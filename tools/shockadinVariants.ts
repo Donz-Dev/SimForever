@@ -607,8 +607,9 @@ export const VARIANT_GROUPS: Readonly<Record<string, readonly Variant[]>> = {
 
   divineFavor: [
     { label: 'Divine Favor entry removed (talent kept)', apply: removeEntry('divine_favor') },
-    { label: 'Divine Favor to the BOTTOM of the list', apply: moveToBottom('divine_favor') },
-    { label: 'Divine Favor below Hammer of Wrath', apply: moveToBottom('divine_favor') },
+    { label: 'Divine Favor back ABOVE Holy Shock (its old place)', apply: moveAbove('divine_favor', 'holy_shock') },
+    { label: 'Divine Favor above Consecration', apply: moveAbove('divine_favor', 'consecration') },
+    { label: 'Divine Favor first, above Judgement', apply: moveAbove('divine_favor', 'judgement') },
     {
       label: 'Divine Favor entry AND talent removed',
       apply: chain(

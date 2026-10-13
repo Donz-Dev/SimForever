@@ -55,30 +55,30 @@ export const PRESET_ENCHANTS: Readonly<
   mage_fire: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   pally_ret: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900002, head: 900002, legs: 900002, neck: 900008, twoHand: 20034, wrists: 900017 },
   /*
-   * BOTH WEAPON CONFIGURATIONS ARE ENCHANTED, on both Shockadin rows, because
-   * both sets now carry both. A loadout naming only the live slots would mean
-   * that flipping the combat style silently dropped the weapon enchant -- the
-   * same +2.4-to-+53.7 DPS hole the benchmark buttons already had once, and
-   * just as invisible, since an unenchanted weapon looks like one nobody
-   * enchanted.
-   */
-  /*
-   * HASTE ON THE HEAD AND LEGS, AND SPELL POWER ON THE NECK, which replaces
-   * +8 Strength twice and +5 Strength once.
+   * THE TWO SHOCKADINS SHARE EIGHT SLOTS AND DIFFER ONLY IN THE HANDS, which is
+   * what their being two profiles on one gear shape means: the only difference
+   * between them is which weapon is held, and the owner has ruled that holding
+   * one excludes the other -- "You cannot ever have the stats of both active."
+   * So neither row names a slot its own set does not fill.
    *
-   * NEITHER THE HEAD NOR THE LEG SLOT OFFERS SPELL POWER AT ALL -- the options
-   * are dodge, haste and the five primaries -- so for a build that is
-   * three-quarters Holy the question is which of the physical lines reaches
-   * furthest. Haste shortens a swing, and the swing carries Seal of
-   * Righteousness: autos and the seal together are about half this build's
-   * damage, so 1% haste measured **+4.7** against +8 Strength's two.
+   * HASTE ON THE HEAD AND LEGS AND SPELL POWER ON THE NECK, which replaces +8
+   * Strength twice and +5 Strength once. Neither the head nor the leg slot
+   * offers spell power at all -- the options are dodge, haste and the five
+   * primaries -- so for a build that is three-quarters Holy the question is
+   * which physical line reaches furthest, and haste shortens the swing that
+   * carries Seal of Righteousness. Haste and +8 Intellect measured as a TIE at
+   * 4,000 paired iterations (+0.4 +/- 1.4 and -0.4 +/- 1.6); both beat +8
+   * Strength by two to three.
    *
    * THE GLOVES AND WRISTS KEEP THEIR SPELL POWER, which is the same question
    * answered the other way: +20 Spell Power beats 1% haste by about two, and
    * +16 beats +9 Strength by five.
+   *
+   * AND THE TWO-HANDER TAKES +65 SPELL POWER, the one enchant only that slot is
+   * offered, against Crusader at -17 and the +30 the one-hander wears at -15.
    */
-  pally_shockadin: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900009, shield: 900030, twoHand: 900029, wrists: 900018 },
-  pally_shockadin_2h: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900009, shield: 900030, twoHand: 900029, wrists: 900018 },
+  pally_shockadin: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900009, shield: 900030, wrists: 900018 },
+  pally_shockadin_2h: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   prot_pally: { chest: 900015, cloak: 900001, feet: 900027, gloves: 900023, head: 900001, legs: 900001, mainHand: 22749, neck: 900012, shield: 900030, wrists: 900016 },
   bm_hunter: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },
   lw_ranged: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },

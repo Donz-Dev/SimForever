@@ -1,6 +1,61 @@
 import type { ClassId } from '../character/ids';
 import { hasProficiency, proficiencyForItem } from '../character/proficiency';
-import type { Item, EquipmentSlot } from './Item';
+import type { Item, EquipmentSlot, Equipment } from './Item';
+
+/**
+ * The weapon slots a newly equipped one DISPLACES.
+ *
+ * ==============================================================================
+ * THE OWNER'S RULING, IN THEIR OWN WORDS: "You cannot ever have the stats of
+ * both active. It's one or the other ... Equipping a 2H weapon REMOVES the
+ * 1H+shield from the character planner equipped items."
+ *
+ * TWO LAYERS SAY THE SAME THING AND ONLY ONE OF THEM SAID IT. `liveEquipment`
+ * already strips whichever hands a combat style cannot fill, so the STATS were
+ * never doubled -- and the equipment MAP could still carry a two-hander and a
+ * one-hander at once, which is what a person reads off the planner. "Resolved
+ * correctly at the point of use" and "cannot be expressed" are not the same
+ * guarantee, and the owner asked for the second.
+ *
+ * SO THE EXCLUSIVITY IS STRUCTURAL NOW, the way a consumable selection keyed by
+ * category is: the state that would be wrong is not representable, rather than
+ * being representable and then ignored. That is the argument `consumables.ts`
+ * already makes about `RaidBuff.exclusiveWith` -- a shape that cannot express
+ * the mistake needs no chooser to be honest.
+ *
+ * IT IS NOT A STYLE RULE AND MUST NOT READ ONE. A character in a shield style
+ * holding a two-hander as a stat stick is `liveEquipment`'s business; this is
+ * about what the two HANDS can physically hold, which is the same answer for
+ * every class and every style.
+ * ==============================================================================
+ */
+const DISPLACED_BY: Readonly<Partial<Record<EquipmentSlot, readonly EquipmentSlot[]>>> = {
+  twoHand: ['mainHand', 'offHand', 'shield'],
+  mainHand: ['twoHand'],
+  offHand: ['twoHand'],
+  shield: ['twoHand'],
+};
+
+/**
+ * Equip into one slot, removing whatever that makes impossible.
+ *
+ * Passing `undefined` empties the slot and displaces nothing -- taking a
+ * two-hander off does not put a shield back on.
+ */
+export function equipExclusive(
+  equipment: Equipment,
+  slot: EquipmentSlot,
+  next: Equipment[EquipmentSlot],
+): Equipment {
+  const result: Record<string, unknown> = { ...equipment };
+  if (!next) {
+    delete result[slot];
+    return result as Equipment;
+  }
+  result[slot] = next;
+  for (const displaced of DISPLACED_BY[slot] ?? []) delete result[displaced];
+  return result as Equipment;
+}
 
 /**
  * The eight slots an ARMOUR CLASS applies to.

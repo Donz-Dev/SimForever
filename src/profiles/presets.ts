@@ -2099,12 +2099,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         characterClass: 'paladin',
         level: 60,
         /*
-         * THE ONE FIELD THAT MAKES THIS A DIFFERENT CHARACTER FROM THE ROW
-         * ABOVE, and the whole swap rides on it: both profiles wear a set that
-         * carries the one-hander, the shield AND the fast two-hander, and
-         * `liveEquipment` strips whichever slots the style cannot fill. So
-         * `two_hander` here is not a claim about the gear -- it is the choice
-         * of which of the two configurations in the bags is in the hands.
+         * THE FIELD THAT MAKES THIS A DIFFERENT CHARACTER FROM THE ROW ABOVE,
+         * and it agrees with the gear rather than overriding it: this profile's
+         * benchmark set contains the fast two-hander and NO one-hander and NO
+         * shield, because the owner ruled that holding one excludes the other
+         * -- "You cannot ever have the stats of both active. It's one or the
+         * other." See `equipExclusive`, which is that ruling where the planner
+         * enforces it.
          */
         combatStyle: 'two_hander',
         stance: 'battle',
@@ -2115,12 +2116,11 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         ...hybridConsumables({
           school: 'school_holy',
           /*
-           * THE WEAPON EFFECT IS BACK ON, which the one-handed row turns off
-           * and which is a decision about the HANDS rather than about the
-           * build. A two-hander is one weapon to coat where a one-hander and a
-           * shield is also one -- see `ConsumableCategory.perWeapon`, which
-           * pays per SWINGING weapon -- so the two rows are offered the same
-           * row and may answer it differently once measured.
+           * THE SPELL-CRIT STONE ON BOTH ROWS, measured rather than assumed on
+           * each: the melee option costs **-10.2** here and **-10.4** on the
+           * shield build. A two-hander and a one-hander-plus-shield are each
+           * ONE swinging weapon, so `ConsumableCategory.perWeapon` pays the
+           * same once either way and the hands do not divide this row.
            */
           meleeWeaponEffect: false,
           blastedLands: 'blasted_intellect',

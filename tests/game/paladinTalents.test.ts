@@ -27,6 +27,7 @@ import {
   consecrationGround,
   improvedSealOfFuryMana,
 } from '../../src/game/auras/paladin';
+import { DIVINE_FAVOR_ABILITY } from '../../src/game/abilities/paladin';
 import { SANCTIFIED_JUDGEMENT_SHARE_PERCENT } from '../../src/game/reactions/paladinCasts';
 import {
   HOLY_SHIELD,
@@ -661,15 +662,35 @@ describe('Divine Favor', () => {
      * global cooldown earlier or thirty seconds earlier. Position decides only
      * WHEN the global cooldown is paid.
      *
-     * SO THE ENTRY BELONGS WHERE A GLOBAL COOLDOWN IS CHEAPEST, which is the
-     * bottom, and the move measured **+13.5 DPS over 3,000 paired iterations**
-     * on the two-hander. The assertion is the mechanism the list order rests on
-     * rather than the order itself -- the order is a rotation decision and this
-     * is an invariant.
+     * THAT WAS WORTH **+13.5** AT THE BOTTOM OF THE LIST, and then the owner
+     * ruled that Divine Favor pays no global cooldown at all -- so the figure
+     * is a fact about a mechanic that has since changed, and every position is
+     * now inside +/-2.2 of every other. The entry went back where the owner
+     * put it.
+     *
+     * THE ASSERTION IS THE INVARIANT UNDER BOTH, which is why it survived the
+     * ruling: the aura has no expiry, so no ordering can arm the wrong spell.
+     * The ORDER is a rotation decision and does not belong in a test.
      * ==========================================================================
      */
     expect(DIVINE_FAVOR.durationMs).toBe(0);
     expect(PALADIN_SHOCKADIN.entries.map((e) => e.abilityId)).toContain('divine_favor');
+  });
+
+  it('starts no global cooldown, by the ruleset owner ruling so', () => {
+    /*
+     * "The Divine Favor talent/cooldown doesn't trigger the global cooldown."
+     * Swift Judgement is the other Paladin ability that says so, and this is a
+     * RULING rather than a measurement for the same reason: an ability wrongly
+     * taking a global cooldown still has the right cost, the right cooldown and
+     * the right effect, so the mistake is invisible everywhere except the DPS.
+     *
+     * BEING OFF IT MEANS ONE THING -- the ability does not START one -- and it
+     * is still BLOCKED by one already running, which is why there is nothing
+     * here about `castTimeMs`.
+     */
+    expect(DIVINE_FAVOR_ABILITY.triggersGcd).toBe(false);
+    expect(DIVINE_FAVOR_ABILITY.castTimeMs ?? 0).toBe(0);
   });
 
   it('is granted by the talent, so a build without it cannot cast it', () => {

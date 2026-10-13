@@ -20,8 +20,8 @@ gear fixed apart from the weapons.
 
 | | was | now | |
 | --- | --- | --- | --- |
-| **Shockadin** (1H + shield) | 787.7 | **892.5** | **+104.8 REAL** |
-| **Shockadin 2H** (new) | -- | **1005.9** | **+113.4 over the shield build** |
+| **Shockadin** (1H + shield) | 787.7 | **896.0** | **+108.3 REAL** |
+| **Shockadin 2H** (new) | -- | **1008.2** | **+112.2 over the shield build** |
 
 **AND THE OTHER 26 PROFILES ARE BIT-IDENTICAL.** `tools/rotation_fingerprint.ts`
 over three seeds: twenty-six rows match `origin/main` in combat-log hash AND
@@ -46,13 +46,34 @@ one-hander trades 15.7 dps away for about 47 budget points of stats; a caster
 two-hander would do the same and come out at 45.7 dps, which is not the Ret's
 weapon rescaled.
 
-**IT IS CARRIED BY BOTH PROFILES RATHER THAN SWAPPED IN**, and nothing new was
-built for that: `twoHand` and `mainHand`/`shield` are different slots and
-`liveEquipment` already strips whichever ones the combat style cannot fill. So
-both Shockadin sets fill all three, both weapons are enchanted, and flipping
-`combatStyle` is the whole swap. The containment check is from the other side --
-changing the two-hand enchant on the shield profile runs **bit-identical
-fights**.
+### The two configurations are EXCLUSIVE, which is a ruling and was a correction
+
+**THE FIRST VERSION HAD BOTH IN ONE SET.** The reasoning was that `twoHand` and
+`mainHand`/`shield` are different slots and `liveEquipment` already strips
+whichever ones a combat style cannot fill, so a set filling all three is a
+character holding one configuration with the other in its bags -- and flipping
+`combatStyle` is then the whole swap. Every step of that is true, the stats were
+never doubled, and **it is not what the owner asked for**:
+
+> "You cannot ever have the stats of both active. It's one or the other, which I
+> hope I was explicit about. Equipping a 2H weapon REMOVES the 1H+shield from
+> the character planner equipped items."
+
+**TWO LAYERS HAD TO AGREE AND ONLY ONE DID.** "Resolved correctly at the point of
+use" and "cannot be expressed" are different guarantees: the equipment MAP could
+carry a two-hander beside a one-hander, and the map is what a person reads off
+the planner. `equipExclusive` in `game/items/equipRules.ts` is the ruling where
+it is enforced -- equipping a two-hander removes the main hand, the off hand and
+the shield, and equipping any of those removes the two-hander.
+
+**IT IS A RULE ABOUT THE HANDS AND NOT ABOUT THE STYLE**, which is why it lives
+beside the proficiency table rather than in `liveEquipment`: a caster holding a
+two-hander as a stat stick is a style question, and this is the same answer for
+every class.
+
+**SO THE ALTERNATIVE IS A SECOND PRESET**, and the swap is a click on the
+preset rail or the benchmark button after changing style. The two sets are the
+same eight armour pieces and the same two trinkets; only the hands differ.
 
 ### Where the +105 and +113 came from
 
@@ -67,7 +88,7 @@ on the two-hander:
 | **Consecration above the two ten-second strikes** | **+14** on both. It was LAST, and fired 6.0 times in a sixty second fight where 7.5 fit |
 | **Instrument of Law 2/2** | **+18**. Hammer of Wrath loses its one-second cast, which also moves it onto the ranged table and its 2x crit |
 | **Improved Judgement 2/2** | **+14**, already taken |
-| **Divine Favor to the BOTTOM of the list** | **+13.5** over 3,000 paired iterations. See below |
+| **Divine Favor off the global cooldown** | **+3.5** and **+2.3**, an owner ruling that arrived afterwards and retired a finding. See below |
 | **head and legs +1% Haste, neck +6 Spell Power** | **+9** together |
 | **Blasted Lands +25 Intellect** rather than Strength | **+3** |
 | **Sacred Arbiter 1/1** | **+10**, already taken |
@@ -110,21 +131,39 @@ before it, which puts Retribution under 28 and takes Champion of the Light with
 it. Sixty percent of this build's Intellect as spell power beats fifteen
 percent crit on two abilities, and it is not close.
 
-### Divine Favor belongs at the BOTTOM, which is the opposite of what was written
+### Divine Favor: a finding, and then a ruling that retired it
 
-The entry sat above Holy Shock with the argument that the buff is "your NEXT
-Holy Shock", so arming it below the spell it arms would waste a global cooldown.
-**Every step of that is true and the conclusion is backwards.**
+**THE ARGUMENT THAT PUT THE ENTRY ABOVE HOLY SHOCK WAS WRONG AND THE PLACE WAS
+RIGHT**, which took two steps to establish.
 
-`DIVINE_FAVOR.durationMs` is **0** -- no expiry -- and the cast reaction that
-spends it fires on the Holy Shock that used it. So the next Holy Shock collects
-the crit whether Divine Favor was cast one global cooldown earlier or thirty
-seconds earlier, and the entry's position decides only WHEN the global cooldown
-is paid. At the bottom it is paid in a gap. **+13.5.**
+The entry sat there because the buff is "your NEXT Holy Shock", so arming it
+below the spell it arms would waste a global cooldown. **Every step of that is
+true and the conclusion does not follow.** `DIVINE_FAVOR.durationMs` is **0** --
+no expiry -- and the cast reaction that spends it fires on the Holy Shock that
+used it, so the next Holy Shock collects the crit whether Divine Favor went out
+one global cooldown earlier or thirty seconds earlier. Position decided only
+WHEN the global cooldown was paid, and the bottom of the list measured **+13.5**
+against the top, with deleting the entry at **+9.9**.
 
-**AND IT BEATS DELETING THE ENTRY, WHICH WAS THE OTHER CANDIDATE AND MEASURED
-+9.9**: removing it gives the global cooldown back and gives the crit away. The
-owner's entry stays, because the measurement was about its POSITION.
+**AND THEN THE OWNER RULED THAT IT PAYS NO GLOBAL COOLDOWN AT ALL**: "the Divine
+Favor talent/cooldown doesn't trigger the global cooldown." `triggersGcd: false`,
+the same declaration Swift Judgement carries, and worth **+3.5** on the shield
+build and **+2.3** on the two-hander.
+
+**THAT MAKES THE WHOLE POSITION QUESTION WORTH NOTHING.** Re-measured at 3,000
+paired iterations after the change, the top of the list, above Consecration,
+above Judgement and the very bottom are **all inside +/-2.2 of each other** --
+so the entry went back where the owner put it, and the list comment says the
+position is now a free choice rather than a measured one.
+
+**WHAT IS NOT FREE IS HAVING IT AT ALL**: removing the entry measures **-9.7**,
+where before the ruling it was worth **+9.9** to remove. The ability went from
+costing more than it gave to giving for almost nothing, and the sign flip is
+entirely the global cooldown.
+
+**A MEASURED ROTATION DECISION IS ONLY AS SETTLED AS THE MECHANIC UNDER IT**,
+which is what this is worth remembering for -- the same shape as the execute
+phase's 1,440ms-to-480ms gap moving when parry haste's direction was corrected.
 
 ### Two things that were measured and turned out to be noise
 

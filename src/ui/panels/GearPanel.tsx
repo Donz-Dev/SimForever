@@ -5,6 +5,7 @@ import { resolveCombatStyle } from '../../game/character';
 import type { Equipment, EquipmentSlot } from '../../game/items/Item';
 import { ENCHANTS_BY_ID, ITEMS_BY_ID } from '../../game/items/itemData';
 import { hasStartingEquipment, startingEquipmentFor } from '../../game/items/startingSets';
+import { equipExclusive } from '../../game/items/equipRules';
 import {
   BENCHMARK_SETS,
   BENCHMARK_TEMPLATES_BY_PRESET,
@@ -70,11 +71,15 @@ export function GearPanel({ profile, onChange }: GearPanelProps) {
     undefined,
   );
 
+  /*
+   * EQUIPPING DISPLACES WHAT IT MAKES IMPOSSIBLE, which is the owner's ruling:
+   * "Equipping a 2H weapon REMOVES the 1H+shield from the character planner
+   * equipped items." The rule lives in `game/items/equipRules.ts` rather than
+   * here, because `benchmarkEquipmentFor` has to obey the same one and two
+   * copies is the shape this project documents everywhere else.
+   */
   const setSlot = (slot: EquipmentSlot, next: Equipment[EquipmentSlot]) => {
-    const equipment: Record<string, unknown> = { ...profile.equipment };
-    if (next) equipment[slot] = next;
-    else delete equipment[slot];
-    onChange({ ...profile, equipment: equipment as Equipment });
+    onChange({ ...profile, equipment: equipExclusive(profile.equipment, slot, next) });
   };
 
   /*

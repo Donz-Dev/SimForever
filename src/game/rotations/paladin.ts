@@ -293,6 +293,32 @@ export const PALADIN_SHOCKADIN: AplList = {
   { abilityId: 'seal_of_righteousness', condition: selfExpired('seal_of_righteousness') },
   /*
    * ==========================================================================
+   * DIVINE FAVOR ABOVE HOLY SHOCK, which is where the owner put it -- AND THE
+   * POSITION IS NOW WORTH NOTHING EITHER WAY, which is the interesting part.
+   *
+   * THE ARGUMENT THAT PUT IT HERE WAS WRONG AND THE PLACE WAS RIGHT. It read:
+   * the buff is "your NEXT Holy Shock", so arming it below the spell it arms
+   * wastes a global cooldown. `DIVINE_FAVOR.durationMs` is **0** -- the aura
+   * lasts until it is SPENT -- so the next Holy Shock collects the crit
+   * whether Divine Favor was cast one global cooldown earlier or thirty
+   * seconds earlier. Position decided only WHEN the global cooldown was paid.
+   *
+   * AND THEN THE OWNER RULED THAT IT PAYS NONE: "the Divine Favor
+   * talent/cooldown doesn't trigger the global cooldown." Measured at 3,000
+   * paired iterations after that change, the top of the list, above
+   * Consecration, above Judgement and the very bottom are **all inside +/-2.2
+   * of each other** -- so this is a free choice and the owner's own order is
+   * what it falls back to.
+   *
+   * WHAT IS NOT FREE IS HAVING IT AT ALL: removing the entry measures
+   * **-9.7**. Off the global cooldown the ability costs one `ROTATION_POLL_MS`
+   * and buys a guaranteed Holy Shock crit, which is the same trade the racials
+   * and the mid-fight consumables make at the top of this list.
+   * ==========================================================================
+   */
+  { abilityId: 'divine_favor' },
+  /*
+   * ==========================================================================
    * CONSECRATION ABOVE THE TWO TEN-SECOND STRIKES, which is where it was NOT,
    * and it is worth **+14** on the two-hander and **+14** on the shield build.
    *
@@ -325,31 +351,6 @@ export const PALADIN_SHOCKADIN: AplList = {
    * damage. Dropping the entry altogether measures **-20**.
    */
   { abilityId: 'hammer_of_wrath' },
-  /*
-   * ==========================================================================
-   * DIVINE FAVOR LAST, WHICH IS THE OPPOSITE OF WHERE IT WAS AND IS WORTH
-   * **+13.5** OVER 3,000 PAIRED ITERATIONS.
-   *
-   * IT USED TO SIT ABOVE HOLY SHOCK, with the argument that the buff is "your
-   * NEXT Holy Shock" so arming it below the spell it arms would waste a global
-   * cooldown. **Every step of that is true and the conclusion is backwards.**
-   * The aura has no duration worth the name -- it lasts UNTIL IT IS SPENT -- so
-   * where the entry sits decides WHEN the global cooldown is paid and nothing
-   * else: the next Holy Shock collects the crit whether Divine Favor was cast
-   * one global cooldown earlier or thirty seconds earlier.
-   *
-   * SO IT BELONGS WHERE A GLOBAL COOLDOWN IS CHEAPEST, which is the bottom. At
-   * the top it displaced a Consecration or a Judgement once a fight; at the
-   * bottom it is cast in a gap, which this list now has few of and still has.
-   *
-   * AND IT BEATS DELETING THE ENTRY, which was the other candidate and measured
-   * **+9.9**: removing it gives the global cooldown back and gives the crit
-   * away, where moving it keeps both. That is why the owner's entry stays --
-   * the measurement was about its POSITION, not about whether the ability
-   * belongs in the list.
-   * ==========================================================================
-   */
-  { abilityId: 'divine_favor' },
   ],
 };
 

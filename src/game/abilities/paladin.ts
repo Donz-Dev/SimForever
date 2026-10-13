@@ -671,6 +671,29 @@ export const DIVINE_FAVOR_ABILITY: Ability = {
   cost: { resource: 'mana', amount: shareOfBase(0.04) },
   cooldownMs: seconds(120),
   requiresTarget: false,
+  /*
+   * ==========================================================================
+   * OFF THE GLOBAL COOLDOWN, BY THE OWNER'S RULING: "the Divine Favor
+   * talent/cooldown doesn't trigger the global cooldown." Swift Judgement is
+   * the other Paladin ability that says so, and for the same reason it is a
+   * RULING rather than a measurement -- an ability wrongly taking a global
+   * cooldown still has the right cost, the right cooldown and the right
+   * effect, so the mistake is invisible everywhere except the figure.
+   *
+   * BEING OFF IT MEANS ONE THING -- the ability does not START a global
+   * cooldown -- and it is still BLOCKED by one already running.
+   *
+   * IT RETIRES A ROTATION FINDING RATHER THAN CONFIRMING ONE. While this took
+   * a global cooldown, moving the entry to the BOTTOM of the Shockadin list was
+   * worth **+13.5** and deleting it **+9.9**, because once a fight it displaced
+   * a Consecration or a Judgement. Off the global cooldown it costs one
+   * `ROTATION_POLL_MS` -- 100ms of idle, the same price the racials and the
+   * mid-fight consumables pay -- and the position stops mattering. The list
+   * keeps it at the bottom anyway; see `rotations/paladin.ts` for why that is
+   * now a free choice rather than a measured one.
+   * ==========================================================================
+   */
+  triggersGcd: false,
   // Nothing to gain from a second one while the first is unspent.
   canCast: ({ caster }) => !caster.auras.has('divine_favor'),
   onCast: ({ simulation, caster }) => {
