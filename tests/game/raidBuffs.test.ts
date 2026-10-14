@@ -771,7 +771,14 @@ describe('Judgement of Wisdom', () => {
     const actor = { resources: { get: () => ({}) } } as never;
     const enemy = { isPlayerControlled: false } as never;
     const attack = { defender: enemy } as never;
-    const spell = { target: enemy } as never;
+    /*
+     * THE STUB CARRIES AN `ability` NOW, and it had to: the cast half asks
+     * whether the ability is aimed at an enemy at all. A fake event that omits
+     * the field is the "a test that reconstructs the thing under test will
+     * reproduce its mistakes" hazard -- this one threw rather than passing
+     * silently, which is the cheaper of the two outcomes.
+     */
+    const spell = { target: enemy, ability: { requiresTarget: true } } as never;
 
     const fire = (r: { canTrigger?: Function; onTrigger: Function }, event: unknown) => {
       if (!r.canTrigger || r.canTrigger(context, actor, event)) r.onTrigger(context, actor, event);
@@ -790,6 +797,63 @@ describe('Judgement of Wisdom', () => {
 
     // And a second cast at that same instant has already had the roll.
     fire(cast as never, spell);
+    expect(granted).toHaveLength(2);
+  });
+
+  it('gives a SELF-BUFF no roll, because it is not a cast against an enemy', () => {
+    /*
+     * ==========================================================================
+     * THE OWNER'S RULE HAS TWO HALVES AND ONLY ONE WAS CHECKED: "every direct
+     * damage source (not DoT ticks) OR CAST AGAINST AN ENEMY".
+     *
+     * The cast half asked only whether a target existed and was hostile -- and
+     * it always is: the rotation carries the encounter's target and the cast
+     * event is handed it whether or not the ability points at anything. So
+     * every self-buff rolled. On BM Hunter, Aspect of the Hawk, Rapid Fire,
+     * Bestial Wrath, Blood Fury and the Frenzy Potion were **20 of 149 grants**.
+     *
+     * NOTHING LOOKED WRONG: real mana, at the stated rate, into a pool the
+     * character has, under a buff that is genuinely up. It was found by joining
+     * each GRANT to what the character cast or dealt at that instant --
+     * `tools/probe_jow.ts`.
+     *
+     * `requiresTarget` IS THE FIELD, and it already means exactly this.
+     * ==========================================================================
+     */
+    const { cast } = judgementOfWisdomReactions();
+    const granted: number[] = [];
+    /*
+     * THE CLOCK ADVANCES BETWEEN OFFERS, because the two halves share a
+     * one-roll-per-INSTANT dedupe -- three casts at the same millisecond are
+     * one action to this reaction, which is the behaviour the test above pins.
+     */
+    let now = 1000;
+    const context = {
+      clock: { now: () => now },
+      rng: { rollChance: () => true },
+      grantResource: (_a: unknown, _r: unknown, amount: number) => granted.push(amount),
+    } as never;
+    const actor = { resources: { get: () => ({}) } } as never;
+    const enemy = { isPlayerControlled: false } as never;
+
+    const offer = (requiresTarget: boolean | undefined) => {
+      now += 1000;
+      const event = { target: enemy, ability: { requiresTarget } } as never;
+      if (!cast.canTrigger || cast.canTrigger(context, actor, event)) {
+        cast.onTrigger(context, actor, event);
+      }
+    };
+
+    offer(false);
+    expect(granted, 'a self-buff is not a cast against an enemy').toHaveLength(0);
+
+    // A debuff on the enemy IS one, and Hunter's Mark declares it.
+    offer(true);
+    expect(granted).toHaveLength(1);
+
+    // And the default is "a hostile target is required", so an ability that
+    // says nothing still rolls -- which is every damaging spell in the game.
+    offer(undefined);
     expect(granted).toHaveLength(2);
   });
 

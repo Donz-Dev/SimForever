@@ -45,6 +45,7 @@ for (const preset of ['bm_hunter', 'lw_ranged', 'bm_hunter+improved_arcane_shot'
   const built = preset.includes('+') ? BM_WITH_IMPROVED(base) : base;
   let worst = Infinity;
   let casts = 0;
+  const pairs = new Map<string, number>();
   const counts = new Map<string, number>();
 
   for (const seed of [12345, 777, 20260101, 4242, 99]) {
@@ -55,13 +56,23 @@ for (const preset of ['bm_hunter', 'lw_ranged', 'bm_hunter+improved_arcane_shot'
     for (const t of times) counts.set(t.name, (counts.get(t.name) ?? 0) + 1);
     casts += times.length;
     for (let i = 1; i < times.length; i += 1) {
-      worst = Math.min(worst, times[i].at - times[i - 1].at);
+      const gap = times[i].at - times[i - 1].at;
+      worst = Math.min(worst, gap);
+      /*
+       * BROKEN OUT BY ORDERED PAIR, because the minimum over ALL transitions
+       * answers the wrong question once a talent shortens one member: Arcane
+       * Shot following Arcane Shot is ALLOWED to be under six seconds, and
+       * Summon Hawk following Arcane Shot is not.
+       */
+      const key = `${times[i - 1].name} -> ${times[i].name}`;
+      pairs.set(key, Math.min(pairs.get(key) ?? Infinity, gap));
     }
   }
 
   console.log(
     `${preset.padEnd(12)} ${casts} casts over 5 fights  ` +
       `[${[...counts].map(([n, c]) => `${n} ${c}`).join(', ')}]  ` +
-      `smallest gap between consecutive casts: ${worst === Infinity ? 'n/a' : `${worst}ms`}`,
+      `smallest gap: ${worst === Infinity ? 'n/a' : `${worst}ms`}`,
   );
+  for (const [pair, gap] of [...pairs].sort()) console.log(`${' '.repeat(16)}${pair.padEnd(32)} ${gap}ms`);
 }

@@ -113,7 +113,7 @@ not a coincidence.
 +150 Spell Power on a profile nothing attacks and that casts no spells runs
 **bit-identical fights**.
 
-### Arcane Shot and Summon Hawk share a cooldown, and half of that is right
+### Arcane Shot and Summon Hawk share a cooldown, and the talent now respects it
 
 **THE SHARING ITSELF WORKS AND IS NOW PINNED ON THE EVENT STREAM.** Both declare
 `cooldownGroup: 'arcane_shot'` -- which the Hunter wiki states outright -- and
@@ -123,23 +123,63 @@ Shot entered the list: before it, the group had one member and nothing to share
 with, so a declaration that was never exercised looked exactly like one that
 worked.
 
-**THE TALENT'S SECOND SENTENCE IS NOT MODELLED.** Improved Arcane Shot reads
-*"Reduces the cooldown of your Arcane Shot by 1.5 sec. Does not affect the
-cooldown of abilities which share a cooldown with Arcane Shot."*
-`AbilityBook.consumeCharge` sets the group lockout from the CASTING ability's
-own `cooldownMs`, so a shortened Arcane Shot shortens the lockout Summon Hawk
-sits behind. Measured on a build carrying both: **5,400ms against 6,000ms**.
+**AND THE TALENT'S SECOND SENTENCE IS MODELLED NOW**, on the owner's instruction
+to implement it as written. Improved Arcane Shot reads *"Reduces the cooldown of
+your Arcane Shot by 1.5 sec. Does not affect the cooldown of abilities which
+share a cooldown with Arcane Shot."* `AbilityBook.consumeCharge` set the group
+lockout from the CASTING ability's own `cooldownMs`, so a shortened Arcane Shot
+shortened the lockout Summon Hawk sat behind -- **5,400ms against 6,000ms**.
 
-**IT IS WORTH 0.0 TODAY AND IS REACHABLE.** BM Hunter spends its two free
-Marksmanship points on Improved Stings and LW Ranged has no Summon Hawk, so
-neither profile takes the combination -- but anyone building it hits it.
+`Ability.cooldownGroupMs` is what an ability imposes on the REST of its group,
+defaulting to its own cooldown, and Arcane Shot declares six seconds. The ability
+that SET a lockout is no longer bound by it either, because its own cooldown is
+-- without that the group would simply undo the talent. Measured by ordered pair
+on a build carrying both:
 
-**AND IT IS A QUESTION RATHER THAN A GAP TO CLOSE QUIETLY.** The obvious fix --
-give the GROUP the base cooldown and the ability its reduced one -- changes what
-a group means for every other user, and the Shaman's shock group is the opposite
-case: Reverberation names every member, so there the group SHOULD shorten. Which
-behaviour Forever wants when a talent names one member of a group is the owner's
-to say. `tools/probe_shared_cd.ts` is the measurement, kept as a command.
+| | |
+| --- | --- |
+| Arcane Shot -> Arcane Shot | **5,400ms** -- the talent, on the ability it names |
+| Arcane Shot -> Summon Hawk | **6,038ms** -- the lockout, untouched |
+| Summon Hawk -> either | **6,000ms** |
+
+**THE SHAMAN'S SHOCKS NEED NOTHING, WHICH IS THE POINT OF THE DEFAULT.**
+Reverberation names every member of that group, so shortening one SHOULD shorten
+the lockout -- and that is what leaving `cooldownGroupMs` undefined already does.
+`tools/probe_shared_cd.ts` is the measurement, kept as a command.
+
+### Judgement of Wisdom was paying out on self-buffs
+
+**THE OWNER FOUND IT FROM THE HAWKS AND THE HAWKS TURNED OUT TO BE INNOCENT**,
+which is worth recording as much as the bug. Summon Hawk takes exactly ONE roll,
+on the cast, and its ticks take none -- `dealDamage` dispatches a damage reaction
+only when `attackTable && !periodic`, so a hawk strike never reaches one. That is
+"the initial cast by the sim character", which is what the rule asks for.
+
+**WHAT WAS WRONG WAS EVERY SELF-BUFF.** The rule is *"every direct damage source
+(not DoT ticks) **or cast against an enemy**"*, and the cast half checked only
+that a target existed and was hostile. It always is: the rotation carries the
+encounter's target and `AbilityCastEvent.target` is handed it whether or not the
+ability points at anything. So Aspect of the Hawk, Rapid Fire, Bestial Wrath,
+Blood Fury and the Frenzy Potion all rolled -- **20 of 149 grants on BM Hunter**.
+
+**NOTHING ABOUT IT LOOKED WRONG.** Real mana, at the stated 50%, into a pool the
+character has, under a buff that is genuinely up, shown as one ordinary row. It
+was found by joining each GRANT to whatever the character cast or dealt at the
+same instant, which is `tools/probe_jow.ts`.
+
+`Ability.requiresTarget` is the field and already means exactly "a cast against
+an enemy": Hunter's Mark declares it true and keeps its roll, Aspect of the Hawk
+declares it false and loses one.
+
+**IT MOVES NINETEEN OF THE TWENTY-EIGHT PROFILES** -- every class with a mana
+bar. The two Hunters land inside their own intervals, because neither was
+mana-bound: BM 901.8 -> 898.1 against +/-4.4, LW Ranged 933.2 -> 935.8 against
++/-7.1.
+
+**AND THE NINE THAT DO NOT MOVE ARE THE CONTAINMENT PROOF** for the
+cooldown-group change beside it: they are the three Warriors and the six Rogues,
+so if the `AbilityBook` edit had any effect of its own, a Warrior's stance group
+would show it.
 
 ### Both lists are otherwise optimal, which was checked rather than assumed
 

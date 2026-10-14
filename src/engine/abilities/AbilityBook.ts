@@ -32,8 +32,15 @@ export class AbilityBook {
    * Separate from per-ability state because a group is not an ability: it has
    * no charges and belongs to no single entry. Kept as an absolute timestamp
    * rather than a remaining duration so nothing has to tick it.
+   *
+   * IT REMEMBERS WHICH ABILITY SET IT, because that ability is not bound by its
+   * own lockout -- its own cooldown is. See `groupRemaining`, and
+   * `Ability.cooldownGroupMs` for the one talent that makes the two differ.
    */
-  private readonly groupReadyAt = new Map<string, Milliseconds>();
+  private readonly groupReadyAt = new Map<
+    string,
+    { readonly until: Milliseconds; readonly byAbilityId: string }
+  >();
 
   constructor(abilities: readonly Ability[] = []) {
     for (const ability of abilities) {
@@ -137,7 +144,20 @@ export class AbilityBook {
   groupRemaining(abilityId: string, now: Milliseconds): Milliseconds {
     const group = this.abilities.get(abilityId)?.cooldownGroup;
     if (!group) return 0;
-    return Math.max(0, (this.groupReadyAt.get(group) ?? 0) - now);
+    const entry = this.groupReadyAt.get(group);
+    if (!entry) return 0;
+    /*
+     * THE ABILITY THAT SET THE LOCKOUT IS NOT BOUND BY IT -- its OWN cooldown
+     * is, and `isReady` checks that separately.
+     *
+     * This matters only when the two differ, which is only when something
+     * declares `cooldownGroupMs`: Arcane Shot imposes six seconds on Summon
+     * Hawk while coming back in four and a half itself. For every other group
+     * the two numbers are equal and this changes nothing -- a potion, a shock
+     * or a stance is still held by its own cooldown for exactly as long.
+     */
+    if (entry.byAbilityId === abilityId) return 0;
+    return Math.max(0, entry.until - now);
   }
 
   /** Time until the next charge becomes available. 0 when one is already up. */
@@ -178,9 +198,13 @@ export class AbilityBook {
      * while a longer one is running cannot cut it short.
      */
     if (ability.cooldownGroup) {
-      const until = now + (ability.cooldownMs ?? 0);
-      const existing = this.groupReadyAt.get(ability.cooldownGroup) ?? 0;
-      this.groupReadyAt.set(ability.cooldownGroup, Math.max(existing, until));
+      // `cooldownGroupMs` is what this ability imposes on the OTHERS, and
+      // defaults to its own cooldown. See `Ability.cooldownGroupMs`.
+      const until = now + (ability.cooldownGroupMs ?? ability.cooldownMs ?? 0);
+      const existing = this.groupReadyAt.get(ability.cooldownGroup);
+      if (!existing || until >= existing.until) {
+        this.groupReadyAt.set(ability.cooldownGroup, { until, byAbilityId: abilityId });
+      }
     }
     return true;
   }

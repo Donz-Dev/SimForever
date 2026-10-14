@@ -142,6 +142,16 @@ export const ARCANE_SHOT: Ability = {
   name: 'Arcane Shot',
   cost: { resource: 'mana', amount: 190 },
   cooldownMs: seconds(6),
+  /*
+   * SIX SECONDS ON THE GROUP WHATEVER A TALENT DOES TO THIS ABILITY, which is
+   * Improved Arcane Shot's second sentence: "Does not affect the cooldown of
+   * abilities which share a cooldown with Arcane Shot." Summon Hawk shares one.
+   *
+   * WRITTEN AS THE SAME CONSTANT THE COOLDOWN USES, so the two cannot drift --
+   * what differs is that `abilityCooldown` reduces `cooldownMs` on this
+   * character's copy and leaves this alone.
+   */
+  cooldownGroupMs: seconds(6),
   // Shares its cooldown with Summon Hawk, which the wiki states.
   cooldownGroup: 'arcane_shot',
   attackTable: 'ranged-special',
