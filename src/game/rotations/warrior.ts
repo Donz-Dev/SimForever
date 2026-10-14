@@ -604,6 +604,43 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: AplList = {
    * landing on time and landing behind a shout.
    * --------------------------------------------------------------------------
    */
+  /*
+   * ==========================================================================
+   * RECKLESSNESS, WHICH WAS IN THIS BUILD'S BOOK AND IN NO LIST. **+94.15**,
+   * which is 9.5% of the profile and the largest single figure this class has
+   * produced.
+   *
+   * --------------------------------------------------------------------------
+   * FREE, 30-MINUTE COOLDOWN, BERSERKER STANCE -- which this list never leaves
+   * -- and **+100 crit chance for fifteen seconds** of a sixty-second fight. So
+   * a quarter of the fight is spent at guaranteed crit, and for a Warrior that
+   * is two things at once: `critResourceMultiplier` is 2.0, so the window
+   * roughly DOUBLES rage income as well, and Flurry is permanently up inside it.
+   *
+   * THE GENERIC `WARRIOR_BATTLE` LIST HAS ALWAYS NAMED IT. The two
+   * stance-specific lists the owner specified do not, which is the same shape as
+   * the Hunter's missing Arcane Shot: declared, learnable, castable, never cast,
+   * and reported nowhere -- an entry that never fired is a row that is not there,
+   * and an ability in no list leaves not even that.
+   *
+   * UNCONDITIONAL AND ABOVE DEATH WISH, out of five placements measured at 400
+   * and the best three re-measured at 1,500 and 4,000 because they fell inside
+   * each other's intervals:
+   *
+   *   above Death Wish, unconditional   +94.15   <- this
+   *   at the bottom                     +91.56
+   *   gated with Death Wish at 35s      +87.33
+   *   at the pull                       +79.38
+   *   in the execute phase              +66.05
+   *
+   * SO PAIRING IT WITH DEATH WISH IS WORSE THAN NOT, which is the one result
+   * here that reads backwards: two damage cooldowns overlapping is the obvious
+   * play, and a 30-minute cooldown held for a window that opens at 35 seconds
+   * spends the first half of the fight unused. It needs no condition because it
+   * is free and fires once.
+   * --------------------------------------------------------------------------
+   */
+  { abilityId: 'recklessness_cast' },
   {
     abilityId: 'death_wish',
     condition: fightRemaining('atMost', DEATH_WISH_WINDOW_MS / 1000),
@@ -692,6 +729,34 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: AplList = {
    * ----------------------------------------------------------------------------
    */
   { abilityId: 'spearing_strike' },
+  /*
+   * ==========================================================================
+   * BERSERKER RAGE, WHICH CLOSES THE WARRIOR'S LAST LIVE GAP -- and it is a
+   * LIST cause rather than an engine one, which is what the gap always said.
+   *
+   * --------------------------------------------------------------------------
+   * `abilities/warrior.ts` RECORDED BOTH HALVES AND ONLY ONE WAS A GAP. The
+   * base ability is inert because Forever names no number for the rage it
+   * generates while active; IMPROVED BERSERKER RAGE states ten on activation,
+   * the figure has been in `values/warrior.json` the whole time, and the talent
+   * has been applied to this character's copy of the ability for releases. What
+   * was missing was an entry to cast it.
+   *
+   * BOTH HALVES OR NEITHER. The talent without this entry runs BIT-IDENTICAL
+   * fights -- the rage has nowhere to arrive -- and this entry without the
+   * talent is **-1.13 +/- 3.13**, a free ability that grants nothing and takes
+   * a global cooldown. Together they are **+6.02 +/- 5.43**. See
+   * `DW_FURY_TALENTS`.
+   *
+   * AT THE BOTTOM, AND THAT IS THE WHOLE OF IT. Ten rage every thirty seconds
+   * is worth about a third of a Heroic Strike, so the entry must not take a
+   * global cooldown from one: above Heroic Strike it measures **+80.63 against
+   * +100.17** on the same build. A rage GRANT at the bottom of a list is the
+   * Cat's Shifting Power argument -- it fires when nothing more valuable can,
+   * and what it collects is free.
+   * --------------------------------------------------------------------------
+   */
+  { abilityId: 'berserker_rage_cast' },
   ],
 };
 
@@ -995,6 +1060,47 @@ export const WARRIOR_SHIELD_DEFENSIVE_ROTATION: Rotation = compileRotation(WARRI
  */
 export const BATTLE_HEROIC_STRIKE_RAGE = 90;
 
+/*
+ * ----------------------------------------------------------------------------
+ * AND NINETY SURVIVED BEING RE-SWEPT WITH RECKLESSNESS AND HAMSTRING IN, which
+ * is not the same question as the one it was chosen against: a crit pays a
+ * Warrior double rage, so fifteen seconds at +100 crit chance is fifteen
+ * seconds of roughly doubled income, and that is the quantity this floor
+ * rations.
+ *
+ * SEVENTY MEASURES HIGHER AND NOT BY ENOUGH TO SAY SO. With both new entries
+ * in, the sweep reads **+61.24 at 70, +58.38 at 80, +57.29 at 90 and +58.53 at
+ * 100**, and two variants measured against the same baseline are not paired
+ * with each other -- 70 against 90 is 3.95 with a combined interval of 4.73 at
+ * four thousand iterations. WITHOUT the new entries 70 measured -4.30 and 50
+ * measured -27.84, so the peak has moved toward 70 and has not arrived.
+ *
+ * SO IT STAYS AT THE OWNER'S NUMBER, and the figure is recorded rather than
+ * acted on: this is their respecification from 75, and a difference inside its
+ * own interval is not grounds to move one. It is the sharpest open question
+ * this round leaves.
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ * Rage above which the Arms list spends a global cooldown on Hamstring.
+ *
+ * ----------------------------------------------------------------------------
+ * TWENTY, WHICH IS TEN MORE THAN HAMSTRING COSTS, and the ten is the whole
+ * point: `atLeast 10` measures IDENTICAL to an ungated entry to the decimal,
+ * because that is the ability's own cost restated and `checkCast` already
+ * enforces it. What a floor above the cost buys is that the entry cannot drain
+ * the pool toward the NEXT Mortal Strike -- priority does not reserve a
+ * resource, so an affordable entry at the bottom is spent whether or not
+ * something above it is about to come off cooldown.
+ *
+ * SWEPT, NOT COMPARED: ungated +54.80, 10 +54.80, 20 +57.29, 30 +57.54, 60
+ * +47.96. Twenty and thirty are indistinguishable at 2,000 iterations and swap
+ * places at 4,000, so twenty is asserted as SAFE rather than tight.
+ * ----------------------------------------------------------------------------
+ */
+export const BATTLE_HAMSTRING_RAGE = 20;
+
 /**
  * Refresh Sunder Armor with less than this left, in the ARMS list.
  *
@@ -1158,6 +1264,68 @@ export const WARRIOR_TWO_HAND_BATTLE: AplList = {
     condition: fightRemainingFraction('atMost', EXECUTE_PHASE_FRACTION),
   },
   { abilityId: 'spearing_strike' },
+  /*
+   * ==========================================================================
+   * HAMSTRING, FOR ITS TRIGGERING RATHER THAN ITS DAMAGE. Worth **+26.74**.
+   *
+   * It is 10 rage for a flat 45, which is nothing -- and it is a WEAPON USE, so
+   * every proc this build carries rolls on it: Crusader on the two-hander,
+   * Weaponmaster's extra attack, Unbridled Wrath's rage, and Deep Wounds if it
+   * crits. The same shape as the melee Hunter's Wing Clip, where the triggering
+   * was the larger half of a +41.2.
+   *
+   * WHAT MAKES IT AFFORDABLE IS THAT THIS LIST HAS IDLE GLOBAL COOLDOWNS. The
+   * same entry is **-33.25** on DW Fury, which spends every spare rage on
+   * Heroic Strike and has no idle moment to put a 10-rage filler in. A finding
+   * on one build of a class is not a finding about the class.
+   *
+   * AND THE GATE IS NOT ITS COST. Twenty rage leaves ten spare after Hamstring
+   * pays; ungated it measures **+54.80 in the pair against +57.29**, because
+   * priority does not reserve a resource -- the entry is checked, refused, and
+   * the list walks past Mortal Strike to something affordable. `atLeast 10`
+   * measures IDENTICAL to ungated, to the decimal, because that is the
+   * ability's own cost restated. Thirty is indistinguishable from twenty at
+   * 2,000 and at 4,000 iterations, so this is the SAFE boundary rather than a
+   * tight one.
+   * ==========================================================================
+   */
+  {
+    abilityId: 'hamstring',
+    condition: resource('atLeast', BATTLE_HAMSTRING_RAGE, 'rage'),
+  },
+  /*
+   * ==========================================================================
+   * RECKLESSNESS LAST, AND IT COSTS A STANCE DANCE. Worth **+37.91** alone and
+   * **+57.29** with the Hamstring entry above it.
+   *
+   * --------------------------------------------------------------------------
+   * IT WAS IN THIS BUILD'S BOOK AND IN NO LIST -- free, 30-minute cooldown,
+   * +100 crit chance for fifteen seconds of a sixty-second fight. The generic
+   * `WARRIOR_BATTLE` list has always named it; the two stance-specific lists the
+   * owner specified do not, and a Warrior who never casts it is a Warrior
+   * missing a quarter of a fight at guaranteed crit.
+   *
+   * THE DANCE IS WHY IT GOES LAST, WHICH IS THE OPPOSITE OF HOW A DAMAGE
+   * COOLDOWN IS USUALLY PLACED. Recklessness requires Berserker Stance,
+   * `PriorityRotation` will cast a stance change to reach an ability, and this
+   * list's own `battle_stance_cast` entry sits above Heroic Strike and brings it
+   * straight back. At the BOTTOM the dance happens in a moment the list had
+   * nothing castable for anyway; above Heroic Strike it takes a global cooldown
+   * something else wanted -- **+34.28 against +40.24** at 400 iterations, and
+   * the ordering held at 1,500.
+   *
+   * AND IT MAKES IMPROVED TACTICAL MASTERY LIVE. Those five points retain up to
+   * fifteen rage across a stance change, and this list previously made none --
+   * they were held only because Anger Management requires the talent at FULL
+   * rank. A talent that was pure prerequisite now does work.
+   *
+   * A CRIT IS ALSO A RAGE STAT HERE, `critResourceMultiplier` being 2.0 for a
+   * Warrior, so the window roughly doubles rage income while it is up. The
+   * Heroic Strike threshold was therefore re-swept with this entry in rather
+   * than carried over: see `BATTLE_HEROIC_STRIKE_RAGE`.
+   * --------------------------------------------------------------------------
+   */
+  { abilityId: 'recklessness_cast' },
   ],
 };
 

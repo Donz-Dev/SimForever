@@ -15,6 +15,7 @@ import {
 import { WARRIOR_CAST_REACTIONS } from '../../src/game/reactions/warriorTalents';
 import { WARRIOR_TALENT_EFFECTS } from '../../src/game/talents/warriorEffects';
 import { talentBuild } from '../../src/game/talents/talentBuild';
+import { talentsForClass } from '../../src/game/talents/talentData';
 import { talentNumber, talentValue } from '../../src/game/talents/talentValues';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { buildSimulation } from '../helpers/buildSimulation';
@@ -263,13 +264,34 @@ describe('what it is worth to the profiles, which is nothing', () => {
 
   it('is the talent DW Fury passed over when Flurry stopped needing Enrage 5', () => {
     /*
-     * Gore Drinker requires Enrage 5/5. Flurry required Enrage 5/5 too until this
-     * patch and now requires Death Wish 1/1 -- which is what let the owner's new
-     * build drop Enrage to 4/5 and keep Flurry at 5/5, and what makes the choice
-     * between the two talents visible rather than forced.
+     * --------------------------------------------------------------------------
+     * ASSERTED FROM THE TREE DATA, NOT FROM THE PRESET, and it used to read
+     * `enrage` off DW Fury's allocation -- which is a BUILD fact sitting inside
+     * a test about a prerequisite. It broke the day Enrage went 4 to 2 to buy
+     * Improved Berserker Rage, on a change that has nothing to do with Gore
+     * Drinker; the rule it means is about which talent gates which.
+     *
+     * GORE DRINKER REQUIRES ENRAGE 5/5 AND FLURRY NO LONGER DOES -- it asks for
+     * Death Wish 1/1 since this patch -- so a build can hold Flurry at 5/5
+     * without maxing Enrage at all, which is what makes the choice between the
+     * two talents visible rather than forced.
+     * --------------------------------------------------------------------------
      */
+    const tree = talentsForClass('warrior')!;
+    const gore = tree.byId.get('gore_drinker')!;
+    expect(gore.requires).toBe('enrage');
+    expect(gore.requiresRanks).toBe(5);
+
+    const flurry = tree.byId.get('flurry')!;
+    expect(flurry.requires).toBe('death_wish');
+    expect(flurry.requiresRanks).toBe(1);
+  });
+
+  it('is passed over by a build that holds Flurry on less than Enrage 5', () => {
+    // The BUILD half of the claim above, asserted apart from the rule.
     const talents = PRESETS_BY_ID.get('dw_fury')!.build().talents;
-    expect(talents.enrage).toBe(4);
     expect(talents.flurry).toBe(5);
+    expect(talents.enrage).toBeLessThan(5);
+    expect(talents.gore_drinker).toBeUndefined();
   });
 });

@@ -34,7 +34,20 @@ import type { EquipmentSlot } from './Item';
 export const PRESET_ENCHANTS: Readonly<
   Record<string, Readonly<Partial<Record<EquipmentSlot, number>>>>
 > = {
-  two_hand_arms: { chest: 900015, cloak: 900011, feet: 900025, gloves: 900021, head: 900005, legs: 900005, neck: 900008, twoHand: 20034, wrists: 900017 },
+  /*
+   * THE ONLY SLOT ON THIS BUILD THAT WAS GRANTING NOTHING. Its boots carried
+   * MINOR SPEED, which is `unmodelled` -- the engine has no positions -- so the
+   * slot was worth literally zero, and +7 Agility measures **+1.72** at 400
+   * paired iterations. Stamina is the other option and runs BIT-IDENTICAL
+   * fights, which is what says the agility figure is the slot's whole value
+   * rather than noise: nothing attacks a damage Warrior.
+   *
+   * EVERY OTHER SLOT STAYS ON STRENGTH, measured rather than assumed. Plate
+   * gives 2 attack power a strength against agility's 1 plus a twentieth of a
+   * crit, and agility lost in all four slots that offer the choice -- neck
+   * -1.75, wrists -2.20, gloves -2.22, and +1% Haste -2.57 on head or legs.
+   */
+  two_hand_arms: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900021, head: 900005, legs: 900005, neck: 900008, twoHand: 20034, wrists: 900017 },
   dw_fury: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900021, head: 900005, legs: 900005, mainHand: 20034, neck: 900008, offHand: 20034, wrists: 900017 },
   prot_warr: { chest: 900015, cloak: 900001, feet: 900025, gloves: 900024, head: 900001, legs: 900001, mainHand: 20034, neck: 900012, shield: 900030, wrists: 900016 },
   rogue_venom: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },

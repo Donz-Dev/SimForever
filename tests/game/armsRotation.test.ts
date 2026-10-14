@@ -1,4 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import { seconds } from '../../src/engine';
+import { runProfile } from '../../src/simulator';
+import { critRageMultiplierFor } from '../../src/game/combat/resourceRules';
+import {
+  RECKLESSNESS_CRIT_BONUS,
+  RECKLESSNESS_DURATION_MS,
+} from '../../src/game/auras/warrior';
 import {
   BATTLE_HEROIC_STRIKE_RAGE,
   BATTLE_SUNDER_REFRESH_WINDOW_MS,
@@ -63,6 +70,15 @@ const OWNER_ORDER = [
   'mortal_strike',
   'execute',
   'spearing_strike',
+  /*
+   * AND THE TWO THIS ROUND ADDED, BOTH AT THE BOTTOM -- which is where an
+   * entry goes when its whole value depends on NOT taking a global cooldown
+   * from something above it. Hamstring is pressed for its procs (+26.74) and
+   * Recklessness pays for a stance dance out of a moment the list had nothing
+   * castable for (+37.91). Together +57.29. See the list.
+   */
+  'hamstring',
+  'recklessness_cast',
 ];
 
 /** What an ORC drinking Mighty Rage and a Healthstone actually runs. */
@@ -82,6 +98,8 @@ const ORC_ARMS_ORDER = [
   'mortal_strike',
   'execute',
   'spearing_strike',
+  'hamstring',
+  'recklessness_cast',
 ];
 
 describe('the 2H Arms list', () => {
@@ -89,7 +107,7 @@ describe('the 2H Arms list', () => {
     expect(WARRIOR_TWO_HAND_BATTLE.entries.map((entry) => entry.abilityId)).toEqual(OWNER_ORDER);
   });
 
-  it('narrows to fifteen entries for the preset that runs it', () => {
+  it('narrows to seventeen entries for the preset that runs it', () => {
     /*
      * THE PANEL IS WHAT THE OWNER READ, and it shows the NARROWED list: every
      * stock list names all four racial cooldowns and all nine consumables,
@@ -203,5 +221,59 @@ describe('what 2H Arms eats', () => {
     expect(selection.blasted_lands).toBe('blasted_strength');
     expect(selection.potion).toBe('mighty_rage_potion');
     expect(selection.other).toBe('healthstone');
+  });
+
+  /*
+   * ==========================================================================
+   * THE STANCE DANCE, WHICH IS THE PART OF RECKLESSNESS THAT CAN BE WRONG.
+   *
+   * The entry itself is pinned above, in the order. What a test is for is the
+   * MECHANISM: Recklessness requires Berserker Stance and this list lives in
+   * Battle, so `PriorityRotation` has to cast its way there AND the list's own
+   * `battle_stance_cast` entry has to bring it back. Either half missing leaves
+   * a warrior that produces an ordinary figure -- stuck in Berserker it simply
+   * stops casting Overpower, Rend, Slam and Mortal Strike, every one of which
+   * the list skips in silence when the stance is wrong.
+   *
+   * `battle_stance_cast` FIRING AT ALL IS THE EVIDENCE. It measured 0.00 uses
+   * for the life of this list, because the preset opens in Battle and nothing
+   * ever moved it; it is about 1.1 a fight now, which is the return leg.
+   * ==========================================================================
+   */
+  describe('the Recklessness stance dance', () => {
+    const fight = (seed: number) =>
+      runProfile(PRESETS_BY_ID.get('two_hand_arms')!.build(), seed).timeline.filter(
+        (event) => event.type === 'cast',
+      );
+
+    it('reaches Berserker Stance for it and comes back to Battle', () => {
+      for (const seed of [1, 7, 4242]) {
+        const ids: string[] = fight(seed)
+          .map((event) => (event.type === 'cast' ? event.abilityId : ''))
+          .filter((id) => id === 'recklessness_cast' || id === 'battle_stance_cast' || id === 'berserker_stance_cast');
+
+        // It is a thirty-minute cooldown, so once a fight and no more.
+        expect(ids.filter((id) => id === 'recklessness_cast').length, `seed ${seed}`).toBe(1);
+
+        // Berserker first, Recklessness inside it, Battle again afterwards.
+        const at = (id: string) => ids.indexOf(id);
+        expect(at('berserker_stance_cast'), `seed ${seed}`).toBeGreaterThanOrEqual(0);
+        expect(at('berserker_stance_cast')).toBeLessThan(at('recklessness_cast'));
+        expect(ids.lastIndexOf('battle_stance_cast')).toBeGreaterThan(at('recklessness_cast'));
+      }
+    });
+
+    it('spends the window at a crit chance nothing else here reaches', () => {
+      /*
+       * ASSERT THE SIZE OF THE MECHANISM, not only that it is wired up: +100
+       * CRIT CHANCE, which for a Warrior is two things at once -- every blow
+       * crits, and `critRageMultiplierFor` pays double rage on a critical
+       * swing, so the window roughly doubles income as well. A version granting
+       * a tenth of this would read as a working cooldown.
+       */
+      expect(RECKLESSNESS_CRIT_BONUS).toBe(100);
+      expect(RECKLESSNESS_DURATION_MS).toBe(seconds(15));
+      expect(critRageMultiplierFor('warrior', 'two_hander')).toBe(2);
+    });
   });
 });

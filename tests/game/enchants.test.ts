@@ -483,7 +483,7 @@ describe('the bow’s +2% crit reaches ranged attacks and nothing else', () => {
 const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   two_hand_arms: {
     head: '+8 Strength', neck: '+5 Strength', cloak: '+5 Agility', chest: '+4 Stats',
-    wrists: '+9 Strength', gloves: '+15 Strength', legs: '+8 Strength', feet: 'Minor Speed',
+    wrists: '+9 Strength', gloves: '+15 Strength', legs: '+8 Strength', feet: '+7 Agility',
   },
   dw_fury: {
     head: '+8 Strength', neck: '+5 Strength', cloak: '+5 Agility', chest: '+4 Stats',
@@ -716,9 +716,20 @@ describe('a character created from scratch gets a loadout too', () => {
     };
 
     expect(nameAt('two_hander', 'head')).toBe('+8 Strength');
-    expect(nameAt('two_hander', 'feet')).toBe('Minor Speed');
-    // The one difference between the two damage warriors.
+    /*
+     * THE TWO DAMAGE WARRIORS AGREE ON EVERY SLOT NOW, where this used to
+     * assert a difference in the boots: 2H Arms carried MINOR SPEED, which is
+     * `unmodelled`, so the slot granted nothing at all. +7 Agility measures
+     * +1.72 and stamina -- the only other option -- runs bit-identical fights,
+     * which is what makes the figure the slot's whole value rather than noise.
+     *
+     * WHAT STILL HAS TO DIFFER IS THE SHIELD BUILD, and that is the claim this
+     * test is really about: three Warrior builds share one suit of plate, so
+     * only the loadout tells them apart.
+     */
+    expect(nameAt('two_hander', 'feet')).toBe('+7 Agility');
     expect(nameAt('dual_wield', 'feet')).toBe('+7 Agility');
+    expect(nameAt('one_hand_shield', 'head')).toBe('+1% Dodge');
     expect(nameAt('one_hand_shield', 'head')).toBe('+1% Dodge');
     expect(nameAt('one_hand_shield', 'gloves')).toBe('+2% Threat');
   });

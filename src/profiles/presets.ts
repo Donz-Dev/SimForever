@@ -268,8 +268,51 @@ const DW_FURY_TALENTS: TalentAllocation = {
   furious_precision: 3,
   dual_wield_specialization: 5,
   raging_blows: 1,
-  enrage: 4,
+  /*
+   * ENRAGE 4 -> 2, AND THE TWO POINTS BUY IMPROVED BERSERKER RAGE.
+   *
+   * --------------------------------------------------------------------------
+   * ENRAGE IS WORTH NOTHING TO THIS PROFILE AND ALWAYS WAS. "A 30% chance to
+   * deal 10% increased Physical damage for 12 sec AFTER BEING THE VICTIM OF ANY
+   * DAMAGING ATTACK", and this preset sets `targetAttacks: false` -- so the
+   * aura reports no uptime at all. It is the `target` cause of inert rather
+   * than an engine gap, and it expires the day somebody hits this warrior.
+   *
+   * ALL FOUR POINTS CANNOT LEAVE, WHICH IS WHY THIS IS 2 AND NOT 0.
+   * Bloodthirst needs thirty points below tier 30 of Fury and there are
+   * thirty-three, so three is the most that can move -- and every other talent
+   * at or below tier 20 is already maxed or equally dead. Two is what the
+   * destination costs.
+   *
+   * AND THE THREE DEAD DESTINATIONS MEASURE BIT-IDENTICAL TO EACH OTHER.
+   * Enrage 2, Blood Craze 2 and Booming Voice 2 all ran IDENTICAL FIGHTS
+   * holding the leftover pair, so the choice is legibility rather than DPS:
+   * two of Enrage's points stay where the owner put them.
+   * --------------------------------------------------------------------------
+   */
+  enrage: 2,
   improved_execute: 2,
+  /*
+   * IMPROVED BERSERKER RAGE, AND IT IS HALF A FIX RATHER THAN HALF A TALENT.
+   *
+   * --------------------------------------------------------------------------
+   * `abilities/warrior.ts` HAS SAID FOR SEVERAL RELEASES THAT THIS TALENT WAS
+   * BUILT AND THAT NO PROFILE COULD SHOW IT -- "the talent is built and no
+   * profile can show it", the fourth cause of inert, which is a LIST and not
+   * the engine. Berserker Rage was in the book of every Warrior build and in
+   * none of their lists.
+   *
+   * SO THE TALENT ALONE IS STILL WORTH NOTHING: taking it without an entry ran
+   * BIT-IDENTICAL FIGHTS, because the ten rage it grants on activation has
+   * nowhere to arrive. With the entry at the bottom of the list it is
+   * **+6.02 +/- 5.43** over the same build without either. Both halves or
+   * neither, which is why they ship together -- see `WARRIOR_DUAL_WIELD_BERSERKER`.
+   *
+   * THE BASE ABILITY IS STILL INERT AND THAT IS THE SOURCE'S DOING; its own
+   * `unmodelled` entry says so. What the talent adds is a stated number.
+   * --------------------------------------------------------------------------
+   */
+  improved_berserker_rage: 2,
   death_wish: 1,
   flurry: 5,
   bloodthirst: 1,

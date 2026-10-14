@@ -469,7 +469,18 @@ describe('DW Fury', () => {
     expect(t.lingering_rage).toBe(2);
     expect(t.furious_precision).toBe(3);
     expect(t.improved_execute).toBe(2);
-    expect(t.enrage).toBe(4);
+    /*
+     * ENRAGE 4 -> 2, AND THE TWO POINTS BUY IMPROVED BERSERKER RAGE. Enrage is
+     * "after being the victim of any damaging attack" and this preset sets
+     * `targetAttacks: false`, so it reports no uptime at all -- the `target`
+     * cause of inert. Two is the most that can move: Bloodthirst needs thirty
+     * points below tier 30 of Fury and there are thirty-three.
+     *
+     * AND THE TALENT IT BUYS NEEDED A LIST ENTRY TO BE WORTH ANYTHING, which is
+     * the fourth cause of inert. See `WARRIOR_DUAL_WIELD_BERSERKER`.
+     */
+    expect(t.enrage).toBe(2);
+    expect(t.improved_berserker_rage).toBe(2);
     expect(t.gore_drinker).toBeUndefined();
   });
 
