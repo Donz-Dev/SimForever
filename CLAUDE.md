@@ -1807,6 +1807,18 @@ interruptible channel -- so it is not offered there.
   `eventsProcessed` was not, which is the only reason it was visible: **print a
   mechanism's own quantity beside the hash, or a change that costs only time
   looks like no change at all.**
+- **AND THE COUNT READS THE OTHER WAY TOO: FEWER EVENTS WITH MORE CASTS IS AN
+  ACTOR THAT IS IDLE LESS.** The rule above is about a change that RAISES the
+  count for an identical log, which is pure cost. The inverse is a finding:
+  putting Hamstring at the bottom of the 2H Arms list took a fight from **33
+  casts and 351 processed events to 42 casts and 247**, because an idle 100ms
+  rotation poll that becomes a cast removes several polls at once.
+  **THAT IS THE CHEAPEST AVAILABLE PROOF THAT A FILLER IS FILLING SOMETHING**,
+  and it is what separated the same entry being worth **+26.74 on 2H Arms and
+  -33.25 on DW Fury** -- Fury moved 44 casts and 449 events to 48 and 427,
+  barely at all, because Heroic Strike already spends every spare rage and
+  there is no idle moment to put a filler in. A DPS figure says which build
+  liked it; the event count says WHY.
 
 ### The priority list on a profile
 
@@ -1897,6 +1909,16 @@ component, because it is the part that can be wrong.
   **THE FLAG IS DROPPED RATHER THAN STORED AS `false`**, because a stored list is
   compared to the stock one BY VALUE and an entry switched off and on again has
   to come back byte-identical. Absent means active, so no migration.
+  **AND IT SHIPS IN A STOCK LIST NOW, WHICH IT NEVER DID BEFORE.** It was built
+  as an EDITING convenience and nothing checked in carried one, until the owner
+  ruled that Recklessness belongs in both damage Warrior lists and **"default
+  disabled in the APL"**. So an off-by-default entry is a way to carry a
+  MEASURED option: deleting it would lose the measurement and the placement with
+  it, and an entry with no measured position is one somebody has to measure
+  again before they can use it. Worth **+94.15** to DW Fury and **+37.91** to 2H
+  Arms when the eye is opened, and the published figures do not include it.
+  **THE PRICE IS A SIXTH CAUSE OF A NEVER-FIRED ENTRY** -- see the list of
+  causes under **Rotations**, because the tool reported it as a defect.
 - **A STORED LIST IS NARROWED BY RACE, AND THE ENGINE NEVER NEEDED THAT.** Every
   list names all four free racial cooldowns -- the shared constant is spread
   into lists belonging to no race -- and `PriorityRotation` skips what the
@@ -2311,6 +2333,30 @@ Aimed Shot and Sniper Shot fired zero times in three lists, nothing errored, and
 the comment beside the mistake asserted the opposite of what the code did. **When
 a new condition primitive is added, the `USES=1` pass IS the test that it
 fires** -- the suite passed with it broken.
+
+**AND A SIXTH, WHICH IS THE ONLY ONE THAT IS A SETTING: THE ENTRY IS SWITCHED
+OFF.** `AplEntry.disabled` was an EDITING convenience with no shipped caller
+until the owner ruled Recklessness into both damage Warrior lists and "default
+disabled in the APL". `compileRotation` filters it, so it reports 0.00 uses --
+and `USES=1` printed `<-- NEVER FIRED`, **the loudest flag that tool has,
+pointed at the one cause that is somebody's decision.** It reads
+`(switched off in the list)` now.
+
+**IT IS THE SAME FIX AS `(not learned by this build)` AND FOR THE SAME REASON.**
+That flag exists because every list names all four racial cooldowns and a
+character learns one, so three or four honest zeros a profile looked like
+findings. **A zero has to say which kind it is, or the flag that means "this is
+the bug" stops meaning anything** -- which is the cost of adding a cause without
+teaching the reporting about it.
+
+**AND THE HEADER ABOVE SAYS FOUR, WHICH IS THIS FILE'S OWN COUNT PROBLEM AGAIN.**
+Counted from the paragraphs rather than incremented: the id names no ability;
+the build never learned it; the entry above never yields; the ENCOUNTER already
+supplies it; the condition reads something nothing sets; **the entry is switched
+off** -- SIX, and SEVEN with "the owner meant it", which is deliberately filed
+as not-a-problem. The sentence that opens this section was written when there
+were four and each addition has been labelled by its own ordinal since, so
+**re-count the paragraphs rather than trusting the number in the header.**
 
 **"A NEW ENTRY GOES AT THE BOTTOM" IS A RULE ABOUT AN ENTRY THAT COSTS
 SOMETHING, AND BOTH ENDS OF THE LIST WERE MEASURED TO FIND THAT OUT.** The four
@@ -3029,6 +3075,25 @@ words.
   **AND PAD IT AT RANKS THAT EXIST**: Subtlety has three, so five points in it is
   dropped, which takes the tree total under the next tier and drops the capstone
   with it — a test that reads "the talent grants nothing" for two reasons at once.
+- **`requiresRanks` IS NOT ALWAYS 1, AND THAT IS WHAT MAKES A DEAD POINT
+  MANDATORY.** A prerequisite is `requires` plus `requiresRanks ?? 1`, and
+  **three of the Warrior's seven ask for the FULL rank**: Anger Management on
+  Improved Tactical Mastery 5/5, Deep Wounds on Improved Rend 3/3, Gore Drinker
+  on Enrage 5/5. So a talent whose own effect is worth nothing can be five points
+  that cannot be moved -- Improved Tactical Mastery retains rage across a stance
+  change a list never makes, and all five are held by the talent beneath it.
+  **"THIS TALENT DOES NOTHING, MOVE ITS POINTS" IS A CLAIM ABOUT THE PREREQUISITE
+  GRAPH AND NOT ONLY ABOUT THE TIER ARITHMETIC.** Three variants written on the
+  tier arithmetic alone were refused by `tools/buildVariants.ts`, each naming the
+  NINE talents it would have stranded -- which is what that guard is for, and the
+  cheapest place to find out. Read `requiresRanks` off the tree before pricing a
+  point, because the tier sums can be perfect and the build still illegal.
+- **AND A DEAD POINT'S DESTINATIONS CAN BE PROVABLY EQUALLY DEAD.** Where two
+  points COULD move, Enrage 2, Blood Craze 2 and Booming Voice 2 each ran
+  **BIT-IDENTICAL FIGHTS** holding them -- so the choice is legibility rather
+  than DPS, and the smallest edit wins. **An identical pair is usually this
+  project's tell for a patch that did not apply**, so say which it is: three
+  variants agreeing exactly is evidence only when each one provably applied.
 - **AND AFTER THE PROBES, RE-RUN THE FULL MEASUREMENT AND CHECK IT REPRODUCES TO
   THE DECIMAL.** Five probes were run across the 1.60.1.70170 rounds -- Champion
   of the Light, Vengeance's stack cap, the Warrior crit-rage multiplier,
@@ -3134,6 +3199,16 @@ Plus the permanent rulings under **Scope**.
   engine gap**, and it reads exactly like one because the talent is equally
   silent either way. Build the mechanism, test the MECHANISM, and let the list
   cause be a list cause.
+  **AND IT HAS NOW BEEN CLOSED BY A LIST AND A BUILD, WHICH IS WHAT THE REASON
+  SAID IT NEEDED.** DW Fury spends two points there -- moved off an Enrage that
+  cannot fire against a target which never attacks -- and the Berserker list has
+  an entry at the bottom. **Both halves or neither**: the talent alone runs
+  BIT-IDENTICAL fights, the entry alone is **-1.13** (a free ability granting
+  nothing and taking a global cooldown), and together they are **+6.02**. The
+  gap is gone and no engine work closed it.
+  **THE PAIR IS WHY THE MEASUREMENT HAS TO BE OF THE PAIR.** Measured one at a
+  time, both halves of a talent-plus-entry read as worthless, and the honest
+  conclusion from either alone is "this is not worth taking".
 
 - **A LOW-HEALTH REQUIREMENT IS A CLOCK, NOT A TARGET PROPERTY, and writing it
   off as one was a documented mistake THREE TIMES.** `inExecutePhase` in
@@ -3174,6 +3249,25 @@ Plus the permanent rulings under **Scope**.
   and nothing could: a list of what is absent is not checked by anything that
   compiles. **When an ability joins a file, read that file's own list of what it
   does not have.**
+- **AND THE WORSE VERSION IS A BLANKET JUDGEMENT OVER SUCH A LIST, BECAUSE IT
+  COVERS THE ENTRY NOBODY CHECKED.** `docs/handoff/warrior.md` listed SEVENTEEN
+  abilities under "In the book, in no list, never cast" and then said **"most are
+  correct"**. **Three of the seventeen went into a list the next time anybody
+  looked** -- Recklessness **+94.15**, Hamstring **+26.74**, Berserker Rage
+  **+6.02** -- so the judgement was right about fourteen and wrong about three,
+  and the largest of the three is 9.5% of DW Fury.
+  **THE ENTRY THAT GOT A PARAGRAPH WAS THE SMALL ONE.** Berserker Rage had its
+  own note there saying a build that spent a point would want it measured, and it
+  is worth +6.02. **Prose draws attention to what somebody already thought about,
+  which is the opposite of where the finding is** -- so check such a list by
+  reading the BUILT CHARACTER'S BOOK against the list rather than by re-reading
+  the reasons, and re-read the judgement whenever the lists change.
+  **AND THE WRITE-UP OF THIS LESSON SAID "sixteen ... right about fifteen and
+  wrong about one" IN THREE PLACES BEFORE ANYBODY COUNTED THE LIST.** Both
+  figures were wrong, in a paragraph whose whole subject is a claim nobody
+  checked. **Count the thing you are about to generalise from**, which is this
+  file's "re-count rather than increment" rule pointed at prose rather than at a
+  census column.
 
 - **AND A REASON CAN NAME THE WRONG CAUSE WHILE THE TALENT IS CORRECTLY
   INERT**, which reads as work outstanding forever. Improved Blizzard said
@@ -4646,6 +4740,18 @@ from the spread -- `n = (2 x spread / target)^2`, never from the measured value
 two rows of one table incomparable, because nothing on screen said that one
 figure rested on twelve times the evidence of the one above it. **A cheaper
 measurement that cannot be read beside its neighbour is the wrong trade.**
+
+**AND TWO VARIANTS MEASURED AGAINST THE SAME BASELINE ARE NOT PAIRED WITH EACH
+OTHER**, which is the mistake the pairing invites. Each row's interval is for
+its own difference FROM THE BASELINE; the difference BETWEEN two rows carries
+both, so it needs roughly `sqrt(a^2 + b^2)` and not either one. Re-sweeping the
+2H Arms Heroic Strike floor gave **+61.24 at 70 rage against +57.29 at 90**,
+which reads as a clear 3.95 beside intervals of 3.39 and 3.29 -- and the honest
+combined interval is **4.73**, so the two are indistinguishable at four thousand
+iterations. **That figure is the OWNER'S**, respecified from 75, so the
+arithmetic is the difference between leaving it alone and overwriting a ruling
+on noise. Sort a variant table by value, and read a gap between rows against the
+combined interval before calling it a finding.
 
 **A CAPPED STAT IS SEVERAL STATS, AND THE OWNER RULED IT SO**: "these can be
 treated as multiple stats in effect". "Chance to miss" is up to FIVE numbers and

@@ -48,6 +48,24 @@ the next free integer** is the thing that stops two branches both calling
 themselves 11, which is the clean-merge arithmetic failure CLAUDE.md documents
 and which has already cost this project a profile format version.
 
+## Questions outstanding for the owner
+
+**GATHERED HERE BECAUSE EACH IS BURIED IN THE ROUND THAT RAISED IT**, and a
+question nobody can find is a question nobody answers. Each links its own
+write-up; none is an engine gap.
+
+| | raised in | what it would change |
+| --- | --- | --- |
+| **Ninety rage on 2H Arms' Heroic Strike** -- re-swept with Recklessness and Hamstring in, 70 measures **+3.95 against a combined interval of 4.73**. The peak has moved toward 70 and has not arrived | round 15 | one constant, and the figure is the owner's own respecification from 75 |
+| **Nature's Reach's second clause** -- "+4% chance to hit", implemented as the flat `hitChance` stat, which the MELEE table reads too. It is what puts the Cat Druid on its 8% cap, and removing it measures **-17.2** | round 14 | if it is meant to be spell-only, the Cat is 4% below cap and its tree needs rebuilding |
+| **Consecrated Ground** -- wording says "Holy SPELLS" and the implementation reaches the seal and Holy Strike too. **+66** to the Shockadin, the biggest talent on that profile | round 12 | the reading, and the Shockadin's figure |
+
+**ALL THREE ARE THE SAME SHAPE: A DEFENSIBLE READING THAT IS NOW LOAD-BEARING.**
+Each was fine while it was worth little and became worth asking about the moment
+a round made it the biggest thing on a profile -- which is CLAUDE.md's rule that
+an interpretation flagged as one is what gets it ruled on, and that the label has
+to survive until the answer arrives.
+
 ## Round twelve: a second set of hands for the Shockadin
 
 **THE OWNER'S ASK, IN TWO HALVES.** First "add a fast 2H to the profile ... an
@@ -143,10 +161,31 @@ first stock list in the project to hold the flag: the entry keeps every byte of
 its measured placement, which is what makes an off-by-default option a usable
 state rather than a lost finding.
 
-**IT ALSO CREATED A FIFTH CAUSE OF A NEVER-FIRED ENTRY.** `USES=1` printed
+**IT ALSO CREATED A SIXTH CAUSE OF A NEVER-FIRED ENTRY.** `USES=1` printed
 `<-- NEVER FIRED` -- the loudest flag that tool has -- at the one cause that is a
 SETTING. It reads `(switched off in the list)` now, the same fix as
 `(not learned by this build)`: a zero has to say which kind it is.
+
+**IT WAS WRITTEN HERE AS THE FIFTH AND CLAUDE.md ALREADY HAD ONE**, which is
+this file's own arithmetic failure in miniature: a count incremented from the
+header's "four causes" rather than re-derived from the paragraphs beneath it,
+where a fifth had been added since. Counted properly there are **six**, and
+seven with "the owner meant it" -- and CLAUDE.md now says to re-count the
+paragraphs rather than trust the number in its header.
+
+**AND FOUR OF THE TEN TEST FAILURES WERE A DOCUMENTED SHAPE RATHER THAN
+EXPECTATION DRIFT**, which is the part worth reading twice:
+
+| | |
+| --- | --- |
+| `procs.test.ts` | asserted Hand of Justice NETS a main-hand swing. It no longer does -- the rage its extra attacks generate buys casts, and a cast resets the swing timer. The fork check it exists for is untouched; the band is symmetric now |
+| `resourceGeneration.test.ts` | asserted ONE rage figure where a critical swing pays two. It was always luck: a bare Warrior crits about 5% of nine swings, so the seed happening to produce none was close to a coin toss |
+| `goreDrinker.test.ts`, `presets.test.ts` | read Enrage's RANK to pin a rule about which talent gates which -- a BUILD fact inside a test about a rule. Asserted from the tree data now, with the build half kept separately |
+| `berserkerRotation.test.ts` | carried a comment saying no list casts Berserker Rage and no profile spends a point there. **Both halves expired in the same commit that made them false** |
+
+**THREE OF THE FOUR ARE THE SAME ROOT**: a fixture that runs the clock runs the
+PRIORITY LIST too, so a list edit reaches tests that look like they are about
+the engine. The fourth is a reason that outlived what it described.
 
 **WHAT IS OPEN: NINETY RAGE ON ARMS' HEROIC STRIKE, WHICH IS THE OWNER'S OWN
 NUMBER.** Re-swept with the new entries in it reads +61.24 at 70 against +57.29

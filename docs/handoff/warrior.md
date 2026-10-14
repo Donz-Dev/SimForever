@@ -63,8 +63,10 @@ this class has produced.
 **A LIST OF WHAT IS ABSENT IS NOT CHECKED BY ANYTHING THAT COMPILES**, which is
 this project's own rule about the Paladin's Hammer of Wrath -- listed as a spell
 the file did not declare, forty lines above its declaration. The same shape, one
-layer up: an enumeration of absences with a blanket judgement over it, where the
-judgement was right about fifteen entries and wrong about one.
+layer up: an enumeration of absences with a blanket judgement over it. The list
+held **seventeen** abilities and **three of them went into a list this round** --
+Recklessness **+94.15**, Hamstring **+26.74**, Berserker Rage **+6.02** -- so it
+was right about fourteen and wrong about three.
 
 **AND THE ENTRY IT WAS RIGHT ABOUT WAS WRITTEN UP AS THE ONE TO RE-READ.**
 `berserker_rage_cast` carried its own paragraph -- *"A build that spent a point
@@ -545,10 +547,12 @@ and only one of the two tools shows it.
 ## In the book, in no list, never cast
 
 **THREE OF THESE HAVE SINCE BEEN PUT IN A LIST AND THIS PARAGRAPH SAID THEY
-WERE MOSTLY FINE.** The sentence below used to end *"most are correct"*, and it
-was right about fifteen entries and wrong about Recklessness, which was worth
+WERE MOSTLY FINE.** The sentence below used to end *"most are correct"* over a
+list of **seventeen**, and three of the seventeen went in: Recklessness
 **+94.15** on DW Fury -- 9.5% of the profile and the largest single figure this
-class has produced. See **The two damage Warriors, optimised** above.
+class has produced -- Hamstring **+26.74** on 2H Arms, and Berserker Rage
+**+6.02**. So it was right about fourteen and wrong about three. See **The two
+damage Warriors, optimised** above.
 
 **A LIST OF WHAT IS ABSENT IS NOT CHECKED BY ANYTHING THAT COMPILES**, which is
 this project's own rule about the Paladin's Hammer of Wrath, one layer up: an
