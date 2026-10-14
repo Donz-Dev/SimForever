@@ -223,13 +223,34 @@ function printUses(presetId: string, profile: CharacterProfile): void {
      * -- a Gnome Warrior's list names Blood Fury and can never cast it.
      */
     const learned = known === undefined || known.has(entry.abilityId);
+    /*
+     * A FIFTH CAUSE OF A ZERO, AND IT ARRIVED WITH THE FIRST STOCK LIST TO
+     * SHIP AN ENTRY SWITCHED OFF.
+     *
+     * ------------------------------------------------------------------------
+     * `AplEntry.disabled` was built as an EDITING convenience and nothing
+     * shipped carrying one, so this column never had to tell a switched-off
+     * entry from a defect. The owner's instruction -- Recklessness "default
+     * disabled in the APL" -- puts one in two lists, and `compileRotation`
+     * filters it, so it reports 0.00 uses and read `<-- NEVER FIRED`: the
+     * loudest flag this tool has, pointed at the one cause that is a SETTING.
+     *
+     * IT IS THE SAME FIX AS "(not learned by this build)" AND FOR THE SAME
+     * REASON. That flag exists because every list names all four racial
+     * cooldowns and a character learns one, so three or four honest zeros a
+     * profile looked like findings. A zero has to say WHICH kind it is, or the
+     * flag that means "this is the bug" stops meaning anything.
+     * ------------------------------------------------------------------------
+     */
     const flag = !learned
       ? '  (not learned by this build)'
-      : uses === 0
-        ? '  <-- NEVER FIRED'
-        : repeated
-          ? '  (pooled: id appears twice)'
-          : '';
+      : entry.disabled === true
+        ? '  (switched off in the list)'
+        : uses === 0
+          ? '  <-- NEVER FIRED'
+          : repeated
+            ? '  (pooled: id appears twice)'
+            : '';
     console.log(
       `    ${String(index + 1).padStart(2)}. ${entry.abilityId.padEnd(26)}` +
         `${uses.toFixed(1).padStart(7)} uses ${share.toFixed(1).padStart(6)}%${flag}`,

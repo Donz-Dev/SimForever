@@ -268,6 +268,12 @@ const OWNER_ORDER = [
   'mighty_rage_potion',
   'major_frenzy_potion',
   'major_spellblasting_potion',
+  /*
+   * RECKLESSNESS ABOVE DEATH WISH, added this round and worth **+94.15** -- it
+   * was in this build's book and in no list. Unconditional, because it is free
+   * and fires once; gating it to overlap Death Wish measured +87.33.
+   */
+  'recklessness_cast',
   'death_wish',
   'major_healing_potion',
   'healthstone',
@@ -279,6 +285,12 @@ const OWNER_ORDER = [
   'bloodthirst',
   'whirlwind',
   'spearing_strike',
+  /*
+   * BERSERKER RAGE LAST, which closes the Warrior's last live gap -- a LIST
+   * cause, not an engine one. Worth +6.02 WITH Improved Berserker Rage and
+   * -1.13 without it; see `DW_FURY_TALENTS`.
+   */
+  'berserker_rage_cast',
 ];
 
 /** What an ORC drinking Mighty Rage and a Healthstone actually runs. */
@@ -286,6 +298,7 @@ const ORC_FURY_ORDER = [
   'bloodrage_cast',
   'blood_fury',
   'mighty_rage_potion',
+  'recklessness_cast',
   'death_wish',
   'healthstone',
   'berserker_stance_cast',
@@ -296,6 +309,7 @@ const ORC_FURY_ORDER = [
   'bloodthirst',
   'whirlwind',
   'spearing_strike',
+  'berserker_rage_cast',
 ];
 
 describe('the Berserker list order', () => {
@@ -305,7 +319,7 @@ describe('the Berserker list order', () => {
     );
   });
 
-  it('narrows to thirteen entries for the preset that runs it', () => {
+  it('narrows to fifteen entries for the preset that runs it', () => {
     /*
      * THE PANEL IS WHAT THE OWNER READ, and it shows the NARROWED list: every
      * stock list names all four racial cooldowns and all nine consumables, and
@@ -429,6 +443,44 @@ describe('the result says which priority list ran', () => {
     expect(named('dual_wield', 'battle')).toBe('Warrior');
   });
 
+  /*
+   * ==========================================================================
+   * BERSERKER RAGE'S RAGE ARRIVING, WHICH IS WHAT THE TALENT WAS WAITING ON.
+   *
+   * `abilities/warrior.ts` recorded for several releases that Improved
+   * Berserker Rage was built and that no profile could show it -- the fourth
+   * cause of inert, a LIST and not the engine. The entry is pinned above, in
+   * the order; what belongs here is that the ten rage actually lands, because
+   * BOTH HALVES ARE SILENT ON THEIR OWN: the talent without an entry granted
+   * nothing, and the entry without the talent grants nothing and still spends a
+   * global cooldown.
+   * ==========================================================================
+   */
+  describe('Berserker Rage, now that something casts it', () => {
+    it('grants the talent ten rage per activation, and is cast more than once', () => {
+      const profile = PRESETS_BY_ID.get('dw_fury')!.build();
+      expect(profile.talents.improved_berserker_rage).toBe(2);
+
+      const run = runProfile(profile, 4242);
+      const casts = run.timeline.filter(
+        (event) => event.type === 'cast' && event.abilityId === 'berserker_rage_cast',
+      );
+      // Thirty-second cooldown in a sixty-second fight, and it is free.
+      expect(casts.length).toBeGreaterThanOrEqual(2);
+
+      const granted = run.timeline.filter(
+        (event) =>
+          event.type === 'resource_gained' &&
+          event.resource === 'rage' &&
+          event.source === 'improved_berserker_rage',
+      );
+      expect(granted.length).toBe(casts.length);
+      for (const event of granted) {
+        if (event.type !== 'resource_gained') continue;
+        expect(event.amount + event.wasted).toBe(10);
+      }
+    });
+  });
   it('names the shield list', () => {
     expect(named('one_hand_shield', 'battle')).toBe('Warrior (Shield)');
   });
@@ -449,11 +501,24 @@ describe('Improved Berserker Rage grants its rage on activation', () => {
    * stated in `values/warrior.json` the whole time: 5 rage at one rank, 10 at
    * two, beside the 50%/100% dispel chance that `valueIndex: 0` steps over.
    *
-   * ASSERTED ON THE MECHANISM AND NOT ON A DPS FIGURE, because no priority list
-   * casts Berserker Rage and none of the three profiles spends a point here --
-   * so its worth to every published number is exactly zero, and that is a BUILD
-   * and LIST fact rather than a modelling one. A talent working and a talent
-   * mattering are different questions.
+   * ASSERTED ON THE MECHANISM AND NOT ON A DPS FIGURE, which is still the right
+   * shape and no longer for the reason this comment used to give. It read "no
+   * priority list casts Berserker Rage and none of the three profiles spends a
+   * point here -- so its worth to every published number is exactly zero", and
+   * BOTH HALVES OF THAT HAVE NOW EXPIRED: the Berserker list has an entry at the
+   * bottom and DW Fury spends two points, moved off an Enrage that cannot fire
+   * against a target which never attacks. Worth **+6.02 +/- 5.43**, where the
+   * talent alone measured BIT-IDENTICAL fights.
+   *
+   * SO THE REASON THAT CALLED THIS A LIVE GAP WAS AN ARGUMENT ABOUT A LIST, and
+   * the fix was a list. The number was in `values/warrior.json` throughout: 5
+   * rage at one rank, 10 at two, beside the 50%/100% dispel chance that
+   * `valueIndex: 0` steps over.
+   *
+   * WHAT STAYS TRUE IS WHY THE ASSERTIONS LOOK LIKE THIS. A talent working and a
+   * talent mattering are different questions, and casting the ability by hand is
+   * what pins the per-rank magnitude whatever any list later does with it -- the
+   * profile half is pinned separately, in `the Berserker list order` above.
    * ----------------------------------------------------------------------------
    */
   function warrior(talents: Record<string, number>) {

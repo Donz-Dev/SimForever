@@ -13,6 +13,7 @@ import {
   RAGE_PER_MAXIMUM_HEALTH_TAKEN,
   RAGE_PER_SECOND_ONE_HAND,
   RAGE_PER_SECOND_TWO_HAND,
+  critRageMultiplierFor,
   manaPerTick,
   regenerationFor,
   rageFromDamageTaken,
@@ -197,11 +198,32 @@ describe('rage', () => {
     );
     expect(awards.length).toBeGreaterThan(3);
 
-    // The placeholder two-hander is 3.4 seconds: 4.5 x 3.4 = 15.3.
+    /*
+     * --------------------------------------------------------------------------
+     * TWO FIGURES, NOT ONE, AND THE SECOND IS A DIFFERENT RULE. The placeholder
+     * two-hander is 3.4 seconds, so `4.5 x 3.4 = 15.3` -- and a CRITICAL swing
+     * pays a Warrior double that, `critRageMultiplierFor` being 2.0. This
+     * asserted the single figure and broke at exactly 30.6 the day Recklessness
+     * entered a list this fixture runs: +100 crit chance for fifteen seconds
+     * means every swing inside the window takes the multiplier.
+     *
+     * IT WAS ALWAYS LUCK RATHER THAN A PROPERTY. A bare Warrior crits about 5%
+     * of the nine swings it makes in thirty seconds, so seed 5 happening to
+     * produce none was close to a coin toss -- the assertion could have failed
+     * on a reseed with nothing else changing.
+     *
+     * WHAT THE TEST IS FOR IS THAT THERE IS NO DAMAGE TERM, and that is intact:
+     * every award is one of two values, decided by the WEAPON and by whether the
+     * blow crit, while the swings below are shown to have differed in damage.
+     * --------------------------------------------------------------------------
+     */
     const expected = rageFromSwing(3.4, true).flat!;
+    const onCrit = expected * critRageMultiplierFor('warrior', 'two_hander');
     for (const award of awards) {
       if (award.type !== 'resource_gained') continue;
-      expect(award.amount + award.wasted).toBeCloseTo(expected, 6);
+      const paid = award.amount + award.wasted;
+      const matches = Math.abs(paid - expected) < 1e-6 || Math.abs(paid - onCrit) < 1e-6;
+      expect(matches, `paid ${paid}, expected ${expected} or ${onCrit}`).toBe(true);
     }
 
     // And the swings really did differ in damage, so the above means something.

@@ -79,7 +79,7 @@ export const PROFILES = [
   ['paladin', 'Shockadin 2H', 'https://talentsforever.com/paladin/60/550130000001212--0521533000133032-ilkjnprtmvABECHLNM-6'],
   ['paladin', 'Prot Pally', 'https://talentsforever.com/paladin/60/50003-0530213321301451-5022-hjAESTVYZXWabdefgk-6'],
   ['warrior', '2H Arms', 'https://talentsforever.com/warrior/60/30325213132515201-0505-2-CA2FAE2HE2KJIMNOLQSUEGiD-6'],
-  ['warrior', 'DW Fury', 'https://talentsforever.com/warrior/60/30305013002-05253005142010501--SUVTYZbdfha1ACE4HEGKa-6'],
+  ['warrior', 'DW Fury', 'https://talentsforever.com/warrior/60/30305013002-05253005122210501--SUVTYZbdfha1ACE4HEGKa-6'],
   ['warrior', 'Prot Warr', 'https://talentsforever.com/warrior/60/35310003002--050532120301021351-jlportmwvxyzABDCHKn-6'],
   /*
    * BOTH RE-ENCODED FROM THEIR PRESETS by `encode_talent_build.mjs`, and both
