@@ -25,12 +25,13 @@ import { pairedDelta } from '../src/simulator/statWeights';
 import { syncDefaultRotation } from '../src/profiles/rotation';
 import { VARIANT_GROUPS as SHOCKADIN } from './shockadinVariants';
 import { VARIANT_GROUPS as HUNTER } from './hunterVariants';
+import { VARIANT_GROUPS as DRUID } from './druidVariants';
 
 /*
  * ONE REGISTRY, SPREAD FROM THE PER-CLASS FILES. A group name is a command-line
  * argument, so they share a namespace -- each file prefixes its own.
  */
-const VARIANT_GROUPS = { ...SHOCKADIN, ...HUNTER };
+const VARIANT_GROUPS = { ...SHOCKADIN, ...HUNTER, ...DRUID };
 
 const PRESET = process.env.PRESET ?? 'pally_shockadin_2h';
 const ITER = Number(process.env.ITER ?? 400);

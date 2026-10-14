@@ -147,3 +147,4 @@ export const chain =
  */
 export const PALADIN_TREE = treeFor('paladin');
 export const HUNTER_TREE = treeFor('hunter');
+export const DRUID_TREE = treeFor('druid');

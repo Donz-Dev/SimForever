@@ -327,10 +327,22 @@ describe('Genesis, which is periodic damage and nothing else', () => {
     expect([1, 2, 3, 4, 5].map((r) => talentNumber('druid', 'genesis', r, 0))).toEqual([
       1, 2, 3, 4, 5,
     ]);
-    expect(buildIn('druid_cat', 'cat').periodicDamageMultiplier).toBeCloseTo(1.05, 10);
-    expect(buildIn('druid_bear', 'bear').periodicDamageMultiplier).toBeCloseTo(1.05, 10);
-    // The Moonkin spends two points, not five.
-    expect(buildIn('druid_moonkin', 'moonkin').periodicDamageMultiplier).toBeCloseTo(1.02, 10);
+    /*
+     * ALL THREE DRUID PROFILES NOW SPEND FIVE. The Moonkin spent two until
+     * Reflection's three points -- mana regeneration on a build that ends a
+     * fight with 2,800 unspent -- bought the rest, worth +5.7.
+     *
+     * THE RANK TABLE ABOVE IS WHAT THIS TEST IS ABOUT, and it is deliberately
+     * asserted apart from the builds: a profile's allocation is a DECISION and
+     * moves, where "rank three is 3%" is the talent.
+     */
+    for (const [preset, style] of [
+      ['druid_cat', 'cat'],
+      ['druid_bear', 'bear'],
+      ['druid_moonkin', 'moonkin'],
+    ] as const) {
+      expect(buildIn(preset, style).periodicDamageMultiplier, preset).toBeCloseTo(1.05, 10);
+    }
   });
 });
 
