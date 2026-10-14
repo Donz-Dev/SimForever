@@ -198,8 +198,24 @@ export const DRUID_MOONKIN: AplList = {
    * they have been in every list but the Shaman's and the three tanks'.
    */
   ...RACIAL_COOLDOWNS,
-  { abilityId: 'moonfire', condition: expired('moonfire') },
+  /*
+   * ==========================================================================
+   * INSECT SWARM ABOVE MOONFIRE, which is worth **+3.2** and is the only
+   * ordering in this list that is not already the best one.
+   *
+   * BOTH ARE REFRESHED ON "IF NOT ACTIVE" AND BOTH COST A GLOBAL COOLDOWN, so
+   * the order decides which one waits when they fall off together -- and Insect
+   * Swarm is the one that loses more by waiting: it is a twelve-second effect
+   * where Moonfire's is eighteen with Nature's Splendor, so a global cooldown
+   * is a larger share of its uptime.
+   *
+   * IT TOOK 4,000 PAIRED ITERATIONS TO SAY SO. At 800 it read +3.95 against an
+   * interval of 4.51 -- noise -- because a swap between two entries that both
+   * cost a global cooldown reorders every later cast and the fights decorrelate.
+   * ==========================================================================
+   */
   { abilityId: 'insect_swarm', condition: expired('insect_swarm') },
+  { abilityId: 'moonfire', condition: expired('moonfire') },
   /*
    * TWO STARFIRE ENTRIES, and the second is not a duplicate. Eclipse charges
    * shorten Starfire's cast and Nature's Grace shortens every cast AND the
@@ -309,30 +325,34 @@ export const DRUID_CAT: AplList = {
    * when it is drunk is thrown away: ten wastes half what twenty does and opens
    * half as often. See `TIGHT_THISTLE_TEA_ENERGY_THRESHOLD`.
    */
-  ...consumableCooldowns({
-    thistleTeaEnergy: TIGHT_THISTLE_TEA_ENERGY_THRESHOLD,
-    exclude: ['major_frenzy_potion'],
-  }),
+  ...consumableCooldowns({ thistleTeaEnergy: TIGHT_THISTLE_TEA_ENERGY_THRESHOLD }),
   /*
    * ==========================================================================
-   * AND THE FRENZY POTION HELD FOR BERSERK, which is the owner's gate and
-   * replaces the Mighty Rage Potion this profile used to drink.
+   * THE MIGHTY RAGE POTION IS BACK, AT THE PULL, which reverses a swap this
+   * file argued for in detail and never measured.
    *
-   * THE TWO CHANGES ARE ONE CHANGE. Mighty Rage is gated on RAGE and a Cat has
-   * none that anything fills, so its gate read permanently true and the potion
-   * fired at the pull for its 60 Strength -- a flat window with nothing lined
-   * up against it, which is exactly what this file says an ungated buff potion
-   * is. Frenzy is 40 attack power, which is less, and it is spent inside a
-   * damage cooldown instead of at a moment nobody chose.
+   * WHAT STOOD HERE: "Mighty Rage is gated on RAGE and a Cat has none that
+   * anything fills, so its gate read permanently true and the potion fired at
+   * the pull for its 60 Strength -- a flat window with nothing lined up against
+   * it ... Frenzy is 40 attack power, which is less, and it is spent inside a
+   * damage cooldown instead of at a moment nobody chose."
    *
-   * IT CANNOT STARVE ITSELF. Berserk is the entry directly below, so the first
-   * poll finds no aura, skips this and casts the cooldown; the next poll -- one
-   * ROTATION_POLL_MS later, because a potion takes no global cooldown -- finds
-   * the window open. A gate waiting on something only an entry ABOVE it could
-   * supply would never open at all.
+   * EVERY FACT IN THAT IS TRUE AND THE TRADE IS THE WRONG WAY ROUND. Sixty
+   * strength is **120 attack power** to a Druid against the Frenzy Potion's 40,
+   * and over the two durations that is 2,400 attack-power-seconds against
+   * 1,200. Being spent at a moment nobody chose is worth less than being three
+   * times the size: **+8.4** at 3,000 paired iterations.
+   *
+   * AND HOLDING MIGHTY RAGE FOR BERSERK IS WORSE THAN DRINKING IT, which is the
+   * half of the old argument that could have survived and does not: the hold
+   * measures **-4.9** against the pull. Twenty seconds of potion spent waiting
+   * for a cooldown is twenty seconds not spent, and Berserk is cast once.
+   *
+   * SO THE EXCLUSION AND THE GATED ENTRY ARE BOTH GONE and the generic list
+   * applies -- its Mighty Rage entry is gated on rage, which a Cat reads as
+   * zero, so it fires at the pull by itself.
    * ==========================================================================
    */
-  buffPotionCooldown('major_frenzy_potion', { id: 'berserk', label: 'Berserk' }),
   ...CONSUMABLE_HEALS,
   /*
    * BERSERK BEHIND TWO CLAUSES, where it was unconditional. Both are the

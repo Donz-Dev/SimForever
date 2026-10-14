@@ -70,6 +70,125 @@ quietly move it.
 ---
 
 
+## The Moonkin and the Cat, optimised
+
+**THE SMALLEST ROUND OF THE THREE, AND THE MOST INTERESTING TO READ**, because
+almost everything that looked like an opportunity measured as a loss. Both
+profiles were already close to their ceiling; what moved them was two points of
+mana regeneration, one potion, and one list swap.
+
+| | spread | was | now |
+| --- | --- | --- | --- |
+| **Moonkin** | 41/0/10 | 778.6 | **790.3** |
+| **Cat** | 9/34/8 | 890.0 | **898.4** |
+
+Both loaded in the calculator: **"all 51 spent"**, nothing refunded.
+
+- Moonkin — <https://talentsforever.com/druid/60/5532220115501351--505-BDEFHCJMNKOPjloAI-3>
+- Cat — <https://talentsforever.com/druid/60/050022-35200032021032212051-053-BEFRSQWXaZdefgcijlm-6>
+
+### What moved
+
+| | |
+| --- | --- |
+| **Moonkin: Reflection 3 -> Genesis 2/5 -> 5/5** | **+5.7**. Mana regeneration while casting, on a build that ends a fight with **2,800 of 8,237 unspent** |
+| **Moonkin: Insect Swarm above Moonfire** | **+3.2**. Both refresh on "if not active" and both cost a global cooldown, so the order decides which waits -- and Insect Swarm's twelve seconds lose more to waiting than Moonfire's eighteen |
+| **Cat: the Mighty Rage Potion back, at the pull** | **+8.4**. See below |
+
+### The Cat's potion, which reverses an argument this project made and never measured
+
+The Cat had been swapped off Mighty Rage with a detailed reason: *"Mighty Rage
+is 60 strength and 45-75 RAGE, and a Cat gains no rage at all -- measured at
+zero over twenty fights -- so half of it was always wasted here. The Frenzy
+Potion is 40 attack power with nothing wasted."*
+
+**EVERY FACT IN THAT IS TRUE AND THE TRADE IS THE WRONG WAY ROUND.** The half
+that is wasted is the rage; the half that is not is 60 strength, and a Druid is
+two attack power a point -- **120 against the Frenzy Potion's 40**. Over the two
+durations that is 2,400 attack-power-seconds against 1,200.
+
+**AND HOLDING IT FOR BERSERK IS WORSE THAN DRINKING IT**, which is the half of
+the old argument that could have survived: the hold measures **-4.9** against
+the pull. Twenty seconds of potion spent waiting for a cooldown is twenty
+seconds not spent, and Berserk is cast once a fight.
+
+### The Cat wastes thirteen of twenty-seven combo points, and that is correct
+
+It generates 27 a fight -- 11 from Shred, 11 from Blood Frenzy's crit proc, 5
+from Rake -- and spends 24 on Rip. **Thirteen are thrown away**, which looks
+exactly like the Hunter's missing Arcane Shot: Ferocious Bite is in the book, in
+no list, and would absorb them.
+
+**IT MEASURES AS A LOSS IN FOUR PLACEMENTS OF FIVE.**
+
+| | |
+| --- | --- |
+| at 5 points, at the bottom | **+3.6** |
+| at 5 points while Rip is up, above Shred | **-8.1** |
+| at 4 points while Rip is up, above Shred | **-26.2** |
+| ungated at the bottom | **-49.9** |
+| at 5 points above Shred | **-63.6** |
+
+**A POINT SPENT ON A BITE IS A POINT RIP DOES NOT GET**, and Rip is 16% of this
+profile over sixteen seconds. The overflow is not waste in a damage sense -- it
+is what a build pays for having one finisher worth casting.
+
+**AND THE ONE POSITIVE PLACEMENT DOES NOT SURVIVE THE POTION.** Ferocious Bite
+is +3.6 on its own and the Mighty Rage Potion is +8.4; **together they are
+-1.6**. More attack power makes Rip's ticks bigger, so the point Bite takes
+costs more. Marginal values do not sum, and here they change sign.
+
+### Two talents that look dead and are not
+
+**NATURE'S REACH IS THE CAT'S HIT CAP.** Its first clause is the range of
+*Balance spells*, which is why it reads as two wasted points on a profile that
+casts none -- and its second is "+4% chance to hit", implemented as the flat
+`hitChance` stat, which the melee table reads too. The Cat sits at **exactly the
+8% melee cap with it**; removing it for two ranks of Naturalist measured
+**-17.2**, which is 4% of everything against +2%.
+
+**THIS IS WORTH THE OWNER'S ATTENTION** rather than just recording: if the hit
+clause is meant to be spell-only, the Cat is 4% below cap and its tree needs
+rebuilding. The flat reading is what the tooltip's unqualified wording supports
+and is what is implemented.
+
+**GENESIS IS WORTH +12.2 TO THE CAT**, which is not obvious on a build that
+reads as physical: Rake and Rip are periodic, and they are 29% of its damage.
+
+### Everything else was already optimal
+
+**THE CAT'S THRESHOLDS ARE ALL PEAKS, SWEPT RATHER THAN COMPARED.** Shifting
+Power's energy ceiling reads **-7.2 at 30, -1.1 at 40, 0 at the owner's 50, -1.6
+at 60 and -6.9 at 70** -- a clean peak on a number the owner chose ten energy
+inside the no-waste region rather than on its edge. Rip at five combo points
+beats four by 3.7 and three by 12.6.
+
+**BERSERK'S ENERGY FLOOR NEVER BINDS**: 0, 15 and 50 all run bit-identical
+fights. It is a safety net that costs nothing, not a lever.
+
+**AGILITY BEATS STRENGTH IN EVERY CAT ENCHANT SLOT**, by 0.2 to 0.6 -- which is
+the opposite of what its consumable row does, and both are right: the row's
+Blasted Lands and food are a tie (+0.3 and +0.1, noise), so the two stats are
+close enough that the crit on agility edges the attack power on strength where
+the amounts are small.
+
+**AND CRUSADER STAYS ON THE CAT'S STAT STICK**, which is worth saying because a
+Hunter's does not proc: a Cat's paw IS a main-hand weapon use, and Holy Strength
+reads **37.5% uptime**. +25 Agility is -3.5 and +65 Spell Power is -17.6.
+
+### The Moonkin has two slots with no useful option at all
+
+Its cloak carries **-2% Threat** and its boots **Minor Speed**, both
+`unmodelled` -- and every alternative measures **bit-identical fights**. Agility,
+stamina and armour are worth exactly nothing to a build that never swings and is
+never attacked, so there is no upgrade to make. Recorded because two dead
+enchants look like an oversight and are not.
+
+**ITS FLASK IS THE LARGEST SINGLE CONSUMABLE DECISION ON EITHER PROFILE**: +150
+Spell Power against +1200 Hit Points is **+102**.
+
+---
+
 ## The one thing to understand first
 
 **A DRUID'S FORM IS ITS COMBAT STYLE — A FIELD THE PRESET SETS — NOT AN AURA.**

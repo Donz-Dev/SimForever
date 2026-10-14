@@ -37,6 +37,7 @@ the tooling to be a bit more sophisticated as well."
 | 10 | **Firelock** -- 5/11/35, a new list, and an AFTERMATH INDEX THAT WAS RIGHT BY LUCK | 891.4 -> 885.5 (**-5.9**), and **26 of 27 rows 0.0** | **774.0** |
 | 12 | **Shockadin** -- a fast 2H as an EXCLUSIVE alternative, both setups optimised, and A TALENT TIER RULE THAT WAS WRONG | 787.7 -> **856.0**, and the 2H at **933.2** as the 28th row | see below |
 | 13 | **BM Hunter** and **LW Ranged** -- an ABILITY IN THE BOOK AND IN NO LIST, two trees with almost no freedom, and TWO CORRECTNESS FIXES BESIDE THEM | 856.2 -> **898.1** and 912.5 -> **935.3** | see below |
+| 14 | **Moonkin** and **Cat** -- the round where nearly every CANDIDATE measured as a loss | 778.6 -> **790.3** and 890.0 -> **898.4** | see below |
 
 **ROUND 11 IS MISSING FROM THAT TABLE ON PURPOSE AND NOT BY ARITHMETIC.** It is
 the tank case study -- Dire Bear Form's armor multiplier, the 75% armor cap and
@@ -86,6 +87,40 @@ and this build is three-quarters Holy. Its wording says "Holy SPELLS" and the
 implementation reaches the seal and Holy Strike too -- a defensible reading
 while nobody took it, and **a question for the owner now that it is the biggest
 talent on the profile**.
+
+## Round fourteen: the Moonkin and the Cat
+
+**THE SMALLEST ROUND OF THE THREE AND THE MOST INTERESTING TO READ**, because
+almost everything that looked like an opportunity measured as a loss.
+
+| | spread | was | now |
+| --- | --- | --- | --- |
+| **Moonkin** | 41/0/10 | 778.6 | **790.3** |
+| **Cat** | 9/34/8 | 890.0 | **898.4** |
+
+**THE CAT THROWS AWAY THIRTEEN OF THE TWENTY-SEVEN COMBO POINTS IT GENERATES,
+AND THAT IS CORRECT.** It looked exactly like the Hunter's missing Arcane Shot
+-- Ferocious Bite is in the book, in no list, and would absorb them -- and
+**four of its five placements measure as a loss**, the worst at -63.6. A point
+spent on a Bite is a point Rip does not get, and Rip is 16% of the profile.
+
+**AND THE ONE POSITIVE PLACEMENT DOES NOT SURVIVE THE POTION**: Ferocious Bite
+is +3.6 alone and the Mighty Rage Potion +8.4, and **together they are -1.6**.
+
+**THE POTION REVERSES AN ARGUMENT THIS PROJECT MADE AND NEVER MEASURED.** The
+Cat had been swapped off Mighty Rage because "a Cat gains no rage at all, so
+half of it was always wasted". True -- and the half that is NOT wasted is 60
+strength, which is **120 attack power to a Druid against the Frenzy Potion's
+40**.
+
+**TWO TALENTS THAT LOOK DEAD AND ARE NOT.** Nature's Reach is the Cat's HIT CAP
+-- its second clause is flat `hitChance`, which the melee table reads -- and
+removing it costs **-17.2**. Genesis is worth **+12.2** to a build that reads as
+physical, because Rake and Rip are periodic and 29% of its damage.
+
+**AND THE CAT'S THRESHOLDS ARE ALL PEAKS**: Shifting Power reads -7.2, -1.1, 0,
+-1.6, -6.9 across 30/40/50/60/70, on the owner's own 50. The full write-up is in
+[docs/handoff/druid.md](docs/handoff/druid.md).
 
 ## Round thirteen: the two ranged Hunters
 

@@ -54,7 +54,11 @@ import { pathToFileURL } from 'node:url';
  * ----------------------------------------------------------------------------
  */
 export const PROFILES = [
-  ['druid', 'Moonkin', 'https://talentsforever.com/druid/60/5232220115501351--505003-BDEFHCJMNKOPjloAI-3'],
+  /*
+   * RE-ENCODED from the preset and LOADED IN THE CALCULATOR: 41/0/10, "all 51
+   * spent", nothing refunded. Reflection's three points bought Genesis 2 -> 5.
+   */
+  ['druid', 'Moonkin', 'https://talentsforever.com/druid/60/5532220115501351--505-BDEFHCJMNKOPjloAI-3'],
   ['druid', 'Cat', 'https://talentsforever.com/druid/60/050022-35200032021032212051-053-BEFRSQWXaZdefgcijlm-6'],
   ['druid', 'Bear', 'https://talentsforever.com/druid/60/050022-45230302120132012551--RVSYZQ1XbcdgfhijBEFTQ-6'],
   ['paladin', 'Seal Twist Ret', 'https://talentsforever.com/paladin/60/550032--05225331201330321-ABEijklmnoprtsvxwF-6'],

@@ -615,9 +615,34 @@ const ROGUE_HEMO_TALENTS: TalentAllocation = {
  * Improved Shifting Power 2 and a third point of Naturalist.
  * ----------------------------------------------------------------------------
  */
+/*
+ * ============================================================================
+ * MOONKIN -- 41 Balance / 10 Restoration, was 38/0/13.
+ *
+ * REFLECTION'S THREE POINTS BUY GENESIS 2 -> 5, worth **+5.7**. Reflection is
+ * "50% of your Mana regeneration continues while casting" and this build ends a
+ * fight with about **2,800 of 8,237 mana unspent** -- so it is regeneration on
+ * a pool that never empties. Genesis is +1% periodic damage a rank, on the 28%
+ * of this profile that is Moonfire and Insect Swarm.
+ *
+ * MOONGLOW STAYS, WHICH IS THE SAME ARGUMENT POINTING THE OTHER WAY and was
+ * measured rather than assumed: it is also mana, and moving ITS three as well
+ * came out **worse** (+4.4 against +5.7), because Genesis caps at 5 and the
+ * spare three have nowhere to go but Improved Entangling Roots.
+ *
+ * RESTORATION'S TEN ARE FIVE REAL AND FIVE FORCED. Naturalist is +1% of
+ * EVERYTHING a rank and sits at tier 5, so five points have to be under it --
+ * and every tier-0 Restoration talent is healing, threat or cast pushback.
+ * Nature's Focus is those five and does nothing at all.
+ *
+ * NATURE'S REACH IS NOT SPARE, which is worth saying because its first clause
+ * is range: its second is +4% hit, and this build sits at exactly the 16%
+ * usable spell cap WITH it.
+ * ============================================================================
+ */
 const DRUID_MOONKIN_TALENTS: TalentAllocation = {
   improved_wrath: 5,
-  genesis: 2,
+  genesis: 5,
   moonglow: 3,
   improved_moonfire: 2,
   nature_s_majesty: 2,
@@ -632,7 +657,6 @@ const DRUID_MOONKIN_TALENTS: TalentAllocation = {
   moonkin_form: 1,
   nature_s_focus: 5,
   naturalist: 5,
-  reflection: 3,
 };
 
 const DRUID_CAT_TALENTS: TalentAllocation = {
@@ -1850,18 +1874,37 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * five agree on, and a row that is right about nine of ten is not a row
        * to delete.
        *
-       * AND THE POTION IS A SWAP RATHER THAN AN OVERRIDE OF THE ROW'S DEFAULT:
-       * Mighty Rage is 60 strength and 45-75 RAGE, and a Cat gains no rage at
-       * all -- measured at zero over twenty fights -- so half of it was always
-       * wasted here. The Frenzy Potion is 40 attack power with nothing wasted,
-       * and the owner's list gates it on BERSERK being up rather than ungated.
+       * AND THE POTION IS THE ROW'S OWN MIGHTY RAGE AGAIN, WHICH REVERSES A
+       * SWAP THIS FILE ARGUED FOR AND NEVER MEASURED.
+       *
+       * ----------------------------------------------------------------------
+       * THE ARGUMENT THAT MADE THE SWAP: "Mighty Rage is 60 strength and 45-75
+       * RAGE, and a Cat gains no rage at all -- measured at zero over twenty
+       * fights -- so half of it was always wasted here. The Frenzy Potion is 40
+       * attack power with nothing wasted."
+       *
+       * BOTH FACTS ARE TRUE AND THE CONCLUSION DOES NOT FOLLOW. The half that is
+       * wasted is the rage; the half that is NOT is 60 strength, and a Druid is
+       * two attack power a point -- **120 against the Frenzy Potion's 40**. Over
+       * the two durations that is 2,400 attack-power-seconds against 1,200.
+       * Measured at 3,000 paired iterations: **+8.4**.
+       *
+       * AND HOLDING IT FOR BERSERK IS WORSE THAN DRINKING IT AT THE PULL, which
+       * is the other half of the old entry and was also worth checking: the hold
+       * measures **-4.9** against the pull, because twenty seconds of potion
+       * spent waiting for a cooldown is twenty seconds not spent. The list's
+       * generic Mighty Rage entry is gated on RAGE, which a Cat reads as zero,
+       * so it fires at the pull by itself and the Cat's own exclusion is gone.
+       *
+       * FEROCIOUS BITE WAS THE OTHER CANDIDATE AND DOES NOT SURVIVE THIS ONE.
+       * See `DRUID_CAT` in `rotations/druid.ts`.
+       * ----------------------------------------------------------------------
        * ======================================================================
        */
       consumables: {
         ...STRENGTH_CONSUMABLES,
         other: 'thistle_tea',
         food: 'food_strength',
-        potion: 'major_frenzy_potion',
       },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
