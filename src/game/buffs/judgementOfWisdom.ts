@@ -42,6 +42,10 @@ import type { CastReaction, Reaction } from '../../engine';
  * not a cast. A missed SPELL still rolls, through the cast half, because it
  * was still a cast against an enemy.
  *
+ * AND A SELF-BUFF GETS NO ROLL EITHER, which is the clause's other half and was
+ * missing: "against an enemy" is `Ability.requiresTarget`, not the mere
+ * presence of a target on the cast event. See the cast half below.
+ *
  * NO AURA, so this is a PROC entry rather than a STATE one -- the same shape
  * as Windfury Totem. Nothing about the judgement itself is modelled: not its
  * 40-second duration, not the melee-strike refresh, and not the one-Judgement
@@ -96,6 +100,30 @@ export function judgementOfWisdomReactions(): {
       canTrigger: (context, actor, cast) => {
         if (!usesMana(actor)) return false;
         if (!cast.target || cast.target.isPlayerControlled) return false;
+        /*
+         * ========================================================================
+         * "A CAST AGAINST AN ENEMY", AND A SELF-BUFF IS NOT ONE.
+         *
+         * THIS CHECKED ONLY THAT A TARGET EXISTED, which is always true: the
+         * rotation carries the encounter's target and `AbilityCastEvent.target`
+         * is handed it whether or not the ability points at anything. So every
+         * self-buff rolled -- Aspect of the Hawk, Rapid Fire, Bestial Wrath,
+         * Blood Fury and the Frenzy Potion between them were **20 of 149 grants**
+         * on BM Hunter, and the same shape on every mana class.
+         *
+         * NOTHING LOOKED WRONG. The mana arrives from a buff that is genuinely
+         * active, at the stated 50%, into a pool the character genuinely has,
+         * and the results page shows one "Judgement of Wisdom" row either way.
+         * It was found by joining each GRANT to whatever the character cast or
+         * dealt at the same instant -- `tools/probe_jow.ts`.
+         *
+         * `requiresTarget` IS THE FIELD AND IT ALREADY MEANS THIS: "whether a
+         * living hostile target is required". Hunter's Mark declares it TRUE and
+         * keeps its roll, because a debuff on the enemy is a cast against one;
+         * Aspect of the Hawk declares it false and loses one.
+         * ========================================================================
+         */
+        if (cast.ability.requiresTarget === false) return false;
 
         /*
          * THE OTHER HALF ALREADY ROLLED FOR THIS ACTION. `runCast` runs

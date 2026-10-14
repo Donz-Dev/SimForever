@@ -256,7 +256,12 @@ describe('what it retired', () => {
       shaman: 'shaman_elemental',
       mage: 'mage_frostfire',
       paladin: 'pally_ret',
-      hunter: 'bm_hunter',
+      // LW Ranged rather than BM Hunter: Efficiency is the Hunter's only
+      // `grantCastModifier` talent, and BM Hunter's two spare Marksmanship
+      // points went to Improved Stings. A test that pins a MECHANISM must not
+      // depend on which talents a profile happens to spend points on -- this
+      // file says so in its own words about Mental Agility, two tests above.
+      hunter: 'lw_ranged',
       warlock: 'warlock_firelock',
       priest: 'shadow_priest',
     });

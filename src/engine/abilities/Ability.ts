@@ -190,6 +190,25 @@ export interface Ability {
    * group of abilities with the same cooldown needs nothing else said.
    */
   readonly cooldownGroup?: string;
+  /**
+   * The cooldown this ability imposes on the REST of its group.
+   *
+   * ============================================================================
+   * DEFAULTS TO `cooldownMs`, AND EXISTS FOR A TALENT THAT SHORTENS ONE MEMBER
+   * OF A GROUP AND SAYS SO. Improved Arcane Shot reads "Reduces the cooldown of
+   * your Arcane Shot by 1.5 sec. DOES NOT AFFECT THE COOLDOWN OF ABILITIES
+   * WHICH SHARE A COOLDOWN WITH ARCANE SHOT" -- and Summon Hawk shares one.
+   *
+   * SO THE TWO NUMBERS GENUINELY DIFFER: Arcane Shot comes back in 4.5 seconds
+   * and the hawk it locked out still waits 6. Without this field the reduction
+   * leaked into the group and the pair could be cast 5,400ms apart, measured.
+   *
+   * THE SHAMAN'S SHOCKS ARE THE OPPOSITE CASE AND NEED NOTHING: Reverberation
+   * names every member of that group, so shortening one shortens the lockout
+   * too -- which is what leaving this undefined already does.
+   * ============================================================================
+   */
+  readonly cooldownGroupMs?: Milliseconds;
 
   /**
    * Why this ability does LESS than its description says, in one line.

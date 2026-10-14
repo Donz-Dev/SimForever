@@ -29,6 +29,179 @@ exactly like a source changing**, and the difference is whether the figure moves
 ---
 
 
+## The two ranged Hunters, optimised
+
+**THE PALADIN'S METHOD APPLIED TO A CLASS WITH ALMOST NO TALENT FREEDOM**, and
+the result is the opposite shape: the Shockadin's gains were mostly talents, and
+these two are mostly a missing list entry.
+
+| | spread | was | optimised | shipped |
+| --- | --- | --- | --- | --- |
+| **BM Hunter** | 31/20/0 | 856.2 | 901.8 | **898.1** |
+| **LW Ranged** | 5/41/5 | 912.5 | 933.2 | **935.3** |
+
+**THE LAST TWO COLUMNS ARE NOT THE SAME ENGINE**, which is why both are shown.
+"Optimised" is the talents, the list and the enchants; "shipped" is after the
+two correctness fixes below -- Judgement of Wisdom no longer paying out on
+self-buffs, and Improved Arcane Shot no longer shortening Summon Hawk's lockout.
+Neither Hunter is mana-bound, so both land inside their own intervals, and
+comparing 901.8 with 898.1 is comparing two different rulesets.
+
+Both trees were loaded into talentsforever.com and read back their spread with
+**"all 51 spent"** and nothing refunded:
+
+- BM Hunter — <https://talentsforever.com/hunter/60/5320001505101251-30520500005--ACBGHJMKNOPSVQUa-3>
+- LW Ranged — <https://talentsforever.com/hunter/60/5-3053450511503051-5-ASQVYXZacefWgbdC-3>
+
+### Arcane Shot was in BM Hunter's book and in no list
+
+**+31 ON ITS OWN, AND IT IS THE CLASS OF BUG WITH NO ZERO TO FIND.** Arcane Shot
+is a trainer shot every Hunter owns from level 6, and it is **14.6% of LW
+Ranged's damage** -- where that list has an entry and BM Hunter's did not.
+
+An entry that fires zero times prints a zero and gets looked at. An ability with
+**no entry at all** has no row, and the damage table still sums to 100%:
+`ability_audit.ts` is the only tool that sees it, and nothing in the suite did.
+
+**AT THE BOTTOM, AND THAT IS MEASURED RATHER THAN THE SAFE DEFAULT**: above
+Summon Hawk it is **-48.6**, because the hawk is 13.9% of this profile's damage
+and a shot that displaces one costs more than it brings. Above Aimed Shot it
+runs **bit-identical fights** -- the two never contend, because Aimed Shot is
+gated on the weave window and Arcane Shot is on a cooldown.
+
+**AND IT WOKE A TALENT.** Improved Arcane Shot measured bit-identical fights
+before the entry existed -- a talent whose ability no list casts.
+
+### BM Hunter's entire design space is two points
+
+Bestial Wrath is tier 30 of Beast Mastery, so **thirty-one of the fifty-one are
+spoken for** before Marksmanship starts. Mortal Shots is tier 15, so fifteen sit
+below it and its own five go on top; Hawk Eye, Lethal Attacks and Careful Aim
+come to thirteen. **Two points, and they must be below tier 15.**
+
+| | |
+| --- | --- |
+| **Improved Stings 2** (was Efficiency 2) | **+11.2** alone, **+41.7** beside the Arcane Shot entry |
+| Improved Arcane Shot 2 | **+25.0** with the entry, and **bit-identical** without it -- more Arcane Shots crowd out Aimed Shots, which hit half again as hard |
+| Rapid Killing 2 | **bit-identical fights** -- it takes Rapid Fire from five minutes to three and the fight is sixty seconds |
+
+**THE BEAST MASTERY FIVE ARE FILLER AND STAY FILLER**: every candidate is pet
+survival on a pet nothing attacks, movement, or a stun.
+
+### LW Ranged: two dead points in Survival, two more in Marksmanship
+
+| | |
+| --- | --- |
+| **Improved Stings 3/3** | **+20.8**. Serpent Sting is 13.4% of this build's damage and the talent is +20% of it |
+| Survivalist 2 -> Efficiency 2 | **bit-identical fights**. +10% health on a profile nothing attacks |
+| Rapid Killing, Scatter Shot | the other two that paid for it |
+
+**FOUR POINTS REMAIN IN EFFICIENCY AND ARE SAID TO BE FILLER.** Marksmanship
+needs thirty below Sniper Shot's tier 30, which is more than its useful talents
+come to -- and the build ends a fight with about 1,570 of 8,071 mana unspent, so
+a cost reduction buys nothing. They are there because there is nowhere better.
+
+### Everything else was already right, and that is worth recording
+
+**THE ENCHANTS AND CONSUMABLES SURVIVED EVERY CHALLENGE.** Agility beats haste,
+intellect and strength in all eight armour slots on both profiles -- the closest
+call is 1% haste on the head, **+1.9 +/- 2.3** on LW Ranged and **-3.4** on BM,
+which is noise and a loss. Agility food and Blasted Lands agility beat attack
+power, strength and intellect everywhere.
+
+**THE STAT STICK IS THE ONE WHERE THE OBVIOUS ANSWER IS WRONG FOR A GOOD
+REASON.** A ranged Hunter's two-hander NEVER SWINGS, so Crusader cannot proc and
+a weapon-damage enchant reaches nothing: Crusader, +30 Spell Power and +65 Spell
+Power all measure **-15.0, identically**, which is the 25 agility they give up
+and nothing else. Three inert enchants agreeing exactly is the containment check,
+not a coincidence.
+
+**AND THE FLASK IS A CHOICE BETWEEN TWO NOTHINGS**: +1200 Hit Points against
++150 Spell Power on a profile nothing attacks and that casts no spells runs
+**bit-identical fights**.
+
+### Arcane Shot and Summon Hawk share a cooldown, and the talent now respects it
+
+**THE SHARING ITSELF WORKS AND IS NOW PINNED ON THE EVENT STREAM.** Both declare
+`cooldownGroup: 'arcane_shot'` -- which the Hunter wiki states outright -- and
+over five BM Hunter fights the **smallest gap between consecutive casts of
+either ability is exactly 6,000ms**. That became load-bearing the day Arcane
+Shot entered the list: before it, the group had one member and nothing to share
+with, so a declaration that was never exercised looked exactly like one that
+worked.
+
+**AND THE TALENT'S SECOND SENTENCE IS MODELLED NOW**, on the owner's instruction
+to implement it as written. Improved Arcane Shot reads *"Reduces the cooldown of
+your Arcane Shot by 1.5 sec. Does not affect the cooldown of abilities which
+share a cooldown with Arcane Shot."* `AbilityBook.consumeCharge` set the group
+lockout from the CASTING ability's own `cooldownMs`, so a shortened Arcane Shot
+shortened the lockout Summon Hawk sat behind -- **5,400ms against 6,000ms**.
+
+`Ability.cooldownGroupMs` is what an ability imposes on the REST of its group,
+defaulting to its own cooldown, and Arcane Shot declares six seconds. The ability
+that SET a lockout is no longer bound by it either, because its own cooldown is
+-- without that the group would simply undo the talent. Measured by ordered pair
+on a build carrying both:
+
+| | |
+| --- | --- |
+| Arcane Shot -> Arcane Shot | **5,400ms** -- the talent, on the ability it names |
+| Arcane Shot -> Summon Hawk | **6,038ms** -- the lockout, untouched |
+| Summon Hawk -> either | **6,000ms** |
+
+**THE SHAMAN'S SHOCKS NEED NOTHING, WHICH IS THE POINT OF THE DEFAULT.**
+Reverberation names every member of that group, so shortening one SHOULD shorten
+the lockout -- and that is what leaving `cooldownGroupMs` undefined already does.
+`tools/probe_shared_cd.ts` is the measurement, kept as a command.
+
+### Judgement of Wisdom was paying out on self-buffs
+
+**THE OWNER FOUND IT FROM THE HAWKS AND THE HAWKS TURNED OUT TO BE INNOCENT**,
+which is worth recording as much as the bug. Summon Hawk takes exactly ONE roll,
+on the cast, and its ticks take none -- `dealDamage` dispatches a damage reaction
+only when `attackTable && !periodic`, so a hawk strike never reaches one. That is
+"the initial cast by the sim character", which is what the rule asks for.
+
+**WHAT WAS WRONG WAS EVERY SELF-BUFF.** The rule is *"every direct damage source
+(not DoT ticks) **or cast against an enemy**"*, and the cast half checked only
+that a target existed and was hostile. It always is: the rotation carries the
+encounter's target and `AbilityCastEvent.target` is handed it whether or not the
+ability points at anything. So Aspect of the Hawk, Rapid Fire, Bestial Wrath,
+Blood Fury and the Frenzy Potion all rolled -- **20 of 149 grants on BM Hunter**.
+
+**NOTHING ABOUT IT LOOKED WRONG.** Real mana, at the stated 50%, into a pool the
+character has, under a buff that is genuinely up, shown as one ordinary row. It
+was found by joining each GRANT to whatever the character cast or dealt at the
+same instant, which is `tools/probe_jow.ts`.
+
+`Ability.requiresTarget` is the field and already means exactly "a cast against
+an enemy": Hunter's Mark declares it true and keeps its roll, Aspect of the Hawk
+declares it false and loses one.
+
+**IT MOVES NINETEEN OF THE TWENTY-EIGHT PROFILES** -- every class with a mana
+bar. The two Hunters land inside their own intervals, because neither was
+mana-bound: BM 901.8 -> 898.1 against +/-4.4, LW Ranged 933.2 -> 935.8 against
++/-7.1.
+
+**AND THE NINE THAT DO NOT MOVE ARE THE CONTAINMENT PROOF** for the
+cooldown-group change beside it: they are the three Warriors and the six Rogues,
+so if the `AbilityBook` edit had any effect of its own, a Warrior's stance group
+would show it.
+
+### Both lists are otherwise optimal, which was checked rather than assumed
+
+Every other move measured a loss on both profiles: Serpent Sting removed
+**-85.2** / **-117.6**, Rapid Fire removed **-29.7** / **-54.0**, Summon Hawk to
+the bottom **-53.7**, Sniper Shot above Aimed Shot **-20.8**, Hunter's Mark
+removed **-4.7** / **-11.4**.
+
+**HUNTER'S MARK IS THE ONE WORTH NAMING**, because this project once measured it
+at **-10.1** on the melee Hunter and the owner's list kept it anyway. On both
+ranged profiles it is a clear gain, so the two findings do not conflict -- they
+are about different builds.
+
+---
+
 ## The one thing to understand first
 
 **THIS CLASS HAS THE PROJECT'S ONLY THIRD SOURCE, AND ITS OWN WIKI.**

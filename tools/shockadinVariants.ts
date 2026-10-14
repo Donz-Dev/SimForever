@@ -1,97 +1,24 @@
 /*
- * The variants `probe_shockadin.ts` measures, grouped by what they change.
+ * The variants `probe_build.ts` measures on the two Shockadins, grouped by what
+ * they change.
  *
- * A TALENT VARIANT IS A WHOLE 51-POINT TREE, not a delta, and it is checked by
- * `legalAllocation` before a fight is run -- a figure whose allocation silently
- * lost a deeper talent is a rumour, which this project has paid for once on the
- * Druid. The helper THROWS rather than measuring one.
+ * The EDITS live in `buildVariants.ts` and are shared with every other class's
+ * variant file; what is here is the Paladin-specific part -- which enchant ids
+ * that slot offers, which trees are legal, what the list looks like.
  */
-import type { CharacterProfile } from '../src/profiles';
-import type { TalentAllocation } from '../src/game/talents/Talent';
-import { legalAllocation } from '../src/game/talents/talentRules';
-import { talentsForClass } from '../src/game/talents/talentData';
-import type { EquipmentSlot } from '../src/game/items/Item';
-import type { AplEntry } from '../src/game/rotations/apl';
+import { PALADIN_TREE } from './buildVariants';
+import {
+  type Variant,
+  chain,
+  consumable,
+  enchant,
+  moveAbove,
+  moveToBottom,
+  removeEntry,
+} from './buildVariants';
 
-type Apply = (profile: CharacterProfile) => CharacterProfile;
+const tree = PALADIN_TREE;
 
-export interface Variant {
-  readonly label: string;
-  readonly apply: Apply;
-}
-
-/* ---------------------------------------------------------------- helpers */
-
-const enchant = (slot: EquipmentSlot, enchantId: number): Apply => (profile) => {
-  const equipped = profile.equipment[slot];
-  if (!equipped) throw new Error(`no item in ${slot}`);
-  return {
-    ...profile,
-    equipment: { ...profile.equipment, [slot]: { ...equipped, enchantId } },
-  };
-};
-
-const consumable = (category: string, id: string): Apply => (profile) => ({
-  ...profile,
-  consumables: { ...profile.consumables, [category]: id },
-});
-
-const PALADIN = talentsForClass('paladin')!;
-
-/** A WHOLE tree, checked before it is measured. */
-const tree = (allocation: TalentAllocation): Apply => (profile) => {
-  const { allocation: legal, dropped } = legalAllocation(PALADIN, allocation);
-  const total = Object.values(legal).reduce((a, b) => a + b, 0);
-  const wanted = Object.values(allocation).reduce((a, b) => a + b, 0);
-  if (dropped.length > 0 || total !== 51 || wanted !== 51) {
-    throw new Error(
-      `illegal tree: wanted ${wanted} legal ${total} dropped [${dropped.join(', ')}]`,
-    );
-  }
-  return { ...profile, talents: legal };
-};
-
-/*
- * AN APL EDIT MARKS THE LIST `custom`, which is not cosmetic: the probe runs
- * `syncDefaultRotation` after every variant -- because a talent change moves
- * which stock list applies -- and that would re-derive a `default` list and
- * silently throw the edit away.
- */
-const apl = (edit: (entries: AplEntry[]) => AplEntry[]): Apply => (profile) => ({
-  ...profile,
-  rotation: {
-    ...profile.rotation,
-    source: 'custom',
-    entries: edit([...profile.rotation.entries]),
-  },
-});
-
-const indexOf = (entries: readonly AplEntry[], id: string) => {
-  const at = entries.findIndex((entry) => entry.abilityId === id);
-  if (at < 0) throw new Error(`no entry for ${id}`);
-  return at;
-};
-
-/** Move `id` so it sits immediately above `beforeId`. */
-const moveAbove = (id: string, beforeId: string): Apply =>
-  apl((entries) => {
-    const [entry] = entries.splice(indexOf(entries, id), 1);
-    entries.splice(indexOf(entries, beforeId), 0, entry);
-    return entries;
-  });
-
-const moveToBottom = (id: string): Apply =>
-  apl((entries) => {
-    const [entry] = entries.splice(indexOf(entries, id), 1);
-    entries.push(entry);
-    return entries;
-  });
-
-const removeEntry = (id: string): Apply =>
-  apl((entries) => entries.filter((entry) => entry.abilityId !== id));
-
-const chain = (...applies: readonly Apply[]): Apply => (profile) =>
-  applies.reduce((p, f) => f(p), profile);
 
 
 

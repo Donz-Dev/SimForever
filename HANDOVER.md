@@ -36,6 +36,7 @@ the tooling to be a bit more sophisticated as well."
 | 9 | **Warlock** -- a CHOOSER for the sacrificed demon, and the 15% confirmed | **no figure moved**; 24 of 27 rows 0.0 to the decimal | **774.2** |
 | 10 | **Firelock** -- 5/11/35, a new list, and an AFTERMATH INDEX THAT WAS RIGHT BY LUCK | 891.4 -> 885.5 (**-5.9**), and **26 of 27 rows 0.0** | **774.0** |
 | 12 | **Shockadin** -- a fast 2H as an EXCLUSIVE alternative, both setups optimised, and A TALENT TIER RULE THAT WAS WRONG | 787.7 -> **856.0**, and the 2H at **933.2** as the 28th row | see below |
+| 13 | **BM Hunter** and **LW Ranged** -- an ABILITY IN THE BOOK AND IN NO LIST, two trees with almost no freedom, and TWO CORRECTNESS FIXES BESIDE THEM | 856.2 -> **898.1** and 912.5 -> **935.3** | see below |
 
 **ROUND 11 IS MISSING FROM THAT TABLE ON PURPOSE AND NOT BY ARITHMETIC.** It is
 the tank case study -- Dire Bear Form's armor multiplier, the 75% armor cap and
@@ -85,6 +86,55 @@ and this build is three-quarters Holy. Its wording says "Holy SPELLS" and the
 implementation reaches the seal and Holy Strike too -- a defensible reading
 while nobody took it, and **a question for the owner now that it is the biggest
 talent on the profile**.
+
+## Round thirteen: the two ranged Hunters
+
+**THE PALADIN'S METHOD ON A CLASS WITH ALMOST NO TALENT FREEDOM**, and the
+result is the opposite shape -- the Shockadin's gains were mostly talents, and
+these are mostly ONE MISSING LIST ENTRY.
+
+| | spread | was | optimised | shipped |
+| --- | --- | --- | --- | --- |
+| **BM Hunter** | 31/20/0 | 856.2 | 901.8 | **898.1** |
+| **LW Ranged** | 5/41/5 | 912.5 | 933.2 | **935.3** |
+
+**THE LAST TWO COLUMNS ARE NOT THE SAME ENGINE**, which is why both are shown.
+"Optimised" is the talents, the list and the enchants; "shipped" is after the
+two correctness fixes below -- Judgement of Wisdom no longer paying out on
+self-buffs, and Improved Arcane Shot no longer shortening Summon Hawk's lockout.
+Neither Hunter is mana-bound, so both land inside their own intervals, and
+comparing 901.8 with 898.1 is comparing two different rulesets.
+
+**ARCANE SHOT WAS IN BM HUNTER'S BOOK AND IN NO LIST**, dealing nothing, for the
+life of the profile -- a trainer shot every Hunter owns from level 6, and
+**14.6% of LW Ranged's damage**. Worth **+31**, and it is the class of bug with
+no zero to find: an entry that fires zero times prints a zero and gets looked at,
+where an ability with no entry has no row and the damage table still sums to
+100%.
+
+**BM HUNTER'S ENTIRE DESIGN SPACE IS TWO POINTS.** Bestial Wrath's tier 30 takes
+thirty-one of the fifty-one, and Mortal Shots' tier 15 fixes thirteen more of
+Marksmanship's twenty. Improved Stings got them: **+11.2** alone, **+41.7**
+beside the new list entry.
+
+**LW RANGED HAD FOUR DEAD POINTS AND THEY BOUGHT IMPROVED STINGS**, worth
+**+20.8**. Survivalist, Rapid Killing and Scatter Shot each measured
+**bit-identical fights** -- health on a profile nothing attacks, a cooldown
+longer than the fight, and a disorient.
+
+**AND EVERYTHING ELSE WAS ALREADY RIGHT**, which is worth recording: agility
+beat haste, intellect and strength in all eight armour slots on both, and every
+other move in either list measured a loss but one -- Arcane Shot above Sniper
+Shot on LW Ranged, **+1.4**, which read real at 600 iterations, noise at 800 and
+real at 3,000 before it was taken.
+
+**AND TWO CORRECTNESS FIXES LANDED BESIDE THE OPTIMISATION**, both from the
+owner reading the results: Improved Arcane Shot now honours its own "does not
+affect the cooldown of abilities which share a cooldown" clause, and
+**Judgement of Wisdom no longer pays out on self-buffs** -- which moves every
+one of the nineteen profiles with a mana bar. The full write-up, including why the
+stat stick's three alternative enchants all measure **-15.0 identically**, is in
+[docs/handoff/hunter.md](docs/handoff/hunter.md).
 
 ## And a talent tier counts points BELOW it, which this project had wrong
 

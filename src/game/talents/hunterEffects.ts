@@ -233,7 +233,29 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  improved_arcane_shot: [{ kind: 'abilityCooldown', abilityId: 'arcane_shot', unit: 'seconds' }],
+  improved_arcane_shot: [
+    { kind: 'abilityCooldown', abilityId: 'arcane_shot', unit: 'seconds' },
+    /*
+     * ==========================================================================
+     * THE SECOND SENTENCE IS MODELLED TOO, on the owner's instruction to
+     * implement the talent as written.
+     *
+     * "Does not affect the cooldown of abilities which share a cooldown with
+     * Arcane Shot." Summon Hawk is that ability -- both declare
+     * `cooldownGroup: 'arcane_shot'`, which the Hunter wiki states outright --
+     * and `AbilityBook.consumeCharge` used to set the group lockout from the
+     * CASTING ability's own `cooldownMs`. So a shortened Arcane Shot shortened
+     * the lockout Summon Hawk sat behind: **5,400ms between consecutive casts
+     * of the pair against the 6,000ms the rule gives**, measured.
+     *
+     * `Ability.cooldownGroupMs` IS THE FIX and Arcane Shot declares it: six
+     * seconds on the group whatever a talent does to the ability itself. The
+     * Shaman's shocks need nothing, because Reverberation names every member of
+     * that group and shortening one SHOULD shorten the lockout -- which is what
+     * leaving the field undefined already does.
+     * ==========================================================================
+     */
+  ],
 
   lone_wolf: [{ kind: 'grantAura', auraId: 'lone_wolf' }],
 
