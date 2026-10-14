@@ -35,10 +35,17 @@ exactly like a source changing**, and the difference is whether the figure moves
 the result is the opposite shape: the Shockadin's gains were mostly talents, and
 these two are mostly a missing list entry.
 
-| | spread | was | now |
-| --- | --- | --- | --- |
-| **BM Hunter** | 31/20/0 | 856.2 | **901.8** |
-| **LW Ranged** | 5/41/5 | 912.5 | **933.2** |
+| | spread | was | optimised | shipped |
+| --- | --- | --- | --- | --- |
+| **BM Hunter** | 31/20/0 | 856.2 | 901.8 | **898.1** |
+| **LW Ranged** | 5/41/5 | 912.5 | 933.2 | **935.3** |
+
+**THE LAST TWO COLUMNS ARE NOT THE SAME ENGINE**, which is why both are shown.
+"Optimised" is the talents, the list and the enchants; "shipped" is after the
+two correctness fixes below -- Judgement of Wisdom no longer paying out on
+self-buffs, and Improved Arcane Shot no longer shortening Summon Hawk's lockout.
+Neither Hunter is mana-bound, so both land inside their own intervals, and
+comparing 901.8 with 898.1 is comparing two different rulesets.
 
 Both trees were loaded into talentsforever.com and read back their spread with
 **"all 51 spent"** and nothing refunded:

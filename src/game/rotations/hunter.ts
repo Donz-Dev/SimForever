@@ -313,8 +313,24 @@ export const HUNTER_LONE_WOLF_RANGED: AplList = {
    * --------------------------------------------------------------------------
    */
   { abilityId: 'aimed_shot', condition: shotLandedRecently(RANGED_WEAVE_WINDOW_MS) },
-  { abilityId: 'sniper_shot', condition: shotLandedRecently(RANGED_WEAVE_WINDOW_MS) },
+  /*
+   * ==========================================================================
+   * ARCANE SHOT ABOVE SNIPER SHOT, WHICH IS WORTH **+1.4** AND TOOK 3,000
+   * PAIRED ITERATIONS TO SAY SO.
+   *
+   * At 800 it read +2.25 against an interval of 1.55 and at 600 it read +1.59
+   * against 1.76 -- real, then noise, then real, on the same change. Both
+   * entries are gated on the weave window, so the pair swaps which one takes a
+   * window that the other would have used, and the fights decorrelate: a spread
+   * of 22 against a difference of 1.4 is what needed the iterations.
+   *
+   * WHY IT PAYS: Arcane Shot is on a cooldown and Sniper Shot is not, so the
+   * shot that can be LOST by waiting goes first. Sniper Shot still fires 3.4
+   * times a fight either way.
+   * ==========================================================================
+   */
   { abilityId: 'arcane_shot' },
+  { abilityId: 'sniper_shot', condition: shotLandedRecently(RANGED_WEAVE_WINDOW_MS) },
   { abilityId: 'summon_hawk', condition: hawksBelowCap },
   ],
 };
