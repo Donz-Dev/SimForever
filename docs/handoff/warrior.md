@@ -18,12 +18,21 @@ trees turned out to be completely forced and every enchant but one and every
 consumable was already right -- so all but 1.7 of the two figures below came out
 of the priority lists, and 94 of it from a single entry neither list had.
 
-| | spread | was | now |
-| --- | --- | --- | --- |
-| **2H Arms** | 39/10/2 | 849.7 | **897.2** |
-| **DW Fury** | 17/34/0 | 989.6 | **1092.6** |
+**AND THAT ENTRY SHIPS SWITCHED OFF, WHICH IS THE OWNER'S CALL.** So what
+actually lands is +23.1 and +7.7, and the 94 is sitting in the list behind a
+closed eye. The measurement is why that is a usable state rather than a lost
+finding.
 
-Both loaded in the calculator: **"all 51 spent"**, nothing refunded.
+| | spread | was | ships at | with Recklessness enabled |
+| --- | --- | --- | --- | --- |
+| **2H Arms** | 39/10/2 | 849.7 | **872.8** | **897.2** |
+| **DW Fury** | 17/34/0 | 989.6 | **997.3** | **1092.6** |
+
+**THE TWO COLUMNS ARE THE OWNER'S RULING AND NOT A HEDGE**: Recklessness is in
+both lists and **switched off**, so the published figure is the third column and
+the fourth is what opening the eye is worth. See below.
+
+Both trees loaded in the calculator: **"all 51 spent"**, nothing refunded.
 
 - 2H Arms — <https://talentsforever.com/warrior/60/30325213132515201-0505-2-CA2FAE2HE2KJIMNOLQSUEGiD-6>
 - DW Fury — <https://talentsforever.com/warrior/60/30305013002-05253005122210501--SUVTYZbdfha1ACE4HEGKa-6>
@@ -32,10 +41,16 @@ Both loaded in the calculator: **"all 51 spent"**, nothing refunded.
 
 | | |
 | --- | --- |
-| **DW Fury: Recklessness above Death Wish** | **+94.15**. Free, Berserker Stance, +100 crit chance for 15 seconds of a 60-second fight |
-| **2H Arms: Recklessness last, and Hamstring above it** | **+57.29** together (+37.91 and +26.74 alone) |
+| **2H Arms: Hamstring at 20 rage, at the bottom** | **+26.74**. Pressed for its procs, not its damage |
 | **DW Fury: Enrage 4 -> 2, Improved Berserker Rage 2, and an entry for it** | **+6.02**. The talent alone is bit-identical |
 | **2H Arms: boots, Minor Speed -> +7 Agility** | **+1.72**. The one slot in either build that was granting nothing |
+
+And in the lists, **switched off**, worth this much to whoever opens the eye:
+
+| | |
+| --- | --- |
+| **DW Fury: Recklessness above Death Wish** | **+94.15**. Free, Berserker Stance, +100 crit chance for 15 seconds of a 60-second fight |
+| **2H Arms: Recklessness last, under the Hamstring entry** | **+37.91**, and **+57.29** for the pair |
 
 ### This section said both of these abilities were in no list, and called the set mostly correct
 
@@ -56,6 +71,44 @@ judgement was right about fifteen entries and wrong about one.
 there would want the entry back and would want it measured"* -- and that is
 exactly what happened. It is worth **+6.02**. Recklessness, which carried no
 paragraph at all, was worth fifteen times as much.
+
+### Recklessness ships switched off, on the owner's instruction
+
+> *"Recklessness is fine to implement and put in the rotation for DPS warrior.
+> But use the glyph to have it be default disabled in the APL."*
+
+**SO THE PUBLISHED FIGURES DO NOT INCLUDE IT, AND THE ENTRY IS STILL THERE WITH
+EVERY BYTE OF ITS MEASURED PLACEMENT.** `AplEntry.disabled` is the flag and
+`compileRotation` filters `disabled !== true` once, when the character is built.
+
+| | ships at | with the eye opened |
+| --- | --- | --- |
+| **2H Arms** | **872.8** | **897.2** |
+| **DW Fury** | **997.3** | **1092.6** |
+
+**THIS IS THE FIRST STOCK LIST IN THE PROJECT TO CARRY THE FLAG.** It was built
+as an EDITING convenience -- *"so that trying something does not cost the
+line"*, switching an entry off rather than retyping its condition to put it
+back -- and nothing shipped holding one. So this is a new use of an existing
+field rather than a new field, and it is the honest way to carry a measured
+option the owner wants off: **deleting the entry would lose the measurement and
+the placement with it**, and an entry with no measured position is one somebody
+has to measure again before they can use it.
+
+**AND IT CREATED A FIFTH CAUSE OF A NEVER-FIRED ENTRY, WHICH THE TOOL COULD NOT
+TELL FROM A DEFECT.** `measure_profiles.ts` with `USES=1` printed
+`recklessness_cast 0.00 uses <-- NEVER FIRED` on both profiles -- the loudest
+flag that tool has, pointed at the one cause that is a SETTING. It reads
+`(switched off in the list)` now, which is the same fix as
+`(not learned by this build)` and for the same reason: **a zero has to say which
+kind it is, or the flag that means "this is the bug" stops meaning anything.**
+
+**WHAT TURNS OFF WITH IT IS IMPROVED TACTICAL MASTERY.** Its five points are
+live only while the Arms list dances for Recklessness, so with the eye closed
+`battle_stance_cast` is back to **0.00 uses** and the talent is a pure
+prerequisite again. Both states are correct and the talent cannot move either
+way -- Anger Management requires it at full rank -- but the note below belongs
+to the eye being open.
 
 ### Recklessness, and why the right placement is the opposite on the two builds
 
@@ -89,14 +142,19 @@ Strike and brings it straight back. At the bottom the dance happens in a moment
 the list had nothing castable for anyway -- **+40.24 against +34.28** above
 Heroic Strike.
 
-**AND THE DANCE MAKES IMPROVED TACTICAL MASTERY LIVE.** Those five points retain
-up to fifteen rage across a stance change, and this list previously made none --
-they were held only because Anger Management requires the talent at FULL rank.
-**A talent that was pure prerequisite now does work**, which is the inverse of
-every "this talent is dead" finding in this round and came free with a list edit.
-`battle_stance_cast` measured **0.00 uses for the life of this list** and is
-about **1.1 a fight** now; that is the return leg, and it is what
-`armsRotation.test.ts` pins.
+**AND THE DANCE MAKES IMPROVED TACTICAL MASTERY LIVE -- WHILE THE EYE IS OPEN.**
+Those five points retain up to fifteen rage across a stance change, and this
+list makes none with the entry switched off, so **the talent is live or dead
+depending on one checkbox**. It was held either way only because Anger
+Management requires it at FULL rank, which is what makes this harmless: there is
+no allocation decision riding on it.
+
+**A TALENT THAT WAS PURE PREREQUISITE CAN BE WOKEN BY A LIST EDIT**, which is
+the inverse of every "this talent is dead" finding in this round and is the part
+worth carrying forward. `battle_stance_cast` measured **0.00 uses for the life
+of this list**, is **0.00 as shipped**, and is about **1.1 a fight** with the eye
+open -- the return leg, which is what `armsRotation.test.ts` drives by opening
+it rather than by reading the shipped preset.
 
 ### Hamstring is +26.7 on one build and -33.3 on the other
 

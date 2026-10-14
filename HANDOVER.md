@@ -38,7 +38,7 @@ the tooling to be a bit more sophisticated as well."
 | 12 | **Shockadin** -- a fast 2H as an EXCLUSIVE alternative, both setups optimised, and A TALENT TIER RULE THAT WAS WRONG | 787.7 -> **856.0**, and the 2H at **933.2** as the 28th row | see below |
 | 13 | **BM Hunter** and **LW Ranged** -- an ABILITY IN THE BOOK AND IN NO LIST, two trees with almost no freedom, and TWO CORRECTNESS FIXES BESIDE THEM | 856.2 -> **898.1** and 912.5 -> **935.3** | see below |
 | 14 | **Moonkin** and **Cat** -- the round where nearly every CANDIDATE measured as a loss | 778.6 -> **790.3** and 890.0 -> **898.4** | see below |
-| 15 | **2H Arms** and **DW Fury** -- AN ABILITY ALREADY IN THE BOOK was 94 of the 103, and both trees turned out completely FORCED | 849.7 -> **897.2** and 989.6 -> **1092.6** | see below |
+| 15 | **2H Arms** and **DW Fury** -- AN ABILITY ALREADY IN THE BOOK was 94 of the 103, and both trees turned out completely FORCED. The owner then asked for that entry SWITCHED OFF | 849.7 -> **872.8** and 989.6 -> **997.3**, and **897.2** / **1092.6** with it enabled | see below |
 
 **ROUND 11 IS MISSING FROM THAT TABLE ON PURPOSE AND NOT BY ARITHMETIC.** It is
 the tank case study -- Dire Bear Form's armor multiplier, the 75% armor cap and
@@ -96,10 +96,10 @@ completely forced and every enchant but one and every consumable was already
 right, so all but 1.7 of this came out of the priority lists -- and 94 of it
 from a single entry neither list had.
 
-| | spread | was | now |
-| --- | --- | --- | --- |
-| **2H Arms** | 39/10/2 | 849.7 | **897.2** |
-| **DW Fury** | 17/34/0 | 989.6 | **1092.6** |
+| | spread | was | ships at | with Recklessness enabled |
+| --- | --- | --- | --- | --- |
+| **2H Arms** | 39/10/2 | 849.7 | **872.8** | **897.2** |
+| **DW Fury** | 17/34/0 | 989.6 | **997.3** | **1092.6** |
 
 **RECKLESSNESS IS FREE, BERSERKER STANCE, AND +100 CRIT CHANCE FOR FIFTEEN
 SECONDS OF A SIXTY-SECOND FIGHT.** For a Warrior that is two things at once,
@@ -116,8 +116,11 @@ this one. **A list of what is absent is not checked by anything that compiles**
 
 **THE DANCE ALSO MAKES IMPROVED TACTICAL MASTERY LIVE**, which is the inverse of
 every other talent finding this round: its five points retain rage across a
-stance change the Arms list never used to make, and they were held only because
-Anger Management requires the talent at FULL rank.
+stance change the Arms list never used to make. **So the talent is live or dead
+depending on one checkbox** now -- and harmlessly, because it was held either
+way by Anger Management requiring it at FULL rank, so no allocation decision
+rides on it. **A talent that was pure prerequisite can be woken by a list
+edit.**
 
 **BOTH TREES ARE FORCED, AND `requiresRanks` IS NOT ALWAYS 1.** Fourteen points
 across the two builds do nothing and only two could move: three of the Warrior's
@@ -131,6 +134,19 @@ says why without any inference: Arms goes from 33 casts and 351 processed events
 to **42 casts and 247** -- nine more casts for a hundred fewer events, because an
 idle rotation poll that becomes a cast removes several polls. Fury barely moves,
 because Heroic Strike already spends every spare rage.
+
+**AND THE OWNER THEN ASKED FOR IT SWITCHED OFF** -- *"use the glyph to have it
+be default disabled in the APL"* -- so the published figures are +23.1 and +7.7
+and the 94 sits in both lists behind a closed eye. `AplEntry.disabled` existed
+as an EDITING convenience and **nothing shipped carrying one**, so this is the
+first stock list in the project to hold the flag: the entry keeps every byte of
+its measured placement, which is what makes an off-by-default option a usable
+state rather than a lost finding.
+
+**IT ALSO CREATED A FIFTH CAUSE OF A NEVER-FIRED ENTRY.** `USES=1` printed
+`<-- NEVER FIRED` -- the loudest flag that tool has -- at the one cause that is a
+SETTING. It reads `(switched off in the list)` now, the same fix as
+`(not learned by this build)`: a zero has to say which kind it is.
 
 **WHAT IS OPEN: NINETY RAGE ON ARMS' HEROIC STRIKE, WHICH IS THE OWNER'S OWN
 NUMBER.** Re-swept with the new entries in it reads +61.24 at 70 against +57.29

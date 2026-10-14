@@ -638,9 +638,33 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: AplList = {
    * play, and a 30-minute cooldown held for a window that opens at 35 seconds
    * spends the first half of the fight unused. It needs no condition because it
    * is free and fires once.
+   *
+   * AND THE PLACEMENT IS WHAT THIS ENTRY IS CARRYING, because it ships switched
+   * off -- see below. An entry with no measured position is one somebody has to
+   * measure again before they can use it.
    * --------------------------------------------------------------------------
    */
-  { abilityId: 'recklessness_cast' },
+  /*
+   * --------------------------------------------------------------------------
+   * AND IT SHIPS SWITCHED OFF, ON THE OWNER'S INSTRUCTION: "use the glyph to
+   * have it be default disabled in the APL."
+   *
+   * `AplEntry.disabled` IS THE FLAG AND THIS IS ITS FIRST USE IN A STOCK LIST.
+   * It was built as an EDITING convenience -- "so that trying something does
+   * not cost the line", switching an entry off rather than retyping its
+   * condition to put it back -- and nothing shipped carrying one. So this is a
+   * new use of an existing field rather than a new field: `compileRotation`
+   * filters `disabled !== true` once, when the character is built.
+   *
+   * WHAT THAT MEANS FOR THE FIGURE. The entry is in the list, in the panel,
+   * with every byte of it intact and the eye closed, and the rotation never
+   * sees it -- so the gain above is what somebody gets by opening the eye, and
+   * the published baseline does not include it. That is the honest way to carry
+   * a measured option the owner wants off by default: deleting the entry would
+   * lose the measurement and the placement with it.
+   * --------------------------------------------------------------------------
+   */
+  { abilityId: 'recklessness_cast', disabled: true },
   {
     abilityId: 'death_wish',
     condition: fightRemaining('atMost', DEATH_WISH_WINDOW_MS / 1000),
@@ -1325,7 +1349,27 @@ export const WARRIOR_TWO_HAND_BATTLE: AplList = {
    * than carried over: see `BATTLE_HEROIC_STRIKE_RAGE`.
    * --------------------------------------------------------------------------
    */
-  { abilityId: 'recklessness_cast' },
+  /*
+   * --------------------------------------------------------------------------
+   * AND IT SHIPS SWITCHED OFF, ON THE OWNER'S INSTRUCTION: "use the glyph to
+   * have it be default disabled in the APL."
+   *
+   * `AplEntry.disabled` IS THE FLAG AND THIS IS ITS FIRST USE IN A STOCK LIST.
+   * It was built as an EDITING convenience -- "so that trying something does
+   * not cost the line", switching an entry off rather than retyping its
+   * condition to put it back -- and nothing shipped carrying one. So this is a
+   * new use of an existing field rather than a new field: `compileRotation`
+   * filters `disabled !== true` once, when the character is built.
+   *
+   * WHAT THAT MEANS FOR THE FIGURE. The entry is in the list, in the panel,
+   * with every byte of it intact and the eye closed, and the rotation never
+   * sees it -- so the gain above is what somebody gets by opening the eye, and
+   * the published baseline does not include it. That is the honest way to carry
+   * a measured option the owner wants off by default: deleting the entry would
+   * lose the measurement and the placement with it.
+   * --------------------------------------------------------------------------
+   */
+  { abilityId: 'recklessness_cast', disabled: true },
   ],
 };
 

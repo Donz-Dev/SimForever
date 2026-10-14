@@ -8,6 +8,7 @@ import {
 } from '../../src/game/auras/warrior';
 import {
   BATTLE_HEROIC_STRIKE_RAGE,
+  WARRIOR_DUAL_WIELD_BERSERKER,
   BATTLE_SUNDER_REFRESH_WINDOW_MS,
   SLAM_SWING_WINDOW_MS,
   WARRIOR_TWO_HAND_BATTLE,
@@ -241,10 +242,79 @@ describe('what 2H Arms eats', () => {
    * ==========================================================================
    */
   describe('the Recklessness stance dance', () => {
+    /*
+     * ========================================================================
+     * THE ENTRY SHIPS SWITCHED OFF, SO THE MECHANISM IS DRIVEN BY TURNING IT
+     * ON. The owner's instruction is "use the glyph to have it be default
+     * disabled in the APL", and `compileRotation` filters `disabled !== true`
+     * -- so the shipped preset never casts it and a test reading the shipped
+     * preset would be asserting the SETTING rather than the dance.
+     *
+     * BOTH HALVES ARE WORTH PINNING AND THEY ARE DIFFERENT CLAIMS. That it is
+     * off by default is the owner's decision and belongs in the test below
+     * this one; that the dance WORKS is what makes opening the eye safe, and
+     * it is the half nothing else would catch -- an entry switched on into a
+     * stance it cannot reach fires zero times and says nothing.
+     * ========================================================================
+     */
+    /** The shipped preset with Recklessness' eye opened, and nothing else moved. */
+    const enabled = () => {
+      const profile = PRESETS_BY_ID.get('two_hand_arms')!.build();
+      return {
+        ...profile,
+        rotation: {
+          ...profile.rotation,
+          source: 'custom' as const,
+          entries: profile.rotation.entries.map((entry) => {
+            if (entry.abilityId !== 'recklessness_cast') return entry;
+            const { disabled: _off, ...rest } = entry;
+            return rest;
+          }),
+        },
+      };
+    };
+
     const fight = (seed: number) =>
-      runProfile(PRESETS_BY_ID.get('two_hand_arms')!.build(), seed).timeline.filter(
-        (event) => event.type === 'cast',
-      );
+      runProfile(enabled(), seed).timeline.filter((event) => event.type === 'cast');
+
+    it('ships with the eye closed, in both damage lists', () => {
+      /*
+       * THE OWNER'S DECISION, AND THE FIRST STOCK LIST IN THE PROJECT TO CARRY
+       * ONE. `disabled` had no shipped caller at all before this, so there was
+       * nothing asserting that a stock list's flag survives being narrowed by
+       * race and by consumable selection -- which is what the preset's own
+       * stored list is.
+       */
+      for (const list of [WARRIOR_TWO_HAND_BATTLE, WARRIOR_DUAL_WIELD_BERSERKER]) {
+        const entry = list.entries.find((e) => e.abilityId === 'recklessness_cast');
+        expect(entry, list.name).toBeDefined();
+        expect(entry!.disabled, list.name).toBe(true);
+      }
+
+      const stored = PRESETS_BY_ID.get('two_hand_arms')!.build().rotation.entries;
+      expect(stored.find((e) => e.abilityId === 'recklessness_cast')!.disabled).toBe(true);
+
+      // And nothing else in either list is switched off.
+      for (const list of [WARRIOR_TWO_HAND_BATTLE, WARRIOR_DUAL_WIELD_BERSERKER]) {
+        const off = list.entries.filter((e) => e.disabled === true).map((e) => e.abilityId);
+        expect(off, list.name).toEqual(['recklessness_cast']);
+      }
+    });
+
+    it('is not cast while the eye is closed', () => {
+      const shipped = runProfile(PRESETS_BY_ID.get('two_hand_arms')!.build(), 1).timeline;
+      expect(
+        shipped.filter(
+          (event) => event.type === 'cast' && event.abilityId === 'recklessness_cast',
+        ),
+      ).toEqual([]);
+      // And the dance it would have provoked does not happen either.
+      expect(
+        shipped.filter(
+          (event) => event.type === 'cast' && event.abilityId === 'berserker_stance_cast',
+        ),
+      ).toEqual([]);
+    });
 
     it('reaches Berserker Stance for it and comes back to Battle', () => {
       for (const seed of [1, 7, 4242]) {
