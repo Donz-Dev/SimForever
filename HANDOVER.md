@@ -39,6 +39,7 @@ the tooling to be a bit more sophisticated as well."
 | 13 | **BM Hunter** and **LW Ranged** -- an ABILITY IN THE BOOK AND IN NO LIST, two trees with almost no freedom, and TWO CORRECTNESS FIXES BESIDE THEM | 856.2 -> **898.1** and 912.5 -> **935.3** | see below |
 | 14 | **Moonkin** and **Cat** -- the round where nearly every CANDIDATE measured as a loss | 778.6 -> **790.3** and 890.0 -> **898.4** | see below |
 | 15 | **2H Arms** and **DW Fury** -- AN ABILITY ALREADY IN THE BOOK was 94 of the 103, and both trees turned out completely FORCED. The owner then asked for that entry SWITCHED OFF | 849.7 -> **872.8** and 989.6 -> **997.3**, and **897.2** / **1092.6** with it enabled | see below |
+| 16 | **Nine sweeping changes at once**, the owner's own itemised list -- caster weapons, a new enchant, pre-combat actions, two raid buffs, the weapon stone per hand, Inner Focus, two APL additions, Predator's Edge and the food | **not re-baselined**, on the owner's standing instruction; 75 hashes unchanged on six of the nine | see below |
 
 **ROUND 11 IS MISSING FROM THAT TABLE ON PURPOSE AND NOT BY ARITHMETIC.** It is
 the tank case study -- Dire Bear Form's armor multiplier, the 75% armor cap and
@@ -65,6 +66,119 @@ Each was fine while it was worth little and became worth asking about the moment
 a round made it the biggest thing on a profile -- which is CLAUDE.md's rule that
 an interpretation flagged as one is what gets it ruled on, and that the label has
 to survive until the answer arrives.
+
+## Round sixteen: nine changes at once, and what each one cost
+
+**THE OWNER ITEMISED NINE AND THEY DIVIDE INTO THREE KINDS**, which is worth
+separating because the kinds cost completely different things and only one of
+them needed anything new from the engine:
+
+| | | what it needed |
+| --- | --- | --- |
+| 5 | Inner Focus was permanent | one word -- `valueless: true` |
+| 8 | Predator's Edge reached swings | one word -- a table out of a list |
+| 9 | spell power food 33 -> 28 | one number |
+| 1 | caster weapon DPS and spell power | a derivation, and a question back |
+| 4 | Gift of Arthas, raid Judgement, MH/OH stones | one aura field, one profile format |
+| 2 | Enchant Weapon - Revelation | one field on `AttackEvent` |
+| 7 | what Clearcasting was used on | a new telemetry EVENT -- nothing else could answer it |
+| 6 | APL seconds-left, and sequences | per-fight state, and `ignoreGcd` |
+| 3 | pre-combat actions | a second setup hook, and `AuraInstance.revision` |
+
+**NOT RE-BASELINED, ON THE OWNER'S STANDING INSTRUCTION**, and six of the nine
+are containment-checked instead: all 75 combat-log hashes from
+`rotation_fingerprint.ts` are identical across the weapon-stone split, the two
+raid buffs, Revelation, both APL additions and the pre-combat actions. Items
+1, 5, 8 and 9 do move figures, and each says which rows below.
+
+### The one that needed a question back, and the arithmetic that answered it
+
+**THE OWNER'S CASTER-WEAPON RULE DID NOT REPRODUCE THEIR OWN STATED TARGET.**
+They gave `T = expected weapon DPS + 6q`, `1H = T x 2/3` and
+`2H staff = 1.3T - T/3`, and separately said the staff should come out at
+Forever's 45.67. Against the TWO-HAND line those disagree with each other --
+`(1.3 - 1/3) x 61.54` is 59.5, and nothing there is 45.67.
+
+Against the ONE-HAND line both land exactly on Forever's observed weapons:
+
+    47.24 x 2/3         = 31.49   against an observed 31.5  (dagger)
+    47.24 x (1.3 - 1/3) = 45.67   against an observed 45.67 (staff)
+
+**TWO INDEPENDENT MULTIPLIERS HITTING TWO OBSERVED VALUES OFF ONE BASE IS NOT
+CHANCE**, so `T` is the one-hand line for BOTH hands. Put to the owner WITH
+THE TABLE rather than guessed, and they ruled the `+ 6 * q` out as well:
+`WEAPON_DPS` already fits a per-tier step of the same size -- epic sits 4.77
+(one hand) to 6.20 (two hand) above rare at item level 65 -- so applying both
+would double-count quality and take the staff to 51.4.
+
+**THE SPELL POWER FORMULA IS CONFIRMED BY DATA NOBODY FITTED IT TO.** All four
+real Forever caster weapons at item level 60-70 carry 94, and `ilvl + 29`
+gives 94, so the weapon is now the most faithful slot in a benchmark set.
+
+What moved, from `benchmark_stat_report.ts`: **the ten caster profiles and
+nothing else** -- gear spell power +17 on the six staff builds and +41 on the
+three one-handers, with crit moving by at most 1 from rounding. Hit, stamina,
+spirit, primaries and attack power are identical on all 28 rows.
+
+**AND A FINDING REPORTED RATHER THAN TUNED.** The caster set total goes 401 ->
+429 against a richest-real 391, and the excess is NOT in the weapon: 335 of
+armour against a richest-real 297. That was already true at 324 before this
+change -- making the weapon correct stopped it being masked rather than
+causing it. Pulling the armour back is a `SHARE_WEIGHT` decision and is the
+owner's.
+
+### Inner Focus: the fourth instance of one failure, and the first where the surviving half PAID OUT
+
+Inner Focus is single-rank, so its values entry is `null`, so `talentBuild`
+dropped the `castReaction` that takes the buff off again -- while
+`grantAbility` reads no value and granted the ability perfectly well. The
+Priest applied a +25% crit buff that nothing ever removed.
+
+**THE THREE PREVIOUS INSTANCES WERE ALL PALADIN PROCS THAT SILENTLY DID
+NOTHING. THIS ONE SILENTLY DID TOO MUCH.** The aura applied, reported its
+uptime, and sat on the character for its full sixty seconds. Adrenaline Rush
+reported 24.9% uptime and delivered nothing; this reported its uptime and
+delivered more than it should. **Neither was MISSING from the results page**,
+which is why both needed somebody to ask what the buff was supposed to MOVE --
+and the owner did, from the result.
+
+**ITS THREE EXISTING TESTS COULD NOT HAVE CAUGHT IT**, because all three build
+the spender by hand -- `innerFocusSpender()`. The reaction was always correct;
+the JOIN to the character was not. The new ones ask `talentBuild(...)
+.castReactions` and drive a `createPlayer` character through the real cast
+path.
+
+### Two owner figures that beat two wordings, in opposite directions
+
+Rend and Tear's stated 1.09x once WIDENED a talent past CLAUDE.md's
+abilities-or-weapons rule. **Predator's Edge NARROWS one inside it**: "melee
+critical strike damage" names neither abilities nor weapons, so the rule gives
+it the swing, and the owner ruled it does not reach one -- "unless it was
+upgraded to a Raptor Strike on next hit".
+
+**THE EXCEPTION THEY NAMED COSTS NO CODE**, which is why one table is the
+right answer rather than a table plus a special case: an on-next-swing ability
+REPLACES the swing and resolves on `melee-special`, so "the swing, when it was
+upgraded" and "a special" are already the same set.
+
+### What the panel could not be shown doing
+
+**THREE OF THE NINE ARE UI AND NONE WAS RENDER-VERIFIED**: all five dev-server
+slots in this folder belong to other chats, so `preview_start` is refused.
+`npm run build` is clean and the data layers underneath are covered by tests
+driving real fights, which is what can honestly be claimed and no more. **The
+pre-combat section, the APL sequence control and the Clearcasting table are
+the three to look at first in the app.**
+
+### And one test that says what it CANNOT prove
+
+Pre-combat's "throws away no swing" passed when probed against BOTH of the
+things built to protect it -- the hook moved after `startAutoAttack`, AND the
+cast-time zeroing removed -- because at t=0 there is no swing in progress to
+lose: `resetSwingTimers` reschedules from now, and at zero that is the swing
+already scheduled. **It is kept as a regression guard and LABELLED as one**,
+rather than deleted or left to imply it demonstrates a mechanism, which is
+this project's own rule about a fixture that cannot express the mistake.
 
 ## Round twelve: a second set of hands for the Shockadin
 

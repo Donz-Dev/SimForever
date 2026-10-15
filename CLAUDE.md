@@ -38,6 +38,7 @@ PROFILE=dw_fury npx vite-node tools/stat_weights.ts        # what a point of eac
 PROFILE=rogue_combat PLAN=1 npx vite-node tools/stat_weights.ts   # the cap ladder, no fights
 npx vite-node tools/probe_racials.ts             # does each racial MECHANISM do its thing
 npx vite-node tools/probe_racial_worth.ts        # what one race is worth, by RACE SWAP
+npx vite-node tools/probe_revelation.ts          # a proc's RATE against its own denominator
 npx vite-node tools/probe_consumable_choice.ts   # every mid-fight candidate on every preset, with its CASTS
 PRESET=warlock_firelock npx vite-node tools/probe_firelock_heal.ts   # why healing a Warlock LOSES dps
 npx vite-node tools/probe_cat_rage.ts            # does a Cat's rage pool ever hold anything
@@ -667,6 +668,31 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   the one that forgot is silently inert, and an EXCLUSION list -- which the
   owner's "like demoralizing shout" wording invites -- fails the generous way,
   which is worse.
+- **A PROC CAN SIT ON A WEAPON AND TRIGGER OFF SOMETHING THAT IS NOT A WEAPON
+  USE AT ALL.** Enchant Weapon - Revelation goes on a MELEE weapon and fires
+  "when a non-periodic spell fails to critically strike" -- so it takes a flat
+  chance rather than `ppmChance`, and it asks which TABLE resolved the attack
+  rather than which slot swung. `AttackEvent.attackTable` exists for that
+  question: nothing else on the event can answer it, because `weaponSlot` is
+  undefined for a spell AND for a seal AND for Thunder Clap's ranged table.
+  **ITS BUFF IS A STAT, AND THE STAT IS WHAT SCOPES IT.** "Your next SPELL" is
+  a set `abilityModifiers` cannot name -- the catch-all reaches melee abilities,
+  and this enchant is on a melee weapon, so a Shockadin's Holy Strike would have
+  taken a crit meant for its Holy Shock. `spellCritChance` IS that scope, so a
+  hundred points of it is a guaranteed crit on a spell and worth nothing to a
+  swing, with no new engine field.
+  **ONE ROLL PER SPELL EVEN WITH BOTH HANDS ENCHANTED, AND IT IS FLAGGED.**
+  Crusader is per-hand because only a use of THAT weapon triggers it; nothing
+  about a spell belongs to one hand. The generous reading is two rolls and is
+  "a bigger number and no error", so a test pins the decision rather than
+  leaving it to be rediscovered.
+  **AND "CharacterSpellCritChance" IS THE SHEET FIGURE, WHICH IS THE READING
+  STILL OPEN.** `probe_revelation.ts` on the Fire Mage: the sheet says 10.82%
+  and its spells actually crit 34.8%, because per-ability talent crit is not on
+  the sheet. The two readings are an 8.62% proc rate and ZERO -- past the 50%
+  cut-off the enchant would be dead on that build. Taken as the sheet and said
+  so, because an effect implemented correctly against the wrong quantity
+  produces an entirely ordinary figure.
 - **IF WHETHER AN ABILITY CAN PROC SOMETHING IS IN QUESTION, ASK.** The owner's
   standing instruction. A wrong answer does not look wrong: Windfury spent its
   whole life refusing abilities and every figure was self-consistent and too low.
@@ -1052,6 +1078,20 @@ something that comes and goes.
   reading would give and let the figure choose. It also means Rip raises Rip,
   which is the self-reference the narrow reading was partly chosen to avoid, and
   that is the owner's call rather than an oversight.
+- **AND IT HAS NOW GONE THE OTHER WAY TOO, WHICH MAKES IT A RULE ABOUT WHO
+  DECIDES RATHER THAN ABOUT WORDINGS.** Rend and Tear's stated 1.09x WIDENED a
+  talent past the abilities-or-weapons rule; Predator's Edge NARROWS one inside
+  it. "Increases your melee critical strike damage" says neither "abilities"
+  nor "weapons", so the rule gives it the swing -- and the owner ruled that it
+  "does NOT affect the hunter's auto-attack swings, unless it was upgraded to a
+  Raptor Strike on next hit. This functions very similarly to warrior's Impale
+  talent and Heroic Strike."
+  **THE EXCEPTION THEY NAMED COSTS NO CODE, WHICH IS THE PART WORTH KEEPING.**
+  An on-next-swing ability REPLACES the swing and declares
+  `attackTable: 'melee-special'`, so "the swing, but only when it was upgraded"
+  and "a special" are the same set. A version that put `melee-auto` back with
+  an exception bolted on would pass a declaration-only test, which is why the
+  test pins Raptor Strike's own two fields instead.
 - **A crit damage bonus raises the bonus HALF** — 1.0 for a 2x melee crit, 0.5
   for a 1.5x spell crit. "+100%" takes a spell crit to 2.0x, not 2.5x; a melee
   crit with "+10% crit damage" is 2.1x, never 2.2x.
@@ -1609,6 +1649,28 @@ The twelve that came before them, and which the rest of this section is about:
   both double. **And the SELECTION is still one choice** -- asking somebody to
   pick the same stone twice would be a control whose only correct answer is
   the one above it.
+- **THE WEAPON EFFECT IS TWO ROWS NOW, MAIN HAND AND OFF HAND**, on the
+  owner's instruction -- "weapons stones need to be split out into MH / OH to
+  be able to control this precisely". It replaces `perWeapon`, which was the
+  SAME RULING with no control on it: one selection applied once per weapon that
+  swings, which cannot express "a Dense Sharpening Stone on the main hand and
+  an Elemental on the off hand". **`ConsumableCategory.hand` is the field, and
+  an off-hand row contributes NOTHING unless `offHand: 'weapon'` -- not half,
+  nothing: there is no weapon for it to be on.**
+  **THE THREE STONES ARE DECLARED ONCE AND OFFERED PER HAND**, because two
+  hand-written copies is six places for a number to be wrong in -- and the IDS
+  carry the hand, which `CONSUMABLES_BY_ID`'s duplicate check at module load
+  requires.
+- **THE DENSE SHARPENING STONE IS THE FIRST CONSUMABLE WHOSE EFFECT BELONGS TO
+  A WEAPON RATHER THAN TO A CHARACTER.** "+8 base weapon damage to the equipped
+  weapon" is not a stat and there is no stat it could be: a character holding
+  two weapons has two of them. It goes into `WeaponProfile.baseDamage`, where a
+  Hunter's ammunition goes and for the same reason, and leaves
+  `powerCoefficient` alone -- that is `baseSpeed / 14`, and a stone does not
+  change how fast the weapon swings. **So it is worth more PER SWING to a slow
+  weapon and the same per second**, which is the opposite of how the PPM
+  enchants here distribute and reads like a bug the first time somebody
+  compares the two hands of a dual-wielder.
 - **THE EXCLUSIVITY IS STRUCTURAL, NOT CHECKED.** A selection is a map from
   CATEGORY id to consumable id, so two from one category is not representable
   and the second write replaces the first. `RaidBuff.exclusiveWith` is the other
@@ -1678,6 +1740,28 @@ The twelve that came before them, and which the rest of this section is about:
   a worn item by any reading, so Toughness and Thick Hide do not scale the +450
   either. It needs no exclusion of its own — `armorFromItems` sums ITEM stats
   directly, so a consumable is already outside it.
+- **AND A RAID DEBUFF CAN ADD FLAT DAMAGE, WHICH NEITHER NEIGHBOUR COULD
+  CARRY.** Gift of Arthas is "+8 damage to any direct damage (non-damage over
+  time) source", and `AuraDefinition.flatDamageTaken` is it:
+  `damageTakenBySchool` MULTIPLIES, and `spellPowerTakenBySchool` is POWER
+  scaled by each ability's coefficient -- so a seal at 20% would take 1.6 of it
+  and an uncoefficiented swing none at all. **"Up to 161" is what a power line
+  reads like; a bare "+8 damage" is not.**
+  **ADDED TO THE BASE ON THE OWNER'S OWN CHOICE** between the two readings they
+  were offered, so a crit doubles it and armor cuts it -- and it therefore sits
+  INSIDE the off-hand penalty exactly as an ability's own flat damage does.
+  **`periodic` IS THE WHOLE OF "DIRECT", so a CHANNEL's ticks DO gain it**: an
+  Arcane Missile is an ordinary non-periodic damage event, which is the same
+  answer Wrack's "other" clause and Touch of the Grave's exception already give.
+  Said here because "Arcane Missiles gains 8 six times" reads like a bug.
+- **AND JUDGEMENT OF THE CRUSADER AS A RAID BUFF SHARES THE PALADIN'S OWN AURA
+  ID, WHICH IS THE WHOLE DESIGN.** `spellPowerTakenFor` ADDS across auras, so a
+  second id would hand a Retribution Paladin 322 Holy spell power the moment
+  somebody ticked the box -- a bigger number and no error, on the build that
+  already casts it. One id makes that unrepresentable, which is
+  `PARTY_CRIT_AURA`'s arrangement and is there because enforcing exclusivity at
+  a CHOOSER is what let a Moonkin read +6% crit. Only the duration differs and
+  it is SPREAD from the one declaration, so the 161 cannot drift.
 - **THE 25 PRESET ROWS ARE CHOSEN, NOT STATED**, and an owner table arriving
   later replaces them outright. They follow ONE written-down rule rather than
   taste, because twenty-five separate opinions is not something a reader can
@@ -1822,13 +1906,47 @@ interruptible channel -- so it is not offered there.
 
 ### The priority list on a profile
 
-**PROFILE FORMAT 14**, and the list is written out IN FULL -- `source`, `name`
+**PROFILE FORMAT 16**, and the list is written out IN FULL -- `source`, `name`
 and every entry. (The list arrived at 13; 14 added the Gear panel's stat
-valuation and the benchmark template id, neither of which the engine reads.) The owner's call, and the opposite of how `combatStyle`
+valuation and the benchmark template id, neither of which the engine reads;
+15 split the Weapon Effect consumable row into one category per HAND, and 16
+added `precombat` -- what the character did before the pull.) The owner's call, and the opposite of how `combatStyle`
 handles its default: a saved file is a complete description of the build, and
 nothing about it depends on what this version thinks a Beast Mastery Hunter's
 stock list is. [docs/apl.md](docs/apl.md).
 
+- **AN ENTRY CAN COMBINE SEVERAL ABILITIES INTO ONE ACTION** -- `AplEntry.sequence`,
+  the owner's "5 combo points is reached + 35 energy is reached -> use Cold
+  Blood and then Eviscerate". **The condition gates the WHOLE thing and nothing
+  may be cast between the steps**, which is the part two ordinary entries
+  cannot express: a priority list makes a sequence by EMERGENCE, each step
+  being in turn the highest castable entry, and that requires hoisting the
+  follow-up above everything that could win the gap. Cold Blood is free and off
+  the global cooldown, so the instant it goes out the list is re-read and
+  anything affordable below it wins.
+  **THE POINTER LIVES ON THE COMBATANT AND NOT ON THE ROTATION.** A compiled
+  rotation is a MODULE-LEVEL CONSTANT -- `DRUID_CAT_ROTATION` and twenty-five
+  siblings -- so state held there would be shared by every character running
+  that list and by every iteration of a batch, which is exactly how one shared
+  closure stopped Windfury proccing after the first iteration.
+  **THE WHOLE SEQUENCE IS RESOLVED BEFORE ANY OF IT IS CAST**, which is the
+  split `resolveCast` and `consumeCastCharges` already make: a sequence
+  half-cast is worse than one not started, because Cold Blood spent with no
+  Eviscerate behind it is a two-minute cooldown thrown away and nothing reports
+  it. `CastCheckOptions.ignoreGcd` is what lets that question be asked at all,
+  and it is `ignoreCastLock`'s shape exactly -- the GCD is checked THIRD, so
+  reading `on_gcd` as an answer hides the cost, the cooldown, the stance and the
+  target.
+  **AND IT ABANDONS RATHER THAN BLOCKING**: a step refused for anything other
+  than the GCD clears the pointer and lets the list resume, because an actor
+  that stops acting would read as a DPS regression rather than as a deadlock.
+- **A COOLDOWN CAN BE READ AS A CLOCK AS WELL AS A STATE** -- `cooldownTime`,
+  the owner's "a 'seconds left' controller just like buff/debuff does". It
+  mirrors `auraTime` including its absent case, and that case differs from the
+  `cooldown` kind beside it ON PURPOSE: an ability the build lacks is NEITHER
+  ready NOR on cooldown, because each is a positive claim about an ability that
+  exists -- where a DURATION has no such pair and zero is what keeps
+  `atMost 0` meaning "is ready".
 - **THE COST IS THAT A SAVED PROFILE IS FROZEN, AND IT WAS CHOSEN KNOWINGLY.**
   A file keeps its list after a stock list is improved. Storing a REFERENCE
   would have let improvements reach old files and would have made the file
@@ -1871,6 +1989,52 @@ stock list is. [docs/apl.md](docs/apl.md).
   BUILTIN CONDITION IS THE EXCEPTION AND IS CHECKED AT LOAD**, because
   `compileCondition` THROWS on an unknown id -- a profile naming one would load
   cleanly and fail when the fight starts, which is the worst place to find out.
+
+### Before the pull
+
+`CharacterProfile.precombat` is what the character did before combat started --
+a stance, a form, Stealth, a pre-cast spell -- each with how long before. The
+owner asked for it as "a small section above the main APL controller, but
+within the same panel". `engine/abilities/precombat.ts`.
+
+- **THE LEAD TIME IS REAL, ON THE OWNER'S RULING**, chosen over the alternative
+  that it is only a feasibility budget. So it has exactly TWO observable
+  consequences: an aura it applied has N seconds less left at the pull, and its
+  own cooldown comes back N seconds sooner. **A pre-cast spell lands at t=0**,
+  which is their own example and the only reading that can be simulated --
+  there is no negative time for it to land in.
+- **NOT A NEGATIVE CLOCK**, which is the obvious alternative. `SimulationClock`
+  only moves forward and every scheduled event, swing timer and aura window is
+  expressed against it; rebasing the fight to start at -2500 would touch all of
+  them to buy exactly those two adjustments.
+- **`AuraInstance.revision` EXISTS BECAUSE BOTH OBVIOUS DISCRIMINATORS FAIL.**
+  The rewind has to age whatever the cast applied OR REFRESHED, and everything
+  pre-combat happens at timestamp 0: `appliedAt` is unchanged by a refresh in
+  the same millisecond, and `expiresAt` is unchanged whenever the aura was
+  already at full duration. A Warrior pre-casting Battle Shout over the raid's
+  own copy read as untouched and kept the full two minutes. **A counter is the
+  fact**, which is `castSequence`'s argument about telling one USE from another.
+- **`onPrecombat` IS A SECOND HOOK RATHER THAN `onCombatStart`, AND THE ORDER
+  IS THE WHOLE REASON.** That one runs BEFORE the `openingAuras` loop, where a
+  stance and a form are applied -- so a pre-combat action fired there would act
+  on a character that is not yet in its stance.
+- **IT IS NOT A FREE CAST.** The mana is spent and the cooldown runs, which is
+  what a character who opened with a Fireball actually arrives with. What
+  pre-combat mode skips is three things: the global cooldown it would start,
+  the swing reset, and the cast time.
+- **A CHANNEL IS REFUSED** rather than relying on the zeroed cast time, which
+  would deliver one tick's worth of effect and report it as the whole channel.
+- **IT IS STORED ON THE PROFILE ROOT AND EDITED IN THE APL PANEL**, which is the
+  one place where where-it-is-stored and where-it-is-edited differ.
+  `syncDefaultRotation` REPLACES the whole `StoredRotation` object whenever a
+  `default` list stops matching the build -- a talent, a stance, a class, even a
+  consumable selection -- so a pre-combat list kept inside it would be silently
+  wiped by any of them.
+- **AND ONE OF ITS TESTS SAYS WHAT IT CANNOT PROVE.** "Throws away no swing"
+  passed when probed against BOTH protections -- the hook moved after
+  `startAutoAttack` AND the cast-time zeroing removed -- because at t=0 there is
+  no swing in progress to lose. It is kept as a regression guard on the property
+  and LABELLED as one, rather than left to imply it demonstrates a mechanism.
 
 ### Editing a priority list
 
@@ -3058,6 +3222,23 @@ words.
   calling the class done. A proc declares `valueless: true`; anything that
   genuinely needs the number gets it hand-filled in the values file with a
   `note`, which is the documented exception.
+- **AND IT HAS NOW HAPPENED A FOURTH TIME, ON A DIFFERENT CLASS, AND THE HALF
+  THAT SURVIVED WAS THE HALF THAT PAYS OUT.** Inner Focus is single-rank, so its
+  `castReaction` -- the thing that takes the buff off again -- was dropped, while
+  `grantAbility` reads no value and so the ABILITY was granted and castable. The
+  Priest applied a +25% crit buff that nothing ever removed: it sat there for its
+  full sixty seconds, reported its uptime, and the owner found it from the result
+  -- "it is providing the shadow profile +25% crit chance permanently".
+  **THAT IS THE INERT-BUFF-WITH-VISIBLE-UPTIME SHAPE UPSIDE DOWN.** Adrenaline
+  Rush reported 24.9% uptime and delivered nothing; this reported its uptime and
+  delivered too much. Nothing was MISSING from the results page either time,
+  which is why both needed somebody to ask what the buff was supposed to move.
+  **AND ITS THREE EXISTING TESTS COULD NOT HAVE SEEN IT**, because all three
+  build the spender BY HAND -- `innerFocusSpender()` -- which is this file's own
+  "a test that reconstructs the thing under test will reproduce its mistakes".
+  The reaction was always correct; the JOIN to the character was not. Ask the
+  BUILD: `talentBuild(...).castReactions`.
+
 - **AND FOR A PROC IT IS WORSE THAN UNREPORTED, BECAUSE THE CENSUS READS THE
   TABLE.** Holy Shield is single-rank, so its values entry is `null`, so its
   `reaction` effect was discarded — while the talent granted its ability and
@@ -3709,6 +3890,49 @@ layered OVER a generated file at build time and never written into it is how
 the owner gave +64 as a bonus, two of their four stated bases disagreed with
 the scrape, and a bonus survives a re-scrape meaning the same thing where a
 total silently reinstates whatever Classic says.
+
+**A CASTER WEAPON'S DAMAGE AND ITS SPELL POWER ARE BOTH STATED NOW, AND THE
+RULE AS GIVEN DID NOT REPRODUCE THE OWNER'S OWN TARGET.** They gave
+`T = expected weapon DPS + 6q`, `1H = T x 2/3`, `2H staff = 1.3T - T/3`, and
+separately said the staff should come out at Forever's 45.67. Against the
+TWO-HAND line those disagree with each other -- `(1.3 - 1/3) x 61.54` is 59.5.
+Against the ONE-HAND line both land exactly on Forever's observed weapons:
+
+    47.24 x 2/3         = 31.49   against an observed 31.5  (dagger)
+    47.24 x (1.3 - 1/3) = 45.67   against an observed 45.67 (staff)
+
+**TWO INDEPENDENT MULTIPLIERS HITTING TWO OBSERVED VALUES OFF ONE BASE IS NOT
+CHANCE**, so `T` is the one-hand line for BOTH hands and a caster staff keeps
+1.45x what a one-hander keeps. Put to the owner WITH THE ARITHMETIC rather than
+guessed, which is the fourth time a printed table has settled something no tool
+here could.
+
+**AND THE `+ 6 * q` IS ABSENT ON THEIR RULING, BECAUSE THE DATA ALREADY
+CONTAINS IT.** It is a per-tier dps step and `WEAPON_DPS` already fits one --
+the epic line sits 4.77 (one hand) to 6.20 (two hand) above the rare line at
+item level 65, which is the same 6. Adding it would double-count quality and
+take the staff to 51.4 against the stated 45.67. **A formula and a fitted line
+can encode the same fact, and applying both is not conservative.**
+
+**THE SPELL POWER IS `1.17 x ilvl - 1.6` RARE AND `ilvl + 29` EPIC, THE SAME
+FOR BOTH HANDS, AND `real_set_shape.ts` CONFIRMS IT INDEPENDENTLY**: all four
+real Forever caster weapons at item level 60-70 carry 94, and the formula gives
+94. The weapon is now the most faithful slot in a benchmark set.
+
+**IT IS FREE WITH THE ITEM LEVEL, WHICH MAKES IT THE THIRD SUCH THING** after
+base armour and weapon dps. `spent` is deliberately NOT recomputed: the budget
+is divided exactly as before and the Spell Power share still costs what it
+cost, so only the line's VALUE moves. That is what keeps the owner's "additional
+stats (Intellect, Hit Rating, Crit Rating, etc) are unaffected" literally true
+-- taking Spell Power out of the shares, or dropping the `DPS_TO_BUDGET` credit
+that funds it, would each have moved crit and intellect by a third on a change
+that is about spell power.
+
+**AND ONE FINDING REPORTED RATHER THAN TUNED**: the caster set total goes 401 ->
+429 against a richest-real 391, and the excess is NOT in the weapon -- 335 of
+armour against a richest-real 297. That was already true at 324 before the
+change; making the weapon correct stopped it being masked. Pulling the armour
+back is a `SHARE_WEIGHT` decision and is the owner's.
 
 **AND AN ITEM HAS A BUDGET, WHICH IS A WAY OF READING ONE AND NEVER A WAY OF
 MAKING ONE.** `budget = qualityBase(ilvl) x slotMultiplier` and
@@ -4507,6 +4731,24 @@ assert the ratio. A ratio also survives a list change, where a raw proc count
 does not.
 **IT IS THE SAME LESSON AS "A PROC THAT NEVER FIRES LEAVES NOTHING BEHIND",
 ONE STEP HARDER**: this one DID fire, and looked entirely ordinary doing it.
+
+**AND A FREE CAST EMITS NO `resource_spent` EVENT, SO A POOL'S OWN TABLE CAN
+ADD TO 100% WHILE POINTS GO UNMENTIONED.** A Cat Druid's energy economy
+balances perfectly with 84 energy a fight missing from it, because a
+Clearcasting cast spends nothing and `aura_removed` says the charge went
+without saying what took it. `CastChargeEvent` is what closes that: the aura,
+the ability, and the SAVING -- which is the figure that makes it a resource
+report rather than a cast count, and which is computed in `castAbility`
+because that is the only place both halves exist.
+
+**IT COVERS EVERY CAST CHARGE AND NOT ONLY THE THREE THAT WERE ASKED FOR.**
+Eclipse, Maelstrom Weapon, Missile Barrage, Presence of Mind and Inner Focus
+all spend one, and a table naming three auras would be the "general field read
+by only some of its rules" failure in a panel -- on the Arcane Mage, Missile
+Barrage saves several times what Clearcasting does, so the asked-for version
+would have reported the smaller half. **A charge that saved NOTHING still gets
+a row**, because that is what a charge thrown away on a free ability looks
+like, and it is the thing somebody tuning a list would most want to see.
 
 **When a fix moves nothing in the suite, that is a statement about the suite.**
 
