@@ -681,6 +681,23 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   taken a crit meant for its Holy Shock. `spellCritChance` IS that scope, so a
   hundred points of it is a guaranteed crit on a spell and worth nothing to a
   swing, with no new engine field.
+  **THE TRIGGER IS A SPELL AND NO KIND OF ATTACK, CONFIRMED BY THE OWNER IN
+  THE TERMS THAT EXPLAIN THE SHAPE**: "a spell doesn't use a weapon. Whereas
+  something like Crusader procs from attacks and that's what drives it having a
+  PPM-based proc system." So the flat chance is not a simplification -- PPM
+  needs a weapon SPEED and a spell has none, which is why this is the one proc
+  in `procs.ts` that does not call `ppmChance`.
+  **VERIFIED ON A HYBRID AND NOT ONLY ON A MAGE**, because a Mage fixture has
+  no melee ability and cannot express the mistake. Over 30 fights a Shockadin's
+  reaction is asked about **329 auto-attacks and 99 Holy Strikes and fires on
+  none of them**, and fires only on Judgement, Holy Shock and Hammer of Wrath.
+  A Cat Druid, which casts nothing on the spell table, procs **0 times in 617
+  asks** -- a correct effect worth exactly nothing to a build.
+  **AND A TALENT CAN TURN AN ABILITY FROM A SPELL INTO AN ATTACK AND STOP IT
+  PROCCING**, which is the rule's sharpest consequence and needs no code:
+  `hammerOfWrathTable` returns `ranged-special` once Instrument of Law has made
+  Hammer of Wrath instant and `spell` otherwise, so the Shockadin's procs
+  Revelation and the Retribution Paladin's does not.
   **ONE ROLL PER HAND, ON THE OWNER'S RULING**, which is Crusader's arrangement
   reached from the opposite direction: Crusader is per-hand because only a use
   of THAT weapon triggers it, and Revelation is per-hand because the owner said

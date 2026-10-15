@@ -29,6 +29,8 @@ import { createPlayer } from '../../src/game/actors/createPlayer';
 import { runProfile } from '../../src/simulator';
 import { createDefaultProfile } from '../../src/profiles';
 import { seconds, toSeconds } from '../../src/engine';
+import { Simulation } from '../../src/engine';
+import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 
 /*
  * The PPM formula, the rates and the Hand of Justice numbers were all supplied
@@ -582,15 +584,90 @@ describe('Enchant Weapon - Revelation', () => {
       expect(reaction.canTrigger!(always, mage(), spellHit(false))).toBe(true);
     });
 
-    it('does not fire on a melee hit, which is what the TABLE decides', () => {
+    it('fires on SPELLS and on no kind of ATTACK, which the owner confirmed', () => {
       /*
-       * THE REASON `AttackEvent` GAINED `attackTable`. This enchant goes on a
-       * MELEE weapon, so a character carrying it swings -- and nothing else on
-       * the event can tell a spell from a swing: `weaponSlot` is undefined for
-       * a spell AND for a seal AND for Thunder Clap's ranged table.
+       * ========================================================================
+       * THE OWNER'S CONFIRMATION, IN THEIR OWN TERMS: "revelation only works on
+       * SPELLS not ATTACKS. A spell doesn't use a weapon. Whereas something
+       * like Crusader procs from attacks and that's what drives it having a
+       * PPM-based proc system."
+       *
+       * SO THE TABLE IS THE WHOLE TEST, and `AttackEvent.attackTable` is why it
+       * gained that field: nothing else on the event can tell a spell from a
+       * swing. `weaponSlot` is undefined for a spell AND for a Paladin's seal
+       * AND for Thunder Clap, which resolves on the ranged table precisely so
+       * `isWeaponUse` excludes it.
+       *
+       * EVERY NON-SPELL TABLE, not just `melee-auto`. The first version of this
+       * checked one, which would have passed against a version that let a melee
+       * SPECIAL through -- and a melee special is the thing a hybrid presses
+       * most. `rollChance` is forced true, so a refusal here is the table
+       * deciding and never the roll.
+       * ========================================================================
        */
-      const melee = { ...spellHit(false), attackTable: 'melee-auto' } as never;
-      expect(revelationReaction('mainHand').canTrigger!(always, mage(), melee)).toBe(false);
+      const reaction = revelationReaction('mainHand');
+      for (const table of [
+        'melee-auto',
+        'melee-special',
+        'ranged-auto',
+        'ranged-special',
+      ] as const) {
+        const attack = { ...spellHit(false), attackTable: table } as never;
+        expect(reaction.canTrigger!(always, mage(), attack), table).toBe(false);
+      }
+      // And with no table at all, which is a Paladin's seal and a pure DoT.
+      const untabled = { ...spellHit(false), attackTable: undefined } as never;
+      expect(reaction.canTrigger!(always, mage(), untabled)).toBe(false);
+    });
+
+    it('takes a FLAT chance, which is what "a spell doesn t use a weapon" forces', () => {
+      /*
+       * ------------------------------------------------------------------------
+       * THE OTHER HALF OF THE OWNER'S SENTENCE, and the reason this proc is
+       * shaped unlike every other one in the file: "Crusader procs from attacks
+       * and that's what drives it having a PPM-based proc system". PPM needs a
+       * WEAPON SPEED -- `ppmChance(speed, ppm)` -- and a spell has none.
+       *
+       * ASSERTED AS INDEPENDENCE FROM THE WEAPON. Two characters whose weapons
+       * differ in speed must get the same chance off the same spell, which is
+       * exactly what a PPM effect would NOT give them.
+       * ------------------------------------------------------------------------
+       */
+      const reaction = revelationReaction('mainHand');
+      const attack = spellHit(false, 0.2) as never;
+
+      // A dagger Rogue and a two-hand Warrior: 1.8s against 3.6s.
+      const dagger = characterAtCombatStart(PRESETS_BY_ID.get('rogue_venom')!.build())!;
+      const twoHander = characterAtCombatStart(PRESETS_BY_ID.get('two_hand_arms')!.build())!;
+      expect(dagger.weapons.mainHand!.swingTimerMs).not.toBe(
+        twoHander.weapons.mainHand!.swingTimerMs,
+      );
+
+      /*
+       * SWEPT RATHER THAN PINNED AT THE BOUNDARY, which the first version of
+       * this did and which float arithmetic punished: `0.11 * (1 - 0.2 - 0.2)`
+       * is 0.06600000000000002, so an assertion that `0.066` is not below it
+       * fails for a reason that has nothing to do with weapons.
+       *
+       * THE CLAIM IS INDEPENDENCE, so the test is that the two characters
+       * answer IDENTICALLY at every roll -- including the ones either side of
+       * the threshold, which is where a PPM effect would diverge. A 1.8-second
+       * dagger at any PPM gives half what a 3.6-second two-hander gives.
+       */
+      for (const roll of [0.0001, 0.03, 0.065, 0.0659, 0.067, 0.09, 0.5]) {
+        const rolled = { rng: { nextFloat: () => roll } } as never;
+        expect(
+          reaction.canTrigger!(rolled, dagger, attack),
+          `roll ${roll}: the dagger and the two-hander must agree`,
+        ).toBe(reaction.canTrigger!(rolled, twoHander, attack));
+      }
+
+      // And the threshold is crossed somewhere inside that sweep, so the
+      // agreement above is not two identical `false`s.
+      const low = { rng: { nextFloat: () => 0.0001 } } as never;
+      const high = { rng: { nextFloat: () => 0.5 } } as never;
+      expect(reaction.canTrigger!(low, dagger, attack)).toBe(true);
+      expect(reaction.canTrigger!(high, dagger, attack)).toBe(false);
     });
 
     it('is listed with outcomes that exclude a crit', () => {
@@ -760,6 +837,100 @@ describe('Enchant Weapon - Revelation', () => {
 
       expect(actor.reactions.map((reaction) => reaction.id)).toContain('revelation_mainHand');
       expect(actor.castReactions.map((reaction) => reaction.id)).toContain('revelation_spend');
+    });
+
+    it('procs off a hybrid s SPELLS and never off its swings', () => {
+      /*
+       * ========================================================================
+       * THE DECISIVE FIXTURE FOR "SPELLS NOT ATTACKS", because a Mage cannot
+       * express the mistake: it has no melee ability to wrongly proc from. A
+       * Shockadin holds a mace, swings it, presses Holy Strike, and casts
+       * Judgement and Holy Shock -- all four reach the reaction.
+       *
+       * MEASURED OVER REAL FIGHTS rather than asserted on a constructed event,
+       * which is what makes it evidence about the ENGINE and not about the
+       * predicate. Over 30 fights the reaction is asked about 329 auto-attacks
+       * and 99 Holy Strikes and fires on NONE of them, and fires only on
+       * Judgement, Holy Shock and Hammer of Wrath.
+       * ========================================================================
+       */
+      const built = PRESETS_BY_ID.get('pally_shockadin')!.build();
+      const profile = {
+        ...built,
+        equipment: {
+          ...built.equipment,
+          mainHand: { ...built.equipment.mainHand!, enchantId: REVELATION_ENCHANT_ID },
+        },
+      };
+
+      const asked = new Map<string, { n: number; fired: number }>();
+      for (let seed = 1; seed <= 6; seed += 1) {
+        const sim = new Simulation(
+          trainingDummyEncounter(
+            { ...profile, simulation: { ...profile.simulation, iterations: 1, seed } } as never,
+            seed,
+          ),
+        );
+        sim.begin();
+        const player = sim.combatants.find((actor) => actor.kind === 'player')!;
+        const reaction = player.reactions.find((r) => r.id.startsWith('revelation'))!;
+        const real = reaction.canTrigger!;
+        (reaction as { canTrigger: typeof real }).canTrigger = (ctx, actor, attack) => {
+          const answer = real(ctx, actor, attack);
+          const key = String(attack.attackTable);
+          const cur = asked.get(key) ?? { n: 0, fired: 0 };
+          cur.n += 1;
+          if (answer) cur.fired += 1;
+          asked.set(key, cur);
+          return answer;
+        };
+        sim.run();
+      }
+
+      // It was genuinely asked about attacks, or this proves nothing.
+      expect(asked.get('melee-auto')!.n, 'swings reached the reaction').toBeGreaterThan(0);
+      expect(asked.get('melee-special')!.n, 'and so did a melee ability').toBeGreaterThan(0);
+
+      for (const [table, counts] of asked) {
+        if (table === 'spell') continue;
+        expect(counts.fired, `${table} must never proc it`).toBe(0);
+      }
+      expect(asked.get('spell')!.fired, 'and a spell does').toBeGreaterThan(0);
+    });
+
+    it('is worth NOTHING to a build that casts no spells', () => {
+      /*
+       * A Cat Druid swings and presses Shred and Rake and casts nothing that
+       * rolls on the spell table, so the enchant can never fire for it. Worth
+       * pinning because "a correct effect can be worth zero" is a conclusion
+       * this project reaches often, and the honest version of it names the
+       * build rather than the effect.
+       */
+      const built = PRESETS_BY_ID.get('druid_cat')!.build();
+      const profile = {
+        ...built,
+        equipment: {
+          ...built.equipment,
+          twoHand: { ...built.equipment.twoHand!, enchantId: REVELATION_ENCHANT_ID },
+        },
+      };
+
+      let procs = 0;
+      for (let seed = 1; seed <= 4; seed += 1) {
+        const sim = new Simulation(
+          trainingDummyEncounter(
+            { ...profile, simulation: { ...profile.simulation, iterations: 1, seed } } as never,
+            seed,
+          ),
+          {
+            emit: (event) => {
+              if (event.type === 'aura_applied' && event.auraId === 'revelation') procs += 1;
+            },
+          },
+        );
+        sim.run();
+      }
+      expect(procs).toBe(0);
     });
 
     it('brings neither half when the weapon is not enchanted with it', () => {
