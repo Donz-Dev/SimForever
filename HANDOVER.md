@@ -5999,7 +5999,15 @@ this table was last rebuilt, and the Bear measures **~402.9** now. It is flagged
 rather than patched, because patching one row publishes a difference between two
 baselines -- this file's own rule. The TALENT columns above were corrected in
 place, because a build is a fact rather than a measurement: Arcane 35/11/5, Fire
-16/31/4, Ele Shaman 32/6/13, LW Ranged 5/39/7, LW Melee 5/13/33.
+16/31/4, Ele Shaman 32/6/13, LW Ranged 5/41/5, LW Melee 5/13/33, Moonkin
+41/0/10.
+
+**AND THIS SENTENCE CONTRADICTED THE TABLE ABOVE IT FOR ONE COMMIT**, which is
+the failure `update_baseline_table.py` already has a paragraph about: the ROWS
+were corrected and the prose restating them was not, so it read `5/39/7` where
+the row three lines up read `5/41/5`. **A figure written twice is a figure that
+drifts once**, and the cheap guard is `talentSpreads.test.ts`, which now reads
+every doc table and compares it to `PRESETS_BY_ID`.
 
 **AND THIS TABLE IS NO LONGER THE PROJECT'S BASELINE.** It is one gear template
 of four. See **The baseline is the owner's now** at the top of this file.

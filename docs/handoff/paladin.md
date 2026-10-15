@@ -242,9 +242,9 @@ school's modifier in before the roll. `AbilityModifier.hitBonus` is the field.
 
 | Profile | Talents | DPS | List |
 | --- | --- | --- | --- |
-| Seal Twist Ret | 13/0/38 | **748.3** ±9.6 | `PALADIN_RETRIBUTION` |
+| Seal Twist Ret | 15/0/36 | **748.3** ±9.6 | `PALADIN_RETRIBUTION` |
 | Shockadin | 23/0/28 | **585.5** ±4.9 | `PALADIN_SHOCKADIN` |
-| Prot Pally | 8/36/7 | **303.9** ±3.7 | `PALADIN_PROTECTION` |
+| Prot Pally | 8/34/9 | **303.9** ±3.7 | `PALADIN_PROTECTION` |
 
 **DO NOT READ THESE AS THE DEEP DIVE'S FIGURES.** The dive took them to 528.3,
 472.7 and 238.1; everything since — the raid buff list, Judgement of Wisdom,

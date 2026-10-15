@@ -216,7 +216,9 @@ export const HUNTER_BEAST_MASTERY: AplList = {
 /**
  * LONE WOLF RANGED — no pet, and 20% more damage for not having one.
  *
- * 7/39/5, the deep Marksmanship build.
+ * 5/41/5, the deep Marksmanship build. (Written as 7/39/5 until round 13
+ * respecified it; the spread is re-derived from the preset now, and
+ * `talentSpreads.test.ts` is what keeps every stated one honest.)
  *
  * AIMED SHOT IS IN, GATED. An earlier version of this file dropped it and the
  * note explaining why survived the owner's list arriving with it kept: "784
