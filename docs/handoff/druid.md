@@ -217,9 +217,9 @@ question** — the count was wrong for as long as nobody did.
 
 | Profile | Talents | DPS | List | Style |
 | --- | --- | --- | --- | --- |
-| Cat | 9/35/7 | **663.3** | `DRUID_CAT` | cat (paws) |
+| Cat | 9/34/8 | **663.3** | `DRUID_CAT` | cat (paws) |
 | Bear | 9/42/0 | **433.6** | `DRUID_BEAR` | bear (paws) |
-| Moonkin | 38/0/13 | **513.4** | `DRUID_MOONKIN` | caster |
+| Moonkin | 41/0/10 | **513.4** | `DRUID_MOONKIN` | caster |
 
 **THESE ARE CURRENT AND THE TABLE USED TO CARRY A "was" COLUMN**, which is gone
 because it had stopped being about this class: the figures moved 656.1 → 716.4,

@@ -643,8 +643,13 @@ const ROGUE_HEMO_TALENTS: TalentAllocation = {
 /** Combat: two swords, the owner's own second set. */
 
 /**
- * THE THREE DRUID BUILDS, decoded from the owner's URLs. 38/0/13, 9/34/8 and
+ * THE THREE DRUID BUILDS, decoded from the owner's URLs. 41/0/10, 9/34/8 and
  * 9/42/0, each exactly 51 points.
+ *
+ * MOONKIN READ 38/0/13 HERE while the comment seventeen lines below correctly
+ * said "41 Balance / 10 Restoration, was 38/0/13" -- a header restating
+ * figures that are also stated beside the thing they describe is a figure
+ * written twice, and the one nobody edits is the one that drifts.
  *
  * ----------------------------------------------------------------------------
  * CAT AND BEAR WERE RE-SPECIFIED AT CLIENT BUILD 1.60.1.70170, Moonkin was not.
@@ -1114,8 +1119,13 @@ const PALADIN_PROTECTION_TALENTS: TalentAllocation = {
 };
 
 /**
- * THE THREE HUNTER BUILDS, decoded from the owner's URLs. 31/20/0, 7/39/5 and
- * 7/13/31, each exactly 51 points.
+ * THE THREE HUNTER BUILDS, decoded from the owner's URLs. 31/20/0, 5/41/5 and
+ * 5/13/33, each exactly 51 points. (There are four Hunter presets now; Hawk
+ * Melee arrived later and has its own block.)
+ *
+ * TWO OF THE THREE WERE STALE HERE -- 7/39/5 and 7/13/31 -- while the blocks
+ * below state both correctly with their own "was" values. Same drift as the
+ * Druid header above: the restatement is what rots.
  *
  * ONLY THE FIRST BRINGS A PET. Both Lone Wolf builds take the talent that
  * reads "while you do not have an active pet", which is what makes it a

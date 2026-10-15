@@ -229,8 +229,8 @@ left, six are the encounter or the build, one is a consequence of a ruling, and
 | Profile | Talents | DPS | List | Notes |
 | --- | --- | --- | --- | --- |
 | BM Hunter | 31/20/0 | **771.7** | `HUNTER_BEAST_MASTERY` | **the only profile with a pet** |
-| LW Melee | 7/13/31 | **779.7** | `HUNTER_LONE_WOLF_MELEE` | **dual wield**, since 2026-10-03 |
-| LW Ranged | 7/39/5 | **805.9** | `HUNTER_LONE_WOLF_RANGED` | |
+| LW Melee | 5/13/33 | **779.7** | `HUNTER_LONE_WOLF_MELEE` | **dual wield**, since 2026-10-03 |
+| LW Ranged | 5/41/5 | **805.9** | `HUNTER_LONE_WOLF_RANGED` | |
 | Hawk Melee | 16/11/24 | **824.4** | `HUNTER_HAWK_MELEE` | **the top Hunter**, since 2026-10-08 |
 
 **BM HUNTER HAS HELD THREE DIFFERENT FIGURES IN TWO DAYS, AND THE SEQUENCE IS
