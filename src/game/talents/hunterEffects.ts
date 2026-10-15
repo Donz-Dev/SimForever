@@ -446,15 +446,32 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * "Increases your MELEE critical strike damage by {0}% and your offhand
      * weapon damage by {1}%."
      *
-     * BOTH MELEE TABLES. Unlike Savage Strikes this does not say "abilities",
-     * so the swing is included -- and for a two-hander build the swing is
-     * most of the damage, which makes the distinction worth reading twice.
+     * ------------------------------------------------------------------------
+     * `melee-special` ALONE, ON THE OWNER'S RULING, AND THE AUTO-ATTACK IS THE
+     * CLAUSE THAT MOVED: "This does NOT affect the hunter's auto-attack swings,
+     * unless it was upgraded to a Raptor Strike on next hit. This functions very
+     * similarly to warrior's Impale talent and Heroic Strike."
      *
-     * It was `critDamageBonus`, whole-character, which reached the Hunter's
-     * RANGED abilities as well. That was generous rather than exact, and the
-     * note saying so is what expired here.
+     * SO THE RAPTOR STRIKE HALF NEEDS NO CODE AT ALL, which is the whole reason
+     * one table is the right answer rather than a table plus an exception.
+     * Raptor Strike declares `attackTable: 'melee-special'` AND
+     * `onNextSwing: MAIN_HAND` -- an on-next-swing ability REPLACES the swing
+     * and resolves as a SPECIAL -- so "the swing, but only when it was upgraded"
+     * is already exactly what `melee-special` selects. An ordinary swing rolls
+     * on `melee-auto` and is now correctly excluded.
+     *
+     * THE READING THIS REPLACES WAS DEFENSIBLE AND IS WHY THE RULING WAS WORTH
+     * ASKING FOR. CLAUDE.md's own rule is "read whether the tooltip says
+     * abilities or weapons" -- "melee critical strike damage" says neither, so
+     * the swing was included, which is what the rule gives for a tooltip of this
+     * shape. The owner's statement outranks the wording, the same way Rend and
+     * Tear's stated 1.09x did in the other direction.
+     *
+     * IT IS A REAL CUT ON LW MELEE, where the swing is a large share of the
+     * damage. The off-hand clause below is untouched.
+     * ------------------------------------------------------------------------
      */
-    { kind: 'attackTableCritDamage', tables: ['melee-auto', 'melee-special'] },
+    { kind: 'attackTableCritDamage', tables: ['melee-special'] },
     /*
      * "...and your offhand weapon damage by {1}%", WHICH IS LIVE NOW AND WAS
      * THE TALENT'S LARGER HALF ALL ALONG.

@@ -462,6 +462,94 @@ describe('Inner Focus, whose two halves are spent at different moments', () => {
     simulation.applyAura(actor, INNER_FOCUS, actor.id);
     expect(focus.canCast!(context)).toBe(false);
   });
+
+  /*
+   * ==========================================================================
+   * AND THE ONE THAT WAS MISSING: DOES THE TALENT ACTUALLY REGISTER THE
+   * SPENDER.
+   *
+   * THREE TESTS ABOVE EXERCISE THE SPENDER AND NONE OF THEM COULD SEE THE BUG,
+   * because every one of them builds it by hand -- `innerFocusSpender()` --
+   * which is CLAUDE.md's "a test that reconstructs the thing under test will
+   * reproduce its mistakes". The reaction was always correct. What was wrong
+   * was that `talentBuild` threw it away: Inner Focus is SINGLE RANK, so its
+   * values entry is `null`, and an effect that reads no value is dropped
+   * without a `valueless: true` beside it.
+   *
+   * WHAT THAT COST: the ability was still granted, so the aura applied, showed
+   * its uptime and never came off -- +25% crit on Mind Blast, Mind Flay and
+   * Shadow Word: Death for its whole sixty seconds. The owner found it by
+   * reading the result, not from anything here.
+   *
+   * SO THIS ASKS THE BUILD, NOT THE REACTION. It is the same assertion
+   * `hunterFiveFixes.test.ts` makes about a `grantAura` resolving: a lookup
+   * that misses is not an error, so something has to ask whether it missed.
+   * ==========================================================================
+   */
+  it('registers its spender on the BUILT character, which is what was broken', () => {
+    const build = talentBuild('priest', { inner_focus: 1 });
+
+    expect(build.castReactions.map((reaction) => reaction.id)).toContain('inner_focus_spend');
+    // And it is not quietly reported as a gap instead.
+    expect(build.unmodelled.filter((entry) => entry.talentId === 'inner_focus')).toEqual([]);
+  });
+
+  it('comes off after one spell on a character built the real way', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * `createPlayer`, NOT `makeAttacker`, AND THAT IS THE WHOLE TEST.
+     *
+     * The three tests above hand-build the spender and hand-build the actor,
+     * so neither end of the join is the one a fight uses. `createPlayer` is
+     * what collects `talentBuild`'s `castReactions` onto the combatant -- the
+     * step that was silently producing an empty list -- and driving the real
+     * cast path is what proves the charge is spent by a SPELL rather than by a
+     * test calling `onTrigger`.
+     *
+     * It also pins the ordering: `runCast` runs `onCast` before the cast
+     * reactions, so the Mind Blast still rolled its crit inside the window.
+     * ------------------------------------------------------------------------
+     */
+    const actor = createPlayer({
+      race: 'troll',
+      characterClass: 'priest',
+      combatStyle: 'caster',
+      talents: legalise({ inner_focus: 1 }, 'priest'),
+    });
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target]);
+
+    simulation.cast(actor, actor.abilities.get('inner_focus')!, undefined);
+    expect(actor.auras.has('inner_focus'), 'the charge is up').toBe(true);
+
+    simulation.advanceTo(simulation.clock.now() + 1);
+    simulation.cast(actor, actor.abilities.get('mind_blast')!, target);
+    simulation.advanceTo(simulation.clock.now() + 5_000);
+
+    expect(actor.auras.has('inner_focus'), 'and one spell spent it').toBe(false);
+  });
+
+  /*
+   * OFF THE GLOBAL COOLDOWN, the owner's instruction.
+   *
+   * ASSERTED ON `gcdReadyAt` RATHER THAN ON THE FLAG, because the rule is
+   * DERIVED -- `triggersGcd ?? onNextSwing === undefined` -- so reading the
+   * field back would only check that somebody typed it. What matters is that
+   * the spell being set up can follow immediately.
+   */
+  it('starts no global cooldown, so the spell it is cast for can follow', () => {
+    const actor = withInnerFocus();
+    const simulation = buildSimulation([actor, makeTarget()]);
+
+    expect(actor.isOnGcd(simulation.clock.now())).toBe(false);
+    simulation.cast(actor, actor.abilities.get('inner_focus')!, undefined);
+    expect(actor.isOnGcd(simulation.clock.now())).toBe(false);
+
+    // A spell that DOES take one, as the control: the assertion above is only
+    // meaningful if this fixture can produce a running GCD at all.
+    simulation.cast(actor, actor.abilities.get('mind_blast')!, simulation.combatants[1]);
+    expect(actor.isOnGcd(simulation.clock.now())).toBe(true);
+  });
 });
 
 describe('Power Infusion, on a target that for one character is itself', () => {

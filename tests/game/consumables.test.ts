@@ -56,7 +56,7 @@ const TABLE: Readonly<Record<string, readonly string[]>> = {
   ],
   Food: [
     '+40 Attack Power',
-    '+33 Spell Power',
+    '+28 Spell Power',
     '+44 Healing Power',
     '+20 Stamina',
     '+20 Strength',
@@ -535,16 +535,16 @@ describe('what each of the 24 presets opens with', () => {
     const withRow = characterAtCombatStart(profile)!;
     const without = characterAtCombatStart({ ...profile, consumables: {} })!;
 
-    // Flask 150, weapon effect 36, Spell Power 35, Food 33 -- all school-blind.
+    // Flask 150, weapon effect 36, Spell Power 35, Food 28 -- all school-blind.
     expect(withRow.stats.get('spellPower') - without.stats.get('spellPower')).toBe(
-      150 + 36 + 35 + 33,
+      150 + 36 + 35 + 28,
     );
     // And the Fire school on top of that, which only Fire damage reads.
     expect(spellPowerFor(withRow, 'fire') - spellPowerFor(without, 'fire')).toBe(
-      150 + 36 + 35 + 33 + 40,
+      150 + 36 + 35 + 28 + 40,
     );
     expect(spellPowerFor(withRow, 'frost') - spellPowerFor(without, 'frost')).toBe(
-      150 + 36 + 35 + 33,
+      150 + 36 + 35 + 28,
     );
     // The flat hit points, which take their own route to the pool.
     expect(withRow.health.maximum - without.health.maximum).toBe(120);

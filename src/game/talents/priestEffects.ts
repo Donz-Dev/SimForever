@@ -138,7 +138,31 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    */
   inner_focus: [
     { kind: 'grantAbility', abilityId: 'inner_focus' },
-    { kind: 'castReaction', reactionId: 'inner_focus' },
+    /*
+     * ------------------------------------------------------------------------
+     * `valueless: true`, AND WITHOUT IT THE SPENDER WAS DROPPED AND THE BUFF
+     * NEVER CAME OFF. The owner reported it from the result: Inner Focus "is
+     * providing the shadow profile +25% crit chance permanently".
+     *
+     * THE FOURTH INSTANCE OF ONE FAILURE AND THE FIRST OUTSIDE THE PALADIN.
+     * Inner Focus is SINGLE RANK, so `values/priest.json` records `null` -- a
+     * single-rank tooltip has no `{0}` for the importer to match -- and
+     * `talentBuild` drops any effect that reads no value. `grantAbility` reads
+     * none, so the ABILITY was granted and castable; the `castReaction` that
+     * takes the buff off again was discarded with a report nobody reads.
+     *
+     * SO THE HALF THAT SURVIVED WAS THE HALF THAT PAYS OUT. The aura applied,
+     * reported its uptime, and sat on the Priest for its full sixty seconds
+     * handing Mind Blast, Mind Flay and Shadow Word: Death +25% crit -- which
+     * is the inert-buff-with-visible-uptime shape upside down. Nothing was
+     * missing from the results page; what was there was too good.
+     *
+     * A SINGLE-RANK `reaction` OR `castReaction` IS THE WHOLE RISK GROUP, and
+     * `priestAbilities.test.ts` now asserts this one registers rather than
+     * asserting what it does once it has.
+     * ------------------------------------------------------------------------
+     */
+    { kind: 'castReaction', reactionId: 'inner_focus', valueless: true },
   ],
 
   meditation: [{ kind: 'stat', stat: 'manaRegenBypass', operation: 'flat' }],

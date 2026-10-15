@@ -404,7 +404,21 @@ export const CONSUMABLE_CATEGORIES: readonly ConsumableCategory[] = [
         name: '+40 Attack Power',
         stats: { attackPower: 40, rangedAttackPower: 40 },
       },
-      { id: 'food_spell_power', name: '+33 Spell Power', stats: { spellPower: 33 } },
+      /*
+       * 28, NOT 33, ON THE OWNER'S OWN REVISION -- "the best spell power food
+       * consumable is no longer +33 spell power, it is now +28 spell power".
+       *
+       * THE ID DOES NOT MOVE AND THE NAME DOES. A profile stores the id, so
+       * every saved caster keeps the food it chose and simply gets the current
+       * figure for it; renaming the row would have silently emptied the Food
+       * slot on four presets and every file anyone has saved. The NAME is what
+       * a person reads, so it follows the number -- the same split a renamed
+       * ability makes between its display name and its id.
+       *
+       * IT MOVES FOUR PUBLISHED ROWS and is meant to: Seal Twist Ret, the
+       * Shockadin, Prot Pally and the Moonkin all take this row.
+       */
+      { id: 'food_spell_power', name: '+28 Spell Power', stats: { spellPower: 28 } },
       {
         id: 'food_healing_power',
         name: '+44 Healing Power',
