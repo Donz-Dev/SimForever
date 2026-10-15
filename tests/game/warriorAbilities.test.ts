@@ -140,7 +140,7 @@ const SHEET: readonly SheetRow[] = [
   { id: 'shield_slam', name: 'Shield Slam', rageCost: 20, cooldownSeconds: 6, castSeconds: 0, attackTable: 'melee-special' },
 ];
 
-const HIT: AttackResolution = { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [] };
+const HIT: AttackResolution = { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [], critChance: 0 };
 
 describe('warrior abilities match the spreadsheet', () => {
   it.each(SHEET)('$name has the stated cost, cooldown, cast time and table', (row) => {
@@ -498,7 +498,7 @@ describe('damage resolution with weapon scaling', () => {
         baseAmount: 160,
         weaponScaling: { slot: 'mainHand' },
       },
-      { outcome: 'dodge', avoided: true, damageMultiplier: 0, rolls: [] },
+      { outcome: 'dodge', avoided: true, damageMultiplier: 0, rolls: [], critChance: 0 },
       210,
     );
 

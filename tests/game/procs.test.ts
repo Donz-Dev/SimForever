@@ -531,8 +531,8 @@ describe('Enchant Weapon - Revelation', () => {
        *   50% -> 0.11 * (0.5 - 0.5)   = 0
        */
       expect(revelationChance(0)).toBeCloseTo(0.11, 10);
-      expect(revelationChance(25)).toBeCloseTo(0.055, 10);
-      expect(revelationChance(50)).toBe(0);
+      expect(revelationChance(0.25)).toBeCloseTo(0.055, 10);
+      expect(revelationChance(0.5)).toBe(0);
     });
 
     it('is clamped at zero rather than going negative past half', () => {
@@ -542,21 +542,24 @@ describe('Enchant Weapon - Revelation', () => {
        * and it is what makes the RATE readable as zero rather than as a
        * negative number somebody has to reason about.
        */
-      expect(revelationChance(60)).toBe(0);
-      expect(revelationChance(100)).toBe(0);
+      expect(revelationChance(0.6)).toBe(0);
+      expect(revelationChance(1)).toBe(0);
     });
 
-    it('reads a PERCENTAGE POINT, which is the one place it could be out 100x', () => {
-      // 11 points of spell crit is 0.11 as a fraction, so the chance is
-      // 0.11 * (0.89 - 0.11) = 0.0858. If the argument were read as a fraction
-      // already this would be 0.11 * (1 - 22) -- clamped to zero, and silent.
-      expect(revelationChance(11)).toBeCloseTo(0.0858, 10);
-      expect(revelationChance(11)).toBeGreaterThan(0);
+    it('takes a FRACTION, which is the one place it could be out 100x', () => {
+      /*
+       * `AttackEvent.critChance` is a fraction because the roll units it comes
+       * from are. A fraction of 0.11 gives `0.11 * (0.89 - 0.11)` = 0.0858;
+       * the same 11 read as percentage POINTS is past the cut-off and clamps
+       * to nothing, which is what the second assertion separates.
+       */
+      expect(revelationChance(0.11)).toBeCloseTo(0.0858, 10);
+      expect(revelationChance(11)).toBe(0);
     });
   });
 
   describe('what triggers it', () => {
-    const spellHit = (critical: boolean) =>
+    const spellHit = (critical: boolean, critChance = 0) =>
       ({
         attacker: undefined as never,
         defender: undefined as never,
@@ -567,14 +570,16 @@ describe('Enchant Weapon - Revelation', () => {
         weaponSlot: undefined,
         critical,
         attackTable: 'spell',
+        critChance,
       }) as const;
 
     const always = { rng: { nextFloat: () => 0 } } as never;
+    const mage = () =>
+      createPlayer({ race: 'gnome', characterClass: 'mage', combatStyle: 'caster' });
 
     it('fires on a spell that landed and did not crit', () => {
-      const actor = createPlayer({ race: 'gnome', characterClass: 'mage', combatStyle: 'caster' });
-      const reaction = revelationReaction();
-      expect(reaction.canTrigger!(always, actor, spellHit(false))).toBe(true);
+      const reaction = revelationReaction('mainHand');
+      expect(reaction.canTrigger!(always, mage(), spellHit(false))).toBe(true);
     });
 
     it('does not fire on a melee hit, which is what the TABLE decides', () => {
@@ -584,15 +589,34 @@ describe('Enchant Weapon - Revelation', () => {
        * the event can tell a spell from a swing: `weaponSlot` is undefined for
        * a spell AND for a seal AND for Thunder Clap's ranged table.
        */
-      const actor = createPlayer({ race: 'gnome', characterClass: 'mage', combatStyle: 'caster' });
       const melee = { ...spellHit(false), attackTable: 'melee-auto' } as never;
-      expect(revelationReaction().canTrigger!(always, actor, melee)).toBe(false);
+      expect(revelationReaction('mainHand').canTrigger!(always, mage(), melee)).toBe(false);
     });
 
     it('is listed with outcomes that exclude a crit', () => {
       // "fails to critically strike" -- and `runReactions` filters on this
       // list, so a crit never reaches `canTrigger` at all.
-      expect(revelationReaction().outcomes).toEqual(['hit']);
+      expect(revelationReaction('mainHand').outcomes).toEqual(['hit']);
+    });
+
+    it('reads the EFFECTIVE crit off the attack, not off the character', () => {
+      /*
+       * ======================================================================
+       * THE OWNER'S RULING, and the reason it needed one: asked whether
+       * "CharacterSpellCritChance" meant the sheet figure or the effective
+       * per-spell one, they said effective -- and added that a sheet reading
+       * 10.82% was "likely missing proper calculation". It was.
+       *
+       * ASSERTED BY HANDING ONE CHARACTER TWO DIFFERENT ATTACKS. The actor is
+       * identical in both calls, so anything reading the STAT would answer the
+       * same way twice; only the event differs. A spell rolling against 60%
+       * crit is past the cut-off and cannot proc at all.
+       * ======================================================================
+       */
+      const reaction = revelationReaction('mainHand');
+      const character = mage();
+      expect(reaction.canTrigger!(always, character, spellHit(false, 0.1))).toBe(true);
+      expect(reaction.canTrigger!(always, character, spellHit(false, 0.6))).toBe(false);
     });
   });
 
@@ -734,31 +758,48 @@ describe('Enchant Weapon - Revelation', () => {
       const profile = casterProfile();
       const actor = characterAtCombatStart(profile)!;
 
-      expect(actor.reactions.map((reaction) => reaction.id)).toContain('revelation');
+      expect(actor.reactions.map((reaction) => reaction.id)).toContain('revelation_mainHand');
       expect(actor.castReactions.map((reaction) => reaction.id)).toContain('revelation_spend');
     });
 
     it('brings neither half when the weapon is not enchanted with it', () => {
       const actor = characterAtCombatStart(PRESETS_BY_ID.get('mage_fire')!.build())!;
-      expect(actor.reactions.map((reaction) => reaction.id)).not.toContain('revelation');
+      expect(actor.reactions.map((reaction) => reaction.id).join()).not.toContain('revelation');
       expect(actor.castReactions.map((reaction) => reaction.id)).not.toContain('revelation_spend');
     });
 
-    it('rolls once per spell with both hands enchanted, not twice', () => {
+    it('rolls ONCE PER HAND, which is the ruling that replaced one roll', () => {
       /*
-       * THE DECISION, PINNED SO THAT CHANGING IT IS DELIBERATE. Crusader is
-       * per-hand because only a use of THAT weapon triggers it; Revelation's
-       * trigger is a spell, which belongs to no hand. If the owner rules that
-       * two enchanted hands should roll twice, this is the assertion that has
-       * to be rewritten rather than a bug that has to be found.
+       * ======================================================================
+       * "Revelation should roll once per hand." Two enchanted hands are two
+       * OPPORTUNITIES against the same chance, so the per-spell probability
+       * becomes `1 - (1 - p)^2` rather than `p`.
+       *
+       * THE IDS DIFFER BY SLOT, which is not cosmetic: two reactions sharing
+       * one id would leave nothing able to say which of them fired.
+       *
+       * AND THE SPENDER IS STILL ONE, because there is one AURA holding one
+       * charge -- and because each spender carries its own `castSequence`
+       * latch, so two would disagree about which cast procced it.
+       * ======================================================================
        */
-      const equipment: Equipment = {
+      const bothHands: Equipment = {
         mainHand: { itemId: 9_500_001, enchantId: REVELATION_ENCHANT_ID },
         offHand: { itemId: 9_500_002, enchantId: REVELATION_ENCHANT_ID },
       };
-      const procs = reactionsForEquipment(equipment).filter((r) => r.id === 'revelation');
-      expect(procs).toHaveLength(1);
-      expect(castReactionsForEquipment(equipment)).toHaveLength(1);
+      const procs = reactionsForEquipment(bothHands).filter((r) =>
+        r.id.startsWith('revelation'),
+      );
+      expect(procs.map((r) => r.id)).toEqual(['revelation_mainHand', 'revelation_offHand']);
+      expect(castReactionsForEquipment(bothHands)).toHaveLength(1);
+
+      // And a TWO-HANDER is one weapon, so it rolls once.
+      const twoHander: Equipment = {
+        twoHand: { itemId: 9_500_003, enchantId: REVELATION_ENCHANT_ID },
+      };
+      expect(
+        reactionsForEquipment(twoHander).filter((r) => r.id.startsWith('revelation')),
+      ).toHaveLength(1);
     });
   });
 });

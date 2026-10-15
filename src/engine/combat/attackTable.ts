@@ -174,6 +174,28 @@ export interface AttackResolution {
   readonly avoided: boolean;
   /** The rolls that produced this, in order. One or two depending on the table. */
   readonly rolls: readonly number[];
+  /**
+   * The crit chance this attack actually rolled against, as a fraction.
+   *
+   * ============================================================================
+   * THE EFFECTIVE FIGURE, NOT THE STAT, AND THAT IS THE ONLY USEFUL VERSION OF
+   * IT. By the time a table is resolved the crit slice has been through
+   * `withCritTable`, `withModifier` and `withoutCrit` -- so it carries the
+   * character's rating, its per-ABILITY crit, its per-SCHOOL crit, its
+   * per-TABLE crit and whatever the TARGET contributes. On a Fire Mage that is
+   * the difference between 21.8% and 34.8%.
+   *
+   * IT IS REPORTED RATHER THAN RE-DERIVED, which is the whole reason it is
+   * here. Revelation's rate is "diminished as your critical strike chance
+   * increases", and a reaction computing that for itself would be a second
+   * copy of a five-source fold -- the `isWeaponUse` failure, where a one-liner
+   * several files re-derived was one two of them got wrong.
+   *
+   * ZERO FOR AN ATTACK THAT COULD NOT CRIT, which is honest: `cannotCrit` and
+   * a table with no crit slice both produce one.
+   * ============================================================================
+   */
+  readonly critChance: number;
 }
 
 /**
@@ -329,6 +351,9 @@ function finish(
     avoided,
     damageMultiplier: multiplierFor(outcome, chances, rng),
     rolls,
+    // THE SLICE THIS ROLL ACTUALLY FACED, after every modifier the caller
+    // folded in. See `AttackResolution.critChance`.
+    critChance: toPercent(chances.crit) / 100,
   };
 }
 

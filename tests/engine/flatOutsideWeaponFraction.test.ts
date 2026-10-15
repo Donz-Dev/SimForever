@@ -178,7 +178,7 @@ describe('the five abilities a change to this formula would move', () => {
 });
 
 describe('end to end, through the real pipeline', () => {
-  const HIT = { outcome: 'hit' as const, avoided: false, damageMultiplier: 1, rolls: [] };
+  const HIT = { outcome: 'hit' as const, avoided: false, damageMultiplier: 1, rolls: [], critChance: 0 };
 
   /** The whole formula, by hand: the flat amount is added after the fraction. */
   const byHand = (base: number, ap: number, flat: number, fraction: number, hand: number) =>

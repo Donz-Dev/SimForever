@@ -403,18 +403,30 @@ export function reactionsForEquipment(
         }),
       );
     }
-  }
 
-  /*
-   * REVELATION, ONCE, HOWEVER MANY HANDS CARRY IT.
-   *
-   * OUTSIDE THE PER-HAND LOOP ABOVE ON PURPOSE. Everything in that loop is
-   * triggered by a USE OF THAT WEAPON, so a second enchanted hand is a second
-   * independent opportunity. Revelation is triggered by a SPELL, which belongs
-   * to no hand -- see its own comment for why the generous reading is not
-   * taken, and for the one-line change if the owner wants it.
-   */
-  if (hasRevelation(equipment)) reactions.push(revelationReaction());
+    /*
+     * REVELATION, ONCE PER ENCHANTED HAND, ON THE OWNER'S RULING.
+     *
+     * ------------------------------------------------------------------------
+     * IT SITS IN THE PER-HAND LOOP AND IS STILL NOT A WEAPON PROC, which is
+     * the thing to hold onto. Everything else here is triggered by a USE of
+     * that weapon and rolls against that weapon's own speed; Revelation is
+     * triggered by a SPELL, which belongs to no hand and has no speed -- so it
+     * takes a flat chance and asks `isWeaponUseOf` nothing.
+     *
+     * SO THE SLOT BUYS ONE THING ONLY: a second opportunity. Two enchanted
+     * hands roll twice against the same chance, which is "roll once per hand"
+     * read exactly -- the per-spell probability becomes `1 - (1 - p)^2`.
+     *
+     * AND THE REACTION IDS DIFFER BY SLOT, because `runReactions` would
+     * otherwise be holding two reactions with one id and nothing says which
+     * fired.
+     * ------------------------------------------------------------------------
+     */
+    if (equipped.enchantId === REVELATION_ENCHANT_ID) {
+      reactions.push(revelationReaction(weaponSlot));
+    }
+  }
 
   for (const slot of ['trinket1', 'trinket2'] as const) {
     const itemId = equipment[slot]?.itemId;
@@ -502,33 +514,29 @@ export const REVELATION_BASE_CHANCE = 0.11;
  * negative` is false anyway -- so the clamp changes no outcome and is here so
  * that anyone READING the rate sees zero rather than -0.03.
  *
- * `spellCritChance` IS A PERCENTAGE POINT ON THE STAT BLOCK and this wants a
- * FRACTION, which is the conversion the owner's formula assumes and the one
- * place this could be out by a hundred.
- *
  * ----------------------------------------------------------------------------
- * WHICH CRIT "CharacterSpellCritChance" MEANS IS THE ONE READING STILL OPEN,
- * AND IT IS WORTH A LOT. The caller passes the CHARACTER SHEET figure -- the
- * school-blind `spellCritChance` stat -- on the reading that a tooltip saying
- * "as your critical strike chance increases" is talking about the number a
- * player can see.
+ * IT TAKES THE EFFECTIVE PER-SPELL CRIT, ON THE OWNER'S RULING, AND IT USED TO
+ * TAKE THE CHARACTER SHEET'S FIGURE.
  *
- * THE MEASUREMENT IS WHAT MAKES IT MATTER. `probe_revelation.ts` on the Fire
- * Mage: the sheet says 10.82% and the spells actually crit 34.8% of the time,
- * because Critical Mass and Improved Scorch add per-ability crit the sheet
- * does not carry. So the two readings are 8.62% and ZERO -- past the 50% cut-
- * off the enchant would be dead on that build rather than merely weaker.
+ * Asked which "CharacterSpellCritChance" meant, they said effective -- and
+ * added that a sheet reading 10.82% was "likely missing proper calculation".
+ * **IT WAS.** `CharacterSheetPanel` printed `stats.spellCritChance` raw and
+ * ignored `critRating` entirely, on all 28 profiles and in BOTH crit rows: the
+ * Fire Mage's sheet said 3.00% melee crit where the engine rolls 14.00%.
  *
- * THE SHEET READING IS TAKEN AND FLAGGED rather than decided quietly, because
- * the alternative is the one this project keeps being caught by: an effect
- * that is correctly implemented against the wrong quantity produces an
- * entirely ordinary figure. If the owner means the EFFECTIVE per-spell crit,
- * the change is which number this is called with and nothing else.
+ * SO THE WRONG READING HERE CAME FROM A WRONG NUMBER ON SCREEN, which is this
+ * project's own "a mislabelled number becomes a documented fact in one
+ * reading" -- arrived at from the other end. The figure was read off the sheet,
+ * used to build the proc, and written into a PR as the thing to check.
+ *
+ * A FRACTION AND NOT PERCENTAGE POINTS, which is the one place this could be
+ * out by a hundred. `AttackEvent.critChance` is already a fraction because the
+ * roll units it comes from are, so the conversion that used to live here is
+ * gone rather than moved.
  * ----------------------------------------------------------------------------
  */
-export function revelationChance(spellCritPercent: number): number {
-  const crit = spellCritPercent / 100;
-  return Math.max(0, REVELATION_BASE_CHANCE * (1 - crit - crit));
+export function revelationChance(spellCrit: number): number {
+  return Math.max(0, REVELATION_BASE_CHANCE * (1 - spellCrit - spellCrit));
 }
 
 /** "grants 100% increased critical strike chance to the next spell cast" */
@@ -582,27 +590,40 @@ export const REVELATION: AuraDefinition = {
 /**
  * What triggers it: a spell that landed and did not crit.
  *
- * THE CHANCE READS THE CHARACTER'S CURRENT SPELL CRIT, so it genuinely
- * diminishes as the character gears up rather than being fixed when the
- * character was built. That is what "is diminished as your critical strike
- * chance increases" says, and reading a build-time figure would freeze it
- * against every buff and trinket in the fight.
+ * THE CHANCE READS WHAT *THIS SPELL* ROLLED AGAINST, which is the owner's
+ * ruling and is stronger than reading the character. `AttackEvent.critChance`
+ * is the slice the roll actually faced -- the rating, the per-ability crit, the
+ * per-school crit, the per-table crit and the target's contribution, all folded
+ * -- so the rate diminishes with everything that genuinely makes the character
+ * crit more, including a trinket that procs mid-fight and a talent that names
+ * one spell.
+ *
+ * SO TWO SPELLS ON ONE CHARACTER CAN HAVE DIFFERENT RATES, and that is the
+ * consequence worth stating: a Fire Mage's Scorch carries Improved Scorch's
+ * crit and its Fireball does not, so Revelation is rarer off the Scorch. That
+ * follows from the tooltip rather than being a special case.
  *
  * NO FEEDBACK LOOP TO GUARD. While Revelation is up the next spell crits, so
  * the outcome filter refuses it; and if something ever did reach this with the
  * aura up, the hundred points take the chance below zero and
  * `revelationChance` clamps it to nothing.
+ *
+ * ONE REACTION PER ENCHANTED HAND, on the owner's ruling -- "Revelation should
+ * roll once per hand". `slot` is carried so the two rolls are genuinely two
+ * opportunities rather than one counted twice, and it is NOT checked against
+ * the attack: a spell is a use of no weapon, so asking `isWeaponUseOf` would
+ * make every roll false. See `reactionsForEquipment`.
  */
-export function revelationReaction(): Reaction {
+export function revelationReaction(slot: MeleeWeaponSlot): Reaction {
   return {
-    id: 'revelation',
+    id: `revelation_${slot}`,
     on: 'dealt',
     // Landed, and not a crit. `glance` and `crush` cannot occur on the spell
     // table and are left out rather than filtered later.
     outcomes: ['hit'],
-    canTrigger: (context, actor, attack) => {
+    canTrigger: (context, _actor, attack) => {
       if (attack.attackTable !== 'spell') return false;
-      const chance = revelationChance(actor.stats.effective.spellCritChance);
+      const chance = revelationChance(attack.critChance ?? 0);
       if (chance <= 0) return false;
       return context.rng.nextFloat(0, 1) < chance;
     },
@@ -687,10 +708,17 @@ export function revelationSpender(): CastReaction {
  * not an attack event and `createPlayer` keeps the two lists apart -- the same
  * split `RaidBuffReactions` makes for Judgement of Wisdom.
  *
- * IT RETURNS AT MOST ONE EVEN WITH BOTH HANDS ENCHANTED, which is the other
- * half of the one-roll-per-spell decision above: two spenders would each try
- * to remove the aura, and the second would find it already gone. Harmless
- * today and exactly the kind of thing that stops being harmless.
+ * IT RETURNS AT MOST ONE EVEN THOUGH BOTH HANDS ROLL, and the reason is the
+ * aura rather than the roll. Two enchanted hands are two OPPORTUNITIES -- the
+ * owner's "roll once per hand" -- and they feed ONE `revelation` aura holding
+ * ONE charge, so there is one thing to spend. Two spenders would each try to
+ * remove it and the second would find it gone; harmless today and exactly the
+ * kind of thing that stops being harmless.
+ *
+ * AND EACH SPENDER CARRIES ITS OWN `castSequence` LATCH, which is the real
+ * reason a second one would be wrong rather than merely redundant: the two
+ * would disagree about which cast procced the aura, and whichever ran first
+ * would decide.
  * ----------------------------------------------------------------------------
  */
 export function castReactionsForEquipment(

@@ -681,18 +681,25 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   taken a crit meant for its Holy Shock. `spellCritChance` IS that scope, so a
   hundred points of it is a guaranteed crit on a spell and worth nothing to a
   swing, with no new engine field.
-  **ONE ROLL PER SPELL EVEN WITH BOTH HANDS ENCHANTED, AND IT IS FLAGGED.**
-  Crusader is per-hand because only a use of THAT weapon triggers it; nothing
-  about a spell belongs to one hand. The generous reading is two rolls and is
-  "a bigger number and no error", so a test pins the decision rather than
-  leaving it to be rediscovered.
-  **AND "CharacterSpellCritChance" IS THE SHEET FIGURE, WHICH IS THE READING
-  STILL OPEN.** `probe_revelation.ts` on the Fire Mage: the sheet says 10.82%
-  and its spells actually crit 34.8%, because per-ability talent crit is not on
-  the sheet. The two readings are an 8.62% proc rate and ZERO -- past the 50%
-  cut-off the enchant would be dead on that build. Taken as the sheet and said
-  so, because an effect implemented correctly against the wrong quantity
-  produces an entirely ordinary figure.
+  **ONE ROLL PER HAND, ON THE OWNER'S RULING**, which is Crusader's arrangement
+  reached from the opposite direction: Crusader is per-hand because only a use
+  of THAT weapon triggers it, and Revelation is per-hand because the owner said
+  so -- the enchant is on each weapon and each one rolls. Two enchanted hands
+  make the per-spell probability `1 - (1 - p)^2`, and the reaction ids carry
+  the slot so nothing is left unable to say which fired.
+  **AND IT READS THE EFFECTIVE PER-SPELL CRIT, ALSO ON THEIR RULING, WHICH
+  EXPOSED A BUG IN THE CHARACTER SHEET.** Asked whether
+  "CharacterSpellCritChance" meant the sheet figure or the effective one, they
+  said effective -- and added that a sheet reading 10.82% was "likely missing
+  proper calculation". **IT WAS**, and see the Verifying work section: the
+  panel printed the raw stat and ignored `critRating` in both crit rows, on all
+  28 profiles.
+  `AttackEvent.critChance` IS WHAT IT READS NOW -- the slice the roll actually
+  faced, after the rating, the per-ability crit, the per-school crit, the
+  per-table crit and the target's contribution. **So two spells on one
+  character can have different rates**: a Fire Mage's Scorch carries Improved
+  Scorch's crit and its Fireball does not, so Revelation is rarer off the
+  Scorch. That follows from the tooltip rather than being a special case.
 - **IF WHETHER AN ABILITY CAN PROC SOMETHING IS IN QUESTION, ASK.** The owner's
   standing instruction. A wrong answer does not look wrong: Windfury spent its
   whole life refusing abilities and every figure was self-consistent and too low.
@@ -4749,6 +4756,48 @@ Barrage saves several times what Clearcasting does, so the asked-for version
 would have reported the smaller half. **A charge that saved NOTHING still gets
 a row**, because that is what a charge thrown away on a free ability looks
 like, and it is the thing somebody tuning a list would most want to see.
+
+**AND A PANEL CAN DISAGREE WITH THE FIGHT ABOUT A STAT IT PRINTS, WHICH IS HOW
+A WRONG NUMBER BECAME A WRONG DESIGN.** `CharacterSheetPanel` printed
+`stats.critChance` and `stats.spellCritChance` RAW, and `critRating` is the
+other half of both -- so on all 28 profiles, in both rows, the sheet was short
+by `rating / 14`:
+
+| | sheet said | the engine rolls |
+| --- | --- | --- |
+| Fire Mage, melee | 3.00% | **14.00%** |
+| Fire Mage, spell | 10.82% | **21.82%** |
+| 2H Arms, melee | 25.01% | **38.44%** |
+
+**NO FIGURE MOVED AND IT STILL COST SOMETHING.** Nothing in `engine`, `game` or
+`simulator` reads the panel -- the engine always called `critChanceFrom`. What
+it cost was a PERSON: Revelation's proc rate was designed against the 10.82%
+shown here and shipped in a PR describing that figure as the thing to check.
+The owner caught it in one sentence -- "if the character sheet is saying 10.82%
+it's likely missing proper calculation".
+
+**THE PANEL'S OWN COMMENT STATED THE RULE TWENTY LINES ABOVE THE BROKEN PAIR**,
+about spell power going "through the same function `dealDamage` and the
+Paladin's seal use, so the sheet cannot disagree with the fight". The two crit
+rows beneath it did exactly that, and the HASTE row beside them was always
+correct -- `hasteMultiplierFrom` is the engine's own function and
+`stats.hasteRating` is never printed raw. **Crit was the one stat on that panel
+read straight off the block**, which is what made it invisible: every
+neighbour was right.
+
+**AND THE SPELL ROW WAS GATED ON THE FLAT STAT, so a build carrying its crit
+entirely as RATING showed no spell crit row at all** -- an absence that reads
+as "this character has none" rather than as a missing row.
+
+**THEN A TWO-SIGMA FLUCTUATION NEARLY BECAME A SECOND BUG.** Re-measuring
+Revelation against the new reading, the rate came back at 1.3x its expectation
+with EVERY ONE of the five ability rows high -- which is this file's own "all
+thirteen moved DOWN" tell, and it was noise. What settled it was two things in
+order: driving the reaction 200,000 times at five FIXED crit chances, where it
+reproduces the formula to three decimal places, and then 400 fights, where
+z = -0.33. **A PROC RATE IS A BINOMIAL AND 60 FIGHTS IS NOT A SAMPLE** --
+`probe_revelation.ts` prints z now, because the percentages either side of it
+look equally convincing at any sample size.
 
 **When a fix moves nothing in the suite, that is a statement about the suite.**
 

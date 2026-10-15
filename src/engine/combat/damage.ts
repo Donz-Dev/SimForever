@@ -8,7 +8,7 @@ import type {
   AttackResolution,
   AttackTableKind,
 } from './attackTable';
-import { ROLL_MAX, resolveAttackTable, toRollUnits } from './attackTable';
+import { ROLL_MAX, resolveAttackTable, toPercent, toRollUnits } from './attackTable';
 import type { AbilityModifier, SchoolModifier } from './abilityModifiers';
 import { combineAbilityModifiers } from './abilityModifiers';
 import {
@@ -760,7 +760,8 @@ function rollTable(
     // No table. Either it lands flatly, or -- for a damage-over-time tick in
     // this ruleset -- it lands and rolls only for a crit.
     if (!request.critFrom) {
-      return { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [] };
+      // No table and no crit table: it lands flatly and could never crit.
+      return { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [], critChance: 0 };
     }
     return rollPeriodicCrit(request, context, modifier);
   }
@@ -966,15 +967,19 @@ function rollPeriodicCrit(
     modifier,
   );
   const roll = context.rng.nextInt(1, ROLL_MAX);
+  // A TICK FACES A CRIT CHANCE TOO, taken from the table that applied it, so a
+  // periodic resolution reports the same quantity a rolled one does.
+  const critChance = toPercent(chances.crit) / 100;
   if (roll <= chances.crit) {
     return {
       outcome: 'crit',
       avoided: false,
       damageMultiplier: chances.critMultiplier,
       rolls: [roll],
+      critChance,
     };
   }
-  return { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [roll] };
+  return { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [roll], critChance };
 }
 
 /** Draw the weapon's damage variance and resolve its contribution. */
@@ -1377,6 +1382,8 @@ export function dealDamage(
     absorbed: resolution.absorbed,
     overkill,
     periodic: request.periodic ?? false,
+    // What the roll faced. See `DamageTelemetryEvent.critChance`.
+    critChance: attack.critChance,
   });
 
   // Taking damage can generate resource: this is how a warrior builds rage
@@ -1437,6 +1444,13 @@ export function dealDamage(
       critical: resolution.critical,
       // The branch above has already established there is one.
       attackTable: request.attackTable,
+      /*
+       * FROM THE ATTACK AND NOT FROM THE DAMAGE. `AttackResolution` is where
+       * the roll happened and `DamageResolution` is about amounts -- widening
+       * the second to carry a crit CHANCE would put a table figure in the
+       * object that reports mitigation.
+       */
+      critChance: attack.critChance,
     };
     runReactions(context, source, 'dealt', event);
     runReactions(context, target, 'taken', event);
@@ -1464,6 +1478,8 @@ export function dealDamage(
       amount: resolution.amount,
       weaponSlot: request.weaponSlot,
       critical: resolution.critical,
+      // The crit table the tick borrowed from; see `rollPeriodicCrit`.
+      critChance: attack.critChance,
     };
     runReactions(context, source, 'periodicDealt', event);
   }

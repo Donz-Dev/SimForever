@@ -77,8 +77,9 @@ describe('block value', () => {
     avoided: false,
     damageMultiplier: 1,
     rolls: [],
+    critChance: 0,
   };
-  const HIT: AttackResolution = { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [] };
+  const HIT: AttackResolution = { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [], critChance: 0 };
 
   const damage = (attack: AttackResolution, blockValue: number) => {
     const target = makeTarget({ stats: { armor: 0, blockValue } });

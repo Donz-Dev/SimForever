@@ -124,8 +124,9 @@ spirit, primaries and attack power are identical on all 28 rows.
 429 against a richest-real 391, and the excess is NOT in the weapon: 335 of
 armour against a richest-real 297. That was already true at 324 before this
 change -- making the weapon correct stopped it being masked rather than
-causing it. Pulling the armour back is a `SHARE_WEIGHT` decision and is the
-owner's.
+causing it. **PUT TO THE OWNER AND DECLINED: "leave the 335 spell power on
+template armour alone for now."** So it stays, as a known gap rather than a
+quiet one, and `SHARE_WEIGHT` is where it would be pulled back.
 
 ### Inner Focus: the fourth instance of one failure, and the first where the surviving half PAID OUT
 
@@ -160,6 +161,68 @@ upgraded to a Raptor Strike on next hit".
 right answer rather than a table plus a special case: an on-next-swing ability
 REPLACES the swing and resolves on `melee-special`, so "the swing, when it was
 upgraded" and "a special" are already the same set.
+
+### Round sixteen, second pass: three answers, and the bug the first one found
+
+**THE OWNER ANSWERED THE TWO FLAGGED READINGS AND DECLINED THE THIRD ASK**, and
+one of the answers carried a second claim that turned out to be a real bug.
+
+| the question | the answer |
+| --- | --- |
+| which crit Revelation reads | **effective per-spell**, not the sheet |
+| one roll per spell, or per hand | **per hand** |
+| pull the caster set's armour back | **leave it alone for now** |
+
+### The sheet was wrong, and it is why the first reading was wrong
+
+They did not only pick effective crit -- they said **"if the character sheet is
+saying 10.82% it's likely missing proper calculation"**. It was.
+`CharacterSheetPanel` printed `stats.critChance` and `stats.spellCritChance`
+RAW, and `critRating` is the other half of both numbers:
+
+| | sheet said | the engine rolls |
+| --- | --- | --- |
+| Fire Mage, melee | 3.00% | **14.00%** |
+| Fire Mage, spell | 10.82% | **21.82%** |
+| 2H Arms, melee | 25.01% | **38.44%** |
+
+**ALL 28 PROFILES, IN BOTH ROWS, AND NO FIGURE EVER MOVED** -- nothing in
+`engine`, `game` or `simulator` reads the panel, and the engine always called
+`critChanceFrom`. What it cost was a person: Revelation's proc rate was
+designed against the 10.82% on that panel and shipped in a PR naming that
+figure as the thing to check.
+
+**THE PANEL'S OWN COMMENT STATED THE RULE TWENTY LINES ABOVE THE BROKEN PAIR**,
+about spell power going through "the same function `dealDamage` ... use, so the
+sheet cannot disagree with the fight". And the HASTE row beside them was always
+correct, because `hasteMultiplierFrom` is the engine's own function. **Crit was
+the one stat on that panel read straight off the block**, which is exactly what
+made it invisible: every neighbour was right.
+
+**THE SPELL ROW WAS ALSO GATED ON THE FLAT STAT**, so a build carrying its crit
+entirely as RATING showed no spell crit row at all -- an absence that reads as
+"this character has none".
+
+### And a two-sigma fluctuation nearly became a second bug
+
+Re-measured against the effective reading, Revelation's rate came back at
+**1.3x its expectation with every one of the five ability rows high** -- which
+is this project's own "all thirteen moved DOWN" tell for a systematic fault.
+It was noise.
+
+What settled it, in order: driving the reaction **200,000 times at five FIXED
+crit chances**, where it reproduces the formula to three decimal places; and
+then **400 fights**, where z = -0.33. At 200 fights it reads 5.009% against an
+expected 4.990%.
+
+**A PROC RATE IS A BINOMIAL AND SIXTY FIGHTS IS NOT A SAMPLE.**
+`probe_revelation.ts` prints z now, because the percentages either side of it
+look equally convincing at any sample size -- and because the honest version of
+"is this proc right" is a sigma, not two decimal places.
+
+**THE RATE ITSELF ROUGHLY HALVED, which is the ruling doing its work**: the
+effective crit on an eligible spell is 27.9% against the sheet's 21.8%, so
+procs go 1.95 to 1.12 a fight.
 
 ### What the panel could not be shown doing
 

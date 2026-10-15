@@ -132,7 +132,7 @@ describe('the armor-penetration claim has expired everywhere', () => {
           school: 'physical',
           baseAmount: 1000,
         },
-        { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [] },
+        { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [], critChance: 0 },
       ).amount;
     };
 

@@ -28,6 +28,7 @@ import { PRESETS_BY_ID } from '../src/profiles/presets';
 import { characterAtCombatStart, runProfile } from '../src/simulator';
 import { REVELATION_ENCHANT_ID } from '../src/game/items/foreverEnchants';
 import { revelationChance } from '../src/game/items/procs';
+import { spellCritChanceFrom } from '../src/engine';
 
 const PRESET = process.env.PRESET ?? 'mage_fire';
 const SEEDS = Number(process.env.SEEDS ?? 20);
@@ -44,13 +45,17 @@ const profile = {
 };
 
 const actor = characterAtCombatStart(profile)!;
-const crit = actor.stats.effective.spellCritChance;
+const sheetCrit = spellCritChanceFrom(actor.stats.effective) * 100;
 
 console.log(`${PRESET}, Revelation on ${slot}`);
 console.log(
-  `  spell crit ${crit.toFixed(2)}% on the character sheet` +
-    `  ->  ${(revelationChance(crit) * 100).toFixed(3)}% per eligible spell`,
+  `  spell crit ${sheetCrit.toFixed(2)}% on the character sheet` +
+    `  ->  ${(revelationChance(sheetCrit / 100) * 100).toFixed(3)}% if the SHEET decided it`,
 );
+console.log(
+  '  -- but the owner ruled EFFECTIVE per-spell crit, which is higher and varies by spell,',
+);
+console.log('     so the expected rate is computed per event below.');
 
 /*
  * SWINGS ARE EXCLUDED BY NAME because the damage TELEMETRY event does not carry
@@ -68,6 +73,8 @@ let spellDamage = 0;
 let inWindow = 0;
 let inWindowCrit = 0;
 let inWindowMiss = 0;
+let expectedProcs = 0;
+let critChanceSum = 0;
 
 for (let seed = 1; seed <= SEEDS; seed += 1) {
   const run = runProfile(
@@ -98,7 +105,17 @@ for (let seed = 1; seed <= SEEDS; seed += 1) {
     spellDamage += 1;
     if (event.outcome === 'crit') crits += 1;
     // "fails to critically strike": landed, and not a crit.
-    if (event.outcome === 'hit') eligible += 1;
+    if (event.outcome === 'hit') {
+      eligible += 1;
+      /*
+       * THE EXPECTATION IS SUMMED PER EVENT, not computed once, because the
+       * rate now depends on what THAT spell rolled against -- a Fire Mage's
+       * Scorch carries Improved Scorch's crit and its Fireball does not.
+       */
+      const c = event.critChance ?? 0;
+      critChanceSum += c;
+      expectedProcs += revelationChance(c);
+    }
 
     if (upFrom !== undefined && event.timestamp > upFrom) {
       inWindow += 1;
@@ -118,10 +135,39 @@ console.log(
 console.log(`  ELIGIBLE (landed, no crit) ${per(eligible)} a fight`);
 console.log(`  Revelation procs           ${per(procs)} a fight`);
 console.log(
-  `  measured rate              ${((procs / eligible) * 100).toFixed(3)}%` +
-    `  against an expected ${(revelationChance(crit) * 100).toFixed(3)}%`,
+  `  mean EFFECTIVE crit on an eligible spell  ${((critChanceSum / eligible) * 100).toFixed(2)}%`,
 );
-console.log(`  applied / removed          ${procs} / ${removed}  (equal: the spender fires)`);
+/*
+ * SIGMA, BECAUSE A PROC RATE IS A BINOMIAL AND 2 SIGMA LOOKS EXACTLY LIKE A
+ * BUG. Chasing this cost an hour: at 60 fights the rate read 1.3x its
+ * expectation with EVERY ability row high, which is the "all thirteen moved
+ * down" tell -- and at 400 fights it came back at z = -0.33. What settled it
+ * was driving the reaction 200,000 times at five fixed crit chances, where it
+ * reproduces the formula to three decimal places.
+ *
+ * So the figure to read is z, not the percentages: |z| under about 2 is noise
+ * at this sample size, and SEEDS=400 is what it takes to see a real 10% bias.
+ */
+const sigma = Math.sqrt(expectedProcs * (1 - expectedProcs / Math.max(1, eligible)));
+console.log(
+  `  measured rate              ${((procs / eligible) * 100).toFixed(3)}%` +
+    `  against an expected ${((expectedProcs / eligible) * 100).toFixed(3)}%`,
+);
+console.log(
+  `  procs ${procs} against ${expectedProcs.toFixed(1)} expected, sigma ${sigma.toFixed(1)}` +
+    `  ->  z = ${((procs - expectedProcs) / sigma).toFixed(2)}`,
+);
+/*
+ * ONE OUTSTANDING PER FIGHT IS CORRECT, not a leak: a fight can finish with
+ * the charge unspent, and over 200 fights a handful will. What would be wrong
+ * is a difference that GROWS with the proc count rather than with the fight
+ * count -- that is the spender not firing, which is Inner Focus's failure and
+ * is invisible in every other figure here.
+ */
+console.log(
+  `  applied / removed          ${procs} / ${removed}` +
+    `  (up to ${SEEDS} apart is right -- one unspent charge per fight)`,
+);
 console.log(
   `  spells landing in-window   ${inWindow}, crit ${inWindowCrit}, missed ${inWindowMiss}` +
     `  (crit + miss should be all of them)`,

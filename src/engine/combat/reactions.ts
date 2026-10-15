@@ -42,6 +42,29 @@ export interface AttackEvent {
    * --------------------------------------------------------------------------
    */
   readonly attackTable?: AttackTableKind;
+  /**
+   * The crit chance this attack actually rolled against, as a fraction.
+   *
+   * ==========================================================================
+   * THE EFFECTIVE FIGURE, WHICH IS THE ONLY USEFUL ONE, and it is not the stat
+   * block's. By the time a table is resolved the crit slice has been through
+   * the character's RATING, its per-ABILITY crit, its per-SCHOOL crit, its
+   * per-TABLE crit and whatever the TARGET contributes -- on a Fire Mage the
+   * stat says 21.8% and the spells roll against 34.8%.
+   *
+   * REVELATION IS THE CALLER, and the owner's ruling is what put it here:
+   * asked whether "CharacterSpellCritChance" meant the sheet or the effective
+   * figure, they said effective -- and added that a sheet reading 10.82% was
+   * "likely missing proper calculation". IT WAS: the Character sheet printed
+   * `stats.spellCritChance` raw and ignored `critRating` entirely, on all 28
+   * profiles and in both crit rows.
+   *
+   * REPORTED RATHER THAN RE-DERIVED. A reaction folding five sources for
+   * itself would be a second copy of a rule -- the `isWeaponUse` failure,
+   * where a one-liner several files re-derived was one two of them got wrong.
+   * ==========================================================================
+   */
+  readonly critChance?: number;
 }
 
 /**

@@ -92,6 +92,25 @@ export interface DamageTelemetryEvent extends TelemetryBase {
   readonly overkill: number;
   /** True for periodic (damage-over-time) ticks. */
   readonly periodic: boolean;
+  /**
+   * The crit chance this attack rolled against, as a fraction.
+   *
+   * --------------------------------------------------------------------------
+   * THE EFFECTIVE FIGURE, after the rating, the per-ability crit, the
+   * per-school crit, the per-table crit and the target's contribution -- which
+   * is the only version of it worth recording, and is NOT the stat block's.
+   *
+   * IT MAKES A CRIT RATE AUDITABLE, which nothing here could do before. The
+   * Results panel prints crits over attempts and there was no expectation to
+   * hold it against: the sheet's figure was both wrong and the wrong quantity.
+   * `probe_revelation.ts` reads it to compute a proc's expected rate per
+   * event, because the rate now varies by spell.
+   *
+   * ZERO FOR AN ATTACK THAT COULD NOT CRIT, which `cannotCrit` and a table
+   * with no crit slice both produce.
+   * --------------------------------------------------------------------------
+   */
+  readonly critChance?: number;
 }
 
 export interface HealTelemetryEvent extends TelemetryBase {
