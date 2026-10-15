@@ -18,6 +18,23 @@ type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
  */
 const migrations: Record<number, Migration> = {
   /**
+   * Version 16 added `precombat`, what the character did before the pull.
+   *
+   * --------------------------------------------------------------------------
+   * ABSENT MEANS NONE, so this supplies a constant -- nothing -- and bumps the
+   * version. That is the version 14 decision rather than the version 13 one,
+   * and it turns on the same question: a saved character with no pre-combat
+   * actions genuinely did nothing before the pull, where a saved character
+   * with no priority list was genuinely running the stock one.
+   *
+   * NO FIGURE MOVES, and that is checkable rather than asserted: an empty
+   * pre-combat list runs no casts, so every one of the 75 combat-log hashes is
+   * unchanged.
+   * --------------------------------------------------------------------------
+   */
+  15: (profile) => ({ ...profile }),
+
+  /**
    * Version 15 split the Weapon Effect row into MAIN HAND and OFF HAND.
    *
    * ============================================================================

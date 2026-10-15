@@ -44,4 +44,25 @@ export interface SimulationConfig {
    * Use for opening buffs, pre-pull cooldowns and encounter setup.
    */
   readonly onCombatStart?: (context: SimulationContext) => void;
+
+  /**
+   * Runs at time 0, AFTER the opening auras and BEFORE anything swings.
+   *
+   * ============================================================================
+   * FOR WHAT THE CHARACTER DID BEFORE THE PULL -- a stance, a form, Stealth, a
+   * pre-cast spell. See `runPrecombat`.
+   *
+   * A SECOND HOOK RATHER THAN `onCombatStart`, AND THE ORDER IS THE WHOLE
+   * REASON. `onCombatStart` runs BEFORE the `openingAuras` loop, which is where
+   * a Warrior's stance and a Druid's form are applied -- so a pre-combat action
+   * fired there would be acting on a character that is not yet in its stance,
+   * and Overpower's gate would refuse it. This runs after, so the character the
+   * pre-pull sees is the character the first swing sees.
+   *
+   * AND BEFORE AUTO-ATTACK, so a pre-cast spell does not throw away a swing
+   * that has already been scheduled -- which a pre-combat cast must not do, and
+   * is the other half of why it is not just an ordinary cast at time 0.
+   * ============================================================================
+   */
+  readonly onPrecombat?: (context: SimulationContext) => void;
 }

@@ -176,6 +176,33 @@ export class AbilityBook {
     return Math.max(group, Math.max(0, state.rechargeStartedAt + cooldown - now));
   }
 
+  /**
+   * Treat a cooldown as having started `byMs` earlier than it did.
+   *
+   * ----------------------------------------------------------------------------
+   * FOR A PRE-COMBAT CAST AND NOTHING ELSE. "Use Stealth <= 2 sec before combat
+   * initiates" means the two seconds have already gone by the time the fight
+   * starts, and on the owner's ruling that is real: the cooldown comes back two
+   * seconds sooner.
+   *
+   * IT MOVES THE START RATHER THAN THE REMAINDER, which is what makes it
+   * compose with everything else the book does. `cooldownRemaining` reads
+   * `rechargeStartedAt + cooldown - now`, and a charge system recharges from
+   * that same instant -- so rewinding the start is "it happened earlier" in
+   * every reading, where subtracting from a remainder would be a one-off nudge
+   * that a recharge would then undo.
+   *
+   * CLAMPED AT THE PRESENT. A cooldown rewound past its own length is simply
+   * ready, and `sync` will hand the charge back on the next read -- which is
+   * correct for an ability used long enough before the pull.
+   * ----------------------------------------------------------------------------
+   */
+  rewindCooldown(abilityId: string, byMs: Milliseconds): void {
+    const state = this.states.get(abilityId);
+    if (!state || state.rechargeStartedAt === null) return;
+    state.rechargeStartedAt -= byMs;
+  }
+
   /** Consume a charge and start its recharge. Returns false if none were up. */
   consumeCharge(abilityId: string, now: Milliseconds): boolean {
     const ability = this.abilities.get(abilityId);

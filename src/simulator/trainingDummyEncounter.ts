@@ -1,5 +1,5 @@
 import type { AuraDefinition, Combatant, SimulationConfig } from '../engine';
-import { seconds } from '../engine';
+import { runPrecombat, seconds } from '../engine';
 import type { CharacterProfile } from '../profiles';
 import { createPlayer } from '../game/actors/createPlayer';
 import { createForeverAttackChances } from '../game/combat/attackChances';
@@ -141,6 +141,30 @@ export function trainingDummyEncounter(
      * on a new profile and on every migrated one, so the difference between
      * this and the old `BATTLE_FURY` is entirely that somebody asked for it.
      */
+    /*
+     * WHAT THE CHARACTER DID BEFORE THE PULL.
+     *
+     * ------------------------------------------------------------------------
+     * AFTER the opening auras and BEFORE anything swings, which is what
+     * `onPrecombat` exists for and is not what `onCombatStart` below would
+     * give: that one runs before stances and forms are applied, so a
+     * pre-combat Overpower would be refused for being out of a stance the
+     * character is about to be in.
+     *
+     * THE PLAYER ONLY. A pet does what its owner's pet rotation says and has
+     * no pre-pull of its own, and a pre-combat list naming an ability the pet
+     * happens to share would otherwise fire twice.
+     * ------------------------------------------------------------------------
+     */
+    onPrecombat: (context) => {
+      const actions = profile.precombat ?? [];
+      if (actions.length === 0) return;
+      for (const actor of context.combatants) {
+        if (actor.kind !== 'player') continue;
+        runPrecombat(context, actor, actions);
+      }
+    },
+
     onCombatStart: (context) => {
       /*
        * DEMONIC SACRIFICE IS APPLIED HERE RATHER THAN CAST.

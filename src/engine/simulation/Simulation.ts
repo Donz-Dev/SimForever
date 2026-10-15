@@ -491,6 +491,13 @@ export class Simulation implements SimulationContext {
       for (const aura of actor.openingAuras) this.applyAura(actor, aura, actor.id);
     }
 
+    /*
+     * WHAT THE CHARACTER DID BEFORE THE PULL, after the stances and forms
+     * above and before anything swings below. Both halves of that sandwich
+     * matter -- see `SimulationConfig.onPrecombat`.
+     */
+    this.config.onPrecombat?.(this);
+
     for (const actor of this.actors) {
       if (!actor.isAlive) continue;
       startAutoAttack(this, actor);

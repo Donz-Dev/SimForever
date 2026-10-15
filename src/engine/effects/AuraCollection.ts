@@ -493,6 +493,9 @@ export class AuraCollection {
           ? now + remaining + definition.durationMs
           : now + definition.durationMs;
       instance.appliedAt = now;
+      // A refresh IS a new window, even when it lands in the same
+      // millisecond as the last one. See `AuraInstance.revision`.
+      instance.revision += 1;
 
       context.events.cancel(instance.expirationHandle);
       this.scheduleExpiration(context, instance);

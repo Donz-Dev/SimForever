@@ -279,11 +279,12 @@ describe('the profile field', () => {
      * gain one), and the current format is whatever the latest field says.
      * Written out rather than read from the constant, so a bump is deliberate.
      *
-     * 15 NOW, which split the Weapon Effect row into one category per hand.
+     * 16 NOW: 15 split the Weapon Effect row into one category per hand, and
+     * 16 added the pre-combat actions.
      * ------------------------------------------------------------------------
      */
-    expect(CURRENT_PROFILE_VERSION).toBe(15);
-    expect(createDefaultProfile().version).toBe(15);
+    expect(CURRENT_PROFILE_VERSION).toBe(16);
+    expect(createDefaultProfile().version).toBe(16);
     // And a version 10 file still gains a stone, which is the test below.
   });
 

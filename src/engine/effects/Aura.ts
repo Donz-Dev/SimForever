@@ -742,6 +742,28 @@ export class AuraInstance {
     this.expiresAt = definition.durationMs > 0 ? appliedAt + definition.durationMs : Infinity;
   }
 
+  /**
+   * How many times this window has been set -- once on apply, once per refresh.
+   *
+   * ----------------------------------------------------------------------------
+   * IT EXISTS SO SOMETHING CAN ASK "DID THIS CAST TOUCH THAT AURA", which no
+   * other field answers. `runPrecombat` snapshots the auras around a pre-pull
+   * cast and ages whatever the cast applied or refreshed, and the two obvious
+   * discriminators both fail:
+   *
+   *   `appliedAt`   a REFRESH in the same millisecond leaves it unchanged, and
+   *                 everything pre-combat happens at timestamp 0. A Warrior
+   *                 pre-casting Battle Shout over the raid's own copy read as
+   *                 untouched and kept the full two minutes.
+   *   `expiresAt`   unchanged whenever something already at full duration is
+   *                 refreshed, which is the same case.
+   *
+   * It is the same argument `Combatant.castSequence` makes about telling one
+   * USE from another: the timestamp is incidental, and a counter is the fact.
+   * ----------------------------------------------------------------------------
+   */
+  revision = 0;
+
   get id(): string {
     return this.definition.id;
   }

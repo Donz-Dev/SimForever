@@ -5,7 +5,7 @@ import { defaultRotationFor, rotationMatchesBuild, stockListFor } from '../../pr
 import type { AplCondition, AplEntry, DescribeNames } from '../../game/rotations/apl';
 import { describeCondition } from '../../game/rotations/apl';
 import { resolveCombatStyle } from '../../game/character';
-import type { Ability } from '../../engine';
+import type { Ability, PrecombatAction } from '../../engine';
 import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
 import { RACIAL_ABILITIES, racialsFor } from '../../game/racials';
 import { consumableAbilities } from '../../game/buffs/consumables';
@@ -95,6 +95,20 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
     });
   };
 
+  /*
+   * PRE-COMBAT EDITS DO NOT MARK THE LIST `custom`, which is the one thing
+   * worth getting right here: the two are stored apart precisely because the
+   * priority list follows the build and this does not. Adding a pre-pull
+   * Stealth must not stop a `default` list re-deriving when the build changes.
+   *
+   * AN EMPTY LIST IS DROPPED rather than stored as `[]`, the rule `disabled`
+   * already follows: absent and empty are different FILES.
+   */
+  const updatePrecombat = (actions: readonly PrecombatAction[]) => {
+    const { precombat: _dropped, ...rest } = profile;
+    onChange(actions.length > 0 ? { ...rest, precombat: actions } : rest);
+  };
+
   const reset = () => onChange({ ...profile, rotation: defaultRotationFor(profile) });
 
   return (
@@ -139,6 +153,17 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
         </p>
       ) : null}
 
+      {/*
+        * ABOVE THE LIST, which is where the owner asked for it and is the
+        * order the fight happens in.
+        */}
+      <PrecombatSection
+        actions={profile.precombat ?? []}
+        abilities={abilities}
+        nameOf={nameOf}
+        onChange={updatePrecombat}
+      />
+
       <AplEntries
         list={list}
         names={names}
@@ -151,6 +176,135 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
 
       <AddEntry abilities={abilities} onAdd={(id) => update(addEntry(list.entries, id))} />
     </Panel>
+  );
+}
+
+/**
+ * What the character did before the pull.
+ *
+ * ==============================================================================
+ * "A SMALL SECTION ABOVE THE MAIN APL CONTROLLER - BUT WITHIN THE SAME PANEL",
+ * the owner's own placement, and it reads in the order the fight happens:
+ * what was done before the pull, then what is done during it.
+ *
+ * IT IS STORED ON THE PROFILE ROOT RATHER THAN ON `rotation`, which is the one
+ * place where where-it-is-edited and where-it-is-stored differ.
+ * `syncDefaultRotation` REPLACES a `default` rotation object whenever the
+ * build changes -- a talent, a stance, a class, even a consumable selection --
+ * and a pre-combat list kept inside it would be wiped by any of them with
+ * nothing on screen to say so.
+ *
+ * THE LEAD TIME IS REAL, on the owner's ruling: a buff used two seconds early
+ * has two seconds less left at the pull, and a cooldown comes back two seconds
+ * sooner. The hint under the controls says so, because a number that LOOKS
+ * like documentation and is actually simulated is worth stating.
+ * ==============================================================================
+ */
+function PrecombatSection({
+  actions,
+  abilities,
+  nameOf,
+  onChange,
+}: {
+  readonly actions: readonly PrecombatAction[];
+  readonly abilities: readonly { readonly id: string; readonly name: string }[];
+  readonly nameOf: (abilityId: string) => string;
+  readonly onChange: (actions: readonly PrecombatAction[]) => void;
+}) {
+  const replace = (index: number, action: PrecombatAction) =>
+    onChange(actions.map((current, at) => (at === index ? action : current)));
+
+  return (
+    <section className="apl-precombat">
+      <h4 className="apl-precombat-title">Before the pull</h4>
+
+      {actions.length === 0 ? (
+        <p className="field-hint">
+          Nothing. Add a stance, a form, Stealth or a spell the character casts before combat
+          starts.
+        </p>
+      ) : (
+        <ol className="apl-precombat-list">
+          {actions.map((action, index) => (
+            <li key={`${action.abilityId}-${index}`} className="apl-precombat-row">
+              <select
+                className="apl-ability apl-ability-choice"
+                value={action.abilityId}
+                aria-label="Pre-combat ability"
+                onChange={(event) => replace(index, { ...action, abilityId: event.target.value })}
+              >
+                {/* Kept so a loaded profile naming an ability this build does
+                    not have SAYS so rather than silently showing another. */}
+                {abilities.some((ability) => ability.id === action.abilityId) ? null : (
+                  <option value={action.abilityId}>
+                    {nameOf(action.abilityId)} (not in this build)
+                  </option>
+                )}
+                {abilities.map((ability) => (
+                  <option key={ability.id} value={ability.id}>
+                    {ability.name}
+                  </option>
+                ))}
+              </select>
+
+              <span className="apl-precombat-at">
+                <input
+                  type="number"
+                  min={0}
+                  step={0.5}
+                  value={action.secondsBefore}
+                  aria-label="Seconds before combat"
+                  onChange={(event) =>
+                    replace(index, {
+                      ...action,
+                      secondsBefore: Math.max(0, Number(event.target.value) || 0),
+                    })
+                  }
+                />
+                <span className="apl-precombat-unit">sec before combat</span>
+              </span>
+
+              <button
+                type="button"
+                title="Remove this pre-combat action"
+                onClick={() => onChange(actions.filter((_, at) => at !== index))}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      <select
+        className="apl-sequence-add"
+        value=""
+        aria-label="Add a pre-combat action"
+        onChange={(event) => {
+          if (!event.target.value) return;
+          /*
+           * A NEW ACTION GOES AT THE BOTTOM AND DEFAULTS TO ONE SECOND, which
+           * is a figure rather than zero on purpose: zero means "at the pull",
+           * which is what an ordinary priority entry already does, so a
+           * pre-combat row that defaulted to it would do nothing different
+           * and read as broken.
+           */
+          onChange([...actions, { abilityId: event.target.value, secondsBefore: 1 }]);
+        }}
+      >
+        <option value="">+ before the pull…</option>
+        {abilities.map((ability) => (
+          <option key={ability.id} value={ability.id}>
+            {ability.name}
+          </option>
+        ))}
+      </select>
+
+      <p className="field-hint">
+        The lead time is real: a buff used 2 sec early has 2 sec less left at the pull, and a
+        cooldown comes back 2 sec sooner. A pre-cast spell lands the moment combat starts.
+      </p>
+    </section>
   );
 }
 
