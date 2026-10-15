@@ -5,6 +5,7 @@ import { EventPriority, createEvent } from '../events';
 import { sampleStats } from '../logging/statSample';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import { bindModifiers } from '../stats';
+import type { ResourceType } from '../resources/Resource';
 import type { Milliseconds } from '../time';
 import type { AuraDefinition } from './Aura';
 import { AuraInstance } from './Aura';
@@ -302,10 +303,55 @@ export class AuraCollection {
    * different event, and all three exist because "your next 2 Starfires" is a
    * count rather than a duration.
    */
-  consumeCastCharges(context: SimulationContext, matched: readonly AuraInstance[]): void {
+  consumeCastCharges(
+    context: SimulationContext,
+    matched: readonly AuraInstance[],
+    /**
+     * The cast that is spending them, for telemetry only.
+     *
+     * ------------------------------------------------------------------------
+     * OPTIONAL BECAUSE IT IS REPORTING AND NOT BEHAVIOUR. A caller that does
+     * not supply it spends the charges exactly as before and emits nothing,
+     * which keeps every existing test and every hand-driven call working
+     * unchanged. The one real caller -- `castAbility` -- always passes it.
+     *
+     * WHY IT HAS TO BE PASSED IN AT ALL: a free cast emits no
+     * `resource_spent`, so the saving is invisible in the stream and nothing
+     * downstream can reconstruct which ability took the charge. See
+     * `CastChargeEvent`.
+     * ------------------------------------------------------------------------
+     */
+    spentOn?: {
+      readonly actorId: string;
+      readonly abilityId: string;
+      readonly abilityName: string;
+      readonly resource?: ResourceType;
+      readonly saved: number;
+    },
+  ): void {
     for (const instance of matched) {
       const spends = instance.definition.castModifier?.consumedByCast;
       if (!spends) continue;
+
+      /*
+       * EMITTED BEFORE THE CHARGE GOES, so the aura is still there to be
+       * named -- and so the ordering reads the way the combat log prints it:
+       * the spell spends the buff, then the buff fades.
+       */
+      if (spentOn) {
+        context.telemetry.emit({
+          type: 'cast_charge_spent',
+          timestamp: context.clock.now(),
+          actorId: spentOn.actorId,
+          auraId: instance.definition.id,
+          auraName: instance.definition.name,
+          abilityId: spentOn.abilityId,
+          abilityName: spentOn.abilityName,
+          ...(spentOn.resource ? { resource: spentOn.resource } : {}),
+          saved: spentOn.saved,
+        });
+      }
+
       // `all` drops the aura whatever it held: one cast, every stack.
       if (spends === 'stack' && instance.stacks > 1) {
         instance.stacks -= 1;

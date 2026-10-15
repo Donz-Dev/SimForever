@@ -4,7 +4,11 @@ import { Panel } from '../components/Panel';
 import { DonutChart } from '../charts/DonutChart';
 import { UptimeBars } from '../charts/UptimeBars';
 import { ResourceTimeline, resourceTimeline } from '../charts/ResourceTimeline';
-import type { BatchResourceFlow, BatchStatAverages } from '../../analysis/BatchTotals';
+import type {
+  BatchCastCharge,
+  BatchResourceFlow,
+  BatchStatAverages,
+} from '../../analysis/BatchTotals';
 import type { TelemetryEvent } from '../../engine';
 
 interface ResultsPanelProps {
@@ -288,6 +292,107 @@ function ResourceEconomy({ batch }: ResultsPanelProps) {
           durationMs={batch.representative.durationMs}
         />
       ))}
+      {/*
+        * AFTER THE POOLS, because it is the part of their accounting that the
+        * pools themselves cannot show: a free cast emits no `resource_spent`.
+        */}
+      <CastCharges batch={batch} />
+    </>
+  );
+}
+
+/**
+ * What a cast charge was spent on -- Clearcasting and its kin.
+ *
+ * ============================================================================
+ * THE OWNER ASKED FOR THIS IN THE RESOURCES SECTION, and it belongs there for
+ * a reason stronger than placement: a free cast emits no `resource_spent`
+ * event, so the saving is MISSING from the tables above. A Cat Druid's energy
+ * economy adds to 100% while 84 energy a fight goes unmentioned, and nothing
+ * on the page says so.
+ *
+ * NOT CLEARCASTING-ONLY, though that is what was asked for. Eclipse, Maelstrom
+ * Weapon, Missile Barrage, Presence of Mind and Inner Focus all spend a cast
+ * charge, and a table naming three of them would be reporting the smaller half
+ * -- on the Arcane Mage, Missile Barrage saves 3,799 mana a fight against
+ * Clearcasting's 1,173.
+ *
+ * GROUPED BY AURA, because "what was Clearcasting used on" is a question about
+ * one buff and a character can carry two. Sorted by what each saved, which is
+ * a different order from how often: six Missile Barrage casts are worth seven
+ * times five Clearcasting ones.
+ * ============================================================================
+ */
+function CastCharges({ batch }: ResultsPanelProps) {
+  const charges = batch.castCharges;
+  if (charges.length === 0) return null;
+
+  /* By aura, keeping the saving order the analysis layer already sorted into. */
+  const byAura = new Map<string, BatchCastCharge[]>();
+  for (const charge of charges) {
+    const rows = byAura.get(charge.auraId) ?? [];
+    rows.push(charge);
+    byAura.set(charge.auraId, rows);
+  }
+
+  return (
+    <>
+      {[...byAura.values()].map((rows) => {
+        const total = rows.reduce((sum, row) => sum + row.saved, 0);
+        const casts = rows.reduce((sum, row) => sum + row.casts, 0);
+        const resource = rows.find((row) => row.resource)?.resource;
+        const unit = resource ? (RESOURCE_NAMES[resource] ?? resource).toLowerCase() : '';
+
+        return (
+          <section key={rows[0].auraId}>
+            <h3>{rows[0].auraName} — what it was used on</h3>
+            <div className="stat-grid">
+              <Stat label="Charges spent" value={fixed(casts)} />
+              <Stat
+                label={resource ? `${RESOURCE_NAMES[resource] ?? resource} saved` : 'Saved'}
+                value={fixed(total)}
+              />
+            </div>
+            <table className="breakdown">
+              <thead>
+                <tr>
+                  <th>Ability</th>
+                  <th className="numeric">Charges</th>
+                  <th className="numeric">Saved</th>
+                  <th className="numeric">Per charge</th>
+                  <th className="numeric">Share</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={`${row.auraId}::${row.abilityId}`}>
+                    <td>{row.abilityName}</td>
+                    <td className="numeric">{fixed(row.casts)}</td>
+                    <td className="numeric">{fixed(row.saved)}</td>
+                    <td className="numeric">
+                      {row.casts > 0 ? fixed(row.saved / row.casts) : '-'}
+                    </td>
+                    {/*
+                      * SHARE OF THE CHARGES, NOT OF THE SAVING, and the two
+                      * disagree whenever a charge lands on something cheap.
+                      * The question "what was it used on" is about where the
+                      * charges WENT -- a charge spent on a free ability is
+                      * 100% wasted and would read as 0% of the saving, which
+                      * is the opposite of what a reader needs to see.
+                      */}
+                    <td className="numeric">{casts > 0 ? pct(row.casts / casts) : '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {total === 0 ? (
+              <p className="field-hint">
+                This buff changes cast time rather than cost, so it saves no {unit || 'resource'}.
+              </p>
+            ) : null}
+          </section>
+        );
+      })}
     </>
   );
 }

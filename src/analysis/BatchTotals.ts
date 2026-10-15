@@ -112,6 +112,46 @@ export interface BatchResourceTotals {
   readonly share: number;
 }
 
+/**
+ * What one aura's charges were spent on, per ability.
+ *
+ * ==============================================================================
+ * THE OWNER'S ASK: "for the classes that have a clearcasting effect -- Elemental
+ * Focus (shaman), Arcane Concentration (mage), and Omen of Clarity (druid) --
+ * have it list in the resources section what clearcasting was used on."
+ *
+ * IT BELONGS IN THE RESOURCES SECTION BECAUSE IT IS A RESOURCE FIGURE AND
+ * NOTHING ELSE CAN SHOW IT. A free cast spends nothing, so it emits no
+ * `resource_spent` event -- which means the saving is missing from the one
+ * table that is supposed to account for every point of a pool. A Druid's energy
+ * economy adds up perfectly while 84 energy a fight goes unmentioned.
+ *
+ * GENERAL, NOT CLEARCASTING-ONLY. Eclipse, Maelstrom Weapon, Missile Barrage,
+ * Presence of Mind and Inner Focus all spend a cast charge, and a report that
+ * named three of them would be the "general field read by only some of its
+ * rules" failure in a panel. The Arcane Mage's own numbers say why that is the
+ * right call: Missile Barrage saves 3,799 mana a fight against Clearcasting's
+ * 1,173, so a Clearcasting-only table would show the smaller half.
+ *
+ * `saved` CAN BE ZERO AND IS STILL WORTH A ROW. Presence of Mind shortens a
+ * cast and reduces no cost, so it reports a charge spent and nothing saved --
+ * which is the honest answer and is also what a charge thrown away on a free
+ * ability looks like.
+ * ==============================================================================
+ */
+export interface BatchCastCharge {
+  readonly auraId: string;
+  readonly auraName: string;
+  readonly abilityId: string;
+  readonly abilityName: string;
+  /** Mean charges spent on this ability per iteration. */
+  readonly casts: number;
+  /** Mean resource saved per iteration. */
+  readonly saved: number;
+  /** The pool the saving came out of, absent when the ability costs nothing. */
+  readonly resource?: string;
+}
+
 export interface BatchResourceFlow {
   /** Which pool this is. Carried so a panel cannot mislabel it. */
   readonly resource: string;
@@ -251,6 +291,16 @@ interface AbilityAccumulator {
   rolledAvoided: number;
 }
 
+interface CastChargeAccumulator {
+  auraId: string;
+  auraName: string;
+  abilityId: string;
+  abilityName: string;
+  casts: number;
+  saved: number;
+  resource?: string;
+}
+
 interface ResourceAccumulator {
   name: string;
   amount: number;
@@ -340,6 +390,8 @@ export class BatchTotals implements TelemetrySink {
    */
   private readonly gained = new Map<string, Map<string, ResourceAccumulator>>();
   private readonly spent = new Map<string, Map<string, ResourceAccumulator>>();
+  /** Cast charges spent, by actor, then by `auraId::abilityId`. */
+  private readonly castCharges = new Map<string, Map<string, CastChargeAccumulator>>();
   /** Every resource any actor actually moved, so the UI can ask for each. */
   private readonly resourcesSeen = new Map<string, Set<string>>();
   private readonly taken = new Map<string, Map<string, TakenAccumulator>>();
@@ -499,6 +551,30 @@ export class BatchTotals implements TelemetrySink {
       event.type === 'aura_removed'
     ) {
       this.recordAura(event);
+      return;
+    }
+
+    if (event.type === 'cast_charge_spent') {
+      const perActor = mapFor(this.castCharges, event.actorId);
+      const key = `${event.auraId}::${event.abilityId}`;
+      const entry = perActor.get(key) ?? {
+        auraId: event.auraId,
+        auraName: event.auraName,
+        abilityId: event.abilityId,
+        abilityName: event.abilityName,
+        casts: 0,
+        saved: 0,
+        resource: event.resource,
+      };
+      entry.casts += 1;
+      entry.saved += event.saved;
+      /*
+       * THE RESOURCE IS TAKEN FROM THE FIRST EVENT THAT HAS ONE. A charge
+       * spent on a free ability carries none, and leaving `undefined` to win
+       * would blank a column that nine other casts filled in.
+       */
+      if (entry.resource === undefined) entry.resource = event.resource;
+      perActor.set(key, entry);
       return;
     }
 
@@ -819,6 +895,34 @@ export class BatchTotals implements TelemetrySink {
       healingReceived: this.per(healing?.received ?? 0),
       overhealing: this.per(healing?.overhealing ?? 0),
     };
+  }
+
+  /**
+   * Cast charges this actor spent, biggest saving first.
+   *
+   * SORTED BY WHAT WAS SAVED rather than by how often, because the question
+   * the table answers is what the proc was WORTH -- and the Arcane Mage shows
+   * why they are different orders: Missile Barrage on Arcane Missiles is six
+   * casts and 3,799 mana, Clearcasting on Arcane Blast is five casts and 518.
+   * A count would put them next to each other.
+   *
+   * A CHARGE THAT SAVED NOTHING STILL GETS A ROW, at the bottom. Presence of
+   * Mind shortens a cast and reduces no cost, which is the honest answer --
+   * and is the same shape as a charge thrown away on a free ability, which is
+   * worth seeing.
+   */
+  castChargesFor(actorId: string): readonly BatchCastCharge[] {
+    return [...(this.castCharges.get(actorId)?.values() ?? [])]
+      .map((entry) => ({
+        auraId: entry.auraId,
+        auraName: entry.auraName,
+        abilityId: entry.abilityId,
+        abilityName: entry.abilityName,
+        casts: this.per(entry.casts),
+        saved: this.per(entry.saved),
+        ...(entry.resource ? { resource: entry.resource } : {}),
+      }))
+      .sort((a, b) => b.saved - a.saved || b.casts - a.casts);
   }
 
   /** Which resources this actor gained or spent at all, in a stable order. */

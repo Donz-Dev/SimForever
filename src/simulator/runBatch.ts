@@ -1,6 +1,7 @@
 import type {
   BatchAbilityTotals,
   BatchDamageTaken,
+  BatchCastCharge,
   BatchResourceFlow,
   BatchSurvival,
   DistributionSummary,
@@ -157,6 +158,18 @@ export interface BatchResult {
    * ----------------------------------------------------------------------------
    */
   readonly resources: readonly BatchResourceFlow[];
+  /**
+   * What an aura's cast charges were spent on -- Clearcasting and its kin.
+   *
+   * BESIDE THE RESOURCES AND NOT INSIDE ONE, because a charge is not keyed by
+   * pool: Presence of Mind saves no resource at all, and a character can spend
+   * charges of two different auras against two different pools. The panel
+   * renders it under the resource sections, which is where the owner asked for
+   * it and is where the saving belongs -- a free cast emits no
+   * `resource_spent`, so this is the only place that pool's missing points are
+   * accounted for.
+   */
+  readonly castCharges: readonly BatchCastCharge[];
   /** Aura uptime on the player, longest first. */
   readonly buffUptime: readonly BatchAuraUptime[];
   /** Aura uptime on the target, longest first. */
@@ -333,6 +346,7 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     resources: totals
       .resourcesFor(playerId)
       .map((resource) => totals.resourceFlow(playerId, resource)),
+    castCharges: totals.castChargesFor(playerId),
     /*
      * EVERY FRIENDLY ACTOR, for the same reason the damage breakdown covers
      * them: a talent the HUNTER spent points on can put a buff on its PET.

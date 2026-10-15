@@ -274,10 +274,24 @@ export function castAbility(
     abilityName: ability.name,
   });
 
-  // Spent here, on the cast that benefits, and AFTER the cost was paid from
-  // the same resolution. An ability that turns out to be on-next-swing below
-  // has still had its charge: it is a cast, and Eclipse counts casts.
-  caster.auras.consumeCastCharges(context, matchedModifiers);
+  /*
+   * Spent here, on the cast that benefits, and AFTER the cost was paid from
+   * the same resolution. An ability that turns out to be on-next-swing below
+   * has still had its charge: it is a cast, and Eclipse counts casts.
+   *
+   * THE SAVING IS WORKED OUT HERE BECAUSE THIS IS THE ONLY PLACE BOTH HALVES
+   * EXIST. `ability.cost` is what the ability declares and `resolved.costAmount`
+   * is what `resolveCast` worked out after every modifier -- and the difference
+   * is the whole of what a Clearcasting charge was worth. Downstream there is
+   * nothing to subtract: a free cast emits no `resource_spent` event at all.
+   */
+  caster.auras.consumeCastCharges(context, matchedModifiers, {
+    actorId: caster.id,
+    abilityId: ability.id,
+    abilityName: ability.name,
+    ...(ability.cost ? { resource: ability.cost.resource } : {}),
+    saved: Math.max(0, (ability.cost?.amount ?? 0) - resolved.costAmount),
+  });
 
   const castTime = castLength(ability, haste, resolved.baseCastTimeMs);
   const abilityContext: AbilityContext = { simulation: context, caster, target, ability };
