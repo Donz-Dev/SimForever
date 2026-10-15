@@ -20,7 +20,7 @@ import type { AplEntry } from '../game/rotations/apl';
  * moves on. Getting this in before anyone has saved anything is much cheaper
  * than retrofitting it later.
  */
-export const CURRENT_PROFILE_VERSION = 14;
+export const CURRENT_PROFILE_VERSION = 15;
 
 export interface CharacterSection {
   readonly name: string;

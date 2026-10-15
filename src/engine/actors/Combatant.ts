@@ -1023,6 +1023,27 @@ export class Combatant {
   }
 
   /**
+   * Flat damage every DIRECT attack against this combatant gains.
+   *
+   * ADDED across auras, the same rule `spellPowerTakenFor` follows and for the
+   * same reason: two debuffs each adding damage are two additions.
+   *
+   * THE CALLER DECIDES WHETHER THE ATTACK QUALIFIES. This returns what the
+   * target carries; `scaleByPower` is the one reader and it asks
+   * `request.periodic` first, because "direct damage" is a property of the
+   * attack rather than of the debuff.
+   */
+  flatDamageTaken(): number {
+    let total = 0;
+    for (const aura of this.auras.active) {
+      const value = aura.definition.flatDamageTaken;
+      if (value === undefined) continue;
+      total += value * (aura.definition.modifiersScaleWithStacks ? aura.stacks : 1);
+    }
+    return total;
+  }
+
+  /**
    * How much more (or less) damage this combatant deals through one table,
    * from auras alone.
    *

@@ -2,12 +2,16 @@ import { describe, expect, it } from 'vitest';
 import type { AttackEvent, Combatant, WeaponSlot } from '../../src/engine';
 import { Simulation, applyHaste, hasteMultiplierFrom } from '../../src/engine';
 import {
+  GIFT_OF_ARTHAS_DAMAGE,
   RAID_BUFFS,
   RAID_BUFFS_BY_ID,
   areExclusive,
   selectedRaidBuffs,
   withRaidBuff,
 } from '../../src/game/buffs/raidBuffs';
+import { JUDGEMENT_OF_THE_CRUSADER } from '../../src/game/auras/paladin';
+import { scaleByPower, spellPowerAgainst } from '../../src/engine';
+import type { DamageRequest } from '../../src/engine';
 import {
   JUDGEMENT_OF_WISDOM_MANA,
   judgementOfWisdomReactions,
@@ -86,12 +90,17 @@ function opened(raidBuffs: readonly string[], attacks = false) {
 
 describe('the catalogue', () => {
   it('has the entries the ruleset owner listed, and no others', () => {
-    // Demoralizing Shout is deliberately absent -- "make it a comment, keep it
-    // inert for now" -- so twenty of the twenty-one originally named, plus
-    // Judgement of Wisdom, which the owner added later.
-    expect(RAID_BUFFS).toHaveLength(21);
+    /*
+     * Demoralizing Shout is deliberately absent -- "make it a comment, keep it
+     * inert for now" -- so twenty of the twenty-one originally named, plus
+     * Judgement of Wisdom, which the owner added later, plus the two they
+     * added later again: Judgement of the CRUSADER and Gift of Arthas.
+     */
+    expect(RAID_BUFFS).toHaveLength(23);
     expect(RAID_BUFFS_BY_ID.has('demoralizing_shout')).toBe(false);
     expect(RAID_BUFFS_BY_ID.has('judgement_of_wisdom')).toBe(true);
+    expect(RAID_BUFFS_BY_ID.has('judgement_of_the_crusader')).toBe(true);
+    expect(RAID_BUFFS_BY_ID.has('gift_of_arthas')).toBe(true);
   });
 
   it('gives every entry a unique id, a name and a description', () => {
@@ -947,5 +956,141 @@ describe('a selected entry lasts the whole fight', () => {
 
     const mark = batch.buffUptime.find((b) => b.auraName === 'Mark of the Wild');
     expect(mark?.uptime ?? 0).toBeGreaterThan(0.99);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Gift of Arthas and Judgement of the Crusader
+// ---------------------------------------------------------------------------
+
+describe('Gift of Arthas, which is flat and school-blind', () => {
+  /*
+   * ==========================================================================
+   * "+8 damage to any direct damage (non-damage over time) source."
+   *
+   * THE ARITHMETIC IS ASSERTED AS A DIFFERENCE, not against a figure. What
+   * matters is that eight points arrive, and the absolute damage of a Fireball
+   * is a coefficient question that belongs to a different test.
+   * ==========================================================================
+   */
+  const resolveTwice = (request: Omit<DamageRequest, 'source' | 'target'>) => {
+    const { simulation, player, target } = opened([]);
+    const base = scaleByPower({ ...request, source: player, target } as DamageRequest);
+    simulation.applyAura(target, RAID_BUFFS_BY_ID.get('gift_of_arthas')!.aura!, target.id);
+    const withBuff = scaleByPower({ ...request, source: player, target } as DamageRequest);
+    return { base, withBuff };
+  };
+
+  it('adds eight to a direct hit', () => {
+    const { base, withBuff } = resolveTwice({
+      abilityId: 'probe',
+      abilityName: 'Probe',
+      school: 'shadow',
+      baseAmount: 100,
+    });
+    expect(withBuff - base).toBe(GIFT_OF_ARTHAS_DAMAGE);
+  });
+
+  it('adds nothing to a damage-over-time tick', () => {
+    /*
+     * "non-damage over time" is the owner's own parenthesis, and `periodic` is
+     * the fact the engine already carries for it -- the same field Genesis,
+     * Wrack's "other" clause and the `dealt` reaction exclusion all read.
+     */
+    const { base, withBuff } = resolveTwice({
+      abilityId: 'probe_dot',
+      abilityName: 'Probe (tick)',
+      school: 'shadow',
+      baseAmount: 100,
+      periodic: true,
+    });
+    expect(withBuff - base).toBe(0);
+  });
+
+  it('is doubled by a crit and cut by armor, which is the owner’s choice', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE READING THEY PICKED, out of two they were offered. "Added to base
+     * damage -- crits and is reduced by armor", against a flat eight bolted on
+     * after mitigation, which is what Classic's own Gift of Arthas does.
+     *
+     * ASSERTED THROUGH THE DAMAGE PIPELINE rather than by reading the field,
+     * because the claim is about WHERE in the pipeline it lands and a constant
+     * check cannot see that. The crit half is the sharper of the two: a flat
+     * post-mitigation eight would add eight to a crit as well.
+     * ------------------------------------------------------------------------
+     */
+    const { simulation, player, target } = opened([]);
+    simulation.applyAura(target, RAID_BUFFS_BY_ID.get('gift_of_arthas')!.aura!, target.id);
+
+    const base = scaleByPower({
+      source: player,
+      target,
+      abilityId: 'probe',
+      abilityName: 'Probe',
+      school: 'shadow',
+      baseAmount: 100,
+    } as DamageRequest);
+
+    // 108 before the crit multiplier, so a 1.5x spell crit is 162 -- twelve
+    // points of the crit are the debuff's, not eight.
+    expect(base).toBe(108);
+    expect(base * 1.5 - 100 * 1.5).toBe(12);
+  });
+
+  it('reaches every school, because the owner named none', () => {
+    for (const school of ['physical', 'shadow', 'fire', 'holy'] as const) {
+      const { base, withBuff } = resolveTwice({
+        abilityId: 'probe',
+        abilityName: 'Probe',
+        school,
+        baseAmount: 100,
+      });
+      expect(withBuff - base, school).toBe(GIFT_OF_ARTHAS_DAMAGE);
+    }
+  });
+});
+
+describe('Judgement of the Crusader as a raid debuff', () => {
+  it('shares the aura id with the Paladin’s own, so the two cannot stack', () => {
+    /*
+     * ========================================================================
+     * THE ONE THING THAT COULD GO WRONG HERE, AND IT WOULD NOT LOOK WRONG.
+     * `spellPowerTakenFor` ADDS across auras -- two debuffs granting Holy power
+     * are one pool -- so a second id would give a Retribution Paladin 322 Holy
+     * spell power the moment somebody ticked this box. A bigger number and no
+     * error, on the build that already casts it.
+     *
+     * The guard is structural: one id, and `AuraCollection.apply` refreshes a
+     * matching id rather than stacking. Same arrangement as `PARTY_CRIT_AURA`,
+     * and for the same reason -- enforcing it at the CHOOSER is what let a
+     * Moonkin read +6% crit.
+     * ========================================================================
+     */
+    const entry = RAID_BUFFS_BY_ID.get('judgement_of_the_crusader')!;
+    expect(entry.aura!.id).toBe(JUDGEMENT_OF_THE_CRUSADER.id);
+    expect(entry.aura!.spellPowerTakenBySchool).toEqual(
+      JUDGEMENT_OF_THE_CRUSADER.spellPowerTakenBySchool,
+    );
+  });
+
+  it('applies 161 Holy spell power once, not twice, with both sources up', () => {
+    const { simulation, player, target } = opened(['judgement_of_the_crusader']);
+    const raidOnly = spellPowerAgainst(player, target, 'holy');
+
+    // And now the Paladin's own, which is the SAME id.
+    simulation.applyAura(target, JUDGEMENT_OF_THE_CRUSADER, player.id);
+    expect(spellPowerAgainst(player, target, 'holy')).toBe(raidOnly);
+  });
+
+  it('lasts the fight, which is what every other enemy entry does', () => {
+    /*
+     * "handled like other debuffs as far as auto-application and duration".
+     * The PALADIN's own is 40 seconds and refreshed by its melee strikes; a
+     * raid buff is an assumption that holds for the whole fight.
+     */
+    const entry = RAID_BUFFS_BY_ID.get('judgement_of_the_crusader')!;
+    expect(entry.aura!.durationMs).toBeGreaterThan(JUDGEMENT_OF_THE_CRUSADER.durationMs);
+    expect(entry.aura!.durationMs).toBe(RAID_BUFFS_BY_ID.get('faerie_fire')!.aura!.durationMs);
   });
 });

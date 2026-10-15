@@ -13,6 +13,16 @@ import {
  * aura or they will eventually disagree about the number.
  */
 import { PARTY_CRIT_AURA, PARTY_CRIT_AURA_PERCENT } from '../auras/druid';
+/*
+ * REUSED, NOT REDECLARED, for the reason the Warrior's two above are: the
+ * Paladin PROVIDES this debuff itself, so the raid buff and the ability have
+ * to be the same aura id or they will eventually disagree -- and worse, would
+ * both apply, because `spellPowerTakenFor` ADDS across auras.
+ */
+import {
+  JUDGEMENT_OF_THE_CRUSADER,
+  JUDGEMENT_OF_THE_CRUSADER_BONUS,
+} from '../auras/paladin';
 import {
   JUDGEMENT_OF_WISDOM_CHANCE,
   JUDGEMENT_OF_WISDOM_MANA,
@@ -541,6 +551,92 @@ const judgementOfWisdom: RaidBuff = {
     'that holds for the whole fight.',
 };
 
+/**
+ * Gift of Arthas: "+8 damage to any direct damage (non-damage over time)
+ * source", the ruleset owner's own wording.
+ *
+ * ----------------------------------------------------------------------------
+ * SCHOOL-BLIND AND FLAT, which is why it needed a field of its own rather than
+ * either of the two neighbours it sits between. `damageTakenBySchool`
+ * multiplies and `spellPowerTakenBySchool` is power scaled by each ability's
+ * coefficient -- see `AuraDefinition.flatDamageTaken`, where the whole argument
+ * is written out.
+ *
+ * IT IS THE SMALLEST RAID DEBUFF HERE AND THE WIDEST. Eight damage is nothing
+ * next to Curse of the Elements' 8%, and it reaches EVERY direct hit a
+ * character lands -- so it is worth most to whoever hits most often, which is
+ * the opposite of how a percentage debuff distributes. A Rogue making forty
+ * strikes a fight collects more than a Mage casting twenty spells.
+ * ----------------------------------------------------------------------------
+ */
+export const GIFT_OF_ARTHAS_DAMAGE = 8;
+
+const giftOfArthas: RaidBuff = {
+  id: 'gift_of_arthas',
+  name: 'Gift of Arthas',
+  detail: `Direct attacks against the target deal ${GIFT_OF_ARTHAS_DAMAGE} extra damage`,
+  source: 'Consumable',
+  appliesTo: 'enemy',
+  aura: {
+    id: 'gift_of_arthas',
+    name: 'Gift of Arthas',
+    durationMs: HOUR,
+    isDebuff: true,
+    flatDamageTaken: GIFT_OF_ARTHAS_DAMAGE,
+  },
+};
+
+/**
+ * Judgement of the Crusader, as something ANOTHER Paladin has already put up.
+ *
+ * ============================================================================
+ * THE SAME AURA ID AS THE PALADIN'S OWN, WHICH IS THE WHOLE DESIGN.
+ *
+ * `spellPowerTakenFor` ADDS across auras -- two debuffs granting Holy power are
+ * one pool -- so a second id would hand a Retribution Paladin 322 Holy spell
+ * power the moment somebody ticked this box: its own judgement plus the raid's.
+ * Sharing the id makes that unrepresentable, because `AuraCollection.apply`
+ * refreshes a matching id instead of stacking. One judgement sits on a target,
+ * which is what the game says too.
+ *
+ * THAT IS THE ARRANGEMENT `PARTY_CRIT_AURA` ALREADY USES for Moonkin Aura and
+ * Leader of the Pack, and it is there because the alternative -- enforcing
+ * exclusivity at the CHOOSER -- failed: `withRaidBuff` governs two raid buff
+ * entries and knows nothing about a talent, so a Moonkin carrying its own form
+ * read +6% crit. A shape that cannot express the mistake needs no chooser.
+ *
+ * ----------------------------------------------------------------------------
+ * ONLY THE DURATION DIFFERS, AND IT IS SPREAD RATHER THAN RETYPED. The
+ * Paladin's own lasts 40 seconds and is refreshed by its melee strikes; a raid
+ * buff here is an assumption that holds for the whole fight, which is what
+ * "handled like other debuffs as far as auto-application and duration" asks
+ * for and what every other enemy entry in this file does.
+ *
+ * SPREADING `JUDGEMENT_OF_THE_CRUSADER` IS WHAT STOPS THE 161 DRIFTING. The
+ * bonus, the name, the id and `isDebuff` all come from the one declaration, so
+ * a Forever change to the figure moves both at once. Retyping it is how the
+ * owner's own Battle Shout and Sunder Armor entries would have drifted, which
+ * is why those reuse their auras too.
+ *
+ * A PALADIN RE-JUDGING SHORTENS IT TO FORTY SECONDS, which is correct rather
+ * than tolerated: at that point the debuff genuinely is that Paladin's, and
+ * their melee strikes refresh it exactly as they always did.
+ * ----------------------------------------------------------------------------
+ */
+const judgementOfTheCrusader: RaidBuff = {
+  id: 'judgement_of_the_crusader',
+  name: 'Judgement of the Crusader',
+  detail: `Target takes up to ${JUDGEMENT_OF_THE_CRUSADER_BONUS} more Holy spell damage`,
+  source: 'Paladin',
+  appliesTo: 'enemy',
+  aura: { ...JUDGEMENT_OF_THE_CRUSADER, durationMs: HOUR },
+  unmodelled:
+    'Its 40-second duration and the melee-strike refresh are the PALADIN’s ' +
+    'version of this debuff and are modelled there. As a raid buff it is an ' +
+    'assumption that holds for the whole fight, which is what every other ' +
+    'entry here is.',
+};
+
 // ---------------------------------------------------------------------------
 
 /** Every entry, in the order the ruleset owner gave them. */
@@ -554,6 +650,8 @@ export const RAID_BUFFS: readonly RaidBuff[] = [
   curseOfRecklessness,
   curseOfTheElements,
   judgementOfWisdom,
+  judgementOfTheCrusader,
+  giftOfArthas,
   blessingOfWisdom,
   blessingOfKings,
   blessingOfMight,

@@ -31,12 +31,14 @@ describe('a new profile', () => {
     expect(simulation.iterations).toBe(3000);
   });
 
-  it('is format 14, which added the gear-sorting stat valuation', () => {
+  it('is format 15, which split the weapon stone into main hand and off hand', () => {
     /*
      * Version 9 added `raidBuffs`, 10 a Rogue's poisons, 11 the Warlock's
-     * stone, 12 the consumables. Written out rather than read from the
-     * constant, so a bump has to be deliberate -- which is this assertion
-     * doing its job: it failed on each bump and was meant to.
+     * stone, 12 the consumables, 13 the priority list, 14 the gear-sorting
+     * stat valuation, and 15 split the Weapon Effect row into one per hand.
+     * Written out rather than read from the constant, so a bump has to be
+     * deliberate -- which is this assertion doing its job: it failed on each
+     * bump and was meant to.
      *
      * IT ALSO CAUGHT A COLLISION, which is new. The stone and the consumables
      * were written on two branches from the same base and BOTH took 11, and
@@ -45,8 +47,8 @@ describe('a new profile', () => {
      * The typechecker found that one (TS1117); this is what says which version
      * the surviving field belongs to.
      */
-    expect(CURRENT_PROFILE_VERSION).toBe(14);
-    expect(createDefaultProfile().version).toBe(14);
+    expect(CURRENT_PROFILE_VERSION).toBe(15);
+    expect(createDefaultProfile().version).toBe(15);
     /*
      * VERSION 14's TWO FIELDS ARE BOTH ABSENT ON A NEW PROFILE, and that is
      * the field's own design rather than an oversight: absent means "derive

@@ -73,6 +73,7 @@ import { castReactionsForEquipment, reactionsForEquipment } from '../items/procs
 import {
   consumableAbilities,
   consumableEffects,
+  weaponDamageBonusFor,
   type ConsumableSelection,
 } from '../buffs/consumables';
 import {
@@ -305,6 +306,38 @@ export function createPlayer(options: PlayerOptions): Combatant {
    */
   if (characterClass === 'hunter' && weapons.ranged) {
     weapons.ranged = withQuiverAndAmmo(weapons.ranged);
+  }
+
+  /*
+   * A COATED WEAPON STONE, PER HAND.
+   *
+   * ==========================================================================
+   * THE DENSE SHARPENING STONE: "+8 base weapon damage to the equipped
+   * weapon". It goes into `baseDamage` and nowhere else -- the same term a
+   * Hunter's ammunition goes into, for the same reason: that is the figure the
+   * damage roll varies and the figure every ability's own flat damage is added
+   * on top of, which is what "base weapon damage" names.
+   *
+   * `powerCoefficient` IS UNTOUCHED, as it is for ammunition. It is
+   * `baseSpeed / 14`, and a sharpening stone does not change how fast the
+   * weapon swings -- recomputing it would be inventing a scaling change out of
+   * a flat bonus.
+   *
+   * AFTER THE QUIVER, which matters not at all today -- the stone reaches only
+   * melee hands and the quiver only the ranged one -- and is the right order
+   * anyway: a stone is coated on the weapon as it is held.
+   *
+   * A HAND WITH NO WEAPON IS SKIPPED by the `?` rather than by a check on the
+   * selection, so an off-hand stone on a sword-and-board warrior lands
+   * nowhere. That is the same answer `consumableReachesCharacter` gives on the
+   * stats side, arrived at from the other direction.
+   * ==========================================================================
+   */
+  for (const hand of ['mainHand', 'offHand'] as const) {
+    const bonus = weaponDamageBonusFor(options.consumables, hand);
+    const weapon = weapons[hand];
+    if (bonus === 0 || !weapon) continue;
+    weapons[hand] = { ...weapon, baseDamage: weapon.baseDamage + bonus };
   }
 
   /*

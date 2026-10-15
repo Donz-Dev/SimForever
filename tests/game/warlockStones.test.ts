@@ -278,10 +278,12 @@ describe('the profile field', () => {
      * the stone is still keyed at 10 (which is what makes a version 10 file
      * gain one), and the current format is whatever the latest field says.
      * Written out rather than read from the constant, so a bump is deliberate.
+     *
+     * 15 NOW, which split the Weapon Effect row into one category per hand.
      * ------------------------------------------------------------------------
      */
-    expect(CURRENT_PROFILE_VERSION).toBe(14);
-    expect(createDefaultProfile().version).toBe(14);
+    expect(CURRENT_PROFILE_VERSION).toBe(15);
+    expect(createDefaultProfile().version).toBe(15);
     // And a version 10 file still gains a stone, which is the test below.
   });
 

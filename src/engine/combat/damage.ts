@@ -586,6 +586,37 @@ export function scaleByPower(request: DamageRequest, weaponDamage = 0): number {
    * ============================================================================
    */
   let total = request.baseAmount + weaponDamage;
+
+  /*
+   * ==========================================================================
+   * AND WHAT THE TARGET ADDS FLATLY. Gift of Arthas: "+8 damage to any direct
+   * damage (non-damage over time) source".
+   *
+   * INSIDE THE BASE AND THEREFORE INSIDE EVERYTHING AFTER IT, which is the
+   * owner's own choice between the two readings they were offered: it is
+   * doubled by a crit and cut by armor on a physical hit, rather than being a
+   * flat eight bolted on after mitigation. The consequence that comes with
+   * that is the off-hand penalty, which `handMultiplier` applies to this sum --
+   * so an off-hand swing gains four, exactly as it gains half of an ability's
+   * own flat damage. That is the rule this function's own header states and
+   * not a special case.
+   *
+   * `periodic` IS THE WHOLE OF "DIRECT". A bleed ticking is not a direct
+   * damage source, and `DamageRequest.periodic` is the fact every other
+   * periodic-aware rule in the engine already reads -- `Genesis`, Wrack's
+   * amplification and the `dealt` reaction exclusion all key off it. Asking
+   * the ability instead would need a flag the one that forgot it is silently
+   * wrong about.
+   *
+   * A CHANNEL'S TICKS ARE NOT PERIODIC and so DO gain it, which is the same
+   * answer Wrack's "other" clause and Touch of the Grave's Arcane Missiles
+   * exception already give: a missile is an ordinary non-periodic damage
+   * event. Said here because "Arcane Missiles gains 8 six times" reads like a
+   * bug and is the ruleset.
+   * ==========================================================================
+   */
+  if (!request.periodic) total += request.target?.flatDamageTaken() ?? 0;
+
   if (coefficient !== 0) {
     /*
      * THE SAME POOL `weaponDamageFor` USES, through the same function, so the
