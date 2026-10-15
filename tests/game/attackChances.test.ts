@@ -7,6 +7,7 @@ import {
   createTrainingDummy,
 } from '../../src/game/actors/createTrainingDummy';
 import { MAX_WEAPON_SKILL_AT_60 } from '../../src/game/actors/weapons';
+import { ROLL_MAX, resolveAttackTable } from '../../src/engine';
 import {
   COMBAT_CONSTANTS,
   createForeverAttackChances,
@@ -309,5 +310,92 @@ describe('the raid boss target', () => {
     const target = boss();
     expect(target.level).toBe(63);
     expect(target.stats.get('armor')).toBe(3731);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+
+describe('crushing blows are flat, and defense reaches them only by the WALK', () => {
+  /*
+   * ==========================================================================
+   * THE RULESET OWNER'S RULING, and it is the opposite of what a Classic
+   * reading gives. Every other figure in the attacks-received table takes
+   * `fromDefense`; `crush` does not, and that asymmetry is DELIBERATE:
+   *
+   *   "this isn't true. Defense CAN reduce crushing blow chance, but only
+   *    indirectly. By obtaining so much of the avoidance stat above crushing
+   *    blow in the combat table to the point that it 'pushes crushing blows
+   *    off the table'."
+   *
+   * WHY THIS TEST EXISTS RATHER THAN A COMMENT ALONE. The comment above the
+   * table groups `bossMiss`, `bossCrit` and `bossCrush` as the same kind of
+   * flat figure, and then two of the three are adjusted -- which is precisely
+   * the shape this project documents as "the shape of a bug" and is how the
+   * 8%-against-9% miss error survived a year. It was raised AS a suspected bug
+   * and the answer was that the implementation is right. A ruling that is only
+   * prose gets re-raised; this fails instead.
+   * ==========================================================================
+   */
+  const receivedTable = (defenseSurplus: number) => {
+    const target = createPlayer({ race: 'orc', characterClass: 'warrior', combatStyle: 'one_hand_shield' });
+    if (defenseSurplus !== 0) {
+      target.stats.addModifier({
+        stat: 'defenseSkill',
+        operation: 'flat',
+        value: defenseSurplus,
+        sourceId: 'probe-defense',
+      });
+    }
+    return createForeverAttackChances()('melee-received', boss(), target);
+  };
+
+  it('does not move the crush chance by a single point, at any defense', () => {
+    const base = receivedTable(0);
+    expect(base.crush).toBe(COMBAT_CONSTANTS.bossCrush);
+    for (const surplus of [10, 60, 115, 400]) {
+      expect(receivedTable(surplus).crush, `surplus ${surplus}`).toBe(COMBAT_CONSTANTS.bossCrush);
+    }
+  });
+
+  it('DOES move miss and crit, which is the asymmetry that looks like a bug', () => {
+    /*
+     * ASSERTED SO THE RULING IS LEGIBLE AS A CHOICE. If every figure were flat
+     * there would be nothing to explain; what needs recording is that two of
+     * the three named constants scale and the third does not.
+     */
+    const base = receivedTable(0);
+    const more = receivedTable(100);
+    expect(more.miss).toBeGreaterThan(base.miss);
+    expect(more.dodge).toBeGreaterThan(base.dodge);
+    expect(more.parry).toBeGreaterThan(base.parry);
+    expect(more.crit).toBeLessThan(base.crit);
+    expect(more.crush).toBe(base.crush);
+  });
+
+  it('pushes crush off the table once the outcomes ABOVE it fill the roll space', () => {
+    /*
+     * THE OWNER'S ACTUAL MECHANISM, demonstrated on the walk rather than
+     * described. `melee-received` resolves miss, dodge, parry, block, crush,
+     * crit in that order and `walk` accumulates a ceiling, so when the first
+     * four sum to the whole roll space no roll can reach crush -- even though
+     * `crush` is still a flat 15%.
+     */
+    const chances = {
+      ...receivedTable(0),
+      miss: 2500,
+      dodge: 2500,
+      parry: 2500,
+      block: 2500,
+    };
+    expect(chances.crush).toBe(COMBAT_CONSTANTS.bossCrush);
+
+    const outcomes = new Set<string>();
+    for (const roll of [1, 2500, 2501, 5000, 7500, 9999, ROLL_MAX]) {
+      outcomes.add(
+        resolveAttackTable('melee-received', chances, { nextInt: () => roll } as never).outcome,
+      );
+    }
+    expect(outcomes.has('crush')).toBe(false);
+    expect(outcomes).toEqual(new Set(['miss', 'dodge', 'parry', 'block']));
   });
 });
