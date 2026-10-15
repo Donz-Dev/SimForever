@@ -1,3 +1,4 @@
+import type { PrecombatAction } from '../engine';
 import type { PartialStats } from '../engine';
 import type { ClassId, CombatStyleId, RaceId, StanceId } from '../game/character';
 import type { Equipment } from '../game/items/Item';
@@ -20,7 +21,7 @@ import type { AplEntry } from '../game/rotations/apl';
  * moves on. Getting this in before anyone has saved anything is much cheaper
  * than retrofitting it later.
  */
-export const CURRENT_PROFILE_VERSION = 14;
+export const CURRENT_PROFILE_VERSION = 16;
 
 export interface CharacterSection {
   readonly name: string;
@@ -293,6 +294,34 @@ export interface CharacterProfile {
    */
   readonly rotation: StoredRotation;
   /**
+   * What the character did BEFORE the pull, in the owner's own framing.
+   *
+   * ============================================================================
+   * "A way to capture pre-combat events a character can do. Things like
+   * swapping into berserker stance, shadow form, cat form, going stealth,
+   * pre-casting a spell... 'Use Stealth <= 2 sec before combat initiates',
+   * 'Cast Fireball <= 2.5 sec before combat initiates'."
+   *
+   * ON THE PROFILE ROOT RATHER THAN INSIDE `rotation`, AND THAT IS NOT
+   * COSMETIC. `syncDefaultRotation` REPLACES the whole `StoredRotation` object
+   * whenever a `default` list stops matching the build -- which happens on a
+   * talent change, a stance change, a class change and a consumable selection.
+   * A pre-combat list stored in there would be silently wiped by any of them,
+   * and the panel would simply show it gone.
+   *
+   * IT IS SHOWN IN THE APL PANEL ANYWAY, which is what the owner asked for --
+   * "a small section above the main APL controller, but within the same
+   * panel". Where a thing is EDITED and where it is STORED are different
+   * questions, and this is the one case so far where they differ.
+   *
+   * OPTIONAL, AND ABSENT MEANS NONE, which is the `statValuation` decision:
+   * every profile saved before this behaves exactly as it did, and the engine
+   * runs no pre-combat action for a character that declares none. Arrived in
+   * format version 16.
+   * ============================================================================
+   */
+  readonly precombat?: readonly PrecombatAction[];
+  /**
    * What a point of each stat is worth to this character, for SORTING GEAR.
    *
    * ==========================================================================
@@ -392,6 +421,12 @@ export function createDefaultProfile(): CharacterProfile {
      * class and talents the character actually ends up with.
      */
     rotation: { source: 'default', name: '', entries: [] },
+    /*
+     * ABSENT RATHER THAN EMPTY on a new profile, which is the rule a dropped
+     * `disabled` flag already follows: an absent key and an empty array are
+     * different FILES, and `syncDefaultRotation` and the preset tests compare
+     * profiles by value.
+     */
     character: {
       name: 'Example',
       race: 'human',
@@ -477,5 +512,11 @@ export function cloneProfile(profile: CharacterProfile): CharacterProfile {
      * replaces one, the way every other update here works.
      */
     rotation: { ...profile.rotation, entries: [...profile.rotation.entries] },
+    /*
+     * SPREAD ONLY WHEN PRESENT, because absent and empty are different files
+     * and `cloneProfile` must not turn one into the other -- `presets.test.ts`
+     * compares built profiles by value.
+     */
+    ...(profile.precombat ? { precombat: [...profile.precombat] } : {}),
   };
 }

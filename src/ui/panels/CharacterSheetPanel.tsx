@@ -4,6 +4,7 @@ import { createPlayer } from '../../game/actors/createPlayer';
 import { resistancesFromItems } from '../../game/items/equipment';
 import { characterAtCombatStart } from '../../simulator';
 import { getStance, isTankBuild, resolveStance } from '../../game/character';
+import { critChanceFrom, spellCritChanceFrom } from '../../engine';
 import { createTrainingDummy } from '../../game/actors/createTrainingDummy';
 import { createForeverAttackChances } from '../../game/combat/attackChances';
 import { getClass, resolveCombatStyle, resourceLabel } from '../../game/character';
@@ -92,7 +93,7 @@ function buildPlayer(profile: CharacterProfile, style: CombatStyleId) {
 
 const round = (value: number) => Math.round(value).toLocaleString('en-US');
 
-function warriorRows(profile: CharacterProfile, style: CombatStyleId): readonly SheetRow[] {
+export function warriorRows(profile: CharacterProfile, style: CombatStyleId): readonly SheetRow[] {
   const player = buildPlayer(profile, style);
   const target = createTrainingDummy({
     health: profile.encounter.targetHealth,
@@ -255,7 +256,17 @@ function warriorRows(profile: CharacterProfile, style: CombatStyleId): readonly 
     }
   }
 
-  rows.push({ label: 'Crit Chance', value: `${stats.critChance.toFixed(2)}%` });
+  /*
+   * THROUGH `critChanceFrom`, FOR THE REASON WRITTEN OUT IN `genericRows`:
+   * `critRating` is the other half of this number and was missing here too.
+   * A 2H Arms warrior's sheet said 25.01% where the engine rolls 38.44%.
+   *
+   * THE HASTE ROW DIRECTLY BELOW ALWAYS DID THIS CORRECTLY, which is what
+   * makes the omission visible once somebody looks: `hasteMultiplierFrom` is
+   * the engine's own function and `stats.hasteRating` is never printed raw.
+   * Crit was the one stat on this panel read straight off the block.
+   */
+  rows.push({ label: 'Crit Chance', value: `${(critChanceFrom(stats) * 100).toFixed(2)}%` });
   rows.push({
     label: 'Haste',
     value: `${((hasteMultiplierFrom(stats) - 1) * 100).toFixed(2)}%`,
@@ -265,7 +276,7 @@ function warriorRows(profile: CharacterProfile, style: CombatStyleId): readonly 
 }
 
 /** The fallback, for the eight classes with no considered list yet. */
-function genericRows(profile: CharacterProfile, style: CombatStyleId): readonly SheetRow[] {
+export function genericRows(profile: CharacterProfile, style: CombatStyleId): readonly SheetRow[] {
   const player = buildPlayer(profile, style);
   const stats = player.stats.effective;
   const mana = player.resources.get('mana');
@@ -313,9 +324,44 @@ function genericRows(profile: CharacterProfile, style: CombatStyleId): readonly 
      */
     ...(stats.spellPower !== 0 ? [{ label: 'Spell Power', value: round(stats.spellPower) }] : []),
     ...scopedSpellPowerRows(player),
-    { label: 'Crit Chance', value: `${stats.critChance.toFixed(2)}%` },
-    ...(stats.spellCritChance !== 0
-      ? [{ label: 'Spell Crit Chance', value: `${stats.spellCritChance.toFixed(2)}%` }]
+    /*
+     * ==========================================================================
+     * THROUGH `critChanceFrom` AND `spellCritChanceFrom`, WHICH IS WHAT THE
+     * FIGHT ROLLS AGAINST -- AND THIS PANEL READ THE RAW STAT FOR THE WHOLE
+     * PROJECT.
+     *
+     * `critRating` is the other half of both numbers and it was missing from
+     * both rows, on all 28 profiles. The Fire Mage's sheet said **3.00% melee
+     * crit where the engine rolls 14.00%**, and 10.82% spell crit against a
+     * real 21.82%; the two Warriors were out by thirteen points.
+     *
+     * THE COMMENT TWENTY LINES ABOVE THIS ONE ALREADY STATED THE RULE: spell
+     * power goes through "the same function `dealDamage` and the Paladin's seal
+     * use, so the sheet cannot disagree with the fight about what a Holy point
+     * is worth". The two crit rows directly beneath it did exactly that, which
+     * is this project's own "a note saying a number is derived is not the same
+     * as the number being re-derived".
+     *
+     * NO FIGURE MOVES. Nothing in `engine`, `game` or `simulator` reads this
+     * panel -- the engine always used the right function. What it cost was a
+     * PERSON reading the sheet, and it cost one directly: Revelation's proc
+     * rate was built against the 10.82% shown here before the owner said the
+     * number looked wrong.
+     *
+     * THE SPELL ROW IS GATED ON THE COMPUTED FIGURE, not on the flat stat. A
+     * Forever caster carries its crit as RATING, so a build with no flat spell
+     * crit and 154 rating used to show NO SPELL CRIT ROW AT ALL -- an absence
+     * that reads as "this character has none".
+     * ==========================================================================
+     */
+    { label: 'Crit Chance', value: `${(critChanceFrom(stats) * 100).toFixed(2)}%` },
+    ...(spellCritChanceFrom(stats) !== 0
+      ? [
+          {
+            label: 'Spell Crit Chance',
+            value: `${(spellCritChanceFrom(stats) * 100).toFixed(2)}%`,
+          },
+        ]
       : []),
   ];
 }

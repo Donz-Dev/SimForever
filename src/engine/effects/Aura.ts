@@ -382,6 +382,45 @@ export interface AuraDefinition {
    */
   readonly spellPowerTakenBySchool?: Partial<Record<DamageSchool, number>>;
   /**
+   * Flat damage added to each DIRECT attack against this combatant.
+   *
+   * ============================================================================
+   * GIFT OF ARTHAS IS THE ONLY CALLER: "+8 damage to any direct damage
+   * (non-damage over time) source", the ruleset owner's raid debuff.
+   *
+   * IT IS NOT `spellPowerTakenBySchool` AND IT IS NOT
+   * `damageTakenBySchool`, which are the two neighbours it would otherwise be
+   * folded into and both of which would be wrong in a way that still renders:
+   *
+   *   `damageTakenBySchool`       MULTIPLIES. There is no reading of "+8
+   *                               damage" as a multiplier.
+   *   `spellPowerTakenBySchool`   is POWER, scaled by each ability's own
+   *                               coefficient -- so a seal at 20% would take
+   *                               1.6 of it and an uncoefficiented swing none
+   *                               at all. "Up to 161" is what a power line
+   *                               reads like; a bare "+8 damage" is not.
+   *
+   * SCHOOL-BLIND, because the owner's wording is "any direct damage source"
+   * and names none. A school-keyed version is what both neighbours are, and
+   * adding one here would be inventing a scope the ruling does not have.
+   *
+   * ADDED TO THE BASE, WHICH IS THE OWNER'S OWN CHOICE between the two
+   * readings they were offered -- so it is doubled by a crit and cut by armor
+   * on a physical hit, rather than being a flat 8 bolted on after mitigation.
+   * The consequence they accepted with it is that it sits INSIDE the off-hand
+   * penalty, exactly as an ability's own flat damage does: `(weapon + power +
+   * flat) x 0.5`, which is the rule `scaleByPower` already states.
+   *
+   * NON-PERIODIC IS CHECKED AT THE ONE READER rather than declared here,
+   * because `DamageRequest.periodic` is the fact and this is the field. A tick
+   * of a bleed is not a direct damage source.
+   *
+   * ADDED ACROSS AURAS, the rule `spellPowerTakenBySchool` already follows: two
+   * debuffs each adding damage are two additions, not a product.
+   * ============================================================================
+   */
+  readonly flatDamageTaken?: number;
+  /**
    * Multiplies the damage this combatant DEALS through one attack table.
    *
    * ----------------------------------------------------------------------------
@@ -702,6 +741,28 @@ export class AuraInstance {
     this.appliedAt = appliedAt;
     this.expiresAt = definition.durationMs > 0 ? appliedAt + definition.durationMs : Infinity;
   }
+
+  /**
+   * How many times this window has been set -- once on apply, once per refresh.
+   *
+   * ----------------------------------------------------------------------------
+   * IT EXISTS SO SOMETHING CAN ASK "DID THIS CAST TOUCH THAT AURA", which no
+   * other field answers. `runPrecombat` snapshots the auras around a pre-pull
+   * cast and ages whatever the cast applied or refreshed, and the two obvious
+   * discriminators both fail:
+   *
+   *   `appliedAt`   a REFRESH in the same millisecond leaves it unchanged, and
+   *                 everything pre-combat happens at timestamp 0. A Warrior
+   *                 pre-casting Battle Shout over the raid's own copy read as
+   *                 untouched and kept the full two minutes.
+   *   `expiresAt`   unchanged whenever something already at full duration is
+   *                 refreshed, which is the same case.
+   *
+   * It is the same argument `Combatant.castSequence` makes about telling one
+   * USE from another: the timestamp is incidental, and a counter is the fact.
+   * ----------------------------------------------------------------------------
+   */
+  revision = 0;
 
   get id(): string {
     return this.definition.id;

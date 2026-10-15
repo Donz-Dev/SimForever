@@ -2,7 +2,7 @@ import type { Ability } from '../abilities/Ability';
 import type { ResourceType } from '../resources/Resource';
 import type { Combatant, WeaponSlot } from '../actors/Combatant';
 import type { SimulationContext } from '../simulation/SimulationContext';
-import type { AttackOutcome } from './attackTable';
+import type { AttackOutcome, AttackTableKind } from './attackTable';
 
 /**
  * An attack that has finished resolving, handed to anything reacting to it.
@@ -21,6 +21,50 @@ export interface AttackEvent {
   readonly amount: number;
   readonly weaponSlot: WeaponSlot | undefined;
   readonly critical: boolean;
+  /**
+   * Which combat table resolved it.
+   *
+   * --------------------------------------------------------------------------
+   * ALWAYS SET FOR A `dealt` OR `taken` REACTION, because `dealDamage` only
+   * dispatches those for damage that consulted a table -- the `if
+   * (request.attackTable && !request.periodic)` that builds the event. It is
+   * optional only because the `periodicDealt` branch synthesises an event for a
+   * tick, which rolled no table and must not claim one.
+   *
+   * WHY A REACTION WANTS IT: "a non-periodic SPELL" is a question about the
+   * table and nothing else on this event can answer it. `weaponSlot` says which
+   * hand was used and is undefined for a spell AND for Thunder Clap's ranged
+   * table AND for a seal; `abilityId` would mean listing every spell a class
+   * owns, which is the maintainability trap `SchoolModifiers` exists to avoid.
+   *
+   * Revelation is the first caller -- an enchant that triggers "when a
+   * non-periodic spell fails to critically strike".
+   * --------------------------------------------------------------------------
+   */
+  readonly attackTable?: AttackTableKind;
+  /**
+   * The crit chance this attack actually rolled against, as a fraction.
+   *
+   * ==========================================================================
+   * THE EFFECTIVE FIGURE, WHICH IS THE ONLY USEFUL ONE, and it is not the stat
+   * block's. By the time a table is resolved the crit slice has been through
+   * the character's RATING, its per-ABILITY crit, its per-SCHOOL crit, its
+   * per-TABLE crit and whatever the TARGET contributes -- on a Fire Mage the
+   * stat says 21.8% and the spells roll against 34.8%.
+   *
+   * REVELATION IS THE CALLER, and the owner's ruling is what put it here:
+   * asked whether "CharacterSpellCritChance" meant the sheet or the effective
+   * figure, they said effective -- and added that a sheet reading 10.82% was
+   * "likely missing proper calculation". IT WAS: the Character sheet printed
+   * `stats.spellCritChance` raw and ignored `critRating` entirely, on all 28
+   * profiles and in both crit rows.
+   *
+   * REPORTED RATHER THAN RE-DERIVED. A reaction folding five sources for
+   * itself would be a second copy of a rule -- the `isWeaponUse` failure,
+   * where a one-liner several files re-derived was one two of them got wrong.
+   * ==========================================================================
+   */
+  readonly critChance?: number;
 }
 
 /**

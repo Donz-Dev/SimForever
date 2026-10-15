@@ -1003,6 +1003,8 @@ describe('Vengeance stacks three times now, and says non-periodic', () => {
           emit: (event) => {
             if (!('auraId' in event) || event.auraId !== 'vengeance') return;
             if (event.type === 'aura_removed') return;
+            // `cast_charge_spent` carries an `auraId` too and has no stacks.
+            if (event.type === 'cast_charge_spent') return;
             seen += 1;
             peak = Math.max(peak, event.stacks ?? 0);
           },

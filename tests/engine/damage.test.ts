@@ -20,24 +20,28 @@ const HIT: AttackResolution = {
   avoided: false,
   damageMultiplier: 1,
   rolls: [],
+  critChance: 0,
 };
 const CRIT: AttackResolution = {
   outcome: 'crit',
   avoided: false,
   damageMultiplier: 2,
   rolls: [],
+  critChance: 0,
 };
 const GLANCE: AttackResolution = {
   outcome: 'glance',
   avoided: false,
   damageMultiplier: 0.7,
   rolls: [],
+  critChance: 0,
 };
 const MISS: AttackResolution = {
   outcome: 'miss',
   avoided: true,
   damageMultiplier: 0,
   rolls: [],
+  critChance: 0,
 };
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';

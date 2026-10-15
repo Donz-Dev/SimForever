@@ -720,8 +720,9 @@ describe('rage from damage taken, against armor and against a block', () => {
     avoided: false,
     damageMultiplier: 1,
     rolls: [],
+    critChance: 0,
   };
-  const HIT: AttackResolution = { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [] };
+  const HIT: AttackResolution = { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [], critChance: 0 };
 
   /** What one blow of `baseAmount` pays a warrior of `maxHealth`. */
   function rageFrom(attack: AttackResolution, armor: number, blockValue: number): number {

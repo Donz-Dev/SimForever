@@ -499,6 +499,19 @@ export function validateProfile(value: unknown): ValidationResult {
         entries: validated.rotation.entries.map((entry) => ({ ...entry })),
       },
       /*
+       * NAMED HERE, WHICH IS THE WHOLE POINT OF THE THREE COMMENTS BELOW.
+       * This rebuild drops any field it does not mention, and has silently
+       * dropped `stance`, then `petFamily`, then very nearly `rotation` --
+       * twice AFTER a comment recording the lesson. `roundTrip.test.ts`
+       * compares the WHOLE profile, which is what catches the next one.
+       *
+       * ABSENT STAYS ABSENT, so a profile with no pre-combat actions comes
+       * back byte-identical rather than gaining an empty array.
+       */
+      ...(Array.isArray(validated.precombat)
+        ? { precombat: validated.precombat.map((action) => ({ ...action })) }
+        : {}),
+      /*
        * NAMED HERE FOR THE REASON THE THREE ABOVE ARE. This rebuild has now
        * silently dropped `stance`, then `petFamily`, then very nearly
        * `rotation` -- three fields, two of them after a comment recording that

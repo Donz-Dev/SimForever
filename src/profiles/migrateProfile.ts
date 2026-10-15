@@ -3,6 +3,8 @@ import type { CharacterProfile } from './CharacterProfile';
 import { defaultRotationFor } from './rotation';
 import { DEFAULT_POISON_LOADOUT } from '../game/reactions/poisons';
 import { DEFAULT_WARLOCK_STONE } from '../game/buffs/warlockStones';
+import { getCombatStyle } from '../game/character/combatStyles';
+import type { CombatStyleId } from '../game/character/ids';
 
 /** Transforms a profile one version forward. */
 type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
@@ -15,6 +17,83 @@ type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
  * files to the new shape.
  */
 const migrations: Record<number, Migration> = {
+  /**
+   * Version 16 added `precombat`, what the character did before the pull.
+   *
+   * --------------------------------------------------------------------------
+   * ABSENT MEANS NONE, so this supplies a constant -- nothing -- and bumps the
+   * version. That is the version 14 decision rather than the version 13 one,
+   * and it turns on the same question: a saved character with no pre-combat
+   * actions genuinely did nothing before the pull, where a saved character
+   * with no priority list was genuinely running the stock one.
+   *
+   * NO FIGURE MOVES, and that is checkable rather than asserted: an empty
+   * pre-combat list runs no casts, so every one of the 75 combat-log hashes is
+   * unchanged.
+   * --------------------------------------------------------------------------
+   */
+  15: (profile) => ({ ...profile }),
+
+  /**
+   * Version 15 split the Weapon Effect row into MAIN HAND and OFF HAND.
+   *
+   * ============================================================================
+   * THE OWNER'S INSTRUCTION -- "weapons stones need to be split out into MH /
+   * OH to be able to control this precisely" -- and the migration's whole job
+   * is that no saved character's result moves.
+   *
+   * WHAT THE OLD FIELD MEANT: `weapon_effect` was ONE selection with
+   * `perWeapon: true`, which `consumableEffects` applied once per weapon that
+   * SWINGS. So a dual-wielder's single choice was worth two stones and
+   * everybody else's was worth one.
+   *
+   * SO BOTH HANDS GET IT, AND THAT REPRODUCES BOTH CASES. A dual-wielder now
+   * carries two explicit stones where it carried one applied twice; everyone
+   * else carries an off-hand stone that reaches nothing, because
+   * `consumableReachesCharacter` refuses an off-hand row unless a second
+   * weapon swings. Same arithmetic from the other direction.
+   *
+   * ----------------------------------------------------------------------------
+   * IT READS THE STYLE ANYWAY, AND NOT FOR THE ARITHMETIC. The off-hand entry
+   * would be harmless on a two-hander, but the PANEL would show a stone
+   * selected on a slot the character does not have -- a control whose only
+   * honest answer is "nothing". A migration is allowed to look at the rest of
+   * the profile (version 13 established that), so a build that cannot swing a
+   * second weapon simply does not get the second row.
+   *
+   * THE ID CARRIES THE HAND, which is this file's own uniqueness rule:
+   * `CONSUMABLES_BY_ID` throws at module load on a duplicate, so the two
+   * categories cannot share `weapon_melee_crit`. A saved `weapon_melee_crit`
+   * therefore becomes `weapon_melee_crit_main_hand`, and an id the table no
+   * longer carries is DROPPED rather than guessed at -- the rule
+   * `selectedConsumables` already follows for an unknown selection.
+   * ----------------------------------------------------------------------------
+   */
+  14: (profile) => {
+    const consumables = (profile.consumables ?? {}) as Record<string, string>;
+    const chosen = consumables.weapon_effect;
+    if (!chosen) return { ...profile };
+
+    const { weapon_effect: _dropped, ...rest } = consumables;
+    /*
+     * CAST THROUGH `CombatStyleId` BECAUSE A SAVED FILE IS JUST JSON. An id the
+     * table does not carry returns undefined and the build keeps one stone,
+     * which is the same failure mode a stale consumable id gets: dropped
+     * rather than guessed at.
+     */
+    const style = (profile.character as { combatStyle?: CombatStyleId } | undefined)?.combatStyle;
+    const dualWields = style !== undefined && getCombatStyle(style)?.offHand === 'weapon';
+
+    return {
+      ...profile,
+      consumables: {
+        ...rest,
+        [`weapon_effect_main_hand`]: `${chosen}_main_hand`,
+        ...(dualWields ? { [`weapon_effect_off_hand`]: `${chosen}_off_hand` } : {}),
+      },
+    };
+  },
+
   /**
    * Version 14 added `statValuation` and `benchmarkTemplateId`.
    *

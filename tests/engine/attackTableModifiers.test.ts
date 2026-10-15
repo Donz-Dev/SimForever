@@ -137,19 +137,34 @@ describe('what each Hunter talent selects', () => {
     expect(m.for('melee-auto').damageMultiplier ?? 1).toBe(1);
   });
 
-  it("gives Predator's Edge both MELEE tables, swing included", () => {
+  it("gives Predator's Edge the melee SPECIAL table and not the swing", () => {
     /*
-     * It says "your melee critical strike damage", not "your melee
-     * abilities", so the swing counts -- and for a two-hander build the swing
-     * is most of the damage. Worth +15.5 DPS on its own.
+     * ------------------------------------------------------------------------
+     * THE OWNER'S RULING OUTRANKS THE WORDING, AND IT HAS NOW DONE SO IN BOTH
+     * DIRECTIONS ON TWO TALENTS.
+     *
+     * This assertion used to read "both MELEE tables, swing included", on the
+     * argument this project applies everywhere else: the tooltip says "your
+     * melee critical strike damage" rather than "your melee abilities", so by
+     * CLAUDE.md's own abilities-or-weapons rule the swing counts. Rend and
+     * Tear's stated 1.09x widened a talent past that rule; this one narrows a
+     * talent inside it. Both are the owner's figure beating the sentence.
+     *
+     * THE EXCEPTION THEY NAMED COSTS NO CODE: "unless it was upgraded to a
+     * Raptor Strike on next hit". An on-next-swing ability REPLACES the swing
+     * and resolves on `melee-special`, so the one table below is already both
+     * halves of the ruling. `hunterGapsClosed.test.ts` pins that through
+     * Raptor Strike's own declaration, which is the half this file cannot see.
      *
      * +30% of the BONUS half: a melee crit multiplies by 2, so the bonus is
      * 1.0 and 30% of it is 0.3, giving x2.3 rather than x2.6.
+     * ------------------------------------------------------------------------
      */
     const m = modifiersFor('lw_melee');
-    expect(m.for('melee-auto').critMultiplierBonus).toBeCloseTo(0.3, 6);
     expect(m.for('melee-special').critMultiplierBonus).toBeCloseTo(0.3, 6);
-    // And no longer the ranged one, which is what it used to over-apply to.
+    expect(m.for('melee-auto').critMultiplierBonus ?? 0).toBe(0);
+    // And not the ranged one, which is what it over-applied to before it was
+    // scoped to the melee tables at all.
     expect(m.for('ranged-special').critMultiplierBonus ?? 0).toBe(0);
   });
 
@@ -213,10 +228,17 @@ describe('what it retired', () => {
     );
     expect(predators).toEqual([]);
 
-    // Both clauses, and the off-hand one reads the SECOND number in the row.
+    /*
+     * Both clauses, and the off-hand one reads the SECOND number in the row.
+     *
+     * `melee-special` ALONE, which is the owner's ruling that the talent does
+     * not reach an ordinary swing -- and the Raptor Strike exception they named
+     * needs nothing, because an on-next-swing ability resolves as a SPECIAL.
+     * `melee-auto` reappearing here is a regression.
+     */
     expect(HUNTER_TALENT_EFFECTS.predator_s_edge).toContainEqual({
       kind: 'attackTableCritDamage',
-      tables: ['melee-auto', 'melee-special'],
+      tables: ['melee-special'],
     });
     expect(HUNTER_TALENT_EFFECTS.predator_s_edge).toContainEqual({
       kind: 'offHandDamage',

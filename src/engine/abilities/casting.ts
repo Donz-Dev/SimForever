@@ -44,6 +44,29 @@ export interface CastCheckOptions {
    * channel away and cast nothing.
    */
   readonly ignoreCastLock?: boolean;
+  /**
+   * Answer as though no global cooldown were running.
+   *
+   * ----------------------------------------------------------------------------
+   * FOR ASKING ABOUT A CAST THAT HAS NOT HAPPENED YET -- "if I press Cold Blood
+   * now, will Eviscerate still be castable a moment later". A SEQUENCE entry
+   * commits to every step before casting any of them, and every step after the
+   * first is on the global cooldown the step before it started, so without this
+   * the check would refuse every sequence that exists.
+   *
+   * SAME SHAPE AND SAME JUSTIFICATION AS `ignoreCastLock`: the GCD is checked
+   * THIRD, so it hides the ability's own cooldown, its cost, its stance and its
+   * target -- every one of which is the thing a sequence check actually wants to
+   * know. Reading `on_gcd` as an answer would be the mistake `selectInterrupt`
+   * made with `already_casting`, where every step of the reasoning was true and
+   * the conclusion was backwards.
+   *
+   * IT DOES NOT MAKE A CAST HAPPEN. `castAbility` calls `checkCast` with no
+   * options, so a sequence still waits for the global cooldown like anything
+   * else; this only decides whether it was worth starting.
+   * ----------------------------------------------------------------------------
+   */
+  readonly ignoreGcd?: boolean;
 }
 
 export function checkCast(
@@ -86,7 +109,7 @@ export function checkCast(
    * that the strike after it is not delayed -- and it still has to wait for
    * the current global cooldown to finish before it goes out.
    */
-  if (caster.isOnGcd(now)) {
+  if (!options?.ignoreGcd && caster.isOnGcd(now)) {
     return { ok: false, reason: 'on_gcd' };
   }
 
@@ -176,13 +199,58 @@ export function checkCast(
  *
  * Returns the rejection reason if the ability could not be used.
  */
+/**
+ * How a cast differs from an ordinary one.
+ *
+ * ==============================================================================
+ * ONE FLAG, AND IT IS A MODE RATHER THAN A TWEAK. A PRE-COMBAT cast is the same
+ * ability doing the same thing and is not part of the fight's clock: it was
+ * pressed before the pull, so it starts no global cooldown, throws away no
+ * swing, and its cast time was spent in a bar that is already over.
+ *
+ * SHARED WITH THE ORDINARY PATH RATHER THAN COPIED. Everything that is the SAME
+ * -- the cost and its reduction, the refund arming, the charge, the cooldown,
+ * the telemetry, the cast reactions -- stays in one place. A second cast
+ * function would be a second copy of the resource accounting, and the one that
+ * drifts is the one nobody measures.
+ * ==============================================================================
+ */
+export interface CastOptions {
+  /**
+   * This cast happened BEFORE the pull.
+   *
+   * It skips three things and nothing else: the global cooldown it would
+   * start, the swing timer a cast resets, and the cast time -- the effect
+   * lands at once, because the casting was done before the clock started.
+   *
+   * IT DOES NOT MAKE THE CAST FREE. The mana is spent and the cooldown runs,
+   * which is what a character who opened with a Fireball actually arrives
+   * with. How much of that cooldown has ALREADY elapsed is the caller's job --
+   * see `runPrecombat`.
+   */
+  readonly precombat?: boolean;
+}
+
 export function castAbility(
   context: SimulationContext,
   caster: Combatant,
   ability: Ability,
   target: Combatant | undefined,
+  options?: CastOptions,
 ): CastCheck {
-  const check = checkCast(context, caster, ability, target);
+  /*
+   * A PRE-COMBAT CAST IGNORES THE CLOCK AND NOTHING ELSE. The cost, the
+   * cooldown, the stance and the target are all checked exactly as usual --
+   * which is what stops a pre-combat list being a way to cast things the
+   * character could not otherwise cast.
+   */
+  const check = checkCast(
+    context,
+    caster,
+    ability,
+    target,
+    options?.precombat ? { ignoreCastLock: true, ignoreGcd: true } : undefined,
+  );
   if (!check.ok) return check;
 
   const now = context.clock.now();
@@ -250,7 +318,8 @@ export function castAbility(
     }
   }
 
-  if (triggersGcd(ability)) {
+  // A pre-combat cast starts no global cooldown: the fight has not begun.
+  if (!options?.precombat && triggersGcd(ability)) {
     /*
      * AND AN AURA MAY SHORTEN IT, which is Nature's Grace. Applied here rather
      * than inside `gcdLength` so that function stays a statement of the RULE --
@@ -274,12 +343,36 @@ export function castAbility(
     abilityName: ability.name,
   });
 
-  // Spent here, on the cast that benefits, and AFTER the cost was paid from
-  // the same resolution. An ability that turns out to be on-next-swing below
-  // has still had its charge: it is a cast, and Eclipse counts casts.
-  caster.auras.consumeCastCharges(context, matchedModifiers);
+  /*
+   * Spent here, on the cast that benefits, and AFTER the cost was paid from
+   * the same resolution. An ability that turns out to be on-next-swing below
+   * has still had its charge: it is a cast, and Eclipse counts casts.
+   *
+   * THE SAVING IS WORKED OUT HERE BECAUSE THIS IS THE ONLY PLACE BOTH HALVES
+   * EXIST. `ability.cost` is what the ability declares and `resolved.costAmount`
+   * is what `resolveCast` worked out after every modifier -- and the difference
+   * is the whole of what a Clearcasting charge was worth. Downstream there is
+   * nothing to subtract: a free cast emits no `resource_spent` event at all.
+   */
+  caster.auras.consumeCastCharges(context, matchedModifiers, {
+    actorId: caster.id,
+    abilityId: ability.id,
+    abilityName: ability.name,
+    ...(ability.cost ? { resource: ability.cost.resource } : {}),
+    saved: Math.max(0, (ability.cost?.amount ?? 0) - resolved.costAmount),
+  });
 
-  const castTime = castLength(ability, haste, resolved.baseCastTimeMs);
+  /*
+   * ZERO FOR A PRE-COMBAT CAST, which is the whole of "cast Fireball 2.5
+   * seconds before combat initiates": the three-second bar was spent before
+   * the pull and what is left is the spell landing. The owner's ruling --
+   * "Fireball 2.5s before -> damage at t=0".
+   *
+   * IT IS NOT A SHORTCUT AROUND A CHANNEL. A channel with its ticks skipped
+   * would deliver one tick's worth of effect and look like a whole channel,
+   * so `runPrecombat` refuses one rather than relying on this line.
+   */
+  const castTime = options?.precombat ? 0 : castLength(ability, haste, resolved.baseCastTimeMs);
   const abilityContext: AbilityContext = { simulation: context, caster, target, ability };
 
   // An on-next-swing ability is paid for and armed here; the auto-attack that

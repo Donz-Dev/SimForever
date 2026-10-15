@@ -296,6 +296,21 @@ export const INNER_FOCUS_ABILITY: Ability = {
   name: 'Inner Focus',
   cooldownMs: INNER_FOCUS_COOLDOWN_MS,
   requiresTarget: false,
+  /*
+   * OFF THE GLOBAL COOLDOWN, on the owner's instruction -- "ensure Inner Focus
+   * does not trigger the global cooldown".
+   *
+   * BEING OFF IT MEANS ONE THING: this does not START a global cooldown, so the
+   * spell it is being pressed for can follow immediately. It is still BLOCKED
+   * by one already running, which is the half that reads wrongly -- an entry
+   * for it still has to find a moment the Priest is not mid-GCD.
+   *
+   * IT IS WHY THE BUFF IS WORTH TAKING AT ALL. On the GCD, a free cast plus
+   * 25% crit costs a Mind Flay tick's worth of time to set up; off it, the
+   * charge is free and only the three-minute cooldown bounds it. The same
+   * argument the five racials and all nine mid-fight consumables are off it on.
+   */
+  triggersGcd: false,
   canCast: ({ caster }) => !caster.auras.has('inner_focus'),
   onCast: ({ simulation, caster }) => {
     simulation.applyAura(caster, INNER_FOCUS, caster.id);

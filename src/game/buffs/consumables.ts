@@ -171,6 +171,25 @@ export interface Consumable {
    * --------------------------------------------------------------------------
    */
   readonly classes?: readonly ClassId[];
+  /**
+   * Flat damage added to the base damage of the weapon this is coated onto.
+   *
+   * --------------------------------------------------------------------------
+   * THE DENSE SHARPENING STONE IS THE ONLY CALLER: "+8 base weapon damage to
+   * the equipped weapon".
+   *
+   * IT IS NOT A STAT, AND THERE IS NO STAT IT COULD BE. Base weapon damage
+   * belongs to a WEAPON -- a character holding two has two of them -- so this
+   * is read per hand by `createPlayer` and added to `WeaponProfile.baseDamage`,
+   * which is where a Hunter's ammunition already goes and for the same reason:
+   * it is the term the damage roll varies and the term an ability's own flat
+   * damage adds on top of.
+   *
+   * ONLY A ROW WITH A `hand` CAN CARRY ONE, which is what makes "the equipped
+   * weapon" a well-defined thing to say. A flask has no hand to be coated on.
+   * --------------------------------------------------------------------------
+   */
+  readonly weaponDamageBonus?: number;
   /** What it does that the simulator does not, in the source's own words. */
   readonly unmodelled?: string;
 }
@@ -182,28 +201,33 @@ export interface ConsumableCategory {
   readonly name: string;
   readonly options: readonly Consumable[];
   /**
-   * APPLIED ONCE PER WEAPON THE CHARACTER WIELDS, so a dual-wielder gets two.
+   * The WEAPON this row is coated onto, for the two rows that are.
    *
    * ==========================================================================
-   * THE OWNER'S RULING: "Dual wielding needs to trigger a second weapon effect
-   * consumable for an additional +2% melee crit chance." A weapon effect is
-   * coated onto a WEAPON rather than drunk, so somebody holding two buys two
-   * -- which is the one row in the table where the character's hands change
-   * what a single selection is worth.
+   * IT REPLACES `perWeapon`, AND THE RULING BEHIND BOTH IS THE SAME ONE: "Dual
+   * wielding needs to trigger a second weapon effect consumable." A weapon
+   * effect is coated onto a WEAPON rather than drunk, so somebody holding two
+   * buys two.
    *
-   * THE SELECTION IS STILL ONE CHOICE, which is why this is a property of the
-   * CATEGORY and not a second dropdown. The panel offers one weapon effect and
-   * the character applies it to whatever it is holding; asking somebody to
-   * pick the same stone twice would be a control whose only correct answer is
-   * the one already above it.
+   * WHAT CHANGED IS THE CONTROL, not the rule. `perWeapon` applied ONE
+   * selection to however many weapons swung, which cannot express "a Dense
+   * Sharpening Stone on the main hand and an Elemental on the off hand" -- and
+   * the owner asked for exactly that: "weapons stones need to be split out
+   * into MH / OH to be able to control this precisely".
    *
-   * ONLY THE WEAPON EFFECT ROW, and it has to be declared rather than derived:
-   * nothing about a flask, an elixir or a piece of food is per-weapon, and
-   * `consumables.test.ts` pins that this is the single row that carries it so
-   * a second one has to be deliberate.
+   * `'offHand'` CONTRIBUTES NOTHING UNLESS A SECOND WEAPON SWINGS, which is
+   * where the old flag's arithmetic went. `offHand: 'weapon'` in
+   * `combatStyles.ts` is the test, not "two hands full": a shield, a held
+   * off-hand item and a Hunter's melee stat stick are none of them a second
+   * coated weapon.
+   *
+   * ABSENT MEANS "NOT COATED ON ANYTHING" -- a flask, an elixir and a piece of
+   * food are worth the same whatever is in the character's hands, and
+   * `consumables.test.ts` pins that these two rows are the only ones carrying
+   * it so a third has to be deliberate.
    * ==========================================================================
    */
-  readonly perWeapon?: boolean;
+  readonly hand?: 'mainHand' | 'offHand';
 }
 
 /**
@@ -216,6 +240,104 @@ export interface ConsumableCategory {
  * Crit Chance", and "+40 Attack Power" appears as its own category AND as a
  * Food -- which is what lets a character take both.
  */
+/**
+ * The three weapon effects, declared ONCE and offered per hand.
+ *
+ * ============================================================================
+ * SPLIT INTO TWO CATEGORIES ON THE OWNER'S INSTRUCTION -- "weapons stones need
+ * to be split out into MH / OH to be able to control this precisely".
+ *
+ * IT REPLACES `perWeapon`, WHICH WAS THE SAME RULING WITH NO CONTROL ON IT.
+ * That flag applied ONE selection to however many weapons swung, which was
+ * right for "a dual-wielder buys two" and could not express "a Dense
+ * Sharpening Stone on the main hand and an Elemental on the off hand" -- which
+ * is exactly the choice the owner now wants, because the new stone competes
+ * with the crit one rather than dominating it.
+ *
+ * THE OPTIONS ARE BUILT FROM ONE TABLE SO THE TWO HANDS CANNOT DRIFT. Two
+ * hand-written copies of three stones is six places for a number to be wrong
+ * in, and the one that drifts is the one nobody measures.
+ *
+ * THE IDS CARRY THE HAND, which the file's own rule requires: "the ids are
+ * derived from the effect rather than from the row, so a consumable that
+ * appears in two categories would be two entries with two ids" -- and
+ * `CONSUMABLES_BY_ID` throws on a duplicate at module load rather than
+ * resolving a saved id to whichever was declared last.
+ * ============================================================================
+ */
+const WEAPON_EFFECTS: readonly {
+  readonly id: string;
+  readonly name: string;
+  readonly effect: Omit<Consumable, 'id' | 'name'>;
+}[] = [
+  {
+    /*
+     * MELEE ALONE, AND THAT IS WHY IT IS NOT `critChance`.
+     *
+     * `critChance` is the engine's one melee-AND-ranged crit stat --
+     * `critChanceFrom` is read by both tables -- so granting it would give
+     * two points to every shot a Hunter fires from a line that says "Melee".
+     * The owner's table says "+2% Melee Crit Chance" here and "+2% Crit
+     * Chance" on the Agility row, and they ruled that the second means melee
+     * AND ranged; two labels meaning the same stat would be one label.
+     */
+    id: 'weapon_melee_crit',
+    name: '+2% Melee Crit Chance',
+    effect: {
+      attackTableModifiers: {
+        'melee-auto': { critBonus: 2 },
+        'melee-special': { critBonus: 2 },
+      },
+    },
+  },
+  {
+    // The caster half of the same row, and it names its crit the other way.
+    id: 'weapon_spell_crit',
+    name: '+1% Spell Crit Chance & +36 Spell Power',
+    effect: { stats: { spellCritChance: 1, spellPower: 36 } },
+  },
+  {
+    /*
+     * ------------------------------------------------------------------------
+     * THE DENSE SHARPENING STONE: "+8 base weapon damage to the equipped
+     * weapon", the owner's own wording, and it "competes with +2% crit from
+     * elemental sharpening stone".
+     *
+     * `weaponDamageBonus` AND NOT A STAT, because there is no stat for it:
+     * base weapon damage belongs to a WEAPON rather than to a character, and
+     * a character holding two weapons has two of them. That is the whole
+     * reason this row needed the MH/OH split before it could exist -- under
+     * `perWeapon` a single selection would have added eight to both hands and
+     * there would have been no way to coat one.
+     *
+     * IT GOES WHERE AMMUNITION GOES. `WeaponProfile.baseDamage` is the term
+     * the damage roll varies and the term every ability's own flat damage adds
+     * on top of, which is what "base weapon damage" names. `powerCoefficient`
+     * is deliberately untouched: that is `baseSpeed / 14` and a sharpening
+     * stone does not change how fast the weapon swings.
+     *
+     * SO IT IS WORTH MORE TO A SLOW WEAPON, per swing, and the same per
+     * second. Eight damage on a 3.6-second two-hander is 2.2 dps and on a
+     * 1.8-second dagger is 4.4 -- which is the opposite of how the PPM
+     * enchants here distribute, and is what a flat per-hit bonus always does.
+     * Said because it reads like a bug the first time somebody compares the
+     * two hands of a dual-wielder.
+     * ------------------------------------------------------------------------
+     */
+    id: 'dense_sharpening_stone',
+    name: '+8 Weapon Damage',
+    effect: { weaponDamageBonus: 8 },
+  },
+];
+
+/** One hand's worth of the table, with the hand in each id. */
+const weaponEffectsFor = (hand: 'main_hand' | 'off_hand'): readonly Consumable[] =>
+  WEAPON_EFFECTS.map((entry) => ({
+    ...entry.effect,
+    id: `${entry.id}_${hand}`,
+    name: entry.name,
+  }));
+
 export const CONSUMABLE_CATEGORIES: readonly ConsumableCategory[] = [
   {
     id: 'flask',
@@ -225,38 +347,33 @@ export const CONSUMABLE_CATEGORIES: readonly ConsumableCategory[] = [
       { id: 'flask_spell_power', name: '+150 Spell Power', stats: { spellPower: 150 } },
     ],
   },
+  /*
+   * TWO ROWS WHERE THERE WAS ONE, and the ORDER is main hand then off hand so
+   * the panel reads the way a character sheet does.
+   */
   {
-    id: 'weapon_effect',
-    name: 'Weapon Effect',
-    // Coated onto a weapon, so a dual-wielder buys two. See `perWeapon`.
-    perWeapon: true,
-    options: [
-      {
-        /*
-         * MELEE ALONE, AND THAT IS WHY IT IS NOT `critChance`.
-         *
-         * `critChance` is the engine's one melee-AND-ranged crit stat --
-         * `critChanceFrom` is read by both tables -- so granting it would give
-         * two points to every shot a Hunter fires from a line that says
-         * "Melee". The owner's table says "+2% Melee Crit Chance" here and
-         * "+2% Crit Chance" on the Agility row, and they ruled that the second
-         * means melee AND ranged; two labels meaning the same stat would be
-         * one label. See `attackTableModifiers`.
-         */
-        id: 'weapon_melee_crit',
-        name: '+2% Melee Crit Chance',
-        attackTableModifiers: {
-          'melee-auto': { critBonus: 2 },
-          'melee-special': { critBonus: 2 },
-        },
-      },
-      {
-        // The caster half of the same row, and it names its crit the other way.
-        id: 'weapon_spell_crit',
-        name: '+1% Spell Crit Chance & +36 Spell Power',
-        stats: { spellCritChance: 1, spellPower: 36 },
-      },
-    ],
+    id: 'weapon_effect_main_hand',
+    name: 'Weapon Effect (Main Hand)',
+    hand: 'mainHand',
+    options: weaponEffectsFor('main_hand'),
+  },
+  {
+    /*
+     * OFFERED ALWAYS AND APPLIED ONLY WHEN A SECOND WEAPON SWINGS. A shield is
+     * not a coated weapon, and neither is a held off-hand item nor a Hunter's
+     * melee stat stick -- `offHand: 'weapon'` in `combatStyles.ts` is the one
+     * rule that says a second one swings, and reading "two hands full" instead
+     * would pay a Protection warrior for coating its shield.
+     *
+     * SHOWN RATHER THAN HIDDEN FOR A BUILD THAT CANNOT USE IT, which is the
+     * Warlock stone's arrangement: a selection the character cannot read is
+     * still what the file says, and a dropdown reading "None" would claim
+     * nothing was chosen.
+     */
+    id: 'weapon_effect_off_hand',
+    name: 'Weapon Effect (Off Hand)',
+    hand: 'offHand',
+    options: weaponEffectsFor('off_hand'),
   },
   {
     id: 'strength',
@@ -404,7 +521,21 @@ export const CONSUMABLE_CATEGORIES: readonly ConsumableCategory[] = [
         name: '+40 Attack Power',
         stats: { attackPower: 40, rangedAttackPower: 40 },
       },
-      { id: 'food_spell_power', name: '+33 Spell Power', stats: { spellPower: 33 } },
+      /*
+       * 28, NOT 33, ON THE OWNER'S OWN REVISION -- "the best spell power food
+       * consumable is no longer +33 spell power, it is now +28 spell power".
+       *
+       * THE ID DOES NOT MOVE AND THE NAME DOES. A profile stores the id, so
+       * every saved caster keeps the food it chose and simply gets the current
+       * figure for it; renaming the row would have silently emptied the Food
+       * slot on four presets and every file anyone has saved. The NAME is what
+       * a person reads, so it follows the number -- the same split a renamed
+       * ability makes between its display name and its id.
+       *
+       * IT MOVES FOUR PUBLISHED ROWS and is meant to: Seal Twist Ret, the
+       * Shockadin, Prot Pally and the Moonkin all take this row.
+       */
+      { id: 'food_spell_power', name: '+28 Spell Power', stats: { spellPower: 28 } },
       {
         id: 'food_healing_power',
         name: '+44 Healing Power',
@@ -588,14 +719,41 @@ export function weaponEffectCount(style: CombatStyleId | undefined): number {
   return getCombatStyle(style)?.offHand === 'weapon' ? 2 : 1;
 }
 
+/**
+ * Whether a category's choice reaches this character at all.
+ *
+ * ----------------------------------------------------------------------------
+ * ONLY THE OFF-HAND ROW CAN BE REFUSED, and only because the character has no
+ * second weapon to coat. That is where `perWeapon`'s arithmetic went: it used
+ * to apply ONE selection twice for a dual-wielder, and now there are two
+ * selections and the second simply does not land when nothing swings with it.
+ *
+ * `offHand: 'weapon'` IS THE TEST, not "two hands full" -- a shield, a held
+ * off-hand item and a Hunter's melee stat stick are none of them a second
+ * coated weapon, and reading it the other way would pay a Protection warrior
+ * for coating its shield.
+ *
+ * ABSENT STYLE MEANS APPLY IT, which is the honest answer to a caller asking
+ * what a selection is worth in the abstract rather than on a character.
+ * ----------------------------------------------------------------------------
+ */
+export function consumableReachesCharacter(
+  category: ConsumableCategory,
+  style: CombatStyleId | undefined,
+): boolean {
+  if (category.hand !== 'offHand') return true;
+  if (style === undefined) return true;
+  return getCombatStyle(style)?.offHand === 'weapon';
+}
+
 export function consumableEffects(
   selection: ConsumableSelection | undefined,
   /**
-   * How the character fights, for the one row that is per-weapon.
+   * How the character fights, for the two rows that are coated onto a weapon.
    *
-   * OPTIONAL, AND ABSENT MEANS ONE. Every caller that has a style passes it;
-   * the ones that do not are asking what a selection is worth in the abstract,
-   * and one application is the honest answer to that.
+   * OPTIONAL, AND ABSENT MEANS BOTH APPLY. Every caller that has a style
+   * passes it; the ones that do not are asking what a selection is worth in
+   * the abstract, and counting both stones is the honest answer to that.
    */
   style?: CombatStyleId,
 ): ConsumableEffects {
@@ -605,34 +763,35 @@ export function consumableEffects(
   const unmodelled: { name: string; reason: string }[] = [];
   let bonusHitPoints = 0;
 
-  const perWeapon = new Set(
-    CONSUMABLE_CATEGORIES.filter((category) => category.perWeapon === true).map((c) => c.id),
-  );
-  const hands = weaponEffectCount(style);
-
   for (const [categoryId, consumable] of selectedConsumableEntries(selection)) {
+    const category = CONSUMABLE_CATEGORIES_BY_ID.get(categoryId)!;
     /*
-     * THE WHOLE CONSUMABLE IS APPLIED TWICE, not just its crit. A second
-     * weapon effect is a second stone on a second weapon, so whatever it
-     * grants it grants again -- which is also what keeps this honest if the
-     * owner's table ever gives the row something besides crit.
+     * AN OFF-HAND STONE ON A CHARACTER WITH NO OFF-HAND WEAPON IS SKIPPED
+     * ENTIRELY -- not applied at half, not applied once. There is no weapon
+     * for it to be on.
      */
-    const times = perWeapon.has(categoryId) ? hands : 1;
+    if (!consumableReachesCharacter(category, style)) continue;
 
-    for (let i = 0; i < times; i += 1) {
-      for (const [name, value] of Object.entries(consumable.stats ?? {})) {
-        if (typeof value !== 'number') continue;
-        stats[name] = (stats[name] ?? 0) + value;
-      }
-      for (const [school, value] of Object.entries(consumable.schoolPower ?? {})) {
-        const key = school as DamageSchool;
-        schoolPower[key] = (schoolPower[key] ?? 0) + value;
-      }
-      for (const [table, modifier] of Object.entries(consumable.attackTableModifiers ?? {})) {
-        attackTableModifiers.add(table as AttackTableKind, modifier);
-      }
-      bonusHitPoints += consumable.bonusHitPoints ?? 0;
+    for (const [name, value] of Object.entries(consumable.stats ?? {})) {
+      if (typeof value !== 'number') continue;
+      stats[name] = (stats[name] ?? 0) + value;
     }
+    for (const [school, value] of Object.entries(consumable.schoolPower ?? {})) {
+      const key = school as DamageSchool;
+      schoolPower[key] = (schoolPower[key] ?? 0) + value;
+    }
+    for (const [table, modifier] of Object.entries(consumable.attackTableModifiers ?? {})) {
+      attackTableModifiers.add(table as AttackTableKind, modifier);
+    }
+    bonusHitPoints += consumable.bonusHitPoints ?? 0;
+
+    /*
+     * `weaponDamageBonus` IS NOT FOLDED IN HERE and that is deliberate. It is
+     * not a character stat -- it belongs to ONE WEAPON -- so it is read per
+     * hand by `weaponDamageBonusFor` where the weapons are built. Adding it to
+     * `stats` would need a stat that does not exist, and inventing one is how
+     * a per-weapon figure quietly becomes a per-character one.
+     */
 
     // Reported ONCE however many were drunk: it is one caveat about one
     // choice, and printing it twice would read as two different problems.
@@ -648,6 +807,34 @@ export function consumableEffects(
     attackTableModifiers,
     unmodelled,
   };
+}
+
+/**
+ * The flat weapon damage a coated stone adds to ONE hand.
+ *
+ * ============================================================================
+ * PER HAND, WHICH IS THE WHOLE POINT OF THE MH/OH SPLIT. The Dense Sharpening
+ * Stone is "+8 base weapon damage to the equipped weapon", and under the old
+ * `perWeapon` flag there was no way to ask about one weapon: a single
+ * selection was applied N times to a character.
+ *
+ * IT DOES NOT ASK WHETHER THE WEAPON EXISTS, because the caller is building
+ * that weapon and already knows. An off-hand stone on a character with no
+ * off-hand weapon is never reached, which is the same answer
+ * `consumableReachesCharacter` gives on the stats side -- two readers, one
+ * rule, and the rule is "there is no weapon for it to be on".
+ * ============================================================================
+ */
+export function weaponDamageBonusFor(
+  selection: ConsumableSelection | undefined,
+  hand: 'mainHand' | 'offHand',
+): number {
+  let total = 0;
+  for (const [categoryId, consumable] of selectedConsumableEntries(selection)) {
+    if (CONSUMABLE_CATEGORIES_BY_ID.get(categoryId)?.hand !== hand) continue;
+    total += consumable.weaponDamageBonus ?? 0;
+  }
+  return total;
 }
 
 /**
@@ -866,7 +1053,14 @@ export const CONSUMABLE_ABILITY_IDS: ReadonlySet<string> = new Set(
 
 /** Everything a build with no mana and no spells can read. */
 const MELEE_COMMON: ConsumableSelection = {
-  weapon_effect: 'weapon_melee_crit',
+  /*
+   * BOTH HANDS, WHICH IS WHAT THE OLD SINGLE ROW ALREADY DID. `perWeapon`
+   * applied one selection to every weapon that swings, so writing the same
+   * stone into both categories is the split expressed without moving a figure
+   * -- and an off-hand entry on a two-hander build reaches nothing.
+   */
+  weapon_effect_main_hand: 'weapon_melee_crit_main_hand',
+  weapon_effect_off_hand: 'weapon_melee_crit_off_hand',
   strength: 'elixir_strength',
   agility: 'elixir_agility',
   attack_power: 'elixir_attack_power',
@@ -946,7 +1140,8 @@ export const AGILITY_CONSUMABLES: ConsumableSelection = {
  */
 const CASTER_COMMON: ConsumableSelection = {
   flask: 'flask_spell_power',
-  weapon_effect: 'weapon_spell_crit',
+  weapon_effect_main_hand: 'weapon_spell_crit_main_hand',
+  weapon_effect_off_hand: 'weapon_spell_crit_off_hand',
   // Intellect rather than Spirit: it buys mana AND spell crit, where spirit
   // buys regeneration alone and `Mana Regen` below is already covering that.
   blasted_lands: 'blasted_intellect',
@@ -1073,7 +1268,12 @@ export function hybridConsumables(options: {
      */
     potion: 'major_spellblasting_potion',
     other: 'demonic_rune',
-    weapon_effect: options.meleeWeaponEffect ? 'weapon_melee_crit' : 'weapon_spell_crit',
+    weapon_effect_main_hand: options.meleeWeaponEffect
+      ? 'weapon_melee_crit_main_hand'
+      : 'weapon_spell_crit_main_hand',
+    weapon_effect_off_hand: options.meleeWeaponEffect
+      ? 'weapon_melee_crit_off_hand'
+      : 'weapon_spell_crit_off_hand',
     strength: 'elixir_strength',
     agility: 'elixir_agility',
     attack_power: 'elixir_attack_power',

@@ -92,6 +92,25 @@ export interface DamageTelemetryEvent extends TelemetryBase {
   readonly overkill: number;
   /** True for periodic (damage-over-time) ticks. */
   readonly periodic: boolean;
+  /**
+   * The crit chance this attack rolled against, as a fraction.
+   *
+   * --------------------------------------------------------------------------
+   * THE EFFECTIVE FIGURE, after the rating, the per-ability crit, the
+   * per-school crit, the per-table crit and the target's contribution -- which
+   * is the only version of it worth recording, and is NOT the stat block's.
+   *
+   * IT MAKES A CRIT RATE AUDITABLE, which nothing here could do before. The
+   * Results panel prints crits over attempts and there was no expectation to
+   * hold it against: the sheet's figure was both wrong and the wrong quantity.
+   * `probe_revelation.ts` reads it to compute a proc's expected rate per
+   * event, because the rate now varies by spell.
+   *
+   * ZERO FOR AN ATTACK THAT COULD NOT CRIT, which `cannotCrit` and a table
+   * with no crit slice both produce.
+   * --------------------------------------------------------------------------
+   */
+  readonly critChance?: number;
 }
 
 export interface HealTelemetryEvent extends TelemetryBase {
@@ -116,6 +135,48 @@ export interface AuraTelemetryEvent extends TelemetryBase {
   readonly auraName: string;
   readonly stacks: number;
   readonly isDebuff: boolean;
+}
+
+/**
+ * A cast spent an aura's charge.
+ *
+ * ==============================================================================
+ * WHAT IT IS FOR: "list in the resources section what clearcasting was used
+ * on", the ruleset owner's ask for Elemental Focus, Arcane Concentration and
+ * Omen of Clarity.
+ *
+ * NOTHING ELSE IN THE STREAM CAN ANSWER IT, which is why this exists rather
+ * than being derived. A free cast spends nothing, so it emits NO
+ * `resource_spent` event at all -- the saving is invisible by construction, and
+ * an `aura_removed` says the charge went without saying what took it. Reading
+ * the cast that happens to share the timestamp would be guessing, and it would
+ * be wrong whenever two things land in one millisecond.
+ *
+ * `saved` IS THE POINT AND NOT A DECORATION. "Clearcasting was used on Shred
+ * nine times" is a cast count; "and saved 378 energy" is the figure that says
+ * whether the proc is worth anything, and it is the one a resource economy can
+ * actually be audited against. It is the difference between what the ability
+ * declares and what `resolveCast` worked out, so it is zero for a charge spent
+ * on something free -- which is itself worth seeing, because it is a charge
+ * thrown away.
+ *
+ * EMITTED FOR EVERY CAST-MODIFIER CHARGE, not only Clearcasting. Eclipse,
+ * Maelstrom Weapon, Missile Barrage and Inner Focus all spend one, and a sink
+ * that reported three of them and not the fourth would be the "general field
+ * read by only some of its rules" failure in telemetry.
+ * ==============================================================================
+ */
+export interface CastChargeEvent extends TelemetryBase {
+  readonly type: 'cast_charge_spent';
+  readonly actorId: string;
+  readonly auraId: string;
+  readonly auraName: string;
+  readonly abilityId: string;
+  readonly abilityName: string;
+  /** The pool the saving came out of, absent when the ability costs nothing. */
+  readonly resource?: ResourceType;
+  /** What the charge saved: the declared cost less what was actually paid. */
+  readonly saved: number;
 }
 
 export interface ResourceTelemetryEvent extends TelemetryBase {
@@ -208,6 +269,7 @@ export type TelemetryEvent =
   | DamageTelemetryEvent
   | HealTelemetryEvent
   | AuraTelemetryEvent
+  | CastChargeEvent
   | ResourceTelemetryEvent
   | StatSampleEvent
   | DeathTelemetryEvent;

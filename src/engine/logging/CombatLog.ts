@@ -93,6 +93,23 @@ export function formatCombatLogLine(event: TelemetryEvent, nameOf: NameResolver)
     case 'aura_removed':
       return `${time}  ${event.auraName} fades from ${nameOf(event.targetId)}`;
 
+    /*
+     * WHAT THE CHARGE WAS SPENT ON, and what it saved. The saving is the half
+     * worth printing: a free cast emits no `resource_spent` at all, so without
+     * this line the combat log shows a Shred that cost nothing and never says
+     * why.
+     */
+    case 'cast_charge_spent': {
+      const saved =
+        event.saved > 0 && event.resource
+          ? `, saving ${formatAmount(event.saved)} ${event.resource}`
+          : '';
+      return (
+        `${time}  ${nameOf(event.actorId)} spends ${event.auraName} ` +
+        `on ${event.abilityName}${saved}`
+      );
+    }
+
     case 'resource_gained': {
       const wasted = event.wasted > 0 ? ` (${formatAmount(event.wasted)} wasted)` : '';
       return (

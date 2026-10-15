@@ -16,6 +16,7 @@ export type {
   BatchAbilityTotals,
   BatchAuraUptime,
   BatchDamageTaken,
+  BatchCastCharge,
   BatchResourceFlow,
   BatchResourceTotals,
   BatchStatAverages,

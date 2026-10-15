@@ -162,6 +162,39 @@ export function setInterrupts(
 }
 
 /**
+ * Set, extend or clear the chain of abilities an entry casts as ONE action.
+ *
+ * ==============================================================================
+ * THE OWNER'S "combine abilities into one action", and the editor's whole job
+ * here is to keep it one choice rather than two entries.
+ *
+ * AN EMPTY CHAIN IS DROPPED RATHER THAN STORED AS `[]`, which is the rule
+ * `disabled` and `interruptsChannel` already follow: `JSON.stringify` writes
+ * `"sequence": []` and omits an absent key, so an entry that gained a step and
+ * lost it again would no longer compare equal to the stock one it came from --
+ * and `syncDefaultRotation` compares stored lists BY VALUE.
+ *
+ * A STEP WITH NO ABILITY CHOSEN IS DROPPED TOO. The panel's "(choose)" option
+ * is the empty string, and a chain containing one would make the whole
+ * sequence abandon on its first decision -- which reads as the sequence simply
+ * not working, with nothing on screen to say why.
+ * ==============================================================================
+ */
+export function setSequence(
+  entries: readonly AplEntry[],
+  index: number,
+  sequence: readonly string[],
+): readonly AplEntry[] {
+  if (index < 0 || index >= entries.length) return entries;
+  const kept = sequence.filter((abilityId) => abilityId.length > 0);
+  return entries.map((entry, at) => {
+    if (at !== index) return entry;
+    const { sequence: _dropped, ...rest } = entry;
+    return kept.length > 0 ? { ...rest, sequence: kept } : rest;
+  });
+}
+
+/**
  * Switch an entry off, or back on.
  *
  * THE FLAG IS DROPPED RATHER THAN STORED AS `false`, which is `setInterrupts`'
@@ -228,6 +261,27 @@ export type ClauseKind = 'buff' | 'resource' | 'cooldown' | 'fight' | 'health';
  */
 export type BuffTest = 'up' | 'absent' | 'down' | 'expiring' | 'stacks';
 
+/**
+ * THE THREE COOLDOWN TESTS, and the third is the owner's ask -- "I want the
+ * cooldown condition to have a 'seconds left' controller just like
+ * buff/debuff does."
+ *
+ * ----------------------------------------------------------------------------
+ * `secondsLeft` IS A DIFFERENT CONDITION KIND, not a different reading of the
+ * same one, which is why this is a three-way test rather than a boolean plus a
+ * number. `cooldown` answers a yes/no about an ability that EXISTS -- an
+ * absent one is neither ready nor on cooldown -- and `cooldownTime` answers a
+ * duration, where an absent ability reads zero. Collapsing them would have to
+ * pick one absent case for both.
+ *
+ * IT MIRRORS `BuffTest` DELIBERATELY. A buff clause already offers "is up",
+ * "has run out" and "expiring within Ns" off one dropdown, and this is the
+ * same shape on the other side of the panel -- which is what the owner meant
+ * by "just like buff/debuff does".
+ * ----------------------------------------------------------------------------
+ */
+export type CooldownTest = 'ready' | 'onCooldown' | 'secondsLeft';
+
 /** Which side of the clock a `fight` clause reads. */
 export type FightUnit = 'percentLeft' | 'secondsLeft' | 'secondsElapsed';
 
@@ -241,9 +295,9 @@ export interface Clause {
   readonly resource?: ResourceType | 'combo';
   /** resource: compare against a SHARE of the maximum rather than an amount. */
   readonly asPercent?: boolean;
-  /** cooldown: which ability, and which way round. */
+  /** cooldown: which ability, and which of the three tests. */
   readonly abilityId?: string;
-  readonly ready?: boolean;
+  readonly cooldownTest?: CooldownTest;
   /** Every numeric kind. Seconds, stacks, points, a percentage or an amount. */
   readonly compare?: ClauseCompare;
   readonly value?: number;
@@ -512,7 +566,15 @@ function toClause(condition: AplCondition): Clause | undefined {
       return {
         kind: 'cooldown',
         abilityId: condition.abilityId,
-        ready: condition.state === 'ready',
+        cooldownTest: condition.state === 'ready' ? 'ready' : 'onCooldown',
+      };
+    case 'cooldownTime':
+      return {
+        kind: 'cooldown',
+        abilityId: condition.abilityId,
+        cooldownTest: 'secondsLeft',
+        compare: condition.compare,
+        value: condition.seconds,
       };
     case 'fightRemaining':
       return condition.fraction !== undefined
@@ -592,10 +654,13 @@ export function fromClause(clause: Clause): AplCondition {
           }
         : { kind: 'resource', resource: clause.resource ?? 'rage', compare, amount: value };
     case 'cooldown':
+      if (clause.cooldownTest === 'secondsLeft') {
+        return { kind: 'cooldownTime', abilityId: clause.abilityId ?? '', compare, seconds: value };
+      }
       return {
         kind: 'cooldown',
         abilityId: clause.abilityId ?? '',
-        state: clause.ready ? 'ready' : 'onCooldown',
+        state: clause.cooldownTest === 'onCooldown' ? 'onCooldown' : 'ready',
       };
     case 'fight':
       if (clause.unit === 'secondsElapsed') {
@@ -617,7 +682,7 @@ export function blankClause(kind: ClauseKind): Clause {
     case 'resource':
       return { kind: 'resource', resource: 'rage', compare: 'atLeast', value: 0 };
     case 'cooldown':
-      return { kind: 'cooldown', abilityId: '', ready: true };
+      return { kind: 'cooldown', abilityId: '', cooldownTest: 'ready' };
     case 'fight':
       return { kind: 'fight', compare: 'atMost', value: 20, unit: 'percentLeft' };
     case 'health':

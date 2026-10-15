@@ -890,6 +890,27 @@ export class Combatant {
    */
   castSequence = 0;
 
+  /**
+   * A multi-ability priority entry part-way through, or null.
+   *
+   * ============================================================================
+   * ON THE COMBATANT AND NOT ON THE ROTATION, WHICH IS THE WHOLE REASON THIS
+   * FIELD EXISTS RATHER THAN A PRIVATE IN `PriorityRotation`.
+   *
+   * A compiled rotation is a MODULE-LEVEL CONSTANT -- `DRUID_CAT_ROTATION` and
+   * its twenty-five siblings are built once at import -- so a sequence pointer
+   * held there would be shared by every character running that list and by
+   * every iteration of a batch. That is exactly how one shared closure stopped
+   * Windfury proccing after the first iteration, and it is why a proc's
+   * reaction is built per character.
+   *
+   * PER-FIGHT STATE ON A PER-FIGHT OBJECT, like the swing timers and
+   * `castSequence` above it. `setUpCombat` clears it, so a combatant that is
+   * reused cannot start a fight mid-sequence.
+   * ============================================================================
+   */
+  pendingSequence: { readonly abilityIds: readonly string[]; index: number } | null = null;
+
   /** Called by the engine when a cast's effect is about to run. */
   recordCast(): number {
     this.castSequence += 1;
@@ -1016,6 +1037,27 @@ export class Combatant {
     for (const aura of this.auras.active) {
       const bySchool = aura.definition.spellPowerTakenBySchool;
       const value = bySchool?.[school];
+      if (value === undefined) continue;
+      total += value * (aura.definition.modifiersScaleWithStacks ? aura.stacks : 1);
+    }
+    return total;
+  }
+
+  /**
+   * Flat damage every DIRECT attack against this combatant gains.
+   *
+   * ADDED across auras, the same rule `spellPowerTakenFor` follows and for the
+   * same reason: two debuffs each adding damage are two additions.
+   *
+   * THE CALLER DECIDES WHETHER THE ATTACK QUALIFIES. This returns what the
+   * target carries; `scaleByPower` is the one reader and it asks
+   * `request.periodic` first, because "direct damage" is a property of the
+   * attack rather than of the debuff.
+   */
+  flatDamageTaken(): number {
+    let total = 0;
+    for (const aura of this.auras.active) {
+      const value = aura.definition.flatDamageTaken;
       if (value === undefined) continue;
       total += value * (aura.definition.modifiersScaleWithStacks ? aura.stacks : 1);
     }

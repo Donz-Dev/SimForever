@@ -299,16 +299,93 @@ export const WEAPON_DPS: Readonly<Record<string, readonly [number, number]>> = {
 };
 
 /**
- * What a caster weapon keeps of its hand's physical damage.
+ * What a caster weapon's melee damage is, and what spell power it carries.
  *
- * Forever's own caster weapons at item level 65: a two-hand staff is 45.67
- * against a physical 61.58, and a main-hand dagger 31.5 against 47.24. Both
- * give up 15.6 to 15.9 dps, which is the trade this reproduces.
+ * ============================================================================
+ * THE OWNER'S OWN RULE, AND BOTH HALVES ARE STATED RATHER THAN FITTED. It
+ * replaces `CASTER_DPS_SHARE`, which was two ratios read off two observed
+ * items.
+ *
+ * `DPS_TO_BUDGET` SURVIVES AND IS STILL READ, which is worth saying because
+ * the obvious conclusion from "the spell power is stated now" is that the
+ * credit that used to fund it is dead. It is not: the credit sets the slot's
+ * BUDGET, and that budget is what crit and intellect divide. Removing it
+ * would cut them by a third on a change the owner scoped to spell power. See
+ * `withCasterSpellPower` in `benchmarkSets.ts`.
+ *
+ * ----------------------------------------------------------------------------
+ * `T` IS THE ONE-HAND PHYSICAL LINE, FOR BOTH HANDS, AND THAT IS THE ONE THING
+ * HERE THAT HAD TO BE DERIVED.
+ *
+ * The owner gave `1H = T x 2/3` and `2H staff = 1.3T - T/3`, and stated that
+ * the staff should come out at Forever's own 45.67. Read against the TWO-HAND
+ * line those two do not agree with each other: `(1.3 - 1/3) x 61.54` is 59.5,
+ * and the owner's own target is 45.67. Read against the ONE-HAND line both
+ * land exactly on Forever's observed caster weapons:
+ *
+ *     47.24 x 2/3           = 31.49   against an observed 31.5  (dagger)
+ *     47.24 x (1.3 - 1/3)   = 45.67   against an observed 45.67 (staff)
+ *
+ * TWO INDEPENDENT MULTIPLIERS HITTING TWO OBSERVED VALUES OFF ONE BASE IS NOT
+ * A COINCIDENCE, which is what settles it. So a caster staff is priced off
+ * what a ONE-HANDED weapon of its item level does, and keeps 1.45 times what a
+ * one-handed caster weapon keeps -- not off the two-hand line at all.
+ *
+ * THE `+ 6 * q` QUALITY STEP IS DELIBERATELY ABSENT, on the owner's ruling. It
+ * is their way of expressing a per-tier dps step, and `WEAPON_DPS` already
+ * carries one: the fitted epic line sits 4.77 (one hand) to 6.20 (two hand)
+ * above the rare line at item level 65, which is the same 6. Adding it on top
+ * would double-count quality and take the staff to 51.4 against the owner's
+ * stated 45.67.
+ * ----------------------------------------------------------------------------
  */
-export const CASTER_DPS_SHARE: Readonly<Record<string, number>> = {
-  twoHand: 45.67 / 61.58,
-  oneHand: 31.5 / 47.24,
+export const CASTER_DPS_MULTIPLIER: Readonly<Record<string, number>> = {
+  /** "for 1H caster weapons multiply T * 2/3". */
+  oneHand: 2 / 3,
+  /** "and 2H caster Staves by 1.3T - T/3". */
+  twoHand: 1.3 - 1 / 3,
 };
+
+/**
+ * The melee damage per second of a caster weapon at an item level.
+ *
+ * `hand` IS WHAT THE MULTIPLIER IS CHOSEN BY AND NOT WHAT `T` IS READ FROM,
+ * which is the whole point of the derivation above: both read the one-hand
+ * line. Passing the two-hand line here is the mistake that makes a caster
+ * staff out-damage a warrior's axe.
+ */
+export function casterWeaponDps(
+  hand: 'oneHand' | 'twoHand',
+  quality: 3 | 4,
+  itemLevel: number,
+): number {
+  const oneHandLine = WEAPON_DPS[`oneHand|${quality}`];
+  const t = oneHandLine[0] * itemLevel + oneHandLine[1];
+  return t * CASTER_DPS_MULTIPLIER[hand];
+}
+
+/**
+ * The spell power a caster weapon carries, stated by the owner.
+ *
+ * ----------------------------------------------------------------------------
+ * THE SAME FOR BOTH HANDS, which is the owner's own wording -- "both 1H Caster
+ * Weapon and 2H Staves Spell Power Values". A one-hander and a staff of the
+ * same item level carry the same figure, and only the DPS tells them apart.
+ *
+ * IT IS NOT BOUGHT OUT OF THE SLOT'S BUDGET. It is a stated figure that comes
+ * with the item level, which puts it with BASE ARMOUR and WEAPON DPS rather
+ * than with crit or intellect -- the two things `docs/itemization.md` already
+ * records as free with the item level rather than out of the budget. What the
+ * weapon pays for it is the melee damage it gave up, which is now stated
+ * directly instead of being converted through `DPS_TO_BUDGET`.
+ *
+ * EPIC IS `ItemLevel + 29` AND RARE IS A LINE, which is the owner's asymmetry
+ * and is kept as given rather than normalised into one expression.
+ * ----------------------------------------------------------------------------
+ */
+export function casterWeaponSpellPower(quality: 3 | 4, itemLevel: number): number {
+  return quality === 4 ? itemLevel + 29 : Math.round(1.17 * itemLevel - 1.6);
+}
 
 /**
  * Budget points bought by one point of forgone weapon damage.

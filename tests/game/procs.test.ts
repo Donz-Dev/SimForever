@@ -13,11 +13,24 @@ import {
   VISKAG_PPM,
   ppmChance,
   reactionsForEquipment,
+  REVELATION,
+  castReactionsForEquipment,
+  revelationChance,
+  revelationReaction,
+  revelationSpender,
 } from '../../src/game/items/procs';
+import { REVELATION_ENCHANT_ID } from '../../src/game/items/foreverEnchants';
+import { PRESETS_BY_ID } from '../../src/profiles/presets';
+import { characterAtCombatStart } from '../../src/simulator';
+import { buildSimulation } from '../helpers/buildSimulation';
+import { makeTarget } from '../helpers/actors';
+import type { Combatant } from '../../src/engine';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { runProfile } from '../../src/simulator';
 import { createDefaultProfile } from '../../src/profiles';
 import { seconds, toSeconds } from '../../src/engine';
+import { Simulation } from '../../src/engine';
+import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 
 /*
  * The PPM formula, the rates and the Hand of Justice numbers were all supplied
@@ -474,5 +487,490 @@ describe('an extra attack does not fork the swing timer', () => {
      */
     expect(procced).toBeGreaterThan(plain * 0.9);
     expect(procced).toBeLessThan(plain * 1.1);
+  });
+});
+
+/*
+ * ==============================================================================
+ * ENCHANT WEAPON - REVELATION
+ *
+ * The owner's own enchant, and the first PROC in the Forever enchant table.
+ * Everything below is written out by hand from their two sentences rather than
+ * read off the source:
+ *
+ *   "a chance to trigger Revelation when a non-periodic spell fails to
+ *    critically strike. Revelation grants 100% increased critical strike
+ *    chance to the next spell cast."
+ *
+ *   chance = 11% * ((1 - CharacterSpellCritChance) - CharacterSpellCritChance)
+ *
+ * WHAT IS WORTH TESTING HERE IS NOT THE CONSTANT. `procs.test.ts`'s own header
+ * records that Windfury's tests pinned 20%, two attacks and 333 attack power
+ * and every one still passed after the effect was rebuilt into a different
+ * mechanic. So these drive the real reaction and the real spender and ask what
+ * the effect DOES: which table it fires off, whether the spell that procced it
+ * can spend it, and whether a melee ability can throw the charge away.
+ * ==============================================================================
+ */
+describe('Enchant Weapon - Revelation', () => {
+  const casterProfile = () => {
+    const built = PRESETS_BY_ID.get('mage_fire')!.build();
+    return {
+      ...built,
+      equipment: {
+        ...built.equipment,
+        twoHand: { ...built.equipment.twoHand!, enchantId: REVELATION_ENCHANT_ID },
+      },
+    };
+  };
+
+  describe('the chance, which diminishes as spell crit rises', () => {
+    it('is 11% at no crit and nothing at half', () => {
+      /*
+       * The owner's expression at four points, computed by hand:
+       *   0%  -> 0.11 * (1 - 0)   = 0.11
+       *   25% -> 0.11 * (0.75 - 0.25) = 0.055
+       *   50% -> 0.11 * (0.5 - 0.5)   = 0
+       */
+      expect(revelationChance(0)).toBeCloseTo(0.11, 10);
+      expect(revelationChance(0.25)).toBeCloseTo(0.055, 10);
+      expect(revelationChance(0.5)).toBe(0);
+    });
+
+    it('is clamped at zero rather than going negative past half', () => {
+      /*
+       * "it no longer procs if your CharacterSpellCritChance is >= 50%". The
+       * clamp changes no outcome -- `nextFloat(0,1) < -0.03` is false anyway --
+       * and it is what makes the RATE readable as zero rather than as a
+       * negative number somebody has to reason about.
+       */
+      expect(revelationChance(0.6)).toBe(0);
+      expect(revelationChance(1)).toBe(0);
+    });
+
+    it('takes a FRACTION, which is the one place it could be out 100x', () => {
+      /*
+       * `AttackEvent.critChance` is a fraction because the roll units it comes
+       * from are. A fraction of 0.11 gives `0.11 * (0.89 - 0.11)` = 0.0858;
+       * the same 11 read as percentage POINTS is past the cut-off and clamps
+       * to nothing, which is what the second assertion separates.
+       */
+      expect(revelationChance(0.11)).toBeCloseTo(0.0858, 10);
+      expect(revelationChance(11)).toBe(0);
+    });
+  });
+
+  describe('what triggers it', () => {
+    const spellHit = (critical: boolean, critChance = 0) =>
+      ({
+        attacker: undefined as never,
+        defender: undefined as never,
+        outcome: critical ? 'crit' : 'hit',
+        abilityId: 'fireball',
+        abilityName: 'Fireball',
+        amount: 500,
+        weaponSlot: undefined,
+        critical,
+        attackTable: 'spell',
+        critChance,
+      }) as const;
+
+    const always = { rng: { nextFloat: () => 0 } } as never;
+    const mage = () =>
+      createPlayer({ race: 'gnome', characterClass: 'mage', combatStyle: 'caster' });
+
+    it('fires on a spell that landed and did not crit', () => {
+      const reaction = revelationReaction('mainHand');
+      expect(reaction.canTrigger!(always, mage(), spellHit(false))).toBe(true);
+    });
+
+    it('fires on SPELLS and on no kind of ATTACK, which the owner confirmed', () => {
+      /*
+       * ========================================================================
+       * THE OWNER'S CONFIRMATION, IN THEIR OWN TERMS: "revelation only works on
+       * SPELLS not ATTACKS. A spell doesn't use a weapon. Whereas something
+       * like Crusader procs from attacks and that's what drives it having a
+       * PPM-based proc system."
+       *
+       * SO THE TABLE IS THE WHOLE TEST, and `AttackEvent.attackTable` is why it
+       * gained that field: nothing else on the event can tell a spell from a
+       * swing. `weaponSlot` is undefined for a spell AND for a Paladin's seal
+       * AND for Thunder Clap, which resolves on the ranged table precisely so
+       * `isWeaponUse` excludes it.
+       *
+       * EVERY NON-SPELL TABLE, not just `melee-auto`. The first version of this
+       * checked one, which would have passed against a version that let a melee
+       * SPECIAL through -- and a melee special is the thing a hybrid presses
+       * most. `rollChance` is forced true, so a refusal here is the table
+       * deciding and never the roll.
+       * ========================================================================
+       */
+      const reaction = revelationReaction('mainHand');
+      for (const table of [
+        'melee-auto',
+        'melee-special',
+        'ranged-auto',
+        'ranged-special',
+      ] as const) {
+        const attack = { ...spellHit(false), attackTable: table } as never;
+        expect(reaction.canTrigger!(always, mage(), attack), table).toBe(false);
+      }
+      // And with no table at all, which is a Paladin's seal and a pure DoT.
+      const untabled = { ...spellHit(false), attackTable: undefined } as never;
+      expect(reaction.canTrigger!(always, mage(), untabled)).toBe(false);
+    });
+
+    it('takes a FLAT chance, which is what "a spell doesn t use a weapon" forces', () => {
+      /*
+       * ------------------------------------------------------------------------
+       * THE OTHER HALF OF THE OWNER'S SENTENCE, and the reason this proc is
+       * shaped unlike every other one in the file: "Crusader procs from attacks
+       * and that's what drives it having a PPM-based proc system". PPM needs a
+       * WEAPON SPEED -- `ppmChance(speed, ppm)` -- and a spell has none.
+       *
+       * ASSERTED AS INDEPENDENCE FROM THE WEAPON. Two characters whose weapons
+       * differ in speed must get the same chance off the same spell, which is
+       * exactly what a PPM effect would NOT give them.
+       * ------------------------------------------------------------------------
+       */
+      const reaction = revelationReaction('mainHand');
+      const attack = spellHit(false, 0.2) as never;
+
+      // A dagger Rogue and a two-hand Warrior: 1.8s against 3.6s.
+      const dagger = characterAtCombatStart(PRESETS_BY_ID.get('rogue_venom')!.build())!;
+      const twoHander = characterAtCombatStart(PRESETS_BY_ID.get('two_hand_arms')!.build())!;
+      expect(dagger.weapons.mainHand!.swingTimerMs).not.toBe(
+        twoHander.weapons.mainHand!.swingTimerMs,
+      );
+
+      /*
+       * SWEPT RATHER THAN PINNED AT THE BOUNDARY, which the first version of
+       * this did and which float arithmetic punished: `0.11 * (1 - 0.2 - 0.2)`
+       * is 0.06600000000000002, so an assertion that `0.066` is not below it
+       * fails for a reason that has nothing to do with weapons.
+       *
+       * THE CLAIM IS INDEPENDENCE, so the test is that the two characters
+       * answer IDENTICALLY at every roll -- including the ones either side of
+       * the threshold, which is where a PPM effect would diverge. A 1.8-second
+       * dagger at any PPM gives half what a 3.6-second two-hander gives.
+       */
+      for (const roll of [0.0001, 0.03, 0.065, 0.0659, 0.067, 0.09, 0.5]) {
+        const rolled = { rng: { nextFloat: () => roll } } as never;
+        expect(
+          reaction.canTrigger!(rolled, dagger, attack),
+          `roll ${roll}: the dagger and the two-hander must agree`,
+        ).toBe(reaction.canTrigger!(rolled, twoHander, attack));
+      }
+
+      // And the threshold is crossed somewhere inside that sweep, so the
+      // agreement above is not two identical `false`s.
+      const low = { rng: { nextFloat: () => 0.0001 } } as never;
+      const high = { rng: { nextFloat: () => 0.5 } } as never;
+      expect(reaction.canTrigger!(low, dagger, attack)).toBe(true);
+      expect(reaction.canTrigger!(high, dagger, attack)).toBe(false);
+    });
+
+    it('is listed with outcomes that exclude a crit', () => {
+      // "fails to critically strike" -- and `runReactions` filters on this
+      // list, so a crit never reaches `canTrigger` at all.
+      expect(revelationReaction('mainHand').outcomes).toEqual(['hit']);
+    });
+
+    it('reads the EFFECTIVE crit off the attack, not off the character', () => {
+      /*
+       * ======================================================================
+       * THE OWNER'S RULING, and the reason it needed one: asked whether
+       * "CharacterSpellCritChance" meant the sheet figure or the effective
+       * per-spell one, they said effective -- and added that a sheet reading
+       * 10.82% was "likely missing proper calculation". It was.
+       *
+       * ASSERTED BY HANDING ONE CHARACTER TWO DIFFERENT ATTACKS. The actor is
+       * identical in both calls, so anything reading the STAT would answer the
+       * same way twice; only the event differs. A spell rolling against 60%
+       * crit is past the cut-off and cannot proc at all.
+       * ======================================================================
+       */
+      const reaction = revelationReaction('mainHand');
+      const character = mage();
+      expect(reaction.canTrigger!(always, character, spellHit(false, 0.1))).toBe(true);
+      expect(reaction.canTrigger!(always, character, spellHit(false, 0.6))).toBe(false);
+    });
+  });
+
+  describe('what it grants', () => {
+    it('makes the next SPELL crit and leaves a swing alone', () => {
+      /*
+       * ------------------------------------------------------------------------
+       * THE WHOLE REASON IT IS A STAT RATHER THAN A PER-ABILITY MODIFIER.
+       * `spellCritChance` is the engine's one spell-table crit stat and the
+       * melee tables read `critChance`, so a hundred points of it is a
+       * guaranteed crit on a spell and worth exactly nothing to a swing -- with
+       * no new engine field, and with no list of spell ids to go stale.
+       * ------------------------------------------------------------------------
+       */
+      const actor = createPlayer({ race: 'gnome', characterClass: 'mage', combatStyle: 'caster' });
+      const simulation = buildSimulation([actor, makeTarget()]);
+
+      const meleeBefore = actor.stats.effective.critChance;
+      const spellBefore = actor.stats.effective.spellCritChance;
+
+      simulation.applyAura(actor, REVELATION, actor.id);
+
+      expect(actor.stats.effective.spellCritChance).toBeCloseTo(spellBefore + 100, 6);
+      expect(actor.stats.effective.critChance).toBeCloseTo(meleeBefore, 6);
+    });
+  });
+
+  describe('what spends it', () => {
+    const mage = () => {
+      const actor = createPlayer({
+        race: 'gnome',
+        characterClass: 'mage',
+        combatStyle: 'caster',
+      });
+      return { actor, simulation: buildSimulation([actor, makeTarget()]) };
+    };
+
+    const castEvent = (actor: Combatant, abilityId: string) =>
+      ({
+        caster: actor,
+        target: undefined,
+        ability: actor.abilities.get(abilityId)!,
+        spent: [],
+        final: true,
+      }) as never;
+
+    it('is not spent by the cast whose own damage procced it', () => {
+      /*
+       * ------------------------------------------------------------------------
+       * THE DIFFERENCE FROM INNER FOCUS, AND WHY A TIMESTAMP GUARD IS NOT
+       * ENOUGH. Inner Focus is APPLIED BY A CAST, so `appliedAt < now` excludes
+       * the only cast that could eat it. Revelation is applied by a DAMAGE
+       * event, and an instant spell's damage lands in the SAME MILLISECOND as
+       * the cast that produced it -- so the charge would be spent by the very
+       * spell that failed to crit, and the enchant would be worth nothing while
+       * reporting perfectly ordinary uptime.
+       * ------------------------------------------------------------------------
+       */
+      const { actor, simulation } = mage();
+      const spender = revelationSpender();
+
+      simulation.cast(actor, actor.abilities.get('fireball')!, simulation.combatants[1]);
+      simulation.applyAura(actor, REVELATION, actor.id);
+
+      expect(spender.canTrigger!(simulation, actor, castEvent(actor, 'fireball'))).toBe(false);
+    });
+
+    it('is spent by the NEXT spell', () => {
+      const { actor, simulation } = mage();
+      const spender = revelationSpender();
+
+      simulation.cast(actor, actor.abilities.get('fireball')!, simulation.combatants[1]);
+      simulation.applyAura(actor, REVELATION, actor.id);
+      expect(spender.canTrigger!(simulation, actor, castEvent(actor, 'fireball'))).toBe(false);
+
+      // A second cast: a different `castSequence`, so the charge is fair game.
+      simulation.advanceTo(simulation.clock.now() + 5_000);
+      simulation.cast(actor, actor.abilities.get('fireball')!, simulation.combatants[1]);
+      expect(spender.canTrigger!(simulation, actor, castEvent(actor, 'fireball'))).toBe(true);
+
+      spender.onTrigger(simulation, actor, castEvent(actor, 'fireball'));
+      expect(actor.auras.has('revelation')).toBe(false);
+    });
+
+    it('is not spent by a MELEE ability, which is the invisible waste', () => {
+      /*
+       * ------------------------------------------------------------------------
+       * "the next SPELL cast". A Shockadin holds a melee weapon, which is where
+       * this enchant goes, and presses Holy Strike between its Holy Shocks. A
+       * charge thrown away on the swing leaves nothing behind to notice: the
+       * proc still fired, the aura still reported its uptime, and the
+       * guaranteed crit simply landed on an ability it was never meant for.
+       *
+       * THE FIXTURE IS A PALADIN ON PURPOSE. A Mage has no melee ability, so a
+       * Mage fixture could not express this mistake at all -- which is the
+       * stock Warlock list's lesson about the interrupt check.
+       * ------------------------------------------------------------------------
+       */
+      const paladin = createPlayer({
+        race: 'human',
+        characterClass: 'paladin',
+        combatStyle: 'one_hand_shield',
+      });
+      const simulation = buildSimulation([paladin, makeTarget()]);
+      const spender = revelationSpender();
+
+      const holyStrike = paladin.abilities.get('holy_strike');
+      expect(holyStrike, 'the fixture can express the mistake').toBeDefined();
+      expect(holyStrike!.attackTable).not.toBe('spell');
+
+      simulation.applyAura(paladin, REVELATION, paladin.id);
+      simulation.advanceTo(simulation.clock.now() + 1);
+      simulation.cast(paladin, holyStrike!, simulation.combatants[1]);
+
+      const event = {
+        caster: paladin,
+        target: undefined,
+        ability: holyStrike!,
+        spent: [],
+        final: true,
+      } as never;
+      expect(spender.canTrigger!(simulation, paladin, event)).toBe(false);
+      expect(paladin.auras.has('revelation')).toBe(true);
+    });
+  });
+
+  describe('on a character the fight actually builds', () => {
+    it('registers BOTH halves, which is what Inner Focus did not', () => {
+      /*
+       * ------------------------------------------------------------------------
+       * THE JOIN, ASKED OF THE BUILT CHARACTER. A proc and its spender are
+       * registered through two different lists -- `reactionsForEquipment` and
+       * `castReactionsForEquipment` -- and the failure mode is not symmetric:
+       * a missing TRIGGER is a proc that never fires and leaves nothing behind,
+       * and a missing SPENDER is a PERMANENT guaranteed crit that reports
+       * ordinary uptime. Inner Focus shipped the second of those.
+       * ------------------------------------------------------------------------
+       */
+      const profile = casterProfile();
+      const actor = characterAtCombatStart(profile)!;
+
+      expect(actor.reactions.map((reaction) => reaction.id)).toContain('revelation_mainHand');
+      expect(actor.castReactions.map((reaction) => reaction.id)).toContain('revelation_spend');
+    });
+
+    it('procs off a hybrid s SPELLS and never off its swings', () => {
+      /*
+       * ========================================================================
+       * THE DECISIVE FIXTURE FOR "SPELLS NOT ATTACKS", because a Mage cannot
+       * express the mistake: it has no melee ability to wrongly proc from. A
+       * Shockadin holds a mace, swings it, presses Holy Strike, and casts
+       * Judgement and Holy Shock -- all four reach the reaction.
+       *
+       * MEASURED OVER REAL FIGHTS rather than asserted on a constructed event,
+       * which is what makes it evidence about the ENGINE and not about the
+       * predicate. Over 30 fights the reaction is asked about 329 auto-attacks
+       * and 99 Holy Strikes and fires on NONE of them, and fires only on
+       * Judgement, Holy Shock and Hammer of Wrath.
+       * ========================================================================
+       */
+      const built = PRESETS_BY_ID.get('pally_shockadin')!.build();
+      const profile = {
+        ...built,
+        equipment: {
+          ...built.equipment,
+          mainHand: { ...built.equipment.mainHand!, enchantId: REVELATION_ENCHANT_ID },
+        },
+      };
+
+      const asked = new Map<string, { n: number; fired: number }>();
+      for (let seed = 1; seed <= 6; seed += 1) {
+        const sim = new Simulation(
+          trainingDummyEncounter(
+            { ...profile, simulation: { ...profile.simulation, iterations: 1, seed } } as never,
+            seed,
+          ),
+        );
+        sim.begin();
+        const player = sim.combatants.find((actor) => actor.kind === 'player')!;
+        const reaction = player.reactions.find((r) => r.id.startsWith('revelation'))!;
+        const real = reaction.canTrigger!;
+        (reaction as { canTrigger: typeof real }).canTrigger = (ctx, actor, attack) => {
+          const answer = real(ctx, actor, attack);
+          const key = String(attack.attackTable);
+          const cur = asked.get(key) ?? { n: 0, fired: 0 };
+          cur.n += 1;
+          if (answer) cur.fired += 1;
+          asked.set(key, cur);
+          return answer;
+        };
+        sim.run();
+      }
+
+      // It was genuinely asked about attacks, or this proves nothing.
+      expect(asked.get('melee-auto')!.n, 'swings reached the reaction').toBeGreaterThan(0);
+      expect(asked.get('melee-special')!.n, 'and so did a melee ability').toBeGreaterThan(0);
+
+      for (const [table, counts] of asked) {
+        if (table === 'spell') continue;
+        expect(counts.fired, `${table} must never proc it`).toBe(0);
+      }
+      expect(asked.get('spell')!.fired, 'and a spell does').toBeGreaterThan(0);
+    });
+
+    it('is worth NOTHING to a build that casts no spells', () => {
+      /*
+       * A Cat Druid swings and presses Shred and Rake and casts nothing that
+       * rolls on the spell table, so the enchant can never fire for it. Worth
+       * pinning because "a correct effect can be worth zero" is a conclusion
+       * this project reaches often, and the honest version of it names the
+       * build rather than the effect.
+       */
+      const built = PRESETS_BY_ID.get('druid_cat')!.build();
+      const profile = {
+        ...built,
+        equipment: {
+          ...built.equipment,
+          twoHand: { ...built.equipment.twoHand!, enchantId: REVELATION_ENCHANT_ID },
+        },
+      };
+
+      let procs = 0;
+      for (let seed = 1; seed <= 4; seed += 1) {
+        const sim = new Simulation(
+          trainingDummyEncounter(
+            { ...profile, simulation: { ...profile.simulation, iterations: 1, seed } } as never,
+            seed,
+          ),
+          {
+            emit: (event) => {
+              if (event.type === 'aura_applied' && event.auraId === 'revelation') procs += 1;
+            },
+          },
+        );
+        sim.run();
+      }
+      expect(procs).toBe(0);
+    });
+
+    it('brings neither half when the weapon is not enchanted with it', () => {
+      const actor = characterAtCombatStart(PRESETS_BY_ID.get('mage_fire')!.build())!;
+      expect(actor.reactions.map((reaction) => reaction.id).join()).not.toContain('revelation');
+      expect(actor.castReactions.map((reaction) => reaction.id)).not.toContain('revelation_spend');
+    });
+
+    it('rolls ONCE PER HAND, which is the ruling that replaced one roll', () => {
+      /*
+       * ======================================================================
+       * "Revelation should roll once per hand." Two enchanted hands are two
+       * OPPORTUNITIES against the same chance, so the per-spell probability
+       * becomes `1 - (1 - p)^2` rather than `p`.
+       *
+       * THE IDS DIFFER BY SLOT, which is not cosmetic: two reactions sharing
+       * one id would leave nothing able to say which of them fired.
+       *
+       * AND THE SPENDER IS STILL ONE, because there is one AURA holding one
+       * charge -- and because each spender carries its own `castSequence`
+       * latch, so two would disagree about which cast procced it.
+       * ======================================================================
+       */
+      const bothHands: Equipment = {
+        mainHand: { itemId: 9_500_001, enchantId: REVELATION_ENCHANT_ID },
+        offHand: { itemId: 9_500_002, enchantId: REVELATION_ENCHANT_ID },
+      };
+      const procs = reactionsForEquipment(bothHands).filter((r) =>
+        r.id.startsWith('revelation'),
+      );
+      expect(procs.map((r) => r.id)).toEqual(['revelation_mainHand', 'revelation_offHand']);
+      expect(castReactionsForEquipment(bothHands)).toHaveLength(1);
+
+      // And a TWO-HANDER is one weapon, so it rolls once.
+      const twoHander: Equipment = {
+        twoHand: { itemId: 9_500_003, enchantId: REVELATION_ENCHANT_ID },
+      };
+      expect(
+        reactionsForEquipment(twoHander).filter((r) => r.id.startsWith('revelation')),
+      ).toHaveLength(1);
+    });
   });
 });

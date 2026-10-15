@@ -897,6 +897,51 @@ describe('the melee Hunter dual-wields', () => {
     expect(hunter.weapons.ranged).toBeUndefined();
   });
 
+  /*
+   * ==========================================================================
+   * THE CRIT-DAMAGE HALF, AND WHICH TABLE IT REACHES.
+   *
+   * The owner's ruling: Predator's Edge "does NOT affect the hunter's
+   * auto-attack swings, unless it was upgraded to a Raptor Strike on next
+   * hit. This functions very similarly to warrior's Impale talent and Heroic
+   * Strike."
+   *
+   * SO THE RAPTOR STRIKE CLAUSE IS ASSERTED THROUGH THE ABILITY RATHER THAN
+   * THROUGH A SPECIAL CASE, because there is no special case: an on-next-swing
+   * ability declares `melee-special` and resolves there, so "the swing, when it
+   * was upgraded" and "a special" are the same set. A test that only read the
+   * declaration would pass against a version that put `melee-auto` back with
+   * an exception bolted on; this one would not.
+   * ==========================================================================
+   */
+  it('raises melee SPECIALS and leaves an ordinary swing alone', () => {
+    const hunter = characterAtCombatStart(melee())!;
+    expect(melee().talents!.predator_s_edge).toBe(5);
+
+    // 30% at 5/5, and a melee crit's bonus half is 1.0, so +0.30.
+    expect(hunter.attackTableModifiers.for('melee-special').critMultiplierBonus).toBeCloseTo(
+      0.3,
+      10,
+    );
+    expect(hunter.attackTableModifiers.for('melee-auto').critMultiplierBonus ?? 0).toBe(0);
+    // And nothing on the ranged tables, which is what it over-applied to
+    // before it was scoped to melee at all.
+    expect(hunter.attackTableModifiers.for('ranged-auto').critMultiplierBonus ?? 0).toBe(0);
+    expect(hunter.attackTableModifiers.for('ranged-special').critMultiplierBonus ?? 0).toBe(0);
+  });
+
+  it('reaches Raptor Strike because an on-next-swing ability IS a special', () => {
+    const raptor = characterAtCombatStart(melee())!.abilities.get('raptor_strike')!;
+    /*
+     * BOTH FIELDS TOGETHER ARE THE CLAUSE. `onNextSwing` is what makes it
+     * replace the swing the owner says is otherwise excluded, and
+     * `attackTable` is what puts the replacement on the table the talent
+     * raises. Either alone would leave the ruling unimplemented.
+     */
+    expect(raptor.onNextSwing).toBeDefined();
+    expect(raptor.attackTable).toBe('melee-special');
+  });
+
   it('pays a 25% off-hand penalty, not 50%, because of Predator\u2019s Edge', () => {
     /*
      * ------------------------------------------------------------------------

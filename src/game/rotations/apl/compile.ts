@@ -57,6 +57,13 @@ export function compileEntry(entry: AplEntry): PriorityEntry {
     abilityId: entry.abilityId,
     ...(entry.condition ? { condition: compileCondition(entry.condition) } : {}),
     ...(entry.interruptsChannel ? { interruptsChannel: true } : {}),
+    /*
+     * AN EMPTY SEQUENCE IS DROPPED, not passed through. `PriorityRotation`
+     * checks `length > 0` anyway, and a stored `[]` would survive a save and
+     * a load as a list that is no longer byte-identical to the stock one --
+     * which is what `syncDefaultRotation` compares by value.
+     */
+    ...(entry.sequence && entry.sequence.length > 0 ? { sequence: [...entry.sequence] } : {}),
   };
 }
 
@@ -195,6 +202,26 @@ export function compileCondition(condition: AplCondition): Condition {
         if (!actor.abilities.has(abilityId)) return false;
         const ready = actor.abilities.isReady(abilityId, context.clock.now());
         return state === 'ready' ? ready : !ready;
+      };
+    }
+
+    case 'cooldownTime': {
+      const { abilityId, compare: how, seconds } = condition;
+      // MILLISECONDS ONCE, up front, exactly as `auraTime` does it: time is
+      // integer milliseconds below the UI and comparing in seconds would
+      // introduce a float on every decision.
+      const milliseconds = seconds * 1000;
+      return (context, actor) => {
+        /*
+         * ZERO FOR AN ABILITY THE BUILD DOES NOT HAVE, which is the opposite
+         * of the `cooldown` kind above and is the right answer for a DURATION.
+         * `cooldownRemaining` already returns 0 for an unknown id, so this is
+         * the book's own answer rather than a branch here -- and it keeps
+         * `atMost 0` meaning "ready", which is what the panel's dropdown
+         * produces and what `auraTime atMost 0` means for an absent aura.
+         */
+        const remaining = actor.abilities.cooldownRemaining(abilityId, context.clock.now());
+        return compare(remaining, how, milliseconds);
       };
     }
 

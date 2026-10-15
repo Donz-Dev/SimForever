@@ -140,16 +140,25 @@ export function ConsumablesPanel({ profile, onChange }: ConsumablesPanelProps) {
       </p>
 
       {/*
-        * SAID ONLY WHERE IT IS TRUE, which is the point of the condition. A
-        * weapon effect is coated onto a WEAPON rather than drunk, so a
-        * dual-wielder applies two and the single row above is worth double --
-        * and that is invisible from the panel, since the selection is one
-        * choice either way. A build holding one weapon needs no explanation.
+        * SAID ONLY WHERE IT IS TRUE, AND IT NOW SAYS THE OPPOSITE THING.
+        *
+        * It used to read "dual wielding, so the Weapon Effect is applied to
+        * both weapons and counts twice", because ONE selection was applied per
+        * weapon and that was invisible from a panel showing one dropdown.
+        * There are two dropdowns now, so the doubling is on screen and needs
+        * no explaining.
+        *
+        * WHAT DOES NEED SAYING IS THE OTHER CASE: a build with no second
+        * weapon still SEES the off-hand row -- the Warlock stone's
+        * arrangement, where a selection the character cannot read is still
+        * what the file says -- and nothing on the row itself would tell
+        * somebody it is doing nothing.
         */}
-      {weaponEffectCount(style) > 1 ? (
+      {weaponEffectCount(style) === 1 ? (
         <p className="consumable-hint">
-          Dual wielding, so the <strong>Weapon Effect</strong> is applied to both weapons and
-          counts twice.
+          This build swings one weapon, so the <strong>Weapon Effect (Off Hand)</strong> row is
+          not applied. A shield, a held off-hand item and a Hunter&rsquo;s melee stat stick are
+          none of them a second coated weapon.
         </p>
       ) : null}
 

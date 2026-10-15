@@ -361,3 +361,159 @@ describe('swapping between two benchmark sets keeps the enchants', () => {
     expect(equipment).toEqual(start);
   });
 });
+
+/**
+ * ==============================================================================
+ * CASTER WEAPONS: TWO STATED NUMBERS, AND A DERIVATION THAT HAD TO BE MADE.
+ *
+ * The owner gave the rule as `1H = T x 2/3` and `2H staff = 1.3T - T/3`, with
+ * `T` described as the expected weapon dps. Read against the TWO-HAND line
+ * those two disagree with each other and with the owner's own stated target of
+ * 45.67 for a staff. Read against the ONE-HAND line, both land exactly on
+ * Forever's observed caster weapons -- which is what settled it, and is what
+ * the first test here pins, because it is the only part that was inferred.
+ *
+ * THE SPELL POWER IS STATED OUTRIGHT and the same for both hands, so the only
+ * thing worth asserting about it is that it reaches the item and the character.
+ * ==============================================================================
+ */
+describe('a caster weapon trades melee damage for a stated spell power', () => {
+  const casterTemplates = BENCHMARK_TEMPLATES.filter(
+    (template) => (template.weapons as { caster?: boolean }).caster === true,
+  );
+
+  /*
+   * BY `label`, NOT THROUGH `BENCHMARK_TEMPLATES_BY_LABEL`, which is keyed by
+   * `characterName ?? label` -- the Arcane Mage's key is "Arcane Mage".
+   */
+  const byLabel = (label: string) =>
+    BENCHMARK_TEMPLATES.find((template) => template.label === label)!;
+
+  const weaponsOf = (label: string, setId: string) => {
+    const template = byLabel(label);
+    const set = BENCHMARK_SETS.find((candidate) => candidate.id === setId)!;
+    return benchmarkItemsFor(template, set).filter(
+      (item) => item.weapon !== null && item.inventoryType !== 'Ranged',
+    );
+  };
+
+  it('covers exactly the ten profiles the owner named', () => {
+    /*
+     * The list is the owner's: Moonkin, Ele Shaman, Frostfire, Arcane, Fire,
+     * Shockadin, Prot Pally, SM/DS, Firelock, Shadow. Pinned because the rule
+     * is selected by the `caster` flag on a template rather than by a class,
+     * and a template gaining or losing one silently re-prices its weapon.
+     */
+    expect(casterTemplates.map((template) => template.label).sort()).toEqual([
+      'Arcane',
+      'Ele Shaman',
+      'Fire',
+      'Firelock',
+      'Frostfire',
+      'Moonkin',
+      'Prot Pally',
+      'SM/DS',
+      'Shadow',
+      'Shockadin',
+    ]);
+  });
+
+  it('reproduces Forever’s own E65 caster weapons, which is why T is the one-hand line', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE WHOLE ARGUMENT, IN TWO NUMBERS. Forever's observed item level 65
+     * caster weapons are a 45.67 staff and a 31.5 one-hander, against physical
+     * lines of 61.58 and 47.24. Both of the owner's multipliers hit them off
+     * the ONE-HAND figure and neither hits anything off the two-hand one:
+     *
+     *     47.24 x 2/3         = 31.49    47.24 x (1.3 - 1/3) = 45.67
+     *     61.58 x 2/3         = 41.05    61.58 x (1.3 - 1/3) = 59.53
+     *
+     * Asserted to half a dps because the generator rounds min and max damage
+     * to integers and derives the dps back from them, and because the fitted
+     * line gives 47.15 where the observed item is 47.24.
+     * ------------------------------------------------------------------------
+     */
+    const staff = weaponsOf('Arcane', 'E65')[0];
+    const oneHander = weaponsOf('Ele Shaman', 'E65')[0];
+
+    expect(staff.subclass).toBe('Staff');
+    expect(staff.weapon!.dps).toBeCloseTo(45.67, 0);
+    expect(Math.abs(staff.weapon!.dps - 45.67)).toBeLessThan(0.5);
+
+    expect(oneHander.weapon!.dps).toBeCloseTo(31.5, 0);
+    expect(Math.abs(oneHander.weapon!.dps - 31.5)).toBeLessThan(0.5);
+
+    // And a staff is NOT priced off the two-hand line, which is the reading
+    // that would make a caster staff out-damage a warrior's axe.
+    expect(staff.weapon!.dps).toBeLessThan(61.58 * (1.3 - 1 / 3));
+  });
+
+  it('gives both hands the same spell power at the same item level', () => {
+    for (const [setId, expected] of [
+      ['B55', 63],
+      ['E65', 94],
+      ['E75', 104],
+      ['E85', 114],
+    ] as const) {
+      /*
+       * THE OWNER'S TWO FORMULAS, WRITTEN OUT HERE RATHER THAN IMPORTED:
+       * rare is `1.17 x ilvl - 1.6` and epic is `ilvl + 29`. 55, 65, 75 and 85
+       * give 62.75 -> 63, 94, 104, 114.
+       */
+      for (const label of ['Arcane', 'Ele Shaman', 'Prot Pally'] as const) {
+        for (const weapon of weaponsOf(label, setId)) {
+          expect(weapon.tooltip, `${label} ${setId}`).toContain(`+${expected} Spell Power`);
+        }
+      }
+    }
+  });
+
+  it('carries exactly one Spell Power line, never two', () => {
+    /*
+     * THE FAILURE THE SUFFIX MATCH EXISTS TO PREVENT. The stated figure
+     * REPLACES the line the budget shares bought; appending beside it would
+     * grant both, which is a bigger number and no error.
+     */
+    for (const template of casterTemplates) {
+      for (const set of BENCHMARK_SETS) {
+        for (const item of benchmarkItemsFor(template, set)) {
+          if (item.weapon === null || item.inventoryType === 'Ranged') continue;
+          const lines = item.tooltip
+            .split('\n')
+            .filter((line) => / Spell Power$/.test(line));
+          expect(lines.length, `${template.label} ${set.id} ${item.name}`).toBe(1);
+        }
+      }
+    }
+  });
+
+  it('leaves a WAND alone, because a stat stick is not a caster weapon', () => {
+    /*
+     * The owner's list is "1H Dagger, Maces, and Swords and 2H Staffs". A wand
+     * is a `ranged` stat stick that never swings, and the rule excludes the
+     * ranged hand by construction rather than by naming subclasses.
+     */
+    const set = BENCHMARK_SETS.find((candidate) => candidate.id === 'E65')!;
+    const wand = benchmarkItemsFor(byLabel('Arcane'), set).find(
+      (item) => item.subclass === 'Wand',
+    )!;
+    expect(wand.tooltip).not.toContain('+94 Spell Power');
+  });
+
+  it('moves no NON-caster weapon at all', () => {
+    /*
+     * THE CONTAINMENT CHECK. A two-handed mace on the Cat and the Enhancement
+     * Shaman sits on the physical line, which is what says the rule reaches
+     * only what the owner scoped it to.
+     */
+    for (const label of ['Cat', 'Enh Shaman', '2H Arms'] as const) {
+      const set = BENCHMARK_SETS.find((candidate) => candidate.id === 'E65')!;
+      for (const item of benchmarkItemsFor(byLabel(label), set)) {
+        if (item.weapon === null || item.inventoryType !== 'Two-Hand') continue;
+        // The epic two-hand line at item level 65 is 61.54.
+        expect(item.weapon.dps, `${label}`).toBeGreaterThan(60);
+      }
+    }
+  });
+});

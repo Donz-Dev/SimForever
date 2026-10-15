@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   CATEGORY_BY_CONSUMABLE_ID,
   CONSUMABLE_CATEGORIES,
+  CONSUMABLE_CATEGORIES_BY_ID,
   CONSUMABLES_BY_ID,
   consumableEffects,
   selectedConsumables,
   weaponEffectCount,
+  weaponDamageBonusFor,
   AGILITY_CONSUMABLES,
   STRENGTH_CONSUMABLES,
   type ConsumableSelection,
@@ -17,7 +19,7 @@ import { createPet } from '../../src/game/actors/createPet';
 import type { StatName } from '../../src/engine';
 import { spellPowerFor } from '../../src/engine';
 import { loadProfile } from '../../src/profiles';
-import { createDefaultProfile } from '../../src/profiles/CharacterProfile';
+import { CURRENT_PROFILE_VERSION, createDefaultProfile } from '../../src/profiles/CharacterProfile';
 
 /*
  * ==============================================================================
@@ -37,7 +39,25 @@ import { createDefaultProfile } from '../../src/profiles/CharacterProfile';
 /** The owner's table, written out: category -> the effects it offers. */
 const TABLE: Readonly<Record<string, readonly string[]>> = {
   Flask: ['+1200 Hit Points', '+150 Spell Power'],
-  'Weapon Effect': ['+2% Melee Crit Chance', '+1% Spell Crit Chance & +36 Spell Power'],
+  /*
+   * TWO ROWS WHERE THE OWNER'S ORIGINAL TABLE HAD ONE, on their later
+   * instruction -- "weapons stones need to be split out into MH / OH to be
+   * able to control this precisely" -- and three stones where there were two,
+   * because the Dense Sharpening Stone "competes with +2% crit from elemental
+   * sharpening stone". Transcribed twice on purpose: the source builds both
+   * hands from one declaration, and a test that read it back would pass
+   * whatever that declaration said.
+   */
+  'Weapon Effect (Main Hand)': [
+    '+2% Melee Crit Chance',
+    '+1% Spell Crit Chance & +36 Spell Power',
+    '+8 Weapon Damage',
+  ],
+  'Weapon Effect (Off Hand)': [
+    '+2% Melee Crit Chance',
+    '+1% Spell Crit Chance & +36 Spell Power',
+    '+8 Weapon Damage',
+  ],
   Strength: ['+30 Strength'],
   Agility: ['+25 Agility & +2% Crit Chance'],
   'Attack Power': ['+40 Attack Power'],
@@ -56,7 +76,7 @@ const TABLE: Readonly<Record<string, readonly string[]>> = {
   ],
   Food: [
     '+40 Attack Power',
-    '+33 Spell Power',
+    '+28 Spell Power',
     '+44 Healing Power',
     '+20 Stamina',
     '+20 Strength',
@@ -206,8 +226,10 @@ describe('what a consumable is worth', () => {
       2 + 25 / 20,
       6,
     );
-    expect(delta({ weapon_effect: 'weapon_spell_crit' }, 'spellCritChance')).toBe(1);
-    expect(delta({ weapon_effect: 'weapon_spell_crit' }, 'critChance')).toBe(0);
+    expect(
+      delta({ weapon_effect_main_hand: 'weapon_spell_crit_main_hand' }, 'spellCritChance'),
+    ).toBe(1);
+    expect(delta({ weapon_effect_main_hand: 'weapon_spell_crit_main_hand' }, 'critChance')).toBe(0);
   });
 
   it('keeps the MELEE crit off the ranged tables', () => {
@@ -228,7 +250,7 @@ describe('what a consumable is worth', () => {
       race: 'orc',
       characterClass: 'hunter',
       combatStyle: 'ranged',
-      consumables: { weapon_effect: 'weapon_melee_crit' },
+      consumables: { weapon_effect_main_hand: 'weapon_melee_crit_main_hand' },
     });
     expect(hunter.attackTableModifiers.for('melee-auto').critBonus).toBe(2);
     expect(hunter.attackTableModifiers.for('melee-special').critBonus).toBe(2);
@@ -359,7 +381,7 @@ describe('what a consumable is worth', () => {
       race: 'orc',
       characterClass: 'hunter',
       combatStyle: 'ranged',
-      consumables: { weapon_effect: 'weapon_melee_crit' },
+      consumables: { weapon_effect_main_hand: 'weapon_melee_crit_main_hand' },
     });
     const pet = createPet({ owner, family: 'cat' });
     expect(owner.attackTableModifiers.for('melee-auto').critBonus).toBe(2);
@@ -380,7 +402,7 @@ describe('the profile field', () => {
     expect(loaded.ok).toBe(true);
     if (!loaded.ok) return;
     expect(loaded.profile.consumables).toEqual({});
-    expect(loaded.profile.version).toBe(14);
+    expect(loaded.profile.version).toBe(CURRENT_PROFILE_VERSION);
   });
 
   it('runs BOTH of the last two migrations, which once collided', () => {
@@ -405,7 +427,7 @@ describe('the profile field', () => {
     const loaded = loadProfile(old);
     expect(loaded.ok).toBe(true);
     if (!loaded.ok) return;
-    expect(loaded.profile.version).toBe(14);
+    expect(loaded.profile.version).toBe(CURRENT_PROFILE_VERSION);
     expect(loaded.profile.consumables).toEqual({});
     expect(loaded.profile.warlockStone).toBe('none');
   });
@@ -455,7 +477,7 @@ describe('what each of the 24 presets opens with', () => {
      */
     for (const id of ['bm_hunter', 'lw_ranged']) {
       const selection = PRESETS_BY_ID.get(id)!.build().consumables;
-      for (const category of ['weapon_effect', 'spell_power', 'school_spell_power']) {
+      for (const category of ['weapon_effect_main_hand', 'spell_power', 'school_spell_power']) {
         expect(selection[category], `${id} ${category}`).toBeUndefined();
       }
       // And it takes what it CAN read, or the assertions above would pass on a
@@ -535,41 +557,47 @@ describe('what each of the 24 presets opens with', () => {
     const withRow = characterAtCombatStart(profile)!;
     const without = characterAtCombatStart({ ...profile, consumables: {} })!;
 
-    // Flask 150, weapon effect 36, Spell Power 35, Food 33 -- all school-blind.
+    // Flask 150, weapon effect 36, Spell Power 35, Food 28 -- all school-blind.
     expect(withRow.stats.get('spellPower') - without.stats.get('spellPower')).toBe(
-      150 + 36 + 35 + 33,
+      150 + 36 + 35 + 28,
     );
     // And the Fire school on top of that, which only Fire damage reads.
     expect(spellPowerFor(withRow, 'fire') - spellPowerFor(without, 'fire')).toBe(
-      150 + 36 + 35 + 33 + 40,
+      150 + 36 + 35 + 28 + 40,
     );
     expect(spellPowerFor(withRow, 'frost') - spellPowerFor(without, 'frost')).toBe(
-      150 + 36 + 35 + 33,
+      150 + 36 + 35 + 28,
     );
     // The flat hit points, which take their own route to the pool.
     expect(withRow.health.maximum - without.health.maximum).toBe(120);
   });
 });
 
-/*
+/**
  * ==============================================================================
- * A WEAPON EFFECT IS COATED ONTO A WEAPON, SO A DUAL-WIELDER BUYS TWO.
+ * THE WEAPON EFFECT IS TWO ROWS NOW, ONE PER HAND.
  *
- * The owner's ruling: "Dual wielding needs to trigger a second weapon effect
- * consumable for an additional +2% melee crit chance."
+ * The owner's instruction: "weapons stones need to be split out into MH / OH to
+ * be able to control this precisely." The RULING behind it is the one
+ * `perWeapon` already carried -- a weapon effect is coated onto a WEAPON rather
+ * than drunk, so somebody holding two buys two -- and what changed is that a
+ * single selection could not express "a Dense Sharpening Stone on the main hand
+ * and an Elemental on the off hand", which is the choice the new stone creates.
  *
- * It is the ONE row in the table whose worth depends on what the character is
- * holding -- every other one is drunk -- and the selection is still a single
- * choice, because asking somebody to pick the same stone twice would be a
- * control whose only correct answer is the one above it.
+ * SO THE FIRST TEST HERE IS THAT THE OLD ARITHMETIC STILL COMES OUT, written
+ * the new way. A dual-wielder choosing the same stone twice gets what one
+ * `perWeapon` selection used to give it.
  * ==============================================================================
  */
-describe('the weapon effect is applied once per weapon', () => {
-  const melee = { weapon_effect: 'weapon_melee_crit' };
+describe('the weapon effect, split into main hand and off hand', () => {
+  const bothHands = {
+    weapon_effect_main_hand: 'weapon_melee_crit_main_hand',
+    weapon_effect_off_hand: 'weapon_melee_crit_off_hand',
+  };
 
   it('gives a dual-wielder twice what a two-hander gets', () => {
-    const twoHand = consumableEffects(melee, 'two_hander');
-    const dualWield = consumableEffects(melee, 'dual_wield');
+    const twoHand = consumableEffects(bothHands, 'two_hander');
+    const dualWield = consumableEffects(bothHands, 'dual_wield');
 
     expect(twoHand.attackTableModifiers.for('melee-auto')?.critBonus).toBe(2);
     expect(dualWield.attackTableModifiers.for('melee-auto')?.critBonus).toBe(4);
@@ -590,41 +618,86 @@ describe('the weapon effect is applied once per weapon', () => {
     expect(weaponEffectCount('dual_wield')).toBe(2);
   });
 
-  it('doubles nothing else, whatever the character is holding', () => {
-    const everything = {
-      flask: 'flask_hit_points',
-      agility: 'elixir_agility',
-      strength: 'elixir_strength',
+  it('drops the off-hand row entirely when nothing swings in that hand', () => {
+    /*
+     * SKIPPED, NOT HALVED. There is no weapon for it to be on, so it
+     * contributes nothing at all -- which is the same answer the old flag gave
+     * by applying the single selection once instead of twice.
+     */
+    const offHandOnly = { weapon_effect_off_hand: 'weapon_melee_crit_off_hand' };
+    expect(consumableEffects(offHandOnly, 'two_hander').attackTableModifiers.for('melee-auto')).toEqual(
+      {},
+    );
+    expect(
+      consumableEffects(offHandOnly, 'one_hand_shield').attackTableModifiers.for('melee-auto'),
+    ).toEqual({});
+    expect(
+      consumableEffects(offHandOnly, 'dual_wield').attackTableModifiers.for('melee-auto')?.critBonus,
+    ).toBe(2);
+  });
+
+  it('lets the two hands carry DIFFERENT stones, which is the whole point', () => {
+    /*
+     * THE THING `perWeapon` COULD NOT SAY. One selection applied twice is two
+     * copies of one stone by construction; two selections are two choices.
+     */
+    const mixed = {
+      weapon_effect_main_hand: 'dense_sharpening_stone_main_hand',
+      weapon_effect_off_hand: 'weapon_melee_crit_off_hand',
     };
-    const twoHand = consumableEffects(everything, 'two_hander');
-    const dualWield = consumableEffects(everything, 'dual_wield');
-    expect(dualWield.stats).toEqual(twoHand.stats);
-    expect(dualWield.bonusHitPoints).toBe(twoHand.bonusHitPoints);
+    const effects = consumableEffects(mixed, 'dual_wield');
+
+    // The crit comes from the off hand alone, so it is 2 rather than 4.
+    expect(effects.attackTableModifiers.for('melee-auto')?.critBonus).toBe(2);
+    // And the weapon damage from the main hand alone.
+    expect(weaponDamageBonusFor(mixed, 'mainHand')).toBe(8);
+    expect(weaponDamageBonusFor(mixed, 'offHand')).toBe(0);
   });
 
-  it('is the only per-weapon row in the table', () => {
-    // Declared rather than derived, so a second one has to be deliberate --
-    // nothing about a flask, an elixir or food is per-weapon.
-    const perWeapon = CONSUMABLE_CATEGORIES.filter((c) => c.perWeapon === true).map((c) => c.id);
-    expect(perWeapon).toEqual(['weapon_effect']);
+  it('is the only pair of coated rows in the table', () => {
+    // Declared rather than derived, so a third has to be deliberate --
+    // nothing about a flask, an elixir or food is coated onto a weapon.
+    const coated = CONSUMABLE_CATEGORIES.filter((c) => c.hand !== undefined).map((c) => c.id);
+    expect(coated).toEqual(['weapon_effect_main_hand', 'weapon_effect_off_hand']);
   });
 
-  it('applies the WHOLE consumable twice, not just its crit', () => {
+  it('offers the same three stones in both hands, built from one table', () => {
+    /*
+     * The ids differ because `CONSUMABLES_BY_ID` throws on a duplicate at
+     * module load; the EFFECTS must not. Two hand-written copies of three
+     * stones is six places for a number to be wrong in.
+     */
+    const names = (categoryId: string) =>
+      CONSUMABLE_CATEGORIES_BY_ID.get(categoryId)!.options.map((option) => option.name);
+    expect(names('weapon_effect_main_hand')).toEqual(names('weapon_effect_off_hand'));
+    expect(names('weapon_effect_main_hand')).toEqual([
+      '+2% Melee Crit Chance',
+      '+1% Spell Crit Chance & +36 Spell Power',
+      '+8 Weapon Damage',
+    ]);
+  });
+
+  it('applies the WHOLE consumable, not just its crit', () => {
     /*
      * A second weapon effect is a second stone on a second weapon, so whatever
      * it grants it grants again. The caster option is the one that carries
      * stats, which is what makes this checkable at all.
      */
-    const spell = { weapon_effect: 'weapon_spell_crit' };
+    const spell = {
+      weapon_effect_main_hand: 'weapon_spell_crit_main_hand',
+      weapon_effect_off_hand: 'weapon_spell_crit_off_hand',
+    };
     const one = consumableEffects(spell, 'two_hander');
     const two = consumableEffects(spell, 'dual_wield');
     expect(two.stats.spellPower).toBe((one.stats.spellPower ?? 0) * 2);
     expect(two.stats.spellCritChance).toBe((one.stats.spellCritChance ?? 0) * 2);
   });
 
-  it('defaults to one application when no style is given', () => {
-    // Callers asking what a selection is worth in the abstract get one.
-    expect(consumableEffects(melee).attackTableModifiers.for('melee-auto')?.critBonus).toBe(2);
+  it('defaults to applying both when no style is given', () => {
+    // Callers asking what a selection is worth in the abstract get both.
+    expect(
+      consumableEffects(bothHands).attackTableModifiers.for('melee-auto')?.critBonus,
+    ).toBe(4);
   });
 
   it('reaches a built dual-wielding character, and only a dual-wielding one', () => {
@@ -632,11 +705,15 @@ describe('the weapon effect is applied once per weapon', () => {
       const base = PRESETS_BY_ID.get(presetId)!.build();
       const without = characterAtCombatStart({
         ...base,
-        consumables: { ...base.consumables, weapon_effect: undefined },
+        consumables: {
+          ...base.consumables,
+          weapon_effect_main_hand: undefined,
+          weapon_effect_off_hand: undefined,
+        },
       } as never)!;
       const withIt = characterAtCombatStart({
         ...base,
-        consumables: { ...base.consumables, weapon_effect: 'weapon_melee_crit' },
+        consumables: { ...base.consumables, ...bothHands },
       })!;
       return (
         (withIt.attackTableModifiers.for('melee-auto')?.critBonus ?? 0) -
@@ -650,6 +727,112 @@ describe('the weapon effect is applied once per weapon', () => {
     expect(crit('rogue_venom')).toBe(4);
     expect(crit('two_hand_arms')).toBe(2);
     expect(crit('prot_warr')).toBe(2);
+  });
+});
+
+/**
+ * ==============================================================================
+ * THE DENSE SHARPENING STONE, which is why the split had to happen first.
+ *
+ * "+8 base weapon damage to the equipped weapon", and it "competes with +2%
+ * crit from elemental sharpening stone" -- so the two sit in the same category
+ * and a character picks one per hand.
+ * ==============================================================================
+ */
+describe('the Dense Sharpening Stone', () => {
+  const stone = (hand: 'main_hand' | 'off_hand') => ({
+    [`weapon_effect_${hand}`]: `dense_sharpening_stone_${hand}`,
+  });
+
+  it('adds eight to the base damage of the hand it is coated on', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * ASSERTED AS A DELTA ON THE BUILT WEAPON, because the absolute figure is
+     * the benchmark set's and would be testing the gear. `baseDamage` is where
+     * it has to land -- the same term a Hunter's ammunition goes into -- and
+     * reading it off the character is what says the join exists at all. A stat
+     * that nothing READS is how `armorPenetration` shipped.
+     * ------------------------------------------------------------------------
+     */
+    const base = PRESETS_BY_ID.get('dw_fury')!.build();
+    const bare = characterAtCombatStart({
+      ...base,
+      consumables: {
+        ...base.consumables,
+        weapon_effect_main_hand: undefined,
+        weapon_effect_off_hand: undefined,
+      },
+    } as never)!;
+    const coated = characterAtCombatStart({
+      ...base,
+      consumables: {
+        ...base.consumables,
+        weapon_effect_main_hand: 'dense_sharpening_stone_main_hand',
+        weapon_effect_off_hand: undefined,
+      },
+    } as never)!;
+
+    expect(coated.weapons.mainHand!.baseDamage - bare.weapons.mainHand!.baseDamage).toBe(8);
+    // And the OTHER hand is untouched, which is the whole of "per weapon".
+    expect(coated.weapons.offHand!.baseDamage).toBe(bare.weapons.offHand!.baseDamage);
+  });
+
+  it('leaves the attack power scaling alone, as ammunition does', () => {
+    /*
+     * `powerCoefficient` IS `baseSpeed / 14`, and a sharpening stone does not
+     * change how fast the weapon swings. Recomputing it would be inventing a
+     * scaling change out of a flat bonus -- which is the mistake the Hunter's
+     * quiver comment exists to forbid, pointed at a different field.
+     */
+    const base = PRESETS_BY_ID.get('dw_fury')!.build();
+    const bare = characterAtCombatStart({
+      ...base,
+      consumables: { ...base.consumables, weapon_effect_main_hand: undefined },
+    } as never)!;
+    const coated = characterAtCombatStart({
+      ...base,
+      consumables: {
+        ...base.consumables,
+        weapon_effect_main_hand: 'dense_sharpening_stone_main_hand',
+      },
+    } as never)!;
+
+    expect(coated.weapons.mainHand!.powerCoefficient).toBe(bare.weapons.mainHand!.powerCoefficient);
+    expect(coated.weapons.mainHand!.swingTimerMs).toBe(bare.weapons.mainHand!.swingTimerMs);
+  });
+
+  it('lands nowhere when the hand holds nothing', () => {
+    // A two-hander build has no off-hand weapon, so an off-hand stone has no
+    // weapon to be on -- and must not quietly reach the main hand instead.
+    const base = PRESETS_BY_ID.get('two_hand_arms')!.build();
+    const bare = characterAtCombatStart({
+      ...base,
+      consumables: {
+        ...base.consumables,
+        weapon_effect_main_hand: undefined,
+        weapon_effect_off_hand: undefined,
+      },
+    } as never)!;
+    const coated = characterAtCombatStart({
+      ...base,
+      consumables: {
+        ...base.consumables,
+        weapon_effect_main_hand: undefined,
+        weapon_effect_off_hand: 'dense_sharpening_stone_off_hand',
+      },
+    } as never)!;
+
+    expect(coated.weapons.mainHand!.baseDamage).toBe(bare.weapons.mainHand!.baseDamage);
+    expect(coated.weapons.offHand).toBeUndefined();
+  });
+
+  it('grants no stats, which is what keeps it out of the stat block', () => {
+    // It is the one consumable whose effect belongs to a WEAPON rather than to
+    // a character, so `consumableEffects` must be blind to it.
+    const effects = consumableEffects(stone('main_hand'), 'dual_wield');
+    expect(effects.stats).toEqual({});
+    expect(effects.bonusHitPoints).toBe(0);
+    expect(effects.attackTableModifiers.for('melee-auto')).toEqual({});
   });
 });
 
@@ -731,5 +914,108 @@ describe('who eats what, on the plate-and-fur row', () => {
         expect(selection[category as keyof typeof selection], `${id}.${category}`).toBe(chosen);
       }
     }
+  });
+});
+
+/**
+ * ==============================================================================
+ * THE VERSION 14 -> 15 MIGRATION, which is the half of the split that can be
+ * wrong without anybody noticing.
+ *
+ * The CODE change reproduces the old arithmetic -- all 75 combat-log hashes are
+ * identical -- and that is a statement about the 25 PRESETS, which were edited
+ * to name both hands. A saved FILE still says `weapon_effect`, and nothing in
+ * the suite reaches `validateProfile` from a measurement: a preset goes from
+ * `build()` straight to the engine. So the only thing standing between a saved
+ * dual-wielder and silently losing half its weapon effect is this migration.
+ * ==============================================================================
+ */
+describe('migrating a weapon effect from one row to two', () => {
+  const v14 = (combatStyle: string, weaponEffect?: string) => ({
+    ...createDefaultProfile(),
+    version: 14,
+    character: { ...createDefaultProfile().character, combatStyle },
+    consumables: {
+      flask: 'flask_hit_points',
+      ...(weaponEffect ? { weapon_effect: weaponEffect } : {}),
+    },
+  });
+
+  const migrated = (profile: unknown) => {
+    // `loadProfile` takes an ALREADY-PARSED value; `parseProfile` is the one
+    // that takes text. The round trip through JSON is still here on purpose,
+    // because a saved file is JSON and a `combatStyle` the table does not
+    // carry has to survive the same path a real one does.
+    const loaded = loadProfile(JSON.parse(JSON.stringify(profile)));
+    expect(loaded.ok, 'it loads').toBe(true);
+    if (!loaded.ok) throw new Error('unreachable');
+    return loaded.profile;
+  };
+
+  it('gives a dual-wielder both hands, which is what one selection was worth', () => {
+    /*
+     * THE WHOLE POINT. `perWeapon` applied one choice to every weapon that
+     * swings, so a saved dual-wielder's single `weapon_melee_crit` was two
+     * stones. Migrating it to the main hand alone would halve it -- 4% crit to
+     * 2% -- on a file that loads with no issue raised.
+     */
+    const profile = migrated(v14('dual_wield', 'weapon_melee_crit'));
+    expect(profile.consumables.weapon_effect_main_hand).toBe('weapon_melee_crit_main_hand');
+    expect(profile.consumables.weapon_effect_off_hand).toBe('weapon_melee_crit_off_hand');
+    expect(profile.consumables.weapon_effect).toBeUndefined();
+  });
+
+  it('gives a one-weapon build only the hand it has', () => {
+    /*
+     * The off-hand row would be inert anyway -- `consumableReachesCharacter`
+     * refuses it -- so this is about the PANEL rather than the arithmetic: a
+     * stone shown as selected on a slot the character does not have is a
+     * control whose only honest answer is "nothing".
+     */
+    /*
+     * THE DEFAULT PROFILE IS A WARRIOR, so the styles here are the ones a
+     * Warrior may hold -- `validateProfile` refuses `caster` on one, which
+     * would fail this test for a reason that has nothing to do with the
+     * migration. What matters is that none of them swings a second weapon.
+     */
+    for (const style of ['two_hander', 'one_hand_shield'] as const) {
+      const profile = migrated(v14(style, 'weapon_melee_crit'));
+      expect(profile.consumables.weapon_effect_main_hand, style).toBe(
+        'weapon_melee_crit_main_hand',
+      );
+      expect(profile.consumables.weapon_effect_off_hand, style).toBeUndefined();
+    }
+  });
+
+  it('reproduces the old arithmetic on a migrated character', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE END-TO-END CHECK, and the one that would catch an id that no longer
+     * resolves. A migrated id that the table does not carry is DROPPED in
+     * silence -- `selectedConsumables` looks it up within its category -- so
+     * "the field is present" is not the same claim as "the stone is applied".
+     * ------------------------------------------------------------------------
+     */
+    const before = consumableEffects(
+      { weapon_effect_main_hand: 'weapon_melee_crit_main_hand', weapon_effect_off_hand: 'weapon_melee_crit_off_hand' },
+      'dual_wield',
+    );
+    const after = consumableEffects(
+      migrated(v14('dual_wield', 'weapon_melee_crit')).consumables,
+      'dual_wield',
+    );
+    expect(after.attackTableModifiers.for('melee-auto')?.critBonus).toBe(4);
+    expect(after.attackTableModifiers.for('melee-auto')?.critBonus).toBe(
+      before.attackTableModifiers.for('melee-auto')?.critBonus,
+    );
+  });
+
+  it('leaves a file that chose no weapon effect alone', () => {
+    const profile = migrated(v14('dual_wield'));
+    expect(profile.consumables.weapon_effect_main_hand).toBeUndefined();
+    expect(profile.consumables.weapon_effect_off_hand).toBeUndefined();
+    // And the rest of the selection survives, which is the `validateProfile`
+    // field-by-field rebuild's own failure mode.
+    expect(profile.consumables.flask).toBe('flask_hit_points');
   });
 });

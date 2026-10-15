@@ -2483,3 +2483,103 @@ button:disabled {
 .apl-ability-choice:focus {
   border-color: var(--border);
 }
+
+/*
+ * A MULTI-ABILITY ACTION: "Cold Blood then Eviscerate".
+ *
+ * STYLED AS PART OF THE ABILITY RATHER THAN AS A SEPARATE CONTROL, because it
+ * is part of what the entry DOES -- the condition beside it is when. The
+ * "then" reads as prose so the whole row is a sentence, which is the form the
+ * owner wrote the request in.
+ */
+.apl-sequence {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.apl-sequence-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.apl-sequence-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* The "+ then..." picker is deliberately quiet: it is an affordance rather
+   than a value, and it sits at the end of every entry whether or not the
+   entry is a sequence. */
+.apl-sequence-add {
+  background: transparent;
+  border-color: transparent;
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 1px 2px;
+  max-width: 9rem;
+}
+
+.apl-sequence-add:hover,
+.apl-sequence-add:focus {
+  border-color: var(--border);
+  color: var(--text);
+}
+
+/*
+ * BEFORE THE PULL, a small section above the priority list in the same panel.
+ *
+ * SET APART BY A RULE AND NOT A BOX, because it is part of the same panel and
+ * the owner asked for "a small section" -- a second bordered card inside the
+ * Priority list panel would read as a second panel.
+ */
+.apl-precombat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.apl-precombat-title {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.apl-precombat-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.apl-precombat-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.apl-precombat-at {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.apl-precombat-at input {
+  width: 4.5rem;
+}
+
+.apl-precombat-unit {
+  font-size: 11px;
+  color: var(--text-muted);
+}

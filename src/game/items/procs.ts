@@ -1,6 +1,7 @@
 import type {
   AttackEvent,
   AuraDefinition,
+  CastReaction,
   Combatant,
   MeleeWeaponSlot,
   Reaction,
@@ -15,6 +16,7 @@ import {
   seconds,
 } from '../../engine';
 import { ITEMS_BY_ID, ITEM_PROCS } from './itemData';
+import { REVELATION_ENCHANT_ID } from './foreverEnchants';
 
 /**
  * Procs per minute.
@@ -401,6 +403,29 @@ export function reactionsForEquipment(
         }),
       );
     }
+
+    /*
+     * REVELATION, ONCE PER ENCHANTED HAND, ON THE OWNER'S RULING.
+     *
+     * ------------------------------------------------------------------------
+     * IT SITS IN THE PER-HAND LOOP AND IS STILL NOT A WEAPON PROC, which is
+     * the thing to hold onto. Everything else here is triggered by a USE of
+     * that weapon and rolls against that weapon's own speed; Revelation is
+     * triggered by a SPELL, which belongs to no hand and has no speed -- so it
+     * takes a flat chance and asks `isWeaponUseOf` nothing.
+     *
+     * SO THE SLOT BUYS ONE THING ONLY: a second opportunity. Two enchanted
+     * hands roll twice against the same chance, which is "roll once per hand"
+     * read exactly -- the per-spell probability becomes `1 - (1 - p)^2`.
+     *
+     * AND THE REACTION IDS DIFFER BY SLOT, because `runReactions` would
+     * otherwise be holding two reactions with one id and nothing says which
+     * fired.
+     * ------------------------------------------------------------------------
+     */
+    if (equipped.enchantId === REVELATION_ENCHANT_ID) {
+      reactions.push(revelationReaction(weaponSlot));
+    }
   }
 
   for (const slot of ['trinket1', 'trinket2'] as const) {
@@ -425,3 +450,291 @@ export function reactionsForEquipment(
 
   return reactions;
 }
+
+// ---------------------------------------------------------------------------
+// Enchant Weapon - Revelation
+// ---------------------------------------------------------------------------
+
+/**
+ * "Permanently enchant a Melee Weapon to have a chance to trigger Revelation
+ * when a non-periodic spell fails to critically strike. Revelation grants 100%
+ * increased critical strike chance to the next spell cast. Revelation's chance
+ * to trigger is diminished as your critical strike chance increases."
+ *
+ * ============================================================================
+ * NOT A PPM EFFECT, AND NOT A WEAPON USE, WHICH IS THE WHOLE SHAPE OF IT.
+ *
+ * Every other weapon proc here triggers off a USE of the weapon it is on --
+ * `isWeaponUseOf`, rolled against that weapon's own base speed. Revelation
+ * sits on a melee weapon and triggers off a SPELL, which belongs to no hand.
+ * So it takes a flat chance rather than `ppmChance`, and it asks the attack
+ * which TABLE resolved it rather than which slot swung.
+ *
+ * ONE ROLL PER SPELL, EVEN WITH BOTH HANDS ENCHANTED, AND THAT IS A CHOICE.
+ * ----------------------------------------------------------------------------
+ * Crusader is per-hand because only a use of THAT weapon can trigger it, so
+ * two hands genuinely present two independent opportunities. Revelation's
+ * trigger is a spell cast: there is nothing about it that belongs to one
+ * weapon rather than the other, and nothing to attribute a second roll to.
+ *
+ * THE GENEROUS READING IS TWO ROLLS AND IT IS NOT TAKEN. "A bigger number and
+ * no error" is the failure mode this project keeps meeting, and the Gear
+ * panel's "a dual-wielder applies the weapon EFFECT twice" ruling is about a
+ * CONSUMABLE coated on each weapon rather than about a proc with a shared
+ * trigger. FLAGGED FOR THE OWNER rather than decided quietly: if two enchanted
+ * hands should roll twice, `reactionsForEquipment` is a one-line change.
+ * ----------------------------------------------------------------------------
+ *
+ * "FAILS TO CRITICALLY STRIKE" IS A LANDED NON-CRIT. A miss is not a failure
+ * to crit, it is a failure to connect -- and `canProc` already refuses one for
+ * every other effect in this file, so reading it the other way would make this
+ * the only proc in the project that fires off a miss.
+ *
+ * "NON-PERIODIC" NEEDS NO CHECK. A `dealt` reaction never sees a tick:
+ * `dealDamage` dispatches `dealt` only for damage that consulted a table and
+ * is not periodic. The clause is in the tooltip because it is true, not
+ * because something here has to enforce it.
+ * ============================================================================
+ */
+export const REVELATION_BASE_CHANCE = 0.11;
+
+/**
+ * The owner's own expression, kept as one:
+ *
+ *     11% * ((1 - CharacterSpellCritChance) - CharacterSpellCritChance)
+ *
+ * WRITTEN OUT RATHER THAN SIMPLIFIED TO `1 - 2c`, which is the same arithmetic
+ * and not the same statement. The owner's form says what it is -- the chance
+ * you did not crit, less the chance you did -- where the simplified one reads
+ * as a tuning constant somebody picked.
+ *
+ * IT GOES TO ZERO AT 50% AND IS CLAMPED THERE, which the owner states in as
+ * many words: "it no longer procs if your CharacterSpellCritChance is >= 50%".
+ * Without the clamp the expression goes NEGATIVE, and `rng.nextFloat(0, 1) <
+ * negative` is false anyway -- so the clamp changes no outcome and is here so
+ * that anyone READING the rate sees zero rather than -0.03.
+ *
+ * ----------------------------------------------------------------------------
+ * IT TAKES THE EFFECTIVE PER-SPELL CRIT, ON THE OWNER'S RULING, AND IT USED TO
+ * TAKE THE CHARACTER SHEET'S FIGURE.
+ *
+ * Asked which "CharacterSpellCritChance" meant, they said effective -- and
+ * added that a sheet reading 10.82% was "likely missing proper calculation".
+ * **IT WAS.** `CharacterSheetPanel` printed `stats.spellCritChance` raw and
+ * ignored `critRating` entirely, on all 28 profiles and in BOTH crit rows: the
+ * Fire Mage's sheet said 3.00% melee crit where the engine rolls 14.00%.
+ *
+ * SO THE WRONG READING HERE CAME FROM A WRONG NUMBER ON SCREEN, which is this
+ * project's own "a mislabelled number becomes a documented fact in one
+ * reading" -- arrived at from the other end. The figure was read off the sheet,
+ * used to build the proc, and written into a PR as the thing to check.
+ *
+ * A FRACTION AND NOT PERCENTAGE POINTS, which is the one place this could be
+ * out by a hundred. `AttackEvent.critChance` is already a fraction because the
+ * roll units it comes from are, so the conversion that used to live here is
+ * gone rather than moved.
+ * ----------------------------------------------------------------------------
+ */
+export function revelationChance(spellCrit: number): number {
+  return Math.max(0, REVELATION_BASE_CHANCE * (1 - spellCrit - spellCrit));
+}
+
+/** "grants 100% increased critical strike chance to the next spell cast" */
+export const REVELATION_CRIT_BONUS = 100;
+
+/**
+ * A minute, as a backstop only.
+ *
+ * FOREVER STATES NO DURATION -- "the next spell cast" is a charge and not a
+ * clock -- so this is not a `PLACEHOLDER_`: no figure is being invented for it
+ * to stand in for. It exists because an aura with no duration never expires
+ * and would sit on the character for the whole fight if the spender ever
+ * failed to fire. The Priest's Inner Focus carries the same backstop for the
+ * same reason, and the one time ITS spender failed to register, the buff was
+ * permanent for sixty seconds of every fight.
+ */
+export const REVELATION_DURATION_MS = seconds(60);
+
+/**
+ * Revelation.
+ *
+ * ----------------------------------------------------------------------------
+ * A STAT, NOT A PER-ABILITY MODIFIER, AND THE STAT IS WHAT SCOPES IT TO SPELLS.
+ *
+ * "the next SPELL cast" is a set no `abilityModifiers` entry can name: the
+ * catch-all reaches melee abilities too, and this enchant goes on a melee
+ * weapon, so a Shockadin's Holy Strike would have collected a guaranteed crit
+ * meant for its Holy Shock. Listing spells by id is the unmaintainable option
+ * `SchoolModifiers` exists to avoid.
+ *
+ * `spellCritChance` IS ALREADY EXACTLY THAT SCOPE. It is the engine's one
+ * spell-table crit stat -- the spell table's crit slice IS the caster's
+ * `spellCritChance` -- and the melee and ranged tables read `critChance`
+ * instead. So a hundred points of it is a guaranteed crit on a spell and worth
+ * nothing to a swing, with no new engine field at all.
+ *
+ * 100 POINTS, ON THE OWNER'S RULING, which is the reading of "100% increased
+ * critical strike chance" that makes the proc condition make sense: it fires
+ * only when a spell FAILED to crit, and its rate shrinks as crit rises, which
+ * is the shape of a catch-up mechanic rather than of a multiplier.
+ * ----------------------------------------------------------------------------
+ */
+export const REVELATION: AuraDefinition = {
+  id: 'revelation',
+  name: 'Revelation',
+  durationMs: REVELATION_DURATION_MS,
+  refreshBehaviour: 'reset',
+  statModifiers: [flat('spellCritChance', REVELATION_CRIT_BONUS)],
+};
+
+/**
+ * What triggers it: a spell that landed and did not crit.
+ *
+ * THE CHANCE READS WHAT *THIS SPELL* ROLLED AGAINST, which is the owner's
+ * ruling and is stronger than reading the character. `AttackEvent.critChance`
+ * is the slice the roll actually faced -- the rating, the per-ability crit, the
+ * per-school crit, the per-table crit and the target's contribution, all folded
+ * -- so the rate diminishes with everything that genuinely makes the character
+ * crit more, including a trinket that procs mid-fight and a talent that names
+ * one spell.
+ *
+ * SO TWO SPELLS ON ONE CHARACTER CAN HAVE DIFFERENT RATES, and that is the
+ * consequence worth stating: a Fire Mage's Scorch carries Improved Scorch's
+ * crit and its Fireball does not, so Revelation is rarer off the Scorch. That
+ * follows from the tooltip rather than being a special case.
+ *
+ * NO FEEDBACK LOOP TO GUARD. While Revelation is up the next spell crits, so
+ * the outcome filter refuses it; and if something ever did reach this with the
+ * aura up, the hundred points take the chance below zero and
+ * `revelationChance` clamps it to nothing.
+ *
+ * ONE REACTION PER ENCHANTED HAND, on the owner's ruling -- "Revelation should
+ * roll once per hand". `slot` is carried so the two rolls are genuinely two
+ * opportunities rather than one counted twice, and it is NOT checked against
+ * the attack: a spell is a use of no weapon, so asking `isWeaponUseOf` would
+ * make every roll false. See `reactionsForEquipment`.
+ */
+export function revelationReaction(slot: MeleeWeaponSlot): Reaction {
+  return {
+    id: `revelation_${slot}`,
+    on: 'dealt',
+    // Landed, and not a crit. `glance` and `crush` cannot occur on the spell
+    // table and are left out rather than filtered later.
+    outcomes: ['hit'],
+    canTrigger: (context, _actor, attack) => {
+      if (attack.attackTable !== 'spell') return false;
+      const chance = revelationChance(attack.critChance ?? 0);
+      if (chance <= 0) return false;
+      return context.rng.nextFloat(0, 1) < chance;
+    },
+    onTrigger: (context, actor) => {
+      context.applyAura(actor, REVELATION, actor.id);
+    },
+  };
+}
+
+/**
+ * Whether an ability resolves on the spell table, read off the ability itself.
+ *
+ * NOT A LIST OF IDS, for the reason the aura is a stat rather than a modifier
+ * map: the set is "every spell this character owns" and a list is the thing
+ * that goes stale. A pure damage-over-time cast declares no table and is not a
+ * spell for this purpose, which is the same line "non-periodic" draws on the
+ * trigger side.
+ */
+function isSpellCast(actor: Combatant, abilityId: string): boolean {
+  return actor.abilities.get(abilityId)?.attackTable === 'spell';
+}
+
+/**
+ * What spends it: the next spell cast, AFTER it has happened.
+ *
+ * ----------------------------------------------------------------------------
+ * THE SHAPE INNER FOCUS AND FINGERS OF FROST ALREADY USE, and for the same
+ * reason: `consumedByCast` is spent at cast START, which is right for a cost
+ * and useless for a crit -- a Shadow Bolt lands three seconds later, by which
+ * time the aura carrying the hundred points would be gone. `runCast` runs
+ * `onCast` BEFORE the cast reactions, so the spell has already rolled its crit
+ * inside the window by the time this fires.
+ *
+ * `appliedAt < now` IS NOT ENOUGH HERE, AND THAT IS THE DIFFERENCE FROM INNER
+ * FOCUS. Inner Focus is APPLIED BY A CAST, so its guard only has to exclude
+ * that one cast. Revelation is applied by a DAMAGE event, which for an instant
+ * spell lands in the same millisecond as the cast that produced it -- so a
+ * timestamp guard alone would let the spell that triggered the proc spend it.
+ * `castSequence` is the discriminator the engine already stamps for exactly
+ * this, the way Seal Fate's per-use cap reads it.
+ *
+ * AND ONLY A SPELL SPENDS IT. "the next spell cast" -- a Shockadin pressing
+ * Holy Strike between two Holy Shocks must not throw the charge away, which is
+ * the invisible failure: the proc still fires, the aura still reports its
+ * uptime, and the saving lands somewhere it was never meant to.
+ *
+ * THE CLOSURE IS PER CHARACTER, which `reactionsForEquipment` guarantees by
+ * building one per equipment set -- the same reason Hand of Justice's internal
+ * cooldown can live in one and a module-level variable could not.
+ * ----------------------------------------------------------------------------
+ */
+export function revelationSpender(): CastReaction {
+  let procCastSequence: number | null = null;
+
+  return {
+    id: 'revelation_spend',
+    canTrigger: (_context, actor, event) => {
+      const aura = actor.auras.get(REVELATION.id);
+      if (!aura) {
+        procCastSequence = null;
+        return false;
+      }
+      // The cast that PROCCED it does not spend it: a proc fired from inside
+      // this cast's own damage shares its sequence number.
+      if (procCastSequence === null) procCastSequence = actor.castSequence;
+      if (procCastSequence === actor.castSequence) return false;
+
+      return isSpellCast(actor, event.ability.id);
+    },
+    onTrigger: (context, actor) => {
+      procCastSequence = null;
+      actor.auras.remove(context, REVELATION.id);
+    },
+  };
+}
+
+/**
+ * The cast reactions the equipped set brings.
+ *
+ * ----------------------------------------------------------------------------
+ * A SECOND FUNCTION BESIDE `reactionsForEquipment`, because a cast event is
+ * not an attack event and `createPlayer` keeps the two lists apart -- the same
+ * split `RaidBuffReactions` makes for Judgement of Wisdom.
+ *
+ * IT RETURNS AT MOST ONE EVEN THOUGH BOTH HANDS ROLL, and the reason is the
+ * aura rather than the roll. Two enchanted hands are two OPPORTUNITIES -- the
+ * owner's "roll once per hand" -- and they feed ONE `revelation` aura holding
+ * ONE charge, so there is one thing to spend. Two spenders would each try to
+ * remove it and the second would find it gone; harmless today and exactly the
+ * kind of thing that stops being harmless.
+ *
+ * AND EACH SPENDER CARRIES ITS OWN `castSequence` LATCH, which is the real
+ * reason a second one would be wrong rather than merely redundant: the two
+ * would disagree about which cast procced the aura, and whichever ran first
+ * would decide.
+ * ----------------------------------------------------------------------------
+ */
+export function castReactionsForEquipment(
+  equipment: Readonly<Record<string, { itemId: number; enchantId?: number } | undefined>>,
+): readonly CastReaction[] {
+  return hasRevelation(equipment) ? [revelationSpender()] : [];
+}
+
+/** Whether any melee weapon slot carries Revelation. */
+function hasRevelation(
+  equipment: Readonly<Record<string, { itemId: number; enchantId?: number } | undefined>>,
+): boolean {
+  return MELEE_EQUIPMENT_SLOTS.some(
+    (slot) => equipment[slot]?.enchantId === REVELATION_ENCHANT_ID,
+  );
+}
+
+/** The three equipment slots a melee weapon can be in. */
+const MELEE_EQUIPMENT_SLOTS = ['mainHand', 'twoHand', 'offHand'] as const;

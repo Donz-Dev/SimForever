@@ -419,6 +419,13 @@ export class Simulation implements SimulationContext {
     // this is also what re-bases the sampler's memo for a reused combatant.
     for (const actor of this.actors) {
       sampleStats(this, actor, true);
+      /*
+       * AND ANY SEQUENCE LEFT OVER, for the same "reused combatant" reason.
+       * A fight that ended mid-sequence would otherwise hand the next one a
+       * pointer into a list, and the first decision would cast step two of
+       * something that never had a step one.
+       */
+      actor.pendingSequence = null;
     }
 
     // The end-of-fight event is what guarantees termination: actors reschedule
@@ -483,6 +490,13 @@ export class Simulation implements SimulationContext {
       if (!actor.isAlive) continue;
       for (const aura of actor.openingAuras) this.applyAura(actor, aura, actor.id);
     }
+
+    /*
+     * WHAT THE CHARACTER DID BEFORE THE PULL, after the stances and forms
+     * above and before anything swings below. Both halves of that sandwich
+     * matter -- see `SimulationConfig.onPrecombat`.
+     */
+    this.config.onPrecombat?.(this);
 
     for (const actor of this.actors) {
       if (!actor.isAlive) continue;
