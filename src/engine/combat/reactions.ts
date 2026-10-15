@@ -2,7 +2,7 @@ import type { Ability } from '../abilities/Ability';
 import type { ResourceType } from '../resources/Resource';
 import type { Combatant, WeaponSlot } from '../actors/Combatant';
 import type { SimulationContext } from '../simulation/SimulationContext';
-import type { AttackOutcome } from './attackTable';
+import type { AttackOutcome, AttackTableKind } from './attackTable';
 
 /**
  * An attack that has finished resolving, handed to anything reacting to it.
@@ -21,6 +21,27 @@ export interface AttackEvent {
   readonly amount: number;
   readonly weaponSlot: WeaponSlot | undefined;
   readonly critical: boolean;
+  /**
+   * Which combat table resolved it.
+   *
+   * --------------------------------------------------------------------------
+   * ALWAYS SET FOR A `dealt` OR `taken` REACTION, because `dealDamage` only
+   * dispatches those for damage that consulted a table -- the `if
+   * (request.attackTable && !request.periodic)` that builds the event. It is
+   * optional only because the `periodicDealt` branch synthesises an event for a
+   * tick, which rolled no table and must not claim one.
+   *
+   * WHY A REACTION WANTS IT: "a non-periodic SPELL" is a question about the
+   * table and nothing else on this event can answer it. `weaponSlot` says which
+   * hand was used and is undefined for a spell AND for Thunder Clap's ranged
+   * table AND for a seal; `abilityId` would mean listing every spell a class
+   * owns, which is the maintainability trap `SchoolModifiers` exists to avoid.
+   *
+   * Revelation is the first caller -- an enchant that triggers "when a
+   * non-periodic spell fails to critically strike".
+   * --------------------------------------------------------------------------
+   */
+  readonly attackTable?: AttackTableKind;
 }
 
 /**

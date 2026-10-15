@@ -79,6 +79,15 @@ interface Declared {
   readonly stats?: PartialStats;
   readonly attackTableModifiers?: Enchant['attackTableModifiers'];
   readonly unmodelled?: readonly UnmodelledEffect[];
+  /**
+   * The source's own words, for an entry that HAS any.
+   *
+   * Every row of the owner's spreadsheet is a bare effect -- "+8 Strength" --
+   * so for those the name IS the tooltip and writing one would be inventing
+   * prose Forever has not written. Revelation came later and in a sentence, so
+   * it carries that sentence instead of repeating its name.
+   */
+  readonly tooltip?: string;
 }
 
 /**
@@ -249,6 +258,37 @@ const DECLARED: readonly Declared[] = [
   { name: '+65 Spell Power', slots: ['twoHand'], stats: { spellPower: 65 } },
   { name: '+9 Stamina', slots: ['shield'], stats: { stamina: 9 } },
   { name: '+25 Agility', slots: ['mainHand', 'offHand', 'twoHand'], stats: { agility: 25 } },
+
+  /*
+   * ==========================================================================
+   * ENCHANT WEAPON - REVELATION, which is a PROC and the first one here.
+   *
+   * APPENDED AND NOT SLOTTED IN, which this file's id contract requires: ids
+   * are allocated BY POSITION, so an entry inserted anywhere else would move
+   * every enchant after it onto somebody's saved profile.
+   *
+   * IT IS THE OWNER'S THIRD WEAPON ENCHANT AND THE FIRST WITH NO WOWHEAD PAGE.
+   * Crusader and Weapon Spell Power are SCRAPED -- a spell id, an icon, a
+   * tooltip -- and `ENCHANT_RULES` in `itemData.ts` says what the simulator
+   * does with their words. This one was given as a sentence and a formula and
+   * nothing else, which is exactly what the rest of this table is, so it
+   * belongs here rather than in a JSON file with invented provenance.
+   *
+   * WHAT IT DOES IS IN `procs.ts`, keyed by this id the way Crusader is keyed
+   * by 20034. `stats` is empty because none of it is a stat: the chance is
+   * rolled per spell and the effect is an aura. See `revelationReaction`.
+   * ==========================================================================
+   */
+  {
+    name: 'Revelation',
+    slots: ['mainHand', 'offHand', 'twoHand'],
+    tooltip:
+      'Permanently enchant a Melee Weapon to have a chance to trigger ' +
+      'Revelation when a non-periodic spell fails to critically strike. ' +
+      'Revelation grants 100% increased critical strike chance to the next ' +
+      "spell cast. Revelation's chance to trigger is diminished as your " +
+      'critical strike chance increases.',
+  },
 ];
 
 /**
@@ -272,9 +312,10 @@ export const FOREVER_ENCHANTS: readonly Enchant[] = DECLARED.map((declared, inde
   stats: declared.stats ?? {},
   ...(declared.attackTableModifiers ? { attackTableModifiers: declared.attackTableModifiers } : {}),
   unmodelled: declared.unmodelled ?? [],
-  // The owner's table states the effect and nothing more, so the "tooltip" is
-  // the effect. Saying more would be writing a tooltip Forever has not written.
-  tooltip: declared.name,
+  // The owner's table states the effect and nothing more, so for those rows
+  // the "tooltip" IS the effect. Saying more would be writing a tooltip
+  // Forever has not written. An entry that came with prose carries it.
+  tooltip: declared.tooltip ?? declared.name,
 }));
 
 /** Looked up by the name the owner's table uses, for the preset loadouts. */
@@ -295,3 +336,14 @@ export function foreverEnchantId(name: string): number {
   if (!enchant) throw new Error(`No Forever enchant named "${name}"`);
   return enchant.id;
 }
+
+/**
+ * Revelation's id, for the one place that has to recognise it.
+ *
+ * BY NAME THROUGH `foreverEnchantId`, which THROWS on a name the table does not
+ * carry -- so renaming the entry is a build failure rather than a proc that
+ * silently stops firing. That is the half `ITEM_PROCS` had to learn twice: Hand
+ * of Justice was keyed to one item id while five sets named another, and it
+ * read as fully simulated while firing never.
+ */
+export const REVELATION_ENCHANT_ID = foreverEnchantId('Revelation');

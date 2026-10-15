@@ -622,12 +622,23 @@ describe('what the items do that the simulator does not', () => {
         .map((e) => e.name)
         .sort((a, b) => a.localeCompare(b));
     const scraped = ['Enchant Weapon - Crusader', 'Enchant Weapon - Spell Power'];
-    expect(offered('mainHand'), 'mainHand').toEqual(['+25 Agility', ...scraped]);
-    expect(offered('offHand'), 'offHand').toEqual(['+25 Agility', ...scraped]);
+    /*
+     * AND A THIRD, LATER AGAIN: REVELATION, on all three melee hands. It is
+     * the owner's and so sits in the Forever block like the two above, but it
+     * is the first entry in that table that is a PROC -- `procs.ts` says what
+     * it does, keyed by its id the way Crusader is keyed by 20034.
+     */
+    expect(offered('mainHand'), 'mainHand').toEqual([
+      '+25 Agility',
+      ...scraped,
+      'Revelation',
+    ]);
+    expect(offered('offHand'), 'offHand').toEqual(['+25 Agility', ...scraped, 'Revelation']);
     expect(offered('twoHand'), 'twoHand').toEqual([
       '+25 Agility',
       '+65 Spell Power',
       ...scraped,
+      'Revelation',
     ]);
 
     /*

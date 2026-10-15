@@ -13,7 +13,18 @@ import {
   VISKAG_PPM,
   ppmChance,
   reactionsForEquipment,
+  REVELATION,
+  castReactionsForEquipment,
+  revelationChance,
+  revelationReaction,
+  revelationSpender,
 } from '../../src/game/items/procs';
+import { REVELATION_ENCHANT_ID } from '../../src/game/items/foreverEnchants';
+import { PRESETS_BY_ID } from '../../src/profiles/presets';
+import { characterAtCombatStart } from '../../src/simulator';
+import { buildSimulation } from '../helpers/buildSimulation';
+import { makeTarget } from '../helpers/actors';
+import type { Combatant } from '../../src/engine';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { runProfile } from '../../src/simulator';
 import { createDefaultProfile } from '../../src/profiles';
@@ -474,5 +485,280 @@ describe('an extra attack does not fork the swing timer', () => {
      */
     expect(procced).toBeGreaterThan(plain * 0.9);
     expect(procced).toBeLessThan(plain * 1.1);
+  });
+});
+
+/*
+ * ==============================================================================
+ * ENCHANT WEAPON - REVELATION
+ *
+ * The owner's own enchant, and the first PROC in the Forever enchant table.
+ * Everything below is written out by hand from their two sentences rather than
+ * read off the source:
+ *
+ *   "a chance to trigger Revelation when a non-periodic spell fails to
+ *    critically strike. Revelation grants 100% increased critical strike
+ *    chance to the next spell cast."
+ *
+ *   chance = 11% * ((1 - CharacterSpellCritChance) - CharacterSpellCritChance)
+ *
+ * WHAT IS WORTH TESTING HERE IS NOT THE CONSTANT. `procs.test.ts`'s own header
+ * records that Windfury's tests pinned 20%, two attacks and 333 attack power
+ * and every one still passed after the effect was rebuilt into a different
+ * mechanic. So these drive the real reaction and the real spender and ask what
+ * the effect DOES: which table it fires off, whether the spell that procced it
+ * can spend it, and whether a melee ability can throw the charge away.
+ * ==============================================================================
+ */
+describe('Enchant Weapon - Revelation', () => {
+  const casterProfile = () => {
+    const built = PRESETS_BY_ID.get('mage_fire')!.build();
+    return {
+      ...built,
+      equipment: {
+        ...built.equipment,
+        twoHand: { ...built.equipment.twoHand!, enchantId: REVELATION_ENCHANT_ID },
+      },
+    };
+  };
+
+  describe('the chance, which diminishes as spell crit rises', () => {
+    it('is 11% at no crit and nothing at half', () => {
+      /*
+       * The owner's expression at four points, computed by hand:
+       *   0%  -> 0.11 * (1 - 0)   = 0.11
+       *   25% -> 0.11 * (0.75 - 0.25) = 0.055
+       *   50% -> 0.11 * (0.5 - 0.5)   = 0
+       */
+      expect(revelationChance(0)).toBeCloseTo(0.11, 10);
+      expect(revelationChance(25)).toBeCloseTo(0.055, 10);
+      expect(revelationChance(50)).toBe(0);
+    });
+
+    it('is clamped at zero rather than going negative past half', () => {
+      /*
+       * "it no longer procs if your CharacterSpellCritChance is >= 50%". The
+       * clamp changes no outcome -- `nextFloat(0,1) < -0.03` is false anyway --
+       * and it is what makes the RATE readable as zero rather than as a
+       * negative number somebody has to reason about.
+       */
+      expect(revelationChance(60)).toBe(0);
+      expect(revelationChance(100)).toBe(0);
+    });
+
+    it('reads a PERCENTAGE POINT, which is the one place it could be out 100x', () => {
+      // 11 points of spell crit is 0.11 as a fraction, so the chance is
+      // 0.11 * (0.89 - 0.11) = 0.0858. If the argument were read as a fraction
+      // already this would be 0.11 * (1 - 22) -- clamped to zero, and silent.
+      expect(revelationChance(11)).toBeCloseTo(0.0858, 10);
+      expect(revelationChance(11)).toBeGreaterThan(0);
+    });
+  });
+
+  describe('what triggers it', () => {
+    const spellHit = (critical: boolean) =>
+      ({
+        attacker: undefined as never,
+        defender: undefined as never,
+        outcome: critical ? 'crit' : 'hit',
+        abilityId: 'fireball',
+        abilityName: 'Fireball',
+        amount: 500,
+        weaponSlot: undefined,
+        critical,
+        attackTable: 'spell',
+      }) as const;
+
+    const always = { rng: { nextFloat: () => 0 } } as never;
+
+    it('fires on a spell that landed and did not crit', () => {
+      const actor = createPlayer({ race: 'gnome', characterClass: 'mage', combatStyle: 'caster' });
+      const reaction = revelationReaction();
+      expect(reaction.canTrigger!(always, actor, spellHit(false))).toBe(true);
+    });
+
+    it('does not fire on a melee hit, which is what the TABLE decides', () => {
+      /*
+       * THE REASON `AttackEvent` GAINED `attackTable`. This enchant goes on a
+       * MELEE weapon, so a character carrying it swings -- and nothing else on
+       * the event can tell a spell from a swing: `weaponSlot` is undefined for
+       * a spell AND for a seal AND for Thunder Clap's ranged table.
+       */
+      const actor = createPlayer({ race: 'gnome', characterClass: 'mage', combatStyle: 'caster' });
+      const melee = { ...spellHit(false), attackTable: 'melee-auto' } as never;
+      expect(revelationReaction().canTrigger!(always, actor, melee)).toBe(false);
+    });
+
+    it('is listed with outcomes that exclude a crit', () => {
+      // "fails to critically strike" -- and `runReactions` filters on this
+      // list, so a crit never reaches `canTrigger` at all.
+      expect(revelationReaction().outcomes).toEqual(['hit']);
+    });
+  });
+
+  describe('what it grants', () => {
+    it('makes the next SPELL crit and leaves a swing alone', () => {
+      /*
+       * ------------------------------------------------------------------------
+       * THE WHOLE REASON IT IS A STAT RATHER THAN A PER-ABILITY MODIFIER.
+       * `spellCritChance` is the engine's one spell-table crit stat and the
+       * melee tables read `critChance`, so a hundred points of it is a
+       * guaranteed crit on a spell and worth exactly nothing to a swing -- with
+       * no new engine field, and with no list of spell ids to go stale.
+       * ------------------------------------------------------------------------
+       */
+      const actor = createPlayer({ race: 'gnome', characterClass: 'mage', combatStyle: 'caster' });
+      const simulation = buildSimulation([actor, makeTarget()]);
+
+      const meleeBefore = actor.stats.effective.critChance;
+      const spellBefore = actor.stats.effective.spellCritChance;
+
+      simulation.applyAura(actor, REVELATION, actor.id);
+
+      expect(actor.stats.effective.spellCritChance).toBeCloseTo(spellBefore + 100, 6);
+      expect(actor.stats.effective.critChance).toBeCloseTo(meleeBefore, 6);
+    });
+  });
+
+  describe('what spends it', () => {
+    const mage = () => {
+      const actor = createPlayer({
+        race: 'gnome',
+        characterClass: 'mage',
+        combatStyle: 'caster',
+      });
+      return { actor, simulation: buildSimulation([actor, makeTarget()]) };
+    };
+
+    const castEvent = (actor: Combatant, abilityId: string) =>
+      ({
+        caster: actor,
+        target: undefined,
+        ability: actor.abilities.get(abilityId)!,
+        spent: [],
+        final: true,
+      }) as never;
+
+    it('is not spent by the cast whose own damage procced it', () => {
+      /*
+       * ------------------------------------------------------------------------
+       * THE DIFFERENCE FROM INNER FOCUS, AND WHY A TIMESTAMP GUARD IS NOT
+       * ENOUGH. Inner Focus is APPLIED BY A CAST, so `appliedAt < now` excludes
+       * the only cast that could eat it. Revelation is applied by a DAMAGE
+       * event, and an instant spell's damage lands in the SAME MILLISECOND as
+       * the cast that produced it -- so the charge would be spent by the very
+       * spell that failed to crit, and the enchant would be worth nothing while
+       * reporting perfectly ordinary uptime.
+       * ------------------------------------------------------------------------
+       */
+      const { actor, simulation } = mage();
+      const spender = revelationSpender();
+
+      simulation.cast(actor, actor.abilities.get('fireball')!, simulation.combatants[1]);
+      simulation.applyAura(actor, REVELATION, actor.id);
+
+      expect(spender.canTrigger!(simulation, actor, castEvent(actor, 'fireball'))).toBe(false);
+    });
+
+    it('is spent by the NEXT spell', () => {
+      const { actor, simulation } = mage();
+      const spender = revelationSpender();
+
+      simulation.cast(actor, actor.abilities.get('fireball')!, simulation.combatants[1]);
+      simulation.applyAura(actor, REVELATION, actor.id);
+      expect(spender.canTrigger!(simulation, actor, castEvent(actor, 'fireball'))).toBe(false);
+
+      // A second cast: a different `castSequence`, so the charge is fair game.
+      simulation.advanceTo(simulation.clock.now() + 5_000);
+      simulation.cast(actor, actor.abilities.get('fireball')!, simulation.combatants[1]);
+      expect(spender.canTrigger!(simulation, actor, castEvent(actor, 'fireball'))).toBe(true);
+
+      spender.onTrigger(simulation, actor, castEvent(actor, 'fireball'));
+      expect(actor.auras.has('revelation')).toBe(false);
+    });
+
+    it('is not spent by a MELEE ability, which is the invisible waste', () => {
+      /*
+       * ------------------------------------------------------------------------
+       * "the next SPELL cast". A Shockadin holds a melee weapon, which is where
+       * this enchant goes, and presses Holy Strike between its Holy Shocks. A
+       * charge thrown away on the swing leaves nothing behind to notice: the
+       * proc still fired, the aura still reported its uptime, and the
+       * guaranteed crit simply landed on an ability it was never meant for.
+       *
+       * THE FIXTURE IS A PALADIN ON PURPOSE. A Mage has no melee ability, so a
+       * Mage fixture could not express this mistake at all -- which is the
+       * stock Warlock list's lesson about the interrupt check.
+       * ------------------------------------------------------------------------
+       */
+      const paladin = createPlayer({
+        race: 'human',
+        characterClass: 'paladin',
+        combatStyle: 'one_hand_shield',
+      });
+      const simulation = buildSimulation([paladin, makeTarget()]);
+      const spender = revelationSpender();
+
+      const holyStrike = paladin.abilities.get('holy_strike');
+      expect(holyStrike, 'the fixture can express the mistake').toBeDefined();
+      expect(holyStrike!.attackTable).not.toBe('spell');
+
+      simulation.applyAura(paladin, REVELATION, paladin.id);
+      simulation.advanceTo(simulation.clock.now() + 1);
+      simulation.cast(paladin, holyStrike!, simulation.combatants[1]);
+
+      const event = {
+        caster: paladin,
+        target: undefined,
+        ability: holyStrike!,
+        spent: [],
+        final: true,
+      } as never;
+      expect(spender.canTrigger!(simulation, paladin, event)).toBe(false);
+      expect(paladin.auras.has('revelation')).toBe(true);
+    });
+  });
+
+  describe('on a character the fight actually builds', () => {
+    it('registers BOTH halves, which is what Inner Focus did not', () => {
+      /*
+       * ------------------------------------------------------------------------
+       * THE JOIN, ASKED OF THE BUILT CHARACTER. A proc and its spender are
+       * registered through two different lists -- `reactionsForEquipment` and
+       * `castReactionsForEquipment` -- and the failure mode is not symmetric:
+       * a missing TRIGGER is a proc that never fires and leaves nothing behind,
+       * and a missing SPENDER is a PERMANENT guaranteed crit that reports
+       * ordinary uptime. Inner Focus shipped the second of those.
+       * ------------------------------------------------------------------------
+       */
+      const profile = casterProfile();
+      const actor = characterAtCombatStart(profile)!;
+
+      expect(actor.reactions.map((reaction) => reaction.id)).toContain('revelation');
+      expect(actor.castReactions.map((reaction) => reaction.id)).toContain('revelation_spend');
+    });
+
+    it('brings neither half when the weapon is not enchanted with it', () => {
+      const actor = characterAtCombatStart(PRESETS_BY_ID.get('mage_fire')!.build())!;
+      expect(actor.reactions.map((reaction) => reaction.id)).not.toContain('revelation');
+      expect(actor.castReactions.map((reaction) => reaction.id)).not.toContain('revelation_spend');
+    });
+
+    it('rolls once per spell with both hands enchanted, not twice', () => {
+      /*
+       * THE DECISION, PINNED SO THAT CHANGING IT IS DELIBERATE. Crusader is
+       * per-hand because only a use of THAT weapon triggers it; Revelation's
+       * trigger is a spell, which belongs to no hand. If the owner rules that
+       * two enchanted hands should roll twice, this is the assertion that has
+       * to be rewritten rather than a bug that has to be found.
+       */
+      const equipment: Equipment = {
+        mainHand: { itemId: 9_500_001, enchantId: REVELATION_ENCHANT_ID },
+        offHand: { itemId: 9_500_002, enchantId: REVELATION_ENCHANT_ID },
+      };
+      const procs = reactionsForEquipment(equipment).filter((r) => r.id === 'revelation');
+      expect(procs).toHaveLength(1);
+      expect(castReactionsForEquipment(equipment)).toHaveLength(1);
+    });
   });
 });

@@ -69,7 +69,7 @@ import {
   weaponsForEquipment,
 } from '../items/equipment';
 import { formArmorMultiplier } from '../character/druidForms';
-import { reactionsForEquipment } from '../items/procs';
+import { castReactionsForEquipment, reactionsForEquipment } from '../items/procs';
 import {
   consumableAbilities,
   consumableEffects,
@@ -876,6 +876,17 @@ export function createPlayer(options: PlayerOptions): Combatant {
       // Eureka!'s charge spender, which has to run AFTER `onCast` has dealt the
       // damage its charge paid for. See `eurekaReactions`.
       ...racials.castReactions,
+      /*
+       * AND THE EQUIPMENT'S, WHICH IS NEW AND IS THE OTHER HALF OF A PROC.
+       *
+       * Revelation's charge is spent by the next SPELL, which is a cast and not
+       * an attack -- so `reactionsForEquipment` above cannot carry it and the
+       * enchant would have been a permanent guaranteed crit. That is Inner
+       * Focus's failure exactly, and the reason it is wired here rather than
+       * left for a later round: a spender that is not registered does not
+       * error, it makes the buff permanent.
+       */
+      ...castReactionsForEquipment(liveEquipment(equipment, style)),
       ...(options.extraCastReactions ?? []),
     ],
     // No abilities means nothing for a rotation to choose, so it is left off

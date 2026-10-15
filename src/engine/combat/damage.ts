@@ -1404,6 +1404,8 @@ export function dealDamage(
       amount: resolution.amount,
       weaponSlot: request.weaponSlot,
       critical: resolution.critical,
+      // The branch above has already established there is one.
+      attackTable: request.attackTable,
     };
     runReactions(context, source, 'dealt', event);
     runReactions(context, target, 'taken', event);

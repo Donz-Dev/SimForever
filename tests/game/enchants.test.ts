@@ -73,10 +73,16 @@ import { AttackTableModifiers } from '../../src/engine';
  * enchants that belong on one.
  * ==============================================================================
  */
+/*
+ * AND A FOURTH, LATER STILL: REVELATION, on all three melee weapon slots. It
+ * is the first entry in this table that is a PROC rather than a stat, so it is
+ * the first whose effect is not its name -- it carries the owner's sentence as
+ * its tooltip and `procs.ts` says what the simulator does with it.
+ */
 const COLUMNS: Readonly<Record<string, readonly string[]>> = {
-  twoHand: ['+65 Spell Power', '+25 Agility'],
-  mainHand: ['+25 Agility'],
-  offHand: ['+25 Agility'],
+  twoHand: ['+65 Spell Power', '+25 Agility', 'Revelation'],
+  mainHand: ['+25 Agility', 'Revelation'],
+  offHand: ['+25 Agility', 'Revelation'],
   shield: ['+9 Stamina'],
   head: [
     '+1% Dodge',
@@ -189,7 +195,7 @@ describe('the ids are stable and are nobody else’s', () => {
      */
     expect(foreverEnchantId('+1% Dodge')).toBe(FOREVER_ENCHANT_ID_BASE + 1);
     expect(foreverEnchantId('+2% Crit Chance')).toBe(FOREVER_ENCHANT_ID_BASE + 28);
-    expect(FOREVER_ENCHANTS).toHaveLength(31);
+    expect(FOREVER_ENCHANTS).toHaveLength(32);
   });
 
   it('throws on a name the table does not contain', () => {
