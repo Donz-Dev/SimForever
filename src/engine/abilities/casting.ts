@@ -44,6 +44,29 @@ export interface CastCheckOptions {
    * channel away and cast nothing.
    */
   readonly ignoreCastLock?: boolean;
+  /**
+   * Answer as though no global cooldown were running.
+   *
+   * ----------------------------------------------------------------------------
+   * FOR ASKING ABOUT A CAST THAT HAS NOT HAPPENED YET -- "if I press Cold Blood
+   * now, will Eviscerate still be castable a moment later". A SEQUENCE entry
+   * commits to every step before casting any of them, and every step after the
+   * first is on the global cooldown the step before it started, so without this
+   * the check would refuse every sequence that exists.
+   *
+   * SAME SHAPE AND SAME JUSTIFICATION AS `ignoreCastLock`: the GCD is checked
+   * THIRD, so it hides the ability's own cooldown, its cost, its stance and its
+   * target -- every one of which is the thing a sequence check actually wants to
+   * know. Reading `on_gcd` as an answer would be the mistake `selectInterrupt`
+   * made with `already_casting`, where every step of the reasoning was true and
+   * the conclusion was backwards.
+   *
+   * IT DOES NOT MAKE A CAST HAPPEN. `castAbility` calls `checkCast` with no
+   * options, so a sequence still waits for the global cooldown like anything
+   * else; this only decides whether it was worth starting.
+   * ----------------------------------------------------------------------------
+   */
+  readonly ignoreGcd?: boolean;
 }
 
 export function checkCast(
@@ -86,7 +109,7 @@ export function checkCast(
    * that the strike after it is not delayed -- and it still has to wait for
    * the current global cooldown to finish before it goes out.
    */
-  if (caster.isOnGcd(now)) {
+  if (!options?.ignoreGcd && caster.isOnGcd(now)) {
     return { ok: false, reason: 'on_gcd' };
   }
 

@@ -80,6 +80,35 @@ export interface PriorityEntry {
    * ----------------------------------------------------------------------------
    */
   readonly interruptsChannel?: boolean;
+  /**
+   * Further abilities to cast after this entry's, in order, with nothing
+   * allowed in between.
+   *
+   * ============================================================================
+   * THE OWNER'S ASK: "a way to combine abilities into one action, that way it
+   * can cause a set sequence to occur. Like 5 combo points is reached + 35
+   * energy is reached -> use Cold Blood and then Eviscerate."
+   *
+   * WHY A PRIORITY LIST CANNOT DO THIS ALREADY. CLAUDE.md records that a
+   * sequence is normally what EMERGES when each of its steps is in turn the
+   * highest castable entry -- which is true, and stops being true the moment
+   * something below is castable in the gap. Cold Blood is free and off the
+   * global cooldown, so the instant it goes out the list is re-read from the
+   * top and Sinister Strike at 45 energy is affordable: the Eviscerate it was
+   * pressed for never happens and a two-minute cooldown is spent on nothing.
+   *
+   * ABSENT MEANS ONE ABILITY, which is what makes this need no migration and
+   * what keeps every existing entry byte-identical -- the rule `disabled`
+   * already follows.
+   *
+   * THE STEPS ARE RESOLVED TOGETHER AND CAST APART. `selectAction` refuses to
+   * start one unless every step is castable ignoring the clock, and then casts
+   * them one per decision -- the engine casts once per decision and nothing
+   * here changes that. An off-GCD first step therefore costs ONE 100ms poll,
+   * which is the same price Charge and Bloodrage already pay.
+   * ============================================================================
+   */
+  readonly sequence?: readonly string[];
 }
 
 /**
@@ -106,6 +135,26 @@ export class PriorityRotation implements Rotation {
   }
 
   selectAction(context: SimulationContext, actor: Combatant): RotationDecision | null {
+    /*
+     * ==========================================================================
+     * A SEQUENCE IN PROGRESS OUTRANKS THE LIST, which is the whole of what
+     * "combine abilities into one action" means. The owner's example is "5
+     * combo points is reached + 35 energy is reached -> use Cold Blood and then
+     * Eviscerate", and the thing that makes it a SEQUENCE rather than two
+     * entries is that nothing may be cast between the two steps.
+     *
+     * A PRIORITY LIST CANNOT EXPRESS THAT ON ITS OWN. CLAUDE.md records the
+     * Rogue stealth design as three entries that EMERGE as a sequence because
+     * each step is in turn the highest castable entry -- and that works only
+     * when nothing cheaper sits below them. Cold Blood is free and off the
+     * global cooldown, so the moment it is cast the list is re-read from the
+     * top and Sinister Strike is affordable: the Eviscerate it was pressed for
+     * never happens, and the cooldown is spent on nothing.
+     * ==========================================================================
+     */
+    const resumed = this.resumeSequence(context, actor);
+    if (resumed !== 'none') return resumed === 'wait' ? null : resumed;
+
     for (const entry of this.entries) {
       const ability = actor.abilities.get(entry.abilityId);
       if (!ability) continue;
@@ -138,9 +187,97 @@ export class PriorityRotation implements Rotation {
         continue;
       }
 
+      /*
+       * THE WHOLE SEQUENCE IS RESOLVED BEFORE ANY OF IT IS CAST, which is the
+       * discipline `resolveCast` and `consumeCastCharges` already split along:
+       * work out what will happen, then commit. A sequence half-cast is worse
+       * than one not started -- Cold Blood spent with no Eviscerate behind it
+       * is a two-minute cooldown thrown away, and nothing reports it.
+       */
+      if (entry.sequence && entry.sequence.length > 0) {
+        if (!this.sequenceIsAffordable(context, actor, entry.sequence, target)) continue;
+        actor.pendingSequence = { abilityIds: entry.sequence, index: 0 };
+      }
+
       return { ability, target };
     }
     return null;
+  }
+
+  /**
+   * The next step of a sequence in progress.
+   *
+   * ----------------------------------------------------------------------------
+   * THREE ANSWERS AND THEY ARE GENUINELY DIFFERENT, which is why this does not
+   * just return a decision or null:
+   *
+   *   a decision   cast the next step
+   *   `'wait'`     the step is blocked by the global cooldown ALONE. Do nothing
+   *                this tick -- and do NOT fall through to the list, which is
+   *                the point: an entry below would fire between the two steps.
+   *   `'none'`     there is no sequence, or it has been abandoned. Walk the list.
+   *
+   * IT ABANDONS RATHER THAN BLOCKING FOREVER. A step that is refused for any
+   * reason other than the global cooldown -- the cost went somewhere, a
+   * cooldown started, the target died -- clears the pointer and lets the list
+   * resume. The alternative is an actor that stops acting for the rest of the
+   * fight, which is the worst failure available here and would look like a DPS
+   * regression rather than a deadlock.
+   * ----------------------------------------------------------------------------
+   */
+  private resumeSequence(
+    context: SimulationContext,
+    actor: Combatant,
+  ): RotationDecision | 'wait' | 'none' {
+    const pending = actor.pendingSequence;
+    if (!pending) return 'none';
+
+    const ability = actor.abilities.get(pending.abilityIds[pending.index]);
+    const target = context.defaultTargetFor(actor);
+
+    if (ability && context.canCast(actor, ability, target)) {
+      // Advance, and drop the pointer on the last step rather than leaving an
+      // exhausted sequence to be re-checked on every decision.
+      if (pending.index + 1 >= pending.abilityIds.length) actor.pendingSequence = null;
+      else pending.index += 1;
+      return { ability, target };
+    }
+
+    if (ability && context.castRejection(actor, ability, target) === 'on_gcd') return 'wait';
+
+    actor.pendingSequence = null;
+    return 'none';
+  }
+
+  /**
+   * Could every step of this sequence be cast, ignoring the clock?
+   *
+   * `ignoreGcd` IS THE WHOLE POINT. Every step after the first is on the global
+   * cooldown the step before it started, so asking the ordinary question would
+   * refuse every sequence that exists. What is being asked is "can the
+   * character AFFORD all of this" -- cost, cooldown, stance, target -- and the
+   * clock is the one thing a sequence is willing to wait out.
+   *
+   * IT CANNOT BE EXACT AND DOES NOT CLAIM TO BE. The cost is checked against
+   * the pool as it is NOW, and step one may spend some of it -- so a sequence
+   * whose steps share a resource can still abandon half-way. That is the
+   * honest limit of a check made before anything has happened, and abandoning
+   * is what it falls back to.
+   */
+  private sequenceIsAffordable(
+    context: SimulationContext,
+    actor: Combatant,
+    sequence: readonly string[],
+    target: Combatant | undefined,
+  ): boolean {
+    for (const abilityId of sequence) {
+      const ability = actor.abilities.get(abilityId);
+      if (!ability) return false;
+      if (context.castRejection(actor, ability, target, { ignoreGcd: true }) !== undefined) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**

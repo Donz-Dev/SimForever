@@ -2483,3 +2483,48 @@ button:disabled {
 .apl-ability-choice:focus {
   border-color: var(--border);
 }
+
+/*
+ * A MULTI-ABILITY ACTION: "Cold Blood then Eviscerate".
+ *
+ * STYLED AS PART OF THE ABILITY RATHER THAN AS A SEPARATE CONTROL, because it
+ * is part of what the entry DOES -- the condition beside it is when. The
+ * "then" reads as prose so the whole row is a sentence, which is the form the
+ * owner wrote the request in.
+ */
+.apl-sequence {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.apl-sequence-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.apl-sequence-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* The "+ then..." picker is deliberately quiet: it is an affordance rather
+   than a value, and it sits at the end of every entry whether or not the
+   entry is a sequence. */
+.apl-sequence-add {
+  background: transparent;
+  border-color: transparent;
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 1px 2px;
+  max-width: 9rem;
+}
+
+.apl-sequence-add:hover,
+.apl-sequence-add:focus {
+  border-color: var(--border);
+  color: var(--text);
+}

@@ -26,6 +26,7 @@ import {
   replaceAt,
   rootOf,
   setAbility,
+  setSequence,
   setCondition,
   setDisabled,
   setGroupOp,
@@ -294,6 +295,22 @@ export function AplEntries({
                   : undefined
               }
             />
+            {/*
+              * BESIDE THE ABILITY AND BEFORE THE CONDITION, because the chain
+              * is part of WHAT this entry does and the condition is WHEN. An
+              * entry reading "Cold Blood then Eviscerate / if 5 combo points"
+              * is the sentence the owner wrote.
+              */}
+            <EntrySequence
+              sequence={entry.sequence}
+              nameOf={nameOf}
+              abilities={abilities ?? []}
+              onChange={
+                onChange
+                  ? (sequence) => onChange(setSequence(list.entries, index, sequence))
+                  : undefined
+              }
+            />
             <EntryCondition
               condition={entry.condition}
               names={names}
@@ -444,6 +461,94 @@ function EntryAbility({
         </option>
       ))}
     </select>
+  );
+}
+
+/**
+ * The abilities an entry casts AFTER its own, as one action.
+ *
+ * ============================================================================
+ * THE OWNER'S "combine abilities into one action", drawn as a chain hanging
+ * off the entry rather than as separate rows -- because that is what it IS.
+ * The entry's condition gates the whole thing, and nothing may be cast between
+ * the steps, which is exactly the part two ordinary entries cannot express.
+ *
+ * READ-ONLY MODE SHOWS THE CHAIN AS TEXT, which matters more here than for
+ * most controls: an entry reading "Cold Blood" with a hidden Eviscerate behind
+ * it would be a rotation doing something the panel does not say.
+ *
+ * THE "then..." PICKER IS ALWAYS LAST, so adding a step is one click and
+ * removing one is choosing the blank. `setSequence` drops the blanks, so a
+ * half-made chain is never stored.
+ * ============================================================================
+ */
+function EntrySequence({
+  sequence,
+  nameOf,
+  abilities,
+  onChange,
+}: {
+  readonly sequence: readonly string[] | undefined;
+  readonly nameOf: (abilityId: string) => string;
+  readonly abilities: readonly { readonly id: string; readonly name: string }[];
+  readonly onChange?: (sequence: readonly string[]) => void;
+}) {
+  const steps = sequence ?? [];
+
+  if (!onChange || abilities.length === 0) {
+    if (steps.length === 0) return null;
+    return (
+      <span className="apl-sequence">
+        {steps.map((abilityId, at) => (
+          <span key={`${abilityId}-${at}`} className="apl-sequence-step">
+            {' then '}
+            {nameOf(abilityId)}
+          </span>
+        ))}
+      </span>
+    );
+  }
+
+  const replace = (at: number, abilityId: string) =>
+    onChange(steps.map((current, index) => (index === at ? abilityId : current)));
+
+  return (
+    <span className="apl-sequence">
+      {steps.map((abilityId, at) => (
+        <span key={`${abilityId}-${at}`} className="apl-sequence-step">
+          <span className="apl-sequence-label">then</span>
+          <select
+            className="apl-ability apl-ability-choice"
+            value={abilityId}
+            aria-label={`Then cast (step ${at + 1})`}
+            onChange={(event) => replace(at, event.target.value)}
+          >
+            {/* The blank is how a step is REMOVED; `setSequence` filters it. */}
+            <option value="">(remove)</option>
+            {abilities.map((ability) => (
+              <option key={ability.id} value={ability.id}>
+                {ability.name}
+              </option>
+            ))}
+          </select>
+        </span>
+      ))}
+      <select
+        className="apl-sequence-add"
+        value=""
+        aria-label="Add an ability to this action"
+        onChange={(event) => {
+          if (event.target.value) onChange([...steps, event.target.value]);
+        }}
+      >
+        <option value="">+ then…</option>
+        {abilities.map((ability) => (
+          <option key={ability.id} value={ability.id}>
+            {ability.name}
+          </option>
+        ))}
+      </select>
+    </span>
   );
 }
 
@@ -914,13 +1019,39 @@ function ClauseRow({
             ))}
           </select>
           <select
-            value={clause.ready ? 'ready' : 'cd'}
+            value={clause.cooldownTest ?? 'ready'}
             aria-label="Cooldown state"
-            onChange={(e) => set({ ready: e.target.value === 'ready' })}
+            onChange={(e) =>
+              /*
+               * THE COMPARE AND THE VALUE ARE SEEDED WHEN "seconds left" IS
+               * PICKED, because `emitClause` reads them and a clause switched
+               * over with neither would emit `atLeast 0 seconds` -- which is
+               * permanently TRUE and would silently ungate the entry. That is
+               * the half-typed-aura-id failure from the other direction: a
+               * condition that is always true is as invisible as one that is
+               * always false.
+               */
+              set(
+                e.target.value === 'secondsLeft'
+                  ? {
+                      cooldownTest: 'secondsLeft',
+                      compare: clause.compare ?? 'atMost',
+                      value: clause.value ?? 0,
+                    }
+                  : { cooldownTest: e.target.value as Clause['cooldownTest'] },
+              )
+            }
           >
             <option value="ready">is ready</option>
-            <option value="cd">is on cooldown</option>
+            <option value="onCooldown">is on cooldown</option>
+            <option value="secondsLeft">has cooldown left</option>
           </select>
+          {clause.cooldownTest === 'secondsLeft' ? (
+            <>
+              {compareField(false)}
+              {numberField(clause.value, 's')}
+            </>
+          ) : null}
         </>
       ) : null}
 

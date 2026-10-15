@@ -419,6 +419,13 @@ export class Simulation implements SimulationContext {
     // this is also what re-bases the sampler's memo for a reused combatant.
     for (const actor of this.actors) {
       sampleStats(this, actor, true);
+      /*
+       * AND ANY SEQUENCE LEFT OVER, for the same "reused combatant" reason.
+       * A fight that ended mid-sequence would otherwise hand the next one a
+       * pointer into a list, and the first decision would cast step two of
+       * something that never had a step one.
+       */
+      actor.pendingSequence = null;
     }
 
     // The end-of-fight event is what guarantees termination: actors reschedule

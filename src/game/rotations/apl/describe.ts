@@ -113,6 +113,12 @@ export function describeCondition(condition: AplCondition, names: DescribeNames 
         ? `${abilityName(condition.abilityId)} is ready`
         : `${abilityName(condition.abilityId)} is on cooldown`;
 
+    case 'cooldownTime':
+      return (
+        `${abilityName(condition.abilityId)} has ${comparison(condition.compare)} ` +
+        `${condition.seconds}s of cooldown left`
+      );
+
     case 'fightRemaining': {
       const left =
         condition.fraction !== undefined

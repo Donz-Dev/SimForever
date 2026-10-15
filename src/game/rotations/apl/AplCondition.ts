@@ -86,6 +86,36 @@ export type AplCondition =
   | { readonly kind: 'comboPoints'; readonly compare: AplCompare; readonly points: number }
   | { readonly kind: 'cooldown'; readonly abilityId: string; readonly state: 'ready' | 'onCooldown' }
   /**
+   * Seconds left on an ability's cooldown -- the owner's ask: "I want the
+   * cooldown condition to have a 'seconds left' controller just like
+   * buff/debuff does."
+   *
+   * --------------------------------------------------------------------------
+   * `auraTime` IS THE MODEL AND THE ABSENT CASE IS THE SAME CHOICE AGAIN. An
+   * absent aura reads as ZERO seconds left, so `auraTime atMost 0` is the
+   * idiom nine files wrote as "expired"; an ability that is READY likewise has
+   * zero left, so `cooldownTime atMost 0` is "is ready".
+   *
+   * AN ABILITY THE BUILD DOES NOT HAVE READS ZERO TOO, which is deliberately
+   * NOT what `cooldown` does -- that one is false in both directions, because
+   * "ready" and "on cooldown" are each a positive claim about an ability that
+   * exists. A DURATION has no such pair: the honest answer to "how long until
+   * Cold Blood" for a character without it is not a number at all, and zero is
+   * the reading that keeps `atMost` behaving like the `cooldown` kind's
+   * `ready` -- which is the one the panel's dropdown produces.
+   *
+   * SECONDS, LIKE `auraTime`, because the panel's control is in seconds and
+   * everything below the UI is integer milliseconds. The conversion is here
+   * rather than in the editor, so a hand-written list reads the same way.
+   * --------------------------------------------------------------------------
+   */
+  | {
+      readonly kind: 'cooldownTime';
+      readonly abilityId: string;
+      readonly compare: AplCompare;
+      readonly seconds: number;
+    }
+  /**
    * How much fight is LEFT, which is how this project expresses "the target is
    * nearly dead" -- the target is a damage sink that never drops, so an execute
    * window is a clock. Either an absolute number of seconds or a fraction of
@@ -205,6 +235,32 @@ export interface AplEntry {
    * ==========================================================================
    */
   readonly disabled?: boolean;
+  /**
+   * Further abilities cast after this entry's, in order, with nothing between.
+   *
+   * ==========================================================================
+   * "A WAY TO COMBINE ABILITIES INTO ONE ACTION", the owner's ask, and their
+   * own example is "5 combo points is reached + 35 energy is reached -> use
+   * Cold Blood and then Eviscerate".
+   *
+   * THE CONDITION IS THE ENTRY'S, NOT THE STEP'S, which is what makes it one
+   * action: the gate is checked once, the whole sequence is then resolved as a
+   * unit, and nothing may be cast between the steps. Two ordinary entries
+   * cannot do that -- Cold Blood is free and off the global cooldown, so the
+   * instant it goes out the list is re-read and anything affordable below it
+   * wins the gap.
+   *
+   * ABSENT MEANS ONE ABILITY, so this needs no migration and leaves every
+   * existing entry byte-identical. It is the rule `disabled` and
+   * `interruptsChannel` already follow, and it matters for the same reason:
+   * `syncDefaultRotation` compares a stored list to the stock one BY VALUE.
+   *
+   * SEE `PriorityEntry.sequence` for what the engine does with it -- including
+   * that a sequence ABANDONS rather than blocking when a step becomes
+   * uncastable, which is the alternative to an actor that stops acting.
+   * ==========================================================================
+   */
+  readonly sequence?: readonly string[];
 }
 
 /** A whole list: what it is called, and what is in it. */
