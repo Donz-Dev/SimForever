@@ -7,7 +7,8 @@ import {
   ARMOUR_SLOTS,
   BENCHMARK_SETS,
   BUDGET_EXPONENT,
-  CASTER_DPS_SHARE,
+  casterWeaponDps,
+  casterWeaponSpellPower,
   COST,
   DPS_TO_BUDGET,
   LINE,
@@ -410,6 +411,77 @@ const toLines = (
 };
 
 /**
+ * Replace a generated line list's Spell Power with the owner's stated figure.
+ *
+ * ============================================================================
+ * `spent` IS DELIBERATELY NOT RECOMPUTED, AND THAT IS THE DESIGN RATHER THAN
+ * AN OVERSIGHT.
+ *
+ * The slot's budget is divided exactly as it was and the Spell Power share
+ * still COSTS what it always cost; what changes is the number the line is
+ * written with. The difference between the two -- 17 points at E65, where a
+ * staff's share bought 77 and the owner states 94 -- is free with the item
+ * level, which puts it with BASE ARMOUR and WEAPON DPS. `docs/itemization.md`
+ * already records those as the two things that come with the item level
+ * rather than out of the budget, and this is the third.
+ *
+ * THAT IS WHAT KEEPS THE OWNER'S "additional stats (Intellect, Hit Rating,
+ * Crit Rating, etc) are unaffected" LITERALLY TRUE. Taking Spell Power out of
+ * the shares, or dropping the `DPS_TO_BUDGET` credit that funds it, would each
+ * have redistributed the slot and moved crit and intellect by a third -- on a
+ * change that is about spell power. The only movement left is +/-1 from
+ * `forgone` shifting with the new dps.
+ *
+ * AND IT IS WHY THE TWO BUDGET GUARDS IN `benchmarkGear.test.ts` STILL HOLD.
+ * `spent` continues to describe what the budget bought, so "fits its budget"
+ * and "spends most of it" are both still statements about the same quantity.
+ * A version that added the stated figure into `spent` would put every caster
+ * weapon 20% over its budget and a version that removed it would put them 65%
+ * under, and neither number would mean anything.
+ *
+ * THE LINE IS APPENDED WHEN THE TEMPLATE DOES NOT ALREADY BUY ONE, so a caster
+ * template whose first three preferences happen not to include Spell Power
+ * still gets the weapon's stated figure. All ten do today;
+ * `benchmarkGear.test.ts` pins that every caster weapon carries it.
+ *
+ * IT REWRITES THE TOOLTIP LINE rather than a stat block, because the
+ * generator's whole discipline is that it writes text and the item parser
+ * reads it back -- which is how 1,384 stranded spell power lines were found.
+ * `LINE['Spell Power']` is the one place that wording lives.
+ * ============================================================================
+ */
+function withCasterSpellPower(
+  divided: { effects: { kind: string; text: string }[]; spent: number },
+  spellPower: number,
+): { effects: { kind: string; text: string }[]; spent: number } {
+  const written = LINE['Spell Power'](spellPower);
+  const line = written.startsWith('Equip: ')
+    ? { kind: 'Equip', text: written.slice(7) }
+    : { kind: 'Stat', text: written };
+
+  const index = divided.effects.findIndex(isSpellPowerLine);
+  const effects =
+    index < 0
+      ? [...divided.effects, line]
+      : [...divided.effects.slice(0, index), line, ...divided.effects.slice(index + 1)];
+
+  return { effects, spent: divided.spent };
+}
+
+/**
+ * The tail of a generated Spell Power line, by its own wording.
+ *
+ * Built from `LINE` rather than written out, so a reworded line cannot leave
+ * this matching nothing -- which would append a second Spell Power line beside
+ * the one the shares bought and grant both. Matched on the SUFFIX because the
+ * amount is what varies, and `0` is as good a probe value as any.
+ */
+const SPELL_POWER_SUFFIX = LINE['Spell Power'](0).replace(/^Equip: /, '').replace('+0', '');
+
+const isSpellPowerLine = (effect: { text: string }): boolean =>
+  effect.text.endsWith(SPELL_POWER_SUFFIX);
+
+/**
  * The stamina a generated line list came out with.
  *
  * Read back off the TOOLTIP TEXT rather than tracked alongside it, for the same
@@ -561,7 +633,14 @@ function weaponDamage(
 ) {
   const line = WEAPON_DPS[`${hand}|${quality}`];
   const physical = line[0] * itemLevel + line[1];
-  const dps = caster ? physical * (CASTER_DPS_SHARE[hand] ?? 1) : physical;
+  /*
+   * A CASTER WEAPON'S DAMAGE IS STATED, NOT A SHARE OF THE PHYSICAL FIGURE.
+   * `casterWeaponDps` is the owner's rule and reads the ONE-HAND line for both
+   * hands -- see its derivation. `caster` is only ever true for a melee hand;
+   * a wand is a `ranged` stat stick and keeps its own line.
+   */
+  const dps =
+    caster && hand !== 'ranged' ? casterWeaponDps(hand, quality, itemLevel) : physical;
   /*
    * THE DAMAGE RANGE IS THE ITEM AND THE DPS IS DERIVED FROM IT, not the other
    * way round. Rounding min and max to integers moves the dps a little, and
@@ -831,9 +910,35 @@ export function benchmarkItemsFor(
     speed: number,
   ) => {
     const damage = weaponDamage(hand, set.quality, set.itemLevel, speed, caster && hand !== 'ranged');
-    const budget =
-      base * SLOT_MULTIPLIER[slotClass] + (caster && hand !== 'ranged' ? damage.forgone * DPS_TO_BUDGET : 0);
-    const { effects, spent } = toLines(new Map(), template.preferred.slice(0, 3), budget);
+    const budget = base * SLOT_MULTIPLIER[slotClass] + (caster && hand !== 'ranged' ? damage.forgone * DPS_TO_BUDGET : 0);
+    const divided = toLines(new Map(), template.preferred.slice(0, 3), budget);
+    /*
+     * ==========================================================================
+     * AND THEN A CASTER WEAPON'S SPELL POWER IS REPLACED BY THE OWNER'S FIGURE.
+     *
+     * OVERRIDDEN RATHER THAN TAKEN OUT OF THE SHARES, which is what keeps the
+     * owner's "caster weapons additional stats (Intellect, Hit Rating, Crit
+     * Rating, etc) are unaffected" literally true. The budget is divided
+     * exactly as it was, so crit and intellect come out at the numbers they
+     * came out at before; only the Spell Power LINE's value moves, from
+     * whatever its share bought to what the owner states.
+     *
+     * DROPPING IT FROM THE SHARES WOULD HAVE MOVED THE OTHER TWO, because the
+     * positional weights redistribute -- a staff's crit would have risen from
+     * 36 to about 48 at E65 on a change that was supposed to be about spell
+     * power. The share it no longer needs is left unspent instead, which is
+     * honest: the weapon is under its budget by exactly the amount spell power
+     * used to cost it, and `spent` below says so.
+     *
+     * `DPS_TO_BUDGET` STAYS FOR THE SAME REASON. Its whole job was to fund this
+     * line out of the damage the weapon gave up, and removing the credit while
+     * leaving the shares alone would have cut crit and intellect by a third --
+     * which is, again, not a spell power change.
+     * ==========================================================================
+     */
+    const { effects, spent } = caster && hand !== 'ranged'
+      ? withCasterSpellPower(divided, casterWeaponSpellPower(set.quality, set.itemLevel))
+      : divided;
     items.push(
       makeItem(
         nextId(),
