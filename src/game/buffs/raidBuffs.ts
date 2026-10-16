@@ -109,19 +109,32 @@ export interface RaidBuff {
   /**
    * Another entry this one cannot be selected alongside.
    *
-   * ----------------------------------------------------------------------------
-   * THE RULESET OWNER'S RULING, and their choice of where to enforce it:
-   * "Leader of the Pack and Moonkin Form don't stack, but that can be handled
-   * on the GUI."
+   * ==========================================================================
+   * **NOTHING DECLARES THIS TODAY, AND `raidBuffs.test.ts` PINS THAT.**
    *
-   * So it is a SELECTION rule rather than a combat one. The engine will happily
-   * carry two auras granting +3% crit and add them to +6%, which is correct
-   * behaviour for two different auras; what is wrong is choosing both, and the
-   * panel refuses that by turning one off when the other goes on.
+   * Its one pair was Leader of the Pack and Moonkin Form, under the owner's
+   * ruling that the two "don't stack, but that can be handled on the GUI" --
+   * so it is a SELECTION rule rather than a combat one: the engine will happily
+   * carry two auras granting +3% crit and add them to +6%, which is correct for
+   * two different auras, and what was wrong was choosing both.
    *
-   * Declared in ONE direction and read in both, so the two entries cannot
-   * disagree about whether they exclude each other.
-   * ----------------------------------------------------------------------------
+   * A patch then split the two by attack type and the owner ruled them no
+   * longer exclusive, which leaves `areExclusive` answering false for every
+   * pair in the catalogue. **A selection rule with no declaration reads exactly
+   * like one that sometimes fires**, which is why that is asserted rather than
+   * left to be noticed -- the same guard `RacialRequirement.weaponTypes` got
+   * when a patch removed its last caller.
+   *
+   * KEPT RATHER THAN DELETED, for two reasons. The next exclusive pair is then
+   * one field on one entry instead of a re-implementation; and the lesson this
+   * pair taught is that enforcing exclusivity HERE was never the thing that
+   * worked -- the no-double-dip rule lives in the shared aura id, and a chooser
+   * knows nothing about a talent or a profile loaded from JSON. See
+   * `MOONKIN_AURA_ID` in `auras/druid.ts`.
+   *
+   * Declared in ONE direction and read in both, so two entries cannot disagree
+   * about whether they exclude each other.
+   * ==========================================================================
    */
   readonly exclusiveWith?: string;
   /**
@@ -386,12 +399,14 @@ const leaderOfThePack: RaidBuff = {
    * the box reads 3% and not 6%. Enforcing that at the chooser instead is what
    * produced the +6% bug.
    *
-   * `exclusiveWith` IS LEFT AS IT WAS AND IS NOW A QUESTION -- two buffs that
-   * no longer overlap have no obvious reason to exclude each other. See
-   * `MOONKIN_AURA_ID` in `auras/druid.ts`.
+   * AND IT NO LONGER CARRIES `exclusiveWith`, on the owner's ruling: "Moonkin
+   * and Leader of the Pack are no longer exclusive. And all profiles should
+   * have both enabled by default in the raid buffs." The declaration was made
+   * when the two were the same 3%; the split made them different buffs, so the
+   * raid simply has a feral druid AND a moonkin. See `MOONKIN_AURA_ID` in
+   * `auras/druid.ts`.
    */
   aura: LEADER_OF_THE_PACK_AURA,
-  exclusiveWith: 'moonkin_form',
 };
 
 const moonkinForm: RaidBuff = {
@@ -401,9 +416,9 @@ const moonkinForm: RaidBuff = {
   source: 'Druid',
   appliesTo: 'player',
   // Spell crit only since the patch, and the same aura the Moonkin Form talent
-  // grants -- one id per buff, so a Moonkin with both sources reads 3%.
+  // grants -- one id per buff, so a Moonkin with both sources reads 3%. Not
+  // exclusive with Leader of the Pack any more; see that entry.
   aura: MOONKIN_AURA,
-  exclusiveWith: 'leader_of_the_pack',
 };
 
 // ---------------------------------------------------------------------------

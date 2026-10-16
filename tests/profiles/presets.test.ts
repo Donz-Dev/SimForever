@@ -198,7 +198,7 @@ describe('the preset catalogue', () => {
      * tooltip says it "disables any benefit you personally receive from
      * Windfury Totem" -- so that preset drops the totem and nothing else.
      *
-     * AND THREE SWAP A BUFF RATHER THAN DROPPING ONE, which is a different
+     * AND TWO SWAP A BUFF RATHER THAN DROPPING ONE, which is a different
      * shape and is why this test is not a single filter. On the ruleset owner's
      * instruction the two RANGED Hunters take Grace of Air Totem where everyone
      * else takes Windfury: "20% chance on each MAIN-HAND use" is worth nothing
@@ -206,19 +206,21 @@ describe('the preset catalogue', () => {
      * main hand, so Windfury is real for it, and the split is by what the
      * profile DOES rather than by class.
      *
-     * THE MOONKIN IS THE THIRD SWAP, and it USED TO BE A DROP. It takes Moonkin
-     * Aura where everyone else takes Leader of the Pack, on the owner's
-     * instruction, because that is the half of the exclusive pair it provides.
-     * Dropping it was accurate about the number and wrong about the raid: the
-     * raid is not short a buff, it has the other one -- and a ticked box is
-     * where a person looks for it on the panel.
+     * THERE WAS A THIRD SWAP AND IT IS GONE, which is this list getting SHORTER
+     * for once. The Moonkin took Moonkin Aura where everyone else took Leader
+     * of the Pack, because the two were declared exclusive and that was the
+     * half it provides -- and the owner has since ruled: "Moonkin and Leader of
+     * the Pack are no longer exclusive. And all profiles should have both
+     * enabled by default in the raid buffs." So the Moonkin runs the same raid
+     * as everybody else, both entries are in the shared list, and the one
+     * profile that used to differ no longer does.
      *
-     * ITS CRIT IS +3% EITHER WAY, and that no longer rests on this list being
-     * right. Moonkin Aura, Leader of the Pack and the two Druid talents that
-     * grant them are ONE aura with one id, so no combination of them is worth
-     * more than one -- see `PARTY_CRIT_AURA`.
+     * ITS OWN CRIT DOES NOT MOVE EITHER WAY, which is what makes selecting
+     * both safe: each aura has ONE id shared by its talent and its raid buff
+     * entry, so a Moonkin holding both sources of Moonkin Aura reads 3% and
+     * not 6% -- see `MOONKIN_AURA_ID`.
      *
-     * Every other difference here would be a bug; these four are the ruleset.
+     * Every other difference here would be a bug; these three are the ruleset.
      */
     const SELF_PROVIDED: Readonly<Record<string, readonly string[]>> = {
       shaman_enhancement: ['windfury_totem'],
@@ -226,7 +228,6 @@ describe('the preset catalogue', () => {
     const SWAPPED: Readonly<Record<string, readonly [string, string]>> = {
       bm_hunter: ['windfury_totem', 'grace_of_air_totem'],
       lw_ranged: ['windfury_totem', 'grace_of_air_totem'],
-      druid_moonkin: ['leader_of_the_pack', 'moonkin_form'],
     };
     const expected = (id: string, buffs: readonly string[]) => {
       const swap = SWAPPED[id];
@@ -243,7 +244,7 @@ describe('the preset catalogue', () => {
     expect(expected('shaman_enhancement', first[1])).toHaveLength(first[1].length - 1);
     // And both exception lists are EXHAUSTIVE: nobody else may differ.
     expect(Object.keys(SELF_PROVIDED).sort()).toEqual(['shaman_enhancement']);
-    expect(Object.keys(SWAPPED).sort()).toEqual(['bm_hunter', 'druid_moonkin', 'lw_ranged']);
+    expect(Object.keys(SWAPPED).sort()).toEqual(['bm_hunter', 'lw_ranged']);
     // A swap keeps the COUNT, which is what tells it from a drop.
     expect(PRESETS_BY_ID.get('bm_hunter')!.build().raidBuffs).toHaveLength(first[1].length);
     expect(PRESETS_BY_ID.get('bm_hunter')!.build().raidBuffs).toContain('grace_of_air_totem');
@@ -251,22 +252,19 @@ describe('the preset catalogue', () => {
     // And the melee Hunter keeps Windfury, because it has a main hand.
     expect(PRESETS_BY_ID.get('lw_melee')!.build().raidBuffs).toContain('windfury_totem');
     /*
-     * THE MOONKIN'S SWAP, asserted the same way: the count is unchanged, which
-     * is what tells a swap from a drop, and it is the only profile of the
-     * twenty-four that selects Moonkin Aura.
+     * AND BOTH DRUID AURAS ARE ON EVERY PRESET, which is the owner's ruling and
+     * the inverse of what this asserted: it checked that the Moonkin was the
+     * only profile of the twenty-four selecting Moonkin Aura.
      */
-    const moonkin = PRESETS_BY_ID.get('druid_moonkin')!.build().raidBuffs;
-    expect(moonkin).toHaveLength(first[1].length);
-    expect(moonkin).toContain('moonkin_form');
-    expect(moonkin).not.toContain('leader_of_the_pack');
     for (const preset of PROFILE_PRESETS) {
-      if (preset.id === 'druid_moonkin') continue;
-      expect(preset.build().raidBuffs, preset.id).not.toContain('moonkin_form');
+      const buffs = preset.build().raidBuffs;
+      expect(buffs, `${preset.id} moonkin_form`).toContain('moonkin_form');
+      expect(buffs, `${preset.id} leader_of_the_pack`).toContain('leader_of_the_pack');
     }
     expect(createDefaultProfile().raidBuffs).toEqual([]);
   });
 
-  it('takes the eighteen the ruleset owner ticked, and no others', () => {
+  it('takes the eighteen the ruleset owner ticked, plus Moonkin Aura', () => {
     /*
      * ------------------------------------------------------------------------
      * Written out by hand from the owner's own screen, in catalogue order.
@@ -286,10 +284,18 @@ describe('the preset catalogue', () => {
      * refused before any randomness is consumed and a Fury fight is identical
      * with it on and off.
      *
+     * AND THE NINETEENTH IS MOONKIN AURA, which was absent because it could not
+     * sit beside Leader of the Pack. The owner has ruled the two not exclusive
+     * with "all profiles should have both enabled by default", so it joins --
+     * and it is the third entry on this list worth nothing to a Warrior, since
+     * Moonkin Aura grants SPELL crit only since the patch that split the pair.
+     * The list is one RAID rather than one character's needs, which is the same
+     * argument the five above make.
+     *
      * WHAT IS STILL ABSENT IS ABSENT ON PURPOSE: Grace of Air Totem, which only
-     * the two ranged Hunters take and which they take INSTEAD of Windfury;
-     * Moonkin Form, which cannot sit beside Leader of the Pack; and Curse of
-     * Recklessness, which the owner left unticked beside the curse they did pick.
+     * the two ranged Hunters take and which they take INSTEAD of Windfury; and
+     * Curse of Recklessness, which the owner left unticked beside the curse they
+     * did pick.
      * ------------------------------------------------------------------------
      */
     expect(PRESETS_BY_ID.get('dw_fury')!.build().raidBuffs).toEqual([
@@ -311,6 +317,7 @@ describe('the preset catalogue', () => {
       'windfury_totem',
       'trueshot_aura',
       'leader_of_the_pack',
+      'moonkin_form',
     ]);
   });
 

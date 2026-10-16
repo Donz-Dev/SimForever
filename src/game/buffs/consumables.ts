@@ -37,6 +37,10 @@ import { getCombatStyle } from '../character';
  * learned what that costs: the Moonkin's +3% crit went to +6% because the rule
  * lived in a chooser and a TALENT reached the same aura without passing through
  * it. A shape that cannot express the mistake needs no chooser to be honest.
+ * (The field is now DECLARED BY NOTHING -- its one pair stopped being exclusive
+ * -- so the comparison is to a mechanism rather than to a live rule. It is the
+ * cleanest possible ending for it: the rule was removable precisely because
+ * nothing had ever depended on the chooser to enforce it.)
  *
  * THEY ARE STATS, NOT AURAS, which is the other difference from a raid buff.
  * A raid buff is an aura because it has a lifecycle -- Windfury's window opens

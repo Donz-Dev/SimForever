@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { AttackTableKind } from '../../src/engine';
 import type { HeadroomSlice } from '../../src/game/combat/statHeadroom';
 import {
   dodgeParryHeadroom,
@@ -262,28 +263,22 @@ describe('hit headroom', () => {
      * ========================================================================
      * THE OTHER HALF OF THE OWNER'S EXAMPLE: "Already capped. No stat weight."
      *
-     * IT USED TO READ THE PROT WARRIOR AND NO LONGER CAN, which is the racial
-     * patch arriving in a test about the hit ladder. That build carries 70 hit
-     * RATING -- seven points -- and reached the eighth from Tauren Endurance,
-     * whose hit clause the patch replaced with crit damage. So every Tauren
-     * preset is now exactly one point short of its cap, and the fully-capped
-     * case has no preset left to demonstrate it. See the test below, which
-     * pins that as a FACT rather than leaving it as the reason this one broke.
+     * IT READS THE PROTECTION WARRIOR AGAIN, which it could not for one
+     * release. Tauren Endurance's hit clause became crit damage, and the
+     * owner's template had been crediting that 1% -- so this build sat one
+     * point short of every cap and the fully-capped case had no preset left to
+     * demonstrate it. The owner has since raised the five Tauren templates by
+     * 10 hit rating each, which restores it: 80 rating is 8 points against an
+     * 8% special miss and a 6.5% dodge, with nothing left anywhere.
      *
-     * SO THE MECHANISM IS DRIVEN ON A CHARACTER BUILT TO BE CAPPED, which is
-     * what this test was always about: a ladder with no rungs when no slice
-     * has headroom. Handing the Protection Warrior the one point its gear no
-     * longer reaches is the smallest change that restores the case, and it
-     * cannot go stale against a racial, a template or a conversion again.
+     * SO THE WORKAROUND IS GONE. It handed this profile the missing point as a
+     * flat `hitChance` stat, which made the mechanism demonstrable and made
+     * the test stop describing a real build. A preset that is genuinely capped
+     * is the stronger fixture, and the test below is what notices if one stops
+     * being.
      * ========================================================================
      */
-    const profile = presetNamed('prot_warr');
-    const capped: CharacterProfile = {
-      ...profile,
-      // The point Endurance used to supply, as a flat stat rather than a racial.
-      stats: { ...profile.stats, hitChance: (profile.stats.hitChance ?? 0) + 1 },
-    };
-    const { player, chances } = built(capped);
+    const { player, chances } = built(presetNamed('prot_warr'));
     const slices = hitHeadroom(player, BOSS, chances);
 
     expect(slices.length).toBeGreaterThan(0);
@@ -291,66 +286,74 @@ describe('hit headroom', () => {
     expect(tiersFrom(slices)).toEqual([]);
   });
 
-  it('leaves every TAUREN preset one point short, which the racial patch did', () => {
+  it('puts every TAUREN preset back on the cap its template aims at', () => {
     /*
      * ========================================================================
-     * A BUILD FACT, PINNED APART FROM THE MECHANISM ABOVE, AND IT IS A QUESTION
-     * FOR THE OWNER RATHER THAN A DEFECT.
+     * THIS TEST ASSERTED THE OPPOSITE AND THE OWNER ANSWERED THE QUESTION IT
+     * WAS WRITTEN TO ASK.
      *
-     * Tauren Endurance was "Total Health increased by 5% and chance to hit
-     * increased by 1%" and is now "...and critical damage and healing
-     * increased by 2%". The owner's benchmark templates credited that 1%: the
-     * two Tauren MELEE rows ask for 70 hit rating where every other melee row
-     * asks for 80, the two feral Druids ask for 30 against a 4-point Nature's
-     * Reach, and the Moonkin asks for 110 against the same 4. Every one of the
-     * five landed exactly on its cap WITH the racial and is one point under it
-     * without.
+     * It read "leaves every TAUREN preset one point short, which the racial
+     * patch did", and it was a FINDING pinned where somebody would read it
+     * rather than a defect: Tauren Endurance was "Total Health increased by 5%
+     * and chance to hit increased by 1%" and the patch made the second clause
+     * crit damage, while the owner's benchmark templates had been crediting
+     * that 1%. The two Tauren MELEE rows asked for 70 hit rating where every
+     * other melee row asked 80, the two feral Druids asked 30 against a
+     * 4-point Nature's Reach, and the Moonkin asked 110 against the same 4.
+     * Five builds, each exactly one point under its own cap.
      *
-     * WHY THIS IS A TEST AND NOT A FIX. The templates are the owner's own
-     * spreadsheet, and raising five of them by 10 rating -- which under their
-     * own donor rule would come out of CRIT -- is a change to their numbers on
-     * nobody's authority. So the consequence is written down where it will be
-     * read, and it fails the moment somebody adjusts a template, which is
-     * exactly when this note should be revisited.
+     * THE RULING: "+10 hit rating, which should be subtracted from elsewhere
+     * on the template set without violating the item budget." So the five rows
+     * are 80/80/40/40/120 now, and `spreadRating` pays for the extra out of
+     * CRIT where the preference list has any and out of the base attributes
+     * where it does not -- which is the owner's own donor rule, unchanged.
      *
-     * THE MELEE HALF COSTS REAL DPS and the spell half costs the Moonkin real
-     * DPS: melee and ranged have NO miss floor, so the eighth point is the
-     * last one that buys anything and the seventh leaves a full point of miss
-     * on the table. This is the one place in the project where a racial change
-     * reaches a figure through the GEAR rather than through its own effect.
+     * WHY THE AIMED SLICE RATHER THAN EVERY SLICE. A build can be capped on one
+     * table and nowhere near its cap on another, and two of these five are:
+     * the Enhancement Shaman's melee is on 8 while its SPELL slice has nine
+     * points to go, and the Moonkin is the mirror -- its spell slice is on 16
+     * while its melee specials are capped twice over by the hit it carries for
+     * its spells. So the claim is about the table the template was aimed at,
+     * which is named here per build rather than inferred.
      * ========================================================================
      */
-    const tauren = PROFILE_PRESETS.map((preset) => preset.build()).filter(
-      (profile) => profile.character.race === 'tauren',
-    );
-    expect(tauren.length).toBe(5);
+    const AIMED: Readonly<Record<string, AttackTableKind>> = {
+      'prot_warr': 'melee-special',
+      'shaman_enhancement': 'melee-special',
+      'druid_cat': 'melee-special',
+      'druid_bear': 'melee-special',
+      'druid_moonkin': 'spell',
+    };
 
-    /*
-     * ONE SLICE AT EXACTLY ONE POINT, rather than every slice -- which is the
-     * assertion this started as and which is false for two of the five.
-     *
-     * The slice that matters is the one the template was AIMED at, and the
-     * other slices of the same build are nowhere near their own caps: the
-     * Enhancement Shaman's melee is one short of 8 while its SPELL slice has
-     * nine points to go, and the Moonkin is the mirror -- its spell slice is
-     * one short of 16 while its melee specials are capped twice over by the
-     * 15 points of hit it carries for its spells. So "every slice is one
-     * short" is the wrong shape, and "something is exactly one short" is the
-     * finding.
-     */
-    for (const profile of tauren) {
+    const tauren = PROFILE_PRESETS.filter(
+      (preset) => preset.build().character.race === 'tauren',
+    );
+    expect(tauren.map((preset) => preset.id).sort()).toEqual(Object.keys(AIMED).sort());
+
+    for (const preset of tauren) {
+      const profile = preset.build();
       const { player, chances } = built(profile);
       const slices = hitHeadroom(player, BOSS, chances);
-      expect(slices.length, profile.character.name).toBeGreaterThan(0);
+      const name = profile.character.name;
+      expect(slices.length, name).toBeGreaterThan(0);
 
-      const oneShort = slices.filter((entry) => Math.abs(entry.headroom - 1) < 1e-6);
-      expect(oneShort.length, `${profile.character.name}: a slice one point short`).toBeGreaterThan(
-        0,
-      );
-      // And nothing is FRACTIONALLY short, which would mean a different cause.
+      const aimed = slices.filter((entry) => entry.table === AIMED[preset.id]);
+      expect(aimed.length, `${name}: a slice on ${AIMED[preset.id]}`).toBeGreaterThan(0);
+      for (const entry of aimed) {
+        expect(entry.headroom, `${name} ${entry.label} is capped`).toBe(0);
+      }
+
+      /*
+       * AND NOTHING IS ONE POINT SHORT ANYWHERE, which is the exact symptom
+       * the racial patch produced and the inverse of what this test used to
+       * assert. A whole point left on a melee table is the expensive case,
+       * because melee and ranged have NO miss floor -- the eighth point is the
+       * last one that buys anything and the seventh leaves a full point of
+       * miss unspent.
+       */
       for (const entry of slices) {
-        const fractional = entry.headroom > 0 && entry.headroom < 1;
-        expect(fractional, `${profile.character.name} ${entry.label}`).toBe(false);
+        const oneShort = Math.abs(entry.headroom - 1) < 1e-6;
+        expect(oneShort, `${name} ${entry.label} is one point short`).toBe(false);
       }
     }
   });

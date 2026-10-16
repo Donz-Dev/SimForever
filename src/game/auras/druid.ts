@@ -47,46 +47,51 @@ const PHYSICAL = 'physical' as const;
 
 /*
  * ============================================================================
- * THE PARTY CRIT AURA: ONE AURA, THREE SOURCES, 3% ONCE.
+ * THE TWO PARTY CRIT AURAS: 3% EACH, AND ONE ID PER AURA RATHER THAN PER
+ * SOURCE.
  *
  * Moonkin Aura and Leader of the Pack each put +3% critical strike chance on
- * everyone within 45 yards, and each tooltip says it is "exclusive with" the
- * other. A character can meet it three ways: the Moonkin Form talent, the
- * Leader of the Pack talent, or either of the two raid buff entries.
- *
- * THE RULESET OWNER'S RULING IS THAT THEY ARE ONE THING. "These are all the
- * same exclusive 3% global critical strike chance and do not stack." So this is
- * ONE `AuraDefinition` with ONE id, and every source applies that one --
+ * everyone within 45 yards, and each can be met two ways -- the Druid TALENT
+ * that grants it, or the raid buff entry of the same name. Each is ONE
+ * `AuraDefinition` with ONE id that both of its sources apply, so a Moonkin in
+ * a raid that also ticks Moonkin Aura reads 3% and not 6%:
  * `AuraCollection.apply` refreshes a matching id instead of stacking a second
- * instance, so any combination of the three is 3% and no rule has to be
- * remembered anywhere.
+ * instance, and no rule has to be remembered anywhere.
  *
  * ----------------------------------------------------------------------------
- * IT WAS TWO AURAS AND IT DOUBLE-DIPPED, which is why this is now structural
- * rather than a selection rule. The earlier arrangement shared an id between
- * each TALENT and the raid buff OF THE SAME NAME, which closed two of the three
- * combinations and left the third wide open: a Moonkin carrying its own
- * `moonkin_form` aura in a raid that selected `leader_of_the_pack` held two
- * different ids and read **+6% crit**. Measured, not suspected -- 21.243%
- * spell crit against 24.243%.
+ * THIS SECTION SAID "ONE AURA, THREE SOURCES, 3% ONCE" AND IT IS TWO AURAS
+ * NOW, WHICH TOOK TWO PATCHES AND ONE OWNER RULING TO ARRIVE AT.
  *
- * The older ruling was "they don't stack, but that can be handled on the GUI",
- * and `withRaidBuff` does switch one off when the other goes on. That was only
- * ever half the surface: it governs two raid buff entries and knows nothing
- * about a TALENT, and nothing at all about a profile loaded from JSON with both
- * ids in its list. A GUI rule cannot cover a source the GUI does not own.
+ * 1. It was two auras and it DOUBLE-DIPPED. Each TALENT shared an id with the
+ *    raid buff of the same name, which closed two of the three combinations
+ *    and left the third wide open: a Moonkin carrying its own form talent in a
+ *    raid that selected `leader_of_the_pack` held two different ids and read
+ *    **+6% crit** -- measured, not suspected, 24.243% against 21.243%. The
+ *    ruling then was "these are all the same exclusive 3% global critical
+ *    strike chance and do not stack", so they became ONE id.
  *
- * THE TWO RAID BUFF ENTRIES STILL EXIST SEPARATELY, and should: a raid is
- * composed by choosing which druid turned up, and the panel names both. They
- * keep `exclusiveWith` so the selection still reads correctly. What changed is
- * that choosing wrongly can no longer be worth anything.
+ * 2. A patch split them BY ATTACK TYPE -- Moonkin Aura spell crit only, Leader
+ *    of the Pack melee and ranged only -- so they are two ids again and they
+ *    stack with each other on purpose. See `MOONKIN_AURA_ID` below.
+ *
+ * 3. The owner has since ruled the two raid buff entries NOT exclusive, and
+ *    every preset selects both. So a raid has a feral druid and a moonkin.
+ *
+ * WHAT SURVIVED ALL THREE IS THE SHAPE, and it is the part worth keeping: the
+ * no-double-dip rule lives in the ID and not in the chooser. The older ruling
+ * was "they don't stack, but that can be handled on the GUI", and `withRaidBuff`
+ * did switch one off when the other went on -- which was only ever half the
+ * surface, because it governs two raid buff entries and knows nothing about a
+ * TALENT, and nothing at all about a profile loaded from JSON with both ids in
+ * its list. **A GUI rule cannot cover a source the GUI does not own**, and that
+ * is why step 3 costs nothing: there is no exclusivity left in a chooser to
+ * remove, because the exclusivity that mattered was never there.
  * ----------------------------------------------------------------------------
  *
- * THE NAME CARRIES BOTH, because one aura cannot be called after one source.
- * It surfaces in the combat log's line at the pull and nowhere else: a
- * permanent aura is never removed, so `auraUptime` filters it out -- it only
- * totals a span when an `aura_removed` closes one. A reader of the log sees one
- * line and the reason there is one line.
+ * EACH NAME CARRIES ITS OWN SOURCE, and the aura surfaces in the combat log's
+ * line at the pull and nowhere else: a permanent aura is never removed, so
+ * `auraUptime` filters it out -- it only totals a span when an `aura_removed`
+ * closes one.
  * ============================================================================
  */
 
@@ -120,20 +125,31 @@ export const PARTY_CRIT_AURA_PERCENT = 3;
  * buffs doing two different things rather than one counted twice.
  *
  * ----------------------------------------------------------------------------
- * AND `exclusiveWith` IS NOW A QUESTION FOR THE OWNER RATHER THAN AN ANSWER.
+ * AND THE EXCLUSIVITY IS GONE, WHICH IS THE OWNER ANSWERING A QUESTION THIS
+ * NOTE WAS LEFT CARRYING.
  *
- * The two raid buff entries are still declared mutually exclusive, and that
- * declaration was made when they were the same 3%. Two buffs that no longer
- * overlap have no obvious reason to exclude each other -- a raid with a Feral
- * and a Moonkin druid would have both -- but removing the exclusivity is a
- * RAID COMPOSITION decision that moves every profile's figure, which is the
- * owner's call and not a reading of this note.
+ * It read "`exclusiveWith` IS NOW A QUESTION FOR THE OWNER RATHER THAN AN
+ * ANSWER", on the reasoning that two buffs which no longer overlap have no
+ * obvious reason to exclude each other -- a raid with a feral druid and a
+ * moonkin would have both -- while removing it is a RAID COMPOSITION decision
+ * that moves every profile's figure and is therefore not a reading of a note.
+ * The ruling: "Moonkin and Leader of the Pack are no longer exclusive. And all
+ * profiles should have both enabled by default in the raid buffs."
  *
- * LEFT AS IT WAS, AND THE COST IS NAMED: every preset carries
- * `leader_of_the_pack`, so every CASTER profile loses the 3% spell crit it was
- * getting from a feral druid's aura. That is what the note says should happen,
- * and it is also exactly what would be undone if the exclusivity went and both
- * were ticked. Flagged in HANDOVER rather than decided here.
+ * SO IT COST EVERY CASTER PROFILE 3% SPELL CRIT FOR ONE RELEASE AND HANDS IT
+ * BACK. Every preset carried `leader_of_the_pack`, which after the split
+ * grants melee and ranged crit only -- so the split itself is what took the
+ * spell crit away from nine caster rows, and selecting both is what restores
+ * it. The flag was worth writing down: this is the second question in two
+ * rounds whose answer arrived because it was recorded where somebody reads it.
+ *
+ * `RaidBuff.exclusiveWith` NOW HAS NO DECLARATION ANYWHERE, and
+ * `raidBuffs.test.ts` pins that rather than leaving it to be assumed -- a
+ * selection rule with no caller reads exactly like one that sometimes fires,
+ * which is `RacialRequirement.weaponTypes`' lesson from the patch before this
+ * one. The field and `areExclusive` are kept: the next exclusive PAIR is a
+ * declaration rather than a re-implementation, and `withRaidBuff` is still
+ * load-bearing for the catalogue ordering it also does.
  * ============================================================================
  */
 

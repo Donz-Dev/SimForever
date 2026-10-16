@@ -47,6 +47,45 @@ import {
  *
  * `preferred` IS IN DESCENDING ORDER OF IMPORTANCE and the allocator reads it
  * that way: the first stat takes the largest share of each slot's budget.
+ *
+ * ------------------------------------------------------------------------------
+ * AND THE FIVE TAUREN ROWS CARRY 10 MORE HIT RATING THAN THEIR SIBLINGS DO,
+ * WHICH IS A RACIAL REACHING A TEMPLATE.
+ *
+ * Tauren Endurance was "Total Health increased by 5% and chance to hit increased
+ * by 1%", and these five templates had been CREDITING that 1%: Prot Warr and Enh
+ * Shaman asked for 70 where every other melee row asks 80, Cat and Bear asked 30
+ * against a 4-point Nature's Reach, and the Moonkin asked 110 against the same 4.
+ * Each landed exactly on its cap WITH the racial. A patch replaced the hit clause
+ * with crit damage and left all five one point short -- the one place in this
+ * project where a racial change reaches a figure through the GEAR rather than
+ * through its own effect, and no audit here can see it.
+ *
+ * THE OWNER'S RULING restored the point as rating: "+10 hit rating, which should
+ * be subtracted from elsewhere on the template set without violating the item
+ * budget." So the rows are 80, 80, 40, 40 and 120, and **nothing else about the
+ * generator changed** -- a rating already costs budget and is already paid for
+ * out of CRIT first, so where the point came from is the owner's own donor rule
+ * answering the second half of their instruction by construction.
+ *
+ * WHERE IT ACTUALLY CAME FROM SPLITS ON WHETHER THE LIST BUYS CRIT, which is
+ * worth reading because three of the five look like they cost nothing:
+ *
+ *     Cat          crit 108 -> 106   attack power 2207 -> 2196
+ *     Enh Shaman   crit 176 -> 174   attack power 1974 -> 1965
+ *     Moonkin      crit 154 -> 152   spell power   774 ->  769
+ *     Prot Warr    crit  47 ->  47   stamina       294 ->  292
+ *     Bear         crit  42 ->  42   stamina       288 ->  285
+ *
+ * The two TANKS have no Crit in `preferred` at all, so there is no donor to
+ * drain and the overflow rule pays for it out of the base attributes instead --
+ * which `toLines` already documents as the behaviour on a slot carrying no crit,
+ * and is why a tank's crit column does not move by a point.
+ *
+ * THE OTHER 23 ROWS MOVED BY NOTHING, which is the containment check: a
+ * template is per build, so a change to five of them must be invisible in the
+ * rest. `tools/benchmark_stat_report.ts` is where that was read.
+ * ------------------------------------------------------------------------------
  * ==============================================================================
  */
 export interface BenchmarkTemplate {
@@ -164,7 +203,7 @@ const PROT_PALLY: readonly BenchStat[] = ['Stamina', 'Strength', 'Spell Power', 
 export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
   { presetId: 'two_hand_arms', characterClass: 'warrior', label: '2H Arms', hit: 80, expertise: 10, preferred: MELEE, armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Axe' }, statStick: WARRIOR_STICK },
   { presetId: 'dw_fury', characterClass: 'warrior', label: 'DW Fury', hit: 80, expertise: 10, preferred: MELEE, armour: 'Plate', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe' }, statStick: WARRIOR_STICK },
-  { presetId: 'prot_warr', characterClass: 'warrior', label: 'Prot Warr', hit: 70, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Sword' }, trinkets: TANK_TRINKETS, statStick: WARRIOR_STICK },
+  { presetId: 'prot_warr', characterClass: 'warrior', label: 'Prot Warr', hit: 80, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Sword' }, trinkets: TANK_TRINKETS, statStick: WARRIOR_STICK },
   { presetId: 'rogue_venom', characterClass: 'rogue', label: 'Venom', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
   /*
    * COMBAT MUT IS THE VENOM TEMPLATE WITH TWO FIELDS CHANGED, which is the
@@ -205,11 +244,11 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * needs a dagger. The gear and the rotation are one decision here.
    */
   { presetId: 'rogue_pure_hemo', characterClass: 'rogue', label: 'Pure Hemo', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Sword', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
-  { presetId: 'druid_moonkin', characterClass: 'druid', label: 'Moonkin', hit: 110, expertise: 0, preferred: CASTER, armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
-  { presetId: 'druid_cat', characterClass: 'druid', label: 'Cat', hit: 30, expertise: 10, preferred: ['Strength', 'Agility', 'Crit', 'Stamina', 'Attack Power'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' } },
-  { presetId: 'druid_bear', characterClass: 'druid', label: 'Bear', hit: 30, expertise: 20, preferred: ['Stamina', 'Bonus Armor', 'Agility', 'Strength', 'Dodge', 'Defense'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' }, trinkets: TANK_TRINKETS },
+  { presetId: 'druid_moonkin', characterClass: 'druid', label: 'Moonkin', hit: 120, expertise: 0, preferred: CASTER, armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
+  { presetId: 'druid_cat', characterClass: 'druid', label: 'Cat', hit: 40, expertise: 10, preferred: ['Strength', 'Agility', 'Crit', 'Stamina', 'Attack Power'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' } },
+  { presetId: 'druid_bear', characterClass: 'druid', label: 'Bear', hit: 40, expertise: 20, preferred: ['Stamina', 'Bonus Armor', 'Agility', 'Strength', 'Dodge', 'Defense'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' }, trinkets: TANK_TRINKETS },
   { presetId: 'shaman_elemental', characterClass: 'shaman', label: 'Ele Shaman', hit: 110, expertise: 0, preferred: CASTER, armour: 'Mail', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true } },
-  { presetId: 'shaman_enhancement', characterClass: 'shaman', label: 'Enh Shaman', hit: 70, expertise: 10, preferred: ['Crit', 'Strength', 'Intellect', 'Agility', 'Stamina', 'Attack Power'], armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Mace' } },
+  { presetId: 'shaman_enhancement', characterClass: 'shaman', label: 'Enh Shaman', hit: 80, expertise: 10, preferred: ['Crit', 'Strength', 'Intellect', 'Agility', 'Stamina', 'Attack Power'], armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Mace' } },
   { presetId: 'mage_frostfire', characterClass: 'mage', label: 'Frostfire', characterName: 'Frostfire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   { presetId: 'mage_arcane', characterClass: 'mage', label: 'Arcane', characterName: 'Arcane Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   { presetId: 'mage_fire', characterClass: 'mage', label: 'Fire', characterName: 'Fire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
