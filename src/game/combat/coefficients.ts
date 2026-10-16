@@ -143,9 +143,54 @@ export const HOLY_STRIKE_SP_COEFFICIENT = 0.2145;
  * ability already reads which seal is up in order to choose its damage; it now
  * reads it for the coefficient too.
  */
+/**
+ * ===========================================================================
+ * TWO OF THE THREE WERE WRONG AND THE PATCH NAMES BOTH: "Judgement of
+ * Righteousness and Judegment of Fury now have the correct spell power
+ * coefficients for INSTANT CAST SPELLS."
+ *
+ * WHAT "THE CORRECT COEFFICIENT FOR AN INSTANT" IS, DERIVED FROM THE DATA
+ * RATHER THAN ASSUMED. The note names a convention without stating a number,
+ * so the number has to come from somewhere -- and this ruleset states it nine
+ * times over. Every instant-cast spell in `WoWSimWorksheet.xlsx` carries
+ * `1.5 / 3.5`, written variously as 0.4285714285714286, 0.42857142857142855,
+ * 0.429 and 0.43:
+ *
+ *   Holy Shock, Hammer of Wrath, Mind Blast, Shadow Word: Death, Fire Blast,
+ *   Scorch, Conflagrate, Shadowburn, Searing Pain
+ *
+ * AND JUDGEMENT IS INSTANT, which is the premise the note rests on and is
+ * worth checking rather than assuming: the spellbook capture reads "Instant"
+ * for it at build 1.60.1.70291.
+ *
+ * SO 0.45 AND 0.5 WERE THE TWO OUTLIERS, AND THE NOTE NAMES EXACTLY THOSE TWO.
+ * That is what makes this a derivation rather than a guess -- a convention
+ * read off nine abilities, and a note that independently names the two rows
+ * which do not follow it.
+ *
+ * KEPT AS AN EXPRESSION, because `1.5 / 3.5` does not terminate: the Ice Lance
+ * work settled that 0.43 is already a rounding of 0.428571..., and rounding
+ * twice compounds it.
+ *
+ * ---------------------------------------------------------------------------
+ * JUDGEMENT OF COMMAND IS LEFT AT THE SHEET'S 0.43 AND THAT IS A QUESTION.
+ *
+ * It is the same figure rounded -- 0.43 against 0.4285714, a 0.33% difference
+ * -- so all three judgements are now "the instant coefficient" while two of
+ * them are exact and one is not. Tidier would be to make all three the
+ * expression, and that is NOT what the note says: it names two abilities, and
+ * a ruling covers what it says and is not extended by analogy. That rule has
+ * paid here before, when Explosive Trap waited for its own naming rather than
+ * inheriting Immolation Trap's.
+ *
+ * FLAGGED FOR THE OWNER rather than quietly aligned, because the alternative
+ * reading -- that the note means all three and lists the two that were visibly
+ * off -- is perfectly defensible and worth 0.33% on one seal.
+ * ---------------------------------------------------------------------------
+ */
 export const JUDGEMENT_OF_COMMAND_SP_COEFFICIENT = 0.43;
-export const JUDGEMENT_OF_FURY_SP_COEFFICIENT = 0.45;
-export const JUDGEMENT_OF_RIGHTEOUSNESS_SP_COEFFICIENT = 0.5;
+export const JUDGEMENT_OF_FURY_SP_COEFFICIENT = 1.5 / 3.5;
+export const JUDGEMENT_OF_RIGHTEOUSNESS_SP_COEFFICIENT = 1.5 / 3.5;
 
 /**
  * Hammer of Wrath: 42.857% spell power.

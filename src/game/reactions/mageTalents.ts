@@ -404,9 +404,52 @@ export const fingersOfFrostSpender = (): CastReaction => ({
 });
 
 /** Procs that fire on a cast, by the talent that grants them. */
+/**
+ * Heating Up's second source: a Fire Blast CAST, win or lose.
+ *
+ * ============================================================================
+ * "Heating up also always gains an additional charge each time the Mage casts
+ * Fire Blast. This does mean Fire Blast critical strikes generate 2 charges."
+ *
+ * THE NOTE EXPLAINS ITS OWN ARITHMETIC, which is what makes this a cast
+ * reaction ALONGSIDE the existing damage one rather than a change to it. Fire
+ * Blast is already in `HEATING_UP_TRIGGERS`, so a crit grants a charge through
+ * the `dealt` path; this grants one on the cast whatever happened. A crit
+ * therefore gets both, which is the note's "2 charges" -- and a MISS still gets
+ * this one, because "each time the Mage casts" names the cast and not the hit.
+ *
+ * SO THE TEMPTING IMPLEMENTATION IS THE WRONG ONE. Doubling the charge inside
+ * the crit reaction gives a critting Fire Blast its two and gives a
+ * non-critting one NOTHING, which is a smaller number, no error, and reads
+ * exactly like a working talent.
+ *
+ * A CAST REACTION AND NOT A `dealt` ONE, because a Fire Blast that MISSES has
+ * to count. `runCast` is where a cast is observed whatever the combat table
+ * then says -- the same reason a finisher's combo points are read from
+ * `AbilityCastEvent`.
+ *
+ * `cast.final` COSTS NOTHING HERE AND IS KEPT, because Fire Blast is an instant
+ * and an instant is one tick. It is the cheap guard against the day something
+ * makes it a channel, which is the reading `eureka_spend` and Touch of the
+ * Grave's cast half both take.
+ *
+ * REGISTERED UNDER THE SAME TALENT ID as the damage half, which is what makes
+ * it impossible for a build to have one and not the other -- the talent grants
+ * both or neither, the shape Primal Fury and Reckoning already use.
+ * ============================================================================
+ */
+export const heatingUpOnFireBlast = (): CastReaction => ({
+  id: 'heating_up_fire_blast',
+  canTrigger: (_context, _actor, cast) => cast.final && cast.ability.id === 'fire_blast',
+  onTrigger: (context, actor) => {
+    context.applyAura(actor, HEATING_UP, actor.id);
+  },
+});
+
 export const MAGE_CAST_REACTIONS: Readonly<Record<string, (value: number) => CastReaction>> = {
   fingers_of_frost: fingersOfFrostSpender,
   arcane_blast: arcaneBlastSpender,
+  heating_up: heatingUpOnFireBlast,
 };
 
 export const MAGE_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {

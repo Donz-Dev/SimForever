@@ -441,6 +441,27 @@ export function fireVulnerabilityAura(percentPerStack: number): AuraDefinition {
  * THREE STACKS AT 25% EACH IS 75%, which takes a six-second Pyroblast to one
  * and a half. That is the whole reason a Fire mage casts Pyroblast at all --
  * and now it is once per rebuilt stack of three rather than once per window.
+ *
+ * ----------------------------------------------------------------------------
+ * AND IT IS NOT SPENT ON A PYROBLAST PRESENCE OF MIND HAS ALREADY MADE INSTANT:
+ * "Heating Up is no longer consumed if the Mage also had Presence of Mind
+ * active for the Pyroblast cast."
+ *
+ * `requiresCastTime` DID NOT ALREADY SAY THIS, which is the near miss worth
+ * naming: that flag reads the ability's DECLARED `castTimeMs`, and Pyroblast
+ * always declares one. So the aura matched a cast that was already instant, its
+ * 75% had nothing left to reduce, and all three stacks were thrown away -- with
+ * nothing on the results page to show it, because the Pyroblast was instant
+ * either way and the aura still reported its uptime.
+ *
+ * `exceptWhileAura` SUPPRESSES THE EFFECT AS WELL AS THE CONSUMPTION, which is
+ * the same answer by a different route: a cast Presence of Mind has already
+ * zeroed cannot be shortened again.
+ *
+ * IT MAKES THE ARCANE LIST'S OWN COMBINATION WORK, which is what the note is
+ * plainly for. That list was respecified to move Presence of Mind so it makes
+ * PYROBLAST instant -- so before this, every one of those casts also ate a
+ * three-stack Heating Up for nothing.
  * ----------------------------------------------------------------------------
  */
 export const HEATING_UP_DURATION_MS = seconds(20);
@@ -462,6 +483,9 @@ export const HEATING_UP: AuraDefinition = {
     // above: the owner's ruling, and `all` rather than `stack` for the reason
     // that field is an enum.
     consumedByCast: 'all',
+    // ... unless Presence of Mind already made the cast instant, in which case
+    // this has nothing to shorten and is not spent. See above.
+    exceptWhileAura: 'presence_of_mind',
   },
 };
 

@@ -215,6 +215,35 @@ export interface CastModifier {
    * moment a priority list reached Moonfire.
    */
   readonly requiresCastTime?: boolean;
+
+  /**
+   * Does not apply, and is NOT CONSUMED, while the caster carries this aura.
+   *
+   * ==========================================================================
+   * "Heating Up is no longer consumed if the Mage also had Presence of Mind
+   * active for the Pyroblast cast."
+   *
+   * WHY `requiresCastTime` DOES NOT ALREADY SAY THIS, which is the near miss:
+   * that flag reads the ability's DECLARED `castTimeMs`, not what this cast
+   * resolves to. Pyroblast always declares a cast time, so Heating Up always
+   * matched and was always spent -- even on a cast Presence of Mind had already
+   * made instant, where its 75% had nothing left to reduce. Three stacks thrown
+   * away on a free cast, and nothing on the results page to say so: the aura
+   * reported its uptime and the Pyroblast was instant either way.
+   *
+   * ONE AURA ID RATHER THAN A PREDICATE, because that is the whole of what the
+   * note asks and a predicate on `CastModifier` would be the first closure in a
+   * structure that is otherwise plain data -- unprintable, uncomparable, and
+   * outside what the APL panel can describe.
+   *
+   * IT SUPPRESSES THE EFFECT AS WELL AS THE CONSUMPTION, which is the same
+   * answer by a different route: a cast the named aura has already made instant
+   * cannot be shortened again, so there is nothing for this modifier to do.
+   * Saying "applies but is not consumed" would need a second field for a
+   * difference nothing can observe.
+   * ==========================================================================
+   */
+  readonly exceptWhileAura?: string;
 }
 
 /**

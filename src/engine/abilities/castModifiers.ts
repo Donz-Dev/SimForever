@@ -34,8 +34,15 @@ export interface ResolvedCast {
   readonly modified: boolean;
 }
 
-/** Does this modifier apply to this ability at all? */
-function matches(instance: AuraInstance, ability: Ability): boolean {
+/**
+ * Does this modifier apply to this ability at all?
+ *
+ * TAKES THE CASTER, because one clause is about the caster rather than about
+ * the ability: `exceptWhileAura` asks whether ANOTHER aura is up. Every other
+ * clause here reads the ability alone, which is why the parameter was not
+ * needed until Heating Up's "not consumed while Presence of Mind is active".
+ */
+function matches(caster: Combatant, instance: AuraInstance, ability: Ability): boolean {
   const modifier = instance.definition.castModifier;
   if (!modifier) return false;
   /*
@@ -61,6 +68,13 @@ function matches(instance: AuraInstance, ability: Ability): boolean {
    * same reason Battle Shout is not offensive to Focused Rage.
    */
   if (modifier.requiresAttackTable && !ability.attackTable) return false;
+  /*
+   * AND NOT WHILE THE CASTER CARRIES A NAMED AURA. Heating Up is "no longer
+   * consumed if the Mage also had Presence of Mind active for the Pyroblast
+   * cast" -- and because this predicate decides BOTH what applies and what is
+   * spent, refusing here is the whole of it. See `exceptWhileAura`.
+   */
+  if (modifier.exceptWhileAura && caster.auras.has(modifier.exceptWhileAura)) return false;
   return true;
 }
 
@@ -74,7 +88,7 @@ export function castModifiersFor(
   caster: Combatant,
   ability: Ability,
 ): readonly AuraInstance[] {
-  return caster.auras.active.filter((instance) => matches(instance, ability));
+  return caster.auras.active.filter((instance) => matches(caster, instance, ability));
 }
 
 /**

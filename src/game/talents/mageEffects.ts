@@ -261,7 +261,25 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * it is worth checking for whenever a talent's name moves: eight entries
    * across the nine classes are hand-filled, and any of them could go this way.
    */
-  heating_up: [{ kind: 'reaction', reactionId: 'heating_up' }],
+  heating_up: [
+    { kind: 'reaction', reactionId: 'heating_up' },
+    /*
+     * AND A SECOND SOURCE THE PATCH ADDED: "Heating up also always gains an
+     * additional charge each time the Mage casts Fire Blast. This does mean Fire
+     * Blast critical strikes generate 2 charges."
+     *
+     * A CAST REACTION BESIDE THE DAMAGE ONE, which is how the note's own
+     * arithmetic comes out: Fire Blast is already a crit trigger, so a critting
+     * Fire Blast takes one charge from each path and a missing one still takes
+     * this. Doubling the charge inside the crit reaction instead would give a
+     * non-critting Fire Blast nothing -- a smaller number and no error.
+     *
+     * `valueless` because it reads no rank: the charge count is the aura's and
+     * the 25% is the other entry's. An effect that reads no value is DROPPED in
+     * silence, which is what this flag exists to prevent.
+     */
+    { kind: 'castReaction', reactionId: 'heating_up', valueless: true },
+  ],
 
   master_of_elements: [{ kind: 'reaction', reactionId: 'master_of_elements' }],
 

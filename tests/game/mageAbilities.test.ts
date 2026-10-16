@@ -73,6 +73,7 @@ import {
 } from '../../src/game/reactions/mageTalents';
 import { talentNumber, talentNumbers } from '../../src/game/talents/talentValues';
 import { castAbility } from '../../src/engine';
+import { legalise } from '../helpers/legalTalents';
 import {
   MAGE_ARCANE,
   MAGE_FIRE,
@@ -403,6 +404,158 @@ describe('the cast modifiers this class is full of', () => {
     blast.onCast({ simulation, caster: actor, target, ability: blast });
     expect(actor.auras.stacksOf('arcane_blast')).toBe(1);
     expect(resolveCast(actor, blast).costAmount).toBeGreaterThan(blast.cost!.amount);
+  });
+});
+
+describe('the two things the patch did to Heating Up', () => {
+  /*
+   * ============================================================================
+   * TWO CLAUSES IN ONE NOTE, AND THEY TOUCH OPPOSITE ENDS OF THE TALENT.
+   *
+   * "Heating Up is no longer consumed if the Mage also had Presence of Mind
+   * active for the Pyroblast cast. Heating up also always gains an additional
+   * charge each time the Mage casts Fire Blast. This does mean Fire Blast
+   * critical strikes generate 2 charges."
+   *
+   * One is about SPENDING the aura and one is about GAINING it, so neither test
+   * below could stand in for the other.
+   * ============================================================================
+   */
+
+  it('is not spent on a Pyroblast that Presence of Mind already made instant', () => {
+    /*
+     * --------------------------------------------------------------------------
+     * `requiresCastTime` DID NOT ALREADY SAY THIS, which is the near miss worth
+     * asserting: that flag reads the ability's DECLARED `castTimeMs`, and
+     * Pyroblast always declares one. So the aura matched a cast that was already
+     * instant, its 75% had nothing left to reduce, and all three stacks were
+     * thrown away -- with nothing on the results page to show it, because the
+     * Pyroblast was instant either way and the aura still reported its uptime.
+     *
+     * IT MATTERS TO A LIST THAT EXISTS. The Arcane list was respecified to move
+     * Presence of Mind so it makes PYROBLAST instant, so before this every one
+     * of those casts also ate a three-stack Heating Up for nothing.
+     *
+     * BOTH HALVES ARE DRIVEN: the cast is still instant, which is Presence of
+     * Mind doing its own job, AND the Heating Up stacks survive. Asserting only
+     * the second would pass an implementation that had broken the first.
+     * --------------------------------------------------------------------------
+     */
+    const actor = bareMage('mage_fire');
+    const simulation = buildSimulation([actor, makeTarget()]);
+    simulation.begin();
+    const pyroblast = actor.abilities.get('pyroblast')!;
+
+    simulation.applyAura(actor, HEATING_UP, actor.id);
+    for (let i = 1; i < HEATING_UP_MAX_STACKS; i += 1) {
+      simulation.applyAura(actor, HEATING_UP, actor.id);
+    }
+    expect(actor.auras.get('heating_up')!.stacks).toBe(HEATING_UP_MAX_STACKS);
+
+    simulation.applyAura(actor, PRESENCE_OF_MIND, actor.id);
+
+    // Presence of Mind alone makes it instant -- Heating Up is not needed.
+    expect(resolveCast(actor, pyroblast).baseCastTimeMs).toBe(0);
+
+    castAbility(simulation, actor, pyroblast, simulation.combatants[1]);
+
+    // Presence of Mind IS spent, which is its own `consumedByCast: 'all'`.
+    expect(actor.auras.has(PRESENCE_OF_MIND.id)).toBe(false);
+    // And Heating Up is NOT, with every stack intact.
+    expect(actor.auras.has(HEATING_UP.id)).toBe(true);
+    expect(actor.auras.get(HEATING_UP.id)!.stacks).toBe(HEATING_UP_MAX_STACKS);
+  });
+
+  it('is still spent by a Pyroblast with no Presence of Mind, which is the control', () => {
+    /*
+     * THE OTHER SIDE OF THE SAME CONDITION, and without it the test above
+     * passes against an aura that is never consumed at all -- which would be a
+     * far bigger change than the note asks for and would read as a working
+     * talent worth several times its value.
+     */
+    const actor = bareMage('mage_fire');
+    const simulation = buildSimulation([actor, makeTarget()]);
+    simulation.begin();
+    const pyroblast = actor.abilities.get('pyroblast')!;
+
+    simulation.applyAura(actor, HEATING_UP, actor.id);
+    expect(actor.auras.has(HEATING_UP.id)).toBe(true);
+    // Not instant: the aura shortens it rather than removing the cast.
+    expect(resolveCast(actor, pyroblast).baseCastTimeMs).toBeGreaterThan(0);
+
+    castAbility(simulation, actor, pyroblast, simulation.combatants[1]);
+    expect(actor.auras.has(HEATING_UP.id)).toBe(false);
+  });
+
+  it('gains a charge on every Fire Blast CAST, so a crit makes two', () => {
+    /*
+     * ==========================================================================
+     * "HEATING UP ALSO ALWAYS GAINS AN ADDITIONAL CHARGE EACH TIME THE MAGE
+     * CASTS FIRE BLAST. THIS DOES MEAN FIRE BLAST CRITICAL STRIKES GENERATE 2
+     * CHARGES."
+     *
+     * The note explains its own arithmetic, and that arithmetic is what makes
+     * this a SECOND reaction rather than a change to the first. Fire Blast was
+     * already in `HEATING_UP_TRIGGERS`, so a crit grants a charge through the
+     * `dealt` path; the cast reaction grants one whatever happened.
+     *
+     * SO THE TEMPTING IMPLEMENTATION IS THE WRONG ONE. Doubling the charge
+     * inside the crit reaction gives a critting Fire Blast its two and gives a
+     * non-critting one NOTHING -- a smaller number, no error, and it reads
+     * exactly like a working talent. The two halves are driven separately here
+     * for that reason.
+     * ==========================================================================
+     */
+    const stacksAfter = (crit: boolean): number => {
+      const actor = createPlayer({
+        race: 'gnome',
+        characterClass: 'mage',
+        talents: legalise({ heating_up: 1 }, 'mage'),
+        bonusStats: {
+          hitChance: 100,
+          // Forced either way, so the crit path is a decision and not a roll.
+          spellCritChance: crit ? 100 : -1000,
+          critRating: 0,
+        },
+      });
+      const target = makeTarget({ maxHealth: 1_000_000, stats: { armor: 0 } });
+      const simulation = buildSimulation([actor, target]);
+      simulation.begin();
+      const fireBlast = actor.abilities.get('fire_blast')!;
+      castAbility(simulation, actor, fireBlast, target);
+      return actor.auras.get(HEATING_UP.id)?.stacks ?? 0;
+    };
+
+    // A cast that did NOT crit still banks one, which is the new half.
+    expect(stacksAfter(false)).toBe(1);
+    // And one that crit banks two: the cast reaction and the damage reaction.
+    expect(stacksAfter(true)).toBe(2);
+  });
+
+  it('registers both of Heating Up’s halves on a build that takes it', () => {
+    /*
+     * THE JOIN, AND IT IS THE HALF THAT GOES MISSING IN SILENCE. The cast
+     * reaction has to be in `MAGE_CAST_REACTIONS` as well as in the effect
+     * table, and a reaction the registry does not carry is simply absent --
+     * `lone_wolf` went the whole project that way. It is also `valueless`,
+     * because an effect that reads no value is DROPPED without saying so, and
+     * Heating Up's own value is hand-filled and has gone missing once already.
+     *
+     * REGISTERED UNDER ONE TALENT ID, which is what makes it impossible for a
+     * build to have one half and not the other.
+     */
+    const actor = createPlayer({
+      race: 'gnome',
+      characterClass: 'mage',
+      talents: legalise({ heating_up: 1 }, 'mage'),
+    });
+    expect(actor.reactions.map((r) => r.id)).toContain('heating_up');
+    expect(actor.castReactions.map((r) => r.id)).toContain('heating_up_fire_blast');
+
+    // And a Mage without the talent has neither.
+    const without = createPlayer({ race: 'gnome', characterClass: 'mage' });
+    expect(without.reactions.map((r) => r.id)).not.toContain('heating_up');
+    expect(without.castReactions.map((r) => r.id)).not.toContain('heating_up_fire_blast');
   });
 });
 
