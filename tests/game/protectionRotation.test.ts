@@ -67,17 +67,28 @@ const compiled = (condition: AplCondition | undefined) =>
  */
 const EXPECTED_ORDER = [
   // Added on the ruleset owner's instruction: once, at the pull, and only
-  // with Vanguard -- which is enforced by Charge's stance list rather than by
-  // a talent check here. Above the survival cooldowns because its window is a
-  // single instant and it takes no global cooldown from them.
-  'charge',
   /*
-   * THE STANCE SECOND, AND THIS FILE USED TO ASSERT IT WAS BELOW THE TWO
-   * COOLDOWNS. See the header: the argument for the old order was real and was
-   * never load-bearing, because the moment the two orders differ is a moment
-   * when neither cooldown can fire.
+   * ==========================================================================
+   * THREE IDS LEFT THIS ARRAY AND WENT BEFORE THE PULL: `charge`,
+   * `defensive_stance_cast` and `battle_shout_cast`. The owner's instruction
+   * with the 28 openers -- "Charge, Defensive Stance, and Battle Shout should
+   * be removed from the normal APL."
+   *
+   * THE FIRST TWO USED TO OPEN THIS LIST and the file carried an argument for
+   * why they were above the survival cooldowns: their windows are single
+   * instants and they take no global cooldown, so neither could delay Last
+   * Stand. That argument is now moot rather than wrong -- `runPrecombat` is
+   * not on the fight's clock at all, which is a stronger version of the same
+   * claim.
+   *
+   * **AND THE CHARGE GATE SURVIVES WITH NO CONDITION.** It needed a builtin
+   * here, because `PriorityRotation` would otherwise have cast a stance change
+   * to unblock the entry and dragged the tank into Battle Stance at the pull.
+   * A pre-combat cast has no rotation attached, so `castAbility`'s ordinary
+   * stance check is the whole of it -- and VANGUARD is still what makes it
+   * work, by adding Defensive to this character's own copy of Charge.
+   * ==========================================================================
    */
-  'defensive_stance_cast',
   'last_stand',
   'shield_wall_cast',
   /*
@@ -97,7 +108,6 @@ const EXPECTED_ORDER = [
    */
   'major_healing_potion',
   'healthstone',
-  'battle_shout_cast',
   'bloodrage_cast',
   'sunder_armor_cast',
   'demoralizing_shout_cast',
@@ -205,6 +215,22 @@ function tank(talents: Record<string, number> = {}, iterations = 200) {
     },
     equipment: startingEquipmentFor('warrior', 'one_hand_shield'),
     talents,
+    /*
+     * THE PRESET'S OWN OPENER, MINUS WHAT THIS FIXTURE CANNOT DO. The owner
+     * moved Charge, Defensive Stance and Battle Shout out of the list and into
+     * `precombat`, so a HAND-BUILT tank -- which is what this is, and which has
+     * no raid buffs either -- gets none of the three unless it declares them.
+     *
+     * CHARGE AND THE POTION ARE LEFT OUT DELIBERATELY: this fixture takes a
+     * talent map per test and Charge needs VANGUARD, so including it would make
+     * the fixture behave differently depending on which test called it. Battle
+     * Shout and Bloodrage are what the assertions here are about.
+     */
+    precombat: [
+      { abilityId: 'bloodrage_cast', secondsBefore: 10 },
+      { abilityId: 'battle_shout_cast', secondsBefore: 10 },
+      { abilityId: 'defensive_stance_cast', secondsBefore: 3 },
+    ],
     simulation: { ...base.simulation, iterations, seed: 12345, durationSeconds: 60 },
     encounter: { ...base.encounter, targetAttacks: true },
   } as never;
@@ -242,32 +268,49 @@ describe('the Protection list', () => {
      * ==========================================================================
      */
     const ids = WARRIOR_SHIELD_DEFENSIVE.entries.map((entry) => entry.abilityId);
-    expect(ids[0]).toBe('charge');
-    expect(ids[1]).toBe('defensive_stance_cast');
-    expect(ids[2]).toBe('last_stand');
-    expect(ids[3]).toBe('shield_wall_cast');
-
-    // The invariant: the two entries above the cooldowns are both off the
-    // global cooldown AND both fire at most once, so neither can delay one.
-    for (const once of ['charge', 'defensive_stance_cast']) {
-      expect(entryFor(once).condition, once).toBeDefined();
-    }
+    /*
+     * THE TWO COOLDOWNS OPEN THE LIST NOW, where Charge and the stance sat
+     * above them. The INVARIANT is what this test is for and it is unchanged
+     * and now trivially true: nothing above the cooldowns can delay them,
+     * because there is nothing above them at all.
+     */
+    expect(ids[0]).toBe('last_stand');
+    expect(ids[1]).toBe('shield_wall_cast');
+    expect(ids.indexOf('charge'), 'Charge went before the pull').toBe(-1);
+    expect(ids.indexOf('defensive_stance_cast'), 'and so did the stance').toBe(-1);
   });
 
-  it('does not let Charge drag the tank into Battle Stance', () => {
+  it('cannot let Charge drag the tank into Battle Stance, because no list names it', () => {
     /*
-     * THE TRAP THIS ENTRY WALKED INTO. `PriorityRotation` treats a wrong
-     * stance as "not yet, and here is how" and casts a stance change to
-     * unblock an entry -- right for Revenge, catastrophic here. Charge allows
-     * Battle Stance, so adding it sent the tank out of Defensive at the pull
-     * and three separate stance tests caught it.
+     * ========================================================================
+     * THE TRAP THIS TEST WAS WRITTEN FOR, AND THE ENTRY IT GUARDED IS GONE.
      *
-     * Its condition refuses unless the character is ALREADY in a stance Charge
-     * allows, and a condition is checked before the swap is considered.
+     * `PriorityRotation` treats a wrong stance as "not yet, and here is how"
+     * and casts a stance change to unblock an entry -- right for Revenge,
+     * catastrophic here. Charge allows Battle Stance, so adding the entry sent
+     * the tank out of Defensive at the pull and three separate stance tests
+     * caught it. A builtin condition fixed it by refusing unless the character
+     * was ALREADY in a stance Charge allows.
+     *
+     * THE OWNER HAS MOVED CHARGE TO `precombat`, so the trap is now
+     * unreachable BY CONSTRUCTION rather than by a condition: a pre-combat
+     * cast has no rotation attached to swap anything, and `castAbility`'s
+     * ordinary stance check refuses it if the stance does not allow it.
+     *
+     * SO WHAT IS ASSERTED IS THE STATE RATHER THAN THE GATE -- the tank is in
+     * Defensive Stance after its opener and never in Battle. That survives the
+     * entry, the condition and the precombat list all changing, which the old
+     * assertion did not: it tested a `condition` object that no longer exists.
+     * ========================================================================
      */
-    const withoutVanguard = characterAtCombatStart(tank(PROTECTION_31))!;
-    const charge = entryFor('charge');
-    expect(compiled(charge.condition)?.(undefined as never, withoutVanguard, undefined)).toBe(false);
+    expect(
+      WARRIOR_SHIELD_DEFENSIVE.entries.some((entry) => entry.abilityId === 'charge'),
+      'no list names Charge',
+    ).toBe(false);
+
+    const withVanguard = characterAtCombatStart(tank(legalise(PROTECTION_31)))!;
+    expect(withVanguard.auras.has('defensive_stance'), 'still Defensive').toBe(true);
+    expect(withVanguard.auras.has('battle_stance'), 'and never Battle').toBe(false);
   });
 });
 
@@ -500,6 +543,14 @@ describe('the list in a fight', () => {
     for (const name of [
       'Last Stand',
       'Bloodrage',
+      /*
+       * BATTLE SHOUT IS CAST BEFORE THE PULL NOW AND STILL HAS A ROW, which is
+       * the half of this change worth asserting: a pre-combat cast goes through
+       * `castAbility` like any other, so it emits a cast event and
+       * `abilityBreakdown` counts it. `tank()` builds a HAND-MADE profile with
+       * no raid buffs, so without the opener below there would be no shout at
+       * all -- the entry that used to supply it has gone.
+       */
       'Battle Shout',
       'Sunder Armor',
       'Demoralizing Shout',

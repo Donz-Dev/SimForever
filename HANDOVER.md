@@ -46,6 +46,7 @@ the tooling to be a bit more sophisticated as well."
 | 17 | **A PATCH: nine racials and forty-odd class notes**, fed in as official notes. The client is TWO BUILDS AHEAD and carries NONE of them, so every figure here comes from a note | **not re-baselined**, on the owner's standing instruction. Four commits, and **thirteen notes are blocked on tree data** | see below |
 | 18 | **TWO OWNER RULINGS, both answering questions round 17 raised and refused to decide** -- the five Tauren templates gain 10 hit rating each, and the two Druid auras stop excluding each other | **not re-baselined**, on the owner's standing instruction. Every caster gains 3% spell crit and the five Tauren rows go back on their hit caps | see below |
 | 18b | **A THIRD RULING, arriving straight after the merge** -- Ice Lance's coefficient is `1.5/3.5/3`, so the divisor tracks the frozen multiplier and the implemented reading was wrong for one release | the frozen coefficient 0.3214 -> **0.4286**, +33% on the spell-power half of a spell that is **8.6% of Frostfire** and is cast by no other profile | see below |
+| 19 | **BEFORE THE PULL, FOR ALL 28 PROFILES** -- the owner specified an opener per profile, and three Warrior lists lose the entries it replaces | **not re-baselined**, on the owner's standing instruction. 26 of 28 openers fire; two of their lines cannot be implemented and are named below | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -322,7 +323,162 @@ Frostfire read 906.6 +/- 61.9 over 30 fights after the change, which is a
 diagnostic and not a baseline -- the published table is 300 fights a profile and
 three rounds behind.
 
-## Round NINETEEN is scoped and not started: the client caught up
+## Round NINETEEN: Before the Pull, for all 28 profiles
+
+**THE FEATURE SHIPPED WITH NO CALLER AND THIS IS WHERE IT WAS ACTUALLY TESTED.**
+`precombat` arrived with the mechanism, the panel, the migration and a test
+whose own comment read "no preset carries a pre-combat list, so the hook returns
+immediately". The owner has now specified an opener for every profile in one
+message, and implementing it found **one engine incoherence, two impossible
+lines, one silently-refused ordering and one reporting hole**.
+
+### The one engine change: `secondsBefore` is when the action STARTED
+
+The owner drew the distinction in their own wording -- an instant is "3s before
+Battle Stance", a cast is "**2.5s before start casting** Frostfire Bolt" -- and
+**every one of the ten "start casting" leads is exactly that spell's cast time
+on that build**:
+
+| | | | |
+| --- | --- | --- | --- |
+| Wrath | 1.5 | Aimed Shot | 2 |
+| Arcane Blast | 1.5 | Incinerate | 2 |
+| Mind Blast | 1.5 | Frostfire Bolt | 2.5 |
+| Lightning Bolt | 2 | Fireball | 3 |
+| **Sniper Shot** | **4** | **Shadow Bolt** | **2.5, which is 3.0 MINUS BANE** |
+
+The last two are what make it a reading rather than a coincidence: neither is a
+figure anybody would pick out of the air, and the second is not the number on
+the ability at all -- it is the talent-reduced cast time of that one build.
+
+**SO `runPrecombat` AGES BY THE LEAD MINUS THE CAST TIME**, clamped at zero.
+Without it a pre-cast spell contradicted itself -- the damage landed at t=0
+while everything the same cast applied was already aged:
+
+| | what the old reading gave it |
+| --- | --- |
+| Fireball at 3s | its DoT 3 seconds into an 8 second burn at the pull |
+| Frostfire Bolt at 2.5s | the same, on 62% of that profile's damage |
+| Arcane Blast at 1.5s | its 15 second stacking window already a tenth gone |
+| Aimed Shot at 2s | a 6 second cooldown back at t=4 rather than t=6 |
+| Sniper Shot at 4s | a 15 second cooldown back at t=11 |
+
+**THE CLAMP IS A CASE AND NOT A GUARD.** The owner's ORIGINAL example, from when
+the feature was designed, was "Cast Fireball <= 2.5 sec before combat initiates"
+-- a 2.5 second lead on a three second cast, which cannot have finished and
+therefore finishes at the pull. `precombat.test.ts` has asserted that since the
+feature shipped and it still passes untouched.
+
+### Two of the owner's lines cannot be implemented, and both are named
+
+| | |
+| --- | --- |
+| **the Cat's "0s Ravage"** | declared as an ability NOWHERE. The spellbook capture has it -- "350% damage plus 343. **Must be prowling and behind the target**" -- and both requirements are `OutOfScope` members, `stealth` and `positioning`. A 350%-weapon-damage opener is not something to approximate |
+| **the melee Hunters' "cast Mongoose Bite"** | "Can only be performed after you dodge", and its only route here is EXPOSE PREY's 10% proc on a landed attack -- so before the pull the window cannot be open. **The ability is not lost**: it is in the list and fires when the proc lands. What is impossible is having it ready AT the pull |
+
+**THE GUARD IS WHAT FOUND THE SECOND ONE.** `precombatOpeners.test.ts`
+transcribes the owner's message a second time and then drives all 28 fights,
+asserting every declared action emits a cast at timestamp zero. It failed on
+`lw_melee` and `hawk_melee` the first time it ran. **The tempting fix is to
+grant `expose_prey` before the pull, which would hand both builds a free 10%
+proc every fight**, so the test pins the reason rather than the absence.
+
+### Four more lines name something already true
+
+"2s before Stealth" on three Rogues -- a Rogue's `openingAuras` carry the
+`stealth` aura and there is no Stealth ABILITY, deliberately -- and "Moonkin
+Form", "Cat Form" and "Dire Bear Form", which are COMBAT STYLES on the profile.
+`onPrecombat` runs AFTER the `openingAuras` loop, so each character is already
+in the state the line asks for. **Writing an entry anyway would have been an
+action that reads correctly and is skipped in silence**, which is the same
+failure as a typo.
+
+### The ordering inside one lead time is load-bearing
+
+**BATTLE SHOUT COSTS 10 RAGE AND A WARRIOR OPENS ON AN EMPTY BAR.** Bloodrage's
+instant grant is 10 -- 15 with Improved Bloodrage -- so a shout written before
+its Bloodrage is refused and skipped. The owner's own openers put the two in the
+right order at one lead time; **three hand-built test fixtures did not**, and
+each produced a missing Battle Shout row rather than an error.
+`Array.prototype.sort` being stable is the whole mechanism that keeps two
+actions at the same lead in declaration order, and that is now asserted.
+
+### What the three Warrior lists lost, and who else was using them
+
+The owner's instruction was per PROFILE -- "Charge, Battle Stance, and Battle
+Shout should be removed from the normal APL" -- and **none of the three fired on
+those presets anyway**: Charge is castable for one instant, the preset already
+opens in its stance, and `battle_shout` is in `PRESET_RAID_BUFFS` so the shout's
+own condition refused it all fight. So the lists are shorter and the characters
+do the same things.
+
+**BUT A PROFILE-SPECIFIC LIST IS ALSO WHAT ANY HAND-BUILT CHARACTER OF THAT
+STYLE AND STANCE RUNS**, and such a character has no raid buff and no opener --
+so it now gets none of the three unless it declares them. **The two GENERIC
+Warrior lists keep theirs**, which is the right scope and is why they were left
+alone. Four test fixtures had to be given openers before their own assertions
+about Battle Shout meant anything again.
+
+**AND `chargeAtThePull` IS GONE WHILE ITS BUILTIN STAYS.** The entry carried a
+`charge_stance_allowed` condition, because `PriorityRotation` would otherwise
+have cast a stance change to unblock it and dragged the tank into Battle Stance
+at the pull. A pre-combat cast has no rotation attached, so `castAbility`'s
+ordinary stance check is the whole of it -- and VANGUARD still gates it with no
+talent named, by adding Defensive to that character's own copy of Charge.
+**The builtin may not be deleted**: a stored list is written out IN FULL on
+every saved profile and `compileCondition` THROWS on an id it does not know, so
+removing it would break every profile saved before this change, at the moment
+its fight starts. `aplFormat.test.ts` carries that as a one-id exception with
+the list asserted exhaustive.
+
+### And the reporting half, which this change created and then closed
+
+**A PRECOMBAT ACTION WAS INVISIBLE TO `USES=1`.** It is not a list entry, so the
+uses loop never reaches it, and the "not in the list, and still dealing damage"
+block filters on `damage > 0` -- which a shout and a stance never have. So three
+actions a fight vanished from the report the day they moved, which is this
+project's own "an ability in the book, in no list, dealing no damage was
+invisible to everything" with a new way in.
+
+`measure_profiles.ts` prints a **"before the pull"** block now, oldest action
+first, with a `<-- NEVER HAPPENED` flag -- because a zero there is the finding
+for exactly the reason a zero in the list is. The Protection warrior reads:
+
+    -- before the pull --
+        bloodrage_cast            10.0s before    1.8 uses
+        battle_shout_cast         10.0s before    1.0 uses
+        defensive_stance_cast      3.0s before    1.0 uses
+        charge                     0.0s before    1.0 uses
+        mighty_rage_potion         0.0s before    1.0 uses
+        heroic_strike              0.0s before   19.5 uses
+
+The uses figure is POOLED with the fight's own casts, which is the caveat the
+list rows already carry and reads oddly here: `heroic_strike` shows 19.5 beside
+"0.0s before" because the damage table is keyed by ABILITY and not by where the
+cast came from. What the column answers is "did this happen at all".
+
+### What was not measured
+
+**NO PROFILE WAS RE-BASELINED**, on the owner's standing instruction, and this
+round would have needed a full one: 26 of the 28 profiles now take actions they
+did not take before. The assurance here is the guard rather than a figure --
+every declared action is asserted to fire at the pull, on all 28, in a real
+fight.
+
+**WHAT IS KNOWN DIRECTIONALLY** is that an opener is not free: it spends mana and
+rage, it puts its own cooldowns on the clock with the lead time rewound, and the
+0-second actions are off the global cooldown by design. A Bear's "Enrage +
+Mighty Rage Potion + queue Maul + Primal Bite" is four actions in the instant a
+priority list could spend one.
+
+**AND ONE THING IS WORTH THE OWNER'S ATTENTION**: Bloodrage grants 10 rage
+instantly AND ten more over ten seconds, and at a 10-second lead the over-time
+half is LOST -- the aura is aged past its own end, so its ticks never happen.
+Physically a warrior who pressed it ten seconds out would arrive with all of it.
+`runPrecombat` cannot deliver a periodic effect's accrued resource, and shortening
+the lead is the owner's call rather than a fix to make here.
+
+## Round TWENTY is scoped and not started: the client caught up
 
 **THE PATCH HAS SHIPPED.** Re-running the importers a day after round seventeen
 put the client at **1.60.1.70425**, where round seventeen captured 70291 -- and
@@ -476,13 +632,15 @@ number -- so the refresh waits on them.
 **THE OTHER NINETEEN PROFILES ARE UNAFFECTED** and decoded cleanly against the
 new trees, which is the containment check worth having before asking.
 
-### What else round NINETEEN has to do
+### What else round TWENTY has to do
 
-**THIS SECTION SAID "round eighteen" AND ROUND EIGHTEEN WENT ELSEWHERE**, which
-is this file's own rule that a round is whatever arrives next rather than
-whatever was scoped: the owner's two rulings were answerable without the tree
-refresh, so they became 18 and the refresh is 19. Renumbered rather than
-renamed, so the row in the table at the top still matches.
+**THIS SECTION HAS BEEN RENUMBERED TWICE AND SAID "round eighteen" FIRST**,
+which is this file's own rule that a round is whatever ARRIVES next rather than
+whatever was scoped. The tree refresh has been the next-scoped round since 17
+and three rounds have gone ahead of it, each answerable without it: two owner
+rulings, Ice Lance, and the 28 openers. Renumbered rather than renamed so the
+rows in the table at the top still match -- **and expect to do it again** rather
+than treating the number as settled.
 
 | | |
 | --- | --- |

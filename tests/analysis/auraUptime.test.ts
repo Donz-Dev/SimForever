@@ -18,6 +18,26 @@ function batch(extra: Record<string, unknown> = {}, talents: Record<string, numb
     character: { ...base.character, combatStyle: 'dual_wield', stance: 'berserker' },
     equipment: startingEquipmentFor('warrior', 'dual_wield'),
     talents,
+    /*
+     * ========================================================================
+     * BLOODRAGE *THEN* BATTLE SHOUT, AND THE ORDER IS LOAD-BEARING.
+     *
+     * The Berserker list no longer casts the shout -- the owner moved it, the
+     * stance and Charge into `precombat` on all three Warrior profiles -- so a
+     * hand-built warrior like this fixture has to declare it or there is no
+     * Battle Shout row at all, which is how this test first failed.
+     *
+     * AND A SHOUT ALONE IS SILENTLY REFUSED. It costs 10 rage, a warrior opens
+     * on an empty bar, and `runPrecombat` SKIPS a cast it cannot pay for --
+     * exactly as a priority list would. Bloodrage's instant 10 is what makes
+     * the next line affordable, which is why the owner's own openers write the
+     * two in this order at the same lead time.
+     * ========================================================================
+     */
+    precombat: [
+      { abilityId: 'bloodrage_cast', secondsBefore: 10 },
+      { abilityId: 'battle_shout_cast', secondsBefore: 10 },
+    ],
     simulation: { ...base.simulation, iterations: 40, seed: 17, durationSeconds: 60 },
     ...extra,
   } as never);
@@ -38,13 +58,15 @@ describe('buff uptime', () => {
      * REMOVED -- there is no expiry event to close the window with. An
      * accounting that only closed on removal would report it at 0%.
      *
-     * Not exactly 1: the rotation casts it a moment into the fight, not at
-     * time zero.
+     * IT IS EXACTLY 1 NOW, AND IT USED TO BE "not exactly 1: the rotation casts
+     * it a moment into the fight". The shout is a PRE-COMBAT action here, so it
+     * is already up when the clock starts -- which is the second observable
+     * consequence of that feature after the lead time, and is asserted rather
+     * than left as a looser bound that would also pass if it were cast late.
      */
     const shout = batch().buffUptime.find((row) => row.auraName === 'Battle Shout');
     expect(shout).toBeDefined();
-    expect(shout!.uptime).toBeGreaterThan(0.95);
-    expect(shout!.uptime).toBeLessThanOrEqual(1);
+    expect(shout!.uptime).toBe(1);
   });
 
   it('counts a refresh as an application without reopening the window', () => {
@@ -109,15 +131,28 @@ describe('uptime is a batch average, not one iteration', () => {
      * fight happened to give. Two batches at different sizes should agree to
      * within a few points; two single fights need not.
      */
-    const forty = batch().buffUptime.find((r) => r.auraName === 'Battle Shout')!.uptime;
-    const base = createDefaultProfile();
-    const eighty = runProfileBatch({
-      ...base,
-      character: { ...base.character, combatStyle: 'dual_wield', stance: 'berserker' },
-      equipment: startingEquipmentFor('warrior', 'dual_wield'),
-      simulation: { ...base.simulation, iterations: 80, seed: 23, durationSeconds: 60 },
-    } as never).buffUptime.find((r) => r.auraName === 'Battle Shout')!.uptime;
+    /*
+     * ========================================================================
+     * THE SUBJECT IS A PROC NOW, WHICH IS WHAT THE PARAGRAPH ABOVE DESCRIBES.
+     *
+     * It read Battle Shout, and Battle Shout is a three-minute buff on a
+     * sixty-second fight: it was 0.95-to-1 before and is EXACTLY 1 now that it
+     * is applied before the pull, so it could not have shown smoothness at any
+     * batch size. Two constants agreeing to within five points asserts nothing.
+     *
+     * Overpower Ready is the real case -- a window opened by the target dodging,
+     * which lands near a third of the fight and genuinely varies per iteration.
+     * ========================================================================
+     */
+    const subject = 'Overpower Ready';
+    const forty = batch().buffUptime.find((r) => r.auraName === subject)!.uptime;
+    const eighty = batch({
+      simulation: { ...createDefaultProfile().simulation, iterations: 80, seed: 23, durationSeconds: 60 },
+    }).buffUptime.find((r) => r.auraName === subject)!.uptime;
 
+    // It varies at all, or the comparison is between two constants again.
+    expect(forty).toBeGreaterThan(0.05);
+    expect(forty).toBeLessThan(0.95);
     expect(Math.abs(forty - eighty)).toBeLessThan(0.05);
   });
 });

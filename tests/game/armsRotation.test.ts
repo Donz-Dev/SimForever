@@ -45,7 +45,17 @@ import { withoutOtherRacials } from '../../src/game/rotations/racialCooldowns';
  *   - SLAM came from LAST to above Mortal Strike.
  */
 const OWNER_ORDER = [
-  'charge',
+  /*
+   * THREE IDS LEFT THIS ARRAY AND WENT BEFORE THE PULL: `charge`,
+   * `battle_stance_cast` and `battle_shout_cast`. The owner's instruction with
+   * the 28 openers -- "Charge, Battle Stance, and Battle Shout should be
+   * removed from the normal APL" -- and all three are in this profile's
+   * `precombat` list now. **NONE OF THE THREE FIRED ON THIS PRESET ANYWAY**:
+   * Charge is castable for one instant, the preset already opens in Battle
+   * Stance, and `battle_shout` is in `PRESET_RAID_BUFFS` so the shout's own
+   * condition refused it all fight. So the list is three rows shorter and the
+   * character does the same things.
+   */
   // The four free racial cooldowns, of which an Orc learns one.
   'blood_fury',
   'berserking',
@@ -61,8 +71,6 @@ const OWNER_ORDER = [
   'major_healing_potion',
   'healthstone',
   'bloodrage_cast',
-  'battle_stance_cast',
-  'battle_shout_cast',
   'heroic_strike',
   'sunder_armor_cast',
   'overpower',
@@ -84,13 +92,10 @@ const OWNER_ORDER = [
 
 /** What an ORC drinking Mighty Rage and a Healthstone actually runs. */
 const ORC_ARMS_ORDER = [
-  'charge',
   'blood_fury',
   'mighty_rage_potion',
   'healthstone',
   'bloodrage_cast',
-  'battle_stance_cast',
-  'battle_shout_cast',
   'heroic_strike',
   'sunder_armor_cast',
   'overpower',
@@ -108,7 +113,7 @@ describe('the 2H Arms list', () => {
     expect(WARRIOR_TWO_HAND_BATTLE.entries.map((entry) => entry.abilityId)).toEqual(OWNER_ORDER);
   });
 
-  it('narrows to seventeen entries for the preset that runs it', () => {
+  it('narrows to fourteen entries for the preset that runs it', () => {
     /*
      * THE PANEL IS WHAT THE OWNER READ, and it shows the NARROWED list: every
      * stock list names all four racial cooldowns and all nine consumables,

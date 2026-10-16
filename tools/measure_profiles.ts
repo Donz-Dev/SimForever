@@ -175,6 +175,54 @@ function printUses(presetId: string, profile: CharacterProfile): void {
   const record = ALL_PRIORITY_LISTS.find((row) => row.profiles.includes(presetId));
 
   console.log(`\n  ${batch.rotationName ?? 'NO ROTATION AT ALL'}  (${record?.name ?? 'unregistered'})`);
+
+  /*
+   * ==========================================================================
+   * WHAT THE CHARACTER DID BEFORE THE PULL, PRINTED FIRST BECAUSE IT HAPPENED
+   * FIRST -- AND BECAUSE WITHOUT IT THREE OF THESE PROFILES LOOK LIKE THEY
+   * STOPPED DOING THINGS THEY STILL DO.
+   *
+   * The owner moved Charge, the stance and Battle Shout out of the three
+   * Warrior lists and into `precombat`, and a pre-combat action is reported
+   * NOWHERE ELSE in this tool: it is not a list entry, so the loop below never
+   * reaches it, and the "not in the list, and still dealing damage" block
+   * filters on `damage > 0` -- which a shout and a stance never have. So three
+   * actions a fight simply vanished from the report, which is this project's
+   * own "an ability in the book, in no list, dealing no damage was invisible
+   * to everything" with a new way in.
+   *
+   * THE USES COLUMN IS READ FROM THE SAME PLACE AS EVERY OTHER ROW, because a
+   * pre-combat cast goes through `castAbility` and emits an ordinary cast
+   * event. **A ZERO HERE IS THE FINDING**: `runPrecombat` skips what it cannot
+   * do -- unaffordable, wrong stance, a `canCast` gate -- in silence, exactly
+   * as a priority list does, so an opener that reads correctly and does nothing
+   * has no other symptom. Battle Shout costs 10 rage and a warrior opens on an
+   * empty bar; that one is a real case and not a hypothetical.
+   *
+   * THE USES FIGURE IS POOLED WITH THE FIGHT'S OWN CASTS, which is the same
+   * caveat the list rows carry and is worth repeating here because it reads
+   * oddly: the damage table is keyed by ABILITY, not by where the cast came
+   * from, so a Protection warrior's `heroic_strike` shows 19.5 next to "0.0s
+   * before" -- one queued arming plus everything the list did. What the column
+   * answers is "did this ability happen at all", which is the question a zero
+   * is the finding for.
+   * ==========================================================================
+   */
+  const opener = profile.precombat ?? [];
+  if (opener.length > 0) {
+    console.log('    -- before the pull --');
+    const ordered = [...opener].sort((a, b) => b.secondsBefore - a.secondsBefore);
+    for (const action of ordered) {
+      const name = ABILITY_NAMES.get(action.abilityId) ?? action.abilityId;
+      const uses = batch.abilities.find((row) => row.abilityName === name)?.uses ?? 0;
+      const lead = `${action.secondsBefore.toFixed(1)}s before`.padStart(12);
+      console.log(
+        `        ${action.abilityId.padEnd(26)}${lead}${uses.toFixed(1).padStart(7)} uses` +
+          (uses === 0 ? '  <-- NEVER HAPPENED' : ''),
+      );
+    }
+  }
+
   if (!record) return;
 
   const byName = new Map(batch.abilities.map((row) => [row.abilityName, row]));

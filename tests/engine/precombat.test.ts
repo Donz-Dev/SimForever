@@ -300,12 +300,24 @@ describe('the profile field', () => {
 
   it('changes nothing for a character that declares none', () => {
     /*
-     * THE CONTAINMENT CHECK IN MINIATURE, and the reason all 75 combat-log
-     * hashes are unchanged: no preset carries a pre-combat list, so the hook
-     * returns immediately.
+     * ========================================================================
+     * THE CONTAINMENT CHECK IN MINIATURE: the hook returns immediately when
+     * there is nothing to do.
+     *
+     * ITS REFERENCE USED TO BE THE PRESET AS SHIPPED, on the reasoning that
+     * "no preset carries a pre-combat list". **Every one of them does now** --
+     * the owner specified an opener for all 28 -- so that reference spends mana
+     * on Mage Armor and a Fireball and the two sides stopped being comparable.
+     * It read 7182 against 6282.
+     *
+     * SO BOTH SIDES DECLARE NONE. This project's own rule: a test that reads a
+     * profile to pin a MECHANISM must not depend on what that profile happens
+     * to carry, and this one was reading the profile for its baseline.
+     * ========================================================================
      */
     const { player, simulation } = fightWith('mage_fire', []);
-    const reference = characterAtCombatStart(PRESETS_BY_ID.get('mage_fire')!.build())!;
+    const base = PRESETS_BY_ID.get('mage_fire')!.build();
+    const reference = characterAtCombatStart({ ...base, precombat: [] })!;
     expect(player.resources.require('mana').current).toBe(
       reference.resources.require('mana').current,
     );

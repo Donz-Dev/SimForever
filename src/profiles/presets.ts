@@ -10,6 +10,7 @@ import type { Equipment, EquippedSlot } from '../game/items/Item';
 import { benchmarkEquipmentForName } from '../game/items/benchmarkSets';
 import { PRESET_ENCHANTS } from '../game/items/presetEnchants';
 import type { TalentAllocation } from '../game/talents/Talent';
+import type { PrecombatAction } from '../engine';
 import type { CharacterProfile } from './CharacterProfile';
 import { createDefaultProfile } from './CharacterProfile';
 import { syncDefaultRotation } from './rotation';
@@ -165,6 +166,57 @@ const PRESET_RAID_BUFFS: readonly string[] = [
 const RANGED_HUNTER_RAID_BUFFS: readonly string[] = PRESET_RAID_BUFFS.map((id) =>
   id === 'windfury_totem' ? 'grace_of_air_totem' : id,
 );
+
+/**
+ * ==============================================================================
+ * WHAT EACH PROFILE DID BEFORE THE PULL, AND IT IS THE OWNER'S OWN LIST.
+ *
+ * They specified an opener for all 28 profiles at once, each as a sequence of
+ * "N seconds before <ability>". `before` is written so a preset's block reads
+ * back in those words -- one call per lead time, the abilities in the order
+ * they were named -- because the thing a reader has to be able to check is the
+ * list against the message it came from.
+ *
+ *     ...before(10, 'bloodrage_cast', 'battle_shout_cast'),
+ *     ...before(3, 'battle_stance_cast'),
+ *     ...before(0, 'charge', 'mighty_rage_potion'),
+ *
+ * ------------------------------------------------------------------------------
+ * ORDER WITHIN ONE LEAD TIME IS THE ORDER WRITTEN HERE. `runPrecombat` sorts
+ * by `secondsBefore` DESCENDING and `Array.prototype.sort` is stable, so two
+ * actions at the same instant happen in the order the preset lists them. That
+ * matters on the Bear, whose whole 0s block is "Enrage + Mighty Rage Potion +
+ * queue Maul + Primal Bite" -- Enrage first is the reading that gives the
+ * queued swing the buff.
+ *
+ * ------------------------------------------------------------------------------
+ * FOUR OF THE OWNER'S LINES NAME SOMETHING THAT IS ALREADY TRUE AND SO HAVE NO
+ * ENTRY, which is said here rather than left as an apparent omission:
+ *
+ *   "2s before Stealth"          a Rogue's `openingAuras` carry `stealth`; there
+ *                                is no Stealth ABILITY and deliberately so, and
+ *                                `openingAuras` are applied BEFORE `onPrecombat`
+ *   "3s before Moonkin Form"     a COMBAT STYLE on the profile, not an ability
+ *   "1s before Cat Form"         the same
+ *   "1.5s before Dire Bear Form" the same
+ *
+ * So each of those characters is already in the state the line asks for by the
+ * time a pre-combat action could be taken. An entry naming an ability the build
+ * does not have is SKIPPED IN SILENCE, so writing one would have looked like a
+ * working opener and done nothing at all.
+ *
+ * AND ONE LINE CANNOT BE IMPLEMENTED: the Cat's "0s Ravage". It is in the
+ * Druid spellbook capture -- "Ravage the target, causing 350% damage plus 343.
+ * **Must be prowling and behind the target**" -- and is declared as an ability
+ * nowhere, because both of its requirements are `OutOfScope` members:
+ * `stealth` and `positioning`. Flagged in HANDOVER rather than approximated,
+ * which for a 350%-weapon-damage opener would be a large invented number.
+ * ==============================================================================
+ */
+const before = (
+  secondsBefore: number,
+  ...abilityIds: readonly string[]
+): readonly PrecombatAction[] => abilityIds.map((abilityId) => ({ abilityId, secondsBefore }));
 
 
 /**
@@ -1536,6 +1588,26 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * ----------------------------------------------------------------------
        */
       consumables: { ...STRENGTH_CONSUMABLES, food: 'food_strength' },
+      /*
+       * THE OWNER'S OPENER, and the three entries it replaces are gone from the
+       * list: Charge, Battle Stance and Battle Shout. See `WARRIOR_TWO_HAND_BATTLE`.
+       *
+       * THE STANCE ENTRY IS A RE-CAST OF THE STANCE IT IS ALREADY IN -- the
+       * preset declares `stance: 'battle'` and `openingAuras` applies it before
+       * any pre-combat action runs. A stance ability has no `canCast` gate, so
+       * the cast succeeds and the `already` guard inside it means NO RAGE IS
+       * LOST; what it buys is that the panel says out loud which stance this
+       * character pulls in, where before it was a field three screens away.
+       *
+       * AND IT IS WHY BLOODRAGE IS SAFE AT 10s. A stance CHANGE dumps rage
+       * above the floor, so an opener that banked rage and then genuinely
+       * swapped would throw it away -- this one does not swap.
+       */
+      precombat: [
+        ...before(10, 'bloodrage_cast', 'battle_shout_cast'),
+        ...before(3, 'battle_stance_cast'),
+        ...before(0, 'charge', 'mighty_rage_potion'),
+      ],
       encounter: {
         ...createDefaultProfile().encounter,
         // A damage warrior is not the one being hit.
@@ -1578,6 +1650,17 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * ----------------------------------------------------------------------
        */
       consumables: { ...STRENGTH_CONSUMABLES, food: 'food_strength' },
+      /*
+       * NO CHARGE HERE AND THE OWNER DID NOT ASK FOR ONE, which is the spec
+       * agreeing with the engine: Charge lists Battle Stance only on this
+       * build -- Vanguard is what adds Defensive, and a Fury warrior takes
+       * neither -- so a Berserker opener cannot Charge at all. Its list has
+       * never carried the entry either.
+       */
+      precombat: [
+        ...before(10, 'bloodrage_cast', 'battle_shout_cast'),
+        ...before(3, 'berserker_stance_cast'),
+      ],
       encounter: {
         ...createDefaultProfile().encounter,
         // A damage warrior is not the one being hit.
@@ -1625,6 +1708,24 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * ----------------------------------------------------------------------
        */
       consumables: { ...STRENGTH_CONSUMABLES, food: 'food_stamina' },
+      /*
+       * THE ONE OPENER THAT CHARGES OUT OF DEFENSIVE STANCE, and it works for
+       * a reason that is in the data rather than in this list: VANGUARD adds
+       * Defensive to this character's own copy of Charge, so the book reads
+       * `stances battle_stance/defensive_stance` where every other warrior's
+       * reads Battle only. A Protection warrior without that talent would have
+       * this entry refused and skipped in silence.
+       *
+       * AND HEROIC STRIKE IS QUEUED RATHER THAN CAST. An on-next-swing ability
+       * is ARMED by `castAbility` -- paid for now, delivered by the first swing
+       * that lands -- so "queue Heroic Strike" is exactly what the engine does
+       * with it, and it costs the rage Bloodrage just banked.
+       */
+      precombat: [
+        ...before(10, 'bloodrage_cast', 'battle_shout_cast'),
+        ...before(3, 'defensive_stance_cast'),
+        ...before(0, 'charge', 'mighty_rage_potion', 'heroic_strike'),
+      ],
       encounter: {
         ...createDefaultProfile().encounter,
         /*
@@ -1678,6 +1779,12 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * ----------------------------------------------------------------------
        */
       consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea', food: 'food_agility' },
+      /*
+       * "Venom: none" -- the owner's own word, and the only profile of the 28
+       * with no opener. Left ABSENT rather than written as an empty array: the
+       * field is optional, `absent` is what every saved profile before format
+       * 16 carries, and `roundTrip.test.ts` compares the whole structure.
+       */
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1714,6 +1821,9 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         ...venom,
         character: { ...venom.character, name: 'Combat Mut' },
         talents: { ...ROGUE_COMBAT_MUT_TALENTS },
+        precombat: [
+          ...before(1, 'blade_flurry'),
+        ],
       };
     },
   },
@@ -1744,6 +1854,9 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * published figure on somebody else's behalf.
        */
       consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea', food: 'food_agility' },
+      precombat: [
+        ...before(1, 'blade_flurry'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1770,6 +1883,18 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * and the melee Hunter are what is left.
        */
       consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea', food: 'food_agility' },
+      /*
+       * STEALTH IS NOT AN ENTRY AND IS STILL TRUE: a Rogue's `openingAuras`
+       * carry the `stealth` aura, which is the one thing about stealth this
+       * project models and is applied BEFORE `onPrecombat` runs. So Ambush's
+       * own gate -- a dagger main hand AND Cutthroat or Stealth -- is already
+       * satisfied here, and the pre-combat Ambush SPENDS that window exactly as
+       * the list's first entry used to.
+       */
+      precombat: [
+        ...before(1, 'premeditation'),
+        ...before(0, 'ambush'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1810,6 +1935,10 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       talents: { ...ROGUE_HEMO_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
+      precombat: [
+        ...before(1, 'premeditation'),
+        ...before(0, 'ambush'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1842,6 +1971,17 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         ...hemo,
         character: { ...hemo.character, name: 'Pure Hemo' },
         talents: { ...ROGUE_PURE_HEMO_TALENTS },
+        /*
+         * NO AMBUSH, WHICH IS THE OWNER'S SPEC AGREEING WITH AMBUSH'S OWN GATE.
+         * Every other Rogue opener ends on it; this build holds a SWORD in its
+         * main hand and `canCast` asks for a dagger, so an Ambush entry here
+         * would be refused and skipped in silence. It has to be written out
+         * because this preset DERIVES from Hemo Dagger, whose opener does ambush
+         * -- inheriting the spread would have carried it.
+         */
+        precombat: [
+          ...before(1, 'premeditation'),
+        ],
       };
     },
   },
@@ -1874,6 +2014,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        */
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_arcane'),
+      /*
+       * MOONKIN FORM IS NOT AN ENTRY AND IS STILL TRUE: it is a COMBAT STYLE on
+       * this profile rather than an ability, so the character is in it before a
+       * pre-combat action could be taken. See `before`.
+       */
+      precombat: [
+        ...before(1.5, 'wrath'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1944,6 +2092,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         other: 'thistle_tea',
         food: 'food_strength',
       },
+      /*
+       * CAT FORM IS THE STYLE, so it needs no entry -- and RAVAGE CANNOT BE
+       * ONE. The owner asked for "0s Ravage"; it is in the Druid spellbook
+       * capture and is declared as an ability nowhere, because "must be
+       * prowling and behind the target" is `stealth` AND `positioning`, both
+       * `OutOfScope` members. So this opener is the form and nothing else, and
+       * the missing half is flagged in HANDOVER rather than approximated.
+       */
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1981,6 +2137,19 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * Natural Reaction, Primal Fury and Demoralizing Roar are all inert
        * against a target that never swings.
        */
+      /*
+       * EVERYTHING AT THE PULL, AND THE ORDER INSIDE THE 0s BLOCK IS THE
+       * READING. Enrage first, then the potion, then the queued Maul, then
+       * Primal Bite: a queued swing delivered after the pull collects both
+       * buffs, where arming it first would be the same four actions in an order
+       * that reads the same and pays less. `runPrecombat` sorts stably, so the
+       * order written here is the order taken.
+       *
+       * DIRE BEAR FORM IS THE STYLE and needs no entry.
+       */
+      precombat: [
+        ...before(0, 'enrage', 'mighty_rage_potion', 'maul', 'mangle'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: true },
     }),
   },
@@ -2002,6 +2171,16 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       talents: { ...SHAMAN_ELEMENTAL_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_nature'),
+      /*
+       * THE ONE OPENER WHOSE CAST IS NOT LAST. Lightning Bolt occupies the two
+       * seconds before the pull and LANDS at it; Flame Shock is then taken at
+       * the pull itself. Both resolve at t=0 and the order here is the order
+       * the owner wrote them in.
+       */
+      precombat: [
+        ...before(2, 'lightning_bolt'),
+        ...before(0, 'flame_shock'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -2034,6 +2213,11 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         meleeWeaponEffect: true,
         blastedLands: 'blasted_strength',
       }),
+      precombat: [
+        ...before(3, 'windfury_weapon'),
+        ...before(1.5, 'searing_totem'),
+        ...before(0, 'flame_shock'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -2055,6 +2239,10 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       talents: { ...MAGE_FROSTFIRE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_fire'),
+      precombat: [
+        ...before(4, 'mage_armor'),
+        ...before(2.5, 'frostfire_bolt'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -2076,6 +2264,10 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       talents: { ...MAGE_ARCANE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_arcane'),
+      precombat: [
+        ...before(3, 'mage_armor'),
+        ...before(1.5, 'arcane_blast'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -2097,6 +2289,10 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       talents: { ...MAGE_FIRE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_fire'),
+      precombat: [
+        ...before(4.5, 'mage_armor'),
+        ...before(3, 'fireball'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -2150,6 +2346,18 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         flask: 'flask_spell_power',
         food: 'food_spell_power',
       },
+      /*
+       * TWO SEALS IN SEQUENCE, WHICH IS THE SEAL TWIST OPENED BEFORE THE PULL.
+       * Seal of Righteousness at 3s and Seal of Command at 1.5s means the
+       * character pulls with Command up and Righteousness spent -- which is
+       * the state the twist cycle expects to find, and the reason the list had
+       * no entry point of its own when both seals were gated on each other.
+       */
+      precombat: [
+        ...before(3, 'seal_of_righteousness'),
+        ...before(1.5, 'seal_of_command'),
+        ...before(0, 'judgement'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -2207,6 +2415,10 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         flask: 'flask_spell_power',
         food: 'food_spell_power',
       },
+      precombat: [
+        ...before(1.5, 'seal_of_righteousness'),
+        ...before(0, 'judgement'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -2269,6 +2481,10 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         flask: 'flask_spell_power',
         food: 'food_spell_power',
       },
+      precombat: [
+        ...before(1.5, 'seal_of_righteousness'),
+        ...before(0, 'judgement'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -2319,6 +2535,12 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         food: 'food_spell_power',
         other: 'healthstone',
       },
+      precombat: [
+        ...before(4.5, 'righteous_fury'),
+        ...before(3, 'seal_of_righteousness'),
+        ...before(1.5, 'holy_shield'),
+        ...before(0, 'judgement'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: true },
     }),
   },
@@ -2343,6 +2565,11 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       // See `RANGED_HUNTER_RAID_BUFFS`.
       raidBuffs: [...RANGED_HUNTER_RAID_BUFFS],
       consumables: RANGED_HUNTER_CONSUMABLES,
+      precombat: [
+        ...before(5, 'hunters_mark'),
+        ...before(3.5, 'aspect_of_the_hawk'),
+        ...before(2, 'aimed_shot'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -2366,6 +2593,11 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       // See `RANGED_HUNTER_RAID_BUFFS`.
       raidBuffs: [...RANGED_HUNTER_RAID_BUFFS],
       consumables: RANGED_HUNTER_CONSUMABLES,
+      precombat: [
+        ...before(7, 'hunters_mark'),
+        ...before(5.5, 'aspect_of_the_hawk'),
+        ...before(4, 'sniper_shot'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -2401,6 +2633,37 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         mana_regen: 'mana_regen_12',
         other: 'demonic_rune',
       },
+      /*
+       * ======================================================================
+       * "QUEUE RAPTOR STRIKE + CAST MONGOOSE BITE", AND ONLY THE FIRST HALF IS
+       * POSSIBLE.
+       *
+       * Raptor Strike is on-next-swing, so `castAbility` ARMS it -- paid for
+       * now, delivered by the first swing that lands -- which is exactly what
+       * the owner's word "queue" describes, and it is the distinction they drew
+       * between the two halves of this line.
+       *
+       * MONGOOSE BITE CANNOT BE ONE, AND NOTHING IS LOST BY LEAVING IT OUT.
+       * "Can only be performed after you dodge", and nothing attacks a Hunter
+       * here -- so the only route to it is EXPOSE PREY, the Survival talent
+       * this build takes at 2/2: "your attacks against targets with Hunter's
+       * Mark have a 10% chance to activate your Mongoose Bite". Its `canCast`
+       * reads the aura that proc applies, and **before the pull no attack has
+       * landed, so the window cannot be open**. A pre-combat Mongoose Bite is
+       * refused and skipped in silence.
+       *
+       * IT IS IN THE LIST, so the ability still fires the moment the proc
+       * lands -- what cannot happen is having it ready AT the pull. Written out
+       * here rather than left as an absence, because the owner named it.
+       * `precombatOpeners.test.ts` pins the reason so this cannot be "fixed"
+       * by granting the aura, which would hand the build a free 10% proc.
+       * ======================================================================
+       */
+      precombat: [
+        ...before(3, 'hunters_mark'),
+        ...before(1.5, 'aspect_of_the_beast'),
+        ...before(0, 'raptor_strike'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -2441,6 +2704,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         mana_regen: 'mana_regen_12',
         other: 'demonic_rune',
       },
+      // The same opener as LW Melee, and Mongoose Bite is absent for the same
+      // reason: its dodge window cannot be open before the pull. See there.
+      precombat: [
+        ...before(3, 'hunters_mark'),
+        ...before(1.5, 'aspect_of_the_beast'),
+        ...before(0, 'raptor_strike'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -2476,6 +2746,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       warlockStone: 'spellstone',
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_shadow'),
+      /*
+       * 2.5 SECONDS IS SHADOW BOLT'S CAST TIME ON THIS BUILD AND NOT ON THE
+       * ABILITY, which is the sharpest evidence for how `secondsBefore` reads:
+       * the declaration says 3.0 and BANE takes half a second off it. See
+       * `PrecombatAction`.
+       */
+      precombat: [
+        ...before(2.5, 'shadow_bolt'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -2510,6 +2789,9 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       warlockStone: 'firestone',
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_fire'),
+      precombat: [
+        ...before(2, 'incinerate'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -2531,6 +2813,10 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       talents: { ...PRIEST_SHADOW_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_shadow'),
+      precombat: [
+        ...before(3, 'shadowform'),
+        ...before(1.5, 'mind_blast'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },

@@ -639,7 +639,14 @@ describe("Hunter's Mark", () => {
      * across the cast, so the Hunter's own ranged attack power never has to be
      * restated here.
      */
-    const profile = PRESETS_BY_ID.get('bm_hunter')!.build();
+    /*
+     * THE OPENER IS STRIPPED, because this profile now CASTS Hunter's Mark
+     * before the pull -- its `canCast` refuses a second one while the aura is
+     * up, so measuring the cast requires a character that has not had it. The
+     * claim is about the ability, not about what the preset opens with.
+     */
+    const base = PRESETS_BY_ID.get('bm_hunter')!.build();
+    const profile = { ...base, precombat: [] };
     const atPull = characterAtCombatStart(profile)!;
     expect(atPull.auras.has('hunters_mark')).toBe(false);
     const before = atPull.stats.get('rangedAttackPower');
