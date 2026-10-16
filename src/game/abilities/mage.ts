@@ -2,7 +2,7 @@ import type { Ability, Combatant } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
 import { baseManaFor } from '../character/baseStatLookup';
 import {
-  ARCANE_BLAST,
+  arcaneBlastAura,
   ARCANE_BLAST_UNMODELLED,
   ARCANE_POWER,
   COMBUSTION,
@@ -537,8 +537,38 @@ export const ARCANE_MISSILES: Ability = {
  * all your other spells" half is not.
  */
 export const ARCANE_BLAST_BASE_MANA_FRACTION = 0.15;
-export const ARCANE_BLAST_DAMAGE = midpoint(364, 424);
-export const ARCANE_BLAST_CAST_MS = seconds(2.5);
+
+/**
+ * ============================================================================
+ * THE REDESIGN'S THREE NUMBERS, AND TWO OF THEM TURN OUT TO BE ONE.
+ *
+ * "This spell is now a 1.5 second cast ... Mana cost unchanged, but damage done
+ * and Spell Damage coefficients both reduced 40%."
+ *
+ * THE -40% ON THE COEFFICIENT *IS* THE CAST TIME CHANGE, which is the finding
+ * here rather than a coincidence to note. This ruleset's spell coefficients
+ * follow `castTime / 3.5`: the old 0.714 is `2.5 / 3.5` rounded, and
+ *
+ *     2.5 / 3.5 x 0.6  =  1.5 / 3.5     exactly
+ *
+ * so a 2.5-second cast becoming a 1.5-second one carries its coefficient down
+ * by precisely the 40% the note states. The two clauses are one change written
+ * twice, and that agreement is strong evidence the figure is right.
+ *
+ * KEPT AS THE EXPRESSION rather than as 0.4284, for the reason Ice Lance's is:
+ * `1.5 / 3.5` does not terminate, 0.714 was already a rounding, and rounding a
+ * second time compounds it. It is also the same figure the two Judgements just
+ * took -- "the correct spell power coefficient for instant cast spells" -- which
+ * is the convention a 1.5-second cast sits on in this ruleset.
+ *
+ * THE BASE DAMAGE IS WRITTEN AS THE OLD RANGE TIMES 0.6, so the captured
+ * 364-424 stays visible and the note's own arithmetic is the thing a reader
+ * checks. Folding it to a flat 236 would hide which half came from the client.
+ * ============================================================================
+ */
+export const ARCANE_BLAST_DAMAGE_REDUCTION = 0.4;
+export const ARCANE_BLAST_DAMAGE = midpoint(364, 424) * (1 - ARCANE_BLAST_DAMAGE_REDUCTION);
+export const ARCANE_BLAST_CAST_MS = seconds(1.5);
 export const ARCANE_BLAST_COEFFICIENT = ARCANE_BLAST_SP_COEFFICIENT;
 
 export const ARCANE_BLAST_ABILITY: Ability = {
@@ -568,8 +598,23 @@ export const ARCANE_BLAST_ABILITY: Ability = {
      * NEXT one -- which is what "each time you cast Arcane Blast, the mana
      * cost is increased" means, and the opposite of what applying it first
      * would do.
+     *
+     * IT ALSO MEANS THIS CAST DOES NOT COLLECT ITS OWN SPELL POWER, which is
+     * the same ordering answering a question the redesign raised: the aura now
+     * grants spell power, `dealDamage` above has already run, and "each time it
+     * is cast it GRANTS" describes what the cast leaves behind rather than what
+     * it benefits from. Applying it first would have the spell pay the old
+     * price and collect the new power, which is generous in both directions.
+     *
+     * BUILT FROM THE CASTER'S OWN INTELLECT, read here because an
+     * `AuraDefinition` is a module constant and cannot know it. The value is
+     * frozen for the window -- see `arcaneBlastAura`, which says why.
      */
-    simulation.applyAura(caster, ARCANE_BLAST, caster.id);
+    simulation.applyAura(
+      caster,
+      arcaneBlastAura(caster.stats.effective.intellect),
+      caster.id,
+    );
   },
   unmodelled: ARCANE_BLAST_UNMODELLED,
 };

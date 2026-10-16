@@ -1,7 +1,7 @@
 import type { CastReaction, Reaction } from '../../engine';
 import type { TalentReactionBuilder } from './warriorTalents';
 import {
-  ARCANE_BLAST,
+
   CLEARCASTING,
   COMBUSTION,
   COMBUSTION_CRITS_TO_END,
@@ -357,40 +357,31 @@ export const fingersOfFrost = (charges: number): Reaction => ({
 
 /*
  * ============================================================================
- * ARCANE BLAST'S WINDOW, ENDED BY THE SPELL THAT COLLECTED IT.
+ * `arcaneBlastSpender` IS GONE, AND THE REDESIGN IS WHY.
  *
- * "Effect stacks up to 4 times and lasts 8 sec or until any other damage spell
- * is cast." Read literally against the sentence before it -- "the damage of
- * all your OTHER spells is increased by 10%" -- the bonus is destroyed by the
- * only thing that could ever collect it, and the clause pays nothing. So the
- * reading taken is that the other spell TAKES the bonus and the stacks then
- * go, which is the project's standing rule for a specification that would
- * otherwise disable itself.
+ * It existed to take Arcane Blast's stacks away on the next damage spell --
+ * "lasts 8 sec or until any other damage spell is cast" -- and it fired on
+ * `cast.final` so that all five Arcane Missiles of a channel sat inside the
+ * window.
  *
- * `cast.final` IS WHAT MAKES A CHANNEL WORK. `runCast` runs once per tick, so
- * without it the first of five missiles would end the window and the other
- * four would fire unbuffed -- a smaller number, no error, and the opposite of
- * what the owner's own Arcane list is built to do.
+ * THAT WAS THIS PROJECT'S MOST LOAD-BEARING INTERPRETATION, flagged in
+ * HANDOVER as a question for the owner: read literally against "the damage of
+ * all your OTHER spells is increased by 10%", the bonus was destroyed by the
+ * only thing that could ever collect it, so the clause would have paid nothing.
+ * The reading taken was that the other spell TAKES the bonus and the stacks
+ * then go.
  *
- * WIRED THROUGH THE TALENT THAT GRANTS THE SPELL, which is the only hook a
- * cast reaction has: `MAGE_CAST_REACTIONS` is keyed by talent id, and a Mage
- * without the Arcane Blast talent has neither the spell nor the aura. Its
- * value -- the 10 -- is hand-filled in the values file and cross-checked
- * against `ARCANE_BLAST_DAMAGE_PER_STACK` by a test, because an effect that
- * reads no value is DROPPED rather than reported.
+ * "THE EFFECT NOW LASTS 15 SECONDS FROM WHEN IT IS FIRST APPLIED, INSTEAD OF
+ * JUST UNTIL THE NEXT SPELL CAST." So there is nothing left to spend: the
+ * window is a clock, `refreshBehaviour: 'ignore'` holds it from the first
+ * application, and this reaction would now end the effect early for no reason
+ * anybody stated. The damage clause it served is gone too -- the aura grants
+ * SPELL POWER from Intellect now, which is a stat and not a per-ability bonus.
+ *
+ * THE QUESTION WAS ANSWERED BY BEING REMOVED, which is worth recording: a
+ * flagged interpretation usually earns a ruling, and this one earned a rewrite.
  * ============================================================================
  */
-export const arcaneBlastSpender = (): CastReaction => ({
-  id: 'arcane_blast_spend',
-  canTrigger: (_context, actor, cast) =>
-    cast.final &&
-    cast.ability.id !== 'arcane_blast' &&
-    DAMAGE_SPELLS.has(cast.ability.id) &&
-    actor.auras.has(ARCANE_BLAST.id),
-  onTrigger: (context, actor) => {
-    actor.auras.remove(context, ARCANE_BLAST.id);
-  },
-});
 
 export const fingersOfFrostSpender = (): CastReaction => ({
   id: 'fingers_of_frost_spend',
@@ -448,7 +439,6 @@ export const heatingUpOnFireBlast = (): CastReaction => ({
 
 export const MAGE_CAST_REACTIONS: Readonly<Record<string, (value: number) => CastReaction>> = {
   fingers_of_frost: fingersOfFrostSpender,
-  arcane_blast: arcaneBlastSpender,
   heating_up: heatingUpOnFireBlast,
 };
 

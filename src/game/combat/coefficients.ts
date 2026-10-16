@@ -339,7 +339,31 @@ export const FIRE_NOVA_SP_COEFFICIENT = 0.143;
 // ---------------------------------------------------------------------------
 
 export const ARCANE_MISSILES_TICK_SP_COEFFICIENT = 0.286;
-export const ARCANE_BLAST_SP_COEFFICIENT = 0.714;
+/**
+ * Arcane Blast: `1.5 / 3.5`, where it was 0.714.
+ *
+ * ===========================================================================
+ * "Mana cost unchanged, but damage done and Spell Damage coefficients both
+ * reduced 40%" -- and that 40% IS the cast time change in the same note,
+ * which is the finding rather than a coincidence.
+ *
+ * Coefficients here follow `castTime / 3.5`. The old 0.714 is `2.5 / 3.5`
+ * rounded, and
+ *
+ *     2.5 / 3.5 x 0.6  =  1.5 / 3.5     exactly
+ *
+ * so "now a 1.5 second cast" and "coefficient reduced 40%" are one change
+ * written twice. Two independent clauses landing on the same figure is strong
+ * evidence it is right, and it puts Arcane Blast on the same instant-cast
+ * figure the two Judgements just took.
+ *
+ * KEPT AS THE EXPRESSION, for the reason Ice Lance's is: `1.5 / 3.5` does not
+ * terminate, 0.714 was already a rounding, and rounding a second time
+ * compounds it. Said here beside the constant because a refresh of the sheet
+ * will not carry it and a reader who knows the sheet would read this as drift.
+ * ===========================================================================
+ */
+export const ARCANE_BLAST_SP_COEFFICIENT = 1.5 / 3.5;
 export const FIRE_BLAST_SP_COEFFICIENT = 0.429;
 export const SCORCH_SP_COEFFICIENT = 0.429;
 /**

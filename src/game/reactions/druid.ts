@@ -48,6 +48,29 @@ import {
  * and that reading is the conservative one -- it can only understate the proc.
  * Worth about a sixth of its rate for a caster at the Moonkin's hit, so it is
  * recorded as a question for the owner rather than settled here.
+ *
+ * ----------------------------------------------------------------------------
+ * THE FAERIE FIRE FIX HAS NOTHING TO FIX HERE, and that is recorded rather than
+ * left as silence: "a note we did nothing about" and "a note nobody read" look
+ * identical from a diff.
+ *
+ * "Omen of Clarity: Fixed a bug where this could be triggered by Faerie Fire
+ * while in Cat Form, Bear Form, or Dire Bear Form. Since Faerie Fire costs no
+ * resources in those forms, it cannot trigger Omen of Clarity."
+ *
+ * THIS PROJECT HAS NO FAERIE FIRE ABILITY. The Druid's book is twenty abilities
+ * and Faerie Fire is not one of them -- the only `faerie_fire` in the project is
+ * a RAID DEBUFF, an armor reduction the encounter assumes rather than something
+ * the Druid casts, and it deals no damage at all. So there is nothing for this
+ * reaction to refuse: it fires on a damage event, and the debuff produces none.
+ *
+ * AND THE NOTE'S OWN REASONING WOULD NOT APPLY EITHER, which is worth knowing
+ * for the day Faerie Fire (Feral) is declared. The note says the proc should be
+ * refused because the ability "costs no resources" -- but that is Clearcasting's
+ * CONSUMPTION rule, not this proc's trigger: `CLEARCASTING`'s cast modifier
+ * already carries `requiresCost`, so a free ability cannot SPEND the charge.
+ * Nothing here filters on cost, because every Druid ability that deals damage
+ * has one. A free damaging ability would need this reaction to ask.
  * ----------------------------------------------------------------------------
  */
 export function omenOfClarityReaction(chancePercent: number): Reaction {

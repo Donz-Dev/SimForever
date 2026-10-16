@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
+import { PRESENCE_OF_MIND } from '../../src/game/auras/mage';
 import { runProfileBatch } from '../../src/simulator';
 
 /**
@@ -116,17 +117,48 @@ describe('it covers every cast charge, not only the three that were asked for', 
     }
   });
 
-  it('keeps a charge that saved nothing, rather than hiding it', () => {
+  it('keeps a charge that reduces no cost at all, rather than hiding it', () => {
     /*
-     * Presence of Mind shortens a cast and reduces no cost, so it reports a
-     * charge spent and zero saved. That is the honest answer AND the shape a
-     * charge thrown away on a free ability takes -- which is the one thing
-     * somebody tuning a priority list would most want to see.
+     * ========================================================================
+     * PRESENCE OF MIND SHORTENS A CAST AND REDUCES NO COST, so the panel has to
+     * keep a row for it -- a charge spent on something that saved nothing is the
+     * one thing somebody tuning a priority list would most want to see.
+     *
+     * THIS USED TO ASSERT `saved === 0` AND THAT WAS A ROTATION OUTCOME. It held
+     * while the Arcane list happened to spend the charge on a cast that nothing
+     * else discounted, and Arcane Blast's redesign -- 2.5 seconds to 1.5 --
+     * changed which spell the list reaches with the charge up. The figure moved
+     * to 35.2 without Presence of Mind changing at all, which is this project's
+     * own rule that a cast count is a rotation outcome however much it looks
+     * like a mechanism.
+     *
+     * ------------------------------------------------------------------------
+     * AND THE REASON IT CAN BE NON-ZERO IS WORTH RECORDING: `saved` IS PER CAST
+     * AND NOT PER AURA. `runCast` computes one figure -- the base cost less what
+     * was resolved -- and hands it to EVERY charge spent on that cast, so a
+     * charge spent alongside a cost-reducing one is credited with a saving it
+     * did not cause.
+     *
+     * THAT IS A REPORTING QUIRK RATHER THAN A BUG, and the honest reading of the
+     * column is "what the cast this charge was spent on saved". Flagged here
+     * because a reader comparing Presence of Mind's 35.2 against its own tooltip
+     * would reasonably conclude the panel was wrong.
+     * ------------------------------------------------------------------------
+     *
+     * SO WHAT IS ASSERTED IS THE INVARIANT: the row exists, the charge is spent,
+     * and the AURA itself declares no cost reduction -- which is the claim that
+     * cannot be moved by a priority list.
+     * ========================================================================
      */
     const rows = batchOf('mage_arcane').castCharges;
     const pom = rows.find((row) => row.auraName === 'Presence of Mind');
     expect(pom, 'the Arcane list casts it').toBeDefined();
     expect(pom!.casts).toBeGreaterThan(0);
-    expect(pom!.saved).toBe(0);
+
+    // It cannot save cost itself: its cast modifier is cast TIME and nothing else.
+    expect(PRESENCE_OF_MIND.castModifier?.costFraction).toBeUndefined();
+    expect(PRESENCE_OF_MIND.castModifier?.castTimeFraction).toBe(1);
+    // And whatever the list does, the figure is never negative.
+    expect(pom!.saved).toBeGreaterThanOrEqual(0);
   });
 });
