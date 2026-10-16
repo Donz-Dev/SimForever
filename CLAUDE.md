@@ -1677,12 +1677,24 @@ See [docs/resources.md](docs/resources.md).
   spells now miss **2% where they sat on 1%**, which DOUBLES the miss rather
   than adding a point. Melee and ranged have no floor at all, so for the other
   four the eighth point was simply the last one that bought anything.
-  **NOT FIXED, BECAUSE THE TEMPLATES ARE THE OWNER'S SPREADSHEET** -- raising
-  five rows by 10 rating, which under their own donor rule comes out of CRIT, is
-  a change to their numbers on nobody's authority. Pinned in
-  `statHeadroom.test.ts` so it fails the moment a template moves.
+  **IT WAS NOT FIXED AND THE QUESTION IS WHAT FIXED IT.** Raising five rows by
+  10 rating was a change to the owner's own spreadsheet on nobody's authority,
+  so it was pinned in `statHeadroom.test.ts` and written up as a question
+  instead -- and the ruling came back: "+10 hit rating, which should be
+  subtracted from elsewhere on the template set without violating the item
+  budget." The rows are **80, 80, 40, 40 and 120** now.
+  **AND THE SECOND HALF OF THE INSTRUCTION NEEDED NO CODE**, which is the part
+  worth knowing: a rating already costs budget and is already paid for out of
+  CRIT first, so "subtracted from elsewhere without violating the budget" is
+  what `spreadRating` and `RATING_DONORS` already do. Where it actually came
+  from splits on whether the build's `preferred` list buys crit at all -- the
+  Cat, the Enh Shaman and the Moonkin each gave up **2 crit rating**, and the
+  two TANKS gave up **2 to 3 stamina and a few points of attack power** because
+  neither has Crit in its list for the donor rule to find.
   **A RACIAL AND A GEAR TEMPLATE CAN BE TUNED AGAINST EACH OTHER**, so when a
-  racial's stat changes, check what the templates were assuming.
+  racial's stat changes, check what the templates were assuming -- and the test
+  that recorded the consequence is what made it askable, which is this file's
+  own rule about a flagged interpretation, pointed at a BUILD fact.
 - **Raid buffs are SELECTED, never assumed.** Nothing is on by default; a buff
   that applied itself would move every figure ever recorded. **A proc's reaction
   is built PER CHARACTER**, because an internal cooldown is per-character state
@@ -1708,10 +1720,28 @@ See [docs/resources.md](docs/resources.md).
   load-bearing: each aura keeps one id shared by its talent and its raid buff
   entry, so a Moonkin with both sources of Moonkin Aura still reads 3%.
   **WHAT IT COST IS EVERY CASTER PROFILE'S 3% SPELL CRIT**, because every preset
-  but the Moonkin carries Leader of the Pack. And `exclusiveWith` is left as it
-  was and is now a QUESTION rather than an answer -- two buffs that no longer
-  overlap have no obvious reason to exclude each other, and removing it is a
-  raid COMPOSITION decision that moves every figure.
+  but the Moonkin carried Leader of the Pack.
+- **AND THE OWNER HAS SINCE RULED THEM NOT EXCLUSIVE, WITH BOTH SELECTED
+  EVERYWHERE, WHICH HANDS THAT 3% BACK.** "Moonkin and Leader of the Pack are no
+  longer exclusive. And all profiles should have both enabled by default in the
+  raid buffs." So `moonkin_form` is in `PRESET_RAID_BUFFS`, the Moonkin's SWAP
+  is deleted -- it ran the one list that substituted an entry for this pair --
+  and a raid simply has a feral druid AND a moonkin.
+  **THE RULING COST NOTHING TO APPLY BECAUSE THE CHOOSER WAS NEVER WHAT
+  WORKED**, which is the entry below stated from the other end: the no-double-dip
+  rule lives in the shared aura ID, so there was no exclusivity in a chooser
+  left to remove. A Moonkin's own spell crit does not move when the box is
+  ticked, because its talent and the raid entry are one id.
+  **AND `RaidBuff.exclusiveWith` NOW HAS NO DECLARATION ANYWHERE.** The field,
+  `areExclusive` and the panel's "replaces X" line are kept -- the next
+  exclusive pair should be one line rather than a re-implementation, and
+  `withRaidBuff` still does the catalogue ordering that makes two identical
+  selections one file. `raidBuffs.test.ts` asserts that `areExclusive` answers
+  false for **every pair in the catalogue**, because a selection rule with no
+  declaration reads exactly like one that sometimes fires. **Third instance of
+  that guard** after `isWeaponUseOf(attack, 'ranged')` and
+  `RacialRequirement.weaponTypes`, and the first where the thing with no caller
+  is a RULE rather than a predicate.
 - **AND IT SUPERSEDES "HANDLE IT ON THE GUI", BECAUSE A GUI RULE CANNOT COVER A
   SOURCE THE GUI DOES NOT OWN.** The earlier ruling made exclusivity a SELECTION
   rule, and `withRaidBuff` does switch one entry off when the other goes on. It
@@ -1721,16 +1751,20 @@ See [docs/resources.md](docs/resources.md).
   profile loaded from JSON with both ids does the same, because nothing re-runs
   `withRaidBuff` on load. **When a rule is enforced at a chooser, ask what else
   can reach the thing being chosen.**
-- **THREE PRESETS SUBSTITUTE ONE RAID BUFF AND ONE DROPS ONE, and a SWAP is the
-  commoner shape.** The two ranged Hunters take Grace of Air for Windfury, the
-  Moonkin takes Moonkin Aura for Leader of the Pack — the half of the pair it
-  provides, on the owner's instruction — and only the Enhancement Shaman drops
-  one outright, because Windfury Weapon disables the totem for its own carrier.
-  Both lists are derived from `PRESET_RAID_BUFFS` by mapping rather than written
-  out, so a buff added there reaches them; the exception lists are in
-  `presets.test.ts` and are asserted EXHAUSTIVE. **A drop and a swap say
-  different things about the raid**: dropping says it is short a buff, which for
-  the Moonkin was wrong — it has the other one.
+- **TWO PRESETS SUBSTITUTE ONE RAID BUFF AND ONE DROPS ONE, and a SWAP is the
+  commoner shape.** The two ranged Hunters take Grace of Air for Windfury, and
+  only the Enhancement Shaman drops one outright, because Windfury Weapon
+  disables the totem for its own carrier. The list is derived from
+  `PRESET_RAID_BUFFS` by mapping rather than written out, so a buff added there
+  reaches it; the exception lists are in `presets.test.ts` and are asserted
+  EXHAUSTIVE. **A drop and a swap say different things about the raid**:
+  dropping says it is short a buff.
+  **IT WAS THREE SWAPS AND THE THIRD IS GONE**, which is one of these lists
+  getting shorter for once: the Moonkin took Moonkin Aura for Leader of the Pack
+  while the two were exclusive, and the owner has since ruled them not exclusive
+  with both selected everywhere. **The exhaustive assertion is what made that a
+  one-line change** -- the swap table and its `toEqual` on the keys both had to
+  move, so nothing could be half-applied.
 
 ### Consumables
 
@@ -2460,6 +2494,20 @@ closures the engine runs, once, when the character is built.
   stream, so a single differing decision reorders every later draw and the rest
   of the fight diverges completely -- the property that ruins paired
   measurement is what makes this check sharp.
+  **BUT IT HASHES THE LOG, SO ANYTHING THAT ADDS A LINE TO THE LOG DIFFERS BY
+  CONSTRUCTION AND THE CHECK SAYS NOTHING.** Selecting one more raid buff on
+  all 25 presets moved **all 84 hashes** and that is not a finding: an aura
+  applied at the pull writes a line and consumes no random number, so a pure
+  melee build whose new buff grants `spellCritChance` runs the identical fight
+  and still reports a different hash. **The hash answers "is this log
+  byte-identical", which is the same question as "did any decision change" only
+  for a change that cannot write a line** -- a refactor, an item nobody wears,
+  a condition nobody reaches. `eventsProcessed` is no substitute either: it was
+  unchanged on 20 of 28 profiles across that commit, and a fight can diverge
+  completely while processing the same number of events. **Say which question
+  the tool is answering before offering a hash as a containment check**, and
+  where the change legitimately touches a stat, the containment check is the
+  MECHANISM -- which stat the aura moves, asserted on the stat.
 - **MIRROR THE SOURCE'S COMPARISON EXACTLY, INCLUDING STRICTNESS.** The nine
   class files had written `< cap` and `<= cap` and `!has()` and
   `remainingMs() <= 0` in different places and MEANT both of each pair, so

@@ -289,21 +289,30 @@ read now.
 | **Curse of the Elements** | Magic schools only, and every Warrior ability is physical, Shield Slam included. The ruleset owner is content with that — "it'll work for other classes" — and `damageTakenBySchool` is checked by a test that fires real fire damage. |
 | **Curse of Recklessness / Curse of the Elements** | Both curses. Only one curse holds on a target in WoW; nothing in the source says so, so both apply here. |
 
-## Entries that cannot sit beside each other
+## Entries that cannot sit beside each other, of which there are none
 
-> These are all the same exclusive 3% global critical strike chance and do not
-> stack.
+> Moonkin and Leader of the Pack are no longer exclusive. And all profiles
+> should have both enabled by default in the raid buffs.
 
-The ruleset owner on Moonkin Aura and Leader of the Pack, and **it supersedes an
-earlier ruling of theirs** — "they don't stack, but that can be handled on the
-GUI" — which made it a SELECTION rule rather than a combat one.
+The ruleset owner, and it is the **third** ruling on this pair. Nothing in the
+catalogue declares `exclusiveWith` now, so `areExclusive` answers false for
+every pair there is -- `raidBuffs.test.ts` asserts exactly that, because a
+selection rule with no declaration reads like one that sometimes fires.
+
+### The three rulings, in order, because each one narrowed the last
+
+| | the ruling | what it produced |
+| --- | --- | --- |
+| 1 | "they don't stack, but that can be handled on the GUI" | `exclusiveWith`, a SELECTION rule, and a +6% crit bug |
+| 2 | "these are all the same exclusive 3% global critical strike chance and do not stack" | ONE `AuraDefinition` with one id, which made the bug unrepresentable |
+| 3 | "no longer exclusive ... all profiles should have both" | two ids again, both selected, each shared with its own talent |
 
 ### Why the GUI was the wrong place for it
 
-`exclusiveWith` works: it declares the pair in one direction, is read in both,
-and the panel turns one off when the other goes on and says "replaces Moonkin
-Form" beside the switch. What it governs is **two raid buff entries**, and the
-3% has **three** sources:
+`exclusiveWith` worked: it declared the pair in one direction, was read in both,
+and the panel turned one off when the other went on and said "replaces Moonkin
+Form" beside the switch. What it governed was **two raid buff entries**, and the
+3% had **three** sources:
 
 | Source | Governed by `withRaidBuff`? |
 | --- | --- |
@@ -319,28 +328,37 @@ ids in its list did the same, because nothing re-runs `withRaidBuff` on load.
 **A GUI rule cannot cover a source the GUI does not own**, and the talent half
 arrived after the ruling did.
 
-### What it is now
+### What it is now: two auras, one id each, shared with their talent
 
-**One `AuraDefinition`, one id, three sources.** `PARTY_CRIT_AURA` in
-`game/auras/druid.ts`, id `party_crit_aura`, and both raid buff entries and both
-talents apply that one — so `AuraCollection.apply` refreshes a matching id
-instead of stacking a second instance and no combination of the three is worth
-more than 3%. It is structural rather than remembered: a fourth source would get
-the rule for free.
+A patch split the pair by attack TYPE -- "Moonkin Aura now only increases Spell
+Critical Strike chance", "Leader of the Pack now only increases Melee and Ranged
+Critical Strike chance" -- so `PARTY_CRIT_AURA` is gone and there are two:
 
-**THE TWO ENTRIES STILL EXIST SEPARATELY, and should.** A raid is composed by
-choosing which druid turned up, the panel names both, and they keep
-`exclusiveWith` so the selection still reads correctly. What changed is that
-choosing wrongly can no longer be worth anything.
+| | id | what it grants | its two sources |
+| --- | --- | --- | --- |
+| Moonkin Aura | `moonkin_aura` | `spellCritChance` +3 | the Moonkin Form talent, and the raid buff entry |
+| Leader of the Pack | `leader_of_the_pack_aura` | `critChance` +3, read by the melee AND ranged tables | the Leader of the Pack talent, and the raid buff entry |
 
-**THE AURA'S NAME CARRIES BOTH** — "Moonkin Aura / Leader of the Pack" — because
-one aura cannot be named after one of three sources. It surfaces in the combat
-log's line at the pull and nowhere else: a permanent aura is never removed, and
-`auraUptime` only totals a span when an `aura_removed` closes one, so it is
-filtered out of the uptime table entirely.
+**THEY STACK WITH EACH OTHER AND NEITHER STACKS WITH ITSELF**, which is the
+whole arrangement. A character under both carries +3% spell AND +3% melee, two
+buffs doing two things; a Moonkin holding its own talent AND the ticked box
+reads 3%, because `AuraCollection.apply` refreshes a matching id instead of
+stacking a second instance. **So ruling 2 survives WITHIN each aura and was
+repealed only ACROSS the pair**, and that is why ruling 3 cost nothing to apply:
+the exclusivity that mattered was never in the chooser.
 
-Nothing else in the catalogue is exclusive. The two curses are not, because
-nothing in the source says a target holds only one.
+### The field is kept and declares nothing
+
+`RaidBuff.exclusiveWith`, `areExclusive` and the panel's "replaces X" line all
+remain. The next exclusive pair should be one field on one entry rather than a
+re-implementation, and `withRaidBuff` is still load-bearing for the catalogue
+ORDERING it also does -- two profiles with the same selection have to be the
+same file. What `raidBuffs.test.ts` pins is that the branch is currently
+unreachable, in both the specific and the general form.
+
+**Every preset selects both**, and the Moonkin -- which used to take Moonkin
+Aura in Leader of the Pack's PLACE, the one substitution in any preset's list
+for this pair -- now runs the shared raid like the other twenty-seven.
 
 ## What it is worth
 

@@ -580,21 +580,27 @@ none of them. **Three are worth knowing, and one of them was a real bug:**
   `hitChance` entry covers all three: the spell branch of `attackChances` reads
   that stat directly and the melee branches read it through `missFromSkill`, so
   no per-table split was needed.
-- **MOONKIN AURA AND LEADER OF THE PACK ARE ONE AURA, NOT TWO, and the id is
-  the whole rule.** The owner: "these are all the same exclusive 3% global
-  critical strike chance and do not stack." So `PARTY_CRIT_AURA` is one
-  definition with one id, and both raid buff entries AND both Druid talents
-  apply it — `AuraCollection.apply` refreshes a matching id instead of stacking.
-  **It used to be two auras and it paid twice**: a Moonkin carrying its own
-  `moonkin_form` aura in a raid with Leader of the Pack ticked read **+6% crit**,
-  24.243% spell crit against 21.243%. The older ruling put exclusivity on the
-  GUI, and `withRaidBuff` governs two RAID BUFF entries and knows nothing about
-  a TALENT. **A rule enforced at a chooser does not cover a source the chooser
-  does not own.**
-- **THE MOONKIN PRESET SELECTS MOONKIN AURA**, on the owner's instruction, where
-  every other profile takes Leader of the Pack — a SUBSTITUTION rather than the
-  removal it used to be, because the raid is not short a buff, it has the other
-  one. Worth nothing either way, which is the containment check.
+- **MOONKIN AURA AND LEADER OF THE PACK ARE TWO AURAS WITH ONE ID EACH, and the
+  id is the whole rule.** This entry read "ARE ONE AURA, NOT TWO" and
+  `PARTY_CRIT_AURA` is gone: a patch split them by attack type -- Moonkin Aura
+  spell crit only, Leader of the Pack melee and ranged only -- so they stack
+  with each other on purpose. **What survived the split is each aura's own id,
+  shared by its TALENT and its raid buff entry**, which is the half of the
+  earlier ruling ("these are all the same exclusive 3% global critical strike
+  chance and do not stack") that was about double-dipping.
+  **IT USED TO BE TWO AURAS WITH THE WRONG IDS AND IT PAID TWICE**: a Moonkin
+  carrying its own `moonkin_form` aura in a raid with Leader of the Pack ticked
+  read **+6% crit**, 24.243% spell crit against 21.243%. The oldest ruling put
+  exclusivity on the GUI, and `withRaidBuff` governs two RAID BUFF entries and
+  knows nothing about a TALENT. **A rule enforced at a chooser does not cover a
+  source the chooser does not own**, which is also why the owner's later ruling
+  that the two are no longer exclusive cost nothing to apply.
+- **EVERY PRESET SELECTS BOTH**, on the owner's ruling -- "Moonkin and Leader of
+  the Pack are no longer exclusive. And all profiles should have both enabled by
+  default in the raid buffs." The Moonkin used to SUBSTITUTE Moonkin Aura for
+  Leader of the Pack, the one list in the project that did, and it runs the
+  shared raid now. **Its own spell crit does not move**, because its talent and
+  the raid entry are one id; what it gains is the melee and ranged 3%.
 - **Mangle was RENAMED to Primal Bite** between client builds. It is 27.0% of the
   Bear's damage under the new name. Build drift is found only by refreshing
   captures, never by cross-checking.
