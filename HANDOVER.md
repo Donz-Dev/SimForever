@@ -93,6 +93,122 @@ a round made it the biggest thing on a profile -- which is CLAUDE.md's rule that
 an interpretation flagged as one is what gets it ruled on, and that the label has
 to survive until the answer arrives.
 
+## Round EIGHTEEN is scoped and not started: the client caught up
+
+**THE PATCH HAS SHIPPED.** Re-running the importers a day after round seventeen
+put the client at **1.60.1.70425**, where round seventeen captured 70291 -- and
+**every tree change the notes described is in it**, plus eleven that are in no
+note at all.
+
+**THE REFRESH IS NOT ON THE BRANCH.** It was run, read, and reverted, because
+its blocker is six profile build URLs that only the owner can respecify -- see
+below. The data on disk is still 70291 and round seventeen is coherent against
+it.
+
+### The three note-derived values are CONFIRMED, which is the headline
+
+`PATCH_NOTE_TALENT_VALUES` carried three figures taken from notes the client had
+not shipped, with the client's own row recorded beside each so a refresh would
+expose a wrong one. 70425 ships all three **verbatim**:
+
+| | |
+| --- | --- |
+| `warlock/shadow_mastery` | 2, 4, 6, 8, 10 |
+| `paladin/champion_of_the_light` | 10, 20, 30 |
+| `priest/mental_strength` | 2, 4, 6, 8, 10 |
+
+**THE DETECTOR SAID SO BY FAILING**, which is what it is for: the importer run
+failed `patchNoteValues.test.ts`'s "the client still says it" on
+`shadow_mastery`, naming the talent and printing both rows. **Delete that whole
+file in the commit that lands the refresh** -- the failing test is the reminder.
+
+So the risk the layer was written against -- the Dual Wield Specialization case,
+where a note and a client tooltip disagreed and the owner ruled for the CLIENT --
+did not materialise on any of the three.
+
+### Every tree change the notes described, confirmed
+
+| | |
+| --- | --- |
+| **Arcane Wrath** | Arcane row 3, 1 rank, requires Arcane Blast. The 16-point gold medal talent, and a new SPELL (id 1326082) |
+| **Frost Blast** | a new Mage spell (id 1326055) |
+| **Missile Barrage** | Arcane row 3 -> **row 0**, 1 -> **2 ranks** |
+| **Critical Mass** | 3 -> **5 ranks** |
+| **Fire Power** | 5 -> **3 ranks** |
+| **Dark Inspiration** | Shadow row 3, 5 ranks |
+| **Mental Strength** | Discipline row 3 -> **row 1** |
+| **Elemental Mastery** | Elemental row 6, requires Lava Burst. The 31-point gold medal talent, and a new spell (id 16166) |
+| **Lava Burst** | row 6 -> **row 4**, and its prerequisite is **gone** |
+
+### And ELEVEN changes in no patch note at all
+
+**WHICH IS THIS FILE'S OWN THESIS PROVEN AGAIN**, and the reason the importers
+run before the notes are read:
+
+| | |
+| --- | --- |
+| **added** | Mage *Improved Fire Blast* (2 ranks); Shaman *Trial by Fire* (2); Warlock *Grim Reach* (2) |
+| **removed** | Mage *Wake of Fire*; Priest *Shadow Affinity*, *Improved Fade*; Shaman *Improved Fire Nova*, *Call of Thunder*; Warlock *Malediction* |
+| **reflowed** | Combustion now needs Critical Mass **5/5** (was 3); Lightning Overload needs Elemental Alacrity 3; Elemental Fury needs Lightning Overload 3 (was Call of Thunder); five more row swaps across Priest and Shaman |
+
+**THE WARLOCK IS NOT MENTIONED IN THE NOTES AT ALL** beyond Shadow Mastery, and
+it lost a 5-rank talent and gained a 2-rank one.
+
+### THE BLOCKER: six builds no longer decode, and five spend points on talents that are gone
+
+`decode_talent_build.mjs --profiles` is **6 of 25 failing**, and the preset
+allocations are worse than the URLs: they spend points on removed talents, which
+`createPlayer` strips **SILENTLY**.
+
+| | |
+| --- | --- |
+| `wake_of_fire` | **1 and 2 points**, two Mage builds |
+| `shadow_affinity` | **3 points**, Shadow Priest |
+| `malediction` | **5 points**, SM/DS |
+| `improved_fire_nova` | **2 points**, Ele Shaman |
+| `call_of_thunder` | **1 point**, Ele Shaman |
+| `fire_power` | capped at 3 now, and two Mage builds spend **4 and 5** |
+
+**THAT IS ELEVEN TO FOURTEEN ORPHANED POINTS ACROSS SIX PROFILES, AND WHERE THEY
+GO IS THE OWNER'S SPECIFICATION.** A profile is specified by its build URL; the
+project's history is the owner respecifying a build when a tree moves. Choosing
+six new 51-point spreads here would be inventing game data one level up from a
+number -- so the refresh waits on them.
+
+**THE OTHER NINETEEN PROFILES ARE UNAFFECTED** and decoded cleanly against the
+new trees, which is the containment check worth having before asking.
+
+### What else round eighteen has to do
+
+| | |
+| --- | --- |
+| five new talents | declare effects, or `classRegistration.test.ts` fails on a missing entry |
+| six removed talents | purge their effect-table entries, or the same test fails on a STRAY id |
+| three new spells | Arcane Wrath, Frost Blast and Elemental Mastery need abilities -- all three now have captured tooltips |
+| the notes still blocked in 17 | Fire Power's redesign, Critical Mass to 5, Winter's Chill, Missile Barrage's Arcane Missiles trigger, Dark Inspiration -- all are now expressible |
+| **Winter's Chill** | still needs the OWNER: the notes give **two different versions** of it, and the client will say which |
+| 38 failing tests | measured on the reverted refresh, so the figure is known rather than guessed |
+
+### And two hand-filled values moved, neither of them lost
+
+The importer reported mage 4 -> 3 and shaman 3 -> 2 hand-filled kept, which is
+the shape of CLAUDE.md's rename warning -- "a renamed talent is the one case
+where the importer's MERGE does not protect a hand-filled value". **Both are
+benign and were checked rather than assumed**: `call_of_thunder` was REMOVED, so
+its hand-fill correctly went with it, and `missile_barrage` is **2 ranks now**,
+so the importer derives its values from the per-rank text and no hand-fill is
+needed. Nothing has to be restored.
+
+### A false positive worth recording, because it nearly went in the report
+
+The first pass of the broken-allocation check reported `deflection` as over its
+cap -- 5 points against a cap of 3. It is **not**: the Rogue's Deflection has
+always been 3 ranks and the Warrior's 5, and the check keyed its rank table by
+talent id alone. **Talent ids are unique only WITHIN a class**, which is the
+collision `talentsForClass` exists for and which this file already records about
+`TALENT_AURAS`. Caught by checking the one surprising row rather than by
+re-reading the script.
+
 ## Round seventeen: a patch, and a client two builds behind it
 
 **THE FIRST THING THIS ROUND DID WAS NOT READ THE NOTES.** CLAUDE.md's rule is

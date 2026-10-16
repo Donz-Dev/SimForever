@@ -53,6 +53,36 @@ import type { ClassId } from '../character';
  *
  * AND ONLY WHERE THE NOTE STATES EVERY RANK. "Significantly reduced" is not a
  * number and does not belong here at any confidence.
+ *
+ * ============================================================================
+ * ALL THREE ENTRIES ARE NOW CONFIRMED BY THE CLIENT, AND THIS WHOLE FILE IS
+ * DUE FOR DELETION ON THE NEXT DATA REFRESH.
+ *
+ * Client build **1.60.1.70425** ships every one of them verbatim:
+ *
+ *     warlock/shadow_mastery          2, 4, 6, 8, 10
+ *     paladin/champion_of_the_light   10, 20, 30
+ *     priest/mental_strength          2, 4, 6, 8, 10
+ *
+ * So the risk this layer was written against -- the Dual Wield Specialization
+ * case, where a note and a client tooltip disagreed and the owner ruled for the
+ * CLIENT -- did not materialise on any of the three. A note-derived figure held
+ * on all three, two builds later.
+ *
+ * THE REFRESH DETECTOR IS WHAT SAID SO, AND IT SAID SO BY FAILING.
+ * `patchNoteValues.test.ts`'s "records what the client said, and the client
+ * still says it" is the test that fires when a `--write` moves a generated row,
+ * and running the importer against 70425 failed it on `shadow_mastery` --
+ * naming the talent and printing both rows. That is the designed end of each
+ * entry: deleted, not left to agree quietly on top of the real value.
+ *
+ * WHY THE ENTRIES ARE STILL HERE. The 70425 refresh is a much larger change
+ * than these three rows -- it adds five talents, removes six, reflows three
+ * trees and leaves SIX profile build URLs no longer decoding -- so it is its
+ * own round, and the data on disk is still 1.60.1.70291. Against THAT capture
+ * every entry is still live and still needed, which is why the test passes
+ * here. **Delete this file in the same commit that lands the refresh**, and the
+ * failing detector is the thing that will remind you.
  * ============================================================================
  */
 
