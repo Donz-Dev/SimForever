@@ -116,6 +116,39 @@ describe('Vanguard is what lets a tank Charge', () => {
     expect(talentBuild('warrior', {}).abilityExtraStances.get('charge')).toBeUndefined();
   });
 
+  /*
+   * ============================================================================
+   * AN EXPLICIT TIMEOUT, AFTER THIS TEST FLAKED FOR THE FOURTH TIME.
+   *
+   * It runs TWO Monte Carlo batches -- `casts()` is one and the `runProfileBatch`
+   * below is another -- which makes it the heaviest of the four batch tests in
+   * this file, and under full-suite CPU contention it crosses vitest's 5,000ms
+   * default. The fourth failure was measured at **5,224ms**, and the suite
+   * passes on a captured re-run with nothing changed.
+   *
+   * THIS SETTLES A CLAIM CLAUDE.md HAS CARRIED THROUGH THREE INSTANCES.
+   * "A SYNCHRONOUS TEST CANNOT TIME OUT -- the body blocks the event loop, so
+   * vitest's timer never fires" was the reasoning that explained away the first
+   * failure, and the file still has **zero async bodies and zero awaits**. The
+   * reasoning is simply wrong: a synchronous body that overruns is reported as a
+   * timeout, and 5,224ms against a 5,000ms limit is the measurement that says so
+   * rather than another argument about it.
+   *
+   * SO THE FIX IS A LIMIT AND NOT A DIAGNOSIS. This test measures BEHAVIOUR --
+   * that the Protection build Charges once with Vanguard and not at all without
+   * it -- and nothing about it is a claim about speed, so a generous limit costs
+   * the suite nothing and removes a failure that has misdirected three separate
+   * investigations: into non-determinism, into a shared checkout, and into the
+   * commit that first added 449 items.
+   *
+   * THE OTHER THREE BATCH TESTS HERE ARE LEFT ALONE, deliberately: none has ever
+   * failed, each runs ONE batch, and widening all four would hide the next one
+   * that genuinely gets slower. `vite.config.ts` sets no `testTimeout`, so the
+   * default still governs everything else.
+   * ============================================================================
+   */
+  const TWO_BATCHES_MS = 30_000;
+
   it('lets the Prot preset Charge once, and stops it without the talent', () => {
     expect(casts('prot_warr', 'Charge')).toBe(1);
 
@@ -129,7 +162,7 @@ describe('Vanguard is what lets a tank Charge', () => {
       simulation: { ...built.simulation, iterations: 200, seed: 4242 },
     } as never);
     expect(batch.abilities.find((a) => a.abilityName === 'Charge')?.uses ?? 0).toBe(0);
-  });
+  }, TWO_BATCHES_MS);
 
   it('NEVER drags the tank out of Defensive Stance to reach it', () => {
     /*

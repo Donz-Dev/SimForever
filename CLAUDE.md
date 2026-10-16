@@ -4912,6 +4912,23 @@ shape should fail loudly, not render a tree with a broken arrow.
   the ratio in question was bit-identical across processes, six full-suite runs
   passed, and the code at the recorded commit was byte-identical to the code that
   passed. **Check the tree before the engine.**
+- **THE "SYNCHRONOUS TEST CANNOT TIME OUT" CLAIM IS SETTLED, AND IT IS WRONG.
+  FOURTH INSTANCE, WITH A MEASURED DURATION.**
+  `chargeAndShieldTalents.test.ts`'s "lets the Prot preset Charge once" failed
+  under the full suite at **5,224ms against the 5,000ms default**, and the file
+  still has **zero async bodies and zero awaits**. A synchronous body that
+  overruns IS reported as a timeout; the reasoning below -- that the body blocks
+  the event loop so vitest's timer never fires -- explained away the first
+  instance and misdirected three investigations after it, into non-determinism,
+  into the shared checkout, and into the commit that first added 449 items.
+  **THE FIX IS A LIMIT, NOT A DIAGNOSIS.** That test runs TWO Monte Carlo
+  batches where its three siblings run one, so it carries an explicit
+  `30_000` now and the others are left on the default -- widening all four
+  would hide the next one that genuinely gets slower. `vite.config.ts` still
+  sets no `testTimeout`.
+  **AND THE ARTIFACT RULE IS WHAT PRODUCED THE NUMBER.** The duration was the
+  whole diagnosis, and it survived only because the run was captured. A
+  re-run passes and destroys it, which is what happened the first three times.
 - **A SYNCHRONOUS TEST CANNOT TIME OUT.** The body blocks the event loop, so
   vitest's timer never fires — `bloodCraze.test.ts` has a test that takes 5491ms
   and passes against a 5000ms default. So a slow test is not a flaky one, and a

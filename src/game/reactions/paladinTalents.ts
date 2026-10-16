@@ -188,10 +188,11 @@ export const reckoning: TalentReactionBuilder = (blockChancePercent) => {
    * THIS IS SAFE BECAUSE A TALENT REACTION IS BUILT PER CHARACTER. `talentBuild`
    * calls this builder from inside `createPlayer`, which the simulation calls
    * once per iteration, and nothing memoises it -- so each character gets its
-   * own `lastProcAt`. A closure at MODULE level here would share one cooldown
-   * across every Paladin in a batch and the talent would appear to work.
+   * own `lastBlockProcAt`. A closure at MODULE level here would share one
+   * cooldown across every Paladin in a batch and the talent would appear to
+   * work.
    */
-  let lastProcAt: number | null = null;
+  let lastBlockProcAt: number | null = null;
 
   return {
     id: 'reckoning',
@@ -201,14 +202,37 @@ export const reckoning: TalentReactionBuilder = (blockChancePercent) => {
       if (attack.amount <= 0) return false;
 
       /*
-       * THE COOLDOWN IS CHECKED BEFORE THE ROLL, which is the ordering that
-       * matters: rolling first and discarding the result would consume a random
-       * number on an attack that could not proc, and every seeded figure in the
-       * project would shift. The same reason `critFrom` being absent consumes no
-       * number at all.
+       * ======================================================================
+       * THE COOLDOWN IS ON BLOCKS ONLY, WHICH IS THE CLIENT'S OWN WORDING AND
+       * NOT THE PATCH NOTE'S.
+       *
+       * Client build 1.60.1.70425 reads "Cannot occur from BLOCKS more than
+       * once every 1.5 sec", where the 1.60.1.70170 note that introduced the
+       * window said only "a 1.5 second internal cooldown on how often it can be
+       * triggered" -- which reads as covering both clauses and is how this was
+       * built. The client is specific and later, and `foreverchanges.pro` has
+       * not been re-read for the Paladin.
+       *
+       * IT MATTERS ON THE ONE BUILD THAT TAKES THE TALENT. The crit-taken
+       * chance is 100% at 5/5, so gating it on the block window was throwing
+       * away charges the ruleset grants -- and since the patch made Reckoning
+       * BANK charges rather than swing immediately, what that suppressed is how
+       * fast the bank fills rather than a single extra attack.
+       *
+       * THE ORDERING IS UNCHANGED AND STILL LOAD-BEARING: the cooldown is
+       * checked before the roll, because rolling first and discarding the
+       * result would consume a random number on an attack that could not proc
+       * and shift every seeded figure in the project.
+       * ======================================================================
        */
       const now = context.clock.now();
-      if (lastProcAt !== null && now - lastProcAt < RECKONING_ICD_MS) return false;
+      if (
+        attack.outcome === 'block' &&
+        lastBlockProcAt !== null &&
+        now - lastBlockProcAt < RECKONING_ICD_MS
+      ) {
+        return false;
+      }
 
       /*
        * THE TALENT'S FIRST VALUE IS THE BLOCK CHANCE AND ITS SECOND IS THE CRIT
@@ -220,8 +244,15 @@ export const reckoning: TalentReactionBuilder = (blockChancePercent) => {
       const chance = attack.outcome === 'block' ? blockChancePercent : RECKONING_CRIT_CHANCE;
       return context.rng.rollChance(chance / 100);
     },
-    onTrigger: (context, actor) => {
-      lastProcAt = context.clock.now();
+    onTrigger: (context, actor, attack) => {
+      /*
+       * ONLY A BLOCK STARTS THE WINDOW, which is the other half of the clause
+       * above: "cannot occur from Blocks more than once every 1.5 sec" says
+       * nothing about a crit taken, so a crit must neither be refused by the
+       * window nor open one. Recording every proc here would let a crit
+       * suppress the next block, which is the same mistake pointing sideways.
+       */
+      if (attack.outcome === 'block') lastBlockProcAt = context.clock.now();
       /*
        * A CHARGE, NOT A SWING. `applyAura` increments a `maxStacks` aura up to
        * its cap and silently does nothing at the cap, which is exactly "you may

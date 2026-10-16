@@ -277,14 +277,26 @@ describe("Reckoning's internal cooldown", () => {
     expect(HAND_OF_JUSTICE_ICD_MS).toBe(1500);
   });
 
-  it('refuses a second trigger inside the window and allows one after it', () => {
+  it('refuses a second BLOCK inside the window and allows one after it', () => {
     /*
-     * DRIVEN AT 100% CHANCE so the roll cannot mask the cooldown. A crit taken is
-     * 100% at 5/5, which the Protection build takes -- so every refusal below is
-     * the cooldown and nothing else.
+     * ========================================================================
+     * DRIVEN WITH BLOCKS, AND IT USED TO BE DRIVEN WITH CRITS.
+     *
+     * Client build 1.60.1.70425 reads "Cannot occur from **Blocks** more than
+     * once every 1.5 sec", where the 1.60.1.70170 note that introduced the
+     * window said only "a 1.5 second internal cooldown on how often it can be
+     * triggered" -- which reads as covering both clauses and is how this was
+     * built and how this test drove it.
+     *
+     * THE CHANCE IS 100 SO A REFUSAL IS NEVER A LOST ROLL. `reckoningSetup`
+     * reads the Protection build's own reaction, whose block chance is 40% at
+     * 5/5 -- so the builder is handed 100 here instead, and every refusal below
+     * is the cooldown and nothing else.
+     * ========================================================================
      */
-    const { player, boss, simulation, reaction } = reckoningSetup();
-    const attack = taken(player as never, boss as never, 'crit');
+    const { player, boss, simulation } = reckoningSetup();
+    const reaction = reckoning(100);
+    const attack = taken(player as never, boss as never, 'block');
 
     expect(reaction.canTrigger?.(simulation, player, attack as never)).toBe(true);
     reaction.onTrigger(simulation, player, attack as never);
@@ -294,26 +306,48 @@ describe("Reckoning's internal cooldown", () => {
     simulation.advanceTo(RECKONING_ICD_MS - 1);
     expect(reaction.canTrigger?.(simulation, player, attack as never)).toBe(false);
 
-    // And exactly at it, which is the boundary the owner's "1.5 second" states.
+    // And exactly at it, which is the boundary the client's "1.5 sec" states.
     simulation.advanceTo(RECKONING_ICD_MS);
     expect(reaction.canTrigger?.(simulation, player, attack as never)).toBe(true);
   });
 
-  it('shares the window across BOTH halves, because it is one talent', () => {
+  it('does NOT put the window on a crit taken, which is the clause it names', () => {
     /*
-     * A BLOCK AND A CRIT TAKEN ARE TWO CLAUSES OF ONE TALENT and one reaction, so
-     * a block cannot trigger it while a crit's cooldown is running. Two separate
-     * windows would be two effects, and would let a tank proc twice as often as
-     * the note allows -- a bigger number and no error.
+     * ========================================================================
+     * THIS TEST ASSERTED THE OPPOSITE AND THE CLIENT FALSIFIED IT.
+     *
+     * It read "shares the window across BOTH halves, because it is one talent",
+     * and the argument was that a block and a crit taken are two clauses of one
+     * reaction so two separate windows "would let a tank proc twice as often as
+     * the note allows -- a bigger number and no error". Reasonable, and wrong:
+     * client build 1.60.1.70425 scopes the window to BLOCKS by name, and the
+     * note that introduced it was simply less specific.
+     *
+     * SO BOTH DIRECTIONS ARE DRIVEN HERE. A crit taken is neither REFUSED by a
+     * block's window nor allowed to OPEN one -- the second is the half a
+     * narrowing gets wrong, because recording every proc would let a crit
+     * suppress the next block and read as the old behaviour.
+     *
+     * IT MATTERS ON THE ONE BUILD THAT TAKES THE TALENT: the crit-taken chance
+     * is 100% at 5/5, and since the patch made Reckoning BANK charges rather
+     * than swing, what the wrong scope suppressed was how fast the bank fills.
+     * ========================================================================
      */
-    const { player, boss, simulation, reaction } = reckoningSetup();
-
+    const { player, boss, simulation } = reckoningSetup();
+    const reaction = reckoning(100);
     const crit = taken(player as never, boss as never, 'crit');
-    expect(reaction.canTrigger?.(simulation, player, crit as never)).toBe(true);
-    reaction.onTrigger(simulation, player, crit as never);
-
     const block = taken(player as never, boss as never, 'block');
+
+    // A block opens the window, and a crit is NOT refused by it.
+    expect(reaction.canTrigger?.(simulation, player, block as never)).toBe(true);
+    reaction.onTrigger(simulation, player, block as never);
     expect(reaction.canTrigger?.(simulation, player, block as never)).toBe(false);
+    expect(reaction.canTrigger?.(simulation, player, crit as never)).toBe(true);
+
+    // And a crit does not OPEN one either, so the next block is still free.
+    const fresh = reckoning(100);
+    fresh.onTrigger(simulation, player, crit as never);
+    expect(fresh.canTrigger?.(simulation, player, block as never)).toBe(true);
   });
 
   it('is PER CHARACTER, which is what a shared closure would silently break', () => {
@@ -325,7 +359,7 @@ describe("Reckoning's internal cooldown", () => {
      *
      * IT IS SAFE HERE BECAUSE `talentBuild` RUNS INSIDE `createPlayer`, which the
      * simulation calls once per iteration through `createCombatants` -- so each
-     * character gets its own `lastProcAt`. That is checked rather than assumed,
+     * character gets its own `lastBlockProcAt`. That is checked rather than assumed,
      * because the comment on Shield Specialization next door says its own
      * cooldown is an aura "so that a batch reusing one TalentBuild cannot share
      * one timer across characters" -- a worry about something this does not do,
@@ -339,16 +373,24 @@ describe("Reckoning's internal cooldown", () => {
     expect(first.reaction).not.toBe(second.reaction);
     expect(first.reaction.canTrigger).not.toBe(second.reaction.canTrigger);
 
-    // And putting one on cooldown leaves the other ready.
-    const attack = taken(first.player as never, first.boss as never, 'crit');
-    first.reaction.onTrigger(first.simulation, first.player, attack as never);
-    expect(first.reaction.canTrigger?.(first.simulation, first.player, attack as never)).toBe(
+    /*
+     * ON BLOCKS, because the window is scoped to blocks by the client -- a crit
+     * neither opens it nor is refused by it, so driving this with crits would
+     * assert nothing about a shared closure at all.
+     */
+    const attack = taken(first.player as never, first.boss as never, 'block');
+    const firstBlocker = reckoning(100);
+    const secondBlocker = reckoning(100);
+    expect(firstBlocker).not.toBe(secondBlocker);
+
+    firstBlocker.onTrigger(first.simulation, first.player, attack as never);
+    expect(firstBlocker.canTrigger?.(first.simulation, first.player, attack as never)).toBe(
       false,
     );
 
-    const other = taken(second.player as never, second.boss as never, 'crit');
+    const other = taken(second.player as never, second.boss as never, 'block');
     expect(
-      second.reaction.canTrigger?.(second.simulation, second.player, other as never),
+      secondBlocker.canTrigger?.(second.simulation, second.player, other as never),
     ).toBe(true);
   });
 
@@ -410,9 +452,15 @@ describe("Reckoning's internal cooldown", () => {
      *
      * MEASURED BY WATCHING THE RNG rather than by reading the function: two
      * refusals inside the window must draw nothing at all.
+     *
+     * ON BLOCKS, because the client scopes the window to blocks -- a crit is
+     * never refused, so driving this with crits would count the draws of an
+     * attack that always passes and assert nothing about the ordering. The
+     * chance is 100 so a `true` is never luck.
      */
-    const { player, boss, simulation, reaction } = reckoningSetup();
-    const attack = taken(player as never, boss as never, 'crit');
+    const { player, boss, simulation } = reckoningSetup();
+    const reaction = reckoning(100);
+    const attack = taken(player as never, boss as never, 'block');
     reaction.onTrigger(simulation, player, attack as never);
 
     let draws = 0;

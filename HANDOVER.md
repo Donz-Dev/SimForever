@@ -126,6 +126,72 @@ So the risk the layer was written against -- the Dual Wield Specialization case,
 where a note and a client tooltip disagreed and the owner ruled for the CLIENT --
 did not materialise on any of the three.
 
+### EVERY FIGURE ROUND SEVENTEEN DERIVED IS CONFIRMED BY 70425
+
+**THIS IS THE PART WORTH THE MOST**, because round seventeen implemented
+forty-odd notes against a client that carried none of them. 70425 carries them,
+and it agrees with every figure that was derived rather than transcribed:
+
+| | derived in 17 | the client now says |
+| --- | --- | --- |
+| Arcane Blast damage | `midpoint(364, 424) x 0.6` = **236.4** | 218-254, midpoint **236** |
+| Arcane Blast cast | 1.5 sec | **1.5 sec cast** |
+| Arcane Blast ramp | 15% of Intellect, 175% cost, 4 stacks, 15 sec | all four, verbatim |
+| Chain Lightning mana | `round(485 x 0.65)` = **315** | **315 Mana** |
+| Shadow Word: Death | 18 sec, over a note whose "(was 12)" matched nothing | **18 sec cooldown** |
+| Devouring Plague | 24 sec | **24 sec cooldown** |
+| Vampiric Embrace | 30 sec | **30 sec cooldown** |
+| Stormstrike | 8% of base mana | **8% of base mana** |
+| Shield Specialization | 4% mana, 3 sec | **4%, 3 sec** |
+| Ice Lance frozen | multiplier 3 | "**200% increased damage** to Frozen targets" |
+| Improved Mind Flay | compounding per instance | "each instance ... more damage than its **previous** instance" |
+| Resourcefulness | melee and ranged ABILITY crits | "your melee and ranged **ability** Critical Strikes" |
+| Leader of the Pack | melee and ranged crit only | "**melee and ranged** Critical Strike chance" |
+| Moonkin Aura | SPELL crit only | "**spell** Critical Strike chance" |
+| Reckoning | stores up to 4 charges | "**Stores up to 4** extra attacks" |
+
+**THE TWO ARITHMETIC DERIVATIONS ARE THE ONES TO NOTICE.** Arcane Blast's
+`-40%` was read as being the same change as its cast time, because
+`2.5 / 3.5 x 0.6 = 1.5 / 3.5` exactly -- and the client's own midpoint is 236
+against the 236.4 that produced. Chain Lightning's "approximately 35%" was
+rounded to 315 on the grounds that a stated OPERATION on a known operand is
+sourced even when the result is not quoted; the client says 315.
+
+**AND THE ONE FLAGGED MISMATCH IS SETTLED IN FAVOUR OF THE PRESCRIPTION.** The
+Shadow Word: Death note read "(was 12 seconds)" where both the capture and this
+repository said 15, and 18 was applied anyway because "increased to 18" is a
+prescription and the parenthetical is history. 70425 says 18.
+
+### Three things 70425 ANSWERS that round seventeen had to flag
+
+| | |
+| --- | --- |
+| **Winter's Chill** | the notes gave **two different versions**. The client shipped the FIRST: 20/40/60/80/100% chance, **+40% Cone of Cold damage per stack, 5 stacks**. The 5%-and-7%-spell-damage version did not ship. (The client tooltip does not carry the note's "consumed by next Cone of Cold" clause.) |
+| **Fire Nova's two missing figures** | "significantly reduced" is now **375 mana** (was 520) and **232-258 damage** (was 413-459, so a midpoint of 245 against 436). Round seventeen correctly applied only the coefficient and recorded that this left the ability pointing the wrong way; both numbers now exist |
+| **Arcane Wrath's real damage** | the TALENT tooltip says 122-146 and the SPELL at max rank says **406-496**, which is the rank-1 trap this project has been caught by twice. 395 mana, 3.5 sec cast, 6 sec cooldown, and "+5% of maximum Mana as Spell Damage" |
+
+### And two CORRECTIONS 70425 forces on round seventeen
+
+**RECKONING'S INTERNAL COOLDOWN IS BLOCKS ONLY.** The client reads "Cannot occur
+from **Blocks** more than once every 1.5 sec", and round seventeen -- following
+the previous patch's broader wording, "a 1.5 second internal cooldown on how
+often it can be triggered" -- applies it to the crit-taken path as well. The
+crit path is 100% at 5/5 on the one build that takes it, so this is a real
+difference in how fast charges bank. **One `canTrigger` clause**, and it is
+round eighteen's smallest and most certain item.
+
+**MOONKIN FORM'S TALENT AND SPELL TOOLTIPS DISAGREE WITH EACH OTHER AT THE SAME
+BUILD.** The SPELL says "spell Critical Strike chance", which confirms the
+split; the TALENT still says plain "critical strike chance ... exclusive with
+Leader of the Pack". Two reads of one client build, which this project has seen
+before on Life Tap -- and here the spell tooltip is the one describing the aura's
+effect, so the split stands.
+
+**THE EXCLUSIVITY ROUND SEVENTEEN LEFT ALONE IS CORROBORATED BY THAT SAME LINE.**
+It was left as a QUESTION on the reasoning that removing it is a raid
+composition decision; the client still calls the two exclusive, so the
+conservative choice was also the right one.
+
 ### Every tree change the notes described, confirmed
 
 | | |
