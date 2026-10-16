@@ -55,6 +55,40 @@ const shareOfBase = (fraction: number) => Math.round(PRIEST_BASE_MANA * fraction
 /** The talent key Improved Shadow Word: Pain hands to the ability. */
 export const SWP_EXTRA_SECONDS_BONUS = 'extraDurationSeconds';
 
+/**
+ * Improved Mind Flay's per-instance escalation, in percentage points.
+ *
+ * ============================================================================
+ * THE TALENT STOPPED BEING A FLAT MULTIPLIER AND BECAME A COMPOUNDING ONE.
+ *
+ * "Improved Mind Flay changes to: Each instance of damage of Mind Flay deals
+ * 10/20% more damage than its previous instance of damage."
+ *
+ * It was "your Mind Flay now deals {0}% more damage", which is an
+ * `abilityDamage` modifier on the combatant -- every tick raised by the same
+ * figure, and the ability itself knowing nothing about it. "More than its
+ * PREVIOUS instance" cannot be said that way: the multiplier differs per tick,
+ * and the only thing that knows which tick is running is the ability's own
+ * `onCast`. So the number is handed over as a BONUS and the escalation is
+ * computed where the tick index lives.
+ *
+ * AND IT IS NEARLY WORTH THE SAME THING, WHICH IS WHY IT NEEDS SAYING. Over
+ * Mind Flay's three ticks at 2/2 the multipliers are 1, 1.20 and 1.44, a mean
+ * of 1.2133 against the flat 1.20 it replaced -- about +1.1% on the ability.
+ * Mind Flay is roughly half the Shadow profile's damage, so expect well under
+ * a percent on the row. A redesign that reads as a buff and measures as noise
+ * is the shape somebody later "fixes", and this one is the ruleset.
+ *
+ * THE EXPONENT IS THE TICK INDEX AND NOT THE TICK COUNT.
+ * `Combatant.recordChannelTick` runs BEFORE `runCast`, so the first tick sees
+ * `channelTicksDelivered === 1` -- the escalation is `(1 + p)^(delivered - 1)`
+ * and the first instance is unmultiplied, which is what "more than its
+ * previous instance" requires. Using the count directly would raise every tick
+ * including the first, which is a bigger number and no error.
+ * ============================================================================
+ */
+export const MIND_FLAY_ESCALATION_BONUS = 'mindFlayEscalationPercent';
+
 // ---------------------------------------------------------------------------
 
 export const MIND_BLAST_CAST_MS = seconds(1.5);
@@ -150,14 +184,29 @@ export const MIND_FLAY: Ability = {
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
+    /*
+     * IMPROVED MIND FLAY COMPOUNDS ACROSS THE CHANNEL'S OWN TICKS.
+     *
+     * `channelTicksDelivered` is incremented by `recordChannelTick` before
+     * `runCast`, so it reads 1 on the first instance and the exponent is one
+     * less -- the first tick is unmultiplied and each one after it is the
+     * previous times `1 + p`. See `MIND_FLAY_ESCALATION_BONUS`.
+     *
+     * ZERO WITHOUT THE TALENT, so `Math.pow(1, n)` is 1 and the ability is
+     * untouched -- which is what lets this live on the ability rather than
+     * behind a talent check it could get wrong.
+     */
+    const escalation = ability.bonuses?.[MIND_FLAY_ESCALATION_BONUS] ?? 0;
+    const instance = Math.max(0, caster.channelTicksDelivered - 1);
+    const multiplier = (1 + escalation / 100) ** instance;
     dealDamage(simulation, {
       source: caster,
       target,
       abilityId: ability.id,
       abilityName: ability.name,
       school: 'shadow',
-      baseAmount: MIND_FLAY_TOTAL / MIND_FLAY_TICKS,
-      powerCoefficient: MIND_FLAY_TICK_COEFFICIENT,
+      baseAmount: (MIND_FLAY_TOTAL / MIND_FLAY_TICKS) * multiplier,
+      powerCoefficient: MIND_FLAY_TICK_COEFFICIENT * multiplier,
       attackTable: ability.attackTable,
     });
   },
@@ -176,11 +225,22 @@ export const MIND_FLAY: Ability = {
  * Recorded rather than left silent: a patch note with no diff beside it reads
  * as something that was missed.
  */
+/**
+ * "Devouring Plague cooldown reduced to 24 seconds (was 1 minute)."
+ *
+ * THE NOTE AND THE CLIENT AGREE ON WHAT IT WAS -- the capture at build
+ * 1.60.1.70291 reads "1 min cooldown" -- so this is a clean prescription and
+ * the note is simply later. Named rather than left as `seconds(24)` inline
+ * because the DoT's own duration sits next to it and the two are now close
+ * enough that a reader will want to know which is which.
+ */
+export const DEVOURING_PLAGUE_COOLDOWN_MS = seconds(24);
+
 export const DEVOURING_PLAGUE_ABILITY: Ability = {
   id: 'devouring_plague',
   name: 'Devouring Plague',
   cost: { resource: 'mana', amount: 985 },
-  cooldownMs: seconds(60),
+  cooldownMs: DEVOURING_PLAGUE_COOLDOWN_MS,
   onCast: ({ simulation, caster, target }) => {
     if (!target) return;
     simulation.applyAura(target, DEVOURING_PLAGUE, caster.id);
@@ -215,11 +275,40 @@ export const SHADOW_WORD_DEATH_DAMAGE = midpoint(434, 462);
 export const SHADOW_WORD_DEATH_BACKLASH_FRACTION = 0.1;
 export const SHADOW_WORD_DEATH_COEFFICIENT = SHADOW_WORD_DEATH_SP_COEFFICIENT;
 
+/**
+ * "Shadow Word: Death cooldown increased to 18 seconds (was 12 seconds)."
+ *
+ * ============================================================================
+ * THE NOTE'S PARENTHETICAL DISAGREES WITH BOTH SOURCES, AND THAT IS RECORDED
+ * RATHER THAN RECONCILED.
+ *
+ * The note says it WAS 12 seconds. The spellbook capture at build
+ * 1.60.1.70291 reads "15 sec cooldown" for rank 4, and this file has carried
+ * 15 from that capture; `foreverchanges.pro` has not been re-read for the
+ * Priest. So nothing in the project has ever said 12.
+ *
+ * EIGHTEEN IS APPLIED ANYWAY, because the two halves of that sentence are
+ * different kinds of claim: "increased to 18 seconds" is a PRESCRIPTION and
+ * "(was 12 seconds)" is the note's own record of history. A prescription with
+ * a stated number is exactly what this project takes from a note -- the same
+ * reading that gives Swipe 3% against a sheet saying 10% -- and a wrong
+ * parenthetical does not make the target value wrong.
+ *
+ * IT IS STILL WORTH ASKING. The other two Priest cooldowns in this patch both
+ * match their "(was ...)" exactly, so this one is the odd row of three, and
+ * this project's own rule is that two of three reproducing and the third
+ * moving is the shape of a bug. The honest possibilities are that the note was
+ * written against a build between captures, or that rank 4 is not the rank the
+ * note means. A QUESTION FOR THE OWNER, flagged here rather than smoothed over.
+ * ============================================================================
+ */
+export const SHADOW_WORD_DEATH_COOLDOWN_MS = seconds(18);
+
 export const SHADOW_WORD_DEATH: Ability = {
   id: 'shadow_word_death',
   name: 'Shadow Word: Death',
   cost: { resource: 'mana', amount: 340 },
-  cooldownMs: seconds(15),
+  cooldownMs: SHADOW_WORD_DEATH_COOLDOWN_MS,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -246,11 +335,24 @@ export const SHADOW_WORD_DEATH: Ability = {
     'health is really gone; only its accounting is missing.',
 };
 
+/**
+ * "Vampiric Embrace cooldown reduced to 30 seconds (was 1 minute)."
+ *
+ * The note and the capture agree on what it was. WORTH NOTHING TO THE ONE
+ * PRIEST PROFILE EITHER WAY, which is why the figure is named and the
+ * expectation written down rather than measured: the ability's whole effect is
+ * a party HEAL from Shadow damage dealt, which is out of scope -- see
+ * `VAMPIRIC_EMBRACE_UNMODELLED`. Halving the cooldown of an aura that heals
+ * nobody changes no number at all, and that is the correct outcome rather than
+ * a failure to apply.
+ */
+export const VAMPIRIC_EMBRACE_COOLDOWN_MS = seconds(30);
+
 export const VAMPIRIC_EMBRACE_ABILITY: Ability = {
   id: 'vampiric_embrace',
   name: 'Vampiric Embrace',
   cost: { resource: 'mana', amount: 40 },
-  cooldownMs: seconds(60),
+  cooldownMs: VAMPIRIC_EMBRACE_COOLDOWN_MS,
   onCast: ({ simulation, caster, target }) => {
     if (!target) return;
     simulation.applyAura(target, VAMPIRIC_EMBRACE, caster.id);

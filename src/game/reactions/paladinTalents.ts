@@ -3,6 +3,7 @@ import { dealDamage } from '../../engine';
 import type { TalentReactionBuilder } from './warriorTalents';
 import {
   HOLY_SHIELD_DAMAGE,
+  RECKONING_CHARGES,
   SHIELD_SPECIALIZATION_USED,
   VINDICATION_CHANCE,
   redoubtAura,
@@ -165,9 +166,12 @@ export const RECKONING_ICD_MS = 1500;
  * after a block, 100% after a non-periodic critical strike. Rolling one chance
  * for both would be wrong in whichever direction the shared number was.
  *
- * AN EXTRA ATTACK, the same machinery Hand of Justice and Windfury use, with
- * the same invariant: `scheduleSwing` keeps at most one pending swing per
- * slot, so this cannot fork the chain.
+ * IT NO LONGER SWINGS, IT BANKS A CHARGE -- which is the patch's change and
+ * splits this talent into TWO reactions. "You gain a charge of Reckoning each
+ * time it triggers. Your next melee swing (auto attack) will trigger all
+ * accumulated charges for 1 extra attack each. You may have a maximum of 4
+ * charges ... so that it does not cause the auto attack timer to be reset by
+ * instant attacks." See `RECKONING_CHARGES` and `reckoningRelease`.
  *
  * "NON-PERIODIC" IS FREE. `dealDamage` never offers a periodic tick to a
  * reaction at all, so the qualifier is already enforced one layer down.
@@ -184,10 +188,11 @@ export const reckoning: TalentReactionBuilder = (blockChancePercent) => {
    * THIS IS SAFE BECAUSE A TALENT REACTION IS BUILT PER CHARACTER. `talentBuild`
    * calls this builder from inside `createPlayer`, which the simulation calls
    * once per iteration, and nothing memoises it -- so each character gets its
-   * own `lastProcAt`. A closure at MODULE level here would share one cooldown
-   * across every Paladin in a batch and the talent would appear to work.
+   * own `lastBlockProcAt`. A closure at MODULE level here would share one
+   * cooldown across every Paladin in a batch and the talent would appear to
+   * work.
    */
-  let lastProcAt: number | null = null;
+  let lastBlockProcAt: number | null = null;
 
   return {
     id: 'reckoning',
@@ -197,14 +202,37 @@ export const reckoning: TalentReactionBuilder = (blockChancePercent) => {
       if (attack.amount <= 0) return false;
 
       /*
-       * THE COOLDOWN IS CHECKED BEFORE THE ROLL, which is the ordering that
-       * matters: rolling first and discarding the result would consume a random
-       * number on an attack that could not proc, and every seeded figure in the
-       * project would shift. The same reason `critFrom` being absent consumes no
-       * number at all.
+       * ======================================================================
+       * THE COOLDOWN IS ON BLOCKS ONLY, WHICH IS THE CLIENT'S OWN WORDING AND
+       * NOT THE PATCH NOTE'S.
+       *
+       * Client build 1.60.1.70425 reads "Cannot occur from BLOCKS more than
+       * once every 1.5 sec", where the 1.60.1.70170 note that introduced the
+       * window said only "a 1.5 second internal cooldown on how often it can be
+       * triggered" -- which reads as covering both clauses and is how this was
+       * built. The client is specific and later, and `foreverchanges.pro` has
+       * not been re-read for the Paladin.
+       *
+       * IT MATTERS ON THE ONE BUILD THAT TAKES THE TALENT. The crit-taken
+       * chance is 100% at 5/5, so gating it on the block window was throwing
+       * away charges the ruleset grants -- and since the patch made Reckoning
+       * BANK charges rather than swing immediately, what that suppressed is how
+       * fast the bank fills rather than a single extra attack.
+       *
+       * THE ORDERING IS UNCHANGED AND STILL LOAD-BEARING: the cooldown is
+       * checked before the roll, because rolling first and discarding the
+       * result would consume a random number on an attack that could not proc
+       * and shift every seeded figure in the project.
+       * ======================================================================
        */
       const now = context.clock.now();
-      if (lastProcAt !== null && now - lastProcAt < RECKONING_ICD_MS) return false;
+      if (
+        attack.outcome === 'block' &&
+        lastBlockProcAt !== null &&
+        now - lastBlockProcAt < RECKONING_ICD_MS
+      ) {
+        return false;
+      }
 
       /*
        * THE TALENT'S FIRST VALUE IS THE BLOCK CHANCE AND ITS SECOND IS THE CRIT
@@ -216,12 +244,98 @@ export const reckoning: TalentReactionBuilder = (blockChancePercent) => {
       const chance = attack.outcome === 'block' ? blockChancePercent : RECKONING_CRIT_CHANCE;
       return context.rng.rollChance(chance / 100);
     },
-    onTrigger: (context, actor) => {
-      lastProcAt = context.clock.now();
-      context.extraAttack(actor, 'mainHand');
+    onTrigger: (context, actor, attack) => {
+      /*
+       * ONLY A BLOCK STARTS THE WINDOW, which is the other half of the clause
+       * above: "cannot occur from Blocks more than once every 1.5 sec" says
+       * nothing about a crit taken, so a crit must neither be refused by the
+       * window nor open one. Recording every proc here would let a crit
+       * suppress the next block, which is the same mistake pointing sideways.
+       */
+      if (attack.outcome === 'block') lastBlockProcAt = context.clock.now();
+      /*
+       * A CHARGE, NOT A SWING. `applyAura` increments a `maxStacks` aura up to
+       * its cap and silently does nothing at the cap, which is exactly "you may
+       * have a maximum of 4 charges" with no comparison written here.
+       */
+      context.applyAura(actor, RECKONING_CHARGES, actor.id);
     },
   };
 };
+
+/**
+ * Reckoning's other half: the swing that spends every stored charge.
+ *
+ * ============================================================================
+ * TWO REACTIONS FOR ONE TALENT, because the patch separated the trigger from
+ * the payout -- the same shape Primal Fury already has, and for the same
+ * reason: one reaction cannot fire on two different events.
+ *
+ * ON A MELEE AUTO-ATTACK AND NOTHING ELSE, which is the note's own
+ * parenthetical -- "your next melee swing (auto attack)". So this reads
+ * `attackTable === 'melee-auto'` rather than `isWeaponUse`: a Paladin's
+ * Crusader Strike is a weapon use on `melee-special` and must NOT release the
+ * charges, which is the whole point of the redesign. An instant attack
+ * releasing them would reset the swing timer, which is the behaviour the note
+ * exists to prevent.
+ *
+ * THE AURA IS REMOVED IN THE SAME SYNCHRONOUS BLOCK, AND THAT IS WHAT STOPS A
+ * RUNAWAY -- NOT ITS POSITION WITHIN IT.
+ *
+ * `extraAttack` schedules a real `melee-auto` swing, so every extra attack runs
+ * this reaction again. What keeps that finite is that the removal happens
+ * before any of those SCHEDULED events resolves: `onTrigger` returns first, and
+ * by then the charges are gone whichever order the two statements are in.
+ *
+ * THE FIRST VERSION OF THIS COMMENT CLAIMED THE ORDER WAS LOAD-BEARING and said
+ * so in capitals. It was PROBED by swapping the two statements, and the whole
+ * suite passed -- which is this project's own rule that a prediction in a
+ * comment is a measurement that has not happened. The removal is kept first as
+ * defensive clarity and nothing rests on it.
+ *
+ * WHAT WOULD ACTUALLY RUN AWAY is removing the aura from somewhere that runs
+ * LATER than the scheduled swings -- a spender keyed to the next decision, say,
+ * or `consumedBySwing`, which spends one charge per swing and would be spent BY
+ * the extra attacks it had just granted.
+ *
+ * ONE `extraAttack` PER CHARGE, which is "1 extra attack each". They are all
+ * scheduled at the current timestamp -- so a release puts its blows in the same
+ * millisecond as the swing that triggered them, which is the one thing a swing
+ * timer can never do and is how the mechanism is measured. Each ends by calling
+ * `scheduleSwing`, which cancels whatever the slot was waiting on, so four
+ * extra attacks resolve four blows and leave ONE pending swing, not four.
+ *
+ * MAIN HAND, because a Paladin holding a shield has no other swinging slot and
+ * the note says "your next melee swing" in the singular.
+ * ============================================================================
+ */
+export const reckoningRelease: TalentReactionBuilder = () => ({
+  id: 'reckoning_release',
+  on: 'dealt',
+  /*
+   * EVERY LANDED OUTCOME, including a glance -- a glancing blow is still the
+   * swing the note names, and `melee-auto` is the only table that glances.
+   * An avoided swing deals nothing and is not a swing that landed.
+   */
+  outcomes: ['hit', 'crit', 'glance', 'crush'],
+  canTrigger: (_context, actor, attack) =>
+    attack.attackTable === 'melee-auto' && actor.auras.has(RECKONING_CHARGES.id),
+  onTrigger: (context, actor) => {
+    const charges = actor.auras.get(RECKONING_CHARGES.id)?.stacks ?? 0;
+    if (charges <= 0) return;
+    /*
+     * REMOVED HERE, SYNCHRONOUSLY, which is what keeps the recursion finite --
+     * each extra attack is a `melee-auto` swing that runs this reaction again,
+     * and the charges have to be gone before any of those SCHEDULED swings
+     * resolves. Being the first statement rather than the last is clarity only:
+     * swapping the two was probed and changed nothing.
+     */
+    actor.auras.remove(context, RECKONING_CHARGES.id);
+    for (let i = 0; i < charges; i += 1) {
+      context.extraAttack(actor, 'mainHand');
+    }
+  },
+});
 
 /**
  * Reckoning's crit chance, which the Protection build takes at 5/5.
@@ -300,7 +414,18 @@ export function holyShieldBlockDamage(): Reaction {
  * construction and shows in the log when the window is shut.
  * ----------------------------------------------------------------------------
  */
-export const SHIELD_SPECIALIZATION_MANA_PERCENT = 6;
+/*
+ * FOUR PERCENT, LOWERED FROM SIX BY THE PATCH NOTE, AND THE COOLDOWN DID NOT
+ * MOVE: "Shield Specialization Mana restored to the Paladin lowered to 4% with
+ * a 3 second internal cooldown (was 6% with a 3 second internal cooldown)."
+ *
+ * THE NOTE RESTATES THE COOLDOWN IDENTICALLY, which is worth reading as a
+ * statement rather than as filler: the 3 seconds is index 3 of the talent's own
+ * row and `SHIELD_SPECIALIZATION_COOLDOWN_MS` already carries it, so the note
+ * confirms that half rather than changing it. A reader who assumed the note
+ * moved both would have gone looking for a second edit.
+ */
+export const SHIELD_SPECIALIZATION_MANA_PERCENT = 4;
 
 export const shieldSpecialization: TalentReactionBuilder = (chancePercent) => ({
   id: 'shield_specialization',
@@ -408,6 +533,7 @@ export const PALADIN_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBui
   vengeance,
   redoubt,
   reckoning,
+  reckoning_release: reckoningRelease,
   shield_specialization: shieldSpecialization,
   eye_for_an_eye: eyeForAnEye,
   vindication,

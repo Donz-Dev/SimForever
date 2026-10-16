@@ -71,7 +71,18 @@ export const ELUNES_LIGHT: AuraDefinition = {
 // ---------------------------------------------------------------------------
 
 export const BLOOD_FURY_DURATION_MS = seconds(15);
-export const BLOOD_FURY_COOLDOWN_MS = seconds(120);
+/**
+ * THREE MINUTES, RAISED FROM TWO BY THE RACIAL PATCH.
+ *
+ * "Blood Fury: Cooldown increased to 3 minutes (was 2 minutes)". The client's
+ * tooltip still reads 2 min at build 1.60.1.70291, so the note is the later
+ * statement and wins. The DURATION is untouched at 15 seconds, which is what
+ * makes this a straight reduction in uptime: a 60-second fight now fits one
+ * cast where it already fitted one, so what actually moves is the pull-timing
+ * -- the ability is off the global cooldown and sits second in every list, so
+ * every Orc profile still casts it exactly once.
+ */
+export const BLOOD_FURY_COOLDOWN_MS = seconds(180);
 /** A fraction, because these are `percentAdd` modifiers. */
 export const BLOOD_FURY_POWER = 0.1;
 
@@ -139,82 +150,93 @@ export const BERSERKING: AuraDefinition = {
 // ---------------------------------------------------------------------------
 
 export const EUREKA_COOLDOWN_MS = seconds(120);
-/** "Your next 3 ..." */
-export const EUREKA_CHARGES = 3;
+/**
+ * "Now an 8 second buff with no charges."
+ *
+ * ===========================================================================
+ * THE REDESIGN REPLACED A CHARGE COUNT WITH A CLOCK, AND DELETING THE CHARGES
+ * DELETES MORE CODE THAN IT ADDS.
+ *
+ * It was "your next 3 damaging abilities cost 10% less and deal 10% more", and
+ * the three charges needed a REACTION PAIR to spend them: a `dealt` reaction
+ * marked that a non-periodic damaging ability had landed and a `final` cast
+ * reaction then spent a stack, because "damaging ability" cannot be answered
+ * from an ability's declaration -- Rupture and Serpent Sting both declare an
+ * attack table and deal no direct damage, so `requiresAttackTable` would have
+ * spent a charge on each.
+ *
+ * NONE OF THAT IS NEEDED BY A DURATION. An 8 second window pays whatever lands
+ * inside it and nothing has to decide what counted, so `eurekaReactions` is
+ * gone with the charges -- which is the better direction for this particular
+ * trait, because the hard part was never the effect and always the spending.
+ *
+ * AND THE EFFECT IS UNCHANGED, which the note says in as many words: "Same
+ * effect on damage and ability costs." So both halves keep their 10% and only
+ * the way the buff ENDS has moved.
+ * ===========================================================================
+ */
+export const EUREKA_DURATION_MS = seconds(8);
 /** "... cost 10% less ..." as a fraction of the base cost. */
 export const EUREKA_COST_FRACTION = 0.1;
 /** "... and deal 10% more damage." */
 export const EUREKA_DAMAGE_MULTIPLIER = 1.1;
 
 /**
- * Eureka!: the next three damaging abilities cost a tenth less and hit a tenth
+ * Eureka!: for eight seconds, abilities cost a tenth less and hit a tenth
  * harder.
  *
  * ============================================================================
- * THE TWO HALVES ARE SPENT BY DIFFERENT MACHINERY, AND THAT IS NOT TIDINESS.
+ * A DURATION REPLACED THREE CHARGES, AND THE CHARGES WERE THE WHOLE DIFFICULTY.
  *
- * `consumeCastCharges` runs BEFORE `onCast` -- `casting.ts` spends the charge
- * on the cast that benefits, and at one stack `consumedByCast` REMOVES the
- * aura. So an aura carrying both the cost reduction and the damage bonus with
- * `consumedByCast: 'stack'` would give the THIRD ability its discount and no
- * damage bonus at all, because the aura is gone by the time `dealDamage` looks.
- * That is Holy Shield's bug exactly: an ability quietly worth two thirds of
- * itself, with nothing on the results page to say so.
+ * The old trait was "your next 3 damaging abilities", and spending those three
+ * charges honestly took a REACTION PAIR -- a `dealt` reaction to notice that a
+ * non-periodic damaging ability had landed, and a `final` cast reaction to
+ * spend a stack afterwards. It had to be a pair because "a damaging ability"
+ * cannot be read off an ability's declaration: Rupture and Serpent Sting both
+ * declare an attack table and deal no direct damage, so `requiresAttackTable`
+ * would have thrown a charge away on each, and because `consumeCastCharges`
+ * runs BEFORE `onCast`, so an aura spending its own last stack would have been
+ * gone by the time `dealDamage` looked for the damage half -- Holy Shield's bug
+ * exactly, an ability quietly worth two thirds of itself.
  *
- * So the cast modifier carries NO `consumedByCast`, and the charge is spent by
- * a reaction pair AFTER the damage has landed. `AuraCollection.consumeStack`
- * exists for precisely this and says so: "Fingers of Frost has no cast modifier
- * at all ... and its charges are still spent by casting."
+ * AN 8 SECOND WINDOW PAYS WHATEVER LANDS INSIDE IT and nothing has to decide
+ * what counted, so `eurekaReactions` is deleted along with `consumedByCast`,
+ * `maxStacks` and `chargesOnApply`. That is the rare redesign that removes a
+ * mechanism rather than adding one.
  *
- * WHY A PAIR RATHER THAN ONE CAST REACTION. "Non-periodic DAMAGING abilities"
- * cannot be answered from the ability declaration, and the two counter-examples
- * are in the project already: Rupture and Serpent Sting both declare an attack
- * table -- they roll it to decide whether the bleed lands -- and neither deals
- * a point of direct damage. `requiresAttackTable` would have spent a charge on
- * both. So a DAMAGE reaction observes that a non-periodic damage event happened
- * and marks the cast; a CAST reaction on `cast.final` spends the stack. See
- * `eurekaReactions`.
+ * WHAT THE CHANGE IS ACTUALLY WORTH IS A QUESTION ABOUT CAST RATE, not about
+ * the number 8. Three charges were spent in about three global cooldowns --
+ * roughly 4.5 seconds on a 1.5s GCD, less for a Rogue -- so eight seconds is
+ * MORE for a caster and about the same or less for an ability-starved melee
+ * build that cannot fill the window. Said here because "a buff got longer"
+ * reads as a straight buff and it is not one for every class.
  *
- * ONE CHARGE PER CAST, WHICH IS THE OWNER'S RULING AND IS WHAT `cast.final`
- * BUYS. `runCast` runs once per channel tick, so without it the first of five
- * Arcane Missiles would spend a charge and the last two would fire unbuffed.
- * The cost is paid once per channel, so the charge is too, and every missile
- * gets the bonus.
+ * `nonPeriodicDamageMultiplier` RATHER THAN `abilityModifiers`, unchanged and
+ * still load-bearing: the clause is "periodic effects get nothing from it" and
+ * `abilityModifierFor` is not told whether the damage is a tick, so an
+ * `abilityModifiers: { '*': ... }` entry would raise Ignite, Pyroblast's burn
+ * and every Corruption tick inside the window -- a bigger number and no error.
  *
- * `nonPeriodicDamageMultiplier` RATHER THAN `abilityModifiers`, because the
- * clause is "periodic effects get nothing from it" and `abilityModifierFor` is
- * not told whether the damage is a tick. An `abilityModifiers: { '*': ... }`
- * entry would raise Ignite, Pyroblast's burn and every Corruption tick inside
- * the window -- a bigger number and no error. See the field's own comment.
+ * AND POWER WORD: SHIELD IS NOT HERE. "Now also benefits Power Word: Shield"
+ * is the note's third clause and it is an ABSORB, which is healing throughput
+ * -- out of scope, and declared as such on the trait rather than left silent.
  * ============================================================================
  */
 export const EUREKA: AuraDefinition = {
   id: 'eureka',
   name: 'Eureka!',
-  /*
-   * UNTIL IT IS SPENT. The client states no duration for the buff -- only the
-   * two minute cooldown -- so none is invented. Three charges at ten percent
-   * will be gone within a few global cooldowns on any build that has the
-   * ability at all, which is what makes the absence cheap rather than
-   * generous.
-   */
-  durationMs: 0,
-  maxStacks: EUREKA_CHARGES,
-  chargesOnApply: EUREKA_CHARGES,
+  durationMs: EUREKA_DURATION_MS,
   castModifier: {
     /*
-     * "Damaging abilities" is not a list and never will be, so the catch-all,
-     * narrowed by the one clause that stops a charge being thrown away: an
-     * ability that costs nothing cannot take a discount.
+     * "Ability costs" is not a list and never will be, so the catch-all,
+     * narrowed by the one clause that still matters: an ability that costs
+     * nothing cannot take a discount.
      *
-     * NO `requiresAttackTable` HERE, deliberately. The CAST side only decides
-     * which casts get the discount, and an ability with no table deals no
-     * direct damage, so it has nothing to discount either -- but Rupture and
+     * NO `requiresAttackTable`, for the reason it never had one -- Rupture and
      * Serpent Sting HAVE a table and deal no damage, so the table is the wrong
-     * question on both sides. What keeps the discount honest is that the charge
-     * is not spent here: a cast that turns out not to be damaging keeps its
-     * discount for this once and the stack stays, which is the generous
-     * rounding of an ambiguous clause rather than a free charge.
+     * question. With the charges gone this is no longer even a question about
+     * waste: there is nothing to throw away, so a non-damaging cast taking its
+     * discount inside the window costs the trait nothing.
      */
     abilityIds: [ALL_ABILITIES],
     requiresCost: true,

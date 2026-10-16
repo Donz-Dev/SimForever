@@ -10,7 +10,9 @@ import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import {
   ARCANE_BLAST_BASE_MANA_FRACTION,
+  ARCANE_BLAST_CAST_MS,
   ARCANE_BLAST_DAMAGE,
+  ARCANE_BLAST_DAMAGE_REDUCTION,
   ARCANE_MISSILES_PER_TICK,
   ARCANE_MISSILES_TICK_COEFFICIENT,
   ARCANE_MISSILES_TICKS,
@@ -27,9 +29,9 @@ import {
   SCORCH_DAMAGE,
 } from '../../src/game/abilities/mage';
 import {
-  ARCANE_BLAST,
+  arcaneBlastAura,
   ARCANE_BLAST_COST_INCREASE_PER_STACK,
-  ARCANE_BLAST_DAMAGE_PER_STACK,
+  ARCANE_BLAST_INTELLECT_TO_SPELL_POWER,
   ARCANE_BLAST_MAX_STACKS,
   ARCANE_POWER,
   ARCANE_POWER_COST_INCREASE,
@@ -67,12 +69,14 @@ import { MAGE_TALENT_EFFECTS } from '../../src/game/talents/mageEffects';
 import {
   CHILL_ABILITY_IDS,
   MAGE_TALENT_REACTIONS,
-  arcaneBlastSpender,
+  MAGE_CAST_REACTIONS,
   fingersOfFrost,
   fingersOfFrostSpender,
 } from '../../src/game/reactions/mageTalents';
 import { talentNumber, talentNumbers } from '../../src/game/talents/talentValues';
 import { castAbility } from '../../src/engine';
+import { legalise } from '../helpers/legalTalents';
+import { ARCANE_BLAST_SP_COEFFICIENT } from '../../src/game/combat/coefficients';
 import {
   MAGE_ARCANE,
   MAGE_FIRE,
@@ -136,7 +140,14 @@ describe('the numbers', () => {
     expect(FROSTBOLT_DAMAGE).toBe(475);
     expect(SCORCH_DAMAGE).toBe(178);
     expect(PYROBLAST_DAMAGE).toBe(583);
-    expect(ARCANE_BLAST_DAMAGE).toBe(394);
+    /*
+     * ARCANE BLAST IS THE ONE ROW THAT IS NO LONGER THE CAPTURE'S MIDPOINT.
+     * "Damage done ... reduced 40%" takes the captured 364-424 down, so the
+     * figure is written as the arithmetic rather than as 236.4 -- the source
+     * range stays visible and the note's own operation is what a reader checks.
+     */
+    expect(ARCANE_BLAST_DAMAGE).toBeCloseTo(394 * (1 - ARCANE_BLAST_DAMAGE_REDUCTION), 6);
+    expect(ARCANE_BLAST_DAMAGE_REDUCTION).toBe(0.4);
     expect(ICE_LANCE_DAMAGE).toBe(145);
   });
 
@@ -378,7 +389,7 @@ describe('the cast modifiers this class is full of', () => {
     expect(base).toBe(Math.round(MAGE_BASE_MANA * ARCANE_BLAST_BASE_MANA_FRACTION));
     expect(ARCANE_BLAST_COST_INCREASE_PER_STACK).toBe(1.75);
 
-    simulation.applyAura(actor, ARCANE_BLAST, actor.id);
+    simulation.applyAura(actor, arcaneBlastAura(actor.stats.effective.intellect), actor.id);
     for (const stacks of [1, 2, 4]) {
       actor.auras.get('arcane_blast')!.stacks = stacks;
       expect(resolveCast(actor, blast).costAmount, `${stacks} stacks`).toBeCloseTo(
@@ -403,6 +414,158 @@ describe('the cast modifiers this class is full of', () => {
     blast.onCast({ simulation, caster: actor, target, ability: blast });
     expect(actor.auras.stacksOf('arcane_blast')).toBe(1);
     expect(resolveCast(actor, blast).costAmount).toBeGreaterThan(blast.cost!.amount);
+  });
+});
+
+describe('the two things the patch did to Heating Up', () => {
+  /*
+   * ============================================================================
+   * TWO CLAUSES IN ONE NOTE, AND THEY TOUCH OPPOSITE ENDS OF THE TALENT.
+   *
+   * "Heating Up is no longer consumed if the Mage also had Presence of Mind
+   * active for the Pyroblast cast. Heating up also always gains an additional
+   * charge each time the Mage casts Fire Blast. This does mean Fire Blast
+   * critical strikes generate 2 charges."
+   *
+   * One is about SPENDING the aura and one is about GAINING it, so neither test
+   * below could stand in for the other.
+   * ============================================================================
+   */
+
+  it('is not spent on a Pyroblast that Presence of Mind already made instant', () => {
+    /*
+     * --------------------------------------------------------------------------
+     * `requiresCastTime` DID NOT ALREADY SAY THIS, which is the near miss worth
+     * asserting: that flag reads the ability's DECLARED `castTimeMs`, and
+     * Pyroblast always declares one. So the aura matched a cast that was already
+     * instant, its 75% had nothing left to reduce, and all three stacks were
+     * thrown away -- with nothing on the results page to show it, because the
+     * Pyroblast was instant either way and the aura still reported its uptime.
+     *
+     * IT MATTERS TO A LIST THAT EXISTS. The Arcane list was respecified to move
+     * Presence of Mind so it makes PYROBLAST instant, so before this every one
+     * of those casts also ate a three-stack Heating Up for nothing.
+     *
+     * BOTH HALVES ARE DRIVEN: the cast is still instant, which is Presence of
+     * Mind doing its own job, AND the Heating Up stacks survive. Asserting only
+     * the second would pass an implementation that had broken the first.
+     * --------------------------------------------------------------------------
+     */
+    const actor = bareMage('mage_fire');
+    const simulation = buildSimulation([actor, makeTarget()]);
+    simulation.begin();
+    const pyroblast = actor.abilities.get('pyroblast')!;
+
+    simulation.applyAura(actor, HEATING_UP, actor.id);
+    for (let i = 1; i < HEATING_UP_MAX_STACKS; i += 1) {
+      simulation.applyAura(actor, HEATING_UP, actor.id);
+    }
+    expect(actor.auras.get('heating_up')!.stacks).toBe(HEATING_UP_MAX_STACKS);
+
+    simulation.applyAura(actor, PRESENCE_OF_MIND, actor.id);
+
+    // Presence of Mind alone makes it instant -- Heating Up is not needed.
+    expect(resolveCast(actor, pyroblast).baseCastTimeMs).toBe(0);
+
+    castAbility(simulation, actor, pyroblast, simulation.combatants[1]);
+
+    // Presence of Mind IS spent, which is its own `consumedByCast: 'all'`.
+    expect(actor.auras.has(PRESENCE_OF_MIND.id)).toBe(false);
+    // And Heating Up is NOT, with every stack intact.
+    expect(actor.auras.has(HEATING_UP.id)).toBe(true);
+    expect(actor.auras.get(HEATING_UP.id)!.stacks).toBe(HEATING_UP_MAX_STACKS);
+  });
+
+  it('is still spent by a Pyroblast with no Presence of Mind, which is the control', () => {
+    /*
+     * THE OTHER SIDE OF THE SAME CONDITION, and without it the test above
+     * passes against an aura that is never consumed at all -- which would be a
+     * far bigger change than the note asks for and would read as a working
+     * talent worth several times its value.
+     */
+    const actor = bareMage('mage_fire');
+    const simulation = buildSimulation([actor, makeTarget()]);
+    simulation.begin();
+    const pyroblast = actor.abilities.get('pyroblast')!;
+
+    simulation.applyAura(actor, HEATING_UP, actor.id);
+    expect(actor.auras.has(HEATING_UP.id)).toBe(true);
+    // Not instant: the aura shortens it rather than removing the cast.
+    expect(resolveCast(actor, pyroblast).baseCastTimeMs).toBeGreaterThan(0);
+
+    castAbility(simulation, actor, pyroblast, simulation.combatants[1]);
+    expect(actor.auras.has(HEATING_UP.id)).toBe(false);
+  });
+
+  it('gains a charge on every Fire Blast CAST, so a crit makes two', () => {
+    /*
+     * ==========================================================================
+     * "HEATING UP ALSO ALWAYS GAINS AN ADDITIONAL CHARGE EACH TIME THE MAGE
+     * CASTS FIRE BLAST. THIS DOES MEAN FIRE BLAST CRITICAL STRIKES GENERATE 2
+     * CHARGES."
+     *
+     * The note explains its own arithmetic, and that arithmetic is what makes
+     * this a SECOND reaction rather than a change to the first. Fire Blast was
+     * already in `HEATING_UP_TRIGGERS`, so a crit grants a charge through the
+     * `dealt` path; the cast reaction grants one whatever happened.
+     *
+     * SO THE TEMPTING IMPLEMENTATION IS THE WRONG ONE. Doubling the charge
+     * inside the crit reaction gives a critting Fire Blast its two and gives a
+     * non-critting one NOTHING -- a smaller number, no error, and it reads
+     * exactly like a working talent. The two halves are driven separately here
+     * for that reason.
+     * ==========================================================================
+     */
+    const stacksAfter = (crit: boolean): number => {
+      const actor = createPlayer({
+        race: 'gnome',
+        characterClass: 'mage',
+        talents: legalise({ heating_up: 1 }, 'mage'),
+        bonusStats: {
+          hitChance: 100,
+          // Forced either way, so the crit path is a decision and not a roll.
+          spellCritChance: crit ? 100 : -1000,
+          critRating: 0,
+        },
+      });
+      const target = makeTarget({ maxHealth: 1_000_000, stats: { armor: 0 } });
+      const simulation = buildSimulation([actor, target]);
+      simulation.begin();
+      const fireBlast = actor.abilities.get('fire_blast')!;
+      castAbility(simulation, actor, fireBlast, target);
+      return actor.auras.get(HEATING_UP.id)?.stacks ?? 0;
+    };
+
+    // A cast that did NOT crit still banks one, which is the new half.
+    expect(stacksAfter(false)).toBe(1);
+    // And one that crit banks two: the cast reaction and the damage reaction.
+    expect(stacksAfter(true)).toBe(2);
+  });
+
+  it('registers both of Heating Up’s halves on a build that takes it', () => {
+    /*
+     * THE JOIN, AND IT IS THE HALF THAT GOES MISSING IN SILENCE. The cast
+     * reaction has to be in `MAGE_CAST_REACTIONS` as well as in the effect
+     * table, and a reaction the registry does not carry is simply absent --
+     * `lone_wolf` went the whole project that way. It is also `valueless`,
+     * because an effect that reads no value is DROPPED without saying so, and
+     * Heating Up's own value is hand-filled and has gone missing once already.
+     *
+     * REGISTERED UNDER ONE TALENT ID, which is what makes it impossible for a
+     * build to have one half and not the other.
+     */
+    const actor = createPlayer({
+      race: 'gnome',
+      characterClass: 'mage',
+      talents: legalise({ heating_up: 1 }, 'mage'),
+    });
+    expect(actor.reactions.map((r) => r.id)).toContain('heating_up');
+    expect(actor.castReactions.map((r) => r.id)).toContain('heating_up_fire_blast');
+
+    // And a Mage without the talent has neither.
+    const without = createPlayer({ race: 'gnome', characterClass: 'mage' });
+    expect(without.reactions.map((r) => r.id)).not.toContain('heating_up');
+    expect(without.castReactions.map((r) => r.id)).not.toContain('heating_up_fire_blast');
   });
 });
 
@@ -717,18 +880,26 @@ describe('Fingers of Frost, the one Frozen talent that is not inert', () => {
     expect(fires('pyroblast')).toBe(false);
   });
 
-  it('quadruples ALL of Ice Lance, the coefficient as well as the base', () => {
+  it('triples ALL of Ice Lance, the coefficient as well as the base', () => {
     /*
-     * TIMES FOUR by the owner's ruling -- "increased BY 300%" is base plus
-     * three times itself, where "deals 300% damage" would be three and is also
-     * what Classic does.
+     * TIMES THREE, LOWERED FROM FOUR: "Ice Lance damage against Frozen targets
+     * changed to a 200% increase (Was 300%)." The READING is unchanged and is
+     * the owner's -- "increased BY 200%" is base plus twice itself, where
+     * "deals 200% damage" would be two and is also what Classic does.
      *
      * AND IT REACHES THE COEFFICIENT. Applying the multiplier to `baseAmount`
      * alone would leave a spell-power-heavy Mage's Ice Lance barely improved
      * and would look entirely reasonable, so the ratio is asserted at a
      * thousand spell power where the coefficient dominates.
+     *
+     * THE RATIO IS ASSERTED AS WELL AS THE CONSTANT, which is what makes this
+     * a test of the MECHANISM: the multiplier is read at cast time and reaches
+     * two separate terms, and a constant check cannot see one of them being
+     * dropped or applied twice. Four and three are the two readings the
+     * project has held, so an exact ratio against a scripted non-crit is the
+     * check -- the floor below is kept for the crit case.
      */
-    expect(ICE_LANCE_FROZEN_MULTIPLIER).toBe(4);
+    expect(ICE_LANCE_FROZEN_MULTIPLIER).toBe(3);
 
     const actor = frostMage();
     const target = makeTarget({ maxHealth: 1_000_000 });
@@ -753,9 +924,14 @@ describe('Fingers of Frost, the one Frozen talent that is not inert', () => {
     castAbility(simulation, actor, ICE_LANCE, target);
     const frozen = damageOf();
 
-    // The combat table can crit either one, so this is a floor rather than an
-    // equality: four times the base must be well clear of an uncrit hit.
-    expect(frozen).toBeGreaterThan(plain * 2);
+    /*
+     * The combat table can crit either one, so this is a floor rather than an
+     * equality: three times the base must be well clear of an uncrit hit. A
+     * crit is 1.5x on the spell table, so `plain * 1.5` is the worst case the
+     * unfrozen cast can reach and 3x must beat it -- which `> plain * 1.6`
+     * says without assuming neither cast crit.
+     */
+    expect(frozen).toBeGreaterThan(plain * 1.6);
   });
 
   it('does not let the cast that procced it spend a charge', () => {
@@ -1027,96 +1203,204 @@ describe('Combustion, whose end condition is four crits rather than a clock', ()
 
 describe('Arcane Blast, whose damage half is the Arcane rotation', () => {
   /*
-   * --------------------------------------------------------------------------
-   * "Each time you cast Arcane Blast, the damage of all your other spells is
-   * increased by 10% and the mana cost of Arcane Blast is increased by 175%.
-   * Effect stacks up to 4 times and lasts 8 sec or until any other damage
-   * spell is cast."
+   * ==========================================================================
+   * REDESIGNED: "This spell is now a 1.5 second cast, and each time it is cast
+   * it grants the casting Mage 15% of their Intellect as additional Spell
+   * Damage. This effect also increases the cost of Arcane Blast as before and
+   * still stacks to 4 times. However, the effect now lasts 15 seconds from when
+   * it is FIRST APPLIED, instead of just until the next spell cast. Mana cost
+   * unchanged, but damage done and Spell Damage coefficients both reduced 40%."
    *
-   * THE DAMAGE HALF WAS UNMODELLED AND IT IS 60% OF THIS PROFILE. The caveat
-   * said `damageDoneMultiplier` is every spell INCLUDING Arcane Blast and
-   * there is no "everything except this one" -- true of that field, and not of
-   * `abilityModifiers`, where "everything except this one" is a list with one
-   * name left out.
+   * THE DAMAGE CLAUSE CHANGED KIND AND NOT SIZE. It was "+10% damage to all
+   * your OTHER spells" per stack, carried as an `abilityModifiers` entry for
+   * every damage spell except this one; it is now SPELL POWER from Intellect,
+   * which is a stat on the Mage and therefore reaches Arcane Blast itself. The
+   * three tests that pinned the old clause are replaced rather than loosened.
    *
-   * WHEN IT ENDS IS AN INTERPRETATION. Read literally, the bonus is destroyed
-   * by the only thing that could ever collect it. The reading taken is that
-   * the other spell TAKES the bonus and the stacks then go, which is the rule
-   * for a specification that would otherwise disable itself -- and it is the
-   * shape of the owner's own Arcane list.
-   * --------------------------------------------------------------------------
+   * AND THE AMBIGUITY IS GONE. "8 sec or until any other damage spell is cast"
+   * was this project's most load-bearing interpretation -- read literally the
+   * bonus was destroyed by the only thing that could collect it -- and HANDOVER
+   * carried it as a question for the owner. The redesign answers it by removing
+   * it: the window is a stated fifteen seconds and nothing ends it early.
+   * ==========================================================================
    */
-  it('reads its 10 from the values file rather than from a constant', () => {
-    expect(talentNumber('mage', 'arcane_blast', 1, 0)).toBe(ARCANE_BLAST_DAMAGE_PER_STACK);
-  });
-
-  it('raises every other damage spell and never itself', () => {
-    const mage = bareMage('mage_arcane');
-    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
-    simulation.begin();
-    simulation.applyAura(mage, ARCANE_BLAST, mage.id);
-
-    const damageOf = (abilityId: string) =>
-      mage.abilityModifierFor(abilityId).damageMultiplier ?? 1;
-
-    expect(damageOf('arcane_missiles')).toBeCloseTo(1.1, 10);
-    expect(damageOf('fireball')).toBeCloseTo(1.1, 10);
-    // "All your OTHER spells". The one name left out of the list.
-    expect(damageOf('arcane_blast')).toBeCloseTo(1, 10);
-  });
-
-  it('compounds its stacks, which is the convention every other stacking multiplier uses', () => {
+  it('is a 1.5 second cast whose coefficient followed the cast time down', () => {
     /*
-     * 1.1 CUBED, NOT 1.3. `modifiersScaleWithStacks` raises a damage
-     * multiplier to the POWER of the stack count everywhere else it is read --
-     * `damageTakenMultiplierFor` says so in its own comment about Improved
-     * Scorch. A second convention for one flag would be worth more trouble
-     * than the six percent it buys at four stacks.
-     */
-    const mage = bareMage('mage_arcane');
-    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
-    simulation.begin();
-    simulation.applyAura(mage, ARCANE_BLAST, mage.id);
-    simulation.applyAura(mage, ARCANE_BLAST, mage.id);
-    simulation.applyAura(mage, ARCANE_BLAST, mage.id);
-
-    expect(mage.auras.stacksOf('arcane_blast')).toBe(3);
-    expect(mage.abilityModifierFor('arcane_missiles').damageMultiplier).toBeCloseTo(1.1 ** 3, 10);
-  });
-
-  it('survives every missile of a channel and goes on the last one', () => {
-    /*
-     * `cast.final` IS WHAT THIS ASSERTS. A cast reaction fires once per
-     * `channelTicks`, so without it the first of five missiles would end the
-     * window and the other four would fire unbuffed -- a smaller number, no
-     * error, and the opposite of what the owner's Arcane list is built to do.
-     */
-    const spender = arcaneBlastSpender();
-    const mage = bareMage('mage_arcane');
-    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
-    simulation.begin();
-    simulation.applyAura(mage, ARCANE_BLAST, mage.id);
-
-    const missiles = mage.abilities.get('arcane_missiles')!;
-    const cast = (ability: typeof missiles, final: boolean) =>
-      spender.canTrigger?.(simulation, mage, { ability, final, spent: {} } as never) ?? true;
-
-    expect(cast(missiles, false)).toBe(false);
-    expect(cast(missiles, true)).toBe(true);
-    // And the spell that BUILT the stacks never spends them.
-    expect(cast(mage.abilities.get('arcane_blast')!, true)).toBe(false);
-  });
-
-  it('is built to four stacks and spent by the Arcane list, in a real fight', () => {
-    /*
-     * THE MECHANISM IN A REAL FIGHT, because the two halves above could both
-     * be right while the list never reached four stacks -- which is the shape
-     * the owner's Arcane list is written around and the reason its Arcane
-     * Power entry waits for three.
+     * THE -40% ON THE COEFFICIENT *IS* THE CAST TIME CHANGE, which is the one
+     * thing worth checking rather than transcribing. Coefficients here follow
+     * `castTime / 3.5`, the old 0.714 is `2.5 / 3.5` rounded, and
      *
-     * READ OFF THE EVENT STREAM, not off a DPS delta: what is asserted is that
-     * the window builds to the cap and that something takes it away, which is
-     * the mechanism. Whether it is worth anything is a different question.
+     *     2.5 / 3.5 x 0.6  =  1.5 / 3.5   exactly
+     *
+     * so the note's two clauses are one change written twice. That agreement is
+     * the evidence the figure is right, and it is asserted as the arithmetic
+     * rather than as 0.4284 so a reader can see it.
+     */
+    expect(ARCANE_BLAST_CAST_MS).toBe(seconds(1.5));
+    expect(ARCANE_BLAST_SP_COEFFICIENT).toBeCloseTo(1.5 / 3.5, 12);
+    // The old pair, multiplied out, lands on the new one.
+    expect((2.5 / 3.5) * (1 - ARCANE_BLAST_DAMAGE_REDUCTION)).toBeCloseTo(1.5 / 3.5, 12);
+
+    // And the base damage took the same 40%, off the captured 364-424.
+    expect(ARCANE_BLAST_DAMAGE).toBeCloseTo(((364 + 424) / 2) * 0.6, 6);
+  });
+
+  it('grants spell power from Intellect, per stack, and reaches itself', () => {
+    /*
+     * --------------------------------------------------------------------------
+     * "GRANTS THE CASTING MAGE 15% OF THEIR INTELLECT AS ADDITIONAL SPELL
+     * DAMAGE" is a STAT, which is the whole difference from the clause it
+     * replaced: the old one named "all your OTHER spells" and this one names
+     * nobody, so Arcane Blast's own next cast collects it.
+     *
+     * ASSERTED ON THE STAT AND ON A SPELL'S MODIFIER BOTH. The stat is what the
+     * note says; the absence of a per-ability modifier is what says the old
+     * clause is really gone rather than sitting alongside the new one -- which
+     * would be a bigger number and no error.
+     * --------------------------------------------------------------------------
+     */
+    /*
+     * A REAL `createPlayer` MAGE RATHER THAN `bareMage`, which is the one test
+     * in this block that needs one: `bareMage` is `makeAttacker` with a book
+     * bolted on and carries NO primary stats at all, so its Intellect is zero
+     * and 15% of nothing is nothing. A fixture that cannot express the quantity
+     * under test proves nothing about it.
+     */
+    const mage = createPlayer({ race: 'gnome', characterClass: 'mage' });
+    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+
+    const intellect = mage.stats.effective.intellect;
+    expect(intellect).toBeGreaterThan(0);
+    const before = mage.stats.effective.spellPower;
+
+    simulation.applyAura(mage, arcaneBlastAura(intellect), mage.id);
+    expect(mage.stats.effective.spellPower - before).toBeCloseTo(
+      intellect * ARCANE_BLAST_INTELLECT_TO_SPELL_POWER,
+      6,
+    );
+
+    // The old "+10% to other spells" is gone, on this spell and on itself.
+    expect(mage.abilityModifierFor('arcane_missiles').damageMultiplier ?? 1).toBe(1);
+    expect(mage.abilityModifierFor('arcane_blast').damageMultiplier ?? 1).toBe(1);
+  });
+
+  it('multiplies the spell power by its stacks, up to four', () => {
+    /*
+     * A FLAT STAT SCALES BY THE COUNT, not to the power of it: `applyStatModifiers`
+     * multiplies a flat spec by `instance.stacks`, where a damage MULTIPLIER
+     * compounds. That difference is `scaleByStacks`'s own rule and it matters
+     * here -- four stacks is 60% of Intellect and not 1.15 to the fourth.
+     */
+    // A real Mage, for the reason the test above gives: `bareMage` has no
+    // Intellect, so a per-stack share of it would be zero at every stack.
+    const mage = createPlayer({ race: 'gnome', characterClass: 'mage' });
+    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+    const intellect = mage.stats.effective.intellect;
+    const before = mage.stats.effective.spellPower;
+    const aura = arcaneBlastAura(intellect);
+
+    for (let stacks = 1; stacks <= ARCANE_BLAST_MAX_STACKS; stacks += 1) {
+      simulation.applyAura(mage, aura, mage.id);
+      expect(mage.auras.stacksOf('arcane_blast'), `${stacks}`).toBe(stacks);
+      expect(mage.stats.effective.spellPower - before, `${stacks} stacks`).toBeCloseTo(
+        intellect * ARCANE_BLAST_INTELLECT_TO_SPELL_POWER * stacks,
+        6,
+      );
+    }
+
+    // And a fifth application is declined rather than stacking.
+    simulation.applyAura(mage, aura, mage.id);
+    expect(mage.auras.stacksOf('arcane_blast')).toBe(ARCANE_BLAST_MAX_STACKS);
+  });
+
+  it('runs fifteen seconds from the FIRST cast, which a refresh must not extend', () => {
+    /*
+     * ==========================================================================
+     * "THE EFFECT NOW LASTS 15 SECONDS FROM WHEN IT IS FIRST APPLIED", and
+     * `refreshBehaviour: 'ignore'` is the whole of it -- which is not obvious
+     * and is why this is asserted rather than trusted.
+     *
+     * `AuraCollection.refresh` increments the stack and re-applies the scaled
+     * stat modifiers BEFORE it consults the behaviour, and only the expiry
+     * reschedule is gated on it. So `ignore` declines the new WINDOW and accepts
+     * the new STACK, which is exactly the note. `reset` -- the DEFAULT, and what
+     * this aura carried before -- would restart the clock on every cast and make
+     * the window effectively unbounded on a spammed spell.
+     *
+     * BOTH HALVES ARE ASSERTED: the expiry does not move, AND the stack still
+     * climbs. A behaviour that declined both would also leave the expiry alone.
+     * ==========================================================================
+     */
+    const mage = bareMage('mage_arcane');
+    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+    const aura = arcaneBlastAura(mage.stats.effective.intellect);
+
+    simulation.applyAura(mage, aura, mage.id);
+    const expiresAt = mage.auras.get('arcane_blast')!.expiresAt;
+    expect(expiresAt).toBe(seconds(15));
+
+    simulation.advanceTo(seconds(5));
+    simulation.applyAura(mage, aura, mage.id);
+
+    // The window is untouched by the second cast...
+    expect(mage.auras.get('arcane_blast')!.expiresAt).toBe(expiresAt);
+    // ...and the stack still went up.
+    expect(mage.auras.stacksOf('arcane_blast')).toBe(2);
+  });
+
+  it('is no longer ended by another damage spell, which the spender used to do', () => {
+    /*
+     * `arcaneBlastSpender` IS DELETED. It removed the stacks on the next damage
+     * spell's `cast.final`, which was the reading of "or until any other damage
+     * spell is cast" -- and the note replaced that clause with a clock.
+     *
+     * ASSERTED AS A NEGATIVE ON THE REGISTRY, because a cast reaction left
+     * registered would end the window early for no reason anybody stated, and
+     * the only visible symptom would be a smaller number.
+     */
+    expect(Object.keys(MAGE_CAST_REACTIONS)).not.toContain('arcane_blast');
+
+    const mage = bareMage('mage_arcane');
+    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+    expect(mage.castReactions.map((r) => r.id)).not.toContain('arcane_blast_spend');
+  });
+
+  it('still charges 175% more per stack, which the note says is unchanged', () => {
+    // The half the redesign did NOT touch, pinned beside the halves it did --
+    // "this effect also increases the cost of Arcane Blast as before".
+    const mage = bareMage('mage_arcane');
+    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+    const blast = mage.abilities.get('arcane_blast')!;
+    const base = blast.cost!.amount;
+    expect(base).toBe(Math.round(MAGE_BASE_MANA * ARCANE_BLAST_BASE_MANA_FRACTION));
+
+    simulation.applyAura(mage, arcaneBlastAura(mage.stats.effective.intellect), mage.id);
+    for (const stacks of [1, 2, 4]) {
+      mage.auras.get('arcane_blast')!.stacks = stacks;
+      expect(resolveCast(mage, blast).costAmount, `${stacks} stacks`).toBeCloseTo(
+        base * (1 + ARCANE_BLAST_COST_INCREASE_PER_STACK * stacks),
+        6,
+      );
+    }
+  });
+
+  it('builds to four stacks in a real fight and holds them for its window', () => {
+    /*
+     * THE MECHANISM IN A REAL FIGHT, because every assertion above could be
+     * right while the list never reached four stacks -- which is the shape the
+     * owner's Arcane list is written around and the reason its Presence of Mind
+     * entry waits for the cap.
+     *
+     * AND THE REMOVAL ASSERTION IS INVERTED FROM WHAT IT WAS. It used to demand
+     * that the aura "goes away for a reason other than its own eight seconds",
+     * which was the spender; the window is a clock now, so what is asserted is
+     * that the cap is REACHED. Pinning a removal would pass on the expiry alone
+     * and say nothing.
      */
     const built = PRESETS_BY_ID.get('mage_arcane')!.build();
     const run = runProfile(built, 4242);
@@ -1124,10 +1408,9 @@ describe('Arcane Blast, whose damage half is the Arcane rotation', () => {
     const rows = run.timeline.filter(
       (event) => 'auraId' in event && event.auraId === 'arcane_blast',
     );
+    expect(rows.length).toBeGreaterThan(0);
     const highest = Math.max(...rows.map((event) => ('stacks' in event ? event.stacks : 0)));
     expect(highest).toBe(ARCANE_BLAST_MAX_STACKS);
-    // And it goes away for a reason other than its own eight seconds.
-    expect(rows.some((event) => event.type === 'aura_removed')).toBe(true);
   });
 });
 
@@ -1908,14 +2191,14 @@ describe('the three lists, after the owner tuned them', () => {
 
     // Not on the way up: one, two and three stacks are all refused.
     for (let stacks = 1; stacks < ARCANE_BLAST_MAX_STACKS; stacks += 1) {
-      simulation.applyAura(mage, ARCANE_BLAST, mage.id);
+      simulation.applyAura(mage, arcaneBlastAura(mage.stats.effective.intellect), mage.id);
       expect(mage.auras.stacksOf('arcane_blast')).toBe(stacks);
       expect(fires(presenceOfMind)).toBe(false);
       // And the Pyroblast beneath it is refused the whole way up too.
       expect(fires(pyroblast)).toBe(false);
     }
 
-    simulation.applyAura(mage, ARCANE_BLAST, mage.id);
+    simulation.applyAura(mage, arcaneBlastAura(mage.stats.effective.intellect), mage.id);
     expect(mage.auras.stacksOf('arcane_blast')).toBe(ARCANE_BLAST_MAX_STACKS);
     expect(fires(presenceOfMind)).toBe(true);
 

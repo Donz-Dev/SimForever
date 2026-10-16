@@ -1,7 +1,12 @@
 import type { AuraDefinition } from '../../engine';
 import { LONE_WOLF } from './hunter';
 import { ANGER_MANAGEMENT } from './warrior';
-import { PARTY_CRIT_AURA, PARTY_CRIT_AURA_ID } from './druid';
+import {
+  LEADER_OF_THE_PACK_AURA,
+  LEADER_OF_THE_PACK_AURA_ID,
+  MOONKIN_AURA,
+  MOONKIN_AURA_ID,
+} from './druid';
 
 /**
  * Auras a TALENT puts on a character, by the id its effect names.
@@ -37,7 +42,8 @@ export const TALENT_AURAS: Readonly<Record<string, AuraDefinition>> = {
    * same value: a talent names what it grants, and two talents granting the
    * same thing is exactly what this is.
    */
-  [PARTY_CRIT_AURA_ID]: PARTY_CRIT_AURA,
+  [MOONKIN_AURA_ID]: MOONKIN_AURA,
+  [LEADER_OF_THE_PACK_AURA_ID]: LEADER_OF_THE_PACK_AURA,
   /*
    * LONE WOLF, AND ITS 20% HAD NEVER APPLIED TO ANYTHING.
    *

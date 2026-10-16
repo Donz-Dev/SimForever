@@ -441,6 +441,27 @@ export function fireVulnerabilityAura(percentPerStack: number): AuraDefinition {
  * THREE STACKS AT 25% EACH IS 75%, which takes a six-second Pyroblast to one
  * and a half. That is the whole reason a Fire mage casts Pyroblast at all --
  * and now it is once per rebuilt stack of three rather than once per window.
+ *
+ * ----------------------------------------------------------------------------
+ * AND IT IS NOT SPENT ON A PYROBLAST PRESENCE OF MIND HAS ALREADY MADE INSTANT:
+ * "Heating Up is no longer consumed if the Mage also had Presence of Mind
+ * active for the Pyroblast cast."
+ *
+ * `requiresCastTime` DID NOT ALREADY SAY THIS, which is the near miss worth
+ * naming: that flag reads the ability's DECLARED `castTimeMs`, and Pyroblast
+ * always declares one. So the aura matched a cast that was already instant, its
+ * 75% had nothing left to reduce, and all three stacks were thrown away -- with
+ * nothing on the results page to show it, because the Pyroblast was instant
+ * either way and the aura still reported its uptime.
+ *
+ * `exceptWhileAura` SUPPRESSES THE EFFECT AS WELL AS THE CONSUMPTION, which is
+ * the same answer by a different route: a cast Presence of Mind has already
+ * zeroed cannot be shortened again.
+ *
+ * IT MAKES THE ARCANE LIST'S OWN COMBINATION WORK, which is what the note is
+ * plainly for. That list was respecified to move Presence of Mind so it makes
+ * PYROBLAST instant -- so before this, every one of those casts also ate a
+ * three-stack Heating Up for nothing.
  * ----------------------------------------------------------------------------
  */
 export const HEATING_UP_DURATION_MS = seconds(20);
@@ -462,6 +483,9 @@ export const HEATING_UP: AuraDefinition = {
     // above: the owner's ruling, and `all` rather than `stack` for the reason
     // that field is an enum.
     consumedByCast: 'all',
+    // ... unless Presence of Mind already made the cast instant, in which case
+    // this has nothing to shorten and is not spent. See above.
+    exceptWhileAura: 'presence_of_mind',
   },
 };
 
@@ -603,86 +627,145 @@ export const COMBUSTION: AuraDefinition = {
  * sec or until any other damage spell is cast."
  *
  * ----------------------------------------------------------------------------
- * THE COST HALF IS EXACT AND THE DAMAGE HALF IS NOT MODELLED.
- *
- * `castModifier.costFraction` takes a NEGATIVE fraction, which is an increase
- * -- so 175% a stack is expressible precisely, and it is the half that
- * actually governs whether a rotation should spam this. Four stacks is eight
- * times the base cost, which is what makes Arcane Blast a burst spell rather
- * than a filler.
- *
- * PER STACK RATHER THAN IN TOTAL, the same reading Maelstrom Weapon needed and
- * for the same reason: the tooltip states one percentage and then says "stacks
- * up to 4 times", which is only meaningful if the stacks multiply it.
- *
  * ============================================================================
- * "ALL YOUR OTHER SPELLS" IS MODELLED NOW, AND IT IS THE HALF THE ARCANE
- * PROFILE IS BUILT AROUND. It was left out with a written caveat saying
- * `damageDoneMultiplier` is every spell INCLUDING Arcane Blast and there is no
- * "everything except this one" -- which was true of that field and not of
- * `abilityModifiers`, where "everything except this one" is a list with one
- * name missing. `MAGE_DAMAGE_SPELL_IDS` minus `arcane_blast` is that list.
+ * REDESIGNED BY THE PATCH, AND THE DAMAGE CLAUSE CHANGED KIND RATHER THAN SIZE.
  *
- * WHEN IT ENDS IS AN INTERPRETATION, AND IT IS THE ONLY ONE THAT LEAVES THE
- * CLAUSE DOING WORK. "Lasts 8 sec or until any other damage spell is cast"
- * read literally against "the damage of all your OTHER spells is increased"
- * says the bonus is removed by the only thing that could ever collect it, so
- * the talent would be worth exactly nothing. The reading taken is that the
- * other spell BENEFITS and the stacks then go -- which is also the shape of
- * the ruleset owner's own Arcane list, where four Arcane Blasts are spent into
- * one Arcane Missiles channel. `arcaneBlastSpender` in
- * `reactions/mageTalents.ts` is that rule, and it fires on the LAST tick of a
- * channel so all five missiles are inside the window.
+ * "Arcane Blast: Redesigned. This spell is now a 1.5 second cast, and each time
+ * it is cast it grants the casting Mage 15% of their Intellect as additional
+ * Spell Damage. This effect also increases the cost of Arcane Blast as before
+ * and still stacks to 4 times. However, the effect now lasts 15 seconds from
+ * when it is FIRST APPLIED, instead of just until the next spell cast. Mana
+ * cost unchanged, but damage done and Spell Damage coefficients both reduced
+ * 40%."
  *
- * SAID OUT LOUD BECAUSE IT MOVES A PROFILE. This is a reading of an ambiguous
- * sentence, not a transcription, and it is worth asking the owner about --
- * HANDOVER.md carries the question.
+ * ----------------------------------------------------------------------------
+ * WHAT WENT: "+10% damage to all your OTHER spells" per stack, carried as an
+ * `abilityModifiers` entry for every damage spell except this one, and the
+ * `arcaneBlastSpender` cast reaction that took the stacks away on the next
+ * spell. BOTH ARE DELETED. The old damage clause was this project's most
+ * load-bearing INTERPRETATION -- "8 sec or until any other damage spell is
+ * cast" read literally said the bonus was removed by the only thing that could
+ * collect it, so the clause would have been worth nothing, and the reading
+ * taken was that the other spell BENEFITS and the stacks then go. HANDOVER
+ * carried it as a question for the owner.
+ *
+ * THE REDESIGN ANSWERS THAT QUESTION BY REMOVING IT, which is worth saying
+ * plainly: the ambiguous sentence is gone from the tooltip, the effect now
+ * lasts a stated 15 seconds, and nothing has to guess what ends it. An
+ * interpretation flagged as one is what gets ruled on -- and sometimes what
+ * arrives is not a ruling but a rewrite.
+ *
+ * ----------------------------------------------------------------------------
+ * SPELL POWER FROM INTELLECT, PER STACK, AND IT REACHES ARCANE BLAST ITSELF.
+ *
+ * "Grants the CASTING MAGE 15% of their Intellect as additional Spell Damage"
+ * is a stat on the Mage, not a per-ability bonus -- so unlike the clause it
+ * replaces it is not "other spells", and Arcane Blast's own next cast collects
+ * it. That is the whole character of the redesign: it was a setup spell for
+ * something else and is now a ramp for everything including itself.
+ *
+ * A FACTORY RATHER THAN A CONSTANT, the arrangement `ripAura` already uses: the
+ * figure depends on the caster's Intellect, which a module-level
+ * `AuraDefinition` cannot know. `CATALOG_AURAS` carries a representative call
+ * so the aura catalogue can still offer it by name.
+ *
+ * AND THE INTELLECT IS READ AT THE FIRST APPLICATION, WHICH IS A FREEZE AND IS
+ * DECLARED RATHER THAN HIDDEN. `apply` finds an existing instance by id and
+ * refreshes using the ORIGINAL definition, so every stack of one window is
+ * worth 15% of whatever Intellect the first cast saw. This project's own rule
+ * is that "a percentage folded into a flat number at build time freezes against
+ * the unbuffed stat" -- the mitigation here is that it is folded at CAST time,
+ * so Arcane Intellect, the gear and every raid buff are already in it, and
+ * nothing in the Mage's kit moves Intellect during a fifteen-second window.
+ * It would stop being true the day something does, and `statFromStat` carried
+ * on an AURA -- folded into the derivation rather than resolved once -- is what
+ * that day needs.
+ *
+ * ----------------------------------------------------------------------------
+ * `refreshBehaviour: 'ignore'` IS "15 SECONDS FROM WHEN IT IS FIRST APPLIED",
+ * AND IT STILL STACKS -- which is not obvious and is the reason this is one
+ * field rather than a new mechanism.
+ *
+ * `AuraCollection.refresh` increments the stack and re-applies the scaled stat
+ * modifiers BEFORE it consults the behaviour, and only the expiry reschedule is
+ * gated on it. So `ignore` declines the new WINDOW and accepts the new STACK,
+ * which is exactly what the note describes. `reset` would restart the clock on
+ * every cast and make the window unbounded in practice.
+ *
+ * ----------------------------------------------------------------------------
+ * THE COST HALF IS UNCHANGED, which the note says outright -- "increases the
+ * cost of Arcane Blast as before". `castModifier.costFraction` takes a NEGATIVE
+ * fraction, which is an increase, so 175% a stack is expressible precisely and
+ * four stacks is eight times the base cost. That is what keeps this a burst
+ * spell rather than a filler even at a 1.5-second cast.
+ *
+ * PER STACK RATHER THAN IN TOTAL, the same reading Maelstrom Weapon needed: the
+ * tooltip states one percentage and then says "stacks up to 4 times", which is
+ * only meaningful if the stacks multiply it.
  * ============================================================================
  */
 export const ARCANE_BLAST_MAX_STACKS = 4;
-export const ARCANE_BLAST_DURATION_MS = seconds(8);
+/**
+ * FIFTEEN SECONDS, FROM FIRST APPLICATION. Was eight, and was also ended early
+ * by any other damage spell -- see above.
+ */
+export const ARCANE_BLAST_DURATION_MS = seconds(15);
 export const ARCANE_BLAST_COST_INCREASE_PER_STACK = 1.75;
-export const ARCANE_BLAST_DAMAGE_PER_STACK = 10;
-
-/** "All your OTHER spells": the damage book with this spell taken out. */
-export const ARCANE_BLAST_BOOSTED_SPELL_IDS: readonly string[] =
-  MAGE_DAMAGE_SPELL_IDS.filter((id) => id !== 'arcane_blast');
+/**
+ * "15% of their Intellect as additional Spell Damage", per stack.
+ *
+ * REPLACES `ARCANE_BLAST_DAMAGE_PER_STACK`, which was the old "+10% damage to
+ * your other spells" -- a different KIND of effect, not a renumbering. The 10
+ * was hand-filled in `values/mage.json` as the talent's single-rank number and
+ * is now unread by anything; it stays in the values file because the importer
+ * merges rather than overwrites and deleting it would be an edit to captured
+ * data for no behavioural reason.
+ */
+export const ARCANE_BLAST_INTELLECT_TO_SPELL_POWER = 0.15;
 
 export const ARCANE_BLAST_UNMODELLED =
-  'Its "8 sec or until any other damage spell is cast" is read as: the other ' +
-  'spell TAKES the bonus and the stacks then go. Read the other way the ' +
-  'damage clause could never pay out at all, so this is the reading that ' +
-  'leaves every clause doing work -- and it is an interpretation of an ' +
-  'ambiguous sentence rather than a transcription.';
+  'Its Intellect share is read at the FIRST application and frozen for the ' +
+  'window, because a refresh reuses the original definition. Nothing in a ' +
+  'Mage kit moves Intellect during fifteen seconds, so the two readings agree ' +
+  'today -- an aura-carried `statFromStat`, folded into the derivation rather ' +
+  'than resolved once, is what a mid-fight Intellect buff would need.';
 
-export const ARCANE_BLAST: AuraDefinition = {
-  id: 'arcane_blast',
-  name: 'Arcane Blast',
-  durationMs: ARCANE_BLAST_DURATION_MS,
-  maxStacks: ARCANE_BLAST_MAX_STACKS,
-  refreshBehaviour: 'reset',
-  /*
-   * BOTH HALVES SCALE, and this flag reaches both: `abilityModifiers` below
-   * for the damage, `castModifier.scalesWithStacks` for the cost. They are
-   * separate flags because a cast modifier is read by `resolveCast` and not by
-   * the damage pipeline, and the two were written at different times.
-   */
-  modifiersScaleWithStacks: true,
-  abilityModifiers: Object.fromEntries(
-    ARCANE_BLAST_BOOSTED_SPELL_IDS.map((id) => [
-      id,
-      { damageMultiplier: 1 + ARCANE_BLAST_DAMAGE_PER_STACK / 100 },
-    ]),
-  ),
-  castModifier: {
-    abilityIds: ['arcane_blast'],
-    // NEGATIVE, which is an increase. The one place in the project where a
-    // cast modifier makes something worse, and the field takes it without a
-    // special case.
-    costFraction: -ARCANE_BLAST_COST_INCREASE_PER_STACK,
-    scalesWithStacks: true,
-  },
-};
+/**
+ * Arcane Blast's ramp, built from the caster's own Intellect.
+ *
+ * `intellect` is the caster's EFFECTIVE value at the moment of the first cast.
+ * See the note above on why that is a freeze and why it is tolerable.
+ */
+export function arcaneBlastAura(intellect: number): AuraDefinition {
+  return {
+    id: 'arcane_blast',
+    name: 'Arcane Blast',
+    durationMs: ARCANE_BLAST_DURATION_MS,
+    maxStacks: ARCANE_BLAST_MAX_STACKS,
+    /*
+     * DECLINES THE NEW WINDOW AND ACCEPTS THE NEW STACK. See above: `refresh`
+     * increments and re-scales before it consults this, and only the expiry
+     * reschedule is gated on it. That is "15 seconds from when it is first
+     * applied" with no new mechanism.
+     */
+    refreshBehaviour: 'ignore',
+    /*
+     * BOTH HALVES SCALE, and this flag reaches both: `statModifiers` below for
+     * the spell power -- `applyStatModifiers` multiplies a flat spec by the
+     * stack count -- and `castModifier.scalesWithStacks` for the cost.
+     */
+    modifiersScaleWithStacks: true,
+    statModifiers: [flat('spellPower', intellect * ARCANE_BLAST_INTELLECT_TO_SPELL_POWER)],
+    castModifier: {
+      abilityIds: ['arcane_blast'],
+      // NEGATIVE, which is an increase. The one place in the project where a
+      // cast modifier makes something worse, and the field takes it without a
+      // special case.
+      costFraction: -ARCANE_BLAST_COST_INCREASE_PER_STACK,
+      scalesWithStacks: true,
+    },
+  };
+}
 
 /**
  * Arcane Power: "For the next 15 sec, your spells deal 30% more damage while
@@ -1038,5 +1121,40 @@ export const MAGE_ARMOR: AuraDefinition = {
  * ----------------------------------------------------------------------------
  */
 export const CATALOG_AURAS: readonly AuraDefinition[] = [
+  /*
+   * ADDED BY THE AURA-CATALOGUE AUDIT, which found these reachable ONLY through
+   * `aurasForClass`'s stock-list safety net -- "anything a stock list names must
+   * be choosable, wherever its definition lives". The id was offered with a name
+   * derived from it and nothing else, where a listed definition carries the
+   * aura's own name and `isDebuff`. A SAFETY NET MASKS THE THING IT IS A NET
+   * FOR, which is why the audit asks the modules rather than the catalogue.
+   */
+  fireVulnerabilityAura(0),
   igniteAura(0),
+  /*
+   * ========================================================================
+   * ARCANE BLAST BECAME A FACTORY WHEN THE PATCH REDESIGNED IT, and that is
+   * exactly the change this list exists to catch: it was an exported CONSTANT,
+   * which the export walk finds, and is now `arcaneBlastAura(intellect)`,
+   * which it does not.
+   *
+   * THE DROPDOWN DID NOT VISIBLY BREAK, AND THAT IS THE INTERESTING PART.
+   * `aurasForClass` ends with a SAFETY NET -- "anything a stock list names must
+   * be choosable, wherever its definition lives" -- and the Arcane list gates
+   * on `arcane_blast` stacks, so the id kept being offered. What it lost was
+   * the DEFINITION behind it: the net supplies a readable name and nothing
+   * else, where this list supplies the aura's own name and `isDebuff`.
+   *
+   * SO `auraCatalog.test.ts` PASSED THROUGH THE REGRESSION. Its structural
+   * check reads the source for every `id` / `name` / `durationMs` triple and
+   * demands the catalog offer each one -- which the net satisfied. **A safety
+   * net masks the thing it is a net for**, and the only reason this was found
+   * was re-reading CLAUDE.md's own note that a factory-built aura needs
+   * listing here.
+   *
+   * ZERO IS THE REPRESENTATIVE ARGUMENT, and only the id, name and `isDebuff`
+   * are read -- none of which depends on the caster's Intellect.
+   * ========================================================================
+   */
+  arcaneBlastAura(0),
 ];

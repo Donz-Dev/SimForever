@@ -7,7 +7,6 @@ import type {
 } from '../../engine';
 import { applyHealing, dealDamage, seconds } from '../../engine';
 import type { ClassId } from '../character';
-import { EUREKA } from './auras';
 
 /**
  * Outcomes where an attack LANDED.
@@ -31,21 +30,32 @@ const LANDED: readonly AttackOutcome[] = ['hit', 'crit', 'block', 'glance', 'cru
 /**
  * Chance per qualifying strike, in percentage points, by class.
  *
- * The owner states the split by class and the client states it by role --
- * "10% for casters, 5% for melee" -- and the two agree on all six classes an
- * Undead can be. The owner's enumeration is used because it names classes
- * rather than a role nothing in this project computes.
+ * ---------------------------------------------------------------------------
+ * TRIPLED AND QUADRUPLED BY THE RACIAL PATCH, AND THE SPLIT IS STILL THE SAME
+ * SHAPE. "Now has a 30% chance to activate for casters and a 20% chance to
+ * activate for Paladins/Rogues/Warriors, as well as a 25 second internal
+ * cooldown" -- so the note names the same two groups the owner and the client
+ * both named, with the three melee classes enumerated exactly as the owner
+ * had them. It was 10% and 5%.
+ *
+ * THE RATE AND THE COOLDOWN MOVED TOGETHER AND MUST BE READ TOGETHER, which
+ * the note says outright: the point is "to make benefit more consistent", so
+ * the per-strike chance went up by 4x-6x and the window that suppresses it
+ * went from 1 second to 25. Taking either half alone gets it badly wrong in
+ * opposite directions -- the rate alone is six times the procs, the cooldown
+ * alone is a twenty-fifth of them.
+ * ---------------------------------------------------------------------------
  *
  * A CLASS ABSENT HERE GETS NOTHING rather than a default, so a Druid or Shaman
- * -- neither of which an Undead can be -- cannot pick up a plausible 5%.
+ * -- neither of which an Undead can be -- cannot pick up a plausible 20%.
  */
 export const TOUCH_OF_THE_GRAVE_CHANCE: Partial<Record<ClassId, number>> = {
-  warrior: 5,
-  paladin: 5,
-  rogue: 5,
-  priest: 10,
-  mage: 10,
-  warlock: 10,
+  warrior: 20,
+  paladin: 20,
+  rogue: 20,
+  priest: 30,
+  mage: 30,
+  warlock: 30,
 };
 
 /** The drain, as a fraction of the Undead's MAXIMUM health. */
@@ -54,19 +64,32 @@ export const TOUCH_OF_THE_GRAVE_HEALTH_FRACTION = 0.05;
 /**
  * And it cannot fire again inside this window.
  *
- * FROM THE CLIENT AND NOT FROM THE OWNER, which is why it is called out. The
- * owner's statement of this racial is long and precise and says nothing about
- * an internal cooldown; `racials.js` ends its tooltip "1 sec internal
- * cooldown." A preferred source being SILENT is not the same as it disagreeing,
- * so both are taken -- the same reading that kept Shadowburn's Soul Shard when
- * `foreverchanges.pro` carried no reagent field to contradict it.
+ * ===========================================================================
+ * TWENTY-FIVE SECONDS, FROM THE PATCH NOTE, WHERE IT WAS ONE FROM THE CLIENT.
  *
- * IT BINDS HARD ON A ROGUE AND BARELY AT ALL ON A WARLOCK, which is worth
- * knowing before reading the measurement: a Rogue makes several strikes a
- * second across two weapons, so a second is a long time; a Warlock casts about
- * one spell per global cooldown and is almost never refused.
+ * The note states it in the same sentence as the new rates -- "as well as a 25
+ * second internal cooldown" -- and it is the half that decides what this
+ * racial is now worth. The old 1 second came from `racials.js` and from
+ * nowhere else: the owner's own long statement of this trait never mentioned a
+ * cooldown at all, which was a silence rather than a disagreement.
+ *
+ * IT IS NOW THE BINDING CONSTRAINT ON EVERY CLASS, which is the inversion
+ * worth writing down. At 1 second the cooldown bit hard on a Rogue making
+ * several strikes a second and barely at all on a Warlock casting once per
+ * global cooldown -- so the per-strike CHANCE was what decided the rate. At 25
+ * seconds in a 60-second fight the ceiling is between two and three procs for
+ * ANY build, and a 20-30% chance per action reaches that ceiling almost at
+ * once: a Rogue making ~90 qualifying strikes a fight will win its first roll
+ * within a second or two of each window opening.
+ *
+ * SO THE CLASS SPLIT NOW BARELY MATTERS, AND THAT IS THE POINT OF THE CHANGE.
+ * "Proc chance and cooldown adjusted to make benefit more consistent" -- the
+ * 30/20 split still decides how fast a window is claimed after it opens, and
+ * no longer decides how many windows there are. Expect the five Undead presets
+ * to converge rather than to scale with their old 10-or-5.
+ * ===========================================================================
  */
-export const TOUCH_OF_THE_GRAVE_INTERNAL_COOLDOWN_MS = seconds(1);
+export const TOUCH_OF_THE_GRAVE_INTERNAL_COOLDOWN_MS = seconds(25);
 
 /** The id the drain's own damage and healing are reported under. */
 export const TOUCH_OF_THE_GRAVE_ABILITY_ID = 'touch_of_the_grave';
@@ -382,11 +405,21 @@ function drainWithTouchOfTheGrave(
     abilityId: TOUCH_OF_THE_GRAVE_ABILITY_ID,
     abilityName: TOUCH_OF_THE_GRAVE_NAME,
     /*
-     * SHADOW, WHICH IS WHAT CARRIES THE OWNER'S ONE EXCEPTION. The drain is
-     * fixed by the Undead's own health and is still shadow damage, so Curse of
-     * the Elements and Improved Shadow Bolt on the TARGET raise it --
-     * and `ignoresAttackerDamageScaling` is what stops the CASTER'S Shadow
-     * Mastery and Shadow Weaving doing the same.
+     * STILL SHADOW, AND THE EXCEPTION THAT USED TO HANG OFF IT IS GONE.
+     *
+     * The owner's original ruling was "only scales off your Hit Points BUT it
+     * does scale if the target is vulnerable", so the school mattered: Curse of
+     * the Elements and Improved Shadow Bolt on the TARGET raised the drain while
+     * `ignoresAttackerDamageScaling` stopped the CASTER'S Shadow Mastery and
+     * Shadow Weaving doing the same. The racial patch removed that exception --
+     * "no longer scales with Shadow increases on the target or the caster" --
+     * so `ignoresTargetSchoolScaling` closes the other side.
+     *
+     * THE SCHOOL IS KEPT ANYWAY AND IS NOT NOW DEAD WEIGHT. It still decides
+     * resistance (nothing, by the owner's ruling), it is what the damage table
+     * reports the drain under, and it is the honest description of the effect.
+     * Changing it to `physical` to "turn the scaling off" would be the shortcut
+     * that lands a shadow drain in a physical row and hands it to armor.
      */
     school: 'shadow',
     /*
@@ -413,6 +446,19 @@ function drainWithTouchOfTheGrave(
      */
     cannotCrit: true,
     ignoresAttackerDamageScaling: true,
+    /*
+     * "TOUCH OF THE DEAD NO LONGER SCALES WITH SHADOW INCREASES ON THE TARGET
+     * OR THE CASTER."
+     *
+     * THE NOTE NAMES IT "TOUCH OF THE DEAD" AND THE ABILITY IS "TOUCH OF THE
+     * GRAVE", which is recorded rather than quietly reconciled: the two notes
+     * sit in the same Undead block, the second plainly continues the first, and
+     * the drain is the only part of this racial that has ever scaled with
+     * anything. No other Undead trait, ability or aura in the client carries
+     * either name. So this is read as the drain -- flagged for the owner as a
+     * naming question, not as an ambiguity about which effect was meant.
+     */
+    ignoresTargetSchoolScaling: true,
     /*
      * AND NO `weaponSlot`, the same shape a seal and a poison already have: the
      * drain is triggered BY a weapon use and is not one, so it cannot proc a
@@ -466,78 +512,3 @@ function drainWithTouchOfTheGrave(
 // Gnome: Eureka!
 // ---------------------------------------------------------------------------
 
-/**
- * The pair of reactions that spend one Eureka! charge per damaging cast.
- *
- * ============================================================================
- * TWO REACTIONS AND ONE CLOSURE, because neither half can answer the question
- * alone.
- *
- * A CAST reaction knows when a cast ENDED and can read `cast.final`, which is
- * the only way to treat a channel as one cast rather than five. It cannot know
- * whether the cast dealt any non-periodic damage, and the ability cannot tell
- * it: Rupture and Serpent Sting both declare a combat table and deal no direct
- * damage, so `requiresAttackTable` would spend a charge on either.
- *
- * A DAMAGE reaction knows exactly that, because `amount` is on the event in
- * front of it and a tick never reaches `dealt` at all. It does not know when
- * the cast is over.
- *
- * So the damage half MARKS and the cast half SPENDS. What makes that work is
- * `runCast`'s own order: `onCast` deals the damage, its `dealt` reactions run
- * from inside `dealDamage`, and `runCastReactions` runs after both.
- *
- * AND IT IS A LATCH THAT SOMETHING CLEARS, which this project warns about by
- * name -- "a latch nobody cleared would make Seal Fate fire once a FIGHT". The
- * clearer is the spender, which runs on every final cast whether it spends or
- * not, so no mark can outlive the cast that set it.
- *
- * THE CLOSURE IS ONLY SAFE BECAUSE THIS IS BUILT PER CHARACTER, the same reason
- * Seal Fate's per-use cap and Windfury's internal cooldown can live in one.
- * ============================================================================
- */
-export function eurekaReactions(): { readonly marker: Reaction; readonly spender: CastReaction } {
-  let dealtNonPeriodicDamage = false;
-
-  const marker: Reaction = {
-    id: 'eureka_mark',
-    on: 'dealt',
-    outcomes: LANDED,
-    canTrigger: (_context, actor, attack) =>
-      /*
-       * ONLY WHILE THE BUFF IS UP, so a Gnome between cooldowns does no
-       * bookkeeping at all.
-       */
-      actor.auras.has(EUREKA.id) &&
-      attack.amount > 0 &&
-      /*
-       * AN ABILITY, NOT A SWING. "Your next 3 ... damaging ABILITIES", and an
-       * auto-attack is not one -- it carries no ability id, the same test
-       * `abilityModifiers` uses to skip swings. A Gnome Warrior's Heroic Strike
-       * spends a charge and its auto-attacks do not.
-       */
-      attack.abilityId !== undefined,
-    onTrigger: () => {
-      dealtNonPeriodicDamage = true;
-    },
-  };
-
-  const spender: CastReaction = {
-    id: 'eureka_spend',
-    /*
-     * `cast.final` IS WHAT MAKES ONE CHANNEL ONE CHARGE, which is the owner's
-     * ruling. Without it the first of five Arcane Missiles would spend a charge
-     * and the last two would fire unbuffed -- a smaller number, no error, and
-     * the opposite of what the Arcane list is built around.
-     */
-    canTrigger: (_context, actor, cast) => cast.final && actor.auras.has(EUREKA.id),
-    onTrigger: (context, actor) => {
-      const spend = dealtNonPeriodicDamage;
-      // Cleared whether or not it spent, so no mark survives its own cast.
-      dealtNonPeriodicDamage = false;
-      if (spend) actor.auras.consumeStack(context, EUREKA.id);
-    },
-  };
-
-  return { marker, spender };
-}

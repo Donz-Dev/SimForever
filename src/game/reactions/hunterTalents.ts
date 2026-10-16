@@ -1,4 +1,4 @@
-import type { AuraDefinition } from '../../engine';
+import type { AttackTableKind, AuraDefinition } from '../../engine';
 import { flat, isWeaponUse, seconds } from '../../engine';
 import type { TalentReactionBuilder } from './warriorTalents';
 import { DEADLY_ASPECTS, FRENZY, laceratingStrikesAura } from '../auras/hunter';
@@ -181,8 +181,38 @@ export const laceratingStrikes: TalentReactionBuilder = (percentOfDamage) => ({
  * constants rather than a rank the builder could not reach. Nature's Grace sets
  * the same precedent on the Druid.
  *
- * ANY CRITICAL STRIKE, which is what the tooltip says -- no weapon test, so a
- * Serpent Sting tick's crit opens the window as readily as a Raptor Strike's.
+ * ----------------------------------------------------------------------------
+ * AND IT IS NO LONGER ANY CRITICAL STRIKE, WHICH THE PATCH NARROWED TWICE OVER.
+ *
+ * "Resourcefulness now correctly activates when landing a critical strike, but
+ * it has been changed to only activating on melee and ranged ABILITY critical
+ * strikes to prevent spamming. Is not activated by Traps."
+ *
+ * It used to fire on any crit with no test at all -- a Serpent Sting tick's
+ * crit opened the window as readily as a Raptor Strike's, which is what the
+ * note means by spamming.
+ *
+ * `melee-special` AND `ranged-special`, WHICH IS THE WORD "ABILITY" READ THE
+ * WAY THIS PROJECT ALREADY READS IT. A tooltip saying "abilities" stops at the
+ * special tables and a tooltip saying "weapons" reaches the swing, so an
+ * AUTO-ATTACK crit no longer opens the window either -- which the note does not
+ * name and which follows from the word it does use. Said out loud because a
+ * Hunter's auto-shot is most of its crits, so this is the larger half of the
+ * narrowing by some distance.
+ *
+ * AND THE TRAPS NEED THEIR OWN EXCLUSION, which is the part no table test
+ * covers: both traps roll NO attack table -- they cannot miss -- and crit
+ * through `critFrom: 'ranged-special'`. So a table check alone would have let
+ * a trap's burn tick straight through the `ranged-special` arm, and the note
+ * excludes them by name. `attackTable` is what separates the two: it is
+ * undefined for a trap and set for a real ability, which is exactly the
+ * distinction `AttackEvent.attackTable` exists to answer.
+ *
+ * NOT A LIST OF TRAP IDS, deliberately. An exclusion list fails the generous
+ * way -- a trap missing from it fires when it should not, and a proc that
+ * fires too often looks exactly like one that works -- and the owner's own
+ * "like demoralizing shout" wording invited exactly that on Touch of the
+ * Grave. Reading the table is structural and covers the next trap for free.
  * ----------------------------------------------------------------------------
  */
 export const RESOURCEFULNESS_REGEN_BYPASS_PERCENT = 50;
@@ -196,11 +226,29 @@ export const RESOURCEFULNESS_REGEN: AuraDefinition = {
   statModifiers: [flat('manaRegenBypass', RESOURCEFULNESS_REGEN_BYPASS_PERCENT)],
 };
 
+/**
+ * The two tables "melee and ranged ABILITY critical strikes" names.
+ *
+ * `-special` ONLY. The `-auto` tables are the swing and the shot, which
+ * "ability" excludes -- and `spell` is not a Hunter concern but is excluded by
+ * the same list rather than by an assumption about the class.
+ */
+const RESOURCEFULNESS_TABLES: readonly AttackTableKind[] = ['melee-special', 'ranged-special'];
+
 export const resourcefulness: TalentReactionBuilder = (chancePercent) => ({
   id: 'resourcefulness',
   on: 'dealt',
   outcomes: ['crit'],
-  canTrigger: (context) => context.rng.rollChance(chancePercent / 100),
+  canTrigger: (context, _actor, attack) =>
+    /*
+     * THE TABLE THE ATTACK ACTUALLY ROLLED, which is the only thing on the
+     * event that can answer this. A trap declares NO table and crits through
+     * `critFrom`, so an undefined table is excluded here by construction --
+     * which is both halves of the note at once: abilities only, and not traps.
+     */
+    attack.attackTable !== undefined &&
+    RESOURCEFULNESS_TABLES.includes(attack.attackTable) &&
+    context.rng.rollChance(chancePercent / 100),
   onTrigger: (context, actor) => {
     context.applyAura(actor, RESOURCEFULNESS_REGEN, actor.id);
   },

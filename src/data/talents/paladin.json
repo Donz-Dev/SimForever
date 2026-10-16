@@ -351,7 +351,7 @@
      "tier": 20,
      "requires": null,
      "requiresRanks": null,
-     "description": "Gives you a 40% chance to gain an extra attack after Blocking a melee attack and a 100% chance to gain an extra attack after being the victim of a non-periodic critical strike."
+     "description": "Gives you a 40% chance to gain an extra attack after Blocking a melee attack and a 100% chance to gain an extra attack after being the victim of a non-periodic critical strike. Cannot occur more often than once every 1.5 sec."
     },
     {
      "row": 5,

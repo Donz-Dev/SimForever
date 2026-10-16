@@ -591,8 +591,10 @@ export const IMMOLATION_TRAP_ABILITY: Ability = {
     'It is placed on the ground and burns "the first enemy to approach", and ' +
     'the engine has no positions -- so on the ruleset owner’s ruling it ' +
     'triggers instantly when cast. Its one-minute life as an untriggered trap ' +
-    'and its 10-yard radius are the two clauses that go with that. By the same ' +
-    'ruling it scales with neither attack power nor spell power.',
+    'and its 10-yard radius are the two clauses that go with that. It scales ' +
+    'with no SPELL power, which is still that ruling -- but it now takes 5% of ' +
+    'ATTACK power over its duration, which the patch note added and which ' +
+    'reverses the "no AP scaler" half of it.',
 };
 
 /**
@@ -681,8 +683,12 @@ export const EXPLOSIVE_TRAP_ABILITY: Ability = {
     'engine has no positions -- so on the ruleset owner’s ruling it triggers ' +
     'instantly when cast, the same ruling Immolation Trap runs on. Its ' +
     'one-minute life as an untriggered trap goes with that, and so does "to all ' +
-    'within 10 yards": there is one target. By the same ruling it scales with ' +
-    'neither attack power nor spell power. "Only one Fire trap can be active at ' +
+    'within 10 yards": there is one target. It scales with no SPELL power, ' +
+    'which is still that ruling -- but its BURN now takes 5% of ATTACK power ' +
+    'over its duration, which the patch note added. Its INITIAL HIT keeps the ' +
+    'owner’s "no scaler", because the note names one figure for two ' +
+    'abilities and does not say which half of this one carries it. ' +
+    '"Only one Fire trap can be active at ' +
     'a time" is not enforced between the two traps either -- they have separate ' +
     'cooldowns and no list casts both.',
 };

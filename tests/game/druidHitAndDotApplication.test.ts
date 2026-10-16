@@ -41,7 +41,13 @@ const NATURES_REACH_HIT = 4;
  * Nature's Reach grants. Written out by hand like the figure above, so this
  * stays a test of the ruleset rather than of the transcription.
  */
-const TAUREN_ENDURANCE_HIT = 1;
+/*
+ * TAUREN ENDURANCE NO LONGER GRANTS HIT. It was "+1% chance to hit" and the
+ * racial patch replaced that clause with 2% critical damage and healing, so
+ * this file's two hit assertions subtract one source fewer than they did.
+ * Recorded here rather than deleted silently, because the figure appearing in
+ * a Druid test at all is what a reader would otherwise go looking for.
+ */
 
 const spellMiss = (hitChance: number): number => {
   const caster = makeAttacker({ stats: { hitChance } });
@@ -155,10 +161,22 @@ describe("Nature's Reach, which was doing neither of its clauses", () => {
         talents: { ...built.talents, nature_s_reach: 0 },
       } as never)!;
 
+      /*
+       * THE TAUREN HALF IS GONE, AND THAT IS THE RACIAL PATCH RATHER THAN THIS
+       * TALENT. Endurance was "+5% health and +1% hit" and is now "+5% health
+       * and +2% critical damage and healing", so the only thing left on top of
+       * the gear here is Nature's Reach's 4 points.
+       *
+       * THE CONTROL IS STILL A NIGHT ELF WITH THE TALENT UNSPENT, which is now
+       * doing less work and is kept anyway: it reads the gear's own figure off
+       * the character rather than trusting the template, which is why this test
+       * survived the last two gear changes. What it no longer has to subtract
+       * is a racial.
+       */
       const fromGear = withNeither.stats.effective.hitChance;
       expect(fromGear, preset).toBeGreaterThan(0);
       expect(withBoth.stats.effective.hitChance, preset).toBeCloseTo(
-        fromGear + TAUREN_ENDURANCE_HIT + NATURES_REACH_HIT,
+        fromGear + NATURES_REACH_HIT,
         6,
       );
     }
@@ -191,8 +209,9 @@ describe("Nature's Reach, which was doing neither of its clauses", () => {
      */
     const moonkinHit = characterAtCombatStart(PRESETS_BY_ID.get('druid_moonkin')!.build())!.stats
       .effective.hitChance;
-    // The racial and the talent are part of it, so the total has to exceed them.
-    expect(moonkinHit).toBeGreaterThan(TAUREN_ENDURANCE_HIT + NATURES_REACH_HIT);
+    // The talent is part of it, so the total has to exceed it. The Tauren
+    // racial no longer contributes hit at all -- see above.
+    expect(moonkinHit).toBeGreaterThan(NATURES_REACH_HIT);
     const moonkin = tableFor('druid_moonkin', 'spell');
     expect(moonkin.talented).toBe(moonkin.untalented - toRollUnits(moonkinHit));
     for (const preset of ['druid_cat', 'druid_bear'] as const) {
@@ -333,12 +352,28 @@ describe('the Moonkin end to end', () => {
     );
 
     /*
-     * AND IT IS WORTH SAYING THAT THIS BUILD IS NOW AT THE CAP. The owner's
-     * usable spell hit cap is 16 points, the template asks for 110 rating and
-     * the racial and the talent add five more -- so the last of them buys
-     * nothing. That is the ladder doing its job rather than a mistake, and
-     * `statHeadroom.test.ts` is where it is reported.
+     * ========================================================================
+     * AND IT HAS JUST COME OFF THE FLOOR, WHICH IS THE RACIAL PATCH REACHING
+     * A FIGURE THROUGH THE GEAR.
+     *
+     * This asserted `1` -- the owner's stated minimum spell miss -- because
+     * the template's 110 hit rating plus Nature's Reach's 4 plus TAUREN
+     * ENDURANCE'S 1 came to exactly the 16-point usable cap, so 17 - 16 = 1
+     * and the build sat on the floor. The patch replaced Endurance's hit
+     * clause with critical damage, so the Moonkin carries 15 and its spells
+     * miss 2% where they missed 1%.
+     *
+     * THAT IS A REAL DPS LOSS ON TOP OF WHATEVER THE CRIT DAMAGE IS WORTH, and
+     * it is the sharpest of the five Tauren cases because it DOUBLES the miss
+     * rate rather than adding a point to it -- the floor made the last point
+     * of hit unusually valuable here. Pinned at 2 rather than loosened to "at
+     * least 1", so restoring the point in a template is a visible change.
+     *
+     * The owner's templates are where this would be fixed if it should be;
+     * `statHeadroom.test.ts` carries the question for all five builds.
+     * ========================================================================
      */
-    expect(expectedMiss).toBe(1);
+    expect(hit).toBeCloseTo(15, 6);
+    expect(expectedMiss).toBe(2);
   });
 });

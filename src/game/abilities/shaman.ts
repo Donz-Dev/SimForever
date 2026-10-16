@@ -17,6 +17,7 @@ import {
   LAVA_BURST_SP_COEFFICIENT,
   LIGHTNING_BOLT_SP_COEFFICIENT,
 } from '../combat/coefficients';
+import { baseManaFor } from '../character';
 
 /**
  * Shaman abilities, from the WoW Forever beta client (build 1.60.1.69876).
@@ -67,6 +68,27 @@ const PHYSICAL = 'physical' as const;
 /** Said once, because every nuke in this file says it. */
 /** The midpoint of a stated range. The combat table supplies the spread. */
 const midpoint = (low: number, high: number) => (low + high) / 2;
+
+/**
+ * A Shaman's base mana, which a "% of base mana" cost is a share of.
+ *
+ * ONE RACE'S ROW, the arrangement `PALADIN_BASE_MANA` already uses: base mana
+ * varies by race in `baseStats.ts` and a spell's cost does not, so the cost
+ * has to be resolved against the CLASS rather than against whoever is casting
+ * it. A Troll and a Tauren Shaman pay the same for Stormstrike.
+ */
+export const SHAMAN_BASE_MANA = baseManaFor('troll', 'shaman');
+
+/** Costs stated as a share of base mana, resolved once. */
+const shareOfBase = (fraction: number) => Math.round(SHAMAN_BASE_MANA * fraction);
+
+/**
+ * The max-rank cost, 35% off the capture's 485. See the ability.
+ *
+ * Named and rounded ONCE rather than written inline, so the arithmetic is
+ * visible and the day the real figure arrives there is one line to change.
+ */
+export const CHAIN_LIGHTNING_MANA = Math.round(485 * (1 - 0.35));
 
 /**
  * Spend Stormstrike's debuff, if it is up, and report the multiplier.
@@ -146,7 +168,31 @@ export const CHAIN_LIGHTNING_COEFFICIENT = CHAIN_LIGHTNING_SP_COEFFICIENT;
 export const CHAIN_LIGHTNING: Ability = {
   id: 'chain_lightning',
   name: 'Chain Lightning',
-  cost: { resource: 'mana', amount: 485 },
+  /*
+   * ==========================================================================
+   * "CHAIN LIGHTNING: MANA COST REDUCED BY APPROXIMATELY 35% ON ALL FOUR
+   * RANKS", AND "APPROXIMATELY" IS THE PROBLEM.
+   *
+   * 485 is the capture's own figure for the max rank, which is the only rank
+   * this project casts -- `import_forever_spells.mjs` writes max rank by
+   * construction. 35% off 485 is 315.25, and the note gives no exact value.
+   *
+   * 315 IS TAKEN AS THE ROUNDING OF A STATED PERCENTAGE RATHER THAN AS AN
+   * INVENTED NUMBER, which is a distinction worth being careful about. The
+   * note states an operation and an operand -- "reduced by approximately 35%"
+   * applied to a cost this project has from the client -- so the arithmetic is
+   * sourced even though the result is not quoted. That is different in kind
+   * from Fire Nova's "significantly reduced", which states no operation at all
+   * and is therefore left alone.
+   *
+   * THE WORD "APPROXIMATELY" IS DOING REAL WORK AND IS FLAGGED: Forever's own
+   * costs are round numbers, so the shipped figure is more likely 315 or 310
+   * than 315.25, and across FOUR ranks a single percentage will not land
+   * exactly on all of them. A QUESTION FOR THE OWNER, and cheap to settle --
+   * one re-read of `foreverchanges.pro` once the build lands.
+   * ==========================================================================
+   */
+  cost: { resource: 'mana', amount: CHAIN_LIGHTNING_MANA },
   castTimeMs: CHAIN_LIGHTNING_CAST_MS,
   cooldownMs: seconds(6),
   attackTable: 'spell',
@@ -425,7 +471,20 @@ export const FIRE_NOVA: Ability = {
 export const STORMSTRIKE: Ability = {
   id: 'stormstrike',
   name: 'Stormstrike',
-  cost: { resource: 'mana', amount: 125 },
+  /*
+   * EIGHT PERCENT OF BASE MANA, WHERE IT WAS A FLAT 125.
+   *
+   * "Stormstrike's cost changed to 8% of Base Mana (was 125 Mana at all points
+   * in the game)" -- and the note's parenthetical matches both this file and
+   * the spellbook capture exactly, which is what makes it a clean change.
+   *
+   * IT IS A RISE HERE, which is worth stating because "a percentage of base
+   * mana" reads as a scaling convenience rather than as a nerf: a Shaman's base
+   * mana at 60 puts 8% well above 125, so Enhancement pays more per Stormstrike
+   * than it did. The Enhancement list casts it on cooldown, so what this costs
+   * is sustain rather than casts -- `probe_resources.ts` is where that shows.
+   */
+  cost: { resource: 'mana', amount: shareOfBase(0.08) },
   cooldownMs: seconds(8),
   attackTable: 'melee-special',
   onCast: ({ simulation, caster, target, ability }) => {

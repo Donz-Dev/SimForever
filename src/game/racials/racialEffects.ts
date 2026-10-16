@@ -62,8 +62,16 @@ import type { RacialDefinition, RacialTrait } from './Racial';
 // and throws on load. Grouping them here is what makes that impossible.
 // ---------------------------------------------------------------------------
 
-/** "Increases your spellcasting, melee, and ranged Haste by 1%" for a Skyborne. */
-export const SKYBORNE_HASTE_PERCENT = 1;
+/**
+ * "Increases your spellcasting, melee, and ranged Haste by 3%" for a Skyborne.
+ *
+ * WAS 1 UNTIL THE RACIAL PATCH, which raised it to 3 with nothing else about
+ * the trait changing: "Wind Blessed: Haste bonus increased to 3% (was 1%)".
+ * The client's own tooltip still reads 1% at build 1.60.1.70291, so the NOTE
+ * is the later statement and wins -- the same reading Swipe's 3% attack power
+ * coefficient already takes against a sheet that says 10%.
+ */
+export const SKYBORNE_HASTE_PERCENT = 3;
 /**
  * The same, in rating.
  *
@@ -77,18 +85,64 @@ const SKYBORNE_HASTE_RATING = SKYBORNE_HASTE_PERCENT * RATING_PER_PERCENT.haste;
 
 /** "+5% Spirit" for a Human. */
 export const HUMAN_SPIRIT_PERCENT = 0.05;
-/** "+2% Global Crit Chance from all sources" while holding a sword. */
-export const SWORD_SPECIALIZATION_CRIT = 2;
-/** "+1% Global Crit Chance from all sources" while holding a mace. */
-export const MACE_SPECIALIZATION_CRIT = 1;
-/** "+1% Global Crit Chance from all sources" while holding an axe. */
-export const AXE_SPECIALIZATION_CRIT = 1;
+/**
+ * "Ruthless: 2% increased critical strike chance" for a Human.
+ *
+ * ---------------------------------------------------------------------------
+ * IT REPLACED SWORD SPECIALIZATION, AND WHAT WENT IS THE CONDITION RATHER
+ * THAN THE NUMBER. The trait was "+2% Global Crit Chance from all sources if
+ * holding a sword or two-handed sword" and is now 2% unconditionally, so the
+ * same two stats are granted and `requires` is simply gone.
+ *
+ * THE PET STILL COMES FOR FREE, which is the half worth checking rather than
+ * assuming: the owner's clause about a weapon specialization reaching the pet
+ * was never about the WEAPON -- it followed from the effect being a STAT, and
+ * `createPet` inherits 100% of its owner's crit. Dropping the condition
+ * cannot take that away.
+ * ---------------------------------------------------------------------------
+ */
+export const RUTHLESS_CRIT = 2;
+/**
+ * "Savage: 1% increased critical strike chance" for an Orc.
+ *
+ * Replaced Axe Specialization, the same way and with the same number it had.
+ */
+export const SAVAGE_CRIT = 1;
+/**
+ * "2% increased critical damage and healing", which Dwarf EARTH FURY and
+ * Tauren ENDURANCE both grant.
+ *
+ * ---------------------------------------------------------------------------
+ * ONE CONSTANT FOR TWO RACES, because the patch note states the identical
+ * clause for each -- the arrangement `PARTY_CRIT_AURA_PERCENT` already uses
+ * for a figure two sources share. Two copies would be two places to drift.
+ *
+ * EARTH FURY REPLACED MACE SPECIALIZATION AND IS A DIFFERENT KIND OF EFFECT,
+ * which is the thing to notice rather than the number: the old trait was crit
+ * CHANCE conditional on holding a mace, and this is crit DAMAGE
+ * unconditionally. So a Dwarf holding a mace now carries less crit chance and
+ * some crit damage where it used to carry only the first, and the effect kind
+ * changed from `stat` to `critDamageBonus`.
+ *
+ * ENDURANCE'S 1% HIT IS GONE AND ITS HEALTH IS NOT. The note reads "Now grants
+ * 2% increased critical damage and healing (instead of 1% hit chance)", which
+ * names the hit clause as the thing replaced and says nothing at all about the
+ * +5% total health -- so that half stays, and the trait is now a health
+ * multiplier and a crit damage bonus.
+ *
+ * THE HEALING HALF IS RULED OUT on both, which has to be DECLARED rather than
+ * left absent: a trait with one clause modelled and one clause silently
+ * missing reads as fully modelled, and the census's `Fully` column is the one
+ * nothing re-reads.
+ * ---------------------------------------------------------------------------
+ */
+export const CRIT_DAMAGE_RACIAL_PERCENT = 2;
+
 /** "+1% Chance to Dodge" for a Night Elf. */
 export const QUICKNESS_DODGE = 1;
 /** "Total Health increased by 5%" for a Tauren. */
 export const ENDURANCE_HEALTH_PERCENT = 0.05;
-/** "chance to hit for melee, ranged, and spells increased by 1%". */
-export const ENDURANCE_HIT = 1;
+
 /** "Maximum Mana, Rage or Energy increased by 5%" for a Gnome. */
 export const EXPANSIVE_MIND_PERCENT = 0.05;
 
@@ -145,13 +199,16 @@ const ELEMENTAL_INSIGHT: RacialTrait = {
 const WIND_BLESSED: RacialTrait = {
   id: 'wind_blessed',
   name: 'Wind Blessed',
-  text: 'Increases your spellcasting, melee, and ranged Haste by 1%.',
+  text: 'Increases your spellcasting, melee, and ranged Haste by 3%.',
   effects: [
     {
       kind: 'stat',
       /*
-       * ONE POINT OF HASTE, AND IT REACHES ALL THREE THINGS THE TOOLTIP NAMES
-       * WITHOUT ANY CODE SAYING SO.
+       * THREE POINTS OF HASTE, AND IT REACHES ALL THREE THINGS THE TOOLTIP
+       * NAMES WITHOUT ANY CODE SAYING SO.
+       *
+       * WAS ONE POINT until the racial patch raised it. Only the number moved;
+       * see `SKYBORNE_HASTE_PERCENT`.
        *
        * `hasteRating` through `RATING_PER_PERCENT.haste` is the idiom the "+1%
        * Haste" armour enchant already uses, and the owner's statement about
@@ -190,27 +247,12 @@ const WIND_BLESSED: RacialTrait = {
  * the pet's crit actually moves rather than trusting this paragraph.
  * ============================================================================
  */
-function weaponSpecialization(
-  id: string,
-  name: string,
-  text: string,
-  crit: number,
-  weaponTypes: readonly ('sword' | 'mace' | 'axe')[],
-): RacialTrait {
+function unconditionalCrit(id: string, name: string, text: string, crit: number): RacialTrait {
   return {
     id,
     name,
     text,
-    effects: [
-      {
-        kind: 'stat',
-        stats: { critChance: crit, spellCritChance: crit },
-        // Two-handed and one-handed are the same `WeaponType` here, which is
-        // what makes "a sword or two-handed sword" one entry: `twoHanded` is a
-        // separate field and this trait does not read it.
-        requires: { weaponTypes },
-      },
-    ],
+    effects: [{ kind: 'stat', stats: { critChance: crit, spellCritChance: crit } }],
   };
 }
 
@@ -221,13 +263,11 @@ function weaponSpecialization(
 const HUMAN: RacialDefinition = {
   race: 'human',
   traits: [
-    weaponSpecialization(
-      'sword_specialization',
-      'Sword Specialization',
-      'Increases your critical strike chance with all spells and attacks by 2% ' +
-        'while you have a sword or two-handed sword equipped.',
-      SWORD_SPECIALIZATION_CRIT,
-      ['sword'],
+    unconditionalCrit(
+      'ruthless',
+      'Ruthless',
+      'Increases your critical strike chance with all spells and attacks by 2%.',
+      RUTHLESS_CRIT,
     ),
     {
       id: 'the_human_spirit',
@@ -327,14 +367,26 @@ const DWARF: RacialDefinition = {
         },
       ],
     },
-    weaponSpecialization(
-      'mace_specialization',
-      'Mace Specialization',
-      'Increases your critical strike chance with all spells and attacks by 1% ' +
-        'while you have a mace or two-handed mace equipped.',
-      MACE_SPECIALIZATION_CRIT,
-      ['mace'],
-    ),
+    {
+      id: 'earth_fury',
+      name: 'Earth Fury',
+      text: 'Increases your critical damage and healing by 2%.',
+      effects: [
+        { kind: 'critDamageBonus', percent: CRIT_DAMAGE_RACIAL_PERCENT },
+        {
+          kind: 'unmodelled',
+          text: 'Increases your critical healing by 2%.',
+          /*
+           * DECLARED RATHER THAN LEFT ABSENT. The damage half is modelled, so
+           * a missing healing entry would put this trait in the census's
+           * `Fully` column -- the one column nothing re-reads. The same
+           * sentence and the same ruling as Tauren Endurance's healing half.
+           */
+          reason: 'Critical healing is healing throughput.',
+          scope: 'healing',
+        },
+      ],
+    },
     {
       id: 'big_game_hunter',
       name: 'Big Game Hunter',
@@ -547,7 +599,7 @@ const ORC: RacialDefinition = {
       id: 'blood_fury',
       name: 'Blood Fury',
       text:
-        'Instant, 2 min cooldown. Increases Attack Power and Spell Power by 10% for 15 sec.',
+        'Instant, 3 min cooldown. Increases Attack Power and Spell Power by 10% for 15 sec.',
       effects: [{ kind: 'grantAbility', abilityId: 'blood_fury' }],
     },
     {
@@ -563,13 +615,11 @@ const ORC: RacialDefinition = {
         },
       ],
     },
-    weaponSpecialization(
-      'axe_specialization',
-      'Axe Specialization',
-      'Increases your critical strike chance with all spells and abilities by 1% ' +
-        'while you have an axe or a two-handed axe equipped.',
-      AXE_SPECIALIZATION_CRIT,
-      ['axe'],
+    unconditionalCrit(
+      'savage',
+      'Savage',
+      'Increases your critical strike chance with all spells and attacks by 1%.',
+      SAVAGE_CRIT,
     ),
     {
       id: 'shatter_curse',
@@ -708,28 +758,35 @@ const TAUREN: RacialDefinition = {
     {
       id: 'endurance',
       name: 'Endurance',
-      text: 'Total Health increased by 5% and chance to hit increased by 1%.',
+      text: 'Total Health increased by 5% and critical damage and healing increased by 2%.',
       effects: [
         { kind: 'healthPercent', percent: ENDURANCE_HEALTH_PERCENT },
+        /*
+         * ========================================================================
+         * THE HIT CLAUSE IS GONE, AND THE HEALTH CLAUSE IS NOT.
+         *
+         * "Endurance: Now grants 2% increased critical damage and healing
+         * (instead of 1% hit chance)" -- the note names the hit half as the
+         * thing replaced and is silent about the +5% total health, so that
+         * half stays. A note is a later statement than the client, whose
+         * tooltip still reads the old wording at build 1.60.1.70291.
+         *
+         * WHAT IT IS WORTH CHANGED SHAPE AS WELL AS SIZE, which is the part a
+         * DPS figure will show. The old 1% hit was worth NOTHING to most
+         * Tauren presets and correctly so -- the usable melee and ranged hit
+         * cap is 8, there is no miss floor, and the Prot Warrior, the Cat and
+         * the Bear all sit at it. Crit damage has no cap and no floor, so this
+         * trait goes from inert on three of its builds to live on all of them,
+         * and a Tauren row moving where it never used to is the expected
+         * consequence rather than a bug.
+         * ========================================================================
+         */
+        { kind: 'critDamageBonus', percent: CRIT_DAMAGE_RACIAL_PERCENT },
         {
-          kind: 'stat',
-          /*
-           * ONE STAT FOR ALL THREE KINDS OF HIT, which is not a simplification.
-           *
-           * The owner's wording is "melee, ranged, and spells" and `hitChance`
-           * is exactly that: `attackChances` folds the character-wide stat into
-           * the melee, ranged AND spell branches, and the only hit this engine
-           * scopes more narrowly is a SCHOOL-scoped `hitBonus` on a modifier
-           * and an off-hand-only bonus per slot. Neither is what this is.
-           *
-           * AND IT IS WORTH NOTHING TO MOST TAUREN PRESETS, which is correct
-           * rather than a bug. The usable melee and ranged hit cap is 8 and
-           * there is no miss floor, so a build already at the cap collects
-           * nothing -- and the Prot Warrior, the Cat and the Bear are all
-           * there. Check hit against the cap before reading a 0.0 here as a
-           * failure to apply.
-           */
-          stats: { hitChance: ENDURANCE_HIT },
+          kind: 'unmodelled',
+          text: 'Increases your critical healing by 2%.',
+          reason: 'Critical healing is healing throughput.',
+          scope: 'healing',
         },
       ],
     },

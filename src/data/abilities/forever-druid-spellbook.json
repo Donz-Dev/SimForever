@@ -1,7 +1,7 @@
 {
  "class": "druid",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70170",
+ "build": "1.60.1.70291",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -735,8 +735,8 @@
    "cost": "320 Mana",
    "range": "30 yd range",
    "cast": "Instant",
-   "description": "Thorns sprout from the friendly target causing 22 Nature damage to attackers when hit. Lasts 10 min.",
-   "versusClassic": "changed"
+   "description": "Thorns sprout from the friendly target causing 18 Nature damage to attackers when hit. Lasts 10 min.",
+   "versusClassic": "same"
   },
   {
    "id": 5225,

@@ -30,8 +30,10 @@ import {
   MOONFIRE_DOT_DURATION_MS,
   NATURES_SWIFTNESS,
   NATURE_SPELLS,
-  PARTY_CRIT_AURA,
-  PARTY_CRIT_AURA_ID,
+  LEADER_OF_THE_PACK_AURA,
+  LEADER_OF_THE_PACK_AURA_ID,
+  MOONKIN_AURA,
+  MOONKIN_AURA_ID,
   PARTY_CRIT_AURA_PERCENT,
   RAKE_DOT,
   lengthened,
@@ -203,19 +205,34 @@ describe('a form is a combat style, so three talents can read it', () => {
     });
   });
 
-  it('grants the party crit aura in the right form and not in the wrong one', () => {
+  it('grants the right ONE of the two party crit auras per form', () => {
     /*
-     * THE SAME AURA FROM BOTH TALENTS, by the owner's ruling that Moonkin Aura
-     * and Leader of the Pack are one exclusive 3% -- so what the form gates is
-     * WHETHER the character has it, not which of two it gets.
+     * A DIFFERENT AURA FROM EACH TALENT NOW, which is what the patch split.
+     * The form still gates WHETHER the character has one; what is new is that
+     * it also decides WHICH, because Moonkin Form grants spell crit and Leader
+     * of the Pack grants melee and ranged crit.
+     *
+     * THE CROSS-CHECKS ARE THE POINT: a Moonkin must not pick up the melee
+     * aura and a feral must not pick up the spell one. Either mistake is
+     * invisible in a DPS figure -- a Moonkin does not swing and a Cat casts
+     * nothing on the spell table -- so it has to be asserted on the build.
      */
-    expect(buildIn('druid_moonkin', 'moonkin').grantedAuras.has(PARTY_CRIT_AURA_ID)).toBe(true);
-    expect(buildIn('druid_cat', 'cat').grantedAuras.has(PARTY_CRIT_AURA_ID)).toBe(true);
-    expect(buildIn('druid_bear', 'bear').grantedAuras.has(PARTY_CRIT_AURA_ID)).toBe(true);
+    const moonkin = buildIn('druid_moonkin', 'moonkin');
+    expect(moonkin.grantedAuras.has(MOONKIN_AURA_ID)).toBe(true);
+    expect(moonkin.grantedAuras.has(LEADER_OF_THE_PACK_AURA_ID)).toBe(false);
+
+    for (const [preset, style] of [
+      ['druid_cat', 'cat'],
+      ['druid_bear', 'bear'],
+    ] as const) {
+      const feral = buildIn(preset, style);
+      expect(feral.grantedAuras.has(LEADER_OF_THE_PACK_AURA_ID), preset).toBe(true);
+      expect(feral.grantedAuras.has(MOONKIN_AURA_ID), preset).toBe(false);
+    }
 
     // A feral allocation read in Moonkin form grants nothing and says why.
     const wrongForm = buildIn('druid_cat', 'moonkin');
-    expect(wrongForm.grantedAuras.has(PARTY_CRIT_AURA_ID)).toBe(false);
+    expect(wrongForm.grantedAuras.has(LEADER_OF_THE_PACK_AURA_ID)).toBe(false);
     expect(wrongForm.unmodelled.map((e) => e.talentId)).toContain('leader_of_the_pack');
   });
 
@@ -846,56 +863,116 @@ describe("Nature's Swiftness, the second caller of the one-shot cast rule", () =
   });
 });
 
-describe('Moonkin Aura and Leader of the Pack are ONE aura, by ruling', () => {
+describe('Moonkin Aura and Leader of the Pack, which the patch split in two', () => {
   /*
    * --------------------------------------------------------------------------
-   * THE RULESET OWNER: "These are all the same exclusive 3% global critical
-   * strike chance and do not stack." Three sources -- the Moonkin Form talent,
-   * the Leader of the Pack talent, and either of the two raid buff entries --
-   * and ONE `AuraDefinition` with one id, so `AuraCollection.apply` refreshes
-   * rather than stacking and any combination is worth 3%.
+   * THEY WERE ONE AURA ON THE OWNER'S RULING AND ARE NOW TWO ON A PATCH NOTE.
    *
-   * IT WAS TWO AURAS AND IT DOUBLE-DIPPED. Each talent used to share an id with
-   * the raid buff OF THE SAME NAME, which closed two of the three combinations
-   * and left the third open: a Moonkin carrying its own `moonkin_form` aura in a
-   * raid that selected `leader_of_the_pack` held two ids and read +6% crit --
-   * 24.243% spell crit against 21.243%. The older ruling was "handle it on the
-   * GUI", and `withRaidBuff` does switch one off when the other goes on; but
-   * that governs two raid buff entries and knows nothing about a TALENT, nor
-   * about a profile loaded from JSON with both ids already in its list.
+   *   "Moonkin Aura now only increases Spell Critical Strike chance"
+   *   "Leader of the Pack now only increases Melee and Ranged Critical Strike
+   *    chance"
+   *
+   * The owner had ruled "these are all the same exclusive 3% global critical
+   * strike chance and do not stack", and ONE `AuraDefinition` with one id was
+   * the whole of that: `AuraCollection.apply` refreshes a matching id rather
+   * than stacking, so any combination of the four sources was worth 3%.
+   *
+   * IT WAS TWO AURAS ONCE BEFORE AND IT DOUBLE-DIPPED, which is why the split
+   * had to be done carefully rather than by reverting. Each talent used to
+   * share an id with the raid buff OF THE SAME NAME, which closed two of the
+   * three combinations and left the third open: a Moonkin carrying its own
+   * `moonkin_form` aura in a raid that selected `leader_of_the_pack` held two
+   * ids and read +6% crit -- 24.243% spell crit against 21.243%. The older
+   * ruling was "handle it on the GUI", and `withRaidBuff` does switch one off
+   * when the other goes on; but that governs two raid buff entries and knows
+   * nothing about a TALENT, nor about a profile loaded from JSON with both ids
+   * already in its list.
+   *
+   * SO THE SHARED ID SURVIVES WITHIN EACH BUFF AND NOT ACROSS THE PAIR. That
+   * is the half of the old ruling that was about double-dipping, and it is
+   * still load-bearing; what is gone is the claim that the two are the same
+   * buff, which the note contradicts outright.
    * --------------------------------------------------------------------------
    */
-  it('is one definition that every source applies', () => {
-    expect(PARTY_CRIT_AURA.id).toBe(PARTY_CRIT_AURA_ID);
+  it('is two definitions now, one per attack type, each with its own id', () => {
+    expect(MOONKIN_AURA.id).toBe(MOONKIN_AURA_ID);
+    expect(LEADER_OF_THE_PACK_AURA.id).toBe(LEADER_OF_THE_PACK_AURA_ID);
+    expect(MOONKIN_AURA_ID).not.toBe(LEADER_OF_THE_PACK_AURA_ID);
     expect(PARTY_CRIT_AURA_PERCENT).toBe(3);
-    // The talent registry resolves the one id, and the old two are gone.
-    expect(TALENT_AURAS[PARTY_CRIT_AURA_ID]).toBe(PARTY_CRIT_AURA);
+
+    /*
+     * AND EACH NAMES ONLY ITS OWN STAT, which is the change. `critChance` is
+     * the stat BOTH the melee and the ranged tables read -- `critChanceFrom`
+     * is the engine's one crit function -- so "melee and ranged" is that one
+     * stat and spell crit is a genuinely separate one.
+     */
+    expect(MOONKIN_AURA.statModifiers?.map((m) => m.stat)).toEqual(['spellCritChance']);
+    expect(LEADER_OF_THE_PACK_AURA.statModifiers?.map((m) => m.stat)).toEqual(['critChance']);
+
+    // The talent registry resolves both ids, and the per-buff ids are gone.
+    expect(TALENT_AURAS[MOONKIN_AURA_ID]).toBe(MOONKIN_AURA);
+    expect(TALENT_AURAS[LEADER_OF_THE_PACK_AURA_ID]).toBe(LEADER_OF_THE_PACK_AURA);
     expect(TALENT_AURAS.leader_of_the_pack).toBeUndefined();
     expect(TALENT_AURAS.moonkin_form).toBeUndefined();
-    // And both RAID BUFF entries hand over that same definition.
-    for (const id of ['leader_of_the_pack', 'moonkin_form']) {
-      expect(RAID_BUFFS_BY_ID.get(id)?.aura, id).toBe(PARTY_CRIT_AURA);
-    }
+
+    // And each RAID BUFF entry hands over the matching definition.
+    expect(RAID_BUFFS_BY_ID.get('leader_of_the_pack')?.aura).toBe(LEADER_OF_THE_PACK_AURA);
+    expect(RAID_BUFFS_BY_ID.get('moonkin_form')?.aura).toBe(MOONKIN_AURA);
   });
 
-  it('is 3% however many times it is applied', () => {
+  it('is still 3% however many times ONE of them is applied', () => {
+    /*
+     * THE NO-DOUBLE-DIP HALF, UNCHANGED AND STILL THE REASON EACH BUFF HAS A
+     * SINGLE ID. A feral Druid's own talent and the raid's box are two routes
+     * to the same aura, and two ids would be +6% melee crit.
+     */
     const cat = druid('druid_cat', 'cat');
     const simulation = buildSimulation([cat, makeTarget()]);
     const before = cat.stats.get('critChance');
-    // The talent's, plus both raid buffs' -- three applications, one aura.
-    simulation.applyAura(cat, PARTY_CRIT_AURA, cat.id);
-    simulation.applyAura(cat, PARTY_CRIT_AURA, cat.id);
-    simulation.applyAura(cat, PARTY_CRIT_AURA, cat.id);
+    simulation.applyAura(cat, LEADER_OF_THE_PACK_AURA, cat.id);
+    simulation.applyAura(cat, LEADER_OF_THE_PACK_AURA, cat.id);
+    simulation.applyAura(cat, LEADER_OF_THE_PACK_AURA, cat.id);
     expect(cat.stats.get('critChance') - before).toBeCloseTo(PARTY_CRIT_AURA_PERCENT, 6);
-    expect(cat.auras.active.filter((aura) => aura.id === PARTY_CRIT_AURA_ID)).toHaveLength(1);
+    expect(
+      cat.auras.active.filter((aura) => aura.id === LEADER_OF_THE_PACK_AURA_ID),
+    ).toHaveLength(1);
   });
 
-  it('is 3% on a Moonkin whose raid runs the OTHER half, which used to be 6%', () => {
+  it('stacks ACROSS the pair, because they are no longer the same buff', () => {
     /*
-     * THE COMBINATION THAT WAS BROKEN, measured end to end through the real
-     * encounter rather than by applying auras by hand -- the talent arrives from
-     * `createPlayer` and the raid buff from `trainingDummyEncounter`, and the
-     * bug was precisely that those two paths produced different ids.
+     * ========================================================================
+     * THE INTENDED CONSEQUENCE OF THE SPLIT, AND THE ASSERTION THAT WOULD HAVE
+     * BEEN A BUG LAST WEEK.
+     *
+     * Under both, a character carries +3% spell AND +3% melee -- two buffs
+     * doing two different things, rather than one counted twice. Asserted
+     * explicitly because the old test in this slot asserted the OPPOSITE, and
+     * a reader who remembers it needs to see that the change was deliberate.
+     * ========================================================================
+     */
+    const cat = druid('druid_cat', 'cat');
+    const simulation = buildSimulation([cat, makeTarget()]);
+    const melee = cat.stats.get('critChance');
+    const spell = cat.stats.get('spellCritChance');
+
+    simulation.applyAura(cat, LEADER_OF_THE_PACK_AURA, cat.id);
+    simulation.applyAura(cat, MOONKIN_AURA, cat.id);
+
+    expect(cat.stats.get('critChance') - melee).toBeCloseTo(PARTY_CRIT_AURA_PERCENT, 6);
+    expect(cat.stats.get('spellCritChance') - spell).toBeCloseTo(PARTY_CRIT_AURA_PERCENT, 6);
+  });
+
+  it('gives a Moonkin SPELL crit and no melee crit, end to end', () => {
+    /*
+     * MEASURED THROUGH THE REAL ENCOUNTER rather than by applying auras by
+     * hand -- the talent arrives from `createPlayer` and the raid buff from
+     * `trainingDummyEncounter`, and the bug that produced the old +6% was
+     * precisely that those two paths produced different ids.
+     *
+     * BOTH HALVES ARE ASSERTED: the spell crit that arrives, and the melee crit
+     * that no longer does. The second is the half the split could get wrong in
+     * silence -- a Moonkin does not swing, so a stray point of melee crit on
+     * it would move no figure at all.
      */
     const base = PRESETS_BY_ID.get('druid_moonkin')!.build();
     const critWith = (raidBuffs: readonly string[]) => {
@@ -904,13 +981,22 @@ describe('Moonkin Aura and Leader of the Pack are ONE aura, by ruling', () => {
       );
       simulation.begin();
       const player = simulation.combatants.find((actor) => actor.kind === 'player')!;
-      return player.stats.get('spellCritChance');
+      return {
+        spell: player.stats.get('spellCritChance'),
+        melee: player.stats.get('critChance'),
+      };
     };
 
     const own = critWith(['moonkin_form']);
-    expect(critWith([])).toBeCloseTo(own, 6);
-    expect(critWith(['leader_of_the_pack'])).toBeCloseTo(own, 6);
-    expect(critWith(['leader_of_the_pack', 'moonkin_form'])).toBeCloseTo(own, 6);
+    // Its own talent already grants it, so the box adds nothing: one id.
+    expect(critWith([]).spell).toBeCloseTo(own.spell, 6);
+    // And Leader of the Pack gives a Moonkin's SPELLS nothing at all now.
+    expect(critWith(['leader_of_the_pack']).spell).toBeCloseTo(own.spell, 6);
+    // While its melee crit does move, which is the aura doing what it says.
+    expect(critWith(['leader_of_the_pack']).melee).toBeCloseTo(
+      own.melee + PARTY_CRIT_AURA_PERCENT,
+      6,
+    );
   });
 
   it('selects Moonkin Aura by default on the Moonkin, and on nobody else', () => {
@@ -918,7 +1004,32 @@ describe('Moonkin Aura and Leader of the Pack are ONE aura, by ruling', () => {
     const built = PRESETS_BY_ID.get('druid_moonkin')!.build();
     expect(built.raidBuffs).toContain('moonkin_form');
     expect(built.raidBuffs).not.toContain('leader_of_the_pack');
-    expect(buildIn('druid_moonkin', 'moonkin').grantedAuras.has(PARTY_CRIT_AURA_ID)).toBe(true);
+    expect(buildIn('druid_moonkin', 'moonkin').grantedAuras.has(MOONKIN_AURA_ID)).toBe(true);
+  });
+
+  it('leaves the two raid buff entries EXCLUSIVE, which is now a question', () => {
+    /*
+     * ========================================================================
+     * PINNED AS IT STANDS RATHER THAN CHANGED, AND THE QUESTION WRITTEN DOWN.
+     *
+     * The exclusivity was declared when the two were the same 3%. Two buffs
+     * that no longer overlap have no obvious reason to exclude each other -- a
+     * raid with a Feral and a Moonkin druid would run both -- but removing it
+     * is a RAID COMPOSITION decision that moves every profile's figure, which
+     * is the owner's call and not a reading of this note.
+     *
+     * WHAT IT COSTS TODAY IS NAMED: every preset but the Moonkin carries
+     * `leader_of_the_pack`, so every CASTER profile loses the 3% spell crit it
+     * was getting from a feral druid's aura. That is what the note says should
+     * happen, and it is also exactly what would be undone if the exclusivity
+     * went and both were ticked.
+     *
+     * This test fails the day somebody changes it, which is when the question
+     * should be re-read rather than quietly answered.
+     * ========================================================================
+     */
+    expect(RAID_BUFFS_BY_ID.get('leader_of_the_pack')?.exclusiveWith).toBe('moonkin_form');
+    expect(RAID_BUFFS_BY_ID.get('moonkin_form')?.exclusiveWith).toBe('leader_of_the_pack');
   });
 
   it('gives Moonkin Form its 360% of item armor', () => {

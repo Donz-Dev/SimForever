@@ -113,8 +113,24 @@ export const SEAL_OF_FURY_SP_COEFFICIENT = 0.1;
 /** Holy Shock: 42.857% spell power — three sevenths, i.e. 1.5 / 3.5. */
 export const HOLY_SHOCK_SP_COEFFICIENT = 0.4285714285714286;
 
-/** Consecration: 9.5% spell power PER TICK. */
-export const CONSECRATION_TICK_SP_COEFFICIENT = 0.095;
+/**
+ * Consecration: 4.2% spell power PER TICK.
+ *
+ * ---------------------------------------------------------------------------
+ * THE PATCH NOTE'S FIGURE, NOT THE SHEET'S. "Consecration's Spell Power
+ * Coefficient per tick has been changed to 4.2% (was 9.5%)" --
+ * `WoWSimWorksheet.xlsx` says 9.5% and the note is later, which is the same
+ * reading that gives Swipe 3% against a sheet saying 10%. Said here beside the
+ * constant because a refresh of the sheet will not carry it and a reader who
+ * knows the sheet would read 0.042 as drift.
+ *
+ * IT IS LESS THAN HALF, AND IT REACHES MORE THAN CONSECRATION. Consecration is
+ * also the one ability whose TICKS can proc Touch of the Grave -- the owner's
+ * own exception, because its cast deals nothing at all -- so an Undead Paladin
+ * feels this twice. Neither of the two Paladin presets that cast it is Undead.
+ * ---------------------------------------------------------------------------
+ */
+export const CONSECRATION_TICK_SP_COEFFICIENT = 0.042;
 
 /** Holy Strike: 50% of weapon damage, AND 21.45% spell power. */
 export const HOLY_STRIKE_SP_COEFFICIENT = 0.2145;
@@ -127,9 +143,54 @@ export const HOLY_STRIKE_SP_COEFFICIENT = 0.2145;
  * ability already reads which seal is up in order to choose its damage; it now
  * reads it for the coefficient too.
  */
+/**
+ * ===========================================================================
+ * TWO OF THE THREE WERE WRONG AND THE PATCH NAMES BOTH: "Judgement of
+ * Righteousness and Judegment of Fury now have the correct spell power
+ * coefficients for INSTANT CAST SPELLS."
+ *
+ * WHAT "THE CORRECT COEFFICIENT FOR AN INSTANT" IS, DERIVED FROM THE DATA
+ * RATHER THAN ASSUMED. The note names a convention without stating a number,
+ * so the number has to come from somewhere -- and this ruleset states it nine
+ * times over. Every instant-cast spell in `WoWSimWorksheet.xlsx` carries
+ * `1.5 / 3.5`, written variously as 0.4285714285714286, 0.42857142857142855,
+ * 0.429 and 0.43:
+ *
+ *   Holy Shock, Hammer of Wrath, Mind Blast, Shadow Word: Death, Fire Blast,
+ *   Scorch, Conflagrate, Shadowburn, Searing Pain
+ *
+ * AND JUDGEMENT IS INSTANT, which is the premise the note rests on and is
+ * worth checking rather than assuming: the spellbook capture reads "Instant"
+ * for it at build 1.60.1.70291.
+ *
+ * SO 0.45 AND 0.5 WERE THE TWO OUTLIERS, AND THE NOTE NAMES EXACTLY THOSE TWO.
+ * That is what makes this a derivation rather than a guess -- a convention
+ * read off nine abilities, and a note that independently names the two rows
+ * which do not follow it.
+ *
+ * KEPT AS AN EXPRESSION, because `1.5 / 3.5` does not terminate: the Ice Lance
+ * work settled that 0.43 is already a rounding of 0.428571..., and rounding
+ * twice compounds it.
+ *
+ * ---------------------------------------------------------------------------
+ * JUDGEMENT OF COMMAND IS LEFT AT THE SHEET'S 0.43 AND THAT IS A QUESTION.
+ *
+ * It is the same figure rounded -- 0.43 against 0.4285714, a 0.33% difference
+ * -- so all three judgements are now "the instant coefficient" while two of
+ * them are exact and one is not. Tidier would be to make all three the
+ * expression, and that is NOT what the note says: it names two abilities, and
+ * a ruling covers what it says and is not extended by analogy. That rule has
+ * paid here before, when Explosive Trap waited for its own naming rather than
+ * inheriting Immolation Trap's.
+ *
+ * FLAGGED FOR THE OWNER rather than quietly aligned, because the alternative
+ * reading -- that the note means all three and lists the two that were visibly
+ * off -- is perfectly defensible and worth 0.33% on one seal.
+ * ---------------------------------------------------------------------------
+ */
 export const JUDGEMENT_OF_COMMAND_SP_COEFFICIENT = 0.43;
-export const JUDGEMENT_OF_FURY_SP_COEFFICIENT = 0.45;
-export const JUDGEMENT_OF_RIGHTEOUSNESS_SP_COEFFICIENT = 0.5;
+export const JUDGEMENT_OF_FURY_SP_COEFFICIENT = 1.5 / 3.5;
+export const JUDGEMENT_OF_RIGHTEOUSNESS_SP_COEFFICIENT = 1.5 / 3.5;
 
 /**
  * Hammer of Wrath: 42.857% spell power.
@@ -231,30 +292,78 @@ export const FLAME_SHOCK_TICK_SP_COEFFICIENT = 0.1;
  *
  * SUPPLIED BY THE RULESET OWNER DIRECTLY, on 2026-09-30, asked for with the
  * alternatives beside it: "give it a 10% spell power coefficient for now".
- * The "for now" is theirs and is recorded rather than smoothed away -- it is a
- * ruling that may be revisited, which is different from a placeholder nobody
- * has answered.
+ * The "for now" was theirs, recorded rather than smoothed away -- and it has
+ * now been revisited, which is what that phrasing was kept for.
  *
  * SAID HERE RATHER THAN FOLDED IN, for Wrack's reason: everything around it is
  * transcribed from one document, and the next refresh of that document will not
  * contain this line. The authority is the same -- it is the owner either way --
  * and the PROVENANCE is not.
  *
- * IT IS A SMALL COEFFICIENT ON A LARGE FLAT HIT, which is worth knowing before
- * reading it as generous: 436 base against 10% of spell power, so an
- * Enhancement shaman's 300-odd spell power adds about 7% to the spell. Fire
- * Nova is a flat nuke here and the coefficient makes it scale rather than
- * making it scale much.
+ * ----------------------------------------------------------------------------
+ * 14.3% NOW, FROM THE PATCH NOTE -- AND THE NOTE'S HISTORY DOES NOT MATCH THIS
+ * PROJECT'S, WHICH IS THE SECOND TIME IN THIS PATCH.
+ *
+ * "Fire Nova's Spell Power Coefficient has been changed to 0.143 (was 0.214)."
+ * This project has carried 0.1 since the owner supplied it, from nothing but
+ * their own sentence -- 0.214 appears in no source here, the way Shadow Word:
+ * Death's "(was 12 seconds)" matches neither the capture's 15 nor this file.
+ * The TARGET is what is applied: 0.143 is a prescription with a number in it.
+ *
+ * ========================================================================
+ * AND IT IS A RISE HERE WHERE THE PATCH CLEARLY INTENDS A FALL, BECAUSE TWO
+ * OF THE THREE FIRE NOVA NOTES CARRY NO NUMBER AT ALL.
+ *
+ *   "Spell Power Coefficient changed to 0.143"       APPLIED
+ *   "base damage has been significantly reduced"     NO FIGURE -- not applied
+ *   "mana cost has been significantly reduced"       NO FIGURE -- not applied
+ *
+ * So Fire Nova in this simulator gets a BETTER coefficient and keeps its 436
+ * base damage and its 520 mana, which is the opposite of the three notes read
+ * together. "Significantly" is not a number and inventing one would be
+ * inventing game data with a patch note in front of it -- this project's most
+ * important working rule -- so the two are left alone and the DIRECTION of the
+ * resulting error is written down instead.
+ *
+ * WHAT TO EXPECT FROM A MEASUREMENT, so nobody reads it as a win: the
+ * Enhancement build carries about 300 spell power, so 0.1 -> 0.143 adds
+ * roughly 13 damage to a 436-damage nuke on a 10 second cooldown. Small, and
+ * pointing the wrong way. A QUESTION FOR THE OWNER: the two missing figures.
+ * ========================================================================
  * ----------------------------------------------------------------------------
  */
-export const FIRE_NOVA_SP_COEFFICIENT = 0.1;
+export const FIRE_NOVA_SP_COEFFICIENT = 0.143;
 
 // ---------------------------------------------------------------------------
 // Mage
 // ---------------------------------------------------------------------------
 
 export const ARCANE_MISSILES_TICK_SP_COEFFICIENT = 0.286;
-export const ARCANE_BLAST_SP_COEFFICIENT = 0.714;
+/**
+ * Arcane Blast: `1.5 / 3.5`, where it was 0.714.
+ *
+ * ===========================================================================
+ * "Mana cost unchanged, but damage done and Spell Damage coefficients both
+ * reduced 40%" -- and that 40% IS the cast time change in the same note,
+ * which is the finding rather than a coincidence.
+ *
+ * Coefficients here follow `castTime / 3.5`. The old 0.714 is `2.5 / 3.5`
+ * rounded, and
+ *
+ *     2.5 / 3.5 x 0.6  =  1.5 / 3.5     exactly
+ *
+ * so "now a 1.5 second cast" and "coefficient reduced 40%" are one change
+ * written twice. Two independent clauses landing on the same figure is strong
+ * evidence it is right, and it puts Arcane Blast on the same instant-cast
+ * figure the two Judgements just took.
+ *
+ * KEPT AS THE EXPRESSION, for the reason Ice Lance's is: `1.5 / 3.5` does not
+ * terminate, 0.714 was already a rounding, and rounding a second time
+ * compounds it. Said here beside the constant because a refresh of the sheet
+ * will not carry it and a reader who knows the sheet would read this as drift.
+ * ===========================================================================
+ */
+export const ARCANE_BLAST_SP_COEFFICIENT = 1.5 / 3.5;
 export const FIRE_BLAST_SP_COEFFICIENT = 0.429;
 export const SCORCH_SP_COEFFICIENT = 0.429;
 /**

@@ -21,7 +21,7 @@ Moonkin unchanged to the decimal.
 | **removed** | Tiger's Fury (the ABILITY), King of the Jungle |
 | **added** | Shifting Power, Improved Shifting Power |
 | **renamed** | Primal Fury → **Blood Frenzy**; the talent id and the reaction ids followed the client, because the source name is what a reader sees on the resource panel |
-| **moved** | Shredding Attacks up a row; Predatory Instincts across |
+| **moved** | Shredding Attacks up a row; Natural Instinct across (renamed from Predatory Instincts at build 1.60.1.70291) |
 
 **SHIFTING POWER IS THE RESOURCE HALF OF KING OF THE JUNGLE, MOVED ONTO AN
 ABILITY AND PAID FOR IN MANA.** "Instantly convert 55% of base Mana into 40

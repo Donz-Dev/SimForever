@@ -436,7 +436,7 @@
    "name": "Demonic Brand",
    "tree": "demonology",
    "ranks": 3,
-   "text": "Your Searing Pain generates {0}% less threat and brands the target for {1} sec. Your pet's next {2} attacks against the target generate high threat and deal {3} to {4} Fire or Shadow damage based on the pet.",
+   "text": "Your Searing Pain generates {0}% less threat and brands the target for {1} sec. Your pet's next {2} attacks against the target deal {3} to {4} Fire or Shadow damage based on the pet. If Shadow damage is dealt, it has high threat.",
    "values": [
     [
      17,

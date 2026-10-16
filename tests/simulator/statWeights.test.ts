@@ -267,14 +267,48 @@ describe('statWeightPlan', () => {
 
   it('reports a fully capped stat as capped instead of measuring it', () => {
     /*
-     * THE RULESET OWNER'S OWN EXAMPLE, and it became real at the 8% miss fix:
-     * a Protection Warrior carries 8 points of hit against an 8% miss on every
-     * table it rolls on, so there is nowhere for another point to go.
+     * ========================================================================
+     * THE RULESET OWNER'S OWN EXAMPLE: "Already capped. No stat weight."
+     *
+     * IT USED TO READ THE PROTECTION WARRIOR STRAIGHT AND NO LONGER CAN. That
+     * build carries 70 hit RATING -- seven points -- and reached the eighth
+     * from TAUREN ENDURANCE, whose hit clause the racial patch replaced with
+     * critical damage. All five Tauren presets are now one point short of
+     * their cap, so no preset is fully capped on hit and the owner's example
+     * has nothing to stand on.
+     *
+     * SO THE POINT IS HANDED BACK AS A FLAT STAT. The claim here is about the
+     * PLAN -- a capped stat is reported rather than measured -- and it must not
+     * depend on which racial a preset's race happens to grant, which is this
+     * project's own rule about a test reading a profile to pin a mechanism.
+     * `statHeadroom.test.ts` is where the build fact is pinned instead.
+     * ========================================================================
      */
-    const plan = statWeightPlan(presetNamed('prot_warr'), ['hitChance']);
+    const profile = presetNamed('prot_warr');
+    const capped: CharacterProfile = {
+      ...profile,
+      stats: { ...profile.stats, hitChance: (profile.stats.hitChance ?? 0) + 1 },
+    };
+    const plan = statWeightPlan(capped, ['hitChance']);
 
     expect(plan.variants).toEqual([]);
     expect(plan.skipped[0].reason).toContain('Already capped');
+  });
+
+  it('measures the one rung a Tauren build now has, which it did not before', () => {
+    /*
+     * THE OTHER SIDE OF THE SAME CHANGE, AND IT IS WHY THE TEST ABOVE HAD TO
+     * MOVE RATHER THAN BE DELETED. Without the point handed back, the
+     * Protection Warrior has exactly one rung -- worth a point of hit on every
+     * melee table it rolls on -- where it had none. A reader who finds the
+     * capped test above needs to be able to see that the real preset is NOT
+     * capped any more, or the two together are misleading.
+     */
+    const plan = statWeightPlan(presetNamed('prot_warr'), ['hitChance']);
+
+    expect(plan.variants).toHaveLength(1);
+    expect(plan.variants[0].toUnits).toBeCloseTo(1, 6);
+    expect(plan.skipped).toEqual([]);
   });
 
   it('tells "capped" apart from "no slice to cap"', () => {

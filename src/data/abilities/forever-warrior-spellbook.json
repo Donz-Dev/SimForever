@@ -1,7 +1,7 @@
 {
  "class": "warrior",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70170",
+ "build": "1.60.1.70291",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -474,7 +474,7 @@
    "cast": "Instant",
    "cooldown": "20 sec cooldown",
    "requires": "Requires Battle Stance",
-   "description": "A brutal attack that deals 40% weapon damage, plus an additional 80% weapon damage against Giants, Dragonkin, and mounted targets.",
+   "description": "A brutal attack that deals 40% weapon damage. Deals an additional 80% weapon damage against Giants, Dragonkin, and mounted targets. Mounted targets are dismounted.",
    "versusClassic": "new"
   },
   {

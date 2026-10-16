@@ -351,7 +351,7 @@
      "tier": 15,
      "requires": null,
      "requiresRanks": null,
-     "description": "Your Searing Pain generates 50% less threat and brands the target for 10 sec. Your pet's next 6 attacks against the target generate high threat and deal 65 to 68 Fire or Shadow damage based on the pet."
+     "description": "Your Searing Pain generates 50% less threat and brands the target for 10 sec. Your pet's next 6 attacks against the target deal 65 to 68 Fire or Shadow damage based on the pet. If Shadow damage is dealt, it has high threat."
     },
     {
      "row": 4,

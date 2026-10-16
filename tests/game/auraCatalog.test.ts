@@ -3,6 +3,17 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { aurasForClass, auraName } from '../../src/game/auras/auraCatalog';
+import * as druidAuras from '../../src/game/auras/druid';
+import * as hunterAuras from '../../src/game/auras/hunter';
+import * as mageAuras from '../../src/game/auras/mage';
+import * as paladinAuras from '../../src/game/auras/paladin';
+import * as priestAuras from '../../src/game/auras/priest';
+import * as rogueAuras from '../../src/game/auras/rogue';
+import * as shamanAuras from '../../src/game/auras/shaman';
+import * as warlockAuras from '../../src/game/auras/warlock';
+import * as warriorAuras from '../../src/game/auras/warrior';
+import * as warriorTalentAuras from '../../src/game/auras/warriorTalents';
+import * as consumableAuras from '../../src/game/auras/consumables';
 import { ALL_PRIORITY_LISTS } from '../../src/game/rotations/allLists';
 import type { AplCondition } from '../../src/game/rotations/apl';
 import { CLASS_IDS } from '../../src/game/character';
@@ -149,6 +160,117 @@ describe('the catalog covers what the stock lists ask about', () => {
     expect(
       missing.map((aura) => `${aura.id} (${aura.file})`),
       'declared but offered to nobody -- a factory-built aura needs listing in its module CATALOG_AURAS',
+    ).toEqual([]);
+  });
+
+  it('offers each one from a real DEFINITION, not from the stock-list safety net', () => {
+    /*
+     * ========================================================================
+     * THE GUARD THE TEST ABOVE TURNED OUT NOT TO BE, FOUND BY A REGRESSION IT
+     * PASSED THROUGH.
+     *
+     * Arcane Blast's aura was an exported CONSTANT and a patch made it a
+     * FACTORY -- `arcaneBlastAura(intellect)`, because the figure depends on
+     * the caster's Intellect. That is precisely the change `CATALOG_AURAS`
+     * exists to catch, and it was not listed there.
+     *
+     * THE TEST ABOVE STILL PASSED, because `aurasForClass` ends with a SAFETY
+     * NET: "anything a stock list names must be choosable, wherever its
+     * definition lives". The Arcane list gates on `arcane_blast` stacks, so the
+     * id kept being offered -- with a name derived from the id and nothing
+     * else, where the definition carries the aura's own name and `isDebuff`.
+     *
+     * **A SAFETY NET MASKS THE THING IT IS A NET FOR**, which is the general
+     * shape: a fallback that makes the common case work also makes the fault
+     * invisible to any check that only asks whether the common case works.
+     *
+     * ------------------------------------------------------------------------
+     * ASKED OF THE MODULES' OWN EXPORTS RATHER THAN OF THE SOURCE, which is the
+     * second version of this test and the reason the first was thrown away.
+     *
+     * Parsing the source for factory calls inside `CATALOG_AURAS` needed a
+     * pattern for the list, a pattern for each factory shape -- both
+     * `export function foo` and `export const foo = (...) =>` are used here --
+     * and a pattern for the id inside each body. It reported ELEVEN
+     * correctly-listed auras as missing on its first run, because `[^\]]*`
+     * truncated the list at `berserkAura([])`, whose argument contains a `]`.
+     *
+     * The modules answer the same question directly: an id is reachable if some
+     * export carries it or if the module's own `CATALOG_AURAS` does. That is
+     * what `aurasForClass` walks, minus the net, and it cannot be defeated by a
+     * bracket.
+     * ------------------------------------------------------------------------
+     *
+     * IT IS NOT A DUPLICATE OF THE TEST ABOVE. That one would still catch an
+     * aura no list mentions AND no catalogue carries, which is the case Rip was
+     * -- so both are kept and neither subsumes the other.
+     * ========================================================================
+     */
+    const MODULES: Readonly<Record<string, Record<string, unknown>>> = {
+      'druid.ts': druidAuras,
+      'hunter.ts': hunterAuras,
+      'mage.ts': mageAuras,
+      'paladin.ts': paladinAuras,
+      'priest.ts': priestAuras,
+      'rogue.ts': rogueAuras,
+      'shaman.ts': shamanAuras,
+      'warlock.ts': warlockAuras,
+      'warrior.ts': warriorAuras,
+      'warriorTalents.ts': warriorTalentAuras,
+      'consumables.ts': consumableAuras,
+    };
+
+    /** Every id some module makes reachable without the stock lists. */
+    const reachable = new Set<string>();
+    const looksLikeAura = (value: unknown): value is { id: string } =>
+      typeof value === 'object' &&
+      value !== null &&
+      typeof (value as { id?: unknown }).id === 'string' &&
+      typeof (value as { name?: unknown }).name === 'string' &&
+      typeof (value as { durationMs?: unknown }).durationMs === 'number';
+
+    for (const module of Object.values(MODULES)) {
+      for (const value of Object.values(module)) {
+        if (looksLikeAura(value)) reachable.add(value.id);
+        // `CATALOG_AURAS`, and any other exported array of definitions.
+        if (Array.isArray(value)) {
+          for (const entry of value) if (looksLikeAura(entry)) reachable.add(entry.id);
+        }
+      }
+    }
+
+    /*
+     * AND WHAT THE SOURCE DECLARES, read the same way the test above reads it --
+     * that half was never the fragile part, because an aura definition is the
+     * one object shape carrying all three fields.
+     */
+    const directory = 'src/game/auras';
+    const declared: { id: string; file: string }[] = [];
+    for (const file of readdirSync(directory)) {
+      if (!file.endsWith('.ts') || file === 'auraCatalog.ts') continue;
+      const source = readFileSync(`${directory}/${file}`, 'utf8');
+      for (const match of source.matchAll(
+        /id:\s*'([a-z0-9_]+)',\s*name:\s*'([^']+)',\s*durationMs:/g,
+      )) {
+        declared.push({ id: match[1], file });
+      }
+    }
+
+    // A guard on the guard: either side going empty would assert nothing.
+    expect(declared.length).toBeGreaterThan(90);
+    expect(reachable.size).toBeGreaterThan(60);
+
+    const onlyViaTheNet = [
+      ...new Set(
+        declared
+          .filter((aura) => !reachable.has(aura.id))
+          .map((aura) => `${aura.id} (${aura.file})`),
+      ),
+    ];
+
+    expect(
+      onlyViaTheNet,
+      'reachable only through the stock-list safety net -- a factory-built aura needs a representative call in its module CATALOG_AURAS',
     ).toEqual([]);
   });
 

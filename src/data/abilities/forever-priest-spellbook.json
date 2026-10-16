@@ -1,7 +1,7 @@
 {
  "class": "priest",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70170",
+ "build": "1.60.1.70291",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -324,7 +324,7 @@
    "cost": "75 Mana",
    "range": "40 yd range",
    "cast": "2.5 sec cast",
-   "description": "Heal your target for 138 to 160.",
+   "description": "Heal your target for 157 to 181.",
    "versusClassic": "changed"
   },
   {
@@ -428,11 +428,11 @@
    "tab": "Discipline",
    "level": "Learned at level 60",
    "school": "Holy",
-   "cost": "355 Mana",
+   "cost": "385 Mana",
    "range": "Friendly: 40 yd range",
    "cast": "Channeled",
    "cooldown": "12 sec cooldown",
-   "description": "Launches a volley of holy light at the target, causing 131 Holy damage to an enemy, or 673 healing to an ally, instantly and every 1 sec for 2 sec.",
+   "description": "Launches a volley of holy light at the target, causing 92 Holy damage to an enemy, or 425 healing to an ally, instantly and every 1 sec for 2 sec.",
    "versusClassic": "new"
   },
   {

@@ -8,7 +8,22 @@ import { createPlayer } from '../../src/game/actors/createPlayer';
 import { createTrainingDummy } from '../../src/game/actors/createTrainingDummy';
 import { PROFILE_PRESETS } from '../../src/profiles/presets';
 import type { CharacterProfile } from '../../src/profiles/CharacterProfile';
-import { SEAL_OF_RIGHTEOUSNESS } from '../../src/game/auras/paladin';
+import { SEAL_OF_FURY, SEAL_OF_RIGHTEOUSNESS } from '../../src/game/auras/paladin';
+import type { AuraDefinition } from '../../src/engine';
+import {
+  CONFLAGRATE_SP_COEFFICIENT,
+  FIRE_BLAST_SP_COEFFICIENT,
+  HAMMER_OF_WRATH_SP_COEFFICIENT,
+  HOLY_SHOCK_SP_COEFFICIENT,
+  JUDGEMENT_OF_COMMAND_SP_COEFFICIENT,
+  JUDGEMENT_OF_FURY_SP_COEFFICIENT,
+  JUDGEMENT_OF_RIGHTEOUSNESS_SP_COEFFICIENT,
+  MIND_BLAST_SP_COEFFICIENT,
+  SCORCH_SP_COEFFICIENT,
+  SEARING_PAIN_SP_COEFFICIENT,
+  SHADOWBURN_SP_COEFFICIENT,
+  SHADOW_WORD_DEATH_SP_COEFFICIENT,
+} from '../../src/game/combat/coefficients';
 import { IMMOLATE } from '../../src/game/auras/warlock';
 import { OVERPOWER_READY, REVENGE_READY, WARRIOR_STANCES } from '../../src/game/auras/warrior';
 import { EXPOSE_PREY } from '../../src/game/reactions/hunterTalents';
@@ -249,5 +264,182 @@ describe('the owner’s instruction: flat ability damage must not get lost', () 
       expect(flatDamageOf(entry!.profile, entry!.ability), `${id} lost its flat damage`)
         .toBeGreaterThan(0);
     }
+  });
+});
+
+describe("the instant-cast coefficient, and the two Judgements that did not use it", () => {
+  /*
+   * ============================================================================
+   * "Judgement of Righteousness and Judegment of Fury now have the correct spell
+   * power coefficients for INSTANT CAST SPELLS."
+   *
+   * THE NOTE NAMES A CONVENTION AND NOT A NUMBER, so the number has to be
+   * derived -- and this ruleset states it nine times over. Every instant-cast
+   * spell on the owner's sheet carries `1.5 / 3.5`, written variously as
+   * 0.4285714285714286, 0.42857142857142855, 0.429 and 0.43:
+   *
+   *   Holy Shock, Hammer of Wrath, Mind Blast, Shadow Word: Death, Fire Blast,
+   *   Scorch, Conflagrate, Shadowburn, Searing Pain
+   *
+   * AND THE TWO ROWS THE NOTE NAMES WERE THE TWO OUTLIERS -- Righteousness at
+   * 0.5 and Fury at 0.45. A convention read off nine abilities, and a note that
+   * independently names the two that broke it, is a derivation rather than a
+   * guess; this test is that argument written down so it can be re-read.
+   *
+   * ----------------------------------------------------------------------------
+   * AND NOTHING PINNED THESE COEFFICIENTS AT ALL BEFORE NOW. Changing both from
+   * 0.5 and 0.45 to 0.4286 passed the whole suite untouched, which is this
+   * project's own "when a fix moves nothing in the suite, that is a statement
+   * about the suite". `ownerCoefficients.test.ts` casts Judgement at ZERO power
+   * and so asserts only that its FLAT damage survives -- which is the half a
+   * coefficient edit cannot break.
+   *
+   * SO THE COEFFICIENT IS MEASURED FROM DAMAGE THAT LANDED, over two spell
+   * powers so the flat half cancels: `(d2 - d1) / (p2 - p1)` is the slope
+   * whatever the base is. A constant check could not see the ability reading
+   * the wrong seal's figure, which is the one mistake this ability's shape
+   * invites -- it picks its coefficient from the seal that is up.
+   * ============================================================================
+   */
+
+  /** The Judgement coefficient a seal actually delivers, measured. */
+  const measuredFor = (seal: AuraDefinition): number => {
+    const profile = PROFILE_PRESETS.find((preset) => preset.id === 'pally_shockadin')!.build();
+
+    const damageAt = (spellPower: number): number => {
+      const events: TelemetryEvent[] = [];
+      const player = zeroPowerPlayer(profile);
+      /*
+       * THE POWER IS ADDED ON TOP OF A ZEROED CHARACTER, so the two readings
+       * differ by exactly `spellPower` and nothing else -- the same idiom
+       * `iceLance.test.ts` uses, and the reason it subtracts the gear rather
+       * than stripping the items.
+       */
+      player.stats.addModifiers([
+        { stat: 'spellPower', operation: 'flat', value: spellPower, sourceId: 'probe' },
+      ]);
+      const target = createTrainingDummy({
+        name: 'Judge',
+        health: 1_000_000_000,
+        armor: 0,
+        level: 63,
+        attacks: false,
+      });
+      const simulation = new Sim(
+        {
+          durationMs: HORIZON,
+          seed: 1,
+          createCombatants: () => [player, target],
+          attackChances: () => ({ ...NO_CHANCES, crit: -1_000_000, critMultiplier: 1 }),
+        },
+        { emit: (event) => events.push(event) },
+      );
+      simulation.begin();
+      for (const resource of player.resources.all) resource.fill();
+
+      // The seal decides what Judgement unleashes, and therefore its coefficient.
+      simulation.applyAura(player, seal, player.id);
+      const before = events.length;
+      castAbility(simulation, player, player.abilities.get('judgement')!, target);
+
+      return events
+        .slice(before)
+        .filter(
+          (event) =>
+            event.type === 'damage' && 'abilityId' in event && event.abilityId === 'judgement',
+        )
+        .reduce((sum, event) => sum + (event as never as { amount: number }).amount, 0);
+    };
+
+    /*
+     * ==========================================================================
+     * THE BUILD'S OWN JUDGEMENT MULTIPLIER IS DIVIDED BACK OUT -- A MEASURED
+     * SLOPE IS THE COEFFICIENT TIMES EVERYTHING BETWEEN IT AND THE DAMAGE EVENT.
+     *
+     * `iceLance.test.ts` had to learn this and divided out a SCHOOL multiplier;
+     * here the term in the way is a PER-ABILITY one, which is why reading the
+     * school was not enough. The first draft of this helper divided by
+     * `schoolModifiers.for('holy')`, which is `{}` on this build -- so the slope
+     * came back 0.492857 against a declared 0.428571, a clean 1.15x, and the
+     * obvious conclusion was that the derivation was wrong.
+     *
+     * THE 1.15 IS `improved_seal_of_righteousness`, which names Judgement by id
+     * alongside the three seals -- "Judgement is one id whatever seal fed it".
+     * So dividing it out keeps this test about the COEFFICIENT and documents the
+     * one multiplier in the way, which a loosened tolerance would have hidden.
+     *
+     * AND IT IS WHY THE TWO SEALS MEASURED IDENTICALLY AT FIRST and that was NOT
+     * the usual tell. Two configurations agreeing to the decimal normally means
+     * the same one was measured twice; here the SLOPE is genuinely the same for
+     * both seals because the patch gave them the same coefficient, and it is the
+     * BASE damage that differs -- 196 against 176. Said out loud because the
+     * identity is exactly what this project treats as evidence of a bug.
+     * ==========================================================================
+     */
+    const multiplier =
+      zeroPowerPlayer(profile).abilityModifierFor('judgement', 1).damageMultiplier ?? 1;
+    return (damageAt(1000) - damageAt(0)) / 1000 / multiplier;
+  };
+
+  it('delivers 1.5/3.5 for Seal of Righteousness, where it was 0.5', () => {
+    expect(JUDGEMENT_OF_RIGHTEOUSNESS_SP_COEFFICIENT).toBeCloseTo(1.5 / 3.5, 12);
+    expect(measuredFor(SEAL_OF_RIGHTEOUSNESS)).toBeCloseTo(1.5 / 3.5, 4);
+  });
+
+  it('delivers 1.5/3.5 for Seal of Fury, where it was 0.45', () => {
+    expect(JUDGEMENT_OF_FURY_SP_COEFFICIENT).toBeCloseTo(1.5 / 3.5, 12);
+    expect(measuredFor(SEAL_OF_FURY)).toBeCloseTo(1.5 / 3.5, 4);
+  });
+
+  it('agrees with every other instant on the sheet, which is where the figure came from', () => {
+    /*
+     * THE DERIVATION, ASSERTED. These nine are the evidence that "the correct
+     * coefficient for an instant cast spell" is `1.5 / 3.5` -- so if one of them
+     * ever moves, the premise this change rests on has moved with it and the two
+     * Judgements above should be re-read rather than left agreeing with a
+     * convention that no longer holds.
+     *
+     * A LOOSE TOLERANCE ON PURPOSE: the sheet writes the same figure to two,
+     * three and sixteen decimal places, and the claim is that they are all the
+     * same number rather than that they are all written the same way.
+     */
+    for (const [name, value] of [
+      ['Holy Shock', HOLY_SHOCK_SP_COEFFICIENT],
+      ['Hammer of Wrath', HAMMER_OF_WRATH_SP_COEFFICIENT],
+      ['Mind Blast', MIND_BLAST_SP_COEFFICIENT],
+      ['Fire Blast', FIRE_BLAST_SP_COEFFICIENT],
+      ['Scorch', SCORCH_SP_COEFFICIENT],
+      ['Conflagrate', CONFLAGRATE_SP_COEFFICIENT],
+      ['Shadowburn', SHADOWBURN_SP_COEFFICIENT],
+      ['Searing Pain', SEARING_PAIN_SP_COEFFICIENT],
+      ['Shadow Word: Death', SHADOW_WORD_DEATH_SP_COEFFICIENT],
+    ] as const) {
+      expect(value, name).toBeCloseTo(1.5 / 3.5, 2);
+    }
+  });
+
+  it('leaves Judgement of Command on the sheet’s rounding, which is a question', () => {
+    /*
+     * ==========================================================================
+     * IT IS THE SAME FIGURE ROUNDED -- 0.43 against 0.4285714, a 0.33%
+     * difference -- so all three Judgements are now "the instant coefficient"
+     * while two are exact and one is not.
+     *
+     * NOT ALIGNED, BECAUSE THE NOTE NAMES TWO ABILITIES. A ruling covers what
+     * it says and is not extended by analogy, which has paid here before:
+     * Explosive Trap waited for its own naming rather than inheriting Immolation
+     * Trap's "assume it triggers instantly", and when the ruling came it carried
+     * a second fact an analogy would have had to guess.
+     *
+     * PINNED SO THE QUESTION IS FINDABLE. The alternative reading -- that the
+     * note means all three and listed the two that were visibly off -- is
+     * perfectly defensible, and this test is what somebody has to change to act
+     * on it.
+     * ==========================================================================
+     */
+    expect(JUDGEMENT_OF_COMMAND_SP_COEFFICIENT).toBe(0.43);
+    // Close to, and deliberately not equal to, the figure the other two now use.
+    expect(JUDGEMENT_OF_COMMAND_SP_COEFFICIENT).toBeCloseTo(1.5 / 3.5, 2);
+    expect(JUDGEMENT_OF_COMMAND_SP_COEFFICIENT).not.toBe(1.5 / 3.5);
   });
 });

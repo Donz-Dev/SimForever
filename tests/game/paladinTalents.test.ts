@@ -5,10 +5,17 @@ import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
 import { reactionsForClass } from '../../src/game/reactions/reactionsForClass';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
-import { castAbility, dealDamage, resolveCast, seconds, spellPowerAgainst } from '../../src/engine';
+import {
+  castAbility,
+  dealDamage,
+  resolveCast,
+  seconds,
+  spellPowerAgainst,
+} from '../../src/engine';
 import { runProfile, runProfileBatch } from '../../src/simulator';
 import { PLACEHOLDER_BOSS_SWING_SECONDS } from '../../src/game/encounters/raidBoss';
 import { Simulation } from '../../src/engine';
+import type { AttackTableKind, Combatant, TelemetryEvent } from '../../src/engine';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import {
   CONSECRATED_GROUND_FLAG,
@@ -40,7 +47,14 @@ import {
   EYE_FOR_AN_EYE_HEALTH_CAP_PERCENT,
   RECKONING_ICD_MS,
   SHIELD_SPECIALIZATION_MANA_PERCENT,
+  reckoning,
+  reckoningRelease,
 } from '../../src/game/reactions/paladinTalents';
+import {
+  RECKONING_CHARGES,
+  RECKONING_MAX_CHARGES,
+  SHIELD_SPECIALIZATION_COOLDOWN_MS,
+} from '../../src/game/auras/paladin';
 import { HAND_OF_JUSTICE_ICD_MS } from '../../src/game/items/procs';
 import { PALADIN_TALENT_EFFECTS } from '../../src/game/talents/paladinEffects';
 import { talentNumber } from '../../src/game/talents/talentValues';
@@ -185,8 +199,18 @@ describe('the three talents that were written off against blocks', () => {
     expect(withShieldSpec.stats.get('blockValue')).toBeCloseTo(base * 1.3, 6);
   });
 
-  it('restores 6% of maximum mana on a block, once every three seconds', () => {
-    expect(SHIELD_SPECIALIZATION_MANA_PERCENT).toBe(6);
+  it('restores 4% of maximum mana on a block, once every three seconds', () => {
+    /*
+     * FOUR PERCENT, LOWERED FROM SIX: "Shield Specialization Mana restored to
+     * the Paladin lowered to 4% with a 3 second internal cooldown (was 6% with
+     * a 3 second internal cooldown)."
+     *
+     * THE NOTE RESTATES THE COOLDOWN IDENTICALLY, so both halves are pinned
+     * here -- the half that moved and the half that was confirmed. A test on
+     * the mana alone would pass a change that also touched the window.
+     */
+    expect(SHIELD_SPECIALIZATION_MANA_PERCENT).toBe(4);
+    expect(SHIELD_SPECIALIZATION_COOLDOWN_MS).toBe(seconds(3));
     const player = presetPlayer('prot_pally');
     const reaction = player.reactions.find((r) => r.id === 'shield_specialization')!;
     // The internal cooldown is an aura rather than a closure, so that a batch
@@ -253,14 +277,26 @@ describe("Reckoning's internal cooldown", () => {
     expect(HAND_OF_JUSTICE_ICD_MS).toBe(1500);
   });
 
-  it('refuses a second trigger inside the window and allows one after it', () => {
+  it('refuses a second BLOCK inside the window and allows one after it', () => {
     /*
-     * DRIVEN AT 100% CHANCE so the roll cannot mask the cooldown. A crit taken is
-     * 100% at 5/5, which the Protection build takes -- so every refusal below is
-     * the cooldown and nothing else.
+     * ========================================================================
+     * DRIVEN WITH BLOCKS, AND IT USED TO BE DRIVEN WITH CRITS.
+     *
+     * Client build 1.60.1.70425 reads "Cannot occur from **Blocks** more than
+     * once every 1.5 sec", where the 1.60.1.70170 note that introduced the
+     * window said only "a 1.5 second internal cooldown on how often it can be
+     * triggered" -- which reads as covering both clauses and is how this was
+     * built and how this test drove it.
+     *
+     * THE CHANCE IS 100 SO A REFUSAL IS NEVER A LOST ROLL. `reckoningSetup`
+     * reads the Protection build's own reaction, whose block chance is 40% at
+     * 5/5 -- so the builder is handed 100 here instead, and every refusal below
+     * is the cooldown and nothing else.
+     * ========================================================================
      */
-    const { player, boss, simulation, reaction } = reckoningSetup();
-    const attack = taken(player as never, boss as never, 'crit');
+    const { player, boss, simulation } = reckoningSetup();
+    const reaction = reckoning(100);
+    const attack = taken(player as never, boss as never, 'block');
 
     expect(reaction.canTrigger?.(simulation, player, attack as never)).toBe(true);
     reaction.onTrigger(simulation, player, attack as never);
@@ -270,26 +306,48 @@ describe("Reckoning's internal cooldown", () => {
     simulation.advanceTo(RECKONING_ICD_MS - 1);
     expect(reaction.canTrigger?.(simulation, player, attack as never)).toBe(false);
 
-    // And exactly at it, which is the boundary the owner's "1.5 second" states.
+    // And exactly at it, which is the boundary the client's "1.5 sec" states.
     simulation.advanceTo(RECKONING_ICD_MS);
     expect(reaction.canTrigger?.(simulation, player, attack as never)).toBe(true);
   });
 
-  it('shares the window across BOTH halves, because it is one talent', () => {
+  it('does NOT put the window on a crit taken, which is the clause it names', () => {
     /*
-     * A BLOCK AND A CRIT TAKEN ARE TWO CLAUSES OF ONE TALENT and one reaction, so
-     * a block cannot trigger it while a crit's cooldown is running. Two separate
-     * windows would be two effects, and would let a tank proc twice as often as
-     * the note allows -- a bigger number and no error.
+     * ========================================================================
+     * THIS TEST ASSERTED THE OPPOSITE AND THE CLIENT FALSIFIED IT.
+     *
+     * It read "shares the window across BOTH halves, because it is one talent",
+     * and the argument was that a block and a crit taken are two clauses of one
+     * reaction so two separate windows "would let a tank proc twice as often as
+     * the note allows -- a bigger number and no error". Reasonable, and wrong:
+     * client build 1.60.1.70425 scopes the window to BLOCKS by name, and the
+     * note that introduced it was simply less specific.
+     *
+     * SO BOTH DIRECTIONS ARE DRIVEN HERE. A crit taken is neither REFUSED by a
+     * block's window nor allowed to OPEN one -- the second is the half a
+     * narrowing gets wrong, because recording every proc would let a crit
+     * suppress the next block and read as the old behaviour.
+     *
+     * IT MATTERS ON THE ONE BUILD THAT TAKES THE TALENT: the crit-taken chance
+     * is 100% at 5/5, and since the patch made Reckoning BANK charges rather
+     * than swing, what the wrong scope suppressed was how fast the bank fills.
+     * ========================================================================
      */
-    const { player, boss, simulation, reaction } = reckoningSetup();
-
+    const { player, boss, simulation } = reckoningSetup();
+    const reaction = reckoning(100);
     const crit = taken(player as never, boss as never, 'crit');
-    expect(reaction.canTrigger?.(simulation, player, crit as never)).toBe(true);
-    reaction.onTrigger(simulation, player, crit as never);
-
     const block = taken(player as never, boss as never, 'block');
+
+    // A block opens the window, and a crit is NOT refused by it.
+    expect(reaction.canTrigger?.(simulation, player, block as never)).toBe(true);
+    reaction.onTrigger(simulation, player, block as never);
     expect(reaction.canTrigger?.(simulation, player, block as never)).toBe(false);
+    expect(reaction.canTrigger?.(simulation, player, crit as never)).toBe(true);
+
+    // And a crit does not OPEN one either, so the next block is still free.
+    const fresh = reckoning(100);
+    fresh.onTrigger(simulation, player, crit as never);
+    expect(fresh.canTrigger?.(simulation, player, block as never)).toBe(true);
   });
 
   it('is PER CHARACTER, which is what a shared closure would silently break', () => {
@@ -301,7 +359,7 @@ describe("Reckoning's internal cooldown", () => {
      *
      * IT IS SAFE HERE BECAUSE `talentBuild` RUNS INSIDE `createPlayer`, which the
      * simulation calls once per iteration through `createCombatants` -- so each
-     * character gets its own `lastProcAt`. That is checked rather than assumed,
+     * character gets its own `lastBlockProcAt`. That is checked rather than assumed,
      * because the comment on Shield Specialization next door says its own
      * cooldown is an aura "so that a batch reusing one TalentBuild cannot share
      * one timer across characters" -- a worry about something this does not do,
@@ -315,16 +373,24 @@ describe("Reckoning's internal cooldown", () => {
     expect(first.reaction).not.toBe(second.reaction);
     expect(first.reaction.canTrigger).not.toBe(second.reaction.canTrigger);
 
-    // And putting one on cooldown leaves the other ready.
-    const attack = taken(first.player as never, first.boss as never, 'crit');
-    first.reaction.onTrigger(first.simulation, first.player, attack as never);
-    expect(first.reaction.canTrigger?.(first.simulation, first.player, attack as never)).toBe(
+    /*
+     * ON BLOCKS, because the window is scoped to blocks by the client -- a crit
+     * neither opens it nor is refused by it, so driving this with crits would
+     * assert nothing about a shared closure at all.
+     */
+    const attack = taken(first.player as never, first.boss as never, 'block');
+    const firstBlocker = reckoning(100);
+    const secondBlocker = reckoning(100);
+    expect(firstBlocker).not.toBe(secondBlocker);
+
+    firstBlocker.onTrigger(first.simulation, first.player, attack as never);
+    expect(firstBlocker.canTrigger?.(first.simulation, first.player, attack as never)).toBe(
       false,
     );
 
-    const other = taken(second.player as never, second.boss as never, 'crit');
+    const other = taken(second.player as never, second.boss as never, 'block');
     expect(
-      second.reaction.canTrigger?.(second.simulation, second.player, other as never),
+      secondBlocker.canTrigger?.(second.simulation, second.player, other as never),
     ).toBe(true);
   });
 
@@ -386,9 +452,15 @@ describe("Reckoning's internal cooldown", () => {
      *
      * MEASURED BY WATCHING THE RNG rather than by reading the function: two
      * refusals inside the window must draw nothing at all.
+     *
+     * ON BLOCKS, because the client scopes the window to blocks -- a crit is
+     * never refused, so driving this with crits would count the draws of an
+     * attack that always passes and assert nothing about the ordering. The
+     * chance is 100 so a `true` is never luck.
      */
-    const { player, boss, simulation, reaction } = reckoningSetup();
-    const attack = taken(player as never, boss as never, 'crit');
+    const { player, boss, simulation } = reckoningSetup();
+    const reaction = reckoning(100);
+    const attack = taken(player as never, boss as never, 'block');
     reaction.onTrigger(simulation, player, attack as never);
 
     let draws = 0;
@@ -413,6 +485,276 @@ describe("Reckoning's internal cooldown", () => {
 });
 
 /* -------------------------------------------------------------------------- */
+
+describe("Reckoning's stored charges, which the patch gave it", () => {
+  /*
+   * ============================================================================
+   * "This talent has been adjusted so you gain a CHARGE of Reckoning each time
+   * it triggers. Your next melee swing (auto attack) will trigger all
+   * accumulated charges for 1 extra attack each. You may have a maximum of 4
+   * charges. This restores the Classic Era functionality of storing up to 4
+   * charges and DELAYS all the triggers until your next swing so that it does
+   * not cause the auto attack timer to be reset by instant attacks."
+   *
+   * THE REWORK PASSED EVERY EXISTING RECKONING TEST UNTOUCHED, which is why
+   * this block exists. The talent went from "fire an extra attack now" to
+   * "bank a charge, spend them all on the next swing" -- a different trigger, a
+   * different payout and a new aura -- and the coverage above is entirely about
+   * `canTrigger`'s internal cooldown, which the rework did not touch. That is
+   * Windfury's lesson exactly: "a test that pins constants pins nothing, and
+   * the way you find out is a rework passing untouched."
+   *
+   * ----------------------------------------------------------------------------
+   * THE FIXTURE IS HAND-BUILT WITH NO WEAPON AND NO ROTATION, AND THE FIRST
+   * DRAFT OF THIS BLOCK WAS WRONG FOR EXACTLY THE REASON THAT MATTERS.
+   *
+   * It used `presetPlayer('prot_pally')` and advanced the clock between
+   * triggers to step past the 1.5-second internal cooldown -- and every charge
+   * count came back 1, because a `createPlayer` combatant carries a ROTATION
+   * and a weapon: the Paladin swung during each advance and its own release
+   * reaction spent the charges. The engine was right and the test was testing
+   * the priority list.
+   *
+   * `makeAttacker` has no weapon and no rotation, so it acts only when told --
+   * which is what lets the clock move without a swing happening. The reactions
+   * are built from their builders at a known chance, the idiom the
+   * Resourcefulness tests already use.
+   * ----------------------------------------------------------------------------
+   */
+
+  /** An actor that holds charges, and both halves of the talent. */
+  const chargeSetup = () => {
+    const player = makeAttacker();
+    const boss = makeTarget({ faction: 'hostile', maxHealth: 1_000_000 });
+    const events: TelemetryEvent[] = [];
+    const simulation = buildSimulation([player, boss], {}, { emit: (e) => events.push(e) });
+    simulation.begin();
+    // 100% on a block too, so a refusal below is never a lost roll.
+    const trigger = reckoning(100);
+    const release = reckoningRelease(0);
+    return { player, boss, simulation, events, trigger, release };
+  };
+
+  /** An attack the Paladin RECEIVED, landing for real. */
+  const taken = (player: Combatant, boss: Combatant, outcome: 'crit' | 'block') =>
+    ({
+      attacker: boss,
+      defender: player,
+      outcome,
+      abilityId: undefined,
+      abilityName: 'Boss Swing',
+      amount: 2_000,
+      weaponSlot: 'mainHand' as const,
+      critical: outcome === 'crit',
+    }) as never;
+
+  /** An attack the Paladin DEALT, on a table of our choosing. */
+  const dealt = (player: Combatant, boss: Combatant, attackTable: AttackTableKind) =>
+    ({
+      attacker: player,
+      defender: boss,
+      outcome: 'hit' as const,
+      abilityId: attackTable === 'melee-auto' ? undefined : 'crusader_strike',
+      abilityName: attackTable === 'melee-auto' ? 'Main Hand Auto-Attack' : 'Crusader Strike',
+      amount: 500,
+      weaponSlot: 'mainHand' as const,
+      critical: false,
+      attackTable,
+    }) as never;
+
+  it('registers BOTH halves on a real build, which one reaction could not do', () => {
+    /*
+     * THE JOIN, AND IT IS THE HALF THAT GOES MISSING IN SILENCE. A second
+     * `reactionId` has to be in `PALADIN_TALENT_REACTIONS` as well as in the
+     * effect table, and a reaction the registry does not carry is simply absent
+     * -- `lone_wolf` went the whole project that way. The release is also
+     * `valueless`, because an effect that reads no value is DROPPED without
+     * saying so: three Paladin procs have been lost exactly that way.
+     *
+     * ASKED OF THE PRESET rather than of the builders, because this is the one
+     * assertion here that is about the wiring and not about the mechanism.
+     */
+    const built = presetPlayer('prot_pally');
+    const ids = built.reactions.map((r) => r.id);
+    expect(ids).toContain('reckoning');
+    expect(ids).toContain('reckoning_release');
+    expect(built.reactions.find((r) => r.id === 'reckoning')!.on).toBe('taken');
+    expect(built.reactions.find((r) => r.id === 'reckoning_release')!.on).toBe('dealt');
+  });
+
+  it('banks a charge instead of swinging, and caps at four', () => {
+    /*
+     * THE CHANGE ITSELF: the trigger used to call `extraAttack` and now applies
+     * an aura. Driven six times against a cap of four, so the cap is tested by
+     * EXCEEDING it rather than by reaching it -- `applyAura` silently declines
+     * to pass `maxStacks`, which is the behaviour being relied on.
+     *
+     * THE INTERNAL COOLDOWN IS STEPPED PAST between triggers, because it is
+     * still 1.5 seconds and the note did not remove it -- so each charge needs
+     * its own window. That is the one thing here NOT in the note and worth a
+     * reader knowing: the charges cap at four and arrive at most one per 1.5s.
+     */
+    const { player, boss, simulation, trigger } = chargeSetup();
+    expect(player.auras.has(RECKONING_CHARGES.id)).toBe(false);
+
+    for (let i = 0; i < 6; i += 1) {
+      simulation.advanceTo(seconds(2 * (i + 1)));
+      const attack = taken(player, boss, 'crit');
+      expect(trigger.canTrigger?.(simulation, player, attack) ?? true, `trigger ${i}`).toBe(true);
+      trigger.onTrigger(simulation, player, attack);
+    }
+
+    expect(player.auras.get(RECKONING_CHARGES.id)!.stacks).toBe(RECKONING_MAX_CHARGES);
+    expect(RECKONING_MAX_CHARGES).toBe(4);
+
+    // AND NOT ONE EXTRA ATTACK HAS HAPPENED, which is the half of the redesign
+    // the note gives its reason for: the swing timer is not touched by a block.
+    expect(player.auras.has(RECKONING_CHARGES.id)).toBe(true);
+  });
+
+  it('releases them on an AUTO-ATTACK and not on an instant, which is the point', () => {
+    /*
+     * ==========================================================================
+     * THE NOTE'S OWN RATIONALE IS THE SPECIFICATION HERE: the charges wait for a
+     * swing "so that it does not cause the auto attack timer to be reset by
+     * INSTANT ATTACKS". `extraAttack` restarts the slot's swing timer, so an
+     * instant releasing the charges would do exactly what the redesign exists to
+     * prevent.
+     *
+     * A PALADIN'S CRUSADER STRIKE IS A WEAPON USE, so `isWeaponUse` would have
+     * let it through -- which is why the release reads `attackTable` instead.
+     * Both are asserted, because the wrong predicate is the plausible mistake
+     * and it would leave the talent working, just at the wrong moments.
+     * ==========================================================================
+     */
+    const { player, boss, simulation, trigger, release } = chargeSetup();
+    trigger.onTrigger(simulation, player, taken(player, boss, 'crit'));
+    expect(player.auras.get(RECKONING_CHARGES.id)!.stacks).toBe(1);
+
+    // Neither a melee special, nor a spell, nor a ranged special.
+    for (const table of ['melee-special', 'spell', 'ranged-special'] as const) {
+      const other = dealt(player, boss, table);
+      expect(release.canTrigger?.(simulation, player, other) ?? true, table).toBe(false);
+    }
+    expect(player.auras.has(RECKONING_CHARGES.id)).toBe(true);
+
+    // The auto-attack does.
+    expect(release.canTrigger?.(simulation, player, dealt(player, boss, 'melee-auto')) ?? true).toBe(
+      true,
+    );
+
+    // And with no charges banked it declines, so a swing costs nothing.
+    player.auras.remove(simulation, RECKONING_CHARGES.id);
+    expect(release.canTrigger?.(simulation, player, dealt(player, boss, 'melee-auto')) ?? true).toBe(
+      false,
+    );
+  });
+
+  it('spends EVERY charge at once, which `consumeSwingCharges` would not', () => {
+    /*
+     * ==========================================================================
+     * "ALL ACCUMULATED CHARGES FOR 1 EXTRA ATTACK EACH", which is the clause a
+     * near-miss gets wrong: `AuraCollection.consumeSwingCharges` spends ONE
+     * charge per swing, and reading that field name as close enough would cap
+     * Reckoning at a single extra attack -- a smaller number and no error.
+     *
+     * THE CHARGES ARE GONE THE INSTANT IT FIRES, before the extra attacks are
+     * scheduled, and that ordering is what stops a runaway: each extra attack is
+     * a real `melee-auto` swing that runs this same reaction again.
+     * ==========================================================================
+     */
+    const { player, boss, simulation, trigger, release } = chargeSetup();
+    for (let i = 0; i < 3; i += 1) {
+      simulation.advanceTo(seconds(2 * (i + 1)));
+      trigger.onTrigger(simulation, player, taken(player, boss, 'crit'));
+    }
+    expect(player.auras.get(RECKONING_CHARGES.id)!.stacks).toBe(3);
+
+    release.onTrigger(simulation, player, dealt(player, boss, 'melee-auto'));
+    expect(player.auras.has(RECKONING_CHARGES.id)).toBe(false);
+  });
+
+  it('lands its extra blows in the SAME INSTANT as the swing that released them', () => {
+    /*
+     * ==========================================================================
+     * THE WHOLE MECHANISM END TO END, ON THE PROFILE THAT TAKES THE TALENT.
+     *
+     * The hand-built tests above can drive a reaction but cannot show the extra
+     * attacks landing: `extraAttack` SCHEDULES a swing, and each one runs the
+     * release reaction again. That recursion is what the ordering inside
+     * `onTrigger` exists to stop, and only a running fight can express it.
+     *
+     * --------------------------------------------------------------------------
+     * THE TELL IS A SHARED TIMESTAMP, AND TWO EASIER CHECKS WERE TRIED AND
+     * REJECTED FIRST. Both are worth recording, because each looked right.
+     *
+     * A CONTROL RUN WITH THE TALENT STRIPPED IS NOT PAIRED. `reckoning` draws a
+     * `rollChance` on every block and crit taken, so removing it shifts the
+     * random stream and the two fights diverge completely -- "the talent run had
+     * more swings" would be luck as readily as mechanism.
+     *
+     * AND A SWING-TIMER CEILING DOES NOT HOLD FOR A TANK. Counting
+     * `fightMs / swingTimerMs` as the most the timer could produce is Windfury's
+     * own tell -- "an attempts column that outruns the weapon's speed" -- and it
+     * measured 34 swings against a ceiling of 28 WITH THE RELEASE DISABLED, so
+     * it was asserting nothing. PARRY HASTE is why: a parry takes 40% of a full
+     * swing off the parrier's own timer, and this build parries the boss
+     * constantly, so its real swing interval is well under its weapon speed.
+     *
+     * WHAT NO TIMER CAN DO IS SWING TWICE IN ONE MILLISECOND. `extraAttack`
+     * schedules at the CURRENT timestamp, so a release puts its extra blows in
+     * the same instant as the swing that triggered them -- and `scheduleSwing`
+     * keeps at most one pending swing per slot, so an ordinary chain cannot.
+     * That is structural, needs no control and no ceiling.
+     * --------------------------------------------------------------------------
+     */
+    const built = PRESETS_BY_ID.get('prot_pally')!.build();
+    const events: TelemetryEvent[] = [];
+    const simulation = new Simulation(
+      { ...trainingDummyEncounter(built), seed: 909 },
+      { emit: (event) => events.push(event) },
+    );
+    simulation.begin();
+    const player = simulation.combatants.find((actor) => actor.kind === 'player')!;
+    simulation.run();
+
+    const autoAttacks = events.filter(
+      (event) =>
+        event.type === 'damage' &&
+        event.sourceId === player.id &&
+        event.abilityName.includes('Auto-Attack'),
+    );
+    expect(autoAttacks.length).toBeGreaterThan(0);
+
+    const perInstant = new Map<number, number>();
+    for (const event of autoAttacks) {
+      perInstant.set(event.timestamp, (perInstant.get(event.timestamp) ?? 0) + 1);
+    }
+    const doubled = [...perInstant.values()].filter((count) => count > 1);
+
+    // At least one instant carried more than one swing, which only an extra
+    // attack can produce.
+    expect(doubled.length).toBeGreaterThan(0);
+
+    /*
+     * AND NO INSTANT CARRIES MORE THAN FIVE -- the triggering swing plus the
+     * four charges the cap allows. That is the runaway check: each extra attack
+     * is itself a `melee-auto` swing that runs the release again, so charges
+     * surviving into those swings would pile an unbounded number of blows into
+     * one millisecond.
+     *
+     * WHAT MAKES IT FINITE IS THAT THE REMOVAL IS SYNCHRONOUS, not that it sits
+     * before the loop -- swapping those two statements was probed and this
+     * suite passed, so the source comment saying the order was load-bearing was
+     * corrected rather than left to be believed. What this assertion really
+     * guards is a spender that runs LATER than the scheduled swings.
+     */
+    expect(Math.max(...doubled)).toBeLessThanOrEqual(RECKONING_MAX_CHARGES + 1);
+
+    // And nothing is left banked at the end of a fight that swung.
+    expect(player.auras.has(RECKONING_CHARGES.id)).toBe(false);
+  });
+});
 
 describe('Judgement of the Crusader, which was tracked and inert', () => {
   it('grants 161 Holy spell power to whoever hits the target', () => {

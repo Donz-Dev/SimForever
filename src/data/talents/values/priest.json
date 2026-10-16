@@ -184,7 +184,7 @@
    "name": "Penance",
    "tree": "discipline",
    "ranks": 1,
-   "text": "Launches a volley of holy light at the target, causing 81 Holy damage to an enemy, or 184 healing to an ally, instantly and every 1 sec for 2 sec.",
+   "text": "Launches a volley of holy light at the target, causing 44 Holy damage to an enemy, or 133 healing to an ally, instantly and every 1 sec for 2 sec.",
    "values": null,
    "note": "single rank"
   },

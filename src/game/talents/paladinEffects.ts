@@ -412,6 +412,18 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * clauses and picks its chance from the outcome.
      */
     { kind: 'reaction', reactionId: 'reckoning' },
+    /*
+     * AND THE HALF THAT PAYS OUT, which the patch separated from the trigger:
+     * "you gain a CHARGE of Reckoning each time it triggers. Your next melee
+     * swing (auto attack) will trigger all accumulated charges for 1 extra
+     * attack each."
+     *
+     * TWO ENTRIES AND NOT ONE, the shape Primal Fury already has: one reaction
+     * cannot fire on both a block taken and a swing dealt. `valueless` because
+     * the release reads no rank -- the charge count is on the aura and the
+     * chance to GAIN one is the other entry's business.
+     */
+    { kind: 'reaction', reactionId: 'reckoning_release', valueless: true },
   ],
 
   iron_creed: [
