@@ -531,5 +531,14 @@ export function maelstromWeaponAura(reductionPercentPerStack: number): AuraDefin
  * ----------------------------------------------------------------------------
  */
 export const CATALOG_AURAS: readonly AuraDefinition[] = [
+  /*
+   * ADDED BY THE AURA-CATALOGUE AUDIT, which found these reachable ONLY through
+   * `aurasForClass`'s stock-list safety net -- "anything a stock list names must
+   * be choosable, wherever its definition lives". The id was offered with a name
+   * derived from it and nothing else, where a listed definition carries the
+   * aura's own name and `isDebuff`. A SAFETY NET MASKS THE THING IT IS A NET
+   * FOR, which is why the audit asks the modules rather than the catalogue.
+   */
+  maelstromWeaponAura(0),
   elementalDevastationAura(0),
 ];

@@ -1121,5 +1121,40 @@ export const MAGE_ARMOR: AuraDefinition = {
  * ----------------------------------------------------------------------------
  */
 export const CATALOG_AURAS: readonly AuraDefinition[] = [
+  /*
+   * ADDED BY THE AURA-CATALOGUE AUDIT, which found these reachable ONLY through
+   * `aurasForClass`'s stock-list safety net -- "anything a stock list names must
+   * be choosable, wherever its definition lives". The id was offered with a name
+   * derived from it and nothing else, where a listed definition carries the
+   * aura's own name and `isDebuff`. A SAFETY NET MASKS THE THING IT IS A NET
+   * FOR, which is why the audit asks the modules rather than the catalogue.
+   */
+  fireVulnerabilityAura(0),
   igniteAura(0),
+  /*
+   * ========================================================================
+   * ARCANE BLAST BECAME A FACTORY WHEN THE PATCH REDESIGNED IT, and that is
+   * exactly the change this list exists to catch: it was an exported CONSTANT,
+   * which the export walk finds, and is now `arcaneBlastAura(intellect)`,
+   * which it does not.
+   *
+   * THE DROPDOWN DID NOT VISIBLY BREAK, AND THAT IS THE INTERESTING PART.
+   * `aurasForClass` ends with a SAFETY NET -- "anything a stock list names must
+   * be choosable, wherever its definition lives" -- and the Arcane list gates
+   * on `arcane_blast` stacks, so the id kept being offered. What it lost was
+   * the DEFINITION behind it: the net supplies a readable name and nothing
+   * else, where this list supplies the aura's own name and `isDebuff`.
+   *
+   * SO `auraCatalog.test.ts` PASSED THROUGH THE REGRESSION. Its structural
+   * check reads the source for every `id` / `name` / `durationMs` triple and
+   * demands the catalog offer each one -- which the net satisfied. **A safety
+   * net masks the thing it is a net for**, and the only reason this was found
+   * was re-reading CLAUDE.md's own note that a factory-built aura needs
+   * listing here.
+   *
+   * ZERO IS THE REPRESENTATIVE ARGUMENT, and only the id, name and `isDebuff`
+   * are read -- none of which depends on the caster's Intellect.
+   * ========================================================================
+   */
+  arcaneBlastAura(0),
 ];
