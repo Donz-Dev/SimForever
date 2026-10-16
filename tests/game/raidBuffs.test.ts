@@ -231,16 +231,43 @@ describe('buffs on the character', () => {
     expect(kings.health.maximum).toBeGreaterThan(plain.health.maximum);
   });
 
-  it('put crit on melee and spells alike', () => {
-    // "+3% crit chance for melee, spells and ranged". Ranged reads the same
-    // stat melee does, so three percentage points reaches all three.
+  it('put Leader of the Pack on MELEE and ranged, and not on spells', () => {
+    /*
+     * ========================================================================
+     * IT USED TO REACH SPELLS TOO AND THE PATCH TOOK THAT AWAY: "Leader of the
+     * Pack now only increases Melee and Ranged Critical Strike chance."
+     *
+     * Ranged reads the same `critChance` stat melee does -- `critChanceFrom`
+     * is the engine's one crit function -- so "melee and ranged" is that one
+     * stat, and spell crit is a genuinely separate one that no longer moves.
+     *
+     * THE SPELL ASSERTION IS THE WHOLE TEST NOW. Every preset but the Moonkin
+     * carries this buff, so the 3% spell crit it used to hand every CASTER
+     * profile is gone -- which is what the note says should happen, and is the
+     * largest single consequence of the Druid half of this patch. Asserted as
+     * "unchanged" rather than deleted, because a merge that left the old
+     * `spellCritChance` modifier on the aura would pass a test that had merely
+     * stopped looking.
+     * ========================================================================
+     */
     const plain = sheet([]);
     const pack = sheet(['leader_of_the_pack']);
     expect(pack.stats.get('critChance')).toBeCloseTo(plain.stats.get('critChance') + 3, 6);
     expect(pack.stats.get('spellCritChance')).toBeCloseTo(
+      plain.stats.get('spellCritChance'),
+      6,
+    );
+  });
+
+  it('put Moonkin Aura on SPELLS, and not on melee or ranged', () => {
+    // The mirror of the above, and the other half of the split.
+    const plain = sheet([]);
+    const moonkin = sheet(['moonkin_form']);
+    expect(moonkin.stats.get('spellCritChance')).toBeCloseTo(
       plain.stats.get('spellCritChance') + 3,
       6,
     );
+    expect(moonkin.stats.get('critChance')).toBeCloseTo(plain.stats.get('critChance'), 6);
   });
 
   it('give Trueshot Aura ranged attack power and nothing else', () => {
@@ -446,9 +473,20 @@ describe('the Warrior keeps Thunder Clap up', () => {
 describe('Leader of the Pack and Moonkin Form', () => {
   it('are declared exclusive, in both directions', () => {
     /*
-     * The ruleset owner's ruling and their choice of where to enforce it:
-     * they do not stack, and the GUI is where to say so. The engine is right
-     * to add two different +3% auras to +6%; what is wrong is choosing both.
+     * ------------------------------------------------------------------------
+     * STILL EXCLUSIVE, AND IT IS NOW A QUESTION RATHER THAN A RULING.
+     *
+     * The owner's ruling was that the two are "the same exclusive 3% global
+     * critical strike chance and do not stack", and the patch split them --
+     * Moonkin Aura is spell crit and Leader of the Pack is melee and ranged.
+     * Two buffs that no longer overlap have no obvious reason to exclude each
+     * other; a raid with a Feral and a Moonkin druid would run both.
+     *
+     * LEFT AS DECLARED, because removing it is a RAID COMPOSITION decision
+     * that moves every profile's figure and that is the owner's call rather
+     * than a reading of this note. Pinned so the day somebody changes it is
+     * the day the question gets re-read.
+     * ------------------------------------------------------------------------
      */
     const pack = RAID_BUFFS_BY_ID.get('leader_of_the_pack')!;
     const moonkin = RAID_BUFFS_BY_ID.get('moonkin_form')!;
@@ -467,10 +505,33 @@ describe('Leader of the Pack and Moonkin Form', () => {
     expect(withMoonkin).toContain('battle_shout');
   });
 
-  it('give three percent, never six', () => {
+  it('give three percent of ONE kind of crit, never six of it', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE NO-DOUBLE-DIP CHECK, NARROWED TO ONE BUFF BY THE SPLIT.
+     *
+     * `withRaidBuff` replaces one with the other, so the selection holds
+     * Moonkin Aura alone -- and the figure to check is that its 3% lands once.
+     * It used to be asserted on `critChance`, which Moonkin Aura no longer
+     * touches at all, so reading the old stat now would assert that the buff
+     * does nothing and pass for the wrong reason.
+     *
+     * The ACROSS-the-pair stacking is asserted in `druidTalents.test.ts`,
+     * where the two auras can be applied together without the chooser
+     * replacing one.
+     * ------------------------------------------------------------------------
+     */
     const plain = sheet([]);
-    const one = sheet(withRaidBuff(withRaidBuff([], 'leader_of_the_pack'), 'moonkin_form'));
-    expect(one.stats.get('critChance')).toBeCloseTo(plain.stats.get('critChance') + 3, 6);
+    const selection = withRaidBuff(withRaidBuff([], 'leader_of_the_pack'), 'moonkin_form');
+    expect(selection).toContain('moonkin_form');
+    expect(selection).not.toContain('leader_of_the_pack');
+
+    const one = sheet(selection);
+    expect(one.stats.get('spellCritChance')).toBeCloseTo(
+      plain.stats.get('spellCritChance') + 3,
+      6,
+    );
+    expect(one.stats.get('critChance')).toBeCloseTo(plain.stats.get('critChance'), 6);
   });
 
   it('keeps the selection in catalogue order', () => {

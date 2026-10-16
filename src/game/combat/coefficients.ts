@@ -113,8 +113,24 @@ export const SEAL_OF_FURY_SP_COEFFICIENT = 0.1;
 /** Holy Shock: 42.857% spell power — three sevenths, i.e. 1.5 / 3.5. */
 export const HOLY_SHOCK_SP_COEFFICIENT = 0.4285714285714286;
 
-/** Consecration: 9.5% spell power PER TICK. */
-export const CONSECRATION_TICK_SP_COEFFICIENT = 0.095;
+/**
+ * Consecration: 4.2% spell power PER TICK.
+ *
+ * ---------------------------------------------------------------------------
+ * THE PATCH NOTE'S FIGURE, NOT THE SHEET'S. "Consecration's Spell Power
+ * Coefficient per tick has been changed to 4.2% (was 9.5%)" --
+ * `WoWSimWorksheet.xlsx` says 9.5% and the note is later, which is the same
+ * reading that gives Swipe 3% against a sheet saying 10%. Said here beside the
+ * constant because a refresh of the sheet will not carry it and a reader who
+ * knows the sheet would read 0.042 as drift.
+ *
+ * IT IS LESS THAN HALF, AND IT REACHES MORE THAN CONSECRATION. Consecration is
+ * also the one ability whose TICKS can proc Touch of the Grave -- the owner's
+ * own exception, because its cast deals nothing at all -- so an Undead Paladin
+ * feels this twice. Neither of the two Paladin presets that cast it is Undead.
+ * ---------------------------------------------------------------------------
+ */
+export const CONSECRATION_TICK_SP_COEFFICIENT = 0.042;
 
 /** Holy Strike: 50% of weapon damage, AND 21.45% spell power. */
 export const HOLY_STRIKE_SP_COEFFICIENT = 0.2145;
@@ -231,23 +247,47 @@ export const FLAME_SHOCK_TICK_SP_COEFFICIENT = 0.1;
  *
  * SUPPLIED BY THE RULESET OWNER DIRECTLY, on 2026-09-30, asked for with the
  * alternatives beside it: "give it a 10% spell power coefficient for now".
- * The "for now" is theirs and is recorded rather than smoothed away -- it is a
- * ruling that may be revisited, which is different from a placeholder nobody
- * has answered.
+ * The "for now" was theirs, recorded rather than smoothed away -- and it has
+ * now been revisited, which is what that phrasing was kept for.
  *
  * SAID HERE RATHER THAN FOLDED IN, for Wrack's reason: everything around it is
  * transcribed from one document, and the next refresh of that document will not
  * contain this line. The authority is the same -- it is the owner either way --
  * and the PROVENANCE is not.
  *
- * IT IS A SMALL COEFFICIENT ON A LARGE FLAT HIT, which is worth knowing before
- * reading it as generous: 436 base against 10% of spell power, so an
- * Enhancement shaman's 300-odd spell power adds about 7% to the spell. Fire
- * Nova is a flat nuke here and the coefficient makes it scale rather than
- * making it scale much.
+ * ----------------------------------------------------------------------------
+ * 14.3% NOW, FROM THE PATCH NOTE -- AND THE NOTE'S HISTORY DOES NOT MATCH THIS
+ * PROJECT'S, WHICH IS THE SECOND TIME IN THIS PATCH.
+ *
+ * "Fire Nova's Spell Power Coefficient has been changed to 0.143 (was 0.214)."
+ * This project has carried 0.1 since the owner supplied it, from nothing but
+ * their own sentence -- 0.214 appears in no source here, the way Shadow Word:
+ * Death's "(was 12 seconds)" matches neither the capture's 15 nor this file.
+ * The TARGET is what is applied: 0.143 is a prescription with a number in it.
+ *
+ * ========================================================================
+ * AND IT IS A RISE HERE WHERE THE PATCH CLEARLY INTENDS A FALL, BECAUSE TWO
+ * OF THE THREE FIRE NOVA NOTES CARRY NO NUMBER AT ALL.
+ *
+ *   "Spell Power Coefficient changed to 0.143"       APPLIED
+ *   "base damage has been significantly reduced"     NO FIGURE -- not applied
+ *   "mana cost has been significantly reduced"       NO FIGURE -- not applied
+ *
+ * So Fire Nova in this simulator gets a BETTER coefficient and keeps its 436
+ * base damage and its 520 mana, which is the opposite of the three notes read
+ * together. "Significantly" is not a number and inventing one would be
+ * inventing game data with a patch note in front of it -- this project's most
+ * important working rule -- so the two are left alone and the DIRECTION of the
+ * resulting error is written down instead.
+ *
+ * WHAT TO EXPECT FROM A MEASUREMENT, so nobody reads it as a win: the
+ * Enhancement build carries about 300 spell power, so 0.1 -> 0.143 adds
+ * roughly 13 damage to a 436-damage nuke on a 10 second cooldown. Small, and
+ * pointing the wrong way. A QUESTION FOR THE OWNER: the two missing figures.
+ * ========================================================================
  * ----------------------------------------------------------------------------
  */
-export const FIRE_NOVA_SP_COEFFICIENT = 0.1;
+export const FIRE_NOVA_SP_COEFFICIENT = 0.143;
 
 // ---------------------------------------------------------------------------
 // Mage

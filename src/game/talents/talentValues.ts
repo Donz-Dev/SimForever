@@ -8,6 +8,7 @@ import hunterValues from '../../data/talents/values/hunter.json';
 import warlockValues from '../../data/talents/values/warlock.json';
 import priestValues from '../../data/talents/values/priest.json';
 import type { ClassId } from '../character';
+import { patchNoteValue } from './patchNoteValues';
 
 /**
  * The per-rank numbers behind talent effects.
@@ -110,6 +111,30 @@ export function talentValue(
   talentId: string,
   rank: number,
 ): TalentValue | undefined {
+  /*
+   * ==========================================================================
+   * A PATCH NOTE'S VALUE OUTRANKS THE GENERATED ONE, AND IT IS CONSULTED HERE
+   * RATHER THAN AT EACH READER.
+   *
+   * `PATCH_NOTE_TALENT_VALUES` carries figures a note states and the client has
+   * not shipped. It cannot live in `values/<class>.json`, because the importer
+   * merges a previous entry ONLY where this run produced `null` -- so a hand
+   * edit to a MULTI-rank row survives exactly until the next `--write`.
+   *
+   * THIS IS THE ROOT AND THAT IS THE WHOLE REASON IT IS HERE. `talentNumber`,
+   * `talentNumbers` and `talentDescription` all come through this function, so
+   * the override reaches the fight AND the Talent panel together. Wiring it
+   * into `talentBuild` alone -- which is where it was first written -- would
+   * have made the panel print 1/2/3/4/5 for a Shadow Mastery the engine was
+   * running at 2/4/6/8/10. That is the character sheet's crit bug exactly: a
+   * panel disagreeing with the fight about a number, invisible because every
+   * neighbour is right, and it cost a proc rate being designed against the
+   * wrong figure.
+   * ==========================================================================
+   */
+  const overridden = patchNoteValue(characterClass, talentId, rank);
+  if (overridden !== undefined) return overridden;
+
   const entry = FILES[characterClass]?.talents[talentId];
   if (!entry?.values) return undefined;
   if (rank < 1 || rank > entry.values.length) return undefined;

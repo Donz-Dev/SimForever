@@ -717,18 +717,26 @@ describe('Fingers of Frost, the one Frozen talent that is not inert', () => {
     expect(fires('pyroblast')).toBe(false);
   });
 
-  it('quadruples ALL of Ice Lance, the coefficient as well as the base', () => {
+  it('triples ALL of Ice Lance, the coefficient as well as the base', () => {
     /*
-     * TIMES FOUR by the owner's ruling -- "increased BY 300%" is base plus
-     * three times itself, where "deals 300% damage" would be three and is also
-     * what Classic does.
+     * TIMES THREE, LOWERED FROM FOUR: "Ice Lance damage against Frozen targets
+     * changed to a 200% increase (Was 300%)." The READING is unchanged and is
+     * the owner's -- "increased BY 200%" is base plus twice itself, where
+     * "deals 200% damage" would be two and is also what Classic does.
      *
      * AND IT REACHES THE COEFFICIENT. Applying the multiplier to `baseAmount`
      * alone would leave a spell-power-heavy Mage's Ice Lance barely improved
      * and would look entirely reasonable, so the ratio is asserted at a
      * thousand spell power where the coefficient dominates.
+     *
+     * THE RATIO IS ASSERTED AS WELL AS THE CONSTANT, which is what makes this
+     * a test of the MECHANISM: the multiplier is read at cast time and reaches
+     * two separate terms, and a constant check cannot see one of them being
+     * dropped or applied twice. Four and three are the two readings the
+     * project has held, so an exact ratio against a scripted non-crit is the
+     * check -- the floor below is kept for the crit case.
      */
-    expect(ICE_LANCE_FROZEN_MULTIPLIER).toBe(4);
+    expect(ICE_LANCE_FROZEN_MULTIPLIER).toBe(3);
 
     const actor = frostMage();
     const target = makeTarget({ maxHealth: 1_000_000 });
@@ -753,9 +761,14 @@ describe('Fingers of Frost, the one Frozen talent that is not inert', () => {
     castAbility(simulation, actor, ICE_LANCE, target);
     const frozen = damageOf();
 
-    // The combat table can crit either one, so this is a floor rather than an
-    // equality: four times the base must be well clear of an uncrit hit.
-    expect(frozen).toBeGreaterThan(plain * 2);
+    /*
+     * The combat table can crit either one, so this is a floor rather than an
+     * equality: three times the base must be well clear of an uncrit hit. A
+     * crit is 1.5x on the spell table, so `plain * 1.5` is the worst case the
+     * unfrozen cast can reach and 3x must beat it -- which `> plain * 1.6`
+     * says without assuming neither cast crit.
+     */
+    expect(frozen).toBeGreaterThan(plain * 1.6);
   });
 
   it('does not let the cast that procced it spend a charge', () => {

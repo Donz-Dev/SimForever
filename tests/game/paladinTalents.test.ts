@@ -41,6 +41,7 @@ import {
   RECKONING_ICD_MS,
   SHIELD_SPECIALIZATION_MANA_PERCENT,
 } from '../../src/game/reactions/paladinTalents';
+import { SHIELD_SPECIALIZATION_COOLDOWN_MS } from '../../src/game/auras/paladin';
 import { HAND_OF_JUSTICE_ICD_MS } from '../../src/game/items/procs';
 import { PALADIN_TALENT_EFFECTS } from '../../src/game/talents/paladinEffects';
 import { talentNumber } from '../../src/game/talents/talentValues';
@@ -185,8 +186,18 @@ describe('the three talents that were written off against blocks', () => {
     expect(withShieldSpec.stats.get('blockValue')).toBeCloseTo(base * 1.3, 6);
   });
 
-  it('restores 6% of maximum mana on a block, once every three seconds', () => {
-    expect(SHIELD_SPECIALIZATION_MANA_PERCENT).toBe(6);
+  it('restores 4% of maximum mana on a block, once every three seconds', () => {
+    /*
+     * FOUR PERCENT, LOWERED FROM SIX: "Shield Specialization Mana restored to
+     * the Paladin lowered to 4% with a 3 second internal cooldown (was 6% with
+     * a 3 second internal cooldown)."
+     *
+     * THE NOTE RESTATES THE COOLDOWN IDENTICALLY, so both halves are pinned
+     * here -- the half that moved and the half that was confirmed. A test on
+     * the mana alone would pass a change that also touched the window.
+     */
+    expect(SHIELD_SPECIALIZATION_MANA_PERCENT).toBe(4);
+    expect(SHIELD_SPECIALIZATION_COOLDOWN_MS).toBe(seconds(3));
     const player = presetPlayer('prot_pally');
     const reaction = player.reactions.find((r) => r.id === 'shield_specialization')!;
     // The internal cooldown is an aura rather than a closure, so that a batch

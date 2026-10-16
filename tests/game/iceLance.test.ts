@@ -16,29 +16,37 @@ import { PRESETS_BY_ID } from '../../src/profiles/presets';
 
 /*
  * ==============================================================================
- * ICE LANCE'S COEFFICIENT, AND THE TWO FOURS THAT SIT NEXT TO EACH OTHER.
+ * ICE LANCE'S COEFFICIENT, AND THE FROZEN MULTIPLIER BESIDE IT.
  *
  * The ruleset owner gave it as an expression: "Ice lance now has a 1.5/3.5/4
  * spell power coefficient instead of 1.5/3.5." It was 0.43 -- `1.5 / 3.5`
  * rounded -- so this is a QUARTER of what shipped.
  *
  * ------------------------------------------------------------------------------
- * AND `ICE_LANCE_FROZEN_MULTIPLIER` IS ALSO 4, APPLIED SEPARATELY, so a frozen
- * Ice Lance carries `1.5 / 3.5 / 4 * 4` -- exactly `1.5 / 3.5`, the coefficient
- * the spell used to have UNFROZEN. A reader who remembers the old 0.43 will see
- * it reappear on the frozen cast and reasonably suspect a four has been
- * cancelled somewhere.
+ * `ICE_LANCE_FROZEN_MULTIPLIER` IS APPLIED SEPARATELY AND IS NOW THREE, where
+ * it was four: "Ice Lance damage against Frozen targets changed to a 200%
+ * increase (Was 300%)." The READING is unchanged and is the owner's -- an
+ * increase BY 200% is base plus twice itself.
  *
- * SETTLED BY THE OWNER, 2026-10-08: asked whether the `/4` was meant to have
- * already done the frozen division, "This is intended stop asking." These tests
- * pin a RULING now rather than an interpretation, which is the difference between
- * a figure that may be revisited and one that may not.
+ * AND THE COINCIDENCE THAT MADE THIS FILE INTERESTING IS GONE WITH IT. While
+ * both numbers were four they multiplied out to `1.5 / 3.5 / 4 * 4` -- exactly
+ * `1.5 / 3.5`, the coefficient the spell had UNFROZEN before the owner's
+ * change -- and the owner ratified that directly: asked whether the `/4` was
+ * meant to have already done the frozen division, "This is intended stop
+ * asking." At a multiplier of three the frozen product is 0.3214 and nothing
+ * lines up.
  *
- * THE TWO WRONG READINGS ARE A FACTOR OF SIXTEEN APART. Treating the owner's /4
- * as having already done the frozen division makes a frozen Ice Lance a quarter
- * of its coefficient; applying the multiplier twice makes it four times. Both
- * produce a perfectly plausible number on a spell that was 35.7% of the
- * Frostfire profile.
+ * SO THERE IS A LIVE QUESTION HERE AGAIN, which these tests pin rather than
+ * settle: the note moves the frozen BONUS and says nothing about the
+ * coefficient, so either the `/4` is a separate settled fact (implemented) or
+ * "intended" meant the PRODUCT and the divisor should follow to three. The two
+ * readings are 0.3214 against 0.4286 on a spell that was 35.7% of the
+ * Frostfire profile. See `abilities/mage.ts`, which carries the argument.
+ *
+ * THE TWO WRONG READINGS ARE STILL A LARGE FACTOR APART. Treating the owner's
+ * /4 as having already done the frozen division makes a frozen Ice Lance a
+ * quarter of its coefficient; applying the multiplier twice makes it three
+ * times. Both produce a perfectly plausible number.
  *
  * SO EVERY TEST HERE MEASURES DAMAGE THAT LANDED AND DIVIDES, rather than
  * asserting either constant. That is the argument the pet's 1.375 damage
@@ -168,9 +176,15 @@ describe("the owner's expression, and what it is not", () => {
     expect(ICE_LANCE_SP_COEFFICIENT * 4).toBeCloseTo(1.5 / 3.5, 12);
   });
 
-  it('is a different four from the frozen multiplier', () => {
-    // Both are 4 and they are not the same 4. See the note in `abilities/mage.ts`.
-    expect(ICE_LANCE_FROZEN_MULTIPLIER).toBe(4);
+  it('is a different number from the frozen multiplier, which is now three', () => {
+    /*
+     * THEY USED TO BOTH BE FOUR AND THE PATCH MOVED ONLY ONE, which is the
+     * clearest possible demonstration that they were never the same number.
+     * Pinned as a PAIR so a later edit that "restores" the symmetry has to
+     * argue with this line rather than with a coincidence.
+     */
+    expect(ICE_LANCE_FROZEN_MULTIPLIER).toBe(3);
+    expect(ICE_LANCE_SP_COEFFICIENT).toBeCloseTo(1.5 / 3.5 / 4, 12);
     expect(ICE_LANCE_COEFFICIENT).toBe(ICE_LANCE_SP_COEFFICIENT);
   });
 });
@@ -195,31 +209,43 @@ describe('what the spell actually applies, measured from damage', () => {
     expect(rawSlope).toBeCloseTo((1.5 / 3.5 / 4) * 1.06, 6);
   });
 
-  it('scales at FOUR TIMES it when Fingers of Frost is up', () => {
+  it('scales at THREE TIMES it when Fingers of Frost is up', () => {
     /*
      * THE MULTIPLIER REACHES THE COEFFICIENT AND NOT ONLY THE BASE, which is a
-     * separate owner ruling -- "deals 300% increased damage" is all of the
-     * damage. Applying it to the flat half alone would leave a
-     * spell-power-heavy Mage's Ice Lance barely improved and look reasonable.
+     * separate owner ruling -- "increased damage" is all of the damage.
+     * Applying it to the flat half alone would leave a spell-power-heavy
+     * Mage's Ice Lance barely improved and look reasonable.
      */
-    expect(measuredCoefficient(true)).toBeCloseTo((1.5 / 3.5 / 4) * 4, 6);
+    expect(measuredCoefficient(true)).toBeCloseTo((1.5 / 3.5 / 4) * 3, 6);
   });
 
-  it('lands the frozen case on 1.5/3.5, which is the coincidence to not "fix"', () => {
+  it('no longer lands the frozen case on 1.5/3.5, which the patch undid', () => {
     /*
-     * The product is exactly the coefficient the spell had UNFROZEN before this
-     * change. That is arithmetic, not a cancelled four -- and it is asserted so
-     * that a future reader who notices it finds a test saying it is expected
-     * rather than a suspicion.
+     * ========================================================================
+     * THIS TEST USED TO ASSERT THE COINCIDENCE AND NOW ASSERTS THAT IT IS GONE.
+     *
+     * While the frozen multiplier was four the product was exactly `1.5 / 3.5`
+     * -- the coefficient the spell had UNFROZEN before the owner's change --
+     * and this test existed so that a reader who noticed it found a note
+     * saying it was expected rather than a suspicion. The owner ratified it:
+     * "This is intended stop asking."
+     *
+     * At three the product is 0.3214 and the symmetry is broken. ASSERTED AS A
+     * NEGATIVE rather than deleted, because the alternative reading of this
+     * patch is that the owner's `/4` should follow the multiplier down to `/3`
+     * and restore 0.4286 -- so the day somebody does that, this line is what
+     * they have to change, and the question beside it is what they should read.
+     * ========================================================================
      */
-    expect(measuredCoefficient(true)).toBeCloseTo(1.5 / 3.5, 6);
+    expect(measuredCoefficient(true)).toBeCloseTo((1.5 / 3.5) * (3 / 4), 6);
+    expect(measuredCoefficient(true)).not.toBeCloseTo(1.5 / 3.5, 3);
     /*
      * THE RATIO NEEDS NO CORRECTION AT ALL, which is why it is the assertion to
      * trust most here: the school multiplier, the base damage and every other
      * term between the coefficient and the damage event appear on both sides and
-     * cancel. Four is four whatever else is in the way.
+     * cancel. Three is three whatever else is in the way.
      */
-    expect(measuredCoefficient(true) / measuredCoefficient(false)).toBeCloseTo(4, 6);
+    expect(measuredCoefficient(true) / measuredCoefficient(false)).toBeCloseTo(3, 6);
   });
 
   it('keeps its flat damage, which a coefficient edit is what deletes', () => {

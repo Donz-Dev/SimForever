@@ -3,12 +3,14 @@ import { createPlayer } from '../../src/game/actors/createPlayer';
 import { runProfileBatch } from '../../src/simulator';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
-import { resolveCast, spellPowerFor } from '../../src/engine';
+import type { TelemetryEvent } from '../../src/engine';
+import { castAbility, resolveCast, seconds, spellPowerFor } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import {
   PRIEST_BASE_MANA,
   MIND_BLAST_DAMAGE,
+  MIND_FLAY_ESCALATION_BONUS,
   MIND_FLAY_TICKS,
   MIND_FLAY_TOTAL,
   SHADOW_WORD_DEATH_BACKLASH_FRACTION,
@@ -145,47 +147,170 @@ describe('Shadowform, the capstone whose clauses land in three places', () => {
   });
 });
 
-describe('Improved Mind Flay, which was reading the yards', () => {
+describe('Improved Mind Flay, which now compounds across the channel', () => {
   /*
    * ==========================================================================
-   * THREE NUMBERS IN ONE ROW AND THE EFFECT TOOK THE WRONG ONE. "Your Mind
-   * Flay now deals {0}% more damage, gains {1} yards increased range, but
-   * slows the target's movement speed by {2}%" -- and the effect declared
-   * `valueIndex: 1`, which is the RANGE.
+   * IT READ THE YARDS ONCE, AND IT HAS NOW BEEN REDESIGNED. BOTH FACTS MATTER
+   * AND THEY ARE DIFFERENT KINDS OF CHANGE.
    *
-   * WHAT MADE IT INVISIBLE IS THE ROW ITSELF. At 2/2 the values are
-   * [20, 10, 20], so reading index 1 gave 10% where the talent grants 20% --
-   * and 10 is both a plausible damage percentage AND exactly what rank 1
-   * correctly grants. The talent read as one rank behind itself: Mind Flay
-   * still scaled, still crit, still took its share of the damage table, and no
-   * audit in the project asks whether a multiplier is the RIGHT multiplier.
+   * THE OLD BUG: "Your Mind Flay now deals {0}% more damage, gains {1} yards
+   * increased range, but slows the target's movement speed by {2}%" -- three
+   * numbers in one row, and the effect declared `valueIndex: 1`, the RANGE. At
+   * 2/2 the values are [20, 10, 20], so it gave 10% where the talent grants
+   * 20% -- and 10 is both a plausible damage percentage AND exactly what rank 1
+   * correctly grants, so the talent read as one rank behind itself.
    *
-   * Written out by hand from the tooltip, then checked against the capture,
-   * which is the two independent checks a captured number gets here.
+   * THE REDESIGN: "Improved Mind Flay changes to: Each instance of damage of
+   * Mind Flay deals 10/20% more damage than its previous instance of damage."
+   * The FIGURES are untouched -- still 10 and 20 at index 0 -- so this is not a
+   * values override and reading it as one would have been a no-op claiming to
+   * be a change. What moved is the SHAPE: a flat per-ability multiplier became
+   * a compounding one, so the number had to leave `abilityModifiers` (which is
+   * on the combatant and cannot see which tick is running) and be handed to the
+   * ability as an `abilityBonus`.
+   *
+   * SO THESE TESTS ASSERT THE DAMAGE OF EACH TICK rather than a multiplier on
+   * the build. The old ones read `abilityModifiers.for('mind_flay')`, which no
+   * longer carries anything -- and a test that had been loosened to "the
+   * multiplier is gone" would have asserted nothing at all about the escalation
+   * that replaced it.
    * ==========================================================================
    */
-  it('reads the DAMAGE out of the row and not the range or the slow', () => {
+  it('still reads the DAMAGE out of the row and not the range or the slow', () => {
+    // The row is unchanged by the patch, and the index is still the first.
     expect(talentNumber('priest', 'improved_mind_flay', 2, 0)).toBe(20);
     expect(talentNumber('priest', 'improved_mind_flay', 2, 1)).toBe(10);
     expect(talentNumber('priest', 'improved_mind_flay', 2, 2)).toBe(20);
 
     const build = talentBuild('priest', legalise({ improved_mind_flay: 2 }, 'priest'));
-    expect(build.abilityModifiers.for('mind_flay').damageMultiplier).toBeCloseTo(1.2, 6);
+    expect(build.abilityBonuses.get('mind_flay')?.[MIND_FLAY_ESCALATION_BONUS]).toBe(20);
+
+    /*
+     * AND IT IS NO LONGER A FLAT MULTIPLIER, which is the half that would rot
+     * quietly: leaving the old `abilityDamage` effect in beside the new bonus
+     * would apply the 20% twice -- once flat on every tick and once
+     * compounding -- a bigger number and no error.
+     */
+    expect(build.abilityModifiers.for('mind_flay').damageMultiplier ?? 1).toBe(1);
   });
 
-  /*
-   * AND IT IS NOT THE RANK-1 FIGURE, which is the specific wrong answer the
-   * old index produced. Asserting 1.2 alone would also pass a build that had
-   * silently dropped to rank 1.
-   */
   it('is worth half as much at one rank, so the two ranks differ', () => {
+    /*
+     * NOT THE RANK-1 FIGURE, which is the specific wrong answer the old index
+     * produced. Asserting 20 alone would also pass a build that had silently
+     * dropped to rank 1.
+     */
     const one = talentBuild('priest', legalise({ improved_mind_flay: 1 }, 'priest'));
-    expect(one.abilityModifiers.for('mind_flay').damageMultiplier).toBeCloseTo(1.1, 6);
+    expect(one.abilityBonuses.get('mind_flay')?.[MIND_FLAY_ESCALATION_BONUS]).toBe(10);
   });
 
   it('is 2/2 in the profile, so the profile gets the full 20%', () => {
     const build = talentBuild('priest', shadowBuild().talents);
-    expect(build.abilityModifiers.for('mind_flay').damageMultiplier).toBeCloseTo(1.2, 6);
+    expect(build.abilityBonuses.get('mind_flay')?.[MIND_FLAY_ESCALATION_BONUS]).toBe(20);
+  });
+
+  it('leaves the FIRST tick alone and raises each one after it', () => {
+    /*
+     * ========================================================================
+     * THE MECHANISM, DRIVEN THROUGH A REAL CHANNEL.
+     *
+     * "More than its PREVIOUS instance" means the first instance is
+     * unmultiplied and each one after it is the one before times `1 + p`. The
+     * exponent is therefore the tick INDEX and not the tick COUNT:
+     * `recordChannelTick` runs before `runCast`, so the first tick already
+     * reads `channelTicksDelivered === 1` and the escalation is
+     * `(1 + p)^(delivered - 1)`. Using the count directly would raise every
+     * tick including the first -- a bigger number and no error.
+     *
+     * DRIVEN RATHER THAN COMPUTED, because the join between the talent and the
+     * ability is the half that can be missing: an `abilityBonus` whose key the
+     * ability does not read leaves the talent reporting itself modelled and
+     * doing nothing, which is `lone_wolf`'s failure exactly.
+     *
+     * THE RATIO IS ASSERTED AND NOT THE ABSOLUTE DAMAGE, so this survives a
+     * coefficient, a spell power or a base damage change -- and the spell table
+     * is given enough hit that no tick can miss, because a missed tick deals
+     * nothing and would read as a suppressed multiplier.
+     * ========================================================================
+     */
+    const ticksFor = (ranks: number): number[] => {
+      const caster = createPlayer({
+        race: 'undead',
+        characterClass: 'priest',
+        /*
+         * MIND FLAY IS ITSELF A TALENT, so the allocation has to spend a point
+         * on it or the character does not know the ability at all -- which is
+         * the "check the book before the list" case, met here as a thrown
+         * error rather than as a silently empty event stream.
+         */
+        talents: legalise({ mind_flay: 1, improved_mind_flay: ranks }, 'priest'),
+        bonusStats: { hitChance: 100, critChance: -100, spellCritChance: -100 },
+      });
+      const target = makeTarget({ maxHealth: 1_000_000, stats: { armor: 0 } });
+      const events: TelemetryEvent[] = [];
+      const simulation = buildSimulation([caster, target], { durationMs: seconds(30) }, {
+        emit: (event) => events.push(event),
+      });
+      simulation.begin();
+      /*
+       * THE CHARACTER'S OWN COPY OF THE ABILITY, NOT THE MODULE CONSTANT.
+       *
+       * `abilityBonus` attaches its number to the ability `abilitiesForBuild`
+       * puts in the character's book, so casting the exported `MIND_FLAY`
+       * declaration reads `bonuses` as undefined and every tick comes back the
+       * same size -- which is what the first version of this test did, and it
+       * reported the talent as inert. The same lesson as reading a COST off
+       * the declaration rather than off the built character.
+       */
+      const mindFlay = caster.abilities.get('mind_flay');
+      if (!mindFlay) throw new Error('the Priest does not know Mind Flay');
+      castAbility(simulation, caster, mindFlay, target);
+      simulation.advanceTo(seconds(5));
+      return events
+        .filter((e) => e.type === 'damage' && e.abilityId === 'mind_flay')
+        .map((e) => (e.type === 'damage' ? e.amount : 0));
+    };
+
+    // Without the talent every instance is the same size.
+    const flat = ticksFor(0);
+    expect(flat).toHaveLength(MIND_FLAY_TICKS);
+    for (const amount of flat) expect(amount).toBeCloseTo(flat[0], 6);
+
+    // With it at 2/2 each instance is 1.20 times the one before.
+    const escalating = ticksFor(2);
+    expect(escalating).toHaveLength(MIND_FLAY_TICKS);
+    for (let index = 1; index < escalating.length; index += 1) {
+      expect(escalating[index] / escalating[index - 1], `tick ${index + 1}`).toBeCloseTo(1.2, 4);
+    }
+    // And the FIRST instance is untouched, which is what "previous" requires.
+    expect(escalating[0]).toBeCloseTo(flat[0], 6);
+  });
+
+  it('is worth almost exactly what the flat version was, over three ticks', () => {
+    /*
+     * ========================================================================
+     * A REDESIGN THAT READS AS A BUFF AND MEASURES AS NOISE, WRITTEN DOWN SO
+     * NOBODY LATER "FIXES" IT.
+     *
+     * Over Mind Flay's three ticks at 2/2 the multipliers are 1, 1.20 and 1.44
+     * -- a mean of 1.2133 against the flat 1.20 it replaced, so about +1.1% on
+     * the ability. Mind Flay is roughly half the Shadow profile's damage, so
+     * expect well under a percent on the row.
+     *
+     * ASSERTED AS A BAND rather than an exact figure, because the claim is
+     * "these two readings are close" and that is what makes a near-zero
+     * measurement correct rather than suspicious.
+     * ========================================================================
+     */
+    const escalation = 20 / 100;
+    let total = 0;
+    for (let index = 0; index < MIND_FLAY_TICKS; index += 1) {
+      total += (1 + escalation) ** index;
+    }
+    const mean = total / MIND_FLAY_TICKS;
+    expect(mean).toBeCloseTo(1.2133, 4);
+    // Within a couple of percent of the flat 1.20 it replaced.
+    expect(Math.abs(mean - 1.2)).toBeLessThan(0.02);
   });
 });
 

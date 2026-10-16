@@ -12,7 +12,11 @@ import {
  * talents that grant them, so the raid buff and the talent have to be the same
  * aura or they will eventually disagree about the number.
  */
-import { PARTY_CRIT_AURA, PARTY_CRIT_AURA_PERCENT } from '../auras/druid';
+import {
+  LEADER_OF_THE_PACK_AURA,
+  MOONKIN_AURA,
+  PARTY_CRIT_AURA_PERCENT,
+} from '../auras/druid';
 /*
  * REUSED, NOT REDECLARED, for the reason the Warrior's two above are: the
  * Paladin PROVIDES this debuff itself, so the raid buff and the ability have
@@ -366,26 +370,39 @@ const trueshotAura: RaidBuff = {
 const leaderOfThePack: RaidBuff = {
   id: 'leader_of_the_pack',
   name: 'Leader of the Pack',
-  detail: `+${PARTY_CRIT_AURA_PERCENT}% critical strike chance, melee and ranged and spell`,
+  detail: `+${PARTY_CRIT_AURA_PERCENT}% critical strike chance, melee and ranged`,
   source: 'Druid',
   appliesTo: 'player',
   /*
-   * THE SAME AURA THE OTHER ENTRY APPLIES, and the same one both Druid talents
-   * grant. One id, so any combination of the three is 3% -- see
-   * `PARTY_CRIT_AURA`. `exclusiveWith` below still governs the CHOICE, which is
-   * what a raid composition is; it is no longer what makes the number right.
+   * MELEE AND RANGED ONLY SINCE THE PATCH: "Leader of the Pack now only
+   * increases Melee and Ranged Critical Strike chance." It and Moonkin Aura
+   * used to share ONE aura id because the owner ruled them the same 3% -- they
+   * are different buffs now, so they are two ids and they stack with each
+   * other.
+   *
+   * THE SHARED ID SURVIVES WITHIN EACH, which is the half of that ruling that
+   * was about double-dipping: this entry applies the same aura the Druid's own
+   * `leader_of_the_pack` TALENT grants, so a feral Druid in a raid that ticks
+   * the box reads 3% and not 6%. Enforcing that at the chooser instead is what
+   * produced the +6% bug.
+   *
+   * `exclusiveWith` IS LEFT AS IT WAS AND IS NOW A QUESTION -- two buffs that
+   * no longer overlap have no obvious reason to exclude each other. See
+   * `MOONKIN_AURA_ID` in `auras/druid.ts`.
    */
-  aura: PARTY_CRIT_AURA,
+  aura: LEADER_OF_THE_PACK_AURA,
   exclusiveWith: 'moonkin_form',
 };
 
 const moonkinForm: RaidBuff = {
   id: 'moonkin_form',
   name: 'Moonkin Form',
-  detail: `+${PARTY_CRIT_AURA_PERCENT}% critical strike chance, melee and ranged and spell`,
+  detail: `+${PARTY_CRIT_AURA_PERCENT}% SPELL critical strike chance`,
   source: 'Druid',
   appliesTo: 'player',
-  aura: PARTY_CRIT_AURA,
+  // Spell crit only since the patch, and the same aura the Moonkin Form talent
+  // grants -- one id per buff, so a Moonkin with both sources reads 3%.
+  aura: MOONKIN_AURA,
   exclusiveWith: 'leader_of_the_pack',
 };
 
@@ -599,7 +616,7 @@ const giftOfArthas: RaidBuff = {
  * refreshes a matching id instead of stacking. One judgement sits on a target,
  * which is what the game says too.
  *
- * THAT IS THE ARRANGEMENT `PARTY_CRIT_AURA` ALREADY USES for Moonkin Aura and
+ * THAT IS THE ARRANGEMENT `MOONKIN_AURA` ALREADY USES for Moonkin Aura and
  * Leader of the Pack, and it is there because the alternative -- enforcing
  * exclusivity at the CHOOSER -- failed: `withRaidBuff` governs two raid buff
  * entries and knows nothing about a talent, so a Moonkin carrying its own form

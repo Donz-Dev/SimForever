@@ -217,16 +217,33 @@ describe('where it lands, and where it correctly does not', () => {
      */
     const shockadin = characterFor('pally_shockadin', 'paladin');
     /*
-     * SIXTY PERCENT OF INTELLECT, NOT ALL OF IT, since client build
-     * 1.60.1.70170: "Champion of the Light's Intellect to Spell Damage ratio
-     * changed to 20/40/60% (Was 33/66/100%)". Both damage builds take 3/3, so
-     * both lost 40% of their largest spell power source.
+     * ========================================================================
+     * THIRTY PERCENT OF INTELLECT, HALVED AGAIN, AND THIS IS THE TALENT'S
+     * THIRD FIGURE IN TWO PATCHES.
+     *
+     *   33/66/100%   as it shipped
+     *   20/40/60%    client build 1.60.1.70170
+     *   10/20/30%    "Champion of the Light now increases your spell damage by
+     *                10/20/30% of your Intellect (was 20/40/60%)"
+     *
+     * Both damage builds take 3/3, so both have now lost half of their largest
+     * spell power source on top of the 40% they lost last patch -- the
+     * Shockadin is three quarters Holy, so this is one of the biggest single
+     * figures in the Paladin half of the patch.
+     *
+     * THE FIGURE IS AHEAD OF THE CLIENT. It comes from the note and lives in
+     * `PATCH_NOTE_TALENT_VALUES`, because the client still says 20/40/60 at
+     * build 1.60.1.70291 and a multi-rank row has nowhere safe to go in the
+     * generated values file.
      *
      * THE FRACTION IS WRITTEN OUT HERE rather than read from the values file,
-     * which is what makes this a check on the ratio and not a tautology.
+     * which is what makes this a check on the ratio and not a tautology -- and
+     * it is also what makes it a check on the OVERRIDE arriving at all: read
+     * off the file this would assert 0.6 and pass against the client's number.
+     * ========================================================================
      */
     expect(shockadin.stats.get('spellPower')).toBeCloseTo(
-      shockadin.stats.get('intellect') * 0.6,
+      shockadin.stats.get('intellect') * 0.3,
       6,
     );
     expect(shockadin.abilities.has('seal_of_righteousness')).toBe(true);
@@ -249,8 +266,8 @@ describe('where it lands, and where it correctly does not', () => {
      * ------------------------------------------------------------------------
      */
     const ret = characterFor('pally_ret', 'paladin');
-    // 60% at 3/3 since client build 1.60.1.70170; see the test above.
-    expect(ret.stats.get('spellPower')).toBeCloseTo(ret.stats.get('intellect') * 0.6, 6);
+    // 30% at 3/3 since the patch note halved it from 60; see the test above.
+    expect(ret.stats.get('spellPower')).toBeCloseTo(ret.stats.get('intellect') * 0.3, 6);
     expect(ret.abilities.has('seal_of_command')).toBe(true);
   });
 

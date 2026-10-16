@@ -1,5 +1,5 @@
 import type { TalentEffects } from './TalentEffect';
-import { SWP_EXTRA_SECONDS_BONUS } from '../abilities/priest';
+import { MIND_FLAY_ESCALATION_BONUS, SWP_EXTRA_SECONDS_BONUS } from '../abilities/priest';
 
 /**
  * What each Priest talent does, as data.
@@ -351,9 +351,34 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * numbers in it. The range clause is positioning and the slow is crowd
    * control; both are out of scope by ruling, so nothing else in the row is
    * wanted.
+   *
+   * --------------------------------------------------------------------------
+   * AND THE TALENT HAS SINCE BEEN REDESIGNED, WHICH CHANGES THE EFFECT KIND
+   * AND NOT THE NUMBER IT READS.
+   *
+   * "Improved Mind Flay changes to: Each instance of damage of Mind Flay deals
+   * 10/20% more damage than its previous instance of damage." The figures are
+   * the same 10 and 20 at index 0 -- the client's row is untouched -- so this
+   * is NOT a `PATCH_NOTE_TALENT_VALUES` entry and reading it as one would have
+   * been a no-op claiming to be a change.
+   *
+   * WHAT MOVED IS WHERE THE NUMBER GOES. `abilityDamage` is a per-ability
+   * multiplier on the COMBATANT, which raises every tick by the same amount
+   * and cannot express "more than its previous instance". `abilityBonus` hands
+   * the figure to Mind Flay's own `onCast`, which is the only place that knows
+   * which tick is running. See `MIND_FLAY_ESCALATION_BONUS`, which also
+   * records that the two readings are worth almost exactly the same over three
+   * ticks -- 1.2133 against 1.20 -- so a measurement near zero is correct.
    * --------------------------------------------------------------------------
    */
-  improved_mind_flay: [{ kind: 'abilityDamage', abilityId: 'mind_flay', valueIndex: 0 }],
+  improved_mind_flay: [
+    {
+      kind: 'abilityBonus',
+      abilityId: 'mind_flay',
+      key: MIND_FLAY_ESCALATION_BONUS,
+      valueIndex: 0,
+    },
+  ],
 
   improved_fade: [{ kind: 'unmodelled', scope: 'threat', reason: `Fade is a threat drop. ${NO_THREAT}` }],
 

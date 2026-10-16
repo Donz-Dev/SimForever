@@ -334,11 +334,13 @@ export const FROSTFIRE_BOLT: Ability = {
  * exception: it does not freeze the target, it makes the caster's next spells
  * behave as though it were, which is a state on the Mage.
  *
- * TIMES FOUR, NOT THREE, by the ruleset owner's ruling. "Increased BY 300%" is
- * base plus three times itself; "deals 300% damage" would be three, and that is
- * also what Classic's Ice Lance does -- so the reading that agrees with Classic
- * is the one that was rejected. Forever marks this spell `new`, so Classic is
- * not authoritative about it in either direction.
+ * TIMES THREE NOW, AND IT WAS FOUR. "Ice Lance damage against Frozen targets
+ * changed to a 200% increase (Was 300%)." The READING is unchanged and is the
+ * owner's: "increased BY 200%" is base plus twice itself, so the multiplier is
+ * three. "Deals 200% damage" would be two, and the owner rejected exactly that
+ * reading of the old 300% -- which is also what Classic's Ice Lance does, and
+ * Forever marks this spell `new`, so Classic is not authoritative about it in
+ * either direction.
  *
  * 133-157 AND NOT THE CAPTURE'S 136-160, by the standing rule that
  * `foreverchanges.pro` wins a disagreement. Recorded in
@@ -347,43 +349,63 @@ export const FROSTFIRE_BOLT: Ability = {
  * ============================================================================
  */
 export const ICE_LANCE_DAMAGE = midpoint(133, 157);
-export const ICE_LANCE_FROZEN_MULTIPLIER = 4;
+export const ICE_LANCE_FROZEN_MULTIPLIER = 3;
 export const ICE_LANCE_COEFFICIENT = ICE_LANCE_SP_COEFFICIENT;
 
 /*
  * ============================================================================
- * TWO FOURS SIT NEXT TO EACH OTHER HERE AND THEY ARE DIFFERENT FOURS.
+ * A THREE AND A FOUR SIT NEXT TO EACH OTHER HERE AND THEY ARE SEPARATE
+ * NUMBERS. THEY USED TO BE TWO FOURS, AND THE PATCH MOVED ONLY ONE OF THEM.
  *
- * `ICE_LANCE_FROZEN_MULTIPLIER` is the ruleset's "300% increased damage against
- * frozen targets", times four by the owner's ruling. The four INSIDE
- * `ICE_LANCE_SP_COEFFICIENT` is part of the owner's own expression for the
- * coefficient, `1.5 / 3.5 / 4`, and is not that multiplier.
+ * `ICE_LANCE_FROZEN_MULTIPLIER` is the ruleset's frozen bonus -- "a 200%
+ * increase", so times three. The four INSIDE `ICE_LANCE_SP_COEFFICIENT` is
+ * part of the owner's own expression for the coefficient, `1.5 / 3.5 / 4`, and
+ * is NOT that multiplier. The patch note changes the frozen bonus and says
+ * nothing whatever about the coefficient.
  *
- * SO THEY MULTIPLY OUT, AND THE PRODUCT IS A FAMILIAR NUMBER: a frozen Ice
- * Lance carries `1.5 / 3.5 / 4 * 4` = `1.5 / 3.5` = 0.4286, which is exactly the
- * coefficient the spell had UNFROZEN before the change. A reader who remembers
- * the old 0.43 will see it reappear on the frozen cast and reasonably suspect a
- * four has been cancelled by accident. It has not.
+ * ----------------------------------------------------------------------------
+ * AND THAT BREAKS A COINCIDENCE THE OWNER CALLED "THE RULESET", WHICH IS A
+ * QUESTION FOR THEM RATHER THAN SOMETHING TO FIX HERE.
+ *
+ * While both numbers were four they multiplied out to a familiar figure: a
+ * frozen Ice Lance carried `1.5 / 3.5 / 4 * 4` = `1.5 / 3.5` = 0.4286, exactly
+ * the coefficient the spell had UNFROZEN before the owner's change. This
+ * comment used to warn a reader not to mistake that for a four cancelled by
+ * accident, and the owner settled it directly -- asked whether their `/4` had
+ * already done the frozen division, they said "This is intended stop asking."
+ *
+ * At a frozen multiplier of three the product is `1.5 / 3.5 / 4 * 3` = 0.3214
+ * and the coincidence is gone. TWO READINGS ARE NOW AVAILABLE AND THEY DIFFER
+ * BY A THIRD:
+ *
+ *   the note moves the BONUS only          frozen coefficient 0.3214
+ *   the /4 tracked the frozen multiplier   divisor becomes 3, frozen 0.4286
+ *
+ * THE FIRST IS IMPLEMENTED, because a statement of a VALUE does not overturn a
+ * separate ruling about which terms a multiplier reaches -- this project's own
+ * rule, and it is the rule that settled these two numbers the first time. The
+ * note is about the frozen bonus and the `/4` is a settled, separate fact.
+ *
+ * It is flagged rather than quietly chosen because the 0.4286 was explicitly
+ * ratified as intended, and "intended" may have meant the PRODUCT rather than
+ * the two factors. An interpretation labelled as one is what gets ruled on.
+ * ----------------------------------------------------------------------------
  *
  * WHAT WOULD GO WRONG IF THE TWO WERE CONFLATED is worth stating because it is
- * large in both directions. Dropping the frozen multiplier from the coefficient
- * -- reading the owner's `/4` as having already done it -- makes a frozen Ice
- * Lance a quarter of its intended coefficient. Applying the multiplier twice
- * makes it four times. Sixteen between the two readings, on a spell that was
- * 35.7% of the Frostfire profile.
+ * still large in both directions. Dropping the frozen multiplier from the
+ * coefficient -- reading the owner's `/4` as having already done it -- makes a
+ * frozen Ice Lance a quarter of its intended coefficient. Applying the
+ * multiplier twice makes it three times. Twelve between the two readings, on a
+ * spell that was 35.7% of the Frostfire profile.
  *
  * THE GUARD IS A TEST THAT MULTIPLIES THEM OUT END TO END rather than a check
  * on either constant, which is the argument the pet's 1.375 damage multiplier
  * already makes: a constant check cannot see a double application.
- *
- * SETTLED BY THE OWNER, 2026-10-08, AND NOT TO BE RE-RAISED. Asked whether their
- * `/4` had already done the frozen division: "This is intended stop asking." The
- * familiar 0.4286 reappearing on a frozen cast is the ruleset.
  * ============================================================================
  */
 
 /**
- * Four while Fingers of Frost is up, one otherwise.
+ * Three while Fingers of Frost is up, one otherwise.
  *
  * READ AT CAST TIME rather than being decided when the aura lands, because the
  * charge can expire between the proc and the cast -- the aura is fifteen

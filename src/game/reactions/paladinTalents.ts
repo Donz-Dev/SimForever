@@ -300,7 +300,18 @@ export function holyShieldBlockDamage(): Reaction {
  * construction and shows in the log when the window is shut.
  * ----------------------------------------------------------------------------
  */
-export const SHIELD_SPECIALIZATION_MANA_PERCENT = 6;
+/*
+ * FOUR PERCENT, LOWERED FROM SIX BY THE PATCH NOTE, AND THE COOLDOWN DID NOT
+ * MOVE: "Shield Specialization Mana restored to the Paladin lowered to 4% with
+ * a 3 second internal cooldown (was 6% with a 3 second internal cooldown)."
+ *
+ * THE NOTE RESTATES THE COOLDOWN IDENTICALLY, which is worth reading as a
+ * statement rather than as filler: the 3 seconds is index 3 of the talent's own
+ * row and `SHIELD_SPECIALIZATION_COOLDOWN_MS` already carries it, so the note
+ * confirms that half rather than changing it. A reader who assumed the note
+ * moved both would have gone looking for a second edit.
+ */
+export const SHIELD_SPECIALIZATION_MANA_PERCENT = 4;
 
 export const shieldSpecialization: TalentReactionBuilder = (chancePercent) => ({
   id: 'shield_specialization',

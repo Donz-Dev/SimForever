@@ -94,14 +94,61 @@ const PHYSICAL = 'physical' as const;
 export const PARTY_CRIT_AURA_PERCENT = 3;
 
 /**
- * The id every source applies, and the whole of the no-double-dip rule.
+ * ============================================================================
+ * TWO AURAS NOW, WHERE THERE WAS ONE, AND THE PATCH SPLIT THEM BY ATTACK TYPE.
  *
- * Named apart from the two RAID BUFF ids -- which are still `moonkin_form` and
- * `leader_of_the_pack`, because those name a CHOICE in the panel rather than an
- * effect on a character. Reusing either one here would have made the aura look
- * like it belonged to one source.
+ *   "Moonkin Aura now only increases Spell Critical Strike chance"
+ *   "Leader of the Pack now only increases Melee and Ranged Critical Strike
+ *    chance"
+ *
+ * IT WAS ONE ID ON THE OWNER'S OWN RULING -- "these are all the same exclusive
+ * 3% global critical strike chance and do not stack" -- and that single id was
+ * the whole of the no-double-dip rule: `AuraCollection.apply` refreshes a
+ * matching id rather than stacking, so a Moonkin carrying its own form talent
+ * in a raid with Leader of the Pack ticked read 3% and not 6%. Enforcing it at
+ * the CHOOSER instead is what had produced the +6% bug, measured at 24.243%
+ * against 21.243%.
+ *
+ * THE SPLIT DOES NOT REPEAL THAT LESSON, IT NARROWS IT. Each aura keeps ONE id
+ * shared by its talent and its raid buff entry, so a Moonkin with both sources
+ * of Moonkin Aura still reads 3% spell crit -- which is the half of the old
+ * ruling that was about double-dipping. What is gone is the claim that the two
+ * are the same buff, because the note says in as many words that they are not.
+ *
+ * SO THEY STACK WITH EACH OTHER NOW, and that is the intended consequence: a
+ * character under both carries +3% spell AND +3% melee, which is two different
+ * buffs doing two different things rather than one counted twice.
+ *
+ * ----------------------------------------------------------------------------
+ * AND `exclusiveWith` IS NOW A QUESTION FOR THE OWNER RATHER THAN AN ANSWER.
+ *
+ * The two raid buff entries are still declared mutually exclusive, and that
+ * declaration was made when they were the same 3%. Two buffs that no longer
+ * overlap have no obvious reason to exclude each other -- a raid with a Feral
+ * and a Moonkin druid would have both -- but removing the exclusivity is a
+ * RAID COMPOSITION decision that moves every profile's figure, which is the
+ * owner's call and not a reading of this note.
+ *
+ * LEFT AS IT WAS, AND THE COST IS NAMED: every preset carries
+ * `leader_of_the_pack`, so every CASTER profile loses the 3% spell crit it was
+ * getting from a feral druid's aura. That is what the note says should happen,
+ * and it is also exactly what would be undone if the exclusivity went and both
+ * were ticked. Flagged in HANDOVER rather than decided here.
+ * ============================================================================
  */
-export const PARTY_CRIT_AURA_ID = 'party_crit_aura';
+
+/** Moonkin Aura: SPELL critical strike chance, and nothing else. */
+export const MOONKIN_AURA_ID = 'moonkin_aura';
+
+/**
+ * Leader of the Pack: MELEE AND RANGED critical strike chance.
+ *
+ * ONE STAT FOR BOTH, which is not a simplification: `critChance` is the stat
+ * the melee AND the ranged tables both read -- `critChanceFrom` is the engine's
+ * one crit function -- so "melee and ranged" is exactly that stat and naming
+ * two would be naming it twice.
+ */
+export const LEADER_OF_THE_PACK_AURA_ID = 'leader_of_the_pack_aura';
 
 /**
  * Crit in this engine is percentage POINTS, and melee and spells are separate
@@ -193,15 +240,19 @@ export const CLEARCASTING: AuraDefinition = {
   },
 };
 
-export const PARTY_CRIT_AURA: AuraDefinition = {
-  id: PARTY_CRIT_AURA_ID,
-  name: 'Moonkin Aura / Leader of the Pack',
+export const MOONKIN_AURA: AuraDefinition = {
+  id: MOONKIN_AURA_ID,
+  name: 'Moonkin Aura',
   // As long as the druid is there, which is the whole fight.
   durationMs: 0,
-  statModifiers: [
-    flat('critChance', PARTY_CRIT_AURA_PERCENT),
-    flat('spellCritChance', PARTY_CRIT_AURA_PERCENT),
-  ],
+  statModifiers: [flat('spellCritChance', PARTY_CRIT_AURA_PERCENT)],
+};
+
+export const LEADER_OF_THE_PACK_AURA: AuraDefinition = {
+  id: LEADER_OF_THE_PACK_AURA_ID,
+  name: 'Leader of the Pack',
+  durationMs: 0,
+  statModifiers: [flat('critChance', PARTY_CRIT_AURA_PERCENT)],
 };
 
 // ---------------------------------------------------------------------------
