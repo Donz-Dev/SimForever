@@ -31,18 +31,41 @@ first to ninth, with the other twenty-three identical to the decimal.
 | average hit | 3,892 | **1,827** |
 | share of the profile | **35.7%** | 20.6% |
 
+**BOTH NUMBERS IN THAT TABLE HAVE MOVED AGAIN SINCE, AND THE FROZEN FIGURE
+ENDED UP BACK WHERE IT IS.** A patch took the frozen multiplier 4 to 3 and the
+owner has since restated the coefficient as **`1.5 / 3.5 / 3`** -- so the base
+is 0.1429 and the frozen case is `1.5 / 3.5 / 3 * 3` = **0.4286**, the same
+product as in the "after" column. The divisor tracks the multiplier; see below.
+
 **A 160-MANA INSTANT AT 35.7% OF A PROFILE IS THE SHAPE THAT INVITES A LOOK.** Its
 flat damage is 133-157, so at an average hit of 3,892 the coefficient was doing
 96% of the work -- and a spell whose base is 4% of its own hit is one where only
 the coefficient is being measured.
 
-**TWO FOURS SIT NEXT TO EACH OTHER AND THEY ARE DIFFERENT FOURS.** The frozen
-multiplier is the ruleset's "300% increased damage"; the four inside the
-coefficient is part of the owner's expression. A frozen Ice Lance therefore
-carries `1.5 / 3.5 / 4 * 4` = `1.5 / 3.5` -- **exactly the coefficient the spell
-had unfrozen before the change**. The two wrong readings of that are SIXTEEN
-apart, and `tests/game/iceLance.test.ts` pins the product end to end rather than
-either constant.
+**TWO THREES SIT NEXT TO EACH OTHER AND THEY ARE DIFFERENT THREES.** It was two
+FOURS when this was written. The frozen multiplier is the ruleset's frozen bonus
+-- "a 200% increase", once "300% increased damage" -- and the number inside the
+coefficient is part of the owner's own expression. A frozen Ice Lance carries
+`1.5 / 3.5 / 3 * 3` = `1.5 / 3.5`, **exactly the coefficient the spell had
+unfrozen before any of this**. The two wrong readings of that are NINE apart,
+and `tests/game/iceLance.test.ts` pins the product end to end rather than either
+constant.
+
+**THEY HAVE MATCHED, DIVERGED AND MATCHED AGAIN, AND THAT IS THE LESSON RATHER
+THAN THE FIGURE.** Asked whether the divisor had already done the frozen
+division, the owner said "This is intended stop asking." A patch then moved the
+BONUS and said nothing about the coefficient, which left the divisor at 4 on the
+rule that a statement of a VALUE does not overturn a separate ruling about which
+terms a multiplier reaches -- the right default, and the wrong answer here. The
+owner: "Ice Lance was changed to use 1.5/3.5/3." **"Intended" had covered the
+PRODUCT.**
+
+**WHAT RECOVERED IT IN ONE MESSAGE WAS A NEGATIVE ASSERTION.** The chosen
+reading was labelled as a reading in three places, with both figures and their
+cost, and the test pinned the alternative as `not.toBeCloseTo(1.5 / 3.5)` with a
+note saying whoever restored the symmetry would have to change that line. So:
+**implement the default AND flag the instance** -- a general rule having
+answered a question is not the question being closed.
 
 **THE WHOLE SUITE PASSED THE CHANGE UNTOUCHED.** Nothing pinned this spell's
 scaling, on a change worth 159 DPS -- and the first draft of the new measurement
