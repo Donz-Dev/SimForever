@@ -284,7 +284,7 @@ together told someone their build was missing features that were never coming.
 | `positioning` | positions, range, facing, movement, "nearby", radius, travel forms | 21 |
 | `crowdControl` | stuns, fears, roots, snares, silences, incapacitates, disorients, disarms, **and removing any of them** | 37 |
 | `threat` | threat, which is not tracked. Defensive Stance's +30% and Defiance are dropped, not deferred | 13 |
-| `healing` | healing THROUGHPUT. **Mana RETURN is NOT out of scope** — it changes a damage profile's sustain, so it is a live gap and gets no `scope` | 36 |
+| `healing` | healing THROUGHPUT. **Mana RETURN is NOT out of scope** — it changes a damage profile's sustain, so it is a live gap and gets no `scope` | 37 |
 | `stealth` | being stealthed, detecting it, and the openers requiring it — Ambush, Garrote, Cheap Shot. **NOT an in-combat proc that REMOVES a stealth requirement**, which is what Cutthroat is | 6 |
 | `castPushback` | avoiding, resisting or reducing the interruption or DELAY of a cast or channel from damage taken. **NOT an interrupt the TARGET suffers** — Earth Shock's school lockout is about the enemy casting and is inert for a different reason | 7 |
 | `totemEntities` | a totem that BUFFS or HEALS on its own. **NOT a totem that deals DAMAGE**, which Searing Totem proved is expressible as a debuff that ticks | 4 |
@@ -332,10 +332,10 @@ talent's reason expires when the ENGINE gains something, and a racial's expires
 when the OWNER revisits a trait they declined.
 
 ```bash
-grep -rhoE "scope: '[a-zA-Z]+'" src/game/racials/ | sort | uniq -c   # 19 declarations
+grep -rhoE "scope: '[a-zA-Z]+'" src/game/racials/ | sort | uniq -c   # 21 declarations
 ```
 
-**AND THAT GREP IS 19 WHERE THE CENSUS IS 20, WHICH IS NOT DRIFT.** A grep counts
+**AND THAT GREP IS 21 WHERE THE CENSUS IS 22, WHICH IS NOT DRIFT.** A grep counts
 DECLARATIONS and the census counts per RACE, and the two Skyborne races SHARE
 three of their four traits -- one declaration each for Walk on Air, Elemental
 Insight and Wind Blessed, the arrangement Crusader already uses for its three
@@ -398,7 +398,7 @@ expressible, and Searing Totem is modelled as a debuff that ticks.
 
 **AND THE COUNT ABOVE IS NINE MEMBERS, NOT SEVEN, WHICH THIS FILE SAID FOR
 SEVERAL RELEASES.** `OutOfScope` declares nine and the table above has nine rows
-summing to **129 entries**. "Seven members, all of them the owner's" was true the
+summing to **130 entries**. "Seven members, all of them the owner's" was true the
 day the Shaman dive's `castPushback` and `totemEntities` were ratified; `dispel`
 and `immunity` came later, from the one question whose answer split in two, and
 the sentence recording the earlier ratification was left with a total that had
