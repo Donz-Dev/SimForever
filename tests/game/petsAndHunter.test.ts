@@ -16,6 +16,7 @@ import { legalise } from '../helpers/legalTalents';
 import { ITEMS_BY_ID } from '../../src/game/items/itemData';
 import {
   PET_ARMOR_SHARE,
+  PET_EXPERTISE_SHARE,
   PET_ATTACK_POWER_SHARE,
   PET_CRIT_SHARE,
   PET_FOCUS_MAXIMUM,
@@ -173,6 +174,111 @@ describe('a pet is built from its owner', () => {
     // The inputs are carried on the pet, not only used to compute its answers.
     expect(pet.stats.get('strength')).toBe(PET_BASE_STRENGTH);
     expect(pet.stats.get('agility')).toBe(PET_BASE_AGILITY);
+  });
+
+  it('inherits the owner’s EXPERTISE, which it was not getting at all', () => {
+    /*
+     * ========================================================================
+     * "Pets now correctly gain your Expertise (Expertise is 'Reduced chance for
+     * enemy to dodge/parry your attack')."
+     *
+     * `dodgeParryReduction` IS EXACTLY THAT STAT, and the pet was not
+     * inheriting it: the stat block listed attack power, armor, crit, strength
+     * and agility, and a field a pet does not name simply starts at zero. So
+     * this was ABSENT rather than wrong, which is the quietest kind of gap --
+     * there was no figure anywhere to be too small, no caveat, and nothing for
+     * an audit to count. The same shape as Dire Bear Form's armor multiplier,
+     * which nothing applied for the life of the project.
+     *
+     * ONE HUNDRED PERCENT, because the note states no share where the wiki
+     * states explicit ones for health, armor and attack power -- and this
+     * project carries each of those as its own constant. A fraction nobody
+     * supplied would be an invented number.
+     *
+     * DRIVEN AT TWO VALUES, which is what separates "inherits it" from
+     * "happens to have some": a pet built from an owner with none must have
+     * none, and the slope must be one.
+     * ========================================================================
+     */
+    const petExpertiseFor = (expertise: number): number => {
+      const owner = createPlayer({
+        race: 'orc',
+        characterClass: 'hunter',
+        combatStyle: 'ranged',
+        bonusStats: { dodgeParryReduction: expertise },
+      });
+      return createPet({ owner, family: 'cat' }).stats.get('dodgeParryReduction');
+    };
+
+    expect(PET_EXPERTISE_SHARE).toBe(1);
+    const bare = petExpertiseFor(0);
+    expect(petExpertiseFor(5) - bare).toBeCloseTo(5 * PET_EXPERTISE_SHARE, 6);
+    expect(petExpertiseFor(12) - bare).toBeCloseTo(12 * PET_EXPERTISE_SHARE, 6);
+
+    /*
+     * ========================================================================
+     * AND IT IS WORTH EXACTLY NOTHING TODAY, WHICH IS A FINDING AND NOT A
+     * FAILURE TO APPLY.
+     *
+     * `bm_hunter` is the ONE profile in the project with a pet, and the owner's
+     * benchmark template asks it for `expertise: 0` -- the only melee or hybrid
+     * template that does. Every Warrior, Rogue, feral Druid, Enhancement
+     * Shaman and Paladin row buys 10 or 20 rating; the Hunter rows buy none.
+     *
+     * SO A CORRECT FIX MEASURES ZERO, and this is the assertion that tells that
+     * apart from a fix that did not arrive -- which is the distinction a DPS
+     * figure inside the interval cannot make. The slope above proves the
+     * mechanism; this proves why no row will move.
+     *
+     * It starts paying the day a Hunter template buys expertise, or the day a
+     * Warlock's pet is built from a profile that has some.
+     * ========================================================================
+     */
+    const owner = hunterFor('bm_hunter');
+    expect(owner.stats.effective.dodgeParryReduction).toBe(0);
+    expect(createPet({ owner, family: 'cat' }).stats.get('dodgeParryReduction')).toBe(0);
+  });
+
+  it('has one crit stat for melee and ranged, so "whichever is higher" is a no-op', () => {
+    /*
+     * ========================================================================
+     * "Pets should be inheriting the player's melee or ranged Critical Strike
+     * chance whichever is higher." THIS ENGINE SATISFIES IT BY CONSTRUCTION
+     * AND NO LINE CHANGED, which is asserted rather than left as silence: "a
+     * note we did nothing about" and "a note nobody read" look identical from
+     * a diff.
+     *
+     * `STAT_NAMES` carries `critChance`, `spellCritChance` and `critRating` --
+     * there is no separate ranged crit stat, and `critChanceFrom` is the one
+     * function BOTH the melee and the ranged tables read. So a character's
+     * melee crit and its ranged crit are the same number and the max is that
+     * number. ATTACK POWER is the opposite case and is why `highestAttackPower`
+     * exists: two genuinely separate pools, so there the max is real.
+     * ========================================================================
+     */
+    const owner = hunterFor('bm_hunter');
+    const stats = owner.stats.effective;
+
+    // Two pools for attack power, so the max can differ from either.
+    expect(highestAttackPower(owner)).toBe(Math.max(stats.attackPower, stats.rangedAttackPower));
+
+    /*
+     * AND ONE FOR CRIT, demonstrated by pushing the stat and reading the pet:
+     * a ranged-only crit source would have to be an `AttackTableModifiers`
+     * entry, which `createPet` does not read -- the owner ruled the bow
+     * enchant's +2% must NOT reach the pet, and that is the line this note is
+     * read as leaving alone.
+     */
+    const petCritFor = (critChance: number): number => {
+      const hunter = createPlayer({
+        race: 'orc',
+        characterClass: 'hunter',
+        combatStyle: 'ranged',
+        bonusStats: { critChance },
+      });
+      return createPet({ owner: hunter, family: 'cat' }).stats.get('critChance');
+    };
+    expect(petCritFor(10) - petCritFor(0)).toBeCloseTo(10 * PET_CRIT_SHARE, 6);
   });
 
   it('swings for the owner’s stated range at the owner’s stated speed', () => {

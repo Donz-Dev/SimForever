@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Simulation, castAbility, resolveCast, seconds, toSeconds } from '../../src/engine';
-import type { Combatant, TelemetryEvent } from '../../src/engine';
+import type { AttackTableKind, Combatant, TelemetryEvent } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
@@ -48,6 +48,7 @@ import {
   IMMOLATION_TRAP_DURATION_MS,
   IMMOLATION_TRAP_TICK_INTERVAL_MS,
   IMMOLATION_TRAP_TOTAL,
+  TRAP_ATTACK_POWER_COEFFICIENT,
   LACERATING_STRIKES_DURATION_MS,
   LACERATING_STRIKES_TICKS,
   laceratingStrikesAura,
@@ -286,14 +287,33 @@ describe('Explosive Trap, the second trap the owner put in scope', () => {
     expect(burn!.total).toBeCloseTo(EXPLOSIVE_TRAP_BURN_TOTAL, 6);
   });
 
-  it('scales with neither attack power nor spell power, on BOTH halves', () => {
+  it('takes 5% of ATTACK power and no spell power, on the BURN half', () => {
     /*
-     * THE OWNER'S WORDS WHEN THEY PUT IT IN: "there isn't an AP or SP scaler."
-     * Both halves, which is what makes this worth its own assertion -- the
-     * initial hit is dealt from `onCast` and the burn from a tick, so a
-     * coefficient could be forgotten on one and present on the other.
+     * ========================================================================
+     * THE PATCH REVERSED HALF OF THE OWNER'S RULING. It went in with "there
+     * isn't an AP or SP scaler" and both halves carried `powerCoefficient: 0`;
+     * the note is "Immolation Trap and Explosive Trap now scale with 5% of
+     * your Attack Power", which is later and wins. The SPELL power half of the
+     * ruling stands.
      *
-     * CAST AT TWO VERY DIFFERENT STAT LINES and demand the same number.
+     * AND IT COULD NOT BE `powerCoefficient`, WHICH IS WHY THIS TEST PUSHES
+     * BOTH POOLS SEPARATELY. That field picks its pool by SCHOOL -- attack
+     * power when physical, spell power otherwise -- and a trap is FIRE, so
+     * 0.05 written there would have read the Hunter's SPELL power. On a Hunter
+     * that is close to nothing: the trap would have gained almost exactly
+     * zero, kept an ordinary damage row, and looked implemented.
+     * `attackPowerCoefficient` is the field, and the two assertions below are
+     * what tell the two apart.
+     *
+     * THE 5% IS A DURATION TOTAL, NOT PER TICK, which is this project's own
+     * reading of a coefficient stated without those words -- Rip was six times
+     * its stated figure for exactly that mistake.
+     *
+     * AND THE WHOLE 5% IS ON THE BURN, which is the one judgement in the note:
+     * this trap has two damage components and Immolation Trap has one, so the
+     * burn is what the two abilities share. The initial hit keeps "no scaler".
+     * See the comment on `EXPLOSIVE_TRAP`.
+     * ========================================================================
      */
     const totalAt = (attackPower: number, spellPower: number) => {
       const { simulation, events } = recordingSimulation([
@@ -320,7 +340,19 @@ describe('Explosive Trap, the second trap the owner put in scope', () => {
 
     const bare = totalAt(0, 0);
     expect(bare).toBeCloseTo(EXPLOSIVE_TRAP_INITIAL_DAMAGE + EXPLOSIVE_TRAP_BURN_TOTAL, 6);
-    expect(totalAt(2000, 2000)).toBeCloseTo(bare, 6);
+
+    // SPELL power alone still does nothing, which is the surviving half of the
+    // owner's ruling AND the check that the coefficient is not school-routed.
+    expect(totalAt(0, 2000)).toBeCloseTo(bare, 6);
+
+    // And attack power adds exactly 5% of itself over the whole ability.
+    expect(totalAt(2000, 0)).toBeCloseTo(bare + 2000 * TRAP_ATTACK_POWER_COEFFICIENT, 6);
+    // Asserted as a SLOPE over two points as well, so the figure is 5% rather
+    // than 100 damage that happens to match at one stat line.
+    expect(totalAt(4000, 0) - totalAt(2000, 0)).toBeCloseTo(
+      2000 * TRAP_ATTACK_POWER_COEFFICIENT,
+      6,
+    );
   });
 
   it('keeps its area clause in its own words rather than approximating it', () => {
@@ -373,13 +405,26 @@ describe('Immolation Trap', () => {
     expect(burn!.total).toBeCloseTo(IMMOLATION_TRAP_TOTAL, 6);
   });
 
-  it('scales with neither attack power nor spell power', () => {
+  it('takes 5% of ATTACK power over its duration, and no spell power', () => {
     /*
-     * THE OWNER'S RULING, and the only damaging effect in the project with no
-     * stat behind it: "Immolation trap doesn't scale with attack power or spell
-     * power currently." Asserted here as well as exempted in
-     * `everySpellScales.test.ts`, because that test only looks at spell power
-     * and this ruling covers both.
+     * ========================================================================
+     * IT WENT IN WITH NO SCALER AT ALL -- "Immolation trap doesn't scale with
+     * attack power or spell power currently" -- and the patch note gives it 5%
+     * of ATTACK power. The spell power half of the ruling stands, which is why
+     * both pools are pushed separately here: `powerCoefficient` would have
+     * routed a fire ability's coefficient to SPELL power and the trap would
+     * have gained nothing on a Hunter while looking implemented.
+     *
+     * A DURATION TOTAL across its five ticks, not 5% per tick -- which would
+     * be five times the stated figure, Rip's mistake exactly.
+     *
+     * RANGED ATTACK POWER IS PUSHED TOO AND MUST DO NOTHING, which is the
+     * narrowest of the three assertions: `attackPowerCoefficient` reads the
+     * MELEE pool because a trap is not a weapon use and has no slot, and the
+     * owner's general ruling is that bare "Attack Power" reaches both pools --
+     * so for any source that grants it the two agree and this assertion is
+     * about the FIELD rather than about a Hunter's gear.
+     * ========================================================================
      */
     const totalWith = (stats: Record<string, number>) => {
       const { simulation, events } = recordingSimulation([
@@ -392,8 +437,15 @@ describe('Immolation Trap', () => {
       return damageBy(events, actor.id).get('Immolation Trap')!.total;
     };
 
-    expect(totalWith({ attackPower: 2000 })).toBeCloseTo(IMMOLATION_TRAP_TOTAL, 6);
+    expect(totalWith({})).toBeCloseTo(IMMOLATION_TRAP_TOTAL, 6);
+    // Attack power adds exactly 5% of itself, spread over the duration.
+    expect(totalWith({ attackPower: 2000 })).toBeCloseTo(
+      IMMOLATION_TRAP_TOTAL + 2000 * TRAP_ATTACK_POWER_COEFFICIENT,
+      6,
+    );
+    // Spell power does nothing, which the owner's surviving ruling requires.
     expect(totalWith({ spellPower: 2000 })).toBeCloseTo(IMMOLATION_TRAP_TOTAL, 6);
+    // And the RANGED pool is not the one this field reads.
     expect(totalWith({ rangedAttackPower: 2000 })).toBeCloseTo(IMMOLATION_TRAP_TOTAL, 6);
   });
 
@@ -755,28 +807,104 @@ describe('the three talents whose reasons were wrong', () => {
       expect(sting.costAmount).toBeCloseTo(250, 6);
     });
 
-    it('opens a mana-regeneration window on a critical strike', () => {
+    it('opens a mana-regeneration window on an ABILITY critical strike', () => {
       const reaction = resourcefulness(100);
       const { simulation } = recordingSimulation([makeAttacker(), makeTarget()]);
       const [actor, target] = simulation.combatants;
       simulation.begin();
 
       expect(actor.stats.get('manaRegenBypass')).toBe(0);
-      reaction.onTrigger(simulation, actor, {
+      const strike = {
         attacker: actor,
         defender: target,
-        outcome: 'crit',
+        outcome: 'crit' as const,
         abilityId: 'raptor_strike',
         abilityName: 'Raptor Strike',
         amount: 500,
-        weaponSlot: 'mainHand',
+        weaponSlot: 'mainHand' as const,
         critical: true,
-      });
+        attackTable: 'melee-special' as const,
+      };
+      expect(reaction.canTrigger?.(simulation, actor, strike) ?? true).toBe(true);
+      reaction.onTrigger(simulation, actor, strike);
 
       expect(actor.auras.has(RESOURCEFULNESS_REGEN.id)).toBe(true);
       expect(actor.stats.get('manaRegenBypass')).toBe(RESOURCEFULNESS_REGEN_BYPASS_PERCENT);
       // 30 seconds, stated by the tooltip and constant across both ranks.
       expect(toSeconds(RESOURCEFULNESS_REGEN.durationMs)).toBe(30);
+    });
+
+    it('refuses every crit the patch narrowed it away from', () => {
+      /*
+       * ======================================================================
+       * "ONLY ACTIVATING ON MELEE AND RANGED ABILITY CRITICAL STRIKES TO
+       * PREVENT SPAMMING. IS NOT ACTIVATED BY TRAPS."
+       *
+       * It used to fire on ANY crit with no test at all -- a Serpent Sting
+       * tick's crit opened the window as readily as a Raptor Strike's, which is
+       * what the note means by spamming.
+       *
+       * DRIVEN AS A TABLE, because that is the one thing on the event which can
+       * answer both halves of the note at once, and because the two halves fail
+       * differently:
+       *
+       *   the AUTO tables   excluded by the word "ability", which this project
+       *                     already reads as stopping at `-special`. A Hunter's
+       *                     auto-shot is most of its crits, so this is the
+       *                     larger half of the narrowing and the note does not
+       *                     name it
+       *   a TRAP            declares NO table -- it cannot miss -- and crits
+       *                     through `critFrom: 'ranged-special'`. So a table
+       *                     CHECK alone is not enough: the event's `attackTable`
+       *                     is undefined for a trap, which is what excludes it,
+       *                     and a reader who assumed `critFrom` filled that
+       *                     field in would have let both traps through
+       *   a periodic TICK   has no table either, so Serpent Sting's burn and
+       *                     Lacerating Strikes' bleed go with the traps
+       *
+       * THE CHANCE IS 100 SO A REFUSAL IS NEVER A LOST ROLL, which matters:
+       * `canTrigger` rolls the dice as its last clause, so at any lower chance
+       * a `false` here would be indistinguishable from bad luck.
+       * ======================================================================
+       */
+      const reaction = resourcefulness(100);
+      const { simulation } = recordingSimulation([makeAttacker(), makeTarget()]);
+      const [actor, target] = simulation.combatants;
+      simulation.begin();
+
+      const crit = (
+        abilityId: string | undefined,
+        attackTable: AttackTableKind | undefined,
+      ) =>
+        reaction.canTrigger?.(
+          simulation,
+          actor,
+          {
+            attacker: actor,
+            defender: target,
+            outcome: 'crit',
+            abilityId,
+            abilityName: abilityId ?? 'Auto-Attack',
+            amount: 500,
+            critical: true,
+            attackTable,
+          } as never,
+        ) ?? true;
+
+      // The two the note keeps.
+      expect(crit('raptor_strike', 'melee-special')).toBe(true);
+      expect(crit('aimed_shot', 'ranged-special')).toBe(true);
+
+      // The swing and the shot, which "ability" excludes.
+      expect(crit(undefined, 'melee-auto')).toBe(false);
+      expect(crit(undefined, 'ranged-auto')).toBe(false);
+
+      // Both traps, which the note excludes by name and which carry NO table.
+      expect(crit('immolation_trap', undefined)).toBe(false);
+      expect(crit('explosive_trap', undefined)).toBe(false);
+
+      // And a damage-over-time tick, which has no table either.
+      expect(crit('serpent_sting', undefined)).toBe(false);
     });
 
     it('builds its proc from the CHANCE and not from the cost reduction', () => {

@@ -199,6 +199,33 @@ export const SERPENT_STING: AuraDefinition = {
  * ----------------------------------------------------------------------------
  */
 export const IMMOLATION_TRAP_TOTAL = 690;
+/**
+ * "Immolation Trap and Explosive Trap now scale with 5% of your Attack Power."
+ *
+ * ============================================================================
+ * IT REVERSES THE OWNER'S OWN EARLIER RULING, which is why it is recorded here
+ * rather than just applied. Both traps were declared with "there isn't an AP or
+ * SP scaler, all the information should be known already" and both carried
+ * `powerCoefficient: 0` on that authority. A patch note is a later statement
+ * and wins -- the same reading that gives Swipe 3% against a sheet saying 10%.
+ *
+ * A DURATION TOTAL, NOT PER TICK, which is this project's own established
+ * reading of a coefficient stated without the words "per tick" -- Rip's row was
+ * implemented per tick on a six-tick effect and was SIX TIMES the stated
+ * figure, 35.3% of the Cat's damage. So the 5% is divided by the tick count,
+ * exactly as each trap's flat total already is, and BOTH halves divide by the
+ * same named constant: when a DoT carries flat damage AND a coefficient, the
+ * cheap structural guard is that the two are stated in the same unit.
+ *
+ * AND IT CANNOT BE `powerCoefficient`, WHICH IS THE TRAP IN BOTH SENSES. That
+ * field picks its pool by SCHOOL -- attack power when physical, spell power
+ * otherwise -- and a trap is FIRE. So 0.05 written there would have read the
+ * Hunter's SPELL power, which on a Hunter is close to nothing: the traps would
+ * have gained almost exactly zero, kept an ordinary damage row, and looked
+ * implemented. `DamageRequest.attackPowerCoefficient` exists for this.
+ * ============================================================================
+ */
+export const TRAP_ATTACK_POWER_COEFFICIENT = 0.05;
 export const IMMOLATION_TRAP_DURATION_MS = seconds(15);
 export const IMMOLATION_TRAP_TICK_INTERVAL_MS = seconds(3);
 
@@ -224,8 +251,14 @@ export const IMMOLATION_TRAP: AuraDefinition = {
         abilityName: aura.name,
         school: FIRE,
         baseAmount: IMMOLATION_TRAP_TOTAL / ticks,
-        // The owner's ruling: no attack power and no spell power.
+        /*
+         * NO SPELL POWER, which is still the owner's ruling -- and 5% of
+         * ATTACK power, which the patch note added. Both halves divide by the
+         * same `ticks`, so the flat total and the coefficient are stated in
+         * the same unit. See `TRAP_ATTACK_POWER_COEFFICIENT`.
+         */
         powerCoefficient: 0,
+        attackPowerCoefficient: TRAP_ATTACK_POWER_COEFFICIENT / ticks,
         periodic: true,
         critFrom: 'ranged-special',
       });
@@ -298,8 +331,36 @@ export const EXPLOSIVE_TRAP: AuraDefinition = {
         abilityName: aura.name,
         school: FIRE,
         baseAmount: EXPLOSIVE_TRAP_BURN_TOTAL / ticks,
-        // The owner's ruling: no attack power and no spell power.
+        /*
+         * ====================================================================
+         * THE WHOLE 5% GOES ON THE BURN, AND THAT IS THE ONE JUDGEMENT IN THIS
+         * NOTE.
+         *
+         * "Immolation Trap and Explosive Trap now scale with 5% of your Attack
+         * Power" names two abilities in one sentence and gives one figure, and
+         * this trap is the only one of the two with TWO damage components -- a
+         * 236 initial hit and this 330 burn. So "where within the ability"
+         * needs answering and the note does not answer it.
+         *
+         * THE BURN IS WHAT THE TWO TRAPS HAVE IN COMMON, Immolation Trap being
+         * burn-only, so putting it here is the only reading that treats the
+         * two abilities identically and introduces no derived number. A
+         * proportional split by base damage was the alternative and would have
+         * meant inventing two shares out of one stated figure.
+         *
+         * EITHER WAY THE ABILITY GAINS EXACTLY 5% OF ATTACK POWER, which is
+         * why this is a small judgement rather than a large one: the two
+         * readings differ only in which damage event carries it, and both
+         * halves of this trap crit at the same `ranged-special` crit. What
+         * could separate them is a periodic-vs-direct multiplier, and the
+         * Hunter has none -- so today the two are indistinguishable in effect.
+         *
+         * THE INITIAL HIT THEREFORE KEEPS THE OWNER'S "no AP or SP scaler",
+         * which the note did not separately address. FLAGGED FOR THEM.
+         * ====================================================================
+         */
         powerCoefficient: 0,
+        attackPowerCoefficient: TRAP_ATTACK_POWER_COEFFICIENT / ticks,
         periodic: true,
         critFrom: 'ranged-special',
       });

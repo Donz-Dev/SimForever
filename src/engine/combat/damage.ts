@@ -122,6 +122,39 @@ export interface DamageRequest {
    * (magical) and added to `baseAmount`.
    */
   readonly powerCoefficient?: number;
+
+  /**
+   * ATTACK POWER, WHATEVER THE SCHOOL. Multiplied and added to `baseAmount`.
+   *
+   * ==========================================================================
+   * THE FIELD EXISTS BECAUSE `powerCoefficient` PICKS ITS POOL BY SCHOOL, AND
+   * THAT IS THE RIGHT RULE WITH ONE EXCEPTION IT CANNOT EXPRESS.
+   *
+   * `scaleByPower` reads attack power when `isPhysical(school)` and spell
+   * power otherwise, which is what makes one field serve every ability in the
+   * project. A FIRE ability that scales with ATTACK power is outside that: the
+   * Hunter's two traps are fire, and "Immolation Trap and Explosive Trap now
+   * scale with 5% of your Attack Power" would have read the Hunter's SPELL
+   * power through `powerCoefficient` -- which on a Hunter is close to nothing,
+   * so the traps would have gained almost exactly zero and looked implemented.
+   *
+   * A SILENT NEAR-ZERO IS THE WHOLE REASON THIS IS A FIELD and not a 5% written
+   * into the trap's `powerCoefficient`. The mistake produces a working ability,
+   * an ordinary damage row and a figure that moves by a fraction of a point.
+   *
+   * IT IS NOT A SECOND WAY TO SAY WHAT `powerCoefficient` ALREADY SAYS. A
+   * physical ability must keep using that one -- `attackPowerFor` reads the
+   * RANGED pool for a ranged weapon and this does not, so expressing a bow
+   * ability through here would quietly give it melee attack power. The two can
+   * be set together and are simply added.
+   *
+   * WHICH POOL: the MELEE one, `stats.attackPower`. The owner's general ruling
+   * is that bare "Attack Power" equals and reaches both pools, so for anything
+   * that carries it the two agree -- and `attackPower` is the one a bare
+   * statement names. A trap is not a weapon use and has no slot to read.
+   * ==========================================================================
+   */
+  readonly attackPowerCoefficient?: number;
   /**
    * Scaling with the equipped weapon, for abilities that deal weapon damage.
    *
@@ -663,6 +696,20 @@ export function scaleByPower(request: DamageRequest, weaponDamage = 0): number {
         // the Crusader do anything. See `spellPowerAgainst`.
         spellPowerAgainst(request.source, request.target, request.school);
     total += coefficient * power;
+  }
+
+  /*
+   * AND ATTACK POWER REGARDLESS OF SCHOOL, for the one shape the field above
+   * cannot say: a FIRE ability that scales with ATTACK power. The Hunter's two
+   * traps are the only callers. See `attackPowerCoefficient`.
+   *
+   * ADDED ALONGSIDE rather than instead of, so an ability may carry both and
+   * neither silently replaces the other -- which is the rule the owner stated
+   * about a coefficient and a flat amount, applied one level up.
+   */
+  const attackPowerCoefficient = request.attackPowerCoefficient ?? 0;
+  if (attackPowerCoefficient !== 0) {
+    total += attackPowerCoefficient * request.source.stats.effective.attackPower;
   }
 
   return total * handMultiplier(request);

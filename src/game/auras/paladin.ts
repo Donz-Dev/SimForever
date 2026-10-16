@@ -731,6 +731,54 @@ export const SHIELD_SPECIALIZATION_USED: AuraDefinition = {
 };
 
 /**
+ * Reckoning's stored charges, which the patch gave it.
+ *
+ * ============================================================================
+ * "This talent has been adjusted so you gain a CHARGE of Reckoning each time
+ * it triggers. Your next melee swing (auto attack) will trigger all
+ * accumulated charges for 1 extra attack each. You may have a maximum of 4
+ * charges. This restores the Classic Era functionality of storing up to 4
+ * charges and DELAYS all the triggers until your next swing so that it does
+ * not cause the auto attack timer to be reset by instant attacks."
+ *
+ * THE RATIONALE IS THE SPECIFICATION, which is unusual and worth reading
+ * closely: the note explains WHY as well as what, and the why names the engine
+ * behaviour being avoided. `extraAttack` restarts the slot's swing timer -- it
+ * is documented as doing exactly that -- so the old implementation reset a
+ * Paladin's swing every time it blocked or was crit, at moments that have
+ * nothing to do with its swing. Storing the charges and spending them ON a
+ * swing means the only reset happens where the timer was being set anyway.
+ *
+ * AN AURA RATHER THAN A CLOSURE COUNTER, and that is not a style choice: the
+ * charges are per-CHARACTER state, a `TalentBuild` is a VALUE a Monte Carlo
+ * batch reuses, and one shared closure is what silently stopped Windfury
+ * proccing after the first iteration of a batch. Shield Specialization's own
+ * internal cooldown is an aura for the same reason. It also means the charges
+ * show up in the combat log and on the buff-uptime table, so a release that
+ * never happens is visible rather than silent.
+ *
+ * `durationMs: 0` IS UNTIL SPENT. The note states no duration and none would
+ * mean anything -- a tank blocks within a swing or two of gaining a charge,
+ * and inventing a window would be inventing data.
+ *
+ * NOT `consumedBySwing`. `AuraCollection.consumeSwingCharges` spends ONE
+ * charge per swing, and this spends ALL of them -- "your next melee swing will
+ * trigger all accumulated charges". Reading the field name as close enough
+ * would cap Reckoning at one extra attack a swing, which is a smaller number
+ * and no error.
+ * ============================================================================
+ */
+export const RECKONING_MAX_CHARGES = 4;
+
+export const RECKONING_CHARGES: AuraDefinition = {
+  id: 'reckoning_charges',
+  name: 'Reckoning',
+  // Until spent, which is what the next melee auto-attack does to all of them.
+  durationMs: 0,
+  maxStacks: RECKONING_MAX_CHARGES,
+};
+
+/**
  * Redoubt: "Damaging melee attacks against you have a 10% chance to increase
  * your chance to block by 30%. Lasts 10 sec or 5 blocks."
  *

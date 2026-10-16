@@ -64,6 +64,37 @@ export const PET_ARMOR_SHARE = 0.3;
 export const PET_ATTACK_POWER_SHARE = 0.1;
 /** The pet gains 100% of the owner's crit chance. */
 export const PET_CRIT_SHARE = 1;
+/**
+ * And 100% of the owner's EXPERTISE, which is new.
+ *
+ * ============================================================================
+ * "Pets now correctly gain your Expertise (Expertise is 'Reduced chance for
+ * enemy to dodge/parry your attack')."
+ *
+ * `dodgeParryReduction` IS EXACTLY THAT STAT and the pet was not inheriting
+ * it: the block below listed attack power, armor, crit, strength and agility,
+ * and every field a pet does not name simply starts at zero.
+ *
+ * NO SHARE IS STATED, so it is the whole of it -- the same reading crit takes.
+ * The note says "gain your Expertise" with no fraction, where the wiki states
+ * explicit shares for health, armor and attack power and this project carries
+ * each of those as its own constant. A fraction nobody supplied would be an
+ * invented number.
+ *
+ * WHAT IT IS WORTH, so a measurement can be read: the benchmark templates buy
+ * expertise -- a Hunter row asks for 10 to 20 rating -- and a pet's swings and
+ * its Claw and Bite all roll a melee table the boss dodges on 6.5%. The pet is
+ * about a third of a Beast Mastery build's damage, so this is small and real
+ * rather than either large or zero. The one profile it reaches is `bm_hunter`.
+ *
+ * AND IT IS A FLAT STAT, NOT A RATING. `dodgeParryReduction` is percentage
+ * POINTS -- `statsFromEquipment` converts an expertise RATING into it -- so
+ * handing the pet the owner's `expertiseRating` instead would have converted
+ * it a second time. The resolved stat is what the owner carries by the time
+ * `createPet` reads `stats.effective`.
+ * ============================================================================
+ */
+export const PET_EXPERTISE_SHARE = 1;
 
 /** A pet's focus pool. The regeneration rate lives in `resourceRules.ts`. */
 export const PET_FOCUS_MAXIMUM = 100;
@@ -212,7 +243,45 @@ export interface PetOptions {
   readonly extraAbilities?: readonly Ability[];
 }
 
-/** The owner's larger attack power source, which is what the pet reads. */
+/**
+ * The owner's larger attack power source, which is what the pet reads.
+ *
+ * ============================================================================
+ * AND THE CRIT NOTE ASKS FOR THE SAME SHAPE AND NEEDS NOTHING, which is worth
+ * recording beside this function rather than leaving as silence.
+ *
+ * "Pets should be inheriting the player's melee or ranged Critical Strike
+ * chance whichever is higher."
+ *
+ * THERE IS NO `max` TO TAKE, because this engine has ONE crit stat for both.
+ * `STAT_NAMES` carries `critChance`, `spellCritChance` and `critRating`, and
+ * `critChanceFrom` is the single function the melee AND the ranged tables both
+ * read -- so a character's melee crit and its ranged crit are the same number
+ * by construction, and `max(melee, ranged)` is that number. Attack power is
+ * the opposite case and is why THIS function exists: `attackPower` and
+ * `rangedAttackPower` are genuinely separate pools, so there the max is real.
+ *
+ * SO THE NOTE IS SATISFIED AND NO LINE CHANGED. Said here because "a note we
+ * did nothing about" and "a note nobody read" look identical from a diff.
+ *
+ * ----------------------------------------------------------------------------
+ * THERE IS ONE READING UNDER WHICH IT WOULD MEAN SOMETHING, AND IT CONTRADICTS
+ * AN OWNER RULING, SO IT IS FLAGGED RATHER THAN TAKEN.
+ *
+ * Melee and ranged crit CAN differ once `AttackTableModifiers` are counted: the
+ * bow enchant grants +2% on the two ranged tables and the "+2% Melee Crit
+ * Chance" consumable grants it on the two melee ones. Reading the note as
+ * "whichever EFFECTIVE table crit is higher" would therefore hand a Hunter's
+ * pet the bow enchant's crit -- which the owner ruled explicitly it must NOT
+ * have, and which is the entire reason that enchant is a table modifier
+ * instead of a stat.
+ *
+ * Two owner statements about the same pet already point opposite ways here --
+ * a weapon specialization's crit reaches it, the bow enchant's does not -- and
+ * the engine draws the line at STAT versus TABLE. This note is read as being
+ * about the stat, which changes nothing, rather than as moving that line.
+ * ============================================================================
+ */
 export function highestAttackPower(owner: CombatantType): number {
   const stats = owner.stats.effective;
   return Math.max(stats.attackPower, stats.rangedAttackPower);
@@ -314,6 +383,22 @@ export function createPet(options: PetOptions): CombatantType {
         PET_BASE_AGILITY / PET_AGILITY_PER_CRIT +
         critChanceFrom(stats) * 100 * PET_CRIT_SHARE +
         talents.critBonus,
+      /*
+       * ======================================================================
+       * THE OWNER'S EXPERTISE, WHICH THE PET WAS NOT GETTING.
+       *
+       * "Pets now correctly gain your Expertise." `dodgeParryReduction` is the
+       * stat, and a field a pet does not name starts at zero -- so this was
+       * absent rather than wrong, which is the quietest kind of gap: there was
+       * no figure anywhere to be too small.
+       *
+       * READ OFF `stats.effective` LIKE EVERY OTHER TERM HERE, so it is the
+       * RESOLVED percentage points and not a rating. `statsFromEquipment`
+       * converts an expertise rating into this stat on the owner, so passing
+       * the rating instead would convert it twice.
+       * ======================================================================
+       */
+      dodgeParryReduction: stats.dodgeParryReduction * PET_EXPERTISE_SHARE,
       strength: PET_BASE_STRENGTH,
       agility: PET_BASE_AGILITY,
     },
