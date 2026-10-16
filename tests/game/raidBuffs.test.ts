@@ -467,81 +467,117 @@ describe('the Warrior keeps Thunder Clap up', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Entries that cannot sit beside each other
+// Entries that cannot sit beside each other, of which there are none
 // ---------------------------------------------------------------------------
 
 describe('Leader of the Pack and Moonkin Form', () => {
-  it('are declared exclusive, in both directions', () => {
+  it('are NOT exclusive, and neither is anything else in the catalogue', () => {
     /*
-     * ------------------------------------------------------------------------
-     * STILL EXCLUSIVE, AND IT IS NOW A QUESTION RATHER THAN A RULING.
+     * ========================================================================
+     * THIS DESCRIBE BLOCK WAS "Entries that cannot sit beside each other" AND
+     * THE CATALOGUE NOW HAS NONE.
      *
-     * The owner's ruling was that the two are "the same exclusive 3% global
-     * critical strike chance and do not stack", and the patch split them --
-     * Moonkin Aura is spell crit and Leader of the Pack is melee and ranged.
-     * Two buffs that no longer overlap have no obvious reason to exclude each
-     * other; a raid with a Feral and a Moonkin druid would run both.
+     * The pair was declared exclusive on the owner's ruling that the two are
+     * "the same exclusive 3% global critical strike chance and do not stack".
+     * A patch then split them -- Moonkin Aura spell crit, Leader of the Pack
+     * melee and ranged -- and these tests were left pinning the declaration
+     * with the question written on them: two buffs that no longer overlap have
+     * no obvious reason to exclude each other, and removing it is a RAID
+     * COMPOSITION decision that moves every profile's figure. The owner's
+     * answer: "Moonkin and Leader of the Pack are no longer exclusive. And all
+     * profiles should have both enabled by default in the raid buffs."
      *
-     * LEFT AS DECLARED, because removing it is a RAID COMPOSITION decision
-     * that moves every profile's figure and that is the owner's call rather
-     * than a reading of this note. Pinned so the day somebody changes it is
-     * the day the question gets re-read.
-     * ------------------------------------------------------------------------
+     * THE ASSERTION IS OVER THE WHOLE CATALOGUE AND NOT JUST THIS PAIR,
+     * because that is the fact that has to stay visible: `areExclusive` now
+     * answers false for every pair there is, and **a selection rule with no
+     * declaration reads exactly like one that sometimes fires**. The field is
+     * kept on purpose -- the next exclusive pair should be one line rather
+     * than a re-implementation -- so something has to say it reaches nothing,
+     * which is the guard `RacialRequirement.weaponTypes` got for the same
+     * reason one patch earlier.
+     * ========================================================================
      */
     const pack = RAID_BUFFS_BY_ID.get('leader_of_the_pack')!;
     const moonkin = RAID_BUFFS_BY_ID.get('moonkin_form')!;
-    expect(areExclusive(pack, moonkin)).toBe(true);
-    expect(areExclusive(moonkin, pack)).toBe(true);
+    expect(areExclusive(pack, moonkin)).toBe(false);
+    expect(areExclusive(moonkin, pack)).toBe(false);
+
+    expect(RAID_BUFFS.filter((buff) => buff.exclusiveWith !== undefined)).toEqual([]);
+    for (const a of RAID_BUFFS) {
+      for (const b of RAID_BUFFS) {
+        if (a.id === b.id) continue;
+        expect(areExclusive(a, b), `${a.id} / ${b.id}`).toBe(false);
+      }
+    }
   });
 
-  it('replace each other when selected', () => {
+  it('sit beside each other when selected, where one used to replace the other', () => {
+    /*
+     * THE INVERSE OF "replace each other when selected", and the test that
+     * would have caught the ruling being half-applied: dropping
+     * `exclusiveWith` from one entry only would leave `areExclusive` true in
+     * BOTH directions, because it is read in both.
+     */
     const withPack = withRaidBuff(['battle_shout'], 'leader_of_the_pack');
     expect(withPack).toEqual(['battle_shout', 'leader_of_the_pack']);
 
-    const withMoonkin = withRaidBuff(withPack, 'moonkin_form');
-    expect(withMoonkin).toContain('moonkin_form');
-    expect(withMoonkin).not.toContain('leader_of_the_pack');
-    // Everything unrelated is left alone.
-    expect(withMoonkin).toContain('battle_shout');
+    const both = withRaidBuff(withPack, 'moonkin_form');
+    expect(both).toContain('moonkin_form');
+    expect(both).toContain('leader_of_the_pack');
+    expect(both).toContain('battle_shout');
+    // And in catalogue order, which is the other half of what this does.
+    expect(both).toEqual(['battle_shout', 'leader_of_the_pack', 'moonkin_form']);
   });
 
-  it('give three percent of ONE kind of crit, never six of it', () => {
+  it('give three percent of EACH kind of crit, and three of neither twice', () => {
     /*
      * ------------------------------------------------------------------------
-     * THE NO-DOUBLE-DIP CHECK, NARROWED TO ONE BUFF BY THE SPLIT.
+     * THE NO-DOUBLE-DIP CHECK, NOW THAT THE SELECTION CAN HOLD BOTH.
      *
-     * `withRaidBuff` replaces one with the other, so the selection holds
-     * Moonkin Aura alone -- and the figure to check is that its 3% lands once.
-     * It used to be asserted on `critChance`, which Moonkin Aura no longer
-     * touches at all, so reading the old stat now would assert that the buff
-     * does nothing and pass for the wrong reason.
+     * It used to read "three percent of ONE kind of crit, never six of it",
+     * because `withRaidBuff` replaced one with the other and only one could be
+     * measured. The honest figure now is one 3% on each STAT -- which is two
+     * buffs doing two different things, and is exactly what the split was for.
      *
-     * The ACROSS-the-pair stacking is asserted in `druidTalents.test.ts`,
-     * where the two auras can be applied together without the chooser
-     * replacing one.
+     * SELECTING EITHER ONE TWICE IS STILL WORTH 3%, which is the half of the
+     * old ruling that survived it: each aura has one id shared with the TALENT
+     * that grants it, so nothing can hold two instances. That is asserted here
+     * on the selection and in `druidTalents.test.ts` on the talent.
      * ------------------------------------------------------------------------
      */
     const plain = sheet([]);
     const selection = withRaidBuff(withRaidBuff([], 'leader_of_the_pack'), 'moonkin_form');
     expect(selection).toContain('moonkin_form');
-    expect(selection).not.toContain('leader_of_the_pack');
+    expect(selection).toContain('leader_of_the_pack');
 
-    const one = sheet(selection);
-    expect(one.stats.get('spellCritChance')).toBeCloseTo(
+    const both = sheet(selection);
+    expect(both.stats.get('spellCritChance')).toBeCloseTo(
       plain.stats.get('spellCritChance') + 3,
       6,
     );
-    expect(one.stats.get('critChance')).toBeCloseTo(plain.stats.get('critChance'), 6);
+    expect(both.stats.get('critChance')).toBeCloseTo(plain.stats.get('critChance') + 3, 6);
+
+    // And each alone moves ONE of the two stats and leaves the other alone.
+    const packOnly = sheet(withRaidBuff([], 'leader_of_the_pack'));
+    expect(packOnly.stats.get('critChance')).toBeCloseTo(plain.stats.get('critChance') + 3, 6);
+    expect(packOnly.stats.get('spellCritChance')).toBeCloseTo(
+      plain.stats.get('spellCritChance'),
+      6,
+    );
   });
 
   it('keeps the selection in catalogue order', () => {
     // So two profiles with the same buffs are the same file, rather than a
-    // diff of whichever switch was flipped first.
+    // diff of whichever switch was flipped first. This is what `withRaidBuff`
+    // is still for now that it switches nothing off.
     const clicked = withRaidBuff(withRaidBuff([], 'faerie_fire'), 'battle_shout');
     expect(clicked).toEqual(['battle_shout', 'faerie_fire']);
   });
 
-  it('is the only exclusive pair, and nothing points at a missing entry', () => {
+  it('points at no missing entry, for whatever pair is declared next', () => {
+    // Vacuous today and the assertion to keep: it is what stops a future
+    // `exclusiveWith` naming an id that was renamed out from under it, which
+    // would make the rule silently do nothing.
     for (const buff of RAID_BUFFS) {
       if (!buff.exclusiveWith) continue;
       expect(RAID_BUFFS_BY_ID.has(buff.exclusiveWith), buff.id).toBe(true);

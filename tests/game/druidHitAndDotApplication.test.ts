@@ -338,11 +338,11 @@ describe('the Moonkin end to end', () => {
      * FLOORED AT 1%.
      *
      * This read "5 from gear + 1 from Tauren Endurance + 4 from Nature's
-     * Reach" and pinned 10 and 7 outright. The benchmark template targets 110
-     * hit rating -- 11 points -- so the Moonkin now carries 16 and its spells
-     * sit ON the floor: 17 - 16 is 1, which is exactly the minimum the owner
-     * stated. Both figures moved and the RULE did not, so the rule is what is
-     * asserted.
+     * Reach" and pinned 10 and 7 outright. The benchmark template targets 120
+     * hit rating -- 12 points -- so the Moonkin carries 16 and its spells sit
+     * ON the floor: 17 - 16 is 1, which is exactly the minimum the owner
+     * stated. Every figure has moved since and the RULE has not, so the rule
+     * is what is asserted.
      */
     const hit = player.stats.effective.hitChance;
     expect(hit).toBeGreaterThan(0);
@@ -353,27 +353,29 @@ describe('the Moonkin end to end', () => {
 
     /*
      * ========================================================================
-     * AND IT HAS JUST COME OFF THE FLOOR, WHICH IS THE RACIAL PATCH REACHING
-     * A FIGURE THROUGH THE GEAR.
+     * BACK ON THE FLOOR, AND IT HAS BEEN OFF IT ONCE. THIS FIGURE HAS NOW
+     * MOVED THREE TIMES WITHOUT THE RULE CHANGING.
      *
-     * This asserted `1` -- the owner's stated minimum spell miss -- because
-     * the template's 110 hit rating plus Nature's Reach's 4 plus TAUREN
-     * ENDURANCE'S 1 came to exactly the 16-point usable cap, so 17 - 16 = 1
-     * and the build sat on the floor. The patch replaced Endurance's hit
-     * clause with critical damage, so the Moonkin carries 15 and its spells
-     * miss 2% where they missed 1%.
+     *   10 hit, 7% miss   gear plus Endurance plus Nature's Reach, before the
+     *                     presets wore benchmark gear
+     *   16 hit, 1% miss   the template's 110 rating plus the same two, which
+     *                     landed exactly on the 16-point usable cap
+     *   15 hit, 2% miss   the patch replaced Endurance's hit with crit damage
+     *   16 hit, 1% miss   the owner raised this template to 120 rating
      *
-     * THAT IS A REAL DPS LOSS ON TOP OF WHATEVER THE CRIT DAMAGE IS WORTH, and
-     * it is the sharpest of the five Tauren cases because it DOUBLES the miss
-     * rate rather than adding a point to it -- the floor made the last point
-     * of hit unusually valuable here. Pinned at 2 rather than loosened to "at
-     * least 1", so restoring the point in a template is a visible change.
+     * THE THIRD STEP WAS THE SHARPEST OF THE FIVE TAUREN CASES, because the
+     * floor is what made the last point unusually valuable here: it DOUBLED
+     * the miss rate where the four melee builds each lost one point of eight.
+     * The owner's answer was "+10 hit rating, which should be subtracted from
+     * elsewhere on the template set", so 120 rating is 12 points and Nature's
+     * Reach's 4 puts it back on 16.
      *
-     * The owner's templates are where this would be fixed if it should be;
-     * `statHeadroom.test.ts` carries the question for all five builds.
+     * PINNED AT 1 RATHER THAN LOOSENED TO "at most 2", so the next template
+     * move is a visible change rather than a quiet one -- which is the only
+     * reason the third step above was ever noticed.
      * ========================================================================
      */
-    expect(hit).toBeCloseTo(15, 6);
-    expect(expectedMiss).toBe(2);
+    expect(hit).toBeCloseTo(16, 6);
+    expect(expectedMiss).toBe(1);
   });
 });

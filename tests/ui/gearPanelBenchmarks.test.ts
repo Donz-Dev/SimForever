@@ -58,6 +58,14 @@ describe('the Gear panel offers the benchmark sets', () => {
 
   it('names the hit target in the tooltip, because that is what the set targets', () => {
     expect(render('rogue_venom')).toContain('120 hit rating');
-    expect(render('druid_cat')).toContain('30 hit rating');
+    /*
+     * 40 AND IT READ 30 FOR A RELEASE. The Cat's template was raised by 10
+     * rating with the other four TAUREN rows, because Tauren Endurance's hit
+     * clause became crit damage and the owner's templates had been crediting
+     * that 1%. The figure is read off the panel rather than the template, so
+     * it is the check that the tooltip still describes the set it generates --
+     * see `BENCHMARK_TEMPLATES`.
+     */
+    expect(render('druid_cat')).toContain('40 hit rating');
   });
 });

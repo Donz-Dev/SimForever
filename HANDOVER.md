@@ -44,6 +44,7 @@ the tooling to be a bit more sophisticated as well."
 | 15 | **2H Arms** and **DW Fury** -- AN ABILITY ALREADY IN THE BOOK was 94 of the 103, and both trees turned out completely FORCED. The owner then asked for that entry SWITCHED OFF | 849.7 -> **872.8** and 989.6 -> **997.3**, and **897.2** / **1092.6** with it enabled | see below |
 | 16 | **Nine sweeping changes at once**, the owner's own itemised list -- caster weapons, a new enchant, pre-combat actions, two raid buffs, the weapon stone per hand, Inner Focus, two APL additions, Predator's Edge and the food | **not re-baselined**, on the owner's standing instruction; 75 hashes unchanged on six of the nine | see below |
 | 17 | **A PATCH: nine racials and forty-odd class notes**, fed in as official notes. The client is TWO BUILDS AHEAD and carries NONE of them, so every figure here comes from a note | **not re-baselined**, on the owner's standing instruction. Four commits, and **thirteen notes are blocked on tree data** | see below |
+| 18 | **TWO OWNER RULINGS, both answering questions round 17 raised and refused to decide** -- the five Tauren templates gain 10 hit rating each, and the two Druid auras stop excluding each other | **not re-baselined**, on the owner's standing instruction. Every caster gains 3% spell crit and the five Tauren rows go back on their hit caps | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -78,22 +79,146 @@ write-up; none is an engine gap.
 | **Ninety rage on 2H Arms' Heroic Strike** -- re-swept with Recklessness and Hamstring in, 70 measures **+3.95 against a combined interval of 4.73**. The peak has moved toward 70 and has not arrived | round 15 | one constant, and the figure is the owner's own respecification from 75 |
 | **Nature's Reach's second clause** -- "+4% chance to hit", implemented as the flat `hitChance` stat, which the MELEE table reads too. It is what puts the Cat Druid on its 8% cap, and removing it measures **-17.2** | round 14 | if it is meant to be spell-only, the Cat is 4% below cap and its tree needs rebuilding |
 | **Consecrated Ground** -- wording says "Holy SPELLS" and the implementation reaches the seal and Holy Strike too. **+66** to the Shockadin, the biggest talent on that profile | round 12 | the reading, and the Shockadin's figure |
-| **All five TAUREN presets have fallen off their hit cap.** The owner's benchmark templates credited Endurance's 1% hit, which the patch replaced with crit damage: the two Tauren melee rows ask for 70 hit rating where every other melee row asks for 80, and the Moonkin's spells now miss **2% where they sat on the owner's own 1% FLOOR** | round 17 | five template rows, which under the owner's own donor rule would come out of CRIT |
-| **Moonkin Aura and Leader of the Pack are still declared EXCLUSIVE.** They were, on the ruling that both are "the same exclusive 3% global crit"; the patch split them by attack type, so two buffs that no longer overlap have no obvious reason to exclude each other | round 17 | raid composition, and therefore every profile's figure |
 | **Ice Lance's frozen multiplier is now 3 and the owner's `1.5 / 3.5 / 4` divisor is still 4.** While both were four they multiplied out to exactly `1.5 / 3.5` and the owner ratified that -- "This is intended stop asking." At three the product is 0.3214 and nothing lines up | round 17 | 0.3214 against 0.4286 on a spell that was 35.7% of Frostfire |
 | **Judgement of Command is left on the sheet's 0.43** where Righteousness and Fury took the exact `1.5 / 3.5`. The note names two abilities; a ruling covers what it says | round 17 | 0.33% on one seal, and whether all three should be the expression |
-| **Fire Nova's base damage and mana cost are "significantly reduced" with no figure**, so only its coefficient moved -- and that is a RISE here, because this project carried the owner's own "for now" 10% | round 17 | two numbers, and the direction of the whole change |
 | **Explosive Trap's 5% of attack power is on its BURN and not its initial hit.** One figure for two abilities, and only this one has two damage components | round 17 | which half carries it |
-| **Shadow Word: Death's note says "(was 12 seconds)"** and both the capture and this file say 15. The target 18 is applied; the parenthetical matches nothing | round 17 | whether 18 is right, or the note means a different rank |
 | **"Touch of the Dead"** is the name the Undead note uses for what is plainly Touch of the Grave -- the same block, and the only part of that racial that has ever scaled with anything | round 17 | a naming question, not an ambiguity about which effect |
 
-**ALL THREE ARE THE SAME SHAPE: A DEFENSIBLE READING THAT IS NOW LOAD-BEARING.**
-Each was fine while it was worth little and became worth asking about the moment
-a round made it the biggest thing on a profile -- which is CLAUDE.md's rule that
-an interpretation flagged as one is what gets it ruled on, and that the label has
-to survive until the answer arrives.
+**SEVEN ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+was written when the table held three and each addition since has been appended
+without it being re-read -- which is CLAUDE.md's own "re-count rather than
+increment" rule, in prose, in a table whose whole job is to be re-read. **Count
+the rows**, and count them from the table rather than from the last figure
+somebody wrote down: the first draft of this very sentence said eight, by
+subtracting four from a miscount of eleven.
 
-## Round EIGHTEEN is scoped and not started: the client caught up
+**AND FOUR CAME OFF IN ONE ROUND, WHICH IS WHAT THE TABLE IS FOR.** Two were
+ruled on by the owner -- the five Tauren hit caps and the Druid aura
+exclusivity, both implemented in round 18 -- and two were answered by the client
+catching up at build 1.60.1.70425: Shadow Word: Death's 18 seconds is confirmed,
+and Fire Nova's two missing figures exist (375 mana, 232-258 damage). **A
+question can be answered by somebody OTHER than the person it was asked of**,
+so re-read this table against a client refresh and not only against a reply.
+
+**WHAT IS LEFT IS THE SAME SHAPE AS THE FIRST THREE: A DEFENSIBLE READING THAT
+IS NOW LOAD-BEARING.** Each was fine while it was worth little and became worth
+asking about the moment a round made it the biggest thing on a profile -- which
+is CLAUDE.md's rule that an interpretation flagged as one is what gets it ruled
+on, and that the label has to survive until the answer arrives.
+
+## Round EIGHTEEN: two owner rulings, and the questions that earned them
+
+**BOTH OF THESE WERE ROWS IN THE TABLE ABOVE**, raised by round seventeen and
+deliberately not decided. That is the whole method: a reading flagged as a
+reading is what gets ruled on, and both answers arrived in one message.
+
+| | the ruling | what it moved |
+| --- | --- | --- |
+| 1 | "All Tauren race profiles need to have their templates gear sets tweaked to gain **+10 hit rating**, which should be subtracted from elsewhere on the template set without violating the item budget information which this project knows" | five template rows, and the five builds go back on their hit caps |
+| 2 | "**Moonkin and Leader of the Pack are no longer exclusive.** And all profiles should have both enabled by default in the raid buffs" | every profile that casts anything gains 3% spell crit |
+
+### 1. The Tauren hit cap, and why the second half of the instruction was free
+
+Tauren Endurance was "Total Health increased by 5% and **chance to hit increased
+by 1%**" and the patch made the second clause crit damage. The owner's benchmark
+templates had been CREDITING that 1%:
+
+| | asked for | its siblings ask | now |
+| --- | --- | --- | --- |
+| Prot Warr | 70 | 80 | **80** |
+| Enh Shaman | 70 | 80 | **80** |
+| Cat | 30 | -- (4 points come from Nature's Reach) | **40** |
+| Bear | 30 | -- (the same 4) | **40** |
+| Moonkin | 110 | -- (the same 4, against a 16-point spell cap) | **120** |
+
+**NOTHING ELSE ABOUT THE GENERATOR CHANGED, WHICH IS THE PART WORTH KNOWING.**
+A rating already costs budget and is already paid for out of CRIT first, so
+"subtracted from elsewhere without violating the budget" is what `spreadRating`
+and `RATING_DONORS` already do -- the owner's own donor rule answering their own
+second clause. `benchmarkGear.test.ts`, which asserts every generated item fits
+its budget and leaves nothing in `unmodelled`, passed untouched.
+
+**WHERE THE POINT CAME FROM SPLITS ON WHETHER THE LIST BUYS CRIT**, read off
+`tools/benchmark_stat_report.ts`:
+
+| | crit | and | the other 23 rows |
+| --- | --- | --- | --- |
+| Cat | 108 -> **106** | attack power 2207 -> 2196 | |
+| Enh Shaman | 176 -> **174** | attack power 1974 -> 1965 | |
+| Moonkin | 154 -> **152** | spell power 774 -> 769 | |
+| Prot Warr | 47 -> 47 | stamina 294 -> **292** | |
+| Bear | 42 -> 42 | stamina 288 -> **285** | **0.0, every column** |
+
+The two TANKS have no Crit in `preferred` at all, so there is no donor to drain
+and the overflow rule pays out of the base attributes instead. That is what
+`toLines` already documents as the behaviour on a slot carrying no crit, and it
+is why two of the five look like they cost nothing.
+
+**THE MOONKIN IS THE SHARPEST CASE AND THE SPELL FLOOR IS WHY.** Spells miss on
+a flat 17% floored at 1%, so its last point was unusually valuable: 120 rating
+plus Nature's Reach is 16 points, back ON the floor at 1% miss where 15 points
+was 2% -- a DOUBLING rather than a point. That figure has now moved three times
+without the rule changing (10/7%, 16/1%, 15/2%, 16/1%), and
+`druidHitAndDotApplication.test.ts` records all four readings above the
+assertion.
+
+### 2. The two Druid auras stop excluding each other
+
+The exclusivity was declared when the two were the same 3% global crit. A patch
+split them by attack TYPE -- Moonkin Aura spell crit only, Leader of the Pack
+melee and ranged only -- and **three sites were left pinning the declaration
+with the question written on them**, because removing it is a raid COMPOSITION
+decision that moves every profile's figure.
+
+**SO `moonkin_form` JOINS `PRESET_RAID_BUFFS` AND THE MOONKIN'S SWAP IS GONE.**
+It ran the one raid-buff list in the project that substituted an entry for this
+pair; `MOONKIN_RAID_BUFFS` is deleted and it runs the shared raid like everybody
+else. Two swaps remain, both the ranged Hunters' Grace of Air, and
+`presets.test.ts` asserts that exception list is EXHAUSTIVE -- which is what made
+this a one-line change that could not be half-applied.
+
+**THE RULING COST NOTHING TO APPLY BECAUSE THE CHOOSER WAS NEVER WHAT WORKED.**
+The older ruling was "they don't stack, but that can be handled on the GUI", and
+`withRaidBuff` did switch one off -- which was only ever half the surface: it
+knows nothing about a TALENT, and nothing about a profile loaded from JSON with
+both ids. That is what let a Moonkin read **+6% crit**, measured at 24.243%
+against 21.243%. The no-double-dip rule has lived in the shared aura ID ever
+since, so there was no exclusivity in a chooser left to remove -- and **the
+Moonkin's own spell crit does not move** when the box is ticked, because its
+talent and the raid entry are one id.
+
+**`RaidBuff.exclusiveWith` NOW HAS NO DECLARATION ANYWHERE.** The field,
+`areExclusive` and the panel's "replaces X" line are kept -- the next exclusive
+pair should be one line rather than a re-implementation, and `withRaidBuff` is
+still load-bearing for the catalogue ordering that makes two identical
+selections one file. `raidBuffs.test.ts` asserts `areExclusive` answers false
+for **every pair in the catalogue**, which is the third instance of that guard
+after `isWeaponUseOf(attack, 'ranged')` and `RacialRequirement.weaponTypes`, and
+the first where the thing with no caller is a RULE rather than a predicate.
+
+### What was NOT measured, and one tool that could not answer it
+
+**NO PROFILE WAS RE-BASELINED**, on the owner's standing instruction. Every
+figure above is a stat off the built character or a row of
+`benchmark_stat_report.ts`; the DPS consequences of both rulings are the owner's
+to measure. Ten tests changed and six asserted the OPPOSITE of what now holds,
+each re-derived rather than adjusted; the `statHeadroom` inversion was probed by
+reverting the Cat row, which fails on exactly that build.
+
+**AND `rotation_fingerprint.ts` WAS THE WRONG TOOL, WHICH IS WORTH RECORDING.**
+It hashes the combat LOG, so selecting one more raid buff on all 25 presets
+moved **all 84 hashes** -- an aura applied at the pull writes a line and
+consumes no random number, so a pure melee build whose new buff grants
+`spellCritChance` runs an identical fight and still reports a different hash.
+`eventsProcessed` is no substitute either: it was unchanged on 20 of 28 profiles
+and a fight can diverge completely while processing the same number of events.
+**A hash answers "is this log byte-identical", which is the same question as
+"did any decision change" only for a change that cannot write a line.** Where a
+change legitimately touches a stat, the containment check is the MECHANISM --
+which stat the aura moves, asserted on the stat, which is what
+`raidBuffs.test.ts` and `druidTalents.test.ts` now do in both directions.
+
+## Round NINETEEN is scoped and not started: the client caught up
 
 **THE PATCH HAS SHIPPED.** Re-running the importers a day after round seventeen
 put the client at **1.60.1.70425**, where round seventeen captured 70291 -- and
@@ -172,13 +297,16 @@ prescription and the parenthetical is history. 70425 says 18.
 
 ### And two CORRECTIONS 70425 forces on round seventeen
 
-**RECKONING'S INTERNAL COOLDOWN IS BLOCKS ONLY.** The client reads "Cannot occur
-from **Blocks** more than once every 1.5 sec", and round seventeen -- following
-the previous patch's broader wording, "a 1.5 second internal cooldown on how
-often it can be triggered" -- applies it to the crit-taken path as well. The
-crit path is 100% at 5/5 on the one build that takes it, so this is a real
-difference in how fast charges bank. **One `canTrigger` clause**, and it is
-round eighteen's smallest and most certain item.
+**RECKONING'S INTERNAL COOLDOWN IS BLOCKS ONLY, AND THIS ONE IS DONE.** The
+client reads "Cannot occur from **Blocks** more than once every 1.5 sec", where
+round seventeen had followed the previous patch's broader wording -- "a 1.5
+second internal cooldown on how often it can be triggered" -- and applied it to
+the crit-taken path as well. The crit path is 100% at 5/5 on the one build that
+takes it, so it was a real difference in how fast charges bank. **It landed in
+round seventeen's last commit**, one `canTrigger` clause, and it needed no tree
+data: four tests in `paladinTalents.test.ts` moved with it and one was
+INVERTED, because the client falsified its premise that the window is shared
+across both halves of the talent.
 
 **MOONKIN FORM'S TALENT AND SPELL TOOLTIPS DISAGREE WITH EACH OTHER AT THE SAME
 BUILD.** The SPELL says "spell Critical Strike chance", which confirms the
@@ -244,7 +372,13 @@ number -- so the refresh waits on them.
 **THE OTHER NINETEEN PROFILES ARE UNAFFECTED** and decoded cleanly against the
 new trees, which is the containment check worth having before asking.
 
-### What else round eighteen has to do
+### What else round NINETEEN has to do
+
+**THIS SECTION SAID "round eighteen" AND ROUND EIGHTEEN WENT ELSEWHERE**, which
+is this file's own rule that a round is whatever arrives next rather than
+whatever was scoped: the owner's two rulings were answerable without the tree
+refresh, so they became 18 and the refresh is 19. Renumbered rather than
+renamed, so the row in the table at the top still matches.
 
 | | |
 | --- | --- |

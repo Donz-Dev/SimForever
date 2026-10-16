@@ -13,7 +13,7 @@ import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
-import { PRESETS_BY_ID } from '../../src/profiles/presets';
+import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
 import {
   AURA_DURATION_BONUS,
   INSECT_SWARM_ABILITY,
@@ -40,7 +40,7 @@ import {
   ripAura,
 } from '../../src/game/auras/druid';
 import { TALENT_AURAS } from '../../src/game/auras/talentAuras';
-import { RAID_BUFFS_BY_ID } from '../../src/game/buffs/raidBuffs';
+import { RAID_BUFFS, RAID_BUFFS_BY_ID } from '../../src/game/buffs/raidBuffs';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import { DRUID_TALENT_EFFECTS } from '../../src/game/talents/druidEffects';
 import { DRUID_CAT, SHIFTING_POWER_ENERGY_CEILING } from '../../src/game/rotations/druid';
@@ -999,37 +999,55 @@ describe('Moonkin Aura and Leader of the Pack, which the patch split in two', ()
     );
   });
 
-  it('selects Moonkin Aura by default on the Moonkin, and on nobody else', () => {
-    // The owner's instruction: it is the half of the pair this profile brings.
-    const built = PRESETS_BY_ID.get('druid_moonkin')!.build();
-    expect(built.raidBuffs).toContain('moonkin_form');
-    expect(built.raidBuffs).not.toContain('leader_of_the_pack');
+  it('selects BOTH on every preset, including the Moonkin that provides one', () => {
+    /*
+     * ========================================================================
+     * THIS READ "selects Moonkin Aura by default on the Moonkin, and on nobody
+     * else", WHICH WAS THE EXCLUSIVITY SPEAKING.
+     *
+     * The owner's ruling: "Moonkin and Leader of the Pack are no longer
+     * exclusive. And all profiles should have both enabled by default in the
+     * raid buffs." So the Moonkin's SWAP is gone -- it ran the one raid-buff
+     * list in the project that substituted an entry for this pair -- and every
+     * preset carries both.
+     *
+     * THE MOONKIN IS STILL THE INTERESTING ROW, which is why it is checked by
+     * name: it provides Moonkin Aura through its own TALENT as well as through
+     * the box, and those two share one aura id. So selecting it changes
+     * nothing for this build and `leader_of_the_pack` is what it gains.
+     * ========================================================================
+     */
+    for (const preset of PROFILE_PRESETS) {
+      const buffs = preset.build().raidBuffs;
+      expect(buffs, `${preset.id} leader_of_the_pack`).toContain('leader_of_the_pack');
+      expect(buffs, `${preset.id} moonkin_form`).toContain('moonkin_form');
+    }
     expect(buildIn('druid_moonkin', 'moonkin').grantedAuras.has(MOONKIN_AURA_ID)).toBe(true);
   });
 
-  it('leaves the two raid buff entries EXCLUSIVE, which is now a question', () => {
+  it('leaves the two raid buff entries NOT exclusive, which the owner ruled', () => {
     /*
      * ========================================================================
-     * PINNED AS IT STANDS RATHER THAN CHANGED, AND THE QUESTION WRITTEN DOWN.
+     * THIS TEST ASSERTED THE OPPOSITE AND SAID SO: "leaves the two raid buff
+     * entries EXCLUSIVE, **which is now a question**".
      *
-     * The exclusivity was declared when the two were the same 3%. Two buffs
-     * that no longer overlap have no obvious reason to exclude each other -- a
-     * raid with a Feral and a Moonkin druid would run both -- but removing it
-     * is a RAID COMPOSITION decision that moves every profile's figure, which
-     * is the owner's call and not a reading of this note.
+     * The exclusivity was declared when the two were the same 3% global crit,
+     * and a patch split them by attack type -- so two buffs that no longer
+     * overlap had no obvious reason to exclude each other, while removing it
+     * was a RAID COMPOSITION decision that moves every profile's figure. The
+     * note refused to make that call and pinned the state instead, which is
+     * what got it answered.
      *
-     * WHAT IT COSTS TODAY IS NAMED: every preset but the Moonkin carries
-     * `leader_of_the_pack`, so every CASTER profile loses the 3% spell crit it
-     * was getting from a feral druid's aura. That is what the note says should
-     * happen, and it is also exactly what would be undone if the exclusivity
-     * went and both were ticked.
-     *
-     * This test fails the day somebody changes it, which is when the question
-     * should be re-read rather than quietly answered.
+     * NOTHING IN THE CATALOGUE DECLARES `exclusiveWith` NOW, and that is
+     * asserted over the whole list rather than for this pair: a selection rule
+     * with no declaration reads exactly like one that sometimes fires. The
+     * field is kept so the next exclusive pair is a declaration -- see its own
+     * doc comment in `raidBuffs.ts`.
      * ========================================================================
      */
-    expect(RAID_BUFFS_BY_ID.get('leader_of_the_pack')?.exclusiveWith).toBe('moonkin_form');
-    expect(RAID_BUFFS_BY_ID.get('moonkin_form')?.exclusiveWith).toBe('leader_of_the_pack');
+    expect(RAID_BUFFS_BY_ID.get('leader_of_the_pack')?.exclusiveWith).toBeUndefined();
+    expect(RAID_BUFFS_BY_ID.get('moonkin_form')?.exclusiveWith).toBeUndefined();
+    expect(RAID_BUFFS.filter((buff) => buff.exclusiveWith !== undefined)).toEqual([]);
   });
 
   it('gives Moonkin Form its 360% of item armor', () => {

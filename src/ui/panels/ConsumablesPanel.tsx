@@ -31,6 +31,11 @@ interface ConsumablesPanelProps {
  * A selection keyed by category cannot hold two from one category at all, so
  * this panel enforces nothing and cannot be bypassed.
  *
+ * THAT COMPARISON IS NOW HISTORICAL IN ONE RESPECT: no raid buff declares
+ * `exclusiveWith` any more, so the switch next door turns nothing off. The
+ * argument stands and is the reason it was safe to remove -- the exclusivity
+ * that mattered was always the shared AURA ID, never the chooser.
+ *
  * READ THE SAME WAY THE GEAR PANEL IS. Every row shows its category and the
  * chosen effect, with "None" as the empty option, and the owner's own wording
  * is the label -- "+25 Agility & +2% Crit Chance" is what the table says and

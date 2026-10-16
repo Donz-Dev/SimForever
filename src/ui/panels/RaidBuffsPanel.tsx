@@ -126,7 +126,15 @@ function BuffGroup({
                   <span className="buff-detail muted">
                     {buff.detail}
                     {/* Named rather than left to be discovered by ticking it
-                        and watching another box clear itself. */}
+                        and watching another box clear itself.
+
+                        NO ENTRY DECLARES `exclusiveWith` TODAY, so this renders
+                        for nothing -- Leader of the Pack and Moonkin Form were
+                        the one pair and the owner has ruled them not exclusive.
+                        Kept with the field rather than deleted beside it: the
+                        next pair should be a declaration and not a panel
+                        change. `raidBuffs.test.ts` is what says the branch is
+                        currently unreachable. */}
                     {buff.exclusiveWith ? (
                       <em>
                         {' '}

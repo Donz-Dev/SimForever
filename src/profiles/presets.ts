@@ -100,21 +100,23 @@ export interface ProfilePreset {
  * a preset can be compared to a hand-edited profile without a diff.
  *
  * ----------------------------------------------------------------------------
- * TWO PRESETS SUBSTITUTE ONE ENTRY EACH, and both swap rather than drop: the
- * ranged Hunters take Grace of Air instead of Windfury, and the MOONKIN TAKES
- * MOONKIN AURA INSTEAD OF LEADER OF THE PACK. The owner's instruction -- the
- * Moonkin profile should have Moonkin Aura selected by default, because that is
- * the one it brings.
+ * TWO PRESETS SUBSTITUTE ONE ENTRY AND IT USED TO BE THREE: the two ranged
+ * Hunters take Grace of Air instead of Windfury, which a bow can never trigger.
  *
- * ITS CRIT IS +3% EITHER WAY, and that is the containment check rather than a
- * coincidence: Moonkin Aura, Leader of the Pack and the two Druid talents that
- * grant them are ONE aura with one id, so no combination of them is worth more
- * than one. See `PARTY_CRIT_AURA` in `auras/druid.ts`, which carries the ruling
- * and the 6% it used to be possible to hold.
+ * THE THIRD WAS THE MOONKIN, WHICH TOOK MOONKIN AURA INSTEAD OF LEADER OF THE
+ * PACK, and that swap is gone because the thing it was for is gone. The two
+ * were declared mutually exclusive when they were the same 3% global crit, so
+ * the raid could only have whichever druid turned up -- and the owner has since
+ * ruled: "Moonkin and Leader of the Pack are no longer exclusive. And all
+ * profiles should have both enabled by default in the raid buffs." A patch had
+ * already split them by attack TYPE, Moonkin Aura spell crit and Leader of the
+ * Pack melee and ranged, so a raid with a feral druid and a moonkin has both
+ * and they do two different things.
  *
- * THAT IS STILL "one raid", read properly: the raid supplies whichever of the
- * two auras it has a druid for, and for this profile that druid is the
- * character. Nothing else about who turned up changes.
+ * SO EVERY PROFILE SELECTS BOTH and the list below is the whole of it -- the
+ * Moonkin runs the same raid as everybody else now, with its own talent and the
+ * raid entry sharing one aura id, which is what keeps that 3% from being 6%.
+ * See `MOONKIN_AURA_ID` in `auras/druid.ts`.
  * ----------------------------------------------------------------------------
  */
 const PRESET_RAID_BUFFS: readonly string[] = [
@@ -136,6 +138,7 @@ const PRESET_RAID_BUFFS: readonly string[] = [
   'windfury_totem',
   'trueshot_aura',
   'leader_of_the_pack',
+  'moonkin_form',
 ];
 
 /**
@@ -161,27 +164,6 @@ const PRESET_RAID_BUFFS: readonly string[] = [
  */
 const RANGED_HUNTER_RAID_BUFFS: readonly string[] = PRESET_RAID_BUFFS.map((id) =>
   id === 'windfury_totem' ? 'grace_of_air_totem' : id,
-);
-
-/**
- * The same raid, for the one character that brings the other half of it.
- *
- * MOONKIN AURA IN LEADER OF THE PACK'S PLACE, on the ruleset owner's
- * instruction. The Moonkin provides this half of the exclusive pair, so it is
- * the half its raid is running.
- *
- * A SUBSTITUTION RATHER THAN A REMOVAL, which is both more accurate -- the raid
- * is not short a buff, it has the other one -- and what makes the Raid Buffs
- * panel show a ticked box where a person would look for it. Derived by mapping
- * rather than written out, like `RANGED_HUNTER_RAID_BUFFS` above and for the
- * same reason: a buff added to the list above reaches this one too, where a
- * second hand-kept copy is how the Moonkin would quietly stop receiving
- * something every other profile got. The position is kept rather than re-sorted
- * into catalogue order, which costs a one-line diff against a hand-edited
- * profile and buys the guarantee that the two lists cannot drift apart.
- */
-const MOONKIN_RAID_BUFFS: readonly string[] = PRESET_RAID_BUFFS.map((id) =>
-  id === 'leader_of_the_pack' ? 'moonkin_form' : id,
 );
 
 
@@ -1880,14 +1862,17 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: { ...DRUID_MOONKIN_TALENTS },
       /*
-       * THE ONE PRESET THAT IS NOT ON `PRESET_RAID_BUFFS`. It takes the Moonkin
-       * Form talent, which grants Moonkin Aura, and that is "exclusive with"
-       * Leader of the Pack by both tooltips and by the owner's ruling. Its crit
-       * is +3% from its own talent instead of +3% from the raid, so the figure
-       * does not move -- which is the check that this is a correctness change
-       * and not a buff.
+       * ON `PRESET_RAID_BUFFS` LIKE EVERYBODY ELSE, WHICH IT WAS NOT FOR MOST
+       * OF ITS LIFE. It took Moonkin Aura in Leader of the Pack's place, on the
+       * ruling that the two were one exclusive 3% and the raid could only have
+       * the druid it had -- and the owner has since ruled them not exclusive
+       * with both selected by default everywhere. **Its own crit does not move
+       * either way**: the Moonkin Form talent grants the same aura id the raid
+       * entry does, so the two cannot add up. What it GAINS is Leader of the
+       * Pack's MELEE AND RANGED 3%, which is worth whatever this build's
+       * physical share is and nothing more -- see HANDOVER for the figure.
        */
-      raidBuffs: [...MOONKIN_RAID_BUFFS],
+      raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_arcane'),
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
