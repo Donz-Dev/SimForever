@@ -43,6 +43,7 @@ the tooling to be a bit more sophisticated as well."
 | 14 | **Moonkin** and **Cat** -- the round where nearly every CANDIDATE measured as a loss | 778.6 -> **790.3** and 890.0 -> **898.4** | see below |
 | 15 | **2H Arms** and **DW Fury** -- AN ABILITY ALREADY IN THE BOOK was 94 of the 103, and both trees turned out completely FORCED. The owner then asked for that entry SWITCHED OFF | 849.7 -> **872.8** and 989.6 -> **997.3**, and **897.2** / **1092.6** with it enabled | see below |
 | 16 | **Nine sweeping changes at once**, the owner's own itemised list -- caster weapons, a new enchant, pre-combat actions, two raid buffs, the weapon stone per hand, Inner Focus, two APL additions, Predator's Edge and the food | **not re-baselined**, on the owner's standing instruction; 75 hashes unchanged on six of the nine | see below |
+| 17 | **A PATCH: nine racials and forty-odd class notes**, fed in as official notes. The client is TWO BUILDS AHEAD and carries NONE of them, so every figure here comes from a note | **not re-baselined**, on the owner's standing instruction. Four commits, and **thirteen notes are blocked on tree data** | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -77,12 +78,212 @@ write-up; none is an engine gap.
 | **Ninety rage on 2H Arms' Heroic Strike** -- re-swept with Recklessness and Hamstring in, 70 measures **+3.95 against a combined interval of 4.73**. The peak has moved toward 70 and has not arrived | round 15 | one constant, and the figure is the owner's own respecification from 75 |
 | **Nature's Reach's second clause** -- "+4% chance to hit", implemented as the flat `hitChance` stat, which the MELEE table reads too. It is what puts the Cat Druid on its 8% cap, and removing it measures **-17.2** | round 14 | if it is meant to be spell-only, the Cat is 4% below cap and its tree needs rebuilding |
 | **Consecrated Ground** -- wording says "Holy SPELLS" and the implementation reaches the seal and Holy Strike too. **+66** to the Shockadin, the biggest talent on that profile | round 12 | the reading, and the Shockadin's figure |
+| **All five TAUREN presets have fallen off their hit cap.** The owner's benchmark templates credited Endurance's 1% hit, which the patch replaced with crit damage: the two Tauren melee rows ask for 70 hit rating where every other melee row asks for 80, and the Moonkin's spells now miss **2% where they sat on the owner's own 1% FLOOR** | round 17 | five template rows, which under the owner's own donor rule would come out of CRIT |
+| **Moonkin Aura and Leader of the Pack are still declared EXCLUSIVE.** They were, on the ruling that both are "the same exclusive 3% global crit"; the patch split them by attack type, so two buffs that no longer overlap have no obvious reason to exclude each other | round 17 | raid composition, and therefore every profile's figure |
+| **Ice Lance's frozen multiplier is now 3 and the owner's `1.5 / 3.5 / 4` divisor is still 4.** While both were four they multiplied out to exactly `1.5 / 3.5` and the owner ratified that -- "This is intended stop asking." At three the product is 0.3214 and nothing lines up | round 17 | 0.3214 against 0.4286 on a spell that was 35.7% of Frostfire |
+| **Judgement of Command is left on the sheet's 0.43** where Righteousness and Fury took the exact `1.5 / 3.5`. The note names two abilities; a ruling covers what it says | round 17 | 0.33% on one seal, and whether all three should be the expression |
+| **Fire Nova's base damage and mana cost are "significantly reduced" with no figure**, so only its coefficient moved -- and that is a RISE here, because this project carried the owner's own "for now" 10% | round 17 | two numbers, and the direction of the whole change |
+| **Explosive Trap's 5% of attack power is on its BURN and not its initial hit.** One figure for two abilities, and only this one has two damage components | round 17 | which half carries it |
+| **Shadow Word: Death's note says "(was 12 seconds)"** and both the capture and this file say 15. The target 18 is applied; the parenthetical matches nothing | round 17 | whether 18 is right, or the note means a different rank |
+| **"Touch of the Dead"** is the name the Undead note uses for what is plainly Touch of the Grave -- the same block, and the only part of that racial that has ever scaled with anything | round 17 | a naming question, not an ambiguity about which effect |
 
 **ALL THREE ARE THE SAME SHAPE: A DEFENSIBLE READING THAT IS NOW LOAD-BEARING.**
 Each was fine while it was worth little and became worth asking about the moment
 a round made it the biggest thing on a profile -- which is CLAUDE.md's rule that
 an interpretation flagged as one is what gets it ruled on, and that the label has
 to survive until the answer arrives.
+
+## Round seventeen: a patch, and a client two builds behind it
+
+**THE FIRST THING THIS ROUND DID WAS NOT READ THE NOTES.** CLAUDE.md's rule is
+that a patch starts with the three importers and the decoder, and running them
+first is the only reason the rest of this is honest:
+
+| | |
+| --- | --- |
+| client was | 1.60.1.70170 |
+| client is | **1.60.1.70291** |
+| of the forty-odd notes, in either data source | **none** |
+
+So the notes describe a build that has not shipped. Every figure in this round
+comes from a NOTE, which is this project's existing reading -- `SWIPE_AP_COEFFICIENT`
+is 3% because the notes said so while `WoWSimWorksheet.xlsx` says 10%. The risk
+that comes with it is the Dual Wield Specialization case pointing the other way,
+where a note and a client tooltip disagreed and the owner ruled for the client.
+**Every note-derived talent value is therefore in ONE table that records what
+the client says beside it**, so a refresh makes each entry either redundant or
+demonstrably wrong rather than quietly authoritative.
+
+### What the importers found, which the notes do not mention
+
+| | |
+| --- | --- |
+| **Druid** | Predatory Instincts **renamed to Natural Instinct**, with a second clause and a second number. Its row went from `[10, 20]` to `[[10, 12], [20, 25]]` |
+| **Warrior** | Impale now **requires Deep Wounds 3/3** |
+| **Paladin** | Reckoning's row gained the 1.5s internal cooldown this project already had |
+| **Priest** | Penance 81 -> 44 damage; **Hunter** Mongoose Bite window 5s -> 10s |
+
+**THE RENAME IS THE DANGEROUS ONE AND IT IS CORRECT BY LUCK.** A talent id is
+slugified from the client's name, so a renamed talent IS a new key -- and the
+values row went from one number to two. `critDamageBonus` takes no `valueIndex`
+and `talentNumber` defaults to index 0, so it still reads the crit damage figure
+**because the client happened to put the surviving clause first**. That is
+Aftermath's shape exactly, and the next clause reorder is what makes it wrong.
+
+All 19 hand-filled single-rank values survived the merge, which is the check a
+rename makes necessary: Heating Up lost its value that way last patch.
+
+### The four commits
+
+| | what it was |
+| --- | --- |
+| 1 | the client refresh, and **nine racials** |
+| 2 | twelve class notes that carry their own numbers, and a new **value-override layer** |
+| 3 | the Hunter's four, and **Reckoning's charges** |
+| 4 | **Heating Up's two clauses**, two Judgements, and **Arcane Blast's redesign** |
+
+### The finding the notes do not mention: five profiles fell off their hit cap
+
+**TAUREN ENDURANCE'S 1% HIT BECAME 2% CRIT DAMAGE, AND THE OWNER'S GEAR
+TEMPLATES WERE CREDITING THAT 1%.** The two Tauren melee rows ask for 70 hit
+rating where every other melee row asks for 80; the two feral Druids ask for 30
+against a 4-point Nature's Reach; the Moonkin asks for 110 against the same 4.
+Every one landed exactly on its cap WITH the racial:
+
+| | | |
+| --- | --- | --- |
+| Prot Warr, Enh Shaman | 7 of 8 melee | one point short |
+| Cat, Bear | 7 of 8 melee | one point short |
+| **Moonkin** | **15 of 16 spell** | its spells now miss **2%** where they sat on the owner's **1% FLOOR** |
+
+Melee and ranged have NO miss floor, so the eighth point was the last one that
+bought anything. The Moonkin is the sharpest case because the floor made its
+last point unusually valuable -- this DOUBLES its spell miss rather than adding
+a point to it.
+
+**NOT FIXED, BECAUSE THE TEMPLATES ARE THE OWNER'S SPREADSHEET.** Raising five
+rows by 10 rating -- which under their own donor rule comes out of CRIT -- is a
+change to their numbers on nobody's authority. It is pinned as a test in
+`statHeadroom.test.ts` instead, and fails the moment a template moves.
+
+**AND IT IS THE ONE PLACE A RACIAL CHANGE REACHES A FIGURE THROUGH THE GEAR**,
+which is why no audit here could have found it: there is no zero anywhere, no
+caveat, and nothing for the census to count.
+
+### Two interpretations retired, in opposite ways
+
+**ARCANE BLAST'S REDESIGN ANSWERED A FLAGGED QUESTION BY DELETING IT.** "Lasts
+8 sec or until any other damage spell is cast" read literally said the bonus was
+destroyed by the only thing that could collect it, so the clause would have paid
+nothing -- and the reading taken (the other spell BENEFITS, then the stacks go)
+was this project's most load-bearing interpretation. HANDOVER carried it as a
+question. The redesign makes the window a stated fifteen seconds, so
+`arcaneBlastSpender` is deleted and nothing has to guess. **A flagged
+interpretation usually earns a ruling; this one earned a rewrite.**
+
+**AND ICE LANCE'S WENT THE OTHER WAY: A SETTLED FACT BECAME A QUESTION AGAIN.**
+While the frozen multiplier and the divisor in the owner's `1.5 / 3.5 / 4` were
+both four they multiplied out to exactly `1.5 / 3.5`, and asked whether the `/4`
+had already done the frozen division the owner said **"This is intended stop
+asking."** The note takes the multiplier to three; the product is 0.3214 and the
+symmetry is gone. The separate-facts reading is implemented and the alternative
+is pinned as a NEGATIVE assertion, so the day somebody restores the symmetry
+they have to argue with a line rather than with a coincidence.
+
+### The arithmetic that settled two numbers nobody stated
+
+**ARCANE BLAST'S "-40% COEFFICIENT" *IS* ITS CAST TIME CHANGE.** Coefficients
+here follow `castTime / 3.5`, the old 0.714 is `2.5 / 3.5` rounded, and
+
+    2.5 / 3.5 x 0.6  =  1.5 / 3.5     exactly
+
+so the note's two clauses are one change written twice. Two independent
+sentences landing on the same figure is the strongest evidence available.
+
+**AND "THE CORRECT COEFFICIENT FOR INSTANT CAST SPELLS" IS THE SAME NUMBER.**
+The note names a convention without stating one, and this ruleset states it nine
+times -- Holy Shock, Hammer of Wrath, Mind Blast, Shadow Word: Death, Fire
+Blast, Scorch, Conflagrate, Shadowburn, Searing Pain all carry `1.5 / 3.5`. The
+two rows the note names, Judgement of Righteousness at 0.5 and Fury at 0.45,
+were **the two outliers**. A convention read off nine abilities plus a note that
+independently names the two breaking it is a derivation rather than a guess.
+
+### Two engine fields, both because the obvious implementation was near-zero
+
+**`DamageRequest.attackPowerCoefficient`**, for the Hunter's traps. "Scale with
+5% of your Attack Power" cannot be `powerCoefficient`: that field picks its pool
+BY SCHOOL and a trap is FIRE, so 0.05 there reads the Hunter's SPELL power --
+close to nothing. The traps would have gained almost exactly zero, kept an
+ordinary damage row, and looked implemented.
+
+**`CastModifier.exceptWhileAura`**, for Heating Up. `requiresCastTime` reads the
+ability's DECLARED cast time and Pyroblast always declares one, so the aura
+matched a cast Presence of Mind had already made instant and all three stacks
+were thrown away -- with nothing on the results page to show it.
+
+### What is BLOCKED, and not approximated
+
+**THIRTEEN NOTES NEED A TREE SHAPE THE CLIENT HAS NOT SHIPPED.** A rank count, a
+row and a prerequisite are read by the decoder, the legality rules and the Talent
+panel, so inventing one is inventing game data with a build URL that will not
+decode:
+
+| | |
+| --- | --- |
+| **Mage** | Missile Barrage to row 1 as a 2-point talent; **Arcane Wrath** (new); Critical Mass to 5 points; Fire Power to 3 and redesigned; Winter's Chill redesigned -- **the notes give TWO different versions of it**; **Frost Blast** (new spell, "low frost damage" and no figure) |
+| **Priest** | **Dark Inspiration** (new); Mental Strength's row move -- its VALUE is applied |
+| **Shaman** | **Elemental Mastery** (new 31-point); Lava Burst's move and new rank 4 |
+
+**AND THREE STATE NO FIGURE AT ALL**: Fire Nova's base damage and mana cost
+"significantly reduced", and Chain Lightning's "approximately" 35%.
+
+**CHAIN LIGHTNING IS THE LINE BETWEEN THE TWO CATEGORIES.** "Reduced by
+approximately 35%" states an OPERATION and an operand, and this project has the
+cost from the client -- so 315 is the rounding of a stated percentage rather than
+an invented number. "Significantly reduced" states no operation, so Fire Nova's
+other two halves are left alone.
+
+### Four notes needed nothing, and that is written down
+
+**"A note we did nothing about" and "a note nobody read" look identical from a
+diff**, so each is recorded where somebody would look for it:
+
+| | |
+| --- | --- |
+| Grace of Air's exclusivity with Windfury | **never modelled here**, and Flametongue Totem does not exist. The two ranged Hunters swap Windfury because it is worthless to a bow, not because of a rule |
+| totems reaching no pet | already true -- `kind === 'player'` is the test and predates the note |
+| Clearcasting and Lightning Overload | the overload deals damage without CASTING anything, so it can never spend a charge |
+| pets inheriting the higher of melee or ranged crit | **no max to take**: `STAT_NAMES` has one crit stat and `critChanceFrom` is the one function both tables read. Attack power is the opposite case, which is why `highestAttackPower` exists |
+| Omen of Clarity and Faerie Fire | this project has **no Faerie Fire ability** -- the only `faerie_fire` is a raid debuff that deals no damage |
+
+**AND THE PET-CRIT NOTE HAS ONE READING UNDER WHICH IT WOULD MEAN SOMETHING,
+WHICH CONTRADICTS AN OWNER RULING.** Melee and ranged crit CAN differ once
+`AttackTableModifiers` are counted, and reading the note that way would hand the
+pet the bow enchant's +2% -- which the owner ruled explicitly it must not have.
+Flagged rather than taken.
+
+### What was checked, and what was not
+
+**NOT RE-BASELINED, on the owner's standing instruction.** Every race in the
+preset set moves except Troll, and seven classes are touched, so a full
+re-measure is its own round.
+
+**WHAT WAS RUN INSTEAD is `USES=1 SEEDS=3` over the twelve most affected
+profiles**, which is the documented cheap check for the commonest rotation bug
+here -- an entry that can no longer fire. **No new never-fired entry appeared**:
+every zero is either `evocation` (the owner: "This is intended") or
+`demonic_rune` at its 10% mana gate.
+
+**ONE ENTRY WAS CHECKED AGAINST A BASELINE WORKTREE RATHER THAN ASSUMED.**
+SM/DS's Life Tap reads 0.0 uses, and at `origin/main` it reads 0.1 -- both
+effectively never, and CLAUDE.md already records it hitting zero when Wrack
+entered that list. Pre-existing, and said so with the evidence rather than
+either claimed or ignored.
+
+**AND SHADOW MASTERY WAS VERIFIED ON THE MECHANISM, NOT THE FIGURE.** SM/DS
+moved +3.5 at three seeds against an interval of +/-10.3, which says nothing. The
+school multiplier on the built character is **1.10 where it was 1.05**, and
+Firelock spends no points there and is correctly untouched.
 
 ## Round sixteen: nine changes at once, and what each one cost
 

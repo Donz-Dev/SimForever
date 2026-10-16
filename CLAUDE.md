@@ -693,7 +693,13 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   tick" -- and it was built to read the DAMAGE, so Corruption, Bane of Agony and
   Siphon Life, which only apply an aura, never rolled at all. **The owner found
   it by arithmetic**: 21.6 damage-dealing casts a minute against 1.17 procs
-  where 10% is 2.16, on the one build whose core is DoTs.
+  where 10% is 2.16, on the one build whose core is DoTs. (**The 10% and 5% are
+  historical**: a patch took them to 30% for casters and 20% for Paladins,
+  Rogues and Warriors with a **25 second** internal cooldown where it was 1 --
+  so the COOLDOWN is now the binding constraint on every class rather than the
+  rate, the ceiling is two or three procs a fight for any build, and the class
+  split decides how fast a window is claimed rather than how many there are.
+  The arithmetic above is the method and not the figures.)
   **THE FIX IS A DAMAGE HALF AND A CAST HALF SHARING ONE CLOSURE**, which is
   exactly the shape `judgementOfWisdomReactions` already had -- and whose own
   comment names Corruption as the case it exists for. The damage half records
@@ -1015,6 +1021,24 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   about which terms a multiplier reaches**, and the guard is a test that
   multiplies them out end to end -- the same argument the pet's 1.375 makes,
   because a constant check cannot see a double application.
+- **A COEFFICIENT PICKS ITS POOL BY SCHOOL, AND THAT IS RIGHT EXCEPT ONCE.**
+  `scaleByPower` reads attack power when `isPhysical(school)` and spell power
+  otherwise, which is what lets one field serve every ability here. A FIRE
+  ability that scales with ATTACK power is outside it, and the Hunter's two
+  traps are exactly that: "Immolation Trap and Explosive Trap now scale with 5%
+  of your Attack Power" written as `powerCoefficient` would have read the
+  Hunter's SPELL power -- **close to nothing, so the traps would have gained
+  almost exactly zero, kept an ordinary damage row, and looked implemented.**
+  `DamageRequest.attackPowerCoefficient` is the field, added ALONGSIDE rather
+  than instead of, and it reads the MELEE pool because a trap is not a weapon
+  use and has no slot to read. **A silent near-zero is why this is a field and
+  not a number written into the wrong one.**
+- **AND THAT NOTE REVERSED THE OWNER'S OWN RULING**, which both traps were
+  declared under -- "there isn't an AP or SP scaler, all the information should
+  be known already" -- so both carried `powerCoefficient: 0` on that authority.
+  A note is a later statement and wins, the same reading that gives Swipe 3%
+  against a sheet saying 10%. The SPELL power half of the ruling stands, which
+  is why the tests push the two pools separately.
 - **A COEFFICIENT IS MEASURED, NEVER COUNTED.** It is passed per `dealDamage`
   call, so `powerCoefficient` written in the wrong place is silent and grepping
   gives 77 damage sites and no ability names. `tools/coefficient_probe.ts` casts
@@ -1080,7 +1104,12 @@ them, including `ALL_ABILITIES`.
   periodic effects get nothing from it". **AN AURA FIELD WHERE GENESIS IS A
   COMBATANT SCALAR**, which is the whole reason it is not one more argument to
   that one: Genesis is a talent and lasts as long as the character, and Eureka!
-  is three charges that arrive and go.
+  arrives and goes. (It was THREE CHARGES until a patch made it an 8 second
+  window with none, which **deleted a mechanism rather than adding one**: the
+  charges needed a `dealt` marker plus a `final` cast reaction, because "a
+  damaging ability" cannot be read off a declaration -- Rupture and Serpent
+  Sting both declare a table and deal no direct damage. A window pays whatever
+  lands inside it and nothing has to decide what counted.)
   **`abilityModifiers: { '*': ... }` IS THE NEAR MISS.** It selects every
   ability correctly and `abilityModifierFor` is never told whether the damage is
   a TICK -- and a tick carries its ability's id, so the catch-all finds it.
@@ -1396,6 +1425,17 @@ something that comes and goes.
   with Pyroblast falling from **13.55 casts a fight to 1.75** because the build
   only reaches three stacks twice. **The field being absent is a reading too**,
   and it is the most generous of the three.
+- **A CAST MODIFIER CAN BE REFUSED BECAUSE OF ANOTHER AURA** --
+  `CastModifier.exceptWhileAura`, keyed by aura id, and it suppresses the effect
+  AND the consumption together because one predicate decides both. "Heating Up
+  is no longer consumed if the Mage also had Presence of Mind active for the
+  Pyroblast cast" is why. **`requiresCastTime` IS THE NEAR MISS AND DOES NOT SAY
+  IT**: that flag reads the ability's DECLARED `castTimeMs`, and Pyroblast always
+  declares one -- so the aura matched a cast Presence of Mind had already made
+  instant, its 75% had nothing left to reduce, and all three stacks were thrown
+  away with nothing on the results page to show it. The Arcane list moves
+  Presence of Mind onto Pyroblast deliberately, so every one of those casts was
+  eating a three-stack Heating Up for nothing.
 - **A percentage mana reduction is `CastModifier.costFraction`**, granted by
   `grantCastModifier`. `abilityCost` subtracts a FLAT amount, right for a 20-rage
   strike and wrong for a 380-mana spell. **AND `abilityCost` TAKES A
@@ -1625,6 +1665,24 @@ See [docs/resources.md](docs/resources.md).
   for a switch. **The test is whether the thing is a CHOICE the character made**:
   a raid buff is somebody else in the raid, a consumable was drunk, an enchant
   was applied, and a race was not any of those.
+- **AND A RACIAL CHANGE CAN REACH A FIGURE THROUGH THE GEAR, WHICH IS THE ONE
+  ROUTE NO AUDIT HERE CAN SEE.** Tauren Endurance's "+1% hit" became "+2%
+  critical damage", and the owner's benchmark templates had been CREDITING that
+  1%: the two Tauren melee rows ask for 70 hit rating where every other melee
+  row asks for 80, the two feral Druids ask for 30 against a 4-point Nature's
+  Reach, and the Moonkin asks for 110 against the same 4. **Every one of the five
+  landed exactly on its cap WITH the racial and is one point under it without.**
+  **THE MOONKIN IS THE SHARPEST CASE BECAUSE OF THE FLOOR.** Spells miss on a
+  flat 17% floored at 1%, so its last point of hit was unusually valuable: its
+  spells now miss **2% where they sat on 1%**, which DOUBLES the miss rather
+  than adding a point. Melee and ranged have no floor at all, so for the other
+  four the eighth point was simply the last one that bought anything.
+  **NOT FIXED, BECAUSE THE TEMPLATES ARE THE OWNER'S SPREADSHEET** -- raising
+  five rows by 10 rating, which under their own donor rule comes out of CRIT, is
+  a change to their numbers on nobody's authority. Pinned in
+  `statHeadroom.test.ts` so it fails the moment a template moves.
+  **A RACIAL AND A GEAR TEMPLATE CAN BE TUNED AGAINST EACH OTHER**, so when a
+  racial's stat changes, check what the templates were assuming.
 - **Raid buffs are SELECTED, never assumed.** Nothing is on by default; a buff
   that applied itself would move every figure ever recorded. **A proc's reaction
   is built PER CHARACTER**, because an internal cooldown is per-character state
@@ -1632,12 +1690,28 @@ See [docs/resources.md](docs/resources.md).
   iteration of a batch. [docs/raid-buffs.md](docs/raid-buffs.md)
 - **A BUFF THE CHARACTER PROVIDES ITSELF IS THE SAME AURA REACHED SEVERAL WAYS,
   AND THE ID IS THE WHOLE RULE.** Moonkin Aura and Leader of the Pack are two
-  raid buff entries AND two Druid talents, and the owner has ruled that "these
-  are all the same exclusive 3% global critical strike chance and do not stack"
-  — so there is ONE `AuraDefinition` with one id, `PARTY_CRIT_AURA`, and all
-  four sources apply it. `AuraCollection.apply` refreshes a matching id instead
-  of stacking, so no combination is worth more than 3%. The arrangement Thunder
-  Clap already had, which `raidBuffs.ts` reuses from the Warrior.
+  raid buff entries AND two Druid talents, and the owner ruled that "these are
+  all the same exclusive 3% global critical strike chance and do not stack" —
+  so there was ONE `AuraDefinition` with one id and all four sources applied it.
+  `AuraCollection.apply` refreshes a matching id instead of stacking, so no
+  combination was worth more than 3%. The arrangement Thunder Clap already had,
+  which `raidBuffs.ts` reuses from the Warrior.
+- **AND A PATCH HAS SINCE SPLIT THEM BY ATTACK TYPE, WHICH NARROWS THAT RULE
+  RATHER THAN REPEALING IT.** "Moonkin Aura now only increases Spell Critical
+  Strike chance"; "Leader of the Pack now only increases Melee and Ranged
+  Critical Strike chance." They are `MOONKIN_AURA` and
+  `LEADER_OF_THE_PACK_AURA` now, two ids, and **they stack with each other** --
+  a character under both carries +3% spell AND +3% melee, which is two buffs
+  doing two things rather than one counted twice.
+  **THE SHARED ID SURVIVES WITHIN EACH AND NOT ACROSS THE PAIR**, which is the
+  half of the old ruling that was about double-dipping and is still
+  load-bearing: each aura keeps one id shared by its talent and its raid buff
+  entry, so a Moonkin with both sources of Moonkin Aura still reads 3%.
+  **WHAT IT COST IS EVERY CASTER PROFILE'S 3% SPELL CRIT**, because every preset
+  but the Moonkin carries Leader of the Pack. And `exclusiveWith` is left as it
+  was and is now a QUESTION rather than an answer -- two buffs that no longer
+  overlap have no obvious reason to exclude each other, and removing it is a
+  raid COMPOSITION decision that moves every figure.
 - **AND IT SUPERSEDES "HANDLE IT ON THE GUI", BECAUSE A GUI RULE CANNOT COVER A
   SOURCE THE GUI DOES NOT OWN.** The earlier ruling made exclusivity a SELECTION
   rule, and `withRaidBuff` does switch one entry off when the other goes on. It
@@ -3187,13 +3261,29 @@ words.
   something the owner did not specify diverges the day a talent reads the bow.
 - **AND A RACIAL'S CRIT POINTS THE OTHER WAY FROM THAT ENCHANT'S, BY THE SAME
   OWNER.** "+2% Global Crit Chance from all sources if holding a sword ... **this
-  includes +2% for pet crit chance**", so the weapon specializations are a STAT
+  includes +2% for pet crit chance**", so the weapon specializations were a STAT
   -- and `createPet` reads `owner.stats.effective.critChance` and inherits all
   of it, so the pet clause needs no code at all. The bow enchant had to be
   `attackTableModifiers` precisely because the owner ruled it must NOT reach the
   pet. **Two "+2% crit" lines from one owner with opposite answers about the
   same pet**, and the engine already draws the line in the right place: what
   there was to get right was choosing which side of it.
+  **THE THREE WEAPON SPECIALIZATIONS ARE GONE AND THE CLAUSE SURVIVED THEM**,
+  which is the part worth keeping. A patch replaced Human Sword Specialization
+  with RUTHLESS and Orc Axe Specialization with SAVAGE -- the same figures with
+  no weapon condition -- and Dwarf Mace Specialization with EARTH FURY, which is
+  crit DAMAGE instead of crit chance. The pet still collects Ruthless and Savage,
+  because what carried the owner's clause to the pet was never the WEAPON: it
+  followed from the effect being a stat.
+  **AND EARTH FURY DOES NOT REACH THE PET, WHICH THE MECHANISM DECIDES RATHER
+  THAN A RULING.** Crit DAMAGE has to be `attackTableModifiers` -- the bonus half
+  of a crit multiplier is 1.0 on the physical tables and 0.5 on the spell one,
+  and a Dwarf can be a Priest -- and `createPet` builds its own combatant, so it
+  stops at its owner. The note says nothing either way; recorded as a question.
+  **`RacialRequirement.weaponTypes` NOW HAS NO CALLER AT ALL**, and
+  `racials.test.ts` asserts that it reaches NOTHING: a condition with no caller
+  reads exactly like one that is sometimes true, which is `EFFECT_RULES`' lesson
+  and `isWeaponUseOf(attack, \'ranged\')`'s.
 - **FOUR ENCHANTS DO NOTHING AND ARE STILL SELECTABLE, which the owner asked
   for.** Healing power, threat in both directions and Minor Speed each carry an
   `unmodelled` entry with the source's own words — an inert effect that SAYS it
@@ -3452,6 +3542,40 @@ words.
   `tools/druid_attribution.ts` does, and its first run did not. A figure without
   its cascade named is a rumour.
 
+**A PATCH NOTE CAN STATE A TALENT VALUE THE CLIENT HAS NOT SHIPPED, AND
+`values/<class>.json` IS NOT WHERE IT GOES.** CLAUDE.md calls that directory the
+one piece of scraped data that IS hand-editable, and the importer disagrees:
+`import_forever_talents.mjs` merges a previous entry ONLY where this run produced
+`null` -- which is to say only for a SINGLE-RANK talent with no `{0}` to match.
+**A hand edit to a MULTI-rank row survives exactly until the next `--write`.**
+
+`PATCH_NOTE_TALENT_VALUES` in `game/talents/patchNoteValues.ts` is that layer,
+and it is consulted in **`talentValue`, the ROOT** -- which is the second place
+it went. Wired into `talentBuild` first, which would have left the Talent panel
+printing the client's 1/2/3/4/5 for a Shadow Mastery the engine ran at
+2/4/6/8/10: **the character sheet's crit bug exactly**, a panel disagreeing with
+the fight about a number, invisible because every neighbour is right.
+`talentNumber`, `talentNumbers` and `talentDescription` all come through the root.
+
+**EVERY ENTRY RECORDS WHAT THE CLIENT SAYS, WHICH IS WHAT MAKES THE LAYER EXPIRE
+RATHER THAN ACCUMULATE.** `patchNoteValues.test.ts` fails when a refresh moves
+the generated row, naming the talent; fails separately if an entry ever AGREES
+with the file, because an override that is a silent no-op is worse than none;
+and fails on a stale talent id, which is the failure a RENAME already cost this
+project once. **ONLY A VALUE MAY GO IN IT, never a tree SHAPE** -- a rank count,
+a row and a prerequisite are read by the decoder and the legality rules, so
+inventing one is inventing game data with a build URL that will not decode.
+
+**AND A NOTE'S PARENTHETICAL HISTORY CAN DISAGREE WITH EVERY SOURCE WHILE ITS
+PRESCRIPTION STANDS.** "Shadow Word: Death cooldown increased to 18 seconds (was
+12 seconds)" -- the capture says 15 and so did this file, so nothing here has
+ever said 12. The two halves are different kinds of claim: "increased to 18" is
+a PRESCRIPTION with a number in it and "(was 12)" is the note's own record. The
+target is applied and the mismatch is flagged, because the other two Priest
+cooldowns in the same patch match their own parentheticals exactly -- **two of
+three reproducing and the third moving is the shape of a bug**, even when the
+odd one out is only the history.
+
 See [docs/talent-effects.md](docs/talent-effects.md) for how an effect is
 expressed.
 
@@ -3647,6 +3771,26 @@ Plus the permanent rulings under **Scope**.
   and still is; the conclusion was wrong, because a coefficient is a RULE and
   asking got one in a single message. **Check whether a missing number is missing
   DATA or a missing RULE before recording it as a gap.**
+- **AND A FLAGGED INTERPRETATION CAN EARN A REWRITE RATHER THAN A RULING, WHICH
+  IS A THIRD OUTCOME THIS FILE DID NOT HAVE.** Arcane Blast's "8 sec or until
+  any other damage spell is cast" read literally said the bonus was destroyed by
+  the only thing that could collect it, so the clause would have paid nothing --
+  the reading taken was that the other spell BENEFITS and the stacks then go,
+  and HANDOVER carried it as a question. A patch redesigned the spell: the window
+  is a stated fifteen seconds, the damage clause is spell power from Intellect
+  instead, and `arcaneBlastSpender` is deleted. **The question was answered by
+  being removed.** The flag is still what made it findable.
+- **AND ONE WENT THE OTHER WAY IN THE SAME PATCH: A SETTLED FACT BECAME A
+  QUESTION AGAIN.** While Ice Lance's frozen multiplier and the divisor in the
+  owner's `1.5 / 3.5 / 4` were both four they multiplied out to exactly
+  `1.5 / 3.5`, and asked whether the `/4` had already done the frozen division
+  the owner said **"This is intended stop asking."** A note took the multiplier
+  to three, the product is 0.3214, and the symmetry is gone -- so either the
+  divisor is a separate settled fact (implemented) or "intended" meant the
+  PRODUCT and it should follow. **A RULING IS ABOUT THE STATE IT WAS GIVEN IN**,
+  and a patch can move the thing it was about. The alternative is pinned as a
+  NEGATIVE assertion, so restoring the symmetry means arguing with a line rather
+  than with a coincidence.
 - **AN INTERPRETATION THAT IS RIGHT IS STILL AN INTERPRETATION, AND LABELLING IT
   ONE IS WHAT GETS IT RULED ON.** Ice Lance's `1.5/3.5/4` left a real ambiguity:
   a frozen cast multiplies the four back out and lands on exactly the old
