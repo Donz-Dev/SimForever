@@ -45,6 +45,7 @@ the tooling to be a bit more sophisticated as well."
 | 16 | **Nine sweeping changes at once**, the owner's own itemised list -- caster weapons, a new enchant, pre-combat actions, two raid buffs, the weapon stone per hand, Inner Focus, two APL additions, Predator's Edge and the food | **not re-baselined**, on the owner's standing instruction; 75 hashes unchanged on six of the nine | see below |
 | 17 | **A PATCH: nine racials and forty-odd class notes**, fed in as official notes. The client is TWO BUILDS AHEAD and carries NONE of them, so every figure here comes from a note | **not re-baselined**, on the owner's standing instruction. Four commits, and **thirteen notes are blocked on tree data** | see below |
 | 18 | **TWO OWNER RULINGS, both answering questions round 17 raised and refused to decide** -- the five Tauren templates gain 10 hit rating each, and the two Druid auras stop excluding each other | **not re-baselined**, on the owner's standing instruction. Every caster gains 3% spell crit and the five Tauren rows go back on their hit caps | see below |
+| 18b | **A THIRD RULING, arriving straight after the merge** -- Ice Lance's coefficient is `1.5/3.5/3`, so the divisor tracks the frozen multiplier and the implemented reading was wrong for one release | the frozen coefficient 0.3214 -> **0.4286**, +33% on the spell-power half of a spell that is **8.6% of Frostfire** and is cast by no other profile | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -79,26 +80,27 @@ write-up; none is an engine gap.
 | **Ninety rage on 2H Arms' Heroic Strike** -- re-swept with Recklessness and Hamstring in, 70 measures **+3.95 against a combined interval of 4.73**. The peak has moved toward 70 and has not arrived | round 15 | one constant, and the figure is the owner's own respecification from 75 |
 | **Nature's Reach's second clause** -- "+4% chance to hit", implemented as the flat `hitChance` stat, which the MELEE table reads too. It is what puts the Cat Druid on its 8% cap, and removing it measures **-17.2** | round 14 | if it is meant to be spell-only, the Cat is 4% below cap and its tree needs rebuilding |
 | **Consecrated Ground** -- wording says "Holy SPELLS" and the implementation reaches the seal and Holy Strike too. **+66** to the Shockadin, the biggest talent on that profile | round 12 | the reading, and the Shockadin's figure |
-| **Ice Lance's frozen multiplier is now 3 and the owner's `1.5 / 3.5 / 4` divisor is still 4.** While both were four they multiplied out to exactly `1.5 / 3.5` and the owner ratified that -- "This is intended stop asking." At three the product is 0.3214 and nothing lines up | round 17 | 0.3214 against 0.4286 on a spell that was 35.7% of Frostfire |
 | **Judgement of Command is left on the sheet's 0.43** where Righteousness and Fury took the exact `1.5 / 3.5`. The note names two abilities; a ruling covers what it says | round 17 | 0.33% on one seal, and whether all three should be the expression |
 | **Explosive Trap's 5% of attack power is on its BURN and not its initial hit.** One figure for two abilities, and only this one has two damage components | round 17 | which half carries it |
 | **"Touch of the Dead"** is the name the Undead note uses for what is plainly Touch of the Grave -- the same block, and the only part of that racial that has ever scaled with anything | round 17 | a naming question, not an ambiguity about which effect |
 
-**SEVEN ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**SIX ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
 the rows**, and count them from the table rather than from the last figure
 somebody wrote down: the first draft of this very sentence said eight, by
-subtracting four from a miscount of eleven.
+subtracting four from a miscount of eleven, and then seven, before Ice Lance
+came off too.
 
-**AND FOUR CAME OFF IN ONE ROUND, WHICH IS WHAT THE TABLE IS FOR.** Two were
-ruled on by the owner -- the five Tauren hit caps and the Druid aura
-exclusivity, both implemented in round 18 -- and two were answered by the client
-catching up at build 1.60.1.70425: Shadow Word: Death's 18 seconds is confirmed,
-and Fire Nova's two missing figures exist (375 mana, 232-258 damage). **A
-question can be answered by somebody OTHER than the person it was asked of**,
-so re-read this table against a client refresh and not only against a reply.
+**AND FIVE CAME OFF IN TWO ROUNDS, WHICH IS WHAT THE TABLE IS FOR.** Three were
+ruled on by the owner -- the five Tauren hit caps and the Druid aura exclusivity
+in round 18, and **Ice Lance's divisor in round 18b** -- and two were answered
+by the client catching up at build 1.60.1.70425: Shadow Word: Death's 18 seconds
+is confirmed, and Fire Nova's two missing figures exist (375 mana, 232-258
+damage). **A question can be answered by somebody OTHER than the person it was
+asked of**, so re-read this table against a client refresh and not only against
+a reply.
 
 **WHAT IS LEFT IS THE SAME SHAPE AS THE FIRST THREE: A DEFENSIBLE READING THAT
 IS NOW LOAD-BEARING.** Each was fine while it was worth little and became worth
@@ -217,6 +219,108 @@ and a fight can diverge completely while processing the same number of events.
 change legitimately touches a stat, the containment check is the MECHANISM --
 which stat the aura moves, asserted on the stat, which is what
 `raidBuffs.test.ts` and `druidTalents.test.ts` now do in both directions.
+
+## Round EIGHTEEN b: Ice Lance, where the ruling covered the PRODUCT
+
+> Ice Lance was changed to use 1.5/3.5/3.
+
+**THE THIRD RULING ON ONE CONSTANT, AND THE SECOND THAT A FLAGGED READING
+PRODUCED.** It arrived unprompted, minutes after round 18 merged, against a row
+in the table above.
+
+### What the three rulings were, in order
+
+| | | the frozen product |
+| --- | --- | --- |
+| 1 | "Ice lance now has a **1.5/3.5/4** spell power coefficient instead of 1.5/3.5" -- and the frozen multiplier was 4 | `1.5/3.5/4 * 4` = **0.4286** |
+| 2 | asked whether the `/4` had already done the frozen division: **"This is intended stop asking."** | unchanged, and now ratified |
+| 3 | a patch: "Ice Lance damage against Frozen targets changed to a 200% increase (Was 300%)", so the multiplier is 3 and the note says nothing about the coefficient | `1.5/3.5/4 * 3` = **0.3214** |
+| 4 | **"Ice Lance was changed to use 1.5/3.5/3"** | `1.5/3.5/3 * 3` = **0.4286** again |
+
+So the coefficient is `1.5 / 3.5 / 3` = 0.1429 unfrozen, the frozen case is
+exactly `1.5 / 3.5`, and the figure the spell has had frozen since the owner
+first touched it never actually moved. **The divisor tracks the multiplier**, and
+"intended" in step 2 covered the PRODUCT rather than the two factors.
+
+### The implemented reading was wrong for one release, and the rule that chose it is still right
+
+Step 3 left two readings a THIRD apart. The one implemented was that the `/4` is
+a separate settled fact, on this project's own rule that **a statement of a
+VALUE does not overturn a separate ruling about which terms a multiplier
+reaches** -- which is the rule that settled these same two numbers correctly in
+step 1, and is still the right default.
+
+**IT WAS WRONG ON THIS INSTANCE AND THE LABEL IS WHAT COST ONE MESSAGE INSTEAD
+OF A RELEASE.** The reading was written down as a reading, in three places, with
+both figures and what each would cost -- and `iceLance.test.ts` pinned the
+alternative as a **negative assertion**, `not.toBeCloseTo(1.5 / 3.5)`, with a
+note saying that whoever restored the symmetry would have to change that line
+and what they should read first. The person who could settle it read the note.
+
+**SO: IMPLEMENT THE DEFAULT AND FLAG THE INSTANCE.** A good general rule having
+answered a question is not the same as the question being closed, and treating
+it that way is what would have buried this one.
+
+### What changed, and the two constants stay two
+
+`ICE_LANCE_SP_COEFFICIENT` is `1.5 / 3.5 / 3`. Six of the eight tests in
+`iceLance.test.ts` moved, including every one that measures damage that landed;
+probed by setting the divisor back to 4, which fails all six.
+
+**THE TWO THREES ARE NOT DERIVED FROM EACH OTHER**, which is worth saying while
+they agree, because the last time they diverged it was a patch doing it.
+Writing `1.5 / 3.5 / ICE_LANCE_FROZEN_MULTIPLIER` would move the coefficient on
+nobody's authority next time -- and `game/combat` cannot import `game/abilities`
+anyway. Each is asserted against its own stated value and neither against the
+other, which is `critRageMultiplierFor`'s arrangement: **pin by IDENTITY rather
+than by equality**, or the next divergence fails in the constant that did not
+move.
+
+**THE GUARD IS STILL THE END-TO-END PRODUCT.** The two wrong readings of the
+pair -- the multiplier applied twice, or folded into the divisor and not applied
+at all -- are NINE apart on a frozen cast and both produce a plausible number,
+so every assertion here measures damage and divides rather than checking a
+constant.
+
+### What it is worth, and the share figure the question row got wrong
+
+**THE FROZEN COEFFICIENT GOES 0.3214 TO 0.4286**, a third more spell power
+scaling. The flat half is untouched.
+
+**AND IT REACHES ONE PROFILE, BECAUSE ICE LANCE IS IN ONE LIST.** `USES=1
+SEEDS=3` on the three Mages:
+
+| | Ice Lance | |
+| --- | --- | --- |
+| **Frostfire** | **3.3 casts a fight, 8.6%** of its damage | the only entry in the project |
+| Arcane | not in the list | |
+| Fire | not in the list | |
+
+**THE QUESTION ROW SAID "35.7% of Frostfire" AND THAT FIGURE WAS THREE CHANGES
+STALE.** 35.7% is what Ice Lance was worth BEFORE the owner quartered its
+coefficient -- the share that made the spell worth looking at in the first
+place. It fell to 20.6% on that change and is 8.6% now, after the Heating Up
+ruling and two rounds of list work moved everything around it. **A share quoted
+to justify asking a question is a dated claim like any other**, and it was
+carried forward through two rewrites of that row without being re-read.
+
+**EVERY CAST IS A FROZEN ONE**, which is the sharpest consequence and is a fact
+about the LIST rather than the spell: the entry is gated on
+`selfHasStack('fingers_of_frost')`, so the unfrozen coefficient is worth
+literally nothing to any profile and the frozen product is the whole of it.
+
+**SO WHAT THIS RULING ACTUALLY DOES IS SPLIT THE FROZEN NERF IN HALF.** Before
+the frozen patch, a frozen Ice Lance was `0.4286` of spell power and `145 x 4`
+of base. The patch took the multiplier to 3, which cut BOTH -- and the owner's
+answer puts the coefficient back where it was while leaving the base at `145 x
+3`. **The frozen bonus fell for the flat damage and not for the scaling**,
+which is what "the divisor tracks the multiplier" means in damage terms and is
+not something either reading of the note said out loud.
+
+**NOT RE-BASELINED**, on the owner's standing instruction. The DPS is yours:
+Frostfire read 906.6 +/- 61.9 over 30 fights after the change, which is a
+diagnostic and not a baseline -- the published table is 300 fights a profile and
+three rounds behind.
 
 ## Round NINETEEN is scoped and not started: the client caught up
 

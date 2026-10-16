@@ -354,49 +354,61 @@ export const ICE_LANCE_COEFFICIENT = ICE_LANCE_SP_COEFFICIENT;
 
 /*
  * ============================================================================
- * A THREE AND A FOUR SIT NEXT TO EACH OTHER HERE AND THEY ARE SEPARATE
- * NUMBERS. THEY USED TO BE TWO FOURS, AND THE PATCH MOVED ONLY ONE OF THEM.
+ * TWO THREES SIT NEXT TO EACH OTHER HERE AND THEY ARE STILL SEPARATE NUMBERS.
+ * THEY HAVE NOW MATCHED, DIVERGED, AND MATCHED AGAIN.
  *
  * `ICE_LANCE_FROZEN_MULTIPLIER` is the ruleset's frozen bonus -- "a 200%
- * increase", so times three. The four INSIDE `ICE_LANCE_SP_COEFFICIENT` is
- * part of the owner's own expression for the coefficient, `1.5 / 3.5 / 4`, and
- * is NOT that multiplier. The patch note changes the frozen bonus and says
- * nothing whatever about the coefficient.
+ * increase", so times three. The three INSIDE `ICE_LANCE_SP_COEFFICIENT` is
+ * part of the owner's own expression for the coefficient, `1.5 / 3.5 / 3`, and
+ * is a DIFFERENT THREE: it is applied once, when the damage is scaled, and the
+ * multiplier is applied separately to the base damage and the coefficient
+ * alike.
  *
  * ----------------------------------------------------------------------------
- * AND THAT BREAKS A COINCIDENCE THE OWNER CALLED "THE RULESET", WHICH IS A
- * QUESTION FOR THEM RATHER THAN SOMETHING TO FIX HERE.
+ * THE HISTORY IS THE WHOLE REASON THIS COMMENT IS LONG, AND IT ENDS WITH THE
+ * COINCIDENCE BEING THE RULESET.
  *
- * While both numbers were four they multiplied out to a familiar figure: a
- * frozen Ice Lance carried `1.5 / 3.5 / 4 * 4` = `1.5 / 3.5` = 0.4286, exactly
- * the coefficient the spell had UNFROZEN before the owner's change. This
- * comment used to warn a reader not to mistake that for a four cancelled by
- * accident, and the owner settled it directly -- asked whether their `/4` had
- * already done the frozen division, they said "This is intended stop asking."
+ * 1. Both numbers were FOUR, and a frozen Ice Lance carried
+ *    `1.5 / 3.5 / 4 * 4` = `1.5 / 3.5` = 0.4286 -- exactly the coefficient the
+ *    spell had UNFROZEN before any of this. Asked whether their `/4` had
+ *    already done the frozen division, the owner said "This is intended stop
+ *    asking." So the comment here warned a reader not to read it as a four
+ *    cancelled by accident.
  *
- * At a frozen multiplier of three the product is `1.5 / 3.5 / 4 * 3` = 0.3214
- * and the coincidence is gone. TWO READINGS ARE NOW AVAILABLE AND THEY DIFFER
- * BY A THIRD:
+ * 2. A patch took the frozen bonus to three and said NOTHING about the
+ *    coefficient. That left two readings a third apart -- the divisor is a
+ *    separate settled fact (frozen 0.3214), or "intended" meant the PRODUCT and
+ *    the divisor follows (0.4286). The first was implemented, on this project's
+ *    rule that a statement of a VALUE does not overturn a separate ruling about
+ *    which terms a multiplier reaches, and FLAGGED as a reading.
  *
- *   the note moves the BONUS only          frozen coefficient 0.3214
- *   the /4 tracked the frozen multiplier   divisor becomes 3, frozen 0.4286
+ * 3. "Ice Lance was changed to use 1.5/3.5/3." **The owner meant the product.**
  *
- * THE FIRST IS IMPLEMENTED, because a statement of a VALUE does not overturn a
- * separate ruling about which terms a multiplier reaches -- this project's own
- * rule, and it is the rule that settled these two numbers the first time. The
- * note is about the frozen bonus and the `/4` is a settled, separate fact.
- *
- * It is flagged rather than quietly chosen because the 0.4286 was explicitly
- * ratified as intended, and "intended" may have meant the PRODUCT rather than
- * the two factors. An interpretation labelled as one is what gets ruled on.
+ * SO THE CHOSEN READING WAS WRONG AND THE LABEL IS WHAT FIXED IT. The argument
+ * for it was sound and is still the right default -- it is the rule that
+ * settled these two numbers the first time -- and what made this recoverable in
+ * one message was writing it down AS a reading rather than as a fact. Third
+ * time on this one constant.
  * ----------------------------------------------------------------------------
  *
- * WHAT WOULD GO WRONG IF THE TWO WERE CONFLATED is worth stating because it is
- * still large in both directions. Dropping the frozen multiplier from the
- * coefficient -- reading the owner's `/4` as having already done it -- makes a
- * frozen Ice Lance a quarter of its intended coefficient. Applying the
- * multiplier twice makes it three times. Twelve between the two readings, on a
- * spell that was 35.7% of the Frostfire profile.
+ * AND THEY ARE NOT DERIVED FROM EACH OTHER, WHICH IS THE POINT OF SAYING THEY
+ * ARE SEPARATE WHILE THEY AGREE. Writing the coefficient as
+ * `1.5 / 3.5 / ICE_LANCE_FROZEN_MULTIPLIER` would move it on nobody's authority
+ * the next time the frozen bonus changes -- and step 2 above is exactly that
+ * patch happening. Two owner statements that happen to agree, pinned by
+ * IDENTITY rather than by equality, which is `critRageMultiplierFor`'s
+ * arrangement for the same reason.
+ *
+ * WHAT WOULD GO WRONG IF THEY WERE CONFLATED is still large in both directions.
+ * Dropping the frozen multiplier from the coefficient -- reading the owner's
+ * `/3` as having already done it -- makes a frozen Ice Lance a third of its
+ * intended coefficient. Applying the multiplier twice makes it three times.
+ * NINE between the two, on a spell that is **8.6% of the Frostfire profile and
+ * is in no other list** -- it was 35.7% before the owner quartered the
+ * coefficient, which is the figure three comments and a HANDOVER row carried
+ * forward long after it stopped being true. **Every cast is a FROZEN one**: the
+ * entry is gated on Fingers of Frost, so the unfrozen coefficient is worth
+ * nothing to any profile and the product above is the whole of it.
  *
  * THE GUARD IS A TEST THAT MULTIPLIES THEM OUT END TO END rather than a check
  * on either constant, which is the argument the pet's 1.375 damage multiplier

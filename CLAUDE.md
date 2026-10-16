@@ -1007,20 +1007,38 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   measurement** -- so divide the school multiplier back out and NAME it rather
   than widening a tolerance until it passes, which hides the one term in the way.
   **A RATIO NEEDS NONE OF THAT**, because every such term appears on both sides
-  and cancels: Ice Lance's frozen-to-unfrozen ratio is exactly 4 whatever else
-  is applied, which makes it the assertion to trust most.
-- **A COEFFICIENT STATED AS AN EXPRESSION IS KEPT AS ONE, AND THE OWNER'S `/4`
-  IS NOT ALWAYS THE MULTIPLIER NEXT DOOR.** Ice Lance's is `1.5 / 3.5 / 4` in the
-  owner's own words, written out rather than rounded because `1.5 / 3.5` does not
-  terminate and the old 0.43 was already a rounding. **It sits beside
-  `ICE_LANCE_FROZEN_MULTIPLIER`, which is ALSO 4 and is a different four** -- so a
-  frozen cast carries `1.5 / 3.5 / 4 * 4`, exactly the figure the spell had
-  unfrozen before the change. Reading the owner's divisor as having already done
-  the frozen division, or applying the multiplier twice, are SIXTEEN apart and
-  both plausible. **A statement of a VALUE does not overturn a separate ruling
-  about which terms a multiplier reaches**, and the guard is a test that
-  multiplies them out end to end -- the same argument the pet's 1.375 makes,
-  because a constant check cannot see a double application.
+  and cancels: Ice Lance's frozen-to-unfrozen ratio is exactly its frozen
+  multiplier whatever else is applied, which makes it the assertion to trust
+  most. (It was 4 when this was written and is 3 now -- **the ratio is the
+  assertion to trust and the FIGURE in it is still a dated claim**, which is
+  this file's own rule about a derived number pointed at its own example.)
+- **A COEFFICIENT STATED AS AN EXPRESSION IS KEPT AS ONE, AND THE OWNER'S
+  DIVISOR IS A DIFFERENT NUMBER FROM THE MULTIPLIER NEXT DOOR EVEN WHEN THEY
+  MATCH.** Ice Lance's is `1.5 / 3.5 / 3` in the owner's own words, written out
+  rather than rounded because `1.5 / 3.5` does not terminate and the old 0.43
+  was already a rounding. **It sits beside `ICE_LANCE_FROZEN_MULTIPLIER`, which
+  is ALSO 3** -- so a frozen cast carries `1.5 / 3.5 / 3 * 3`, exactly the
+  figure the spell had unfrozen before any of it. Reading the owner's divisor as
+  having already done the frozen division, or applying the multiplier twice, are
+  NINE apart and both plausible, so the guard is a test that multiplies them out
+  end to end -- the same argument the pet's 1.375 makes, because a constant
+  check cannot see a double application.
+  **THEY HAVE NOW MATCHED, DIVERGED AND MATCHED AGAIN, AND THAT IS THE WHOLE
+  LESSON.** Both were 4; a patch moved the frozen bonus to 3 and said nothing
+  about the coefficient, which left the divisor at 4 on this file's rule that
+  **a statement of a VALUE does not overturn a separate ruling about which terms
+  a multiplier reaches**; the owner then said "Ice Lance was changed to use
+  1.5/3.5/3". **The rule is still the right default and it was the wrong
+  answer**, and what made that recoverable in one message was the reading being
+  LABELLED as a reading, with both figures and a negative assertion pinning the
+  alternative. See below.
+  **AND THEY STAY TWO CONSTANTS RATHER THAN ONE DERIVED FROM THE OTHER.**
+  Writing `1.5 / 3.5 / ICE_LANCE_FROZEN_MULTIPLIER` would have moved the
+  coefficient on nobody's authority at the patch that separated them -- and
+  `game/combat` cannot import `game/abilities` in any case. **Pin each by
+  IDENTITY rather than asserting they are equal**, which is
+  `critRageMultiplierFor`'s arrangement and is what stopped the last divergence
+  failing in the constant that did not move.
 - **A COEFFICIENT PICKS ITS POOL BY SCHOOL, AND THAT IS RIGHT EXCEPT ONCE.**
   `scaleByPower` reads attack power when `isPhysical(school)` and spell power
   otherwise, which is what lets one field serve every ability here. A FIRE
@@ -3829,16 +3847,31 @@ Plus the permanent rulings under **Scope**.
   instead, and `arcaneBlastSpender` is deleted. **The question was answered by
   being removed.** The flag is still what made it findable.
 - **AND ONE WENT THE OTHER WAY IN THE SAME PATCH: A SETTLED FACT BECAME A
-  QUESTION AGAIN.** While Ice Lance's frozen multiplier and the divisor in the
-  owner's `1.5 / 3.5 / 4` were both four they multiplied out to exactly
-  `1.5 / 3.5`, and asked whether the `/4` had already done the frozen division
-  the owner said **"This is intended stop asking."** A note took the multiplier
-  to three, the product is 0.3214, and the symmetry is gone -- so either the
-  divisor is a separate settled fact (implemented) or "intended" meant the
-  PRODUCT and it should follow. **A RULING IS ABOUT THE STATE IT WAS GIVEN IN**,
-  and a patch can move the thing it was about. The alternative is pinned as a
-  NEGATIVE assertion, so restoring the symmetry means arguing with a line rather
-  than with a coincidence.
+  QUESTION AGAIN, AND THE ANSWER WAS THAT THE RULING HAD COVERED THE PRODUCT.**
+  While Ice Lance's frozen multiplier and the divisor in the owner's
+  `1.5 / 3.5 / 4` were both four they multiplied out to exactly `1.5 / 3.5`, and
+  asked whether the `/4` had already done the frozen division the owner said
+  **"This is intended stop asking."** A note then took the multiplier to three
+  and said nothing about the coefficient -- so either the divisor was a separate
+  settled fact (0.3214, implemented) or "intended" meant the PRODUCT and the
+  divisor should follow (0.4286). **A RULING IS ABOUT THE STATE IT WAS GIVEN
+  IN**, and a patch can move the thing it was about.
+  **THE OWNER'S ANSWER: "Ice Lance was changed to use 1.5/3.5/3."** So the
+  ratification was of the product, the divisor tracks the multiplier, and the
+  implemented reading was wrong for one release.
+  **WHAT RECOVERED IT IN ONE MESSAGE WAS THE NEGATIVE ASSERTION.** The
+  alternative was pinned as `not.toBeCloseTo(1.5 / 3.5)` with both figures and
+  their cost beside it, so restoring the symmetry meant arguing with a line
+  rather than with a coincidence -- and the person who could settle it read the
+  line. **A flagged reading is cheap and a wrong unflagged one is not**: this is
+  the third ruling on that one constant, and the second where the label is what
+  produced the answer.
+  **AND THE DEFAULT THAT CHOSE WRONGLY IS STILL THE RIGHT DEFAULT.** "A
+  statement of a VALUE does not overturn a separate ruling about which terms a
+  multiplier reaches" settled these same two numbers correctly the first time.
+  A rule that is right in general can be wrong on an instance, so **implement
+  the default AND flag the instance** rather than treating a good rule as having
+  removed the question.
 - **AN INTERPRETATION THAT IS RIGHT IS STILL AN INTERPRETATION, AND LABELLING IT
   ONE IS WHAT GETS IT RULED ON.** Ice Lance's `1.5/3.5/4` left a real ambiguity:
   a frozen cast multiplies the four back out and lands on exactly the old
@@ -3851,6 +3884,13 @@ Plus the permanent rulings under **Scope**.
   doubt it describes -- three sites were carrying this as a chosen reading, and a
   reader who finds one of them next year cannot tell a live question from a
   settled one.
+  **IT THEN WENT BACK ON AND CAME OFF AGAIN**, because the next patch moved the
+  frozen multiplier and reopened exactly this ambiguity -- see the entry above.
+  The answer both times was the same one stated two ways: `1.5 / 3.5` on a
+  frozen cast is the ruleset, and **what "intended" covered was the PRODUCT**.
+  So the thing to carry forward is not the figure but the shape: a caveat on
+  this constant has been written, removed, rewritten and removed again, and
+  every cycle was cheap because it named both readings and what each would cost.
 - **TWO CORRECT HALVES WITH NOTHING JOINING THEM IS A SHAPE NO HALF'S TEST CAN
   CATCH.** `armorPenetration` shipped declared, granted by three talents,
   counted as fully modelled and READ BY NOTHING -- `resolveDamage` took the

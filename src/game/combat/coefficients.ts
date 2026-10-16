@@ -367,44 +367,54 @@ export const ARCANE_BLAST_SP_COEFFICIENT = 1.5 / 3.5;
 export const FIRE_BLAST_SP_COEFFICIENT = 0.429;
 export const SCORCH_SP_COEFFICIENT = 0.429;
 /**
- * Ice Lance: `1.5 / 3.5 / 4`, which is 0.107.
+ * Ice Lance: `1.5 / 3.5 / 3`, which is 0.143.
  *
  * ----------------------------------------------------------------------------
- * THE RULESET OWNER'S OWN EXPRESSION, GIVEN IN THAT FORM: "Ice lance now has a
- * 1.5/3.5/4 spell power coefficient instead of 1.5/3.5." It was 0.43 here, which
- * is `1.5 / 3.5` rounded -- so this is a QUARTER of what shipped.
+ * THE RULESET OWNER'S OWN EXPRESSION, GIVEN IN THAT FORM TWICE. It was
+ * "1.5/3.5/4 spell power coefficient instead of 1.5/3.5", and the owner has
+ * since restated it: **"Ice Lance was changed to use 1.5/3.5/3."**
  *
  * WRITTEN AS THE EXPRESSION RATHER THAN AS A DECIMAL, which is the one place in
  * this file that does so, for two reasons. The owner stated it that way, and
- * `1.5 / 3.5` does not terminate: 0.43 was already a rounding, and rounding a
- * second division would compound it. `0.107` is 0.11% low against 0.1071428...
+ * `1.5 / 3.5` does not terminate: the old 0.43 was already a rounding, and
+ * rounding a second division would compound it. `0.143` is 0.1% low against
+ * 0.1428571...
  *
- * AND THE FOUR IN IT IS NOT THE FROZEN MULTIPLIER, however much it looks like
- * one. `ICE_LANCE_FROZEN_MULTIPLIER` is also 4 and is applied SEPARATELY, in the
- * ability, to the base damage and this coefficient alike -- so a frozen Ice
- * Lance now carries `1.5 / 3.5 / 4 * 4`, which is exactly `1.5 / 3.5`, the
- * figure the spell used to have UNFROZEN.
+ * AND THE THREE IN IT IS NOT THE FROZEN MULTIPLIER, however much it looks like
+ * one -- WHICH IS WORTH SAYING FOR THE SECOND TIME, BECAUSE THE TWO HAVE NOW
+ * MATCHED, DIVERGED AND MATCHED AGAIN. `ICE_LANCE_FROZEN_MULTIPLIER` is also 3
+ * and is applied SEPARATELY, in the ability, to the base damage and this
+ * coefficient alike -- so a frozen Ice Lance carries `1.5 / 3.5 / 3 * 3`, which
+ * is exactly `1.5 / 3.5`, the figure the spell had UNFROZEN before any of this.
  *
- * THAT COINCIDENCE IS THE TRAP THIS NOTE EXISTS FOR. The two readings -- "the
- * owner divided by the frozen multiplier, so the ability should stop applying
- * it" and "the owner gave a base coefficient and the multiplier still applies"
- * -- differ by a factor of SIXTEEN on a frozen cast, and the second is the right
- * one: the owner has already ruled separately that the multiplier reaches the
- * coefficient as well as the base ("deals 300% increased damage" is all of the
- * damage), and a new statement of a VALUE does not overturn a ruling about which
- * terms a multiplier reaches. See `ICE_LANCE` for that ruling.
+ * THE COINCIDENCE IS THE RULESET, AND IT TOOK A DIVERGENCE TO PROVE IT. The
+ * first time both numbers were 4 and the product was `1.5 / 3.5`, asked whether
+ * the divisor was meant to have already done the frozen division the owner said
+ * **"This is intended stop asking."** A patch then moved the frozen bonus to
+ * "a 200% increase" and said nothing about the coefficient, which left two
+ * readings a THIRD apart -- the divisor is a separate settled fact (frozen
+ * 0.3214) or "intended" meant the PRODUCT and the divisor follows (0.4286).
+ * The first was implemented, on this project's rule that a statement of a VALUE
+ * does not overturn a separate ruling about which terms a multiplier reaches,
+ * and it was FLAGGED as a reading rather than taken as settled. **The owner's
+ * answer is the second reading: "intended" meant the product.**
  *
- * AND THE OWNER HAS NOW CONFIRMED IT DIRECTLY AND CLOSED THE QUESTION, 2026-10-08:
- * asked whether the `/4` was meant to have already done the frozen division, they
- * answered **"This is intended stop asking."** So `1.5 / 3.5 / 4 * 4` on a frozen
- * cast is the ruleset rather than an inference this project is carrying, and it is
- * **NOT TO BE RE-RAISED.** The reasoning above is kept because it is what stops a
- * reader re-deriving the other reading; what it is no longer is the AUTHORITY --
- * an interpretation flagged as an interpretation stays one however long it sits
- * there, and this is the second question on this constant the owner has settled.
+ * SO THE TWO NUMBERS STAY SEPARATE CONSTANTS AND ARE NOT DERIVED FROM EACH
+ * OTHER. Writing this as `1.5 / 3.5 / ICE_LANCE_FROZEN_MULTIPLIER` would make
+ * the next patch to the frozen bonus move the coefficient on nobody's
+ * authority -- and `game/combat` cannot import from `game/abilities` anyway.
+ * They are two owner statements that happen to agree, which is
+ * `critRageMultiplierFor`'s arrangement exactly: **pin each by IDENTITY rather
+ * than asserting they are equal**, or the next divergence fails in the constant
+ * that did not move.
+ *
+ * AND THE GUARD IS STILL THE END-TO-END PRODUCT rather than either constant.
+ * The two wrong readings of the pair -- the multiplier applied twice, or not at
+ * all -- are NINE apart on a frozen cast and both produce a plausible number.
+ * `iceLance.test.ts` measures damage that landed and divides.
  * ----------------------------------------------------------------------------
  */
-export const ICE_LANCE_SP_COEFFICIENT = 1.5 / 3.5 / 4;
+export const ICE_LANCE_SP_COEFFICIENT = 1.5 / 3.5 / 3;
 export const BLAST_WAVE_SP_COEFFICIENT = 0.129;
 export const FROSTBOLT_SP_COEFFICIENT = 0.814;
 
