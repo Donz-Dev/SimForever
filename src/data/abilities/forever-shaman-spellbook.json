@@ -1,7 +1,7 @@
 {
  "class": "shaman",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70170",
+ "build": "1.60.1.70291",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -713,7 +713,6 @@
    "level": "Learned at level 20",
    "school": "Nature",
    "cast": "Instant",
-   "cooldown": "15 sec cooldown",
    "description": "The caster is surrounded by 3 globes of water. When a spell, melee, or ranged attack hits the caster or when one of the caster's healing spells gets a critical result, 2% of maximum mana is restored to the caster, expending one water globe. Only one globe will activate every few seconds. Lasts 10 min.\n\nOnly one Elemental Shield can be active on the Shaman at any one time.",
    "versusClassic": "new"
   },

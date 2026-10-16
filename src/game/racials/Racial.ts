@@ -1,4 +1,5 @@
 import type {
+  AttackTableModifiers,
   AuraDefinition,
   CastReaction,
   PartialStats,
@@ -95,6 +96,37 @@ export type RacialEffect =
       readonly resources: readonly ResourceType[];
       readonly percent: number;
     }
+
+  /**
+   * CRITICAL STRIKE DAMAGE, whole-character, in percentage points.
+   *
+   * --------------------------------------------------------------------------
+   * "2% increased critical damage", which Tauren Endurance and Dwarf Earth
+   * Fury both gained in the racial patch. It raises the BONUS HALF of the
+   * multiplier, never the whole thing: a melee crit multiplies by 2, so the
+   * bonus is 1.0 and 2% of it gives x2.02 -- not x2.04.
+   *
+   * IT IS APPLIED PER ATTACK TABLE AND THAT IS THE WHOLE POINT, because the
+   * bonus half is a different number on each. A spell crit multiplies by 1.5,
+   * so the same 2% is worth 0.01 there against 0.02 on a melee crit. The
+   * talent-side `critDamageBonus` reads the MELEE figure for everything and
+   * its own comment flags that as a known simplification -- "a class with
+   * spell crits would need this per school" -- and these two racials are
+   * exactly that class: a DWARF can be a Priest and a TAUREN can be a Moonkin
+   * Druid, so the melee reading would have overpaid every spell these races
+   * cast by a factor of two while reading as an ordinary small number.
+   *
+   * AND IT DOES NOT REACH THE PET, which follows from the mechanism rather
+   * than from a ruling. A weapon specialization's crit was a STAT and the
+   * owner said outright that it reaches the pet; `createPet` inherits the
+   * owner's crit stat and knows nothing about attack table modifiers, which is
+   * also why the bow enchant's "+2% Crit Chance" had to be expressed this way.
+   * The patch note says nothing either way, so the honest position is that
+   * this is what the correctly-scoped mechanism gives -- RECORDED AS A
+   * QUESTION rather than presented as a decision.
+   * --------------------------------------------------------------------------
+   */
+  | { readonly kind: 'critDamageBonus'; readonly percent: number }
 
   /** An active ability the race grants. Its id must be in `RACIAL_ABILITIES`. */
   | { readonly kind: 'grantAbility'; readonly abilityId: string }
@@ -195,6 +227,15 @@ export function isRuledOut(trait: RacialTrait): boolean {
 export interface RacialBuild {
   readonly stats: PartialStats;
   readonly statModifiers: readonly StatModifierSpec[];
+  /**
+   * Per attack table, for a crit damage racial. Empty when nothing granted one.
+   *
+   * A VALUE LIKE EVERY OTHER FIELD HERE, and `createPlayer` merges it into a
+   * fresh set rather than mutating it, for the reason the talent build's own
+   * copy already states: a batch that reused one would hand the second
+   * character the first one's modifiers on top of its own.
+   */
+  readonly attackTableModifiers: AttackTableModifiers;
   /** 1 when nothing raises it. */
   readonly healthMultiplier: number;
   /** Per resource, 1 when nothing raises it. */

@@ -103,7 +103,7 @@
      "tier": 15,
      "requires": null,
      "requiresRanks": null,
-     "description": "A brutal attack that deals 40% weapon damage, plus an additional 80% weapon damage against Giants, Dragonkin, and mounted targets."
+     "description": "A brutal attack that deals 40% weapon damage. Deals an additional 80% weapon damage against Giants, Dragonkin, and mounted targets. Mounted targets are dismounted."
     },
     {
      "row": 3,
@@ -123,8 +123,8 @@
      "name": "Impale",
      "icon": "ability_searingarrow",
      "tier": 15,
-     "requires": null,
-     "requiresRanks": null,
+     "requires": "Deep Wounds",
+     "requiresRanks": 3,
      "description": "Increases the critical strike damage bonus of your abilities by 20%."
     },
     {
@@ -373,7 +373,7 @@
      "tier": 25,
      "requires": "Enrage",
      "requiresRanks": 5,
-     "description": "Your Enrage, Berserker Rage, Bloodrage, Death Wish, and Bloodthirst abilities cause your next 3 melee attacks to restore 1% of your maximum Health."
+     "description": "Your Enrage, Berserker Rage, Bloodrage, Death Wish, and Bloodthirst abilities cause your next 3 melee attacks to restore 1.0% of your maximum Health."
     },
     {
      "row": 6,

@@ -76,7 +76,7 @@ const CAT_FERAL_CORE = {
   blood_frenzy: 2,
   improved_shifting_power: 2,
   leader_of_the_pack: 1,
-  predatory_instincts: 2,
+  natural_instinct: 2,
   rend_and_tear: 5,
   berserk: 1,
 };

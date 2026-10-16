@@ -103,7 +103,7 @@
    "name": "Spearing Strike",
    "tree": "arms",
    "ranks": 1,
-   "text": "A brutal attack that deals 40% weapon damage, plus an additional 80% weapon damage against Giants, Dragonkin, and mounted targets.",
+   "text": "A brutal attack that deals 40% weapon damage. Deals an additional 80% weapon damage against Giants, Dragonkin, and mounted targets. Mounted targets are dismounted.",
    "values": null,
    "note": "single rank"
   },

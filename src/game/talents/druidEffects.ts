@@ -519,7 +519,41 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  predatory_instincts: [{ kind: 'critDamageBonus' }],
+  /*
+   * "Increases the critical strike damage bonus of your melee abilities by
+   * {0}% and increases your spell healing by {1}% of your Intellect."
+   *
+   * ------------------------------------------------------------------------
+   * IT WAS PREDATORY INSTINCTS UNTIL CLIENT BUILD 1.60.1.70291, AND THE
+   * RENAME CAME WITH A SECOND CLAUSE AND A SECOND NUMBER. The id is slugified
+   * from the client's name, so a renamed talent IS a new key -- there is no
+   * choice about that, and `predatory_instincts` is simply gone.
+   *
+   * THE ROW WENT FROM ONE NUMBER TO TWO, which is the thing to notice rather
+   * than the name. It was `[10, 20]` -- a flat value per rank -- and is now
+   * `[[10, 12], [20, 25]]`. `critDamageBonus` takes no `valueIndex` and
+   * `talentNumber` defaults to index 0, so the crit damage figure is still
+   * what it reads; that is correct BY LUCK of the client having put the
+   * surviving clause first, exactly the way Aftermath was correct by luck
+   * while its two numbers coincided. Said here because the next clause order
+   * change is what makes it wrong.
+   *
+   * The healing half is ruled out: healing THROUGHPUT is out of scope, and
+   * declaring it is what keeps the talent out of the `Fully` column -- a
+   * talent with one clause modelled and one clause silently absent reads as
+   * finished, which is the one column nothing re-reads.
+   * ------------------------------------------------------------------------
+   */
+  natural_instinct: [
+    { kind: 'critDamageBonus' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'Its second clause, "increases your spell healing by 25% of your ' +
+        'Intellect", is healing throughput.',
+      scope: 'healing',
+    },
+  ],
 
   /*
    * "While in Cat Form, Bear Form, or Dire Bear Form, the Leader of the Pack

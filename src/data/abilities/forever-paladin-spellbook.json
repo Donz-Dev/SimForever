@@ -1,7 +1,7 @@
 {
  "class": "paladin",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70170",
+ "build": "1.60.1.70291",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -525,8 +525,8 @@
    "level": "Learned at level 56",
    "school": "Holy",
    "cast": "Instant",
-   "description": "Causes 30 Holy damage to any creature that strikes a party member within 30 yards. Players may only have one Aura on them per Paladin at any one time.",
-   "versusClassic": "changed"
+   "description": "Causes 20 Holy damage to any creature that strikes a party member within 30 yards. Players may only have one Aura on them per Paladin at any one time.",
+   "versusClassic": "same"
   },
   {
    "id": 25780,

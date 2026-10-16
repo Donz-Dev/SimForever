@@ -423,27 +423,32 @@
    "name": "Reckoning",
    "tree": "protection",
    "ranks": 5,
-   "text": "Gives you a {0}% chance to gain an extra attack after Blocking a melee attack and a {1}% chance to gain an extra attack after being the victim of a non-periodic critical strike.",
+   "text": "Gives you a {0}% chance to gain an extra attack after Blocking a melee attack and a {1}% chance to gain an extra attack after being the victim of a non-periodic critical strike. Cannot occur more often than once every {2} sec.",
    "values": [
     [
      8,
-     20
+     20,
+     1.5
     ],
     [
      16,
-     40
+     40,
+     1.5
     ],
     [
      24,
-     60
+     60,
+     1.5
     ],
     [
      32,
-     80
+     80,
+     1.5
     ],
     [
      40,
-     100
+     100,
+     1.5
     ]
    ]
   },

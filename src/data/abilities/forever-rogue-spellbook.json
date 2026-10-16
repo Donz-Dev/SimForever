@@ -1,7 +1,7 @@
 {
  "class": "rogue",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70170",
+ "build": "1.60.1.70291",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -234,7 +234,7 @@
    "cast": "Instant",
    "cooldown": "10 sec cooldown",
    "description": "Performs a feint, causing no damage but lowering your threat by a large amount, making the enemy less likely to attack you.",
-   "versusClassic": "same"
+   "versusClassic": "changed"
   },
   {
    "id": 11290,

@@ -738,6 +738,17 @@ export function createPlayer(options: PlayerOptions): Combatant {
    * reaching the other's.
    */
   attackTableModifiers.merge(consumables.attackTableModifiers);
+  /*
+   * AND A FOURTH: a crit DAMAGE racial -- Tauren Endurance and Dwarf Earth
+   * Fury, both "2% increased critical damage".
+   *
+   * PER TABLE RATHER THAN AS A STAT, because the bonus half of a crit
+   * multiplier is 1.0 on the physical tables and 0.5 on the spell one, and
+   * both of these races can be casters. See `RacialEffect`'s own note: this
+   * is also what keeps it off the pet, which the mechanism decides rather
+   * than a ruling.
+   */
+  attackTableModifiers.merge(racials.attackTableModifiers);
 
   /*
    * THE ABILITY BOOK, PLUS WHATEVER THE RACE GRANTS.
@@ -906,8 +917,8 @@ export function createPlayer(options: PlayerOptions): Combatant {
      */
     castReactions: [
       ...build.castReactions,
-      // Eureka!'s charge spender, which has to run AFTER `onCast` has dealt the
-      // damage its charge paid for. See `eurekaReactions`.
+      // Touch of the Grave's cast half, which catches a pure damage-over-time
+      // cast that emitted no damage event for the damage half to read.
       ...racials.castReactions,
       /*
        * AND THE EQUIPMENT'S, WHICH IS NEW AND IS THE OTHER HALF OF A PROC.

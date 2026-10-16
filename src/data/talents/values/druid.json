@@ -481,14 +481,20 @@
    "values": null,
    "note": "single rank"
   },
-  "predatory_instincts": {
-   "name": "Predatory Instincts",
+  "natural_instinct": {
+   "name": "Natural Instinct",
    "tree": "feral_combat",
    "ranks": 2,
-   "text": "Increases the critical strike damage bonus of your melee abilities by {0}%.",
+   "text": "Increases the critical strike damage bonus of your melee abilities by {0}% and increases your spell healing by {1}% of your Intellect.",
    "values": [
-    10,
-    20
+    [
+     10,
+     12
+    ],
+    [
+     20,
+     25
+    ]
    ]
   },
   "natural_reaction": {
@@ -562,7 +568,7 @@
    "name": "Furor",
    "tree": "restoration",
    "ranks": 5,
-   "text": "Gives you a {0}% chance to gain {1} Rage when you shapeshift into Bear Form or Dire Bear Form. When you shift into Cat Form, you will regain {2}% of the Energy you had when you were last in Cat Form, plus {3} Energy for each second you spent not in Bear Form, Cat Form, or Dire Bear Form, up to a maximum of {4} Energy.",
+   "text": "Gives you a {0}% chance to gain {1} Rage when shapeshifting into Bear Form or Dire Bear Form. Shapeshifting into Cat Form restores {2}% of the Energy you had when last in Cat Form, plus {3} Energy per sec spent outside Cat Form, up to {4} Energy.\n\nBear Form and Dire Bear Form forfeit this Energy and halt its restoration while active.",
    "values": [
     [
      20,

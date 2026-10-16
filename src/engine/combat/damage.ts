@@ -175,6 +175,33 @@ export interface DamageRequest {
    * ----------------------------------------------------------------------------
    */
   readonly ignoresAttackerDamageScaling?: boolean;
+
+  /**
+   * And the same on the TARGET'S side, for its per-SCHOOL scaling only.
+   *
+   * ----------------------------------------------------------------------------
+   * THE MIRROR OF THE FLAG ABOVE, AND IT ARRIVED BY A PATCH NOTE RETIRING THAT
+   * FLAG'S OWN EXCEPTION. `ignoresAttackerDamageScaling` was written with the
+   * owner's ruling that Touch of the Grave "only scales off your Hit Points BUT
+   * it does scale if the target is vulnerable" -- so the target's side was
+   * deliberately left alone, and the comment above still records why. The
+   * racial patch removed the BUT: "no longer scales with Shadow increases on
+   * the target or the caster."
+   *
+   * PER SCHOOL ONLY, WHICH IS NARROWER THAN ITS TWIN AND DELIBERATELY SO. The
+   * attacker flag bypasses the blanket `damageDoneMultiplier` as well, because
+   * its ruling is about the whole of the attacker's contribution. This one is
+   * scoped to what the note actually names: a "Shadow increase on the target"
+   * is `damageTakenBySchool`, and there are two real ones -- the Warlock's own
+   * Improved Shadow Bolt and the raid's Curse of the Elements. A blanket
+   * damage-taken multiplier on the target is not a Shadow increase, and nor is
+   * a per-ability debuff, so both still apply.
+   *
+   * WIDENING IT TO THE BLANKET MULTIPLIER WOULD BE THE GENEROUS MISTAKE -- a
+   * smaller number on a drain that is already small, with nothing to flag it.
+   * ----------------------------------------------------------------------------
+   */
+  readonly ignoresTargetSchoolScaling?: boolean;
   /**
    * This attack CANNOT critically strike, whatever table resolves it.
    *
@@ -1164,10 +1191,16 @@ export function resolveDamage(
    * school vulnerability apply to TICKS only; dropping it would silently widen
    * every such debuff to direct damage as well.
    */
-  const afterTarget =
-    afterAttacker *
-    targetAbilityMultiplier *
-    target.damageTakenMultiplierFor(request.school, request.periodic === true);
+  /*
+   * AND ONE DAMAGE SOURCE OPTS OUT OF THE PER-SCHOOL HALF OF THIS LINE.
+   * Touch of the Grave "no longer scales with Shadow increases on the target",
+   * so it keeps the blanket multiplier and skips the school. See
+   * `ignoresTargetSchoolScaling`.
+   */
+  const targetSchoolMultiplier = request.ignoresTargetSchoolScaling
+    ? target.damageTakenMultiplier
+    : target.damageTakenMultiplierFor(request.school, request.periodic === true);
+  const afterTarget = afterAttacker * targetAbilityMultiplier * targetSchoolMultiplier;
 
   /*
    * ARMOR PENETRATION SHRINKS THE ARMOR, NOT THE REDUCTION, and the two differ

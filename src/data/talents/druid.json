@@ -368,12 +368,12 @@
      "row": 4,
      "col": 3,
      "ranks": 2,
-     "name": "Predatory Instincts",
+     "name": "Natural Instinct",
      "icon": "ability_druid_predatoryinstincts",
      "tier": 20,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases the critical strike damage bonus of your melee abilities by 20%."
+     "description": "Increases the critical strike damage bonus of your melee abilities by 20% and increases your spell healing by 25% of your Intellect."
     },
     {
      "row": 5,
@@ -434,7 +434,7 @@
      "tier": 0,
      "requires": null,
      "requiresRanks": null,
-     "description": "Gives you a 100% chance to gain 10 Rage when you shapeshift into Bear Form or Dire Bear Form. When you shift into Cat Form, you will regain 100% of the Energy you had when you were last in Cat Form, plus 10 Energy for each second you spent not in Bear Form, Cat Form, or Dire Bear Form, up to a maximum of 100 Energy."
+     "description": "Gives you a 100% chance to gain 10 Rage when shapeshifting into Bear Form or Dire Bear Form. Shapeshifting into Cat Form restores 100% of the Energy you had when last in Cat Form, plus 10 Energy per sec spent outside Cat Form, up to 100 Energy.\n\nBear Form and Dire Bear Form forfeit this Energy and halt its restoration while active."
     },
     {
      "row": 1,

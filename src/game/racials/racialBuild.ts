@@ -1,4 +1,5 @@
 import type {
+  AttackTableKind,
   CastReaction,
   PartialStats,
   Reaction,
@@ -6,13 +7,15 @@ import type {
   StatModifierSpec,
   WeaponType,
 } from '../../engine';
+import { AttackTableModifiers } from '../../engine';
+import { COMBAT_CONSTANTS } from '../combat/attackChances';
 import type { ClassId, CombatStyleId, RaceId } from '../character';
 import type { Equipment } from '../items/Item';
 import { weaponTypeFor } from '../items/equipment';
 import { ITEMS_BY_ID } from '../items/itemData';
 import type { RacialBuild, RacialRequirement, RacialTrait } from './Racial';
 import { RACIALS } from './racialEffects';
-import { eurekaReactions, touchOfTheGrave } from './reactions';
+import { touchOfTheGrave } from './reactions';
 
 /** What a racial can ask about the character, resolved before the pull. */
 export interface RacialBuildContext {
@@ -27,6 +30,41 @@ export interface RacialBuildContext {
    */
   readonly equipment: Equipment;
   readonly style: CombatStyleId;
+}
+
+/**
+ * The five tables a character's OWN attacks resolve on.
+ *
+ * `melee-received` is deliberately absent: it is the attacks-received table,
+ * so anything registered against it describes what happens TO the character.
+ * Written out rather than derived from `AttackTableKind`, so a table added to
+ * that union is a compile question rather than a silent sixth entry here.
+ */
+const OFFENSIVE_TABLES: readonly AttackTableKind[] = [
+  'melee-auto',
+  'melee-special',
+  'ranged-auto',
+  'ranged-special',
+  'spell',
+];
+
+/**
+ * The BONUS half of a crit multiplier for one attack table.
+ *
+ * A SECOND COPY OF `talentBuild`'S OWN PRIVATE HELPER, and the duplication is
+ * the lesser evil: that one is not exported, and exporting it would make a
+ * racial depend on the talent layer's internals for no reason beyond six
+ * lines. What matters is that BOTH read `COMBAT_CONSTANTS` -- the shared
+ * ruleset numbers in `game/combat` -- rather than writing 1.0 and 0.5 out, so
+ * the two cannot drift: a ruleset that separates ranged crits from melee
+ * changes the constant and both follow.
+ */
+function critBonusHalfFor(table: AttackTableKind): number {
+  if (table === 'spell') return COMBAT_CONSTANTS.spellCritMultiplier - 1;
+  if (table === 'ranged-auto' || table === 'ranged-special') {
+    return COMBAT_CONSTANTS.rangedCritMultiplier - 1;
+  }
+  return COMBAT_CONSTANTS.meleeCritMultiplier - 1;
 }
 
 /** The weapon types held, in any hand. */
@@ -98,6 +136,7 @@ export function racialBuild(race: RaceId, context: RacialBuildContext): RacialBu
   const grantedAbilities = new Set<string>();
   const reactions: Reaction[] = [];
   const castReactions: CastReaction[] = [];
+  const attackTableModifiers = new AttackTableModifiers();
 
   for (const trait of RACIALS[race].traits) {
     for (const effect of trait.effects) {
@@ -121,6 +160,28 @@ export function racialBuild(race: RaceId, context: RacialBuildContext): RacialBu
           for (const resource of effect.resources) {
             resourceMaxMultipliers[resource] =
               (resourceMaxMultipliers[resource] ?? 1) * (1 + effect.percent);
+          }
+          break;
+        case 'critDamageBonus':
+          /*
+           * THE BONUS HALF, PER TABLE, WHICH IS A DIFFERENT NUMBER ON EACH.
+           *
+           * A melee or ranged crit multiplies by 2 and a spell crit by 1.5, so
+           * "2% increased critical damage" adds 0.02 on the physical tables and
+           * 0.01 on the spell one. Both races carrying this can be casters -- a
+           * Dwarf Priest, a Tauren Moonkin -- so reading the melee figure for
+           * everything would double what every spell they cast collects.
+           *
+           * `melee-received` IS EXCLUDED, and it is the one table that would be
+           * actively wrong rather than merely unused: that is the
+           * attacks-RECEIVED table, so a crit damage bonus registered there
+           * would raise the damage the BOSS crits the character for. A Tauren
+           * Warrior tanking would have paid its own racial.
+           */
+          for (const table of OFFENSIVE_TABLES) {
+            attackTableModifiers.add(table, {
+              critMultiplierBonus: critBonusHalfFor(table) * (effect.percent / 100),
+            });
           }
           break;
         case 'grantAbility':
@@ -152,21 +213,14 @@ export function racialBuild(race: RaceId, context: RacialBuildContext): RacialBu
   }
 
   /*
-   * EUREKA!'S REACTION PAIR FOLLOWS ITS ABILITY RATHER THAN BEING DECLARED.
+   * EUREKA! USED TO NEED A REACTION PAIR HERE AND NO LONGER DOES.
    *
-   * The two reactions exist only to spend the aura's charges, so they belong to
-   * the ability and not to the trait -- a `reaction` effect beside the
-   * `grantAbility` would be two declarations that must agree, and the one that
-   * drifted would leave Eureka! spending no charges at all: three permanent
-   * charges, +10% damage all fight, and a buff-uptime row saying it was up.
-   *
-   * Derived from the granted ability so the two cannot disagree.
+   * It was "your next 3 damaging abilities", and the three charges were spent
+   * by a `dealt` marker plus a `final` cast reaction -- derived from the
+   * granted ability rather than declared on the trait, so the two could not
+   * disagree. The racial patch made it an 8 second buff with no charges, so
+   * there is nothing to spend and `eurekaReactions` is gone. See `EUREKA`.
    */
-  if (grantedAbilities.has('eureka')) {
-    const { marker, spender } = eurekaReactions();
-    reactions.push(marker);
-    castReactions.push(spender);
-  }
 
   return {
     stats: stats as PartialStats,
@@ -176,6 +230,7 @@ export function racialBuild(race: RaceId, context: RacialBuildContext): RacialBu
     grantedAbilities,
     reactions,
     castReactions,
+    attackTableModifiers,
     openingAuras: [],
   };
 }

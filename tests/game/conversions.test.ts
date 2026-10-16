@@ -9,6 +9,7 @@ import {
   statDerivationFor,
 } from '../../src/game/character';
 import { createPlayer } from '../../src/game/actors/createPlayer';
+import { racialBuild } from '../../src/game/racials';
 
 /**
  * The worked examples given alongside the conversion table.
@@ -43,10 +44,29 @@ describe('worked examples from the conversion table', () => {
     expect(player.stats.get('attackPower')).toBe(104);
   });
 
-  it('Orc Hunter has about 0.77% crit chance', () => {
-    // -1.53 base + 122 agility / 53. Negative base, positive result.
+  it('Orc Hunter has about 0.77% crit chance from the CONVERSION, plus its racial', () => {
+    /*
+     * ========================================================================
+     * -1.53 base + 122 agility / 53. Negative base, positive result.
+     *
+     * THE RACIAL IS NAMED RATHER THAN AVOIDED, which is the change the racial
+     * patch forced. This read `toBeCloseTo(0.77)` on a bare Orc Hunter, and it
+     * held only because Axe Specialization required an axe in hand -- an
+     * ungeared Orc satisfied nothing and collected nothing. SAVAGE replaced it
+     * with 1% crit and no condition, so an ungeared Orc now carries 1.77%.
+     *
+     * The worked example is the owner's and the race is part of it, so the
+     * repair is to subtract what the race contributes rather than to swap in a
+     * raceless one -- and `racialBuild` is asked for that figure instead of
+     * the 1 being written out, so this test cannot drift against the racial
+     * table the way it just drifted against the patch.
+     * ========================================================================
+     */
     const player = createPlayer({ race: 'orc', characterClass: 'hunter' });
-    expect(player.stats.get('critChance')).toBeCloseTo(0.77, 2);
+    const fromRace =
+      racialBuild('orc', { characterClass: 'hunter', equipment: {}, style: 'ranged' }).stats
+        .critChance ?? 0;
+    expect(player.stats.get('critChance') - fromRace).toBeCloseTo(0.77, 2);
   });
 });
 

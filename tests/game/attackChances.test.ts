@@ -7,7 +7,7 @@ import {
   createTrainingDummy,
 } from '../../src/game/actors/createTrainingDummy';
 import { MAX_WEAPON_SKILL_AT_60 } from '../../src/game/actors/weapons';
-import { ROLL_MAX, resolveAttackTable } from '../../src/engine';
+import { ROLL_MAX, resolveAttackTable, toRollUnits } from '../../src/engine';
 import {
   COMBAT_CONSTANTS,
   createForeverAttackChances,
@@ -178,13 +178,32 @@ describe('crit suppression', () => {
     expect(critSuppression(60, 55)).toBe(0);
   });
 
-  it('erases an ungeared character crit entirely', () => {
-    // An Orc Warrior has about 4.99% crit, which is less than the 4.8 point
-    // penalty leaves room for.
+  it('takes its 4.8 points off an ungeared character, leaving almost nothing', () => {
+    /*
+     * ========================================================================
+     * ASSERTED AS THE SUBTRACTION RATHER THAN AS A BAND, which this test used
+     * to be: it read "an Orc Warrior has about 4.99% crit" and checked the
+     * result was under 0.5%. That held while an Orc's crit happened to sit
+     * just under the 4.8 point penalty, and the racial patch replaced Axe
+     * Specialization with SAVAGE -- 1% crit with no weapon condition -- so an
+     * ungeared Orc now carries about 5.99% and the band broke.
+     *
+     * THE BAND WAS NEVER THE CLAIM. What suppression does is subtract 4.8
+     * points, and the honest version of this test reads the character's own
+     * crit and checks the arithmetic -- which cannot go stale when a racial,
+     * a conversion or a base stats row moves. This project's own rule: read
+     * the base off the character and assert the rule.
+     * ========================================================================
+     */
     const player = warrior('two_hander');
     const chances = providerFor('two_hander')('melee-auto', player, boss());
-    expect(player.stats.get('critChance')).toBeLessThan(6);
-    expect(chances.crit).toBeLessThan(50); // under 0.5%
+    const own = player.stats.get('critChance');
+    const suppression = critSuppression(60, RAID_BOSS_LEVEL) / 100; // points
+
+    // Still a character whose crit suppression nearly erases, which is what
+    // makes this the interesting case rather than an arbitrary one.
+    expect(own).toBeLessThan(suppression * 2);
+    expect(chances.crit).toBe(toRollUnits(Math.max(0, own - suppression)));
   });
 
   it('never goes below zero', () => {
