@@ -53,6 +53,7 @@ the tooling to be a bit more sophisticated as well."
 | 19b | **A COMPLETED CAST OR ATTACK BREAKS STEALTH AND PROWL** -- an ENGINE rule with Premeditation as its one declared exception, replacing Ambush and Ravage each removing the aura by hand | Rupture's Ambushes **4.2 -> 3.4** a fight and Hemo Dagger's **2.7 -> 2.2**, for **-6.6** and **-9.0**; the Cat and Pure Hemo are **bit-identical**. Two ways to half-wire it were written and the full suite passed on both | see below |
 | 19 | **BEFORE THE PULL, FOR ALL 28 PROFILES** -- the owner specified an opener per profile, and three Warrior lists lose the entries it replaces | **not re-baselined**, on the owner's standing instruction. Every line of theirs is implemented after one round of corrections: a positioning RULING, two new Druid abilities, a substitution and a periodic that accrues | see below |
 | 23 | **THE ARCANE MAGE THROUGH THE WHOLE LOOP, and the first round run from a WRITTEN PROCEDURE** -- `docs/profile-optimisation.md`. The illegal opener reverted, every other dimension re-priced on the legal build, and one new finding off the UPTIME table | legal **1080.1 +/- 9.9** -> **1090.3 +/- 12.1**. The revert is **-96.5 +/- 9.4** paired and the channel floor **+13.2 +/- 3.2 REAL**; **every other candidate in all seven dimensions loses** | see below |
+| 24 | **THE OWNER'S AUDIT OF THE ARCANE PROFILE -- three items, and the second was worth all of it** -- Mage Armor out of the list, Presence of Mind and Arcane Power OFF the global cooldown, and the cooldown stack written as a real `sequence` | **1090.3 -> 1123.4 (+33.1)**, and Fire and Frostfire **0.0 to the decimal** | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -248,6 +249,93 @@ ruled on, and Arcane Wrath is closed by measurement under both readings.
    The old justification's REASONING had expired; its CONCLUSION had not.
 5. **Then the four profiles that were never done** -- Enh Shaman, Frostfire
    Mage, Fire Mage, Shadow Priest -- one at a time, through the procedure.
+
+## Round TWENTY-FOUR: the owner's audit of the Arcane profile
+
+**THREE ITEMS, GIVEN AS AN AUDIT RATHER THAN AS A BRIEF**, and the middle one
+was worth all of the figure.
+
+| | the item | result |
+| --- | --- | --- |
+| 1 | *"Mage Armor doesn't need to be captured in the main APL section."* | entry removed. It could never fire -- pre-cast at a 3s lead, thirty-minute buff, one-minute fight |
+| 2 | *"Ensure Presence of Mind and Arcane Power don't trigger a global cooldown."* | **they both did.** `triggersGcd: false` on each |
+| 3 | *"Set up a cooldown overlap condition with Arcane Wrath / Pyroblast."* | shipped as one `AplEntry.sequence`; **Pyroblast is the payload and Arcane Wrath is not** |
+
+**TOGETHER +33.1, AND FIRE AND FROSTFIRE MOVED 0.0 TO THE DECIMAL** -- neither
+takes Presence of Mind or Arcane Power, and their own Mage Armor entries were
+left alone deliberately.
+
+### Item 2 was a fact to read, not a measurement
+
+`triggersGcd(ability)` is `ability.triggersGcd ?? ability.onNextSwing === undefined`,
+so an ordinary ability is ON the global cooldown unless it opts out -- and
+`abilities/mage.ts` was one of three ability files with no `triggersGcd: false`
+anywhere. Both were paying a global cooldown they should not have.
+
+**THE MISTAKE IS INVISIBLE IN EVERYTHING BUT THE DPS**, which is why it lasted:
+an ability wrongly taking a global cooldown still applies the right aura, for
+the right duration, on the right cooldown. Nothing reads wrong on the results
+page.
+
+### Item 3: the shape was right, the payload was not, and it was already happening
+
+The potion, Presence of Mind and Pyroblast were three entries that fired
+together. Written as a sequence they run **bit-identical fights** -- because
+all three are off the global cooldown, and **two of them only became so in item
+2**. So the pair-by-emergence was one change away from coming apart silently.
+**Emergence is an accident of what is castable; a sequence is a guarantee.**
+
+Measured over 1,000 paired iterations:
+
+| the stack | |
+| --- | --- |
+| potion > PoM > **pyroblast** | **bit-identical** -- shipped |
+| potion > PoM > arcane_wrath | **-72.4** |
+| potion > AP > PoM > pyroblast | **-34.9** |
+| potion > AP > PoM > arcane_wrath (the screenshot's shape) | **-43.8** |
+
+**PRESENCE OF MIND ERASES A CAST TIME, SO THE PAYLOAD WANTS TO BE THE LONGEST
+CAST** -- Pyroblast is six seconds against Arcane Wrath's 3.5, and Arcane Wrath
+costs a talent point as well. **And Arcane Power cannot join the stack**: it is
+pre-cast at a 0s lead for **+24.2**, and a sequence resolves in full before any
+of it is cast, so a step on cooldown would refuse the lot and the stack would
+silently never fire.
+
+**THIS IS THE FIRST TIME ARCANE WRATH HAS BEEN PRICED AS ANYTHING BUT A
+FILLER.** Its -76.7 and -118.2 were measured displacing Arcane Blasts every
+cycle; here it is cast once inside a +30% window and displaces nothing, and it
+still loses. **The old conclusion survives a reading it was never tested under.**
+
+### Two things the round turned up on its own
+
+**THE EVOCATION TRIPWIRE FIRED, EXACTLY AS IT WAS BUILT TO.**
+`mageAbilities.test.ts` pinned ZERO Evocation casts across three profiles and
+twenty seeds, with the owner's "This is intended" beside it and a note that it
+"fails if a change makes Evocation start firing, which is the right moment to go
+back to the owner." Item 2 is more casts a fight, an Arcane Blast at four stacks
+costs eight times base, and the build now reaches a tenth of its pool on **seed
+10 of 20** and casts it once. Mean headroom is still **2,638** mana, so this is
+a TAIL and not a shift. **It is the honest reading of that entry rather than a
+regression** -- a conditional entry that is almost never true costs the entries
+below it nothing and pays out in a fight that does not go like the measured
+ones. Re-pinned PER PROFILE and exactly: Fire 0, Frostfire 0, Arcane 1.
+
+**AND A SEQUENCE STEP WAS INVISIBLE TO `USES=1`.** `printUses` keys on
+`abilityId`, so every step after the first vanished from the numbered list AND
+fell into the **"not in the list, and still dealing damage"** block -- the one
+heading in that report meaning "nobody asked for this damage". Pyroblast
+reported exactly that way the moment the stack shipped. Steps now print indented
+under their entry with their own cast counts and **no verdict column**, because
+a step has no condition of its own and cannot be "never fired" independently.
+
+### And one left alone on purpose
+
+**THE `arcane_power` ENTRY IN THE LIST IS DEAD FOR THE SAME REASON MAGE ARMOR
+WAS** -- pre-cast at t=0 on a three-minute cooldown, in a one-minute fight, so
+it can never fire. The owner named Mage Armor and not this, and an entry that
+would come back to life the day the opener changes is a reasonable thing to keep.
+**Flagged rather than removed**, because which of those two readings is wanted is
+theirs.
 
 ## Round TWENTY-THREE: the Arcane Mage, run from a written procedure
 

@@ -691,6 +691,7 @@ export const ARCANE_POWER_ABILITY: Ability = {
   id: 'arcane_power',
   name: 'Arcane Power',
   cooldownMs: seconds(180),
+  triggersGcd: false,
   onCast: ({ simulation, caster }) => {
     simulation.applyAura(caster, ARCANE_POWER, caster.id);
   },
@@ -698,9 +699,30 @@ export const ARCANE_POWER_ABILITY: Ability = {
 
 /** Presence of Mind, granted by the Arcane talent. */
 export const PRESENCE_OF_MIND_ABILITY: Ability = {
+  /*
+   * OFF THE GLOBAL COOLDOWN, ON THE OWNER'S RULING: "Ensure Presence of Mind
+   * and Arcane Power don't trigger a global cooldown."
+   *
+   * BEING OFF IT MEANS ONE THING -- the ability does not START a global
+   * cooldown. It is still BLOCKED by one running, and what it buys is that the
+   * action AFTER it is free. That is what makes a cooldown STACK expressible at
+   * all: `nextDecisionTime` lets a free cast act again at once, so the potion,
+   * this, and the payload resolve in a single instant rather than spending a
+   * global cooldown each.
+   *
+   * AND IT DECLARES A `cooldownMs`, which is not incidental --
+   * `freeCastChain.test.ts` asserts across all nine classes that every off-GCD
+   * ability has one, because an off-GCD ability with no cooldown would win the
+   * list forever and HANG a fight rather than fail one.
+   *
+   * THE MISTAKE IS INVISIBLE IN EVERYTHING BUT THE DPS: an ability wrongly
+   * taking a global cooldown still applies the right aura for the right
+   * duration on the right cooldown.
+   */
   id: 'presence_of_mind',
   name: 'Presence of Mind',
   cooldownMs: seconds(180),
+  triggersGcd: false,
   onCast: ({ simulation, caster }) => {
     simulation.applyAura(caster, PRESENCE_OF_MIND, caster.id);
   },
