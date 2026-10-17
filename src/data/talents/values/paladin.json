@@ -348,19 +348,19 @@
     [
      10,
      33,
-     6,
+     4,
      3
     ],
     [
      20,
      66,
-     6,
+     4,
      3
     ],
     [
      30,
      100,
-     6,
+     4,
      3
     ]
    ]
@@ -423,31 +423,36 @@
    "name": "Reckoning",
    "tree": "protection",
    "ranks": 5,
-   "text": "Gives you a {0}% chance to gain an extra attack after Blocking a melee attack and a {1}% chance to gain an extra attack after being the victim of a non-periodic critical strike. Cannot occur more often than once every {2} sec.",
+   "text": "Gives you a {0}% chance after Blocking and a {1}% chance after receiving a non-periodic critical strike to gain an extra attack. Stores up to {2} extra attacks. Cannot occur from Blocks more than once every {3} sec.",
    "values": [
     [
      8,
      20,
+     4,
      1.5
     ],
     [
      16,
      40,
+     4,
      1.5
     ],
     [
      24,
      60,
+     4,
      1.5
     ],
     [
      32,
      80,
+     4,
      1.5
     ],
     [
      40,
      100,
+     4,
      1.5
     ]
    ]
@@ -687,9 +692,9 @@
    "ranks": 3,
    "text": "Increases your spell damage by up to {0}% of your Intellect.",
    "values": [
+    10,
     20,
-    40,
-    60
+    30
    ]
   },
   "instrument_of_law": {

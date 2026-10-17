@@ -1,7 +1,7 @@
 {
  "class": "shaman",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70291",
+ "build": "1.60.1.70425",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -83,7 +83,7 @@
    "tab": "Elemental",
    "level": "Learned at level 56",
    "school": "Nature",
-   "cost": "485 Mana",
+   "cost": "315 Mana",
    "range": "30 yd range",
    "cast": "2 sec cast",
    "cooldown": "6 sec cooldown",
@@ -162,6 +162,18 @@
    "versusClassic": "same"
   },
   {
+   "id": 16166,
+   "name": "Elemental Mastery",
+   "rank": null,
+   "tab": "Elemental",
+   "level": "Learned at level 40",
+   "school": "Nature",
+   "cast": "Instant",
+   "cooldown": "3 min cooldown",
+   "description": "Gain mastery over Fire and Lightning, reducing the cast time of Lightning Bolt and Lava Burst by 0.5 sec, and removing the cooldown from Chain Lightning. Lasts 15 sec.",
+   "versusClassic": "changed"
+  },
+  {
    "id": 6196,
    "name": "Far Sight",
    "rank": null,
@@ -181,11 +193,11 @@
    "tab": "Elemental",
    "level": "Learned at level 52",
    "school": "Fire",
-   "cost": "520 Mana",
+   "cost": "375 Mana",
    "range": "30 yd range",
    "cast": "Instant",
    "cooldown": "10 sec cooldown",
-   "description": "Instantly inflicts 413 to 459 fire damage to enemies within 10 yd of your active Fire totem.",
+   "description": "Instantly inflicts 232 to 258 fire damage to enemies within 10 yd of your active Fire totem.",
    "versusClassic": "new"
   },
   {
@@ -200,7 +212,7 @@
    "extraLines": [
     "Tools: Water Totem"
    ],
-   "description": "Summons a Fire Resistance Totem with 5 health at the feet of the caster for 5 min that increases the fire resistance of party and raid members within 30 yards by 60.",
+   "description": "Summons a Fire Resistance Totem with 5 health at the feet of the caster for 5 min that increases the fire resistance of party or raid members within 30 yards by 60.",
    "versusClassic": "changed"
   },
   {
@@ -229,7 +241,7 @@
    "extraLines": [
     "Tools: Fire Totem"
    ],
-   "description": "Summons a Flametongue Totem with 5 health at the feet of the caster. The totem enhances the melee attacks of all party members within 30 yards. Each main hand hit causes 17 to 55 additional Fire damage, based on the speed of the weapon. Slower weapons cause more fire damage per swing. Lasts 5 min.",
+   "description": "Summons a Flametongue Totem with 5 health at the feet of the caster. The totem enhances the melee attacks of all party or raid members within 30 yards. Each main hand hit causes 17 to 55 additional Fire damage, based on the speed of the weapon. Slower weapons cause more fire damage per swing. Lasts 5 min.",
    "versusClassic": "changed"
   },
   {
@@ -309,7 +321,7 @@
    "extraLines": [
     "Tools: Air Totem"
    ],
-   "description": "Summons a Grace of Air Totem with 5 health at the feet of the caster. The totem increases the agility of party members within 30 yards by 89. Lasts 5 min.",
+   "description": "Summons a Grace of Air Totem with 5 health at the feet of the caster. The totem increases the agility of party or raid members within 30 yards by 89. Lasts 5 min.",
    "versusClassic": "changed"
   },
   {
@@ -357,9 +369,9 @@
    "versusClassic": "changed"
   },
   {
-   "id": 1238300,
+   "id": 1326047,
    "name": "Lava Burst",
-   "rank": 3,
+   "rank": 4,
    "tab": "Elemental",
    "level": "Learned at level 60",
    "school": "Fire",
@@ -439,9 +451,9 @@
    "versusClassic": "changed"
   },
   {
-   "id": 17359,
+   "id": 1325256,
    "name": "Mana Tide Totem",
-   "rank": 3,
+   "rank": 4,
    "tab": "Restoration",
    "level": "Learned at level 58",
    "school": "Frost",
@@ -452,7 +464,7 @@
     "Tools: Water Totem"
    ],
    "description": "Summons a Mana Tide Totem with 5 health at the feet of the caster for 12 sec that restores 290 mana every 3 seconds to group members within 30 yards.",
-   "versusClassic": "changed"
+   "versusClassic": "note"
   },
   {
    "id": 10601,
@@ -586,7 +598,7 @@
    "extraLines": [
     "Tools: Air Totem"
    ],
-   "description": "Summons an immobile Sentry Totem with 100 health at your feet for 5 min that allows vision of nearby area and warns of enemies that attack it. Right-Click on buff to switch back and forth between totem sight and shaman sight.",
+   "description": "Summons an immobile Sentry Totem with 100 health at your feet for 5 min that allows vision of nearby area and warns of enemies that attack it. Right-Click on buff to switch back and forth between totem sight and Shaman sight.",
    "versusClassic": "same"
   },
   {
@@ -627,7 +639,7 @@
    "tab": "Enhancement",
    "level": "Learned at level 25",
    "school": "Physical",
-   "cost": "125 Mana",
+   "cost": "8% of base mana",
    "range": "Melee Range",
    "cast": "Instant",
    "cooldown": "8 sec cooldown",
@@ -646,7 +658,7 @@
    "extraLines": [
     "Tools: Earth Totem"
    ],
-   "description": "Summons a Strength of Earth Totem with 5 health at the feet of the caster. The totem increases the strength of party members within 30 yards by 53. Lasts 5 min.",
+   "description": "Summons a Strength of Earth Totem with 5 health at the feet of the caster. The totem increases the strength of party or raid members within 30 yards by 53. Lasts 5 min.",
    "versusClassic": "changed"
   },
   {
@@ -713,7 +725,7 @@
    "level": "Learned at level 20",
    "school": "Nature",
    "cast": "Instant",
-   "description": "The caster is surrounded by 3 globes of water. When a spell, melee, or ranged attack hits the caster or when one of the caster's healing spells gets a critical result, 2% of maximum mana is restored to the caster, expending one water globe. Only one globe will activate every few seconds. Lasts 10 min.\n\nOnly one Elemental Shield can be active on the Shaman at any one time.",
+   "description": "The caster is surrounded by 3 globes of water. When a spell, melee, or ranged attack hits the caster or when one of the caster's spells gets a critical result, 2% of maximum mana is restored to the caster, expending one water globe. Only one globe will activate every few seconds. Lasts 10 min.\n\nOnly one Elemental Shield can be active on the Shaman at any one time.",
    "versusClassic": "new"
   },
   {
@@ -744,7 +756,7 @@
    "extraLines": [
     "Tools: Air Totem"
    ],
-   "description": "Summons a Windfury Totem with 5 health at the feet of the caster. The totem enhances the melee attacks of all party members within 30 yards. Each main hand hit has a 20% chance of granting the attacker 1 extra attack with 246 extra melee attack power. Lasts 5 min.",
+   "description": "Summons a Windfury Totem with 5 health at the feet of the caster. The totem enhances the melee attacks of all party or raid members within 30 yards. Each main hand hit has a 20% chance of granting the attacker 1 extra attack with 246 extra melee attack power. Lasts 5 min.",
    "versusClassic": "changed"
   },
   {

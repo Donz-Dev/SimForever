@@ -1,5 +1,5 @@
 import type { AuraDefinition } from '../../engine';
-import { ALL_ABILITIES, dealDamage, seconds } from '../../engine';
+import { percent, ALL_ABILITIES, dealDamage, seconds } from '../../engine';
 import {
   DEVOURING_PLAGUE_TICK_SP_COEFFICIENT,
   SHADOW_WORD_PAIN_TICK_SP_COEFFICIENT,
@@ -131,6 +131,47 @@ export const DEVOURING_PLAGUE: AuraDefinition = {
  *
  * At 3/3 the chance is 100%, so five stacks arrive almost immediately and stay.
  */
+/**
+ * Dark Inspiration: Spirit, from a Mind Blast or a COMPLETED Mind Flay.
+ *
+ * ==============================================================================
+ * "Your Mind Blast and fully channeled Mind Flay causes Dark Inspiration,
+ * increasing yours and your party's Spirit by {0}% for 10 sec." New at client
+ * build 1.60.1.70425, replacing Shadow Affinity.
+ *
+ * SPIRIT IS A REAL STAT HERE and this is a mana-return talent rather than a
+ * dead one: `manaPer5` is `spirit * manaPer5PerSpirit`, so the percentage
+ * reaches the regeneration rule. What it is WORTH is another matter -- the five
+ * second rule suppresses most regeneration on a caster that is casting, so the
+ * honest expectation is small and the measurement decides.
+ *
+ * "YOURS AND YOUR PARTY'S" IS ONE CHARACTER HERE, as every party clause in this
+ * project is. Recorded rather than silently narrowed.
+ *
+ * ------------------------------------------------------------------------------
+ * "FULLY CHANNELED" IS `AbilityCastEvent.final`, WHICH IS EXACTLY THE WORD.
+ * A cast reaction fires once per channel TICK, and `final` marks the last one
+ * -- so a Mind Flay that is interrupted never reaches it and never grants this.
+ *
+ * THAT COUPLES IT TO THE INTERRUPT RULING, which is worth knowing before
+ * reading either: the owner asked that an interrupt preserve Mind Flay's first
+ * two ticks and take only the third. The third tick IS the final one, so an
+ * interrupted channel still loses this buff -- the two rulings arrived days
+ * apart and meet here.
+ * ==============================================================================
+ */
+export const DARK_INSPIRATION_DURATION_MS = seconds(10);
+
+export function darkInspirationAura(percentIncrease: number): AuraDefinition {
+  return {
+    id: 'dark_inspiration',
+    name: 'Dark Inspiration',
+    durationMs: DARK_INSPIRATION_DURATION_MS,
+    refreshBehaviour: 'reset',
+    statModifiers: [percent('spirit', percentIncrease / 100)],
+  };
+}
+
 export const SHADOW_WEAVING_MAX_STACKS = 5;
 export const SHADOW_WEAVING_DURATION_MS = seconds(15);
 
@@ -406,4 +447,5 @@ export const CATALOG_AURAS: readonly AuraDefinition[] = [
    */
   shadowWordPainAura(0),
   shadowWeavingAura(0),
+  darkInspirationAura(0),
 ];

@@ -1,7 +1,7 @@
 {
  "class": "warlock",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70291",
+ "build": "1.60.1.70425",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -13,7 +13,7 @@
    "school": "Shadow",
    "cast": "Instant",
    "cooldown": "3 min cooldown",
-   "description": "Increases the effect of your next Curse of Weakness or Bane of Agony by 50%, or your next Curse of Exhaustion by 20%. Lasts 30 sec.",
+   "description": "Increases the effect of your next Curse of Weakness or Bane of Agony by 50%, or your next Curse of Exhaustion by 50%. Lasts 30 sec.",
    "versusClassic": "changed"
   },
   {

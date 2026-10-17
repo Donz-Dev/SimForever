@@ -136,7 +136,7 @@
      "tier": 20,
      "requires": null,
      "requiresRanks": null,
-     "description": "Your Main Hand melee attacks against enemies afflicted by your Rend have a 20% chance to allow the use of your Overpower ability on the target. Lasts 6 sec."
+     "description": "Grants your Main Hand melee attacks against enemies afflicted by your Rend a 20% chance to allow an activation of Overpower."
     },
     {
      "row": 4,

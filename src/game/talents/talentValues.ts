@@ -8,7 +8,6 @@ import hunterValues from '../../data/talents/values/hunter.json';
 import warlockValues from '../../data/talents/values/warlock.json';
 import priestValues from '../../data/talents/values/priest.json';
 import type { ClassId } from '../character';
-import { patchNoteValue } from './patchNoteValues';
 
 /**
  * The per-rank numbers behind talent effects.
@@ -113,28 +112,31 @@ export function talentValue(
 ): TalentValue | undefined {
   /*
    * ==========================================================================
-   * A PATCH NOTE'S VALUE OUTRANKS THE GENERATED ONE, AND IT IS CONSULTED HERE
-   * RATHER THAN AT EACH READER.
+   * THE PATCH-NOTE OVERRIDE LAYER WAS CONSULTED HERE AND IS GONE, BECAUSE THE
+   * CLIENT CAUGHT UP WITH ALL THREE OF ITS ENTRIES.
    *
-   * `PATCH_NOTE_TALENT_VALUES` carries figures a note states and the client has
-   * not shipped. It cannot live in `values/<class>.json`, because the importer
-   * merges a previous entry ONLY where this run produced `null` -- so a hand
-   * edit to a MULTI-rank row survives exactly until the next `--write`.
+   * `PATCH_NOTE_TALENT_VALUES` carried figures a note stated and the client had
+   * not shipped -- Shadow Mastery's 2/4/6/8/10, Champion of the Light's
+   * 10/20/30 and Mental Strength's 2/4/6/8/10. Build 1.60.1.70425 ships every
+   * one of them verbatim, so the generated rows below are now the same numbers
+   * and an override on top of them would be a silent no-op.
    *
-   * THIS IS THE ROOT AND THAT IS THE WHOLE REASON IT IS HERE. `talentNumber`,
-   * `talentNumbers` and `talentDescription` all come through this function, so
-   * the override reaches the fight AND the Talent panel together. Wiring it
-   * into `talentBuild` alone -- which is where it was first written -- would
-   * have made the panel print 1/2/3/4/5 for a Shadow Mastery the engine was
-   * running at 2/4/6/8/10. That is the character sheet's crit bug exactly: a
-   * panel disagreeing with the fight about a number, invisible because every
-   * neighbour is right, and it cost a proc rate being designed against the
-   * wrong figure.
+   * IT WAS BUILT TO EXPIRE AND IT EXPIRED ON SCHEDULE, which is the part worth
+   * recording: every entry stated what the CLIENT said beside what the note
+   * said, and `patchNoteValues.test.ts` failed the moment a refresh moved a
+   * generated row. That failure is how this deletion was triggered rather than
+   * remembered -- **a layer that cannot tell you it is redundant becomes
+   * permanent**, and this one announced it.
+   *
+   * AND THE RISK IT WAS WRITTEN AGAINST DID NOT MATERIALISE. The Dual Wield
+   * Specialization case had a note and a client tooltip disagree, with the
+   * owner ruling for the CLIENT; here a note-derived figure held on all three
+   * entries, two builds later. The shape is worth rebuilding the next time a
+   * note runs ahead of the client -- `git log` has it -- and it must not be
+   * kept standing empty, because a table with no rows reads exactly like a
+   * mechanism that is doing something.
    * ==========================================================================
    */
-  const overridden = patchNoteValue(characterClass, talentId, rank);
-  if (overridden !== undefined) return overridden;
-
   const entry = FILES[characterClass]?.talents[talentId];
   if (!entry?.values) return undefined;
   if (rank < 1 || rank > entry.values.length) return undefined;

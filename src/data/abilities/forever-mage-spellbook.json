@@ -1,7 +1,7 @@
 {
  "class": "mage",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70291",
+ "build": "1.60.1.70425",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -26,8 +26,8 @@
    "school": "Arcane",
    "cost": "15% of base mana",
    "range": "30 yd range",
-   "cast": "2.5 sec cast",
-   "description": "Blasts the target with energy, dealing 364 to 424 Arcane damage. Each time you cast Arcane Blast, the damage of all your other spells is increased by 10% and the mana cost of Arcane Blast is increased by 175%. Effect stacks up to 4 times and lasts 8 sec or until any other damage spell is cast.",
+   "cast": "1.5 sec cast",
+   "description": "Blasts the target with energy, dealing 218 to 254 Arcane damage. Each time you cast Arcane Blast, you gain 15% of your Intellect as Spell Damage and the mana cost of Arcane Blast is increased by 175%. Effect stacks up to 4 times and lasts 15 sec from time of initial application.",
    "versusClassic": "new"
   },
   {
@@ -97,6 +97,20 @@
    "versusClassic": "changed"
   },
   {
+   "id": 1326082,
+   "name": "Arcane Wrath",
+   "rank": 4,
+   "tab": "Arcane",
+   "level": "Learned at level 60",
+   "school": "Arcane",
+   "cost": "395 Mana",
+   "range": "30 yd range",
+   "cast": "3.5 sec cast",
+   "cooldown": "6 sec cooldown",
+   "description": "Launches a projectile of pure Arcane energy at the enemy target, causing 406 to 496 Arcane damage. This spell gains additional Spell Damage equal to 5% of your maximum Mana.",
+   "versusClassic": "new"
+  },
+  {
    "id": 13021,
    "name": "Blast Wave",
    "rank": 5,
@@ -160,16 +174,16 @@
    "versusClassic": "changed"
   },
   {
-   "id": 10161,
+   "id": 10160,
    "name": "Cone of Cold",
-   "rank": 5,
+   "rank": 4,
    "tab": "Frost",
-   "level": "Learned at level 58",
+   "level": "Learned at level 50",
    "school": "Frost",
-   "cost": "555 Mana",
+   "cost": "465 Mana",
    "cast": "Instant",
    "cooldown": "10 sec cooldown",
-   "description": "Targets in a cone in front of the caster take 328 to 358 Frost damage and are slowed by 40% for 6 sec.",
+   "description": "Targets in a cone in front of the caster take 260 to 286 Frost damage and are slowed by 40% for 6 sec. The first 4 targets hit by this cone are slowed by an additional 10% for an additional 3 sec.",
    "versusClassic": "changed"
   },
   {
@@ -349,6 +363,19 @@
    "versusClassic": "same"
   },
   {
+   "id": 1326055,
+   "name": "Frost Blast",
+   "rank": 3,
+   "tab": "Frost",
+   "level": "Learned at level 48",
+   "school": "Frost",
+   "cost": "90 Mana",
+   "range": "30 yd range",
+   "cast": "1.5 sec cast",
+   "description": "Quickly launch a weak blast of frost at the enemy, causing 80 to 88 Frost damage and slowing movement speed by 40% for 9 sec.",
+   "versusClassic": "new"
+  },
+  {
    "id": 10230,
    "name": "Frost Nova",
    "rank": 4,
@@ -448,7 +475,7 @@
    "cost": "160 Mana",
    "range": "30 yd range",
    "cast": "Instant",
-   "description": "Deals 136 to 160 Frost damage to an enemy target. Deals 300% increased damage to Frozen targets.",
+   "description": "Deals 136 to 160 Frost damage to an enemy target. Deals 200% increased damage to Frozen targets.",
    "versusClassic": "new"
   },
   {

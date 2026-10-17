@@ -154,6 +154,58 @@ export const FIREBALL_COEFFICIENTS = {
   perTick: FIREBALL_TICK_SP_COEFFICIENT,
 };
 
+/**
+ * The Mage's Fire effects a target can carry, for Fire Power's COUNT.
+ *
+ * ==============================================================================
+ * "3% per your Fire effects on the target, up to a maximum increase of 12%.
+ * Effects which mix multiple schools of magic do not qualify."
+ *
+ * NAMED RATHER THAN DERIVED, which is `WARLOCK_SOUL_SIPHON_EFFECTS`' arrangement
+ * and for the identical reason: an `AuraDefinition` carries no school, because
+ * the school of a periodic effect is decided inside its own `onTick`. A
+ * derivation that has to RUN the effect to answer is not a derivation -- the
+ * argument `isBleed` already makes about "physical, periodic and ignoring
+ * armor".
+ *
+ * ------------------------------------------------------------------------------
+ * FOUR ENTRIES, AND FOUR IS EXACTLY THE CAP AT 3/3. 3% each with a 12% ceiling
+ * means the fourth effect is the last one that pays, so a fully-loaded target
+ * sits precisely on the maximum and a fifth would be worth nothing. That is the
+ * same coincidence Soul Siphon has -- three effects reaching a 36% cap at 12%
+ * each -- and it has the same consequence: **the cap is never the binding
+ * constraint, so a reading error in the list is invisible while everything is
+ * up** and only shows in the window where one has dropped.
+ *
+ * FROSTFIRE BOLT'S DoT IS DELIBERATELY ABSENT, and it is the whole of the
+ * tooltip's last sentence. It ticks Fire damage and `countsAsSchools` says it
+ * is also Frost, so it is an effect that mixes two schools and does not
+ * qualify. **The exclusion is enforced by this list rather than by a check**,
+ * which is why it is written here: a reader adding the next Fire DoT has to
+ * decide the same question, and there is nothing in the code to remind them.
+ *
+ * AND THE ASYMMETRY IS THE PART TO HOLD ON TO: a Frostfire Bolt still COLLECTS
+ * Fire Power, because the spell is a Fire spell. It just does not contribute to
+ * the count. See `perTargetEffectMultiplier`.
+ *
+ * ------------------------------------------------------------------------------
+ * WHAT IT MAY BE MISSING. Fireball's and Pyroblast's burns and Ignite are every
+ * Fire DoT this project declares; `fire_vulnerability` is Improved Scorch's
+ * debuff, which is a Fire effect the Mage put on the target and is counted on
+ * that reading. Blast Wave and Flamestrike leave nothing behind, and Living
+ * Bomb does not exist in this ruleset. **If the ruleset counts something this
+ * list does not, the talent is worth LESS than it should be** -- a smaller
+ * number and no error -- so the talent's own `unmodelled`-free declaration is
+ * paired with this note rather than with a claim of completeness.
+ * ==============================================================================
+ */
+export const MAGE_FIRE_POWER_EFFECTS: readonly string[] = [
+  'fireball',
+  'pyroblast',
+  'ignite',
+  'fire_vulnerability',
+];
+
 export const FIREBALL_DOT: AuraDefinition = {
   id: 'fireball',
   name: 'Fireball',
@@ -799,6 +851,9 @@ export const ARCANE_POWER_DURATION_MS = seconds(15);
 
 /** Every Mage ability that costs mana. Checked against the book by a test. */
 export const MAGE_COSTED_SPELL_IDS: readonly string[] = [
+  // Arcane Wrath, new at client build 1.60.1.70425: 395 mana, so Arcane Power's
+  // +30% cost reaches it like every other costed spell in the book.
+  'arcane_wrath',
   ...MAGE_DAMAGE_SPELL_IDS,
   'mage_armor',
 ];
@@ -917,44 +972,70 @@ export const FINGERS_OF_FROST: AuraDefinition = fingersOfFrostAura(2);
 /*
  * ============================================================================
  * WINTER'S CHILL: "Gives your Frost damage spells a 20% chance to apply the
- * Winter's Chill effect, which increases the chance your Ice Lance and
- * Frostbolt spells will critically hit the target by 2% for 15 sec. Stacks up
- * to 1 times." (Rank 5: 100%, and five stacks.)
+ * Winter's Chill effect, which increases the damage done by your CONE OF COLD
+ * spell to the target by 40%, stacking up to 5 times." (Rank 5: 100%.)
  *
- * A CRIT DEBUFF THE TARGET CARRIES, WHICH IS THE ONE SHAPE THIS ENGINE DID NOT
- * HAVE. Its `unmodelled` reason said so exactly: "`abilityCrit` is on the
- * caster and an aura reaches every ability or none". Both halves were true and
- * both are gone -- `attackerAbilityModifiers` names abilities and is read off
- * the DEFENDER.
+ * A DEBUFF THE TARGET CARRIES THAT NAMES ONE OF THE ATTACKER'S ABILITIES,
+ * WHICH IS THE ONE SHAPE THIS ENGINE DID NOT HAVE. The talent's original
+ * `unmodelled` reason said so exactly: "`abilityCrit` is on the caster and an
+ * aura reaches every ability or none". Both halves were true and both are gone
+ * -- `attackerAbilityModifiers` names abilities and is read off the DEFENDER.
  *
- * IT IS THE MIRROR OF `critWhileAura`, built for Shatter one PR earlier, and
- * the two are worth reading together: a crit bonus that only counts inside a
- * window, differing in whose window it is. Shatter reads a buff on the Mage;
- * this reads a debuff on the boss.
+ * ----------------------------------------------------------------------------
+ * IT WAS A CRIT DEBUFF ON ICE LANCE AND FROSTBOLT UNTIL CLIENT BUILD
+ * 1.60.1.70425, AND IT IS A DAMAGE DEBUFF ON CONE OF COLD NOW. The mechanism
+ * survives the redesign untouched and only the FIELD and the ABILITY LIST
+ * moved -- `critBonus: 2` on two spells becomes `damageMultiplier` on one --
+ * which is what `attackerAbilityModifiers` carrying a whole `AbilityModifier`
+ * bought rather than a bare crit number.
  *
- * THE RANK SCALES TWO NUMBERS, WHICH NO OTHER PROC IN THIS FILE DOES. The
- * values row is `[chance, critPerStack, duration, maxStacks]` and the chance
- * goes 20..100 while the cap goes 1..5, so the reaction takes the whole row
- * rather than one index. The 2% and the 15 seconds are the same at every rank
- * and are constants here, checked against the file by a test -- the discipline
- * `FINGERS_OF_FROST_PROC_CHANCE` already follows.
+ * AND THE RANK NOW MOVES ONE NUMBER WHERE IT USED TO MOVE TWO. The row was
+ * `[chance, critPerStack, duration, maxStacks]` with the chance going 20..100
+ * AND the cap going 1..5; it is `[chance, damagePercent, maxStacks]` now, and
+ * only the chance scales -- the 40% and the five stacks are flat at every
+ * rank. **So the index moved as well as the meaning**: the stack cap is index
+ * 2 where it was index 3, and reading the old index off the new row gives
+ * `undefined`, which the reaction would have turned into a one-stack debuff.
+ * That is a fifth of the talent and no error, which is why the index is named
+ * and every rank is pinned.
  *
- * TWO NAMED SPELLS AND NOT A SCHOOL. Frostfire Bolt APPLIES it, because it
- * counts as Frost damage, and is not one of the two that CRIT more for it --
- * the tooltip names Ice Lance and Frostbolt and stops. That asymmetry is the
- * kind a reader assumes away, so it is written here and asserted in the test.
+ * ----------------------------------------------------------------------------
+ * **A QUESTION FOR THE OWNER: FIVE STACKS OF 40% IS EITHER 3x OR 5.38x.**
  *
- * NO MAGE PROFILE TAKES IT. The Frostfire build is 0/29/22 and this sits below
- * that in the Frost tree, so nothing in the baseline moves -- which is the
- * expected result for a talent nobody spends a point on, and not evidence that
- * it does not work. The test asserts the MECHANISM.
+ * `modifiersScaleWithStacks` takes damage to the POWER of the stack count --
+ * this project's documented convention, and what Improved Scorch's Fire
+ * Vulnerability already does with its 3% -- so five stacks here are
+ * `1.4^5 = 5.378`. Read ADDITIVELY, "40% stacking up to 5 times" is
+ * `1 + 5 x 0.4 = 3.0`.
+ *
+ * THE CONVENTION IS IMPLEMENTED AND THE ALTERNATIVE IS FLAGGED, which is this
+ * project's rule for an ambiguous wording: at 3% a stack the two readings are
+ * 1.159 against 1.150 and nobody would notice, and at 40% they are a factor of
+ * 1.8 apart. **A house rule that is invisible at every existing caller is not
+ * evidence about a caller eight times larger.** Worth nothing today either
+ * way, for the reason below.
+ *
+ * ----------------------------------------------------------------------------
+ * AND IT IS UNREACHABLE TWICE OVER, both named on the talent rather than here.
+ * CONE OF COLD IS NOT DECLARED -- its damage is captured and the ability is
+ * not, the same blocker Improved Cone of Cold has carried all along -- and NO
+ * MAGE PROFILE TAKES THIS TALENT, the Frostfire build being 0/29/22 with this
+ * sitting below its Frost investment. So the redesign moves no figure, which
+ * is the expected result and not evidence that it does not work.
  * ============================================================================
  */
 export const WINTERS_CHILL_DURATION_MS = seconds(15);
-/** 2% a stack at every rank. Checked against the values file by a test. */
-export const WINTERS_CHILL_CRIT_PER_STACK = 2;
-/** The two spells the crit bonus names. Frostfire Bolt APPLIES it and is not one. */
-export const WINTERS_CHILL_SPELL_IDS: readonly string[] = ['ice_lance', 'frostbolt'];
+/** 40% a stack at every rank. Checked against the values file by a test. */
+export const WINTERS_CHILL_DAMAGE_PER_STACK = 40;
+/**
+ * The one spell the damage bonus names, and NOT the set that applies it.
+ *
+ * Any Frost damage spell applies the debuff -- Frostfire Bolt included, because
+ * it counts as Frost damage -- and only Cone of Cold deals more for it. That
+ * asymmetry survived the redesign and is the kind a reader assumes away, so it
+ * is written here and asserted in the test.
+ */
+export const WINTERS_CHILL_SPELL_IDS: readonly string[] = ['cone_of_cold'];
 
 export function wintersChillAura(maxStacks: number): AuraDefinition {
   return {
@@ -966,7 +1047,10 @@ export function wintersChillAura(maxStacks: number): AuraDefinition {
     refreshBehaviour: 'reset',
     modifiersScaleWithStacks: true,
     attackerAbilityModifiers: Object.fromEntries(
-      WINTERS_CHILL_SPELL_IDS.map((id) => [id, { critBonus: WINTERS_CHILL_CRIT_PER_STACK }]),
+      WINTERS_CHILL_SPELL_IDS.map((id) => [
+        id,
+        { damageMultiplier: 1 + WINTERS_CHILL_DAMAGE_PER_STACK / 100 },
+      ]),
     ),
   };
 }

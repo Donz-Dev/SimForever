@@ -106,6 +106,17 @@ describe('the numbers', () => {
     // from the source and carrying the ruling, not only the number. See
     // docs/source-cross-checks.md.
     expect(LIGHTNING_BOLT_DAMAGE).toBe(196);
+    /*
+     * 123 IS `midpoint(116, 130)` AND NOT THE CAPTURE'S 119-133, the same way
+     * Lightning Bolt's 196 is `midpoint(185, 207)` against a capture reading
+     * 189-211 -- both are `foreverchanges.pro`'s figures, which win. See
+     * `docs/source-cross-checks.md` and the note on the constant itself.
+     *
+     * THIS LINE IS WHAT CAUGHT THE CONSTANT BEING SWITCHED TO THE CAPTURE
+     * DURING THE 1.60.1.70425 REFRESH, which is the whole argument for writing
+     * a figure out by hand: the line above it passed, so one of two constants
+     * resolved by one ruling had moved and the other had not.
+     */
     expect(CHAIN_LIGHTNING_DAMAGE).toBe(123);
     expect(EARTH_SHOCK_DAMAGE).toBe(301);
     expect(FROST_SHOCK_DAMAGE).toBe(283);
@@ -998,9 +1009,24 @@ describe('Fire Nova, which was blocked on the wrong thing for the whole project'
    * power coefficient, which one question answered. Naming the expensive blocker
    * instead of the cheap one parked the talent behind work it never needed.
    */
-  it('takes the midpoint of 413 to 459, at max rank, from the spellbook', () => {
-    expect(FIRE_NOVA_DAMAGE).toBe(436);
-    expect(FIRE_NOVA.cost!.amount).toBe(520);
+  it('takes the midpoint of 232 to 258, at max rank, from the spellbook', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * IT WAS 413 TO 459 FOR 520 MANA AND IS 232 TO 258 FOR 375 at client build
+     * 1.60.1.70425 -- a 44% cut to the damage with a 28% cut to the cost beside
+     * it, which is one of the largest single numbers the refresh moved.
+     *
+     * AND IT MOVES NO PROFILE, which is worth saying rather than leaving a
+     * reader to wonder why a 44% nerf did not appear in a baseline. Fire Nova
+     * needs an active fire totem and deals its damage to everything around it;
+     * every encounter here has exactly ONE target, so the spell sits at the
+     * very bottom of the Enhancement list where the owner put it and what
+     * changes is what the figure MEANS the day a multi-target encounter exists.
+     * The same argument Swipe's 3% already carries.
+     * ------------------------------------------------------------------------
+     */
+    expect(FIRE_NOVA_DAMAGE).toBe(245);
+    expect(FIRE_NOVA.cost!.amount).toBe(375);
     expect(FIRE_NOVA_COOLDOWN_MS).toBe(seconds(10));
   });
 
@@ -1023,12 +1049,20 @@ describe('Fire Nova, which was blocked on the wrong thing for the whole project'
 
   it('is scaled by BOTH talents that name it, from the right value each time', () => {
     /*
-     * Improved Fire Nova is "+20% damage AND -4 sec cooldown", one row with two
-     * numbers. Reading index 0 for the cooldown would remove TWENTY seconds from
-     * a ten-second cooldown and make the ability free to cast -- which does not
-     * error and does not read as wrong.
+     * Trial by Fire is "+20% damage AND -4 sec cooldown", two of three numbers
+     * on one row. Reading index 0 for the cooldown would remove TWENTY seconds
+     * from a ten-second cooldown and make the ability free to cast -- which
+     * does not error and does not read as wrong.
+     *
+     * IT IS IMPROVED FIRE NOVA RENAMED, at the same row with the same two
+     * clauses and a THIRD one added -- "increases the duration of your Magma
+     * Totem by 20 sec", which is `totemEntities` and the reason this talent
+     * went from fully modelled to partly. **The rename is what makes the index
+     * worth re-asserting**: the row grew from two numbers to three, and index 2
+     * is now a real value rather than out of range, so a wrong index that used
+     * to produce `undefined` would now produce 20.
      */
-    const build = talentBuild('shaman', legalise({ improved_fire_nova: 2 }, 'shaman'));
+    const build = talentBuild('shaman', legalise({ trial_by_fire: 2 }, 'shaman'));
     expect(build.abilityModifiers.for('fire_nova').damageMultiplier).toBeCloseTo(1.2, 6);
     expect(build.abilityCooldownReductionMs.get('fire_nova')).toBe(seconds(4));
 
@@ -1209,10 +1243,44 @@ describe('what is left, which is the claim this deep dive makes', () => {
        * thing this project keeps finding in a header. The LIST is the claim.
        * ========================================================================
        */
+      /*
+       * ========================================================================
+       * AND CLIENT BUILD 1.60.1.70425 ADDED THREE MORE, two of them to the
+       * Elemental build and one to both -- so this list has grown from two
+       * entries to three and five, and every one of the additions is a NEW
+       * CLAUSE on a talent rather than a regression.
+       *
+       *   TRIAL BY FIRE     Improved Fire Nova renamed, and FULLY modelled
+       *                     before the rename. The two clauses that were there
+       *                     still apply; what is new is "increases the duration
+       *                     of your Magma Totem by 20 sec", and Magma Totem is
+       *                     a totem that damages what stands around it and is
+       *                     not declared -- `totemEntities`. Both builds spend
+       *                     two points here.
+       *   ELEMENTAL MASTERY the new Elemental capstone. Its cast-time clause on
+       *                     Lightning Bolt and Lava Burst applies; "removing
+       *                     the cooldown from Chain Lightning" needs an aura
+       *                     that SUSPENDS a cooldown, which nothing expresses,
+       *                     so that half is a live gap rather than a ruling.
+       *
+       * SO A TALENT CAN MOVE FROM `Fully` TO `partly` WITHOUT ANYTHING BREAKING,
+       * and Trial by Fire is the clean example: the refresh gave an existing
+       * talent a third clause this project cannot reach. **That is the opposite
+       * direction from every other entry in this list** -- the rest arrived
+       * partly modelled and are waiting on something -- and it is why the
+       * census is re-read after a patch rather than only after a code change.
+       * ========================================================================
+       */
       expect(partly, preset).toEqual(
         preset === 'shaman_enhancement'
-          ? ['call_of_flame', 'improved_stormstrike']
-          : ['call_of_flame', 'elemental_fury', 'tidal_focus'],
+          ? ['call_of_flame', 'improved_stormstrike', 'trial_by_fire']
+          : [
+              'call_of_flame',
+              'elemental_fury',
+              'elemental_mastery',
+              'tidal_focus',
+              'trial_by_fire',
+            ],
       );
     }
   });
@@ -1228,11 +1296,18 @@ describe('what is left, which is the claim this deep dive makes', () => {
       }
     }
     expect(scopes.get('castPushback')?.sort()).toEqual(['eye_of_the_storm', 'healing_focus']);
+    /*
+     * TRIAL BY FIRE IS THE FIFTH `totemEntities` ENTRY, and the only one whose
+     * talent does something else as well: the other four are totems and nothing
+     * but totems, where this one's Fire Nova damage and cooldown clauses both
+     * apply and only its Magma Totem duration does not.
+     */
     expect(scopes.get('totemEntities')?.sort()).toEqual([
       'earth_s_grasp',
       'guardian_totems',
       'mana_tide_totem',
       'restorative_totems',
+      'trial_by_fire',
     ]);
   });
 

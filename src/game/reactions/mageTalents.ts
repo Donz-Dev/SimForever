@@ -273,27 +273,39 @@ export const improvedScorchReaction: TalentReactionBuilder = (chancePercent) => 
 
 /*
  * ============================================================================
- * WINTER'S CHILL: a Frost damage spell may leave a stacking crit debuff.
+ * WINTER'S CHILL: a Frost damage spell may leave a stacking damage debuff.
  *
  * "Gives your Frost damage spells a {0}% chance to apply the Winter's Chill
- * effect, which increases the chance your Ice Lance and Frostbolt spells will
- * critically hit the target by 2% for 15 sec. Stacks up to {3} times."
- *
- * THE FIRST PROC HERE WHOSE RANK MOVES TWO NUMBERS, which is why it takes the
- * whole values row: the chance is index 0 and the stack cap is index 3, and
- * they scale together 20/1 .. 100/5. Deriving one from the other works today
- * and is exactly the arithmetic that goes wrong the day a rank changes.
+ * effect, which increases the damage done by your Cone of Cold spell to the
+ * target by {1}%, stacking up to {2} times."
  *
  * WHAT APPLIES IT AND WHAT BENEFITS ARE DIFFERENT SETS, and the tooltip says
- * so: any Frost damage spell applies it, and only Ice Lance and Frostbolt crit
- * more for it. Frostfire Bolt is in the first and not the second.
+ * so: any Frost damage spell applies it, and only Cone of Cold deals more for
+ * it. Frostfire Bolt is in the first and not the second.
  *
- * `WINTERS_CHILL_MAX_STACKS_INDEX` IS NAMED because an index into a values row
- * read wrong is the failure this project keeps meeting -- Arcane Mind's crit
- * clause at index 0 would have been a tenth of its value.
+ * ----------------------------------------------------------------------------
+ * `WINTERS_CHILL_MAX_STACKS_INDEX` WENT FROM 3 TO 2 AT CLIENT BUILD
+ * 1.60.1.70425, AND THAT IS THE WHOLE RISK IN THIS REDESIGN. The row was
+ * `[chance, critPerStack, duration, maxStacks]` and is `[chance, damagePercent,
+ * maxStacks]` -- one entry shorter -- so the old index reads PAST THE END and
+ * `values?.[3]` is `undefined`.
+ *
+ * WHICH WOULD NOT HAVE THROWN. The fallback below is 1, so the talent would
+ * have applied a debuff capped at ONE stack rather than five: a fifth of its
+ * value, reported with the right uptime, on a mechanism that otherwise works.
+ * **A row getting SHORTER is the one index change that cannot be caught by the
+ * value looking wrong**, because there is no value -- which is this project's
+ * `talentNumber`-returns-nothing failure wearing an array index. Every rank is
+ * pinned by a test.
+ *
+ * AND THE RANK NO LONGER MOVES TWO NUMBERS. It used to scale the chance 20..100
+ * AND the cap 1..5 together, which is why this reaction takes the whole row
+ * instead of one index; the cap is flat at 5 now. The row is still passed whole
+ * -- a rank that moves one number today is not a promise about the next patch,
+ * and this talent has already changed that answer once.
  * ============================================================================
  */
-const WINTERS_CHILL_MAX_STACKS_INDEX = 3;
+const WINTERS_CHILL_MAX_STACKS_INDEX = 2;
 
 export const wintersChill: TalentReactionBuilder = (chancePercent, values) => {
   /*

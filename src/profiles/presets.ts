@@ -834,9 +834,25 @@ const SHAMAN_ELEMENTAL_TALENTS: TalentAllocation = {
   call_of_flame: 3,
   elemental_focus: 1,
   elemental_alacrity: 3,
-  improved_fire_nova: 2,
+  /*
+   * TRIAL BY FIRE TAKES IMPROVED FIRE NOVA'S TWO POINTS, which is the same row
+   * and the same two clauses renamed -- so this is the spread surviving a
+   * rename rather than a choice being remade.
+   */
+  trial_by_fire: 2,
   eye_of_the_storm: 3,
-  call_of_thunder: 1,
+  /*
+   * AND CALL OF THUNDER'S POINT GOES TO THE NEW CAPSTONE. Call of Thunder was
+   * deleted at build 1.60.1.70425 and ELEMENTAL MASTERY took its place in the
+   * file -- a three minute cooldown taking half a second off Lightning Bolt and
+   * Lava Burst for fifteen seconds. The tree already spends 31 points below row
+   * six, so the capstone was one point away.
+   *
+   * A REPAIR RATHER THAN AN OPTIMISATION, and the distinction is worth keeping:
+   * nothing here has been measured yet. What it is NOT is a build that quietly
+   * lost six talents to a tree reshuffle.
+   */
+  elemental_mastery: 1,
   elemental_reach: 2,
   lightning_overload: 3,
   elemental_fury: 5,
@@ -856,7 +872,8 @@ const SHAMAN_ENHANCEMENT_TALENTS: TalentAllocation = {
   call_of_flame: 3,
   elemental_devastation: 3,
   elemental_focus: 1,
-  improved_fire_nova: 2,
+  // Trial by Fire is Improved Fire Nova renamed, same row and same two clauses.
+  trial_by_fire: 2,
   thundering_strikes: 5,
   ancestral_knowledge: 4,
   mental_dexterity: 3,
@@ -889,8 +906,20 @@ const MAGE_FROSTFIRE_TALENTS: TalentAllocation = {
   improved_scorch: 3,
   heating_up: 1,
   master_of_elements: 3,
-  critical_mass: 3,
-  fire_power: 4,
+  /*
+   * FIRE POWER'S LOST RANK PAYS FOR CRITICAL MASS'S NEW ONE, which is the
+   * tidiest thing a tree refresh has ever done to a spread: at client build
+   * 1.60.1.70425 Fire Power went 5 ranks to 3 and Critical Mass went 3 to 5,
+   * so the point this build could no longer spend on the first is a point it
+   * could not previously spend on the second.
+   *
+   * ASKING FOR A RANK THAT NO LONGER EXISTS DROPS THE WHOLE TALENT, not the
+   * surplus -- `legalAllocation` refuses the entry rather than clamping it, so
+   * `fire_power: 4` was worth ZERO rather than three ranks. This profile was
+   * running with no Fire Power at all.
+   */
+  critical_mass: 4,
+  fire_power: 3,
   elemental_precision: 5,
   ice_shards: 5,
   piercing_ice: 3,
@@ -933,7 +962,8 @@ const MAGE_ARCANE_TALENTS: TalentAllocation = {
   arcane_instability: 3,
   arcane_power: 1,
   // Fire, 11
-  wake_of_fire: 2,
+  // Improved Fire Blast is Wake of Fire renamed: same row, same live clause.
+  improved_fire_blast: 2,
   incineration: 3,
   ignite: 5,
   pyroblast: 1,
@@ -965,7 +995,8 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
   arcane_impact: 3,
   missile_barrage: 1,
   // Fire, 31
-  wake_of_fire: 1,
+  // Improved Fire Blast is Wake of Fire renamed: same row, same live clause.
+  improved_fire_blast: 1,
   incineration: 3,
   improved_fireball: 5,
   ignite: 5,
@@ -973,8 +1004,29 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
   improved_scorch: 3,
   heating_up: 1,
   master_of_elements: 3,
-  critical_mass: 3,
-  fire_power: 5,
+  /*
+   * ==========================================================================
+   * COMBUSTION NOW REQUIRES CRITICAL MASS 5/5, AND FIRE POWER PAYS FOR IT.
+   *
+   * At client build 1.60.1.70425 Critical Mass went 3 ranks to 5 and Fire Power
+   * went 5 to 3 -- and Combustion's prerequisite follows the rank count, so
+   * `critical_mass: 3` stopped being 3/3 and became 3/5. The capstone was
+   * therefore illegal on a build that had not changed.
+   *
+   * THE TWO MOVES CANCEL EXACTLY. Two ranks of Fire Power that no longer exist
+   * are the two ranks Critical Mass needs, so the Fire tree is still 31 and the
+   * spread still sums to 51 with nothing taken from another tree.
+   *
+   * WHAT IT COST BEFORE THE REPAIR WAS SEVEN TALENTS, not two. `fire_power: 5`
+   * and the illegal Combustion dropped the tree under its own tier gates, so
+   * Improved Scorch, Heating Up, Master of Elements and Critical Mass went with
+   * them -- 17 of 51 points. **A rank count moving is a cascade and not a
+   * clamp**, which is why `tools/probe_allocations.ts` prints `dropped` rather
+   * than a total.
+   * ==========================================================================
+   */
+  critical_mass: 5,
+  fire_power: 3,
   combustion: 1,
   // Frost, 4
   elemental_precision: 4,
@@ -1399,7 +1451,6 @@ const WARLOCK_AFFLICTION_TALENTS: TalentAllocation = {
   suppression: 4,
   amplify_curse: 1,
   improved_corruption: 5,
-  malediction: 5,
   improved_drains: 3,
   improved_bane_of_agony: 2,
   pandemic: 3,
@@ -1409,6 +1460,45 @@ const WARLOCK_AFFLICTION_TALENTS: TalentAllocation = {
   soul_siphon: 3,
   shadow_mastery: 5,
   wrack: 1,
+  /*
+   * ==========================================================================
+   * MALEDICTION'S FIVE POINTS BECOME BANE, AND THE PROFILE'S OWN OPENER IS WHAT
+   * CHOSE THAT -- not a measurement and not a preference.
+   *
+   * Malediction was deleted at client build 1.60.1.70425 and GRIM REACH took
+   * its slot at two ranks, so five points needed a home. Nothing live was left
+   * in Affliction: Grim Reach is `positioning`, Soul Harvest needs a kill, Fel
+   * Concentration is `castPushback`, and the fifth point of Suppression is one
+   * the OWNER moved out deliberately. Malediction was +% to every periodic
+   * effect on the project's most DoT-heavy build, so what replaced it replaces
+   * nothing -- that is the ruleset's change and not a hole to fill.
+   *
+   * WHAT POINTS AT BANE IS THIS PRESET'S `precombat`: the owner specified "2.5s
+   * before start casting Shadow Bolt", and Shadow Bolt DECLARES three seconds.
+   * `secondsBefore` is the cast time on the BUILD, so a 2.5 second lead says
+   * this character casts Shadow Bolt in 2.5 seconds -- and Bane at 5/5 is
+   * exactly 0.5 seconds off it. Nothing else in the Warlock's three trees
+   * touches that cast.
+   *
+   * SO THE BUILD HAD BEEN MISSING A TALENT THE OWNER'S OPENER ASSUMED, AND THE
+   * COMMENT BESIDE THAT OPENER SAID SO WITHOUT ANYBODY CHECKING. It reads "the
+   * declaration says 3.0 and BANE takes half a second off it" and is cited in
+   * CLAUDE.md as the sharpest evidence for how a lead is read -- on a build
+   * that spent no points in Destruction at all. **A comment explaining a number
+   * can be true of the ruleset and false of the profile it sits on**, and this
+   * one was describing the Firelock, which does take Bane 5/5.
+   *
+   * IT COST NOTHING AT THE PULL AND THE REPAIR IS STILL REAL. `runPrecombat`
+   * ages by the lead MINUS the cast time clamped at zero, so a 2.5 second lead
+   * on a 3.0 second cast already finished at t=0; what was wrong was the fight
+   * that followed, where every Shadow Bolt took three seconds instead of 2.5.
+   *
+   * UNMEASURED, AND SAID SO. This profile is not one of the six the owner asked
+   * to have optimised, so the five points went where the evidence pointed
+   * rather than where a measurement would put them.
+   * ==========================================================================
+   */
+  bane: 5,
   demonic_embrace: 5,
   demonic_aegis: 2,
   fel_vitality: 3,
@@ -1489,13 +1579,42 @@ const WARLOCK_DESTRUCTION_TALENTS: TalentAllocation = {
  * ----------------------------------------------------------------------------
  */
 const PRIEST_SHADOW_TALENTS: TalentAllocation = {
+  /*
+   * ==========================================================================
+   * THE DISCIPLINE THIRTEEN WERE REBUILT, because IMPROVED POWER WORD: SHIELD
+   * MOVED DOWN A ROW -- tier 5 to tier 10 at client build 1.60.1.70425 -- and
+   * this tree spends only seven points above it. So the talent became illegal
+   * and took Meditation, at the same tier, with it.
+   *
+   * MENTAL STRENGTH MOVED THE OTHER WAY in the same patch, tier 15 up to tier
+   * 5, which is what makes the repair a straight swap rather than a choice: the
+   * ten points row two now demands are exactly Twin Disciplines and Mental
+   * Strength, and Mental Strength is +% Intellect where the two talents it
+   * replaces are a SHIELD nothing attacks and a THREAT ruling.
+   *
+   * SO THE REFRESH HANDED THIS BUILD FIVE LIVE POINTS FOR FIVE DEAD ONES and
+   * the only thing it had to be told was which rows they sit in now. Meditation
+   * keeps its three -- `manaRegenBypass` is a real stat, and mana RETURN is
+   * explicitly not out of scope.
+   * ==========================================================================
+   */
   twin_disciplines: 5,
-  silent_resolve: 2,
-  improved_power_word_shield: 3,
+  mental_strength: 5,
   meditation: 3,
   twilight_focus: 3,
   shadow_focus: 5,
-  shadow_affinity: 3,
+  /*
+   * DARK INSPIRATION TAKES SHADOW AFFINITY'S THREE POINTS, and it is a live
+   * talent where that one was a `threat` ruling -- so this is the second trade
+   * of dead points for working ones in the same spread.
+   *
+   * IT IS TWO ROWS LOWER, tier 15 against tier 5, which the tier arithmetic
+   * absorbs: the Shadow tree spends 17 points above row three where it needs
+   * 15. Shadow Affinity's removal is what dropped Early Demise, Darkness and
+   * Shadowform in the first place, because three points vanishing from row one
+   * took the tree under three later gates at once.
+   */
+  dark_inspiration: 3,
   improved_shadow_word_pain: 2,
   shadow_reach: 2,
   improved_mind_blast: 5,

@@ -29,46 +29,11 @@
     5
    ]
   },
-  "elemental_warding": {
-   "name": "Elemental Warding",
-   "tree": "elemental",
-   "ranks": 3,
-   "text": "Reduces damage taken from Fire, Frost, and Nature effects by {0}%.",
-   "values": [
-    3,
-    7,
-    10
-   ]
-  },
-  "reverberation": {
-   "name": "Reverberation",
-   "tree": "elemental",
-   "ranks": 5,
-   "text": "Reduces the cooldown of your Shock spells by {0} sec.",
-   "values": [
-    0.2,
-    0.4,
-    0.6,
-    0.8,
-    1
-   ]
-  },
-  "call_of_flame": {
-   "name": "Call of Flame",
-   "tree": "elemental",
-   "ranks": 3,
-   "text": "Increases the damage done by your Fire Totems and by your Flame Shock, Fire Nova, and Lava Burst spells by {0}%.",
-   "values": [
-    5,
-    10,
-    15
-   ]
-  },
   "elemental_devastation": {
    "name": "Elemental Devastation",
    "tree": "elemental",
    "ranks": 3,
-   "text": "Your offensive spell critical strikes will increase your chance to get a critical strike with melee attacks by {0}% for {1} sec.",
+   "text": "Your Critical Strikes with direct damage spells increase your chance to get a Critical Strike with melee attacks by {0}% for {1} sec.",
    "values": [
     [
      3,
@@ -84,15 +49,18 @@
     ]
    ]
   },
-  "elemental_focus": {
-   "name": "Elemental Focus",
+  "reverberation": {
+   "name": "Reverberation",
    "tree": "elemental",
-   "ranks": 1,
-   "text": "Gives you a 10% chance to enter a Clearcasting state after casting any Fire, Frost, or Nature damage spell. The Clearcasting state reduces the mana cost of your next damage spell by 100%.",
+   "ranks": 5,
+   "text": "Reduces the cooldown of your Shock spells by {0} sec.",
    "values": [
-    10
-   ],
-   "note": "single rank; the 10 filled in by hand per this directory's README -- a single-rank talent has no {0} for the importer to match, so its values come back null. The text states TWO numbers, a 10 percent chance to enter Clearcasting and a 100 percent reduction on the next damage spell; the 100 is the aura's own costFraction of 1 and needs no per-rank number, so the CHANCE is what is stored -- the same shape as the Mage's Arcane Concentration, whose builder also takes the chance."
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1
+   ]
   },
   "elemental_alacrity": {
    "name": "Elemental Alacrity",
@@ -105,19 +73,62 @@
     0.5
    ]
   },
-  "improved_fire_nova": {
-   "name": "Improved Fire Nova",
+  "call_of_flame": {
+   "name": "Call of Flame",
+   "tree": "elemental",
+   "ranks": 3,
+   "text": "Increases the damage done by your Fire Totems and by your Flame Shock, Fire Nova, and Lava Burst spells by {0}%, as well as increases the duration of your Flame Shock spell by {1} sec.",
+   "values": [
+    [
+     5,
+     3
+    ],
+    [
+     10,
+     6
+    ],
+    [
+     15,
+     9
+    ]
+   ]
+  },
+  "elemental_focus": {
+   "name": "Elemental Focus",
+   "tree": "elemental",
+   "ranks": 1,
+   "text": "Gives you a 10% chance to enter a Clearcasting state after casting any Fire, Frost, or Nature damage spell. The Clearcasting state reduces the mana cost of your next damage spell by 100%.",
+   "values": [
+    10
+   ],
+   "note": "single rank; the 10 filled in by hand per this directory's README -- a single-rank talent has no {0} for the importer to match, so its values come back null. The text states TWO numbers, a 10 percent chance to enter Clearcasting and a 100 percent reduction on the next damage spell; the 100 is the aura's own costFraction of 1 and needs no per-rank number, so the CHANCE is what is stored -- the same shape as the Mage's Arcane Concentration, whose builder also takes the chance."
+  },
+  "elemental_warding": {
+   "name": "Elemental Warding",
+   "tree": "elemental",
+   "ranks": 3,
+   "text": "Reduces damage taken from Fire, Frost, and Nature effects by {0}%.",
+   "values": [
+    3,
+    7,
+    10
+   ]
+  },
+  "trial_by_fire": {
+   "name": "Trial by Fire",
    "tree": "elemental",
    "ranks": 2,
-   "text": "Increases the damage done by your Fire Nova spell by {0}% and reduces its cooldown by {1} sec.",
+   "text": "Increases the damage done by your Fire Nova spell by {0}% and reduces its cooldown by {1} sec, and increases the duration of your Magma Totem by {2} sec.",
    "values": [
     [
      10,
-     2
+     2,
+     10
     ],
     [
      20,
-     4
+     4,
+     20
     ]
    ]
   },
@@ -132,31 +143,37 @@
     70
    ]
   },
-  "call_of_thunder": {
-   "name": "Call of Thunder",
+  "earthbound": {
+   "name": "Earthbound",
    "tree": "elemental",
    "ranks": 1,
-   "text": "Increases the critical strike chance of your Lightning Bolt and Chain Lightning spells by 3%.",
-   "values": [
-    3
-   ],
-   "note": "single rank; the 3 filled in by hand per this directory's README -- a single-rank talent has no variable the calculator can identify from its own text, and the text states 3% outright"
+   "text": "Your Earthbind Totem Immobilizes nearby targets for 5 sec when cast.",
+   "values": null,
+   "note": "single rank"
   },
   "elemental_reach": {
    "name": "Elemental Reach",
    "tree": "elemental",
    "ranks": 2,
-   "text": "Increases the range of your Lightning Bolt, Chain Lightning, Fire Nova, and Lava Burst spells by {0} yards, and increases the range of your Flame Shock spell by {1} yards.",
+   "text": "Increases the range of your Lightning Bolt, Chain Lightning, Fire Nova, and Lava Burst spells by {0} yards and reduces the cooldown of Totemic Projection by {1} sec.",
    "values": [
     [
      3,
-     8
+     10
     ],
     [
      6,
-     15
+     20
     ]
    ]
+  },
+  "lava_burst": {
+   "name": "Lava Burst",
+   "tree": "elemental",
+   "ranks": 1,
+   "text": "You hurl molten lava at the target, dealing 113 to 145 Fire damage. If your Flame Shock is on the target, Lava Burst deals 20% increased damage.",
+   "values": null,
+   "note": "single rank"
   },
   "lightning_overload": {
    "name": "Lightning Overload",
@@ -168,14 +185,6 @@
     7,
     10
    ]
-  },
-  "earthbound": {
-   "name": "Earthbound",
-   "tree": "elemental",
-   "ranks": 1,
-   "text": "Your Earthbind Totem Immobilizes nearby targets for 5 sec when cast.",
-   "values": null,
-   "note": "single rank"
   },
   "elemental_fury": {
    "name": "Elemental Fury",
@@ -190,11 +199,11 @@
     100
    ]
   },
-  "lava_burst": {
-   "name": "Lava Burst",
+  "elemental_mastery": {
+   "name": "Elemental Mastery",
    "tree": "elemental",
    "ranks": 1,
-   "text": "You hurl molten lava at the target, dealing 150 to 192 Fire damage. If your Flame Shock is on the target, Lava Burst deals 20% increased damage.",
+   "text": "Gain mastery over Fire and Lightning, reducing the cast time of Lightning Bolt and Lava Burst by 0.5 sec, and removing the cooldown from Chain Lightning. Lasts 15 sec.",
    "values": null,
    "note": "single rank"
   },
@@ -473,41 +482,6 @@
     0.5
    ]
   },
-  "totemic_focus": {
-   "name": "Totemic Focus",
-   "tree": "restoration",
-   "ranks": 5,
-   "text": "Reduces the Mana cost of your totems and any spells that summon or move them by {0}%.",
-   "values": [
-    5,
-    10,
-    15,
-    20,
-    25
-   ]
-  },
-  "mindfulness": {
-   "name": "Mindfulness",
-   "tree": "restoration",
-   "ranks": 3,
-   "text": "Allows {0}% of your Mana regeneration to continue while casting.",
-   "values": [
-    17,
-    33,
-    50
-   ]
-  },
-  "natural_grace": {
-   "name": "Natural Grace",
-   "tree": "restoration",
-   "ranks": 3,
-   "text": "Reduces the threat generated by your spells by {0}%.",
-   "values": [
-    5,
-    10,
-    15
-   ]
-  },
   "tidal_focus": {
    "name": "Tidal Focus",
    "tree": "restoration",
@@ -534,6 +508,41 @@
      5,
      5
     ]
+   ]
+  },
+  "mindfulness": {
+   "name": "Mindfulness",
+   "tree": "restoration",
+   "ranks": 3,
+   "text": "Allows {0}% of your Mana regeneration to continue while casting.",
+   "values": [
+    17,
+    33,
+    50
+   ]
+  },
+  "natural_grace": {
+   "name": "Natural Grace",
+   "tree": "restoration",
+   "ranks": 3,
+   "text": "Reduces the threat generated by your spells by {0}%.",
+   "values": [
+    5,
+    10,
+    15
+   ]
+  },
+  "totemic_focus": {
+   "name": "Totemic Focus",
+   "tree": "restoration",
+   "ranks": 5,
+   "text": "Reduces the Mana cost of your totems and any spells that summon or move them by {0}%.",
+   "values": [
+    5,
+    10,
+    15,
+    20,
+    25
    ]
   },
   "improved_reincarnation": {
@@ -589,7 +598,7 @@
    "name": "Water Shield",
    "tree": "restoration",
    "ranks": 1,
-   "text": "The caster is surrounded by 3 globes of water. When a spell, melee, or ranged attack hits the caster or when one of the caster's healing spells gets a critical result, 2% of maximum mana is restored to the caster, expending one water globe. Only one globe will activate every few seconds. Lasts 10 min.\n\nOnly one Elemental Shield can be active on the Shaman at any one time.",
+   "text": "The caster is surrounded by 3 globes of water. When a spell, melee, or ranged attack hits the caster or when one of the caster's spells gets a critical result, 2% of maximum mana is restored to the caster, expending one water globe. Only one globe will activate every few seconds. Lasts 10 min.\n\nOnly one Elemental Shield can be active on the Shaman at any one time.",
    "values": null,
    "note": "single rank"
   },

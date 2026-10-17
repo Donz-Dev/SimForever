@@ -530,6 +530,51 @@ export function maelstromWeaponAura(reductionPercentPerStack: number): AuraDefin
  * break it from a distance.
  * ----------------------------------------------------------------------------
  */
+/**
+ * Elemental Mastery, the new Elemental capstone's window.
+ *
+ * ==============================================================================
+ * "Gain mastery over Fire and Lightning, reducing the cast time of Lightning
+ * Bolt and Lava Burst by 0.5 sec, and removing the cooldown from Chain
+ * Lightning. Lasts 15 sec." Three minute cooldown.
+ *
+ * A `castModifier` NAMING TWO ABILITIES, WITH NO `consumedByCast`. That absence
+ * is the whole shape: this is a DURATION effect, so every Lightning Bolt and
+ * Lava Burst inside the fifteen seconds is shortened rather than only the next
+ * one. Arcane Power already rests on the same distinction, and Heating Up is
+ * the counter-example -- "your NEXT Pyroblast" spends `all`.
+ *
+ * `castTimeReductionMs` AND NOT `castTimeFraction`, because the clause states a
+ * flat half second rather than a percentage. The two differ on a hasted caster:
+ * half a second off a 2.0s Lightning Bolt is 25%, and off a 1.5s one it is 33%.
+ *
+ * ------------------------------------------------------------------------------
+ * THE THIRD CLAUSE IS NOT HERE AND THE TALENT SAYS SO. "Removing the cooldown
+ * from Chain Lightning" needs an aura that SUSPENDS a cooldown while it is up,
+ * and nothing expresses that: `abilityCooldown` is resolved when the character
+ * is built, and a `CastModifier` carries cast time and cost. Declared as an
+ * `unmodelled` reason on the talent rather than silently absent.
+ *
+ * WHICH COSTS LESS THAN IT READS, on a single-target encounter: Chain Lightning
+ * is a multi-target spell and sits in no priority list here, so a cooldown it
+ * never reaches is a cooldown worth removing to nobody. That is a LIST cause
+ * rather than an engine one, and it is named on the talent so the day a
+ * multi-target encounter exists somebody re-reads it.
+ * ==============================================================================
+ */
+export const ELEMENTAL_MASTERY_DURATION_MS = seconds(15);
+export const ELEMENTAL_MASTERY_CAST_REDUCTION_MS = 500;
+
+export const ELEMENTAL_MASTERY_AURA: AuraDefinition = {
+  id: 'elemental_mastery',
+  name: 'Elemental Mastery',
+  durationMs: ELEMENTAL_MASTERY_DURATION_MS,
+  castModifier: {
+    abilityIds: ['lightning_bolt', 'lava_burst'],
+    castTimeReductionMs: ELEMENTAL_MASTERY_CAST_REDUCTION_MS,
+  },
+};
+
 export const CATALOG_AURAS: readonly AuraDefinition[] = [
   /*
    * ADDED BY THE AURA-CATALOGUE AUDIT, which found these reachable ONLY through

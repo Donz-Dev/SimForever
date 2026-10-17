@@ -24,6 +24,7 @@ import {
   PYROBLAST_DOT,
 } from '../auras/mage';
 import {
+  PLACEHOLDER_ARCANE_WRATH_SP_COEFFICIENT,
   ARCANE_BLAST_SP_COEFFICIENT,
   ARCANE_MISSILES_TICK_SP_COEFFICIENT,
   BLAST_WAVE_SP_COEFFICIENT,
@@ -351,29 +352,33 @@ export const FROSTFIRE_BOLT: Ability = {
 export const ICE_LANCE_DAMAGE = midpoint(133, 157);
 /*
  * ============================================================================
- * THREE, AND THE CLIENT NOW SAYS TWO. RECORDED RATHER THAN ACTED ON.
+ * "N% INCREASED" IS `1 + N/100`, AND GETTING THAT WRONG HAS NOW COST FIVE
+ * RULINGS ON ONE SPELL.
  *
- * `talentsforever.com` has moved Ice Lance's tooltip from "Deals 300% increased
- * damage to Frozen targets" to **200%**, and this project reads that phrasing as
- * the multiplier itself -- which is how this constant came to be 3 when the
- * tooltip said 300%, having been 4 before.
+ * "Deals 200% increased damage to Frozen targets" is **times THREE**: base,
+ * plus twice itself. The note twenty lines above has said so since the figure
+ * moved -- "increased BY 200% is base plus twice itself, so the multiplier is
+ * three" -- and a block was later added HERE claiming the opposite, that the
+ * project "reads that phrasing as the multiplier itself" and that the client's
+ * 200% therefore implied 2.
  *
- * SO THE CLIENT IMPLIES 2 AND THE OWNER HAS JUST SAID 1.5/3.5/3, FOR THE FOURTH
- * TIME ON THIS ONE SPELL: "Ice lance is 1.5/3.5/3, like I've stated many times
- * in a row." That names the COEFFICIENT, which is unchanged and is not this
- * constant -- the two are deliberately separate facts, pinned by identity,
- * because a patch has already moved one without the other.
+ * **IT WAS WRONG, AND IT CONTRADICTED A CORRECT NOTE IN THE SAME FILE.** Two
+ * statements about one number, twenty lines apart, disagreeing -- which is
+ * exactly the failure CLAUDE.md records about a pointer and the document it
+ * points at, met inside a single file. The wrong one was newer, so it read as
+ * the current thinking.
  *
- * NOTHING IS CHANGED HERE, on two grounds. The owner's own files are the highest
- * authority in this project and they have just spoken about this spell; and the
- * last ruling on it established that the divisor TRACKS this multiplier so the
- * product stays `1.5 / 3.5`, which a lone move to 2 would break in the direction
- * nobody asked for.
+ * SO THE CLIENT MOVING 300% TO 200% IS THE CLIENT CATCHING UP to the patch note
+ * that already took the multiplier 4 -> 3. There was never a disagreement
+ * between the sources; there was a disagreement between this file and itself.
  *
- * WHAT WOULD SETTLE IT is one sentence from the owner about the MULTIPLIER
- * rather than the coefficient. **This is a dated disagreement between two
- * sources and not a decision**, which is why it is written where the number is
- * rather than left for the tree refresh to apply silently.
+ * THE OWNER, FOR THE FIFTH TIME: "Ice lance was changed. It now says 200%
+ * increased damage. WHICH IS A 3x MULTIPLIER. So the damage is multiplied by 3
+ * against a frozen enemy. In order to compensate the spell power coefficient
+ * for Ice Lance is 1.5/3.5/3."
+ *
+ * BOTH NUMBERS WERE ALREADY RIGHT and nothing here changed. What changed is
+ * that the note which caused the question twice is gone.
  * ============================================================================
  */
 export const ICE_LANCE_FROZEN_MULTIPLIER = 3;
@@ -605,8 +610,25 @@ export const ARCANE_BLAST_BASE_MANA_FRACTION = 0.15;
  * checks. Folding it to a flat 236 would hide which half came from the client.
  * ============================================================================
  */
-export const ARCANE_BLAST_DAMAGE_REDUCTION = 0.4;
-export const ARCANE_BLAST_DAMAGE = midpoint(364, 424) * (1 - ARCANE_BLAST_DAMAGE_REDUCTION);
+/*
+ * ==============================================================================
+ * THE CLIENT STATES THIS NUMBER NOW, SO THE DERIVATION COMES OUT.
+ *
+ * It was `midpoint(364, 424) * (1 - 0.4)` -- the old capture's damage with a
+ * patch note's 40% cut applied on top, because the capture predated the
+ * redesign. At build 1.60.1.70425 the spellbook says **218 to 254** outright.
+ *
+ * AND THE DERIVATION WAS RIGHT TO WITHIN A POINT: 394 x 0.6 is 236.4 against a
+ * stated midpoint of 236. **A derived figure confirmed by a later capture is
+ * the best outcome available to one**, and it is only checkable because the
+ * derivation was written down rather than folded into a literal.
+ *
+ * `ARCANE_BLAST_DAMAGE_REDUCTION` IS DELETED WITH IT. A note's operation kept
+ * beside a figure the client now states is a second source of truth for one
+ * number, and the next refresh would have applied the cut twice.
+ * ==============================================================================
+ */
+export const ARCANE_BLAST_DAMAGE = midpoint(218, 254);
 export const ARCANE_BLAST_CAST_MS = seconds(1.5);
 export const ARCANE_BLAST_COEFFICIENT = ARCANE_BLAST_SP_COEFFICIENT;
 
@@ -749,7 +771,93 @@ export const EVOCATION: Ability = {
   },
 };
 
+/**
+ * Arcane Wrath: an instant Arcane nuke that scales with the Mage's mana POOL.
+ *
+ * ==============================================================================
+ * "Launches a projectile of pure Arcane energy at the enemy target, causing 406
+ * to 496 Arcane damage. This spell gains additional Spell Damage equal to 5% of
+ * your maximum Mana." 395 mana, instant, 6 second cooldown.
+ *
+ * NEW AT CLIENT BUILD 1.60.1.70425, granted by the Arcane tree's new row-3
+ * talent of the same name, which requires Arcane Blast.
+ *
+ * ------------------------------------------------------------------------------
+ * 406 TO 496 IS RANK 4 AND THE TALENT TOOLTIP SAYS 122 TO 146, WHICH IS RANK 1.
+ * The talent's own text is the figure a reader meets first and it is a quarter of
+ * the real spell -- **a talent tooltip shows rank 1 of the ability it grants**,
+ * which has cost this project two Hunter abilities (Sniper Shot at 160 against
+ * 295, Summon Hawk at 32 against 108, the second worth 144 DPS). The spellbook
+ * capture's own `rank` field is what settles it, and it reads 4.
+ *
+ * ------------------------------------------------------------------------------
+ * THE MANA CLAUSE IS A SPELL POWER ADDITION AND IS DEALT AS ONE. It is folded
+ * into `baseAmount` already multiplied by the coefficient, so the total comes
+ * out as `base + (spellPower + 5% of max mana) x coefficient` -- which is what
+ * "gains additional Spell Damage" says, and is the arithmetic a second
+ * `powerCoefficient` could not express.
+ *
+ * MAXIMUM AND NOT CURRENT, which the tooltip states and which matters: a Mage's
+ * mana falls through a fight, so reading the current pool would make the spell
+ * get weaker the longer it is cast -- a smaller number, no error, and exactly
+ * backwards for a spell whose point is that a big pool is damage.
+ *
+ * THE POOL IS SIZED ONCE from a stats snapshot, so this is stable across the
+ * fight for free; it is not re-read per cast because it cannot move.
+ *
+ * ------------------------------------------------------------------------------
+ * **ITS COEFFICIENT IS A FLAGGED PLACEHOLDER AND A QUESTION FOR THE OWNER.**
+ * The sheet predates the spell. See
+ * `PLACEHOLDER_ARCANE_WRATH_SP_COEFFICIENT`, which carries the argument for
+ * the borrowed figure and the reason both of this spell's clauses rest on it.
+ *
+ * AND NO PROFILE TAKES THE TALENT YET. The Arcane build spends its 35 points
+ * elsewhere, so this is declared so the talent can be MEASURED rather than
+ * because something casts it -- which is the opposite of the usual order here
+ * and is deliberate: an undeclared ability makes its talent unevaluable, and
+ * `hunterFiveFixes.test.ts` now fails on a `grantAbility` that resolves to
+ * nothing for exactly that reason.
+ * ==============================================================================
+ */
+export const ARCANE_WRATH_DAMAGE = midpoint(406, 496);
+export const ARCANE_WRATH_MANA = 395;
+export const ARCANE_WRATH_COOLDOWN_MS = seconds(6);
+/** "Additional Spell Damage equal to 5% of your maximum Mana." */
+export const ARCANE_WRATH_MANA_TO_SPELL_POWER = 0.05;
+export const ARCANE_WRATH_COEFFICIENT = PLACEHOLDER_ARCANE_WRATH_SP_COEFFICIENT;
+
+export const ARCANE_WRATH: Ability = {
+  id: 'arcane_wrath',
+  name: 'Arcane Wrath',
+  cost: { resource: 'mana', amount: ARCANE_WRATH_MANA },
+  cooldownMs: ARCANE_WRATH_COOLDOWN_MS,
+  attackTable: 'spell',
+  requiresTarget: true,
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    const fromMana =
+      (caster.resources.get('mana')?.maximum ?? 0) * ARCANE_WRATH_MANA_TO_SPELL_POWER;
+    dealDamage(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: 'arcane',
+      /*
+       * THE MANA SHARE ARRIVES HERE, ALREADY SCALED. `scaleByPower` adds
+       * `spellPower x powerCoefficient` to whatever this is, so putting
+       * `fromMana x coefficient` in the base makes the two pools add before the
+       * coefficient -- which is one multiplication of a combined pool, not two.
+       */
+      baseAmount: ARCANE_WRATH_DAMAGE + fromMana * ARCANE_WRATH_COEFFICIENT,
+      powerCoefficient: ARCANE_WRATH_COEFFICIENT,
+      attackTable: ability.attackTable,
+    });
+  },
+};
+
 export const MAGE_ABILITIES: readonly Ability[] = [
+  ARCANE_WRATH,
   FIREBALL,
   SCORCH,
   PYROBLAST,

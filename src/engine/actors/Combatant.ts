@@ -1,4 +1,4 @@
-import type { AbilityModifier } from '../combat/abilityModifiers';
+import type { AbilityModifier, PerTargetEffectDamage } from '../combat/abilityModifiers';
 import {
   AbilityModifiers,
   AttackTableModifiers,
@@ -344,6 +344,19 @@ export interface CombatantOptions {
    */
   readonly bleedingTargetModifiers?: AttackTableModifiers;
   /**
+   * Per-school damage scaled by a COUNT of this combatant's effects on the
+   * target, capped. Fire Power's "3% per your Fire effects on the target, up to
+   * 12%". See `PerTargetEffectDamage`.
+   *
+   * ----------------------------------------------------------------------------
+   * THE SECOND MODIFIER CONDITIONED ON THE DEFENDER, after
+   * `bleedingTargetModifiers` -- and it is a count where that one is a
+   * boolean. Kept apart from `schoolModifiers` for the same reason: folding a
+   * conditional bonus into the unconditional bucket loses the condition.
+   * ----------------------------------------------------------------------------
+   */
+  readonly schoolDamagePerTargetEffect?: ReadonlyMap<DamageSchool, PerTargetEffectDamage>;
+  /**
    * A permanent multiplier on every PERIODIC point of damage, on top of
    * `damageMultiplier`.
    *
@@ -465,6 +478,8 @@ export class Combatant {
   readonly attackTableModifiers: AttackTableModifiers;
   /** The same, counted only while the target bleeds. See the option. */
   readonly bleedingTargetModifiers: AttackTableModifiers;
+  /** Per-school damage scaled by effects on the target. See the option. */
+  readonly schoolDamagePerTargetEffect: ReadonlyMap<DamageSchool, PerTargetEffectDamage>;
   readonly baseDamageMultiplier: number;
   /** Multiplies periodic damage only. See the option. */
   readonly periodicDamageMultiplier: number;
@@ -631,6 +646,7 @@ export class Combatant {
     this.attackTableModifiers = options.attackTableModifiers ?? new AttackTableModifiers();
     this.bleedingTargetModifiers =
       options.bleedingTargetModifiers ?? new AttackTableModifiers();
+    this.schoolDamagePerTargetEffect = options.schoolDamagePerTargetEffect ?? new Map();
     this.baseDamageMultiplier = options.damageMultiplier ?? 1;
     this.periodicDamageMultiplier = options.periodicDamageMultiplier ?? 1;
     this.survivesLethalDamage = options.survivesLethalDamage ?? false;

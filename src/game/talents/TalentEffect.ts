@@ -414,6 +414,37 @@ export type TalentEffect =
     }
 
   /**
+   * Per-school damage scaled by a COUNT of the caster's effects on the target.
+   *
+   * ----------------------------------------------------------------------------
+   * FIRE POWER IS THE ONLY CALLER: "Increases the damage done by your Fire
+   * spells by {0}% per your Fire effects on the target, up to a maximum increase
+   * of {1}%. Effects which mix multiple schools of magic do not qualify."
+   *
+   * IT TAKES **TWO** VALUE INDICES, WHICH NOTHING ELSE IN THIS UNION DOES, and
+   * that is what the talent needs rather than a convenience: `valueIndex` is the
+   * per-effect figure and `capValueIndex` is the ceiling, and they are 3 and 12
+   * at rank 3. Expressing it as two separate effects would mean two entries that
+   * have to agree about which school and which aura list, which is the
+   * "one effect running on two conventions" shape Rip already paid for.
+   *
+   * `effectIds` IS DECLARED BY THE CONTENT and not derived from the auras -- an
+   * `AuraDefinition` carries no school, so "a Fire effect" cannot be read off
+   * one. See `PerTargetEffectDamage` for why, and `MAGE_FIRE_POWER_EFFECTS` for
+   * the list and what it leaves out.
+   * ----------------------------------------------------------------------------
+   */
+  | {
+      readonly kind: 'schoolDamagePerTargetEffect';
+      readonly schools: readonly DamageSchool[];
+      readonly effectIds: readonly string[];
+      /** The per-effect percentage. */
+      readonly valueIndex?: number;
+      /** The ceiling, in percentage points. A different index on the same row. */
+      readonly capValueIndex: number;
+    }
+
+  /**
    * Damage, crit chance or crit damage for an ATTACK TABLE.
    *
    * ----------------------------------------------------------------------

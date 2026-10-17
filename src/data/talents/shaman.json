@@ -32,12 +32,12 @@
      "row": 1,
      "col": 0,
      "ranks": 3,
-     "name": "Elemental Warding",
-     "icon": "spell_nature_spiritarmor",
+     "name": "Elemental Devastation",
+     "icon": "spell_fire_elementaldevastation",
      "tier": 5,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces damage taken from Fire, Frost, and Nature effects by 10%."
+     "description": "Your Critical Strikes with direct damage spells increase your chance to get a Critical Strike with melee attacks by 9% for 10 sec."
     },
     {
      "row": 1,
@@ -54,27 +54,27 @@
      "row": 1,
      "col": 2,
      "ranks": 3,
-     "name": "Call of Flame",
-     "icon": "spell_fire_immolation",
+     "name": "Elemental Alacrity",
+     "icon": "spell_lightning_lightningbolt01",
      "tier": 5,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases the damage done by your Fire Totems and by your Flame Shock, Fire Nova, and Lava Burst spells by 15%."
+     "description": "Reduces the cast time of your Lightning Bolt, Chain Lightning, and Lava Burst spells by 0.50 sec."
     },
     {
      "row": 1,
      "col": 3,
      "ranks": 3,
-     "name": "Elemental Devastation",
-     "icon": "spell_fire_elementaldevastation",
+     "name": "Call of Flame",
+     "icon": "spell_fire_immolation",
      "tier": 5,
      "requires": null,
      "requiresRanks": null,
-     "description": "Your offensive spell critical strikes will increase your chance to get a critical strike with melee attacks by 9% for 10 sec."
+     "description": "Increases the damage done by your Fire Totems and by your Flame Shock, Fire Nova, and Lava Burst spells by 15%, as well as increases the duration of your Flame Shock spell by 9 sec."
     },
     {
      "row": 2,
-     "col": 1,
+     "col": 0,
      "ranks": 1,
      "name": "Elemental Focus",
      "icon": "spell_shadow_manaburn",
@@ -85,25 +85,25 @@
     },
     {
      "row": 2,
-     "col": 2,
+     "col": 1,
      "ranks": 3,
-     "name": "Elemental Alacrity",
-     "icon": "spell_lightning_lightningbolt01",
+     "name": "Elemental Warding",
+     "icon": "spell_nature_spiritarmor",
      "tier": 10,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces the cast time of your Lightning Bolt, Chain Lightning, and Lava Burst spells by 0.50 sec."
+     "description": "Reduces damage taken from Fire, Frost, and Nature effects by 10%."
     },
     {
      "row": 3,
      "col": 0,
      "ranks": 2,
-     "name": "Improved Fire Nova",
+     "name": "Trial by Fire",
      "icon": "spell_fire_sealoffire",
      "tier": 15,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases the damage done by your Fire Nova spell by 20% and reduces its cooldown by 4 sec."
+     "description": "Increases the damage done by your Fire Nova spell by 20% and reduces its cooldown by 4 sec, and increases the duration of your Magma Totem by 20 sec."
     },
     {
      "row": 3,
@@ -118,14 +118,14 @@
     },
     {
      "row": 3,
-     "col": 2,
+     "col": 3,
      "ranks": 1,
-     "name": "Call of Thunder",
-     "icon": "spell_nature_callstorm",
+     "name": "Earthbound",
+     "icon": "spell_nature_stranglevines",
      "tier": 15,
-     "requires": "Elemental Alacrity",
-     "requiresRanks": 3,
-     "description": "Increases the critical strike chance of your Lightning Bolt and Chain Lightning spells by 3%."
+     "requires": null,
+     "requiresRanks": null,
+     "description": "Your Earthbind Totem Immobilizes nearby targets for 5 sec when cast."
     },
     {
      "row": 4,
@@ -136,29 +136,29 @@
      "tier": 20,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases the range of your Lightning Bolt, Chain Lightning, Fire Nova, and Lava Burst spells by 6 yards, and increases the range of your Flame Shock spell by 15 yards."
+     "description": "Increases the range of your Lightning Bolt, Chain Lightning, Fire Nova, and Lava Burst spells by 6 yards and reduces the cooldown of Totemic Projection by 20 sec."
     },
     {
      "row": 4,
      "col": 1,
+     "ranks": 1,
+     "name": "Lava Burst",
+     "icon": "spell_shaman_lavaburst",
+     "tier": 20,
+     "requires": null,
+     "requiresRanks": null,
+     "description": "You hurl molten lava at the target, dealing 113 to 145 Fire damage. If your Flame Shock is on the target, Lava Burst deals 20% increased damage."
+    },
+    {
+     "row": 4,
+     "col": 2,
      "ranks": 3,
      "name": "Lightning Overload",
      "icon": "spell_nature_lightningoverload",
      "tier": 20,
-     "requires": null,
-     "requiresRanks": null,
+     "requires": "Elemental Alacrity",
+     "requiresRanks": 3,
      "description": "Gives your Lightning Bolt and Chain Lightning spells a 10% chance to cast a second, similar spell on the same target at no additional cost that causes half damage and no threat."
-    },
-    {
-     "row": 4,
-     "col": 3,
-     "ranks": 1,
-     "name": "Earthbound",
-     "icon": "spell_nature_stranglevines",
-     "tier": 20,
-     "requires": null,
-     "requiresRanks": null,
-     "description": "Your Earthbind Totem Immobilizes nearby targets for 5 sec when cast."
     },
     {
      "row": 5,
@@ -167,20 +167,20 @@
      "name": "Elemental Fury",
      "icon": "spell_fire_volcano",
      "tier": 25,
-     "requires": "Call of Thunder",
-     "requiresRanks": 1,
+     "requires": "Lightning Overload",
+     "requiresRanks": 3,
      "description": "Increases the critical strike damage bonus of your Searing and Magma Totems and your Fire, Frost, and Nature spells by 100%."
     },
     {
      "row": 6,
      "col": 1,
      "ranks": 1,
-     "name": "Lava Burst",
-     "icon": "spell_shaman_lavaburst",
+     "name": "Elemental Mastery",
+     "icon": "spell_nature_wispheal",
      "tier": 30,
-     "requires": "Lightning Overload",
-     "requiresRanks": 3,
-     "description": "You hurl molten lava at the target, dealing 150 to 192 Fire damage. If your Flame Shock is on the target, Lava Burst deals 20% increased damage."
+     "requires": "Lava Burst",
+     "requiresRanks": 1,
+     "description": "Gain mastery over Fire and Lightning, reducing the cast time of Lightning Bolt and Lava Burst by 0.5 sec, and removing the cooldown from Chain Lightning. Lasts 15 sec."
     }
    ]
   },
@@ -407,12 +407,12 @@
      "row": 0,
      "col": 2,
      "ranks": 5,
-     "name": "Totemic Focus",
-     "icon": "spell_nature_moonglow",
+     "name": "Tidal Focus",
+     "icon": "spell_frost_manarecharge",
      "tier": 0,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces the Mana cost of your totems and any spells that summon or move them by 25%."
+     "description": "Reduces the Mana cost of your healing spells by 5% and improves your chance to hit by 5%."
     },
     {
      "row": 1,
@@ -440,12 +440,12 @@
      "row": 1,
      "col": 2,
      "ranks": 5,
-     "name": "Tidal Focus",
-     "icon": "spell_frost_manarecharge",
+     "name": "Totemic Focus",
+     "icon": "spell_nature_moonglow",
      "tier": 5,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces the Mana cost of your healing spells by 5% and improves your chance to hit by 5%."
+     "description": "Reduces the Mana cost of your totems and any spells that summon or move them by 25%."
     },
     {
      "row": 1,
@@ -489,7 +489,7 @@
      "tier": 10,
      "requires": null,
      "requiresRanks": null,
-     "description": "The caster is surrounded by 3 globes of water. When a spell, melee, or ranged attack hits the caster or when one of the caster's healing spells gets a critical result, 2% of maximum mana is restored to the caster, expending one water globe. Only one globe will activate every few seconds. Lasts 10 min.\n\nOnly one Elemental Shield can be active on the Shaman at any one time."
+     "description": "The caster is surrounded by 3 globes of water. When a spell, melee, or ranged attack hits the caster or when one of the caster's spells gets a critical result, 2% of maximum mana is restored to the caster, expending one water globe. Only one globe will activate every few seconds. Lasts 10 min.\n\nOnly one Elemental Shield can be active on the Shaman at any one time."
     },
     {
      "row": 3,

@@ -430,6 +430,64 @@ export function scaleByStacks(modifier: AbilityModifier, stacks: number): Abilit
  * this one, and `createPlayer` folds the equipped set's into the build's.
  * ------------------------------------------------------------------------------
  */
+/**
+ * A per-school damage bonus scaled by how many of the ATTACKER'S OWN effects
+ * are on the target, with a ceiling.
+ *
+ * ==============================================================================
+ * THE SIXTH MODIFIER SHAPE, AND THE SECOND THAT ASKS A QUESTION ABOUT SOMEBODY
+ * ELSE. `bleedingTargetModifiers` reads one BOOLEAN off the target -- is it
+ * bleeding -- and this reads a COUNT. Everything else about it is a
+ * `SchoolModifiers` entry: built once with the character, keyed by school.
+ *
+ * Fire Power is why: "Increases the damage done by your Fire spells by 3% per
+ * your Fire effects on the target, up to a maximum increase of 12%." Four
+ * separate things in that sentence have no home in the five scopes above --
+ * a SCHOOL, a COUNT, a CAP, and a count of auras on the DEFENDER.
+ *
+ * ------------------------------------------------------------------------------
+ * `effectIds` IS A NAMED LIST AND NOT A DERIVATION, which is Soul Siphon's
+ * arrangement and is deliberate. "A Fire effect" cannot be read off an aura: an
+ * `AuraDefinition` carries no school, because the school of a periodic effect is
+ * decided inside its own `onTick`, and a derivation that has to RUN the effect
+ * to answer is not a derivation -- the same argument `isBleed` already makes
+ * about "physical, periodic and ignoring armor".
+ *
+ * SO THE LIST CAN BE NARROWER THAN THE RULESET'S, AND SAYS SO WHERE IT IS
+ * DECLARED. Soul Siphon's does, for exactly this reason. **The failure mode is
+ * an effect the ruleset counts and the list does not**, which is a smaller
+ * number and no error -- so the content's own `unmodelled` entry names it
+ * rather than this field implying completeness.
+ *
+ * ------------------------------------------------------------------------------
+ * KEPT APART FROM `SchoolModifier.damageMultiplier` rather than folded into it,
+ * which is the rule `addWhileAura` states and this project has paid for twice:
+ * combining a conditional modifier into the unconditional bucket loses the
+ * condition, and a talent that pays a flat 12% all fight instead of 3% per
+ * effect is a bigger number and no error.
+ *
+ * AND THE CAP IS A PERCENTAGE RATHER THAN A COUNT, because the tooltip states
+ * one. `Math.min(count * percentPerEffect, maxPercent)` and not
+ * `Math.min(count, 4) * percentPerEffect`: the two agree at 3 and 12 and come
+ * apart the moment a rank makes the cap an inexact multiple -- rank 1 is 1%
+ * with a cap of 4, which is FOUR effects, where rank 2's 2% and 8 is also four.
+ * They agree at every current rank, which is precisely when writing the wrong
+ * one is free.
+ * ==============================================================================
+ */
+export interface PerTargetEffectDamage {
+  /** Percentage points per qualifying effect on the target. 3 is "+3% each". */
+  readonly percentPerEffect: number;
+  /** The most it can reach, in percentage points, however many are up. */
+  readonly maxPercent: number;
+  /**
+   * The aura ids that COUNT, on the target. Named rather than derived -- see
+   * the class note -- and the content that declares them owns whether the list
+   * is complete.
+   */
+  readonly effectIds: readonly string[];
+}
+
 export class SchoolModifiers {
   private readonly bySchool = new Map<DamageSchool, SchoolModifier>();
 

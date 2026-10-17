@@ -132,28 +132,13 @@
    "name": "Bloodthrill",
    "tree": "arms",
    "ranks": 5,
-   "text": "Your Main Hand melee attacks against enemies afflicted by your Rend have a {0}% chance to allow the use of your Overpower ability on the target. Lasts {1} sec.",
+   "text": "Grants your Main Hand melee attacks against enemies afflicted by your Rend a {0}% chance to allow an activation of Overpower.",
    "values": [
-    [
-     4,
-     6
-    ],
-    [
-     8,
-     6
-    ],
-    [
-     12,
-     6
-    ],
-    [
-     16,
-     6
-    ],
-    [
-     20,
-     6
-    ]
+    4,
+    8,
+    12,
+    16,
+    20
    ]
   },
   "sweeping_strikes": {

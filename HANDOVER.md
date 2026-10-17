@@ -7327,7 +7327,7 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Firelock | Warlock | 5/11/35 | 885.5 | | Shadow Priest | Priest | 13/3/35 | 774.7 |
 | Hawk Melee | Hunter | 16/11/24 | 883.0 | | Enh Shaman | Shaman | 17/34/0 | 750.7 |
 | Seal Twist Ret | Paladin | 15/0/36 | 876.4 | | Pure Hemo | Rogue | 21/8/22 | 723.5 |
-| Arcane Mage | Mage | 35/11/5 | 866.8 | | SM/DS | Warlock | 40/11/0 | 722.4 |
+| Arcane Mage | Mage | 35/11/5 | 866.8 | | SM/DS | Warlock | 35/11/5 | 722.4 |
 | Frostfire Mage | Mage | 0/29/22 | 863.3 | | Rupture Rogue | Rogue | 12/8/31 | 719.4 |
 | BM Hunter | Hunter | 31/20/0 | 856.2 | | Venom Rogue | Rogue | 37/12/2 | 718.9 |
 | 2H Arms | Warrior | 39/10/2 | 849.7 | | Ele Shaman | Shaman | 32/6/13 | 671.1 |

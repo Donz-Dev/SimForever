@@ -364,6 +364,44 @@ export const ARCANE_MISSILES_TICK_SP_COEFFICIENT = 0.286;
  * ===========================================================================
  */
 export const ARCANE_BLAST_SP_COEFFICIENT = 1.5 / 3.5;
+/*
+ * ==============================================================================
+ * ARCANE WRATH IS NOT IN THE OWNER'S SHEET, SO THIS IS A FLAGGED PLACEHOLDER
+ * AND A QUESTION FOR THEM.
+ *
+ * The spell was added at client build 1.60.1.70425 and `WoWSimWorksheet.xlsx`
+ * predates it, so there is no row to transcribe -- and the old `castTime / 3.5`
+ * rule that would have derived one is DELETED, because three of its four cases
+ * were Classic's and the owner has since stated the numbers.
+ *
+ * ------------------------------------------------------------------------------
+ * 0.429 IS FIRE BLAST'S, AND THE ARGUMENT FOR BORROWING IT IS STRUCTURAL RATHER
+ * THAN A GUESS AT THE MAGNITUDE.
+ *
+ *   Fire Blast     417 to 489 damage, INSTANT, 8 second cooldown   -> 0.429
+ *   Arcane Wrath   406 to 496 damage, INSTANT, 6 second cooldown   -> ?
+ *
+ * The same damage band, the same cast time and a comparable cooldown, and 0.429
+ * is `1.5 / 3.5` -- the figure the sheet gives EVERY Mage instant it contains
+ * (Fire Blast and Scorch both). **So the sheet's own pattern for this shape of
+ * spell is one number, and this spell is that shape.**
+ *
+ * IT KEEPS THE `PLACEHOLDER_` NAME ANYWAY, which is the whole rule: a borrowed
+ * number that looks sourced is the failure this project exists to avoid, and a
+ * well-argued borrow is still a borrow. Nothing can read it without seeing that.
+ *
+ * ------------------------------------------------------------------------------
+ * AND THE SECOND CLAUSE IS BLOCKED ON THE SAME NUMBER, which is why this is
+ * worth asking rather than leaving. "This spell gains additional Spell Damage
+ * equal to 5% of your maximum Mana" is a POWER addition, so it is multiplied by
+ * the coefficient before it reaches the damage -- on a Mage with roughly 5,000
+ * mana that is 250 spell power, worth about 107 damage at 0.429 and nothing at
+ * all at 0. **Both halves of the spell rest on one figure the owner has not
+ * stated**, and a wrong coefficient is wrong twice here where it is wrong once
+ * everywhere else.
+ * ==============================================================================
+ */
+export const PLACEHOLDER_ARCANE_WRATH_SP_COEFFICIENT = 0.429;
 export const FIRE_BLAST_SP_COEFFICIENT = 0.429;
 export const SCORCH_SP_COEFFICIENT = 0.429;
 /**

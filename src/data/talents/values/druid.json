@@ -477,7 +477,7 @@
    "name": "Leader of the Pack",
    "tree": "feral_combat",
    "ranks": 1,
-   "text": "While in Cat Form, Bear Form, or Dire Bear Form, the Leader of the Pack increases the critical strike chance of all party members within 45 yards by 3%, exclusive with Moonkin Aura.",
+   "text": "While in Cat Form, Bear Form, or Dire Bear Form, the Leader of the Pack increases the melee and ranged Critical Strike chance of all party or raid members within 45 yards by 3%.",
    "values": null,
    "note": "single rank"
   },
@@ -568,7 +568,7 @@
    "name": "Furor",
    "tree": "restoration",
    "ranks": 5,
-   "text": "Gives you a {0}% chance to gain {1} Rage when shapeshifting into Bear Form or Dire Bear Form. Shapeshifting into Cat Form restores {2}% of the Energy you had when last in Cat Form, plus {3} Energy per sec spent outside Cat Form, up to {4} Energy.\n\nBear Form and Dire Bear Form forfeit this Energy and halt its restoration while active.",
+   "text": "Gives you a {0}% chance to gain {1} Rage when shapeshifting into Bear Form or Dire Bear Form. Shapeshifting into Cat Form restores {2}% of the Energy you had when last in Cat Form, plus {3} Energy per second spent outside Bear Form or Dire Bear Form, up to {4} Energy.",
    "values": [
     [
      20,

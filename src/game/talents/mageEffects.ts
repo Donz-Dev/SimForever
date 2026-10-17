@@ -1,6 +1,6 @@
 import type { TalentEffects } from './TalentEffect';
 import { ALL_ABILITIES } from '../../engine';
-import { FROZEN_UNMODELLED } from '../auras/mage';
+import { FROZEN_UNMODELLED, MAGE_FIRE_POWER_EFFECTS } from '../auras/mage';
 
 /**
  * What each Mage talent does, as data.
@@ -169,6 +169,21 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   missile_barrage: [{ kind: 'reaction', reactionId: 'missile_barrage' }],
 
+  /*
+   * ==========================================================================
+   * ARCANE WRATH, NEW AT CLIENT BUILD 1.60.1.70425 and the Arcane tree's row-3
+   * addition. It grants a spell and nothing else, so one effect covers it.
+   *
+   * ITS SECOND CLAUSE IS THE ABILITY'S OWN and is implemented there rather than
+   * here: "This spell gains additional Spell Damage equal to 5% of your maximum
+   * Mana" is a scaling rule belonging to one spell, which is the shape every
+   * Paladin seal already uses when it asks `spellPowerAgainst` inside its own
+   * `onCast`. A talent effect could not express it -- `SchoolModifier`'s spell
+   * power is per SCHOOL and would reach every Arcane spell the Mage owns.
+   * ==========================================================================
+   */
+  arcane_wrath: [{ kind: 'grantAbility', abilityId: 'arcane_wrath' }],
+
   presence_of_mind: [{ kind: 'grantAbility', abilityId: 'presence_of_mind' }],
 
   arcane_mind: [
@@ -192,11 +207,26 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   // --- Fire ----------------------------------------------------------------
 
-  wake_of_fire: [
+  /*
+   * ==========================================================================
+   * IMPROVED FIRE BLAST REPLACES WAKE OF FIRE, AND IT IS THE SAME LIVE CLAUSE.
+   *
+   * "Reduces the cooldown of your Fire Blast spell by {0} sec and increases its
+   * range by {1} yards." Wake of Fire reduced the same cooldown on the same
+   * ability and carried a killing-blow rider that needed a kill; this carries a
+   * RANGE rider instead, which is `positioning`.
+   *
+   * SO THE REPLACEMENT IS A STRICT IMPROVEMENT FOR THIS SIMULATOR: the dead
+   * clause went from one that EXPIRES if the encounter ever allows a kill to
+   * one that is ruled out permanently.
+   * ==========================================================================
+   */
+  improved_fire_blast: [
     { kind: 'abilityCooldown', abilityId: 'fire_blast', unit: 'seconds' },
     {
       kind: 'unmodelled',
-      reason: 'Its killing-blow crit bonus needs a kill, and the target survives every fight.',
+      scope: 'positioning',
+      reason: 'Its range clause is positioning. The cooldown reduction APPLIES.',
     },
   ],
 
@@ -287,7 +317,45 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   blast_wave: [{ kind: 'grantAbility', abilityId: 'blast_wave' }],
 
-  fire_power: [{ kind: 'schoolDamage', schools: ['fire'] }],
+  /*
+   * ==========================================================================
+   * FIRE POWER IS A RAMP NOW, AND IT USED TO BE A FLAT MULTIPLIER.
+   *
+   * "Increases the damage done by your Fire spells by {0}% per your Fire effects
+   * on the target, up to a maximum increase of {1}%. Effects which mix multiple
+   * schools of magic do not qualify." Three ranks at build 1.60.1.70425, where
+   * it was five ranks of a flat 2% each.
+   *
+   * THE OLD DECLARATION WAS `schoolDamage` READING INDEX 0, so at 3/3 it applied
+   * a flat **3%** where the talent grants three per effect up to twelve. That is
+   * between a quarter and a third of the talent, on a row whose index 0 is still
+   * the right number for the wrong operation -- **the plausible wrong reading is
+   * the per-effect figure applied once**, which is why this needed a new effect
+   * kind rather than a different index.
+   *
+   * AND BOTH FIRE BUILDS CARRY THREE POINTS HERE. The Fire Mage's 3/3 comes out
+   * of Combustion's new Critical Mass 5/5 prerequisite and the Frostfire Mage's
+   * out of a rank the client deleted, so this talent was repaired in the spread
+   * and reimplemented here in the same round.
+   *
+   * ------------------------------------------------------------------------------
+   * TWO INDICES OFF ONE ROW: index 0 is the per-effect percentage and index 1 is
+   * the cap, `[[1,4],[2,8],[3,12]]`. The cap index is REQUIRED on the effect
+   * rather than defaulted -- see the `schoolDamagePerTargetEffect` case in
+   * `talentBuild` for why a default would quietly quarter the talent.
+   *
+   * WHICH EFFECTS COUNT IS `MAGE_FIRE_POWER_EFFECTS`, declared beside the auras
+   * it names, including what it leaves out and why.
+   * ==========================================================================
+   */
+  fire_power: [
+    {
+      kind: 'schoolDamagePerTargetEffect',
+      schools: ['fire'],
+      effectIds: MAGE_FIRE_POWER_EFFECTS,
+      capValueIndex: 1,
+    },
+  ],
 
   /*
    * TWO EFFECTS, because the ability only switches the aura on. The reaction is
@@ -508,7 +576,39 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * both, which nothing else in this tree does. The reaction takes the whole
    * row for that reason.
    */
-  winter_s_chill: [{ kind: 'reaction', reactionId: 'winter_s_chill' }],
+  /*
+   * ==========================================================================
+   * WINTER'S CHILL IS A CONE OF COLD AMPLIFIER NOW, which makes it partly
+   * modelled where it used to be fully: the proc, the debuff and the per-stack
+   * damage all work, and the spell they point at is not declared.
+   *
+   * "Gives your Frost damage spells a {0}% chance to apply the Winter's Chill
+   * effect, which increases the damage done by your Cone of Cold spell to the
+   * target by {1}%, stacking up to {2} times." It was a crit bonus on Ice Lance
+   * and Frostbolt before client build 1.60.1.70425.
+   *
+   * SO THE REDESIGN POINTED IT AT THE SAME BLOCKER ITS NEIGHBOUR ALREADY HAS.
+   * Improved Cone of Cold two rows up carries exactly this reason, and the two
+   * now expire together -- one declaration of Cone of Cold makes both live.
+   *
+   * THE MECHANISM IS KEPT RATHER THAN RETIRED, and that is deliberate: it is
+   * the only caller of `attackerAbilityModifiers`, so deleting it would leave
+   * an engine field no content reaches -- which this project has twice found
+   * reads exactly like a field that sometimes fires. See `wintersChillAura`.
+   * ==========================================================================
+   */
+  winter_s_chill: [
+    { kind: 'reaction', reactionId: 'winter_s_chill' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'Cone of Cold, which IS captured -- 328 to 358 Frost, 555 mana, ' +
+        'instant, 10 second cooldown -- and is not declared, so the spell this ' +
+        'debuff amplifies cannot be cast. The proc chance, the five-stack ' +
+        'debuff and its 40% all apply. Improved Cone of Cold carries the same ' +
+        'blocker, and no Mage profile takes either talent.',
+    },
+  ],
 
   ice_barrier: [
     { kind: 'unmodelled', reason: `An absorb -- ${NOT_ATTACKED} And ${NO_PUSHBACK}` },

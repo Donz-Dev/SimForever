@@ -407,7 +407,7 @@
    "name": "Trueshot Aura",
    "tree": "marksmanship",
    "ranks": 1,
-   "text": "Increases the Ranged Attack Power of party members within 45 yds by 30.",
+   "text": "Increases the Ranged Attack Power of party or raid members within 45 yds by 30.",
    "values": null,
    "note": "single rank"
   },
@@ -428,17 +428,17 @@
    "name": "Rapid Recuperation",
    "tree": "marksmanship",
    "ranks": 2,
-   "text": "Hitting a target with your Serpent Sting ability grants you {0}% and consuming Rapid Killing grants you {1}% of your Mana regeneration while casting for the next {2} sec.",
+   "text": "Afflicting a target with Serpent Sting allows {0}% of your Mana Regeneration to continue while casting for {1} sec, increased to {2}% when Rapid Killing is consumed.",
    "values": [
     [
      25,
-     50,
-     15
+     15,
+     50
     ],
     [
      50,
-     100,
-     15
+     15,
+     100
     ]
    ]
   },
@@ -622,7 +622,7 @@
    "name": "Predator's Edge",
    "tree": "survival",
    "ranks": 5,
-   "text": "Increases your melee critical strike damage by {0}% and your Off Hand weapon damage by {1}%.",
+   "text": "Increases your melee ability critical strike damage by {0}% and your Off Hand weapon damage by {1}%.",
    "values": [
     [
      6,
@@ -658,17 +658,17 @@
    "name": "Resourcefulness",
    "tree": "survival",
    "ranks": 2,
-   "text": "Reduces the mana cost of your Trap abilities and melee abilities by {0}%. In addition, your critical strikes have a {1}% chance to allow {2}% of your Mana regeneration to continue while casting for {3} sec.",
+   "text": "Reduces the Mana cost of your Trap and melee abilities by {0}%, and grants your melee and ranged ability Critical Strikes a {1}% chance to allow {2}% of your Mana Regeneration to continue while casting for {3} sec.",
    "values": [
     [
      30,
-     30,
+     50,
      50,
      30
     ],
     [
      60,
-     60,
+     100,
      50,
      30
     ]
@@ -678,7 +678,7 @@
    "name": "Expose Prey",
    "tree": "survival",
    "ranks": 2,
-   "text": "Your attacks against targets with Hunter's Mark have a {0}% chance to activate your Mongoose Bite for {1} sec.",
+   "text": "Grants your melee and ranged attacks against enemies afflicted by Hunter's Mark a {0}% chance to allow an activation of Mongoose Bite. Lasts {1} sec.",
    "values": [
     [
      5,

@@ -7,7 +7,13 @@ import type {
   StatName,
   WeaponProfile,
 } from '../../engine';
-import type { AttackTableKind, AuraDefinition, WeaponSlot } from '../../engine';
+import type {
+  AttackTableKind,
+  AuraDefinition,
+  DamageSchool,
+  PerTargetEffectDamage,
+  WeaponSlot,
+} from '../../engine';
 import {
   ALL_ABILITIES,
   AbilityModifiers,
@@ -250,6 +256,11 @@ export interface TalentBuild {
    */
   readonly bleedingTargetModifiers: AttackTableModifiers;
   /**
+   * Per-school damage scaled by a COUNT of the caster's effects on the target.
+   * Fire Power, and nothing else. See `Combatant.schoolDamagePerTargetEffect`.
+   */
+  readonly schoolDamagePerTargetEffect: ReadonlyMap<DamageSchool, PerTargetEffectDamage>;
+  /**
    * A multiplier on PERIODIC damage only, from Genesis and its relatives.
    *
    * Separate from `damageMultiplier` because it selects on the kind of damage
@@ -326,6 +337,7 @@ const EMPTY: TalentBuild = {
   schoolModifiers: new SchoolModifiers(),
   attackTableModifiers: new AttackTableModifiers(),
   bleedingTargetModifiers: new AttackTableModifiers(),
+  schoolDamagePerTargetEffect: new Map(),
   periodicDamageMultiplier: 1,
   pet: NO_PET_MODIFIERS,
   reactions: [],
@@ -612,6 +624,7 @@ export function talentBuild(
   const schoolModifiers = new SchoolModifiers();
   const attackTableModifiers = new AttackTableModifiers();
   const bleedingTargetModifiers = new AttackTableModifiers();
+  const schoolDamagePerTargetEffect = new Map<DamageSchool, PerTargetEffectDamage>();
   let periodicDamageBonusPct = 0;
 
   // What the talents do to a PET. Percentages while they accumulate; turned
@@ -1088,6 +1101,38 @@ export function talentBuild(
             schoolModifiers.add(school, { damageMultiplier: 1 + value / 100 });
           }
           break;
+        /*
+         * ======================================================================
+         * FIRE POWER: a per-school bonus scaled by effects on the TARGET.
+         *
+         * TWO NUMBERS OFF ONE ROW, which is why this reads `capValueIndex` as
+         * well as the ordinary `value`. `talentNumbers` is the whole row and
+         * `value` is already the entry `valueIndex` selected, so the cap is
+         * fetched separately -- and the cap index is REQUIRED on the effect
+         * rather than defaulted, because a default would silently make the
+         * ceiling whatever the per-effect figure is: 3% capped at 3% is a
+         * quarter of the talent, reported as fully modelled.
+         * ======================================================================
+         */
+        case 'schoolDamagePerTargetEffect': {
+          const row = talentNumbers(characterClass, talentId, rank);
+          const cap = row?.[effect.capValueIndex];
+          /*
+           * NO FALLBACK FOR THE CAP. A missing ceiling read as 0 would switch
+           * the talent off and read as 100 would uncap it, and both are plausible
+           * -- so a row that cannot supply it skips the effect, which is what
+           * `talentBuild` already does for a missing `value`.
+           */
+          if (cap === undefined) break;
+          for (const school of effect.schools) {
+            schoolDamagePerTargetEffect.set(school, {
+              percentPerEffect: value,
+              maxPercent: cap,
+              effectIds: effect.effectIds,
+            });
+          }
+          break;
+        }
         case 'schoolCrit':
           for (const school of effect.schools) {
             schoolModifiers.add(school, { critBonus: value });
@@ -1243,6 +1288,7 @@ export function talentBuild(
     schoolModifiers,
     attackTableModifiers,
     bleedingTargetModifiers,
+    schoolDamagePerTargetEffect,
     periodicDamageMultiplier: 1 + periodicDamageBonusPct / 100,
     pet: {
       damageMultiplier: 1 + petDamagePct / 100,

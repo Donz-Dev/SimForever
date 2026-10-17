@@ -189,8 +189,14 @@ that keeps its name, row, ranks and prerequisite and changes only its NUMBERS
 has no structural tell at all -- and in that one refresh those included Mental
 Strength 15% to 10%, Critical Mass 6% to 10% over five ranks instead of three,
 Lava Burst's damage cut by a quarter, and **Ice Lance's frozen bonus from 300%
-to 200%**, which is the constant this file has already recorded three separate
-owner rulings about.
+to 200%** -- which is the client CATCHING UP to a patch note already applied,
+and not a change to make. "N% increased" is `1 + N/100`, so 200% is times
+THREE: the multiplier was already 3 and the coefficient already `1.5/3.5/3`.
+**Reading it as "the multiplier is the percentage" cost two unnecessary
+questions on a spell the owner has now ruled on FIVE times**, because that wrong
+reading got written into a comment that contradicted a correct one in the same
+file. The correct note is in `abilities/mage.ts`; do not re-derive this from the
+tooltip.
 
 **THE UI HAS HAD FOUR PASSES NOW, AND THIS LINE HAS ALREADY BEEN WRONG ONCE
 BY THE SAME ARITHMETIC.** It once read "THE UI HAS NOT HAD A PASS OF ITS OWN

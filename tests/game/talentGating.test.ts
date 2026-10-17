@@ -39,13 +39,32 @@ const TALENT_GRANTED = [
  * nothing in the results explains -- which is exactly what happened when every
  * warrior had all three 31-point capstones at once.
  */
+/*
+ * ============================================================================
+ * PIERCING HOWL LEFT THIS LIST, AND ITS ABILITY NEVER EXISTED.
+ *
+ * It declared `grantAbility: 'piercing_howl'` with `implemented: false` here --
+ * a row for an ability no class defines -- NEXT TO an `unmodelled` entry on the
+ * talent reading "NOT TO BE IMPLEMENTED: the project owner classes snares as
+ * non-combat". So the talent made two contradictory claims and this list
+ * recorded the dead one.
+ *
+ * THE `grantAbility` GUARD IN `hunterFiveFixes.test.ts` IS WHAT FOUND IT, on
+ * its first run, beside the Arcane Wrath case it was written for. The
+ * declaration is gone, so the row is too.
+ *
+ * CONCUSSION BLOW STAYS AT `implemented: false`, which looks like the same
+ * thing and is not: the owner ruled it "still not to be implemented. No note
+ * about this needs to be made on the GUI", so its grant with no caveat is the
+ * decision rather than a leftover, and the guard exempts it by name.
+ * ============================================================================
+ */
 const ABILITY_GRANTING_TALENTS = [
   { talent: 'mortal_strike', ability: 'mortal_strike', tree: 'arms', implemented: true },
   { talent: 'spearing_strike', ability: 'spearing_strike', tree: 'arms', implemented: true },
   { talent: 'sweeping_strikes', ability: 'sweeping_strikes', tree: 'arms', implemented: true },
   { talent: 'bloodthirst', ability: 'bloodthirst', tree: 'fury', implemented: true },
   { talent: 'death_wish', ability: 'death_wish', tree: 'fury', implemented: true },
-  { talent: 'piercing_howl', ability: 'piercing_howl', tree: 'fury', implemented: false },
   { talent: 'shield_slam', ability: 'shield_slam', tree: 'protection', implemented: true },
   { talent: 'last_stand', ability: 'last_stand', tree: 'protection', implemented: true },
   { talent: 'concussion_blow', ability: 'concussion_blow', tree: 'protection', implemented: false },
