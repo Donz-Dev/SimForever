@@ -34,12 +34,23 @@ import { characterAtCombatStart } from '../../src/simulator';
  *
  *   the 350% is a WEAPON FRACTION and the 343 is outside it
  *   the gate is the PROWL AURA, which is Ambush's arrangement
- *   Ravage SPENDS the window, which is the one clause neither source states
+ *   Ravage ENDS the window, which is the one clause neither source stated
  *
- * THE THIRD IS A READING AND IS LABELLED ONE. Ambush is the precedent: a
- * stealth opener that removes the aura gating it. Without it a Cat holding Prowl
- * could Ravage again whenever the energy allowed -- a repeatable 350% weapon
- * damage instant, which is a very large invented number.
+ * THE THIRD WAS A READING AND IS NOW THE OWNER'S OWN RULE, ANSWERED WIDER THAN
+ * IT WAS ASKED. It was flagged here as a reading -- Ambush being the precedent,
+ * and the alternative being a repeatable 350% instant -- and the answer was not
+ * about Ravage at all: "**Almost every completed cast or attack breaks
+ * stealth/prowl**, and for the purposes of this simulation the only thing that
+ * doesn't is a rogue's premeditation."
+ *
+ * SO NOTHING IN `RAVAGE.onCast` DOES IT ANY MORE and the behaviour below is
+ * unchanged. `PROWL` declares `brokenByAction` and the engine ends it; the
+ * tests here still assert the OUTCOME, which is the half that was ever the
+ * claim. `tests/engine/stealthBreaking.test.ts` is the rule's own guard.
+ *
+ * **THE FLAG IS WHAT GOT IT RULED ON**, which is this project's own rule about
+ * a labelled interpretation -- and the caveat came off the same day the answer
+ * landed, because a caveat outlives the doubt it describes.
  * ==============================================================================
  */
 
@@ -131,15 +142,17 @@ describe('Ravage', () => {
     expect(SHRED.cost).toEqual(RAVAGE.cost);
   });
 
-  it('cannot be cast without the window, and SPENDS it when it is', () => {
+  it('cannot be cast without the window, and ENDS it when it is', () => {
     /*
      * ========================================================================
-     * BOTH HALVES, because the gate and the spend are different claims and
-     * only one of them is stated anywhere.
+     * BOTH HALVES, because the gate and the break come from different places
+     * and are enforced by different code.
      *
-     * The gate is the owner's and the capture's: "must be prowling". The SPEND
-     * is a reading of an unstated clause, following Ambush -- and it is the one
-     * that matters most, because without it this is a repeatable 350% instant.
+     * The gate is the owner's and the capture's -- "must be prowling" -- and
+     * lives in this ability's `canCast`. The BREAK is the owner's general rule
+     * and lives in the engine, so this half is Ravage inheriting it rather than
+     * declaring it: a claim about the JOIN, which is the thing that goes
+     * missing when a rule moves out of an ability and into a field.
      * ========================================================================
      */
     /*
@@ -172,7 +185,7 @@ describe('Ravage', () => {
     expect(castAbility(simulation, player, RAVAGE, target).ok, 'with the window').toBe(true);
     expect(player.auras.has('prowl'), 'and the window is gone').toBe(false);
 
-    // So a second one is refused, which is the whole point of the spend --
+    // So a second one is refused, which is the whole point of the break --
     // and refused for the WINDOW rather than for the energy, which is why the
     // pool is topped up first.
     simulation.grantResource(player, 'energy', 100, { id: 'test', name: 'Test' });
@@ -197,9 +210,9 @@ describe('Ravage', () => {
     expect(player.resources.get('comboPoints')?.current ?? 0).toBeGreaterThan(0);
   });
 
-  it('is in no priority list, which follows from the spend', () => {
+  it('is in no priority list, which follows from the rule', () => {
     /*
-     * NOT A SEPARATE DECISION: once Prowl is spent nothing re-applies it, so an
+     * NOT A SEPARATE DECISION: once Prowl is broken nothing re-applies it, so an
      * entry could never fire. The owner asked for Ravage as an OPENER, and
      * `measure_profiles.ts` would report a list entry for it as NEVER FIRED --
      * which is the loudest flag that tool has, pointed at something correct.

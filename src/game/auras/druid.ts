@@ -123,6 +123,14 @@ export const PARTY_CRIT_AURA_PERCENT = 3;
  * ============================================================================
  */
 export const PROWL: AuraDefinition = {
+  /*
+   * ANY COMPLETED CAST OR ATTACK ENDS IT, on the owner's general rule -- which
+   * is what settled the one clause neither source stated about Ravage. The
+   * question raised was whether Ravage SPENDS the window; the answer is wider
+   * and is not Ravage's at all: everything does. See
+   * `AuraDefinition.brokenByAction`.
+   */
+  brokenByAction: true,
   id: 'prowl',
   name: 'Prowl',
   // Lasts until cancelled, which is what every stance, form and Stealth here

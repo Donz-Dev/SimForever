@@ -325,19 +325,25 @@ export const SHRED: Ability = {
  * coefficient and `WoWSimWorksheet.xlsx` has no Ravage row.
  *
  * ----------------------------------------------------------------------------
- * IT CONSUMES PROWL, AND THAT IS THE ONE THING NEITHER SOURCE STATES.
+ * IT BREAKS PROWL, AND THAT WAS THE ONE CLAUSE NEITHER SOURCE STATED -- UNTIL
+ * THE OWNER ANSWERED IT WIDER THAN THE QUESTION.
  *
- * Ambush is the precedent and it is exact: a stealth opener that removes the
- * aura gating it, so the window is spent rather than reusable. Without it a Cat
- * holding Prowl would be able to Ravage again whenever the energy allowed --
- * 350% weapon damage on a 60-energy instant, repeatable, which is a very large
- * invented number. **So this is the conservative reading of an unstated
- * clause**, recorded here as a reading rather than as a fact, and it is cheap
- * to flip: one line in `onCast`.
+ * The reading taken was that Ravage SPENDS the window, following Ambush, with
+ * `caster.auras.remove(PROWL)` in this `onCast` and a note calling it a
+ * reading. The answer: "**Almost every completed cast or attack breaks
+ * stealth/prowl**, and for the purposes of this simulation the only thing that
+ * doesn't is a rogue's premeditation."
  *
- * NOT IN THE CAT'S PRIORITY LIST, and that follows from the above rather than
- * being a separate decision: once Prowl is spent nothing re-applies it, so an
- * entry could never fire. The owner asked for it as an OPENER.
+ * SO THE LINE IS GONE AND NOTHING HERE DOES IT. `PROWL` declares
+ * `brokenByAction` and the engine ends it on any completed cast or attack --
+ * which is a stronger statement than the reading was, and a safer one: the
+ * reading made Ravage's own code responsible for a rule that applies to
+ * everything, and the next ability to touch Prowl would have had to remember.
+ *
+ * NOT IN THE CAT'S PRIORITY LIST, which follows from the rule rather than being
+ * a separate decision: the first swing after the pull breaks Prowl and nothing
+ * re-applies it, so an entry could never fire. The owner asked for it as an
+ * OPENER.
  * ============================================================================
  */
 export const PROWL_ABILITY: Ability = {
@@ -369,9 +375,6 @@ export const RAVAGE: Ability = {
   canCast: ({ caster }) => caster.auras.has(PROWL.id),
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
-    // Spent, not merely required: see the note above on why this follows
-    // Ambush and why the alternative is a repeatable 350% instant.
-    caster.auras.remove(simulation, PROWL.id);
     const result = dealDamage(simulation, {
       source: caster,
       target,

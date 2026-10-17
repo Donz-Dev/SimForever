@@ -168,6 +168,29 @@ export interface Ability {
   readonly refundsCostOnMiss?: boolean;
 
   /**
+   * Using this ENDS the auras a completed cast or attack breaks. Default true.
+   *
+   * ============================================================================
+   * DERIVED, NOT DECLARED, which is the shape `refundsCostOnMiss` above already
+   * uses and for the same reason: a new ability gets the rule for free and the
+   * one that forgot would be the exception. The ruleset owner stated it that
+   * way too -- "**almost** every completed cast or attack breaks stealth/prowl,
+   * and for the purposes of this simulation the only thing that doesn't is a
+   * rogue's premeditation."
+   *
+   * SO THERE IS EXACTLY ONE `false` IN THE PROJECT and a test asserts that,
+   * because an opt-out list is the thing that grows quietly: a second ability
+   * that stopped breaking stealth would hand a Rogue a free extra Ambush and
+   * leave no zero anywhere to notice.
+   *
+   * IT IS NOT "this ability is free" OR "off the global cooldown" -- those are
+   * separate fields and Premeditation happens to be both. What this says is
+   * narrower: the USE does not count as the action that ends a stealth window.
+   * ============================================================================
+   */
+  readonly breaksActionAuras?: boolean;
+
+  /**
    * The stance aura id this ability PUTS the caster in, if it is a stance
    * change.
    *

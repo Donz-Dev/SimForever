@@ -27,10 +27,10 @@ import {
  * STEALTH, AND IT IS A GATE ON AMBUSH AND NOTHING ELSE.
  *
  * Being stealthed is out of scope and stays out: there is no detection, no
- * break-on-damage, no movement, and nothing in this engine has a position for
- * any of it to matter to. What the ruleset owner has ruled IN is the one
- * consequence that changes a damage profile -- "we don't need stealth to
- * properly function, it just needs to enable Ambush."
+ * movement, and nothing in this engine has a position for any of it to matter
+ * to. What the ruleset owner has ruled IN is the one consequence that changes a
+ * damage profile -- "we don't need stealth to properly function, it just needs
+ * to enable Ambush."
  *
  * SO THIS IS THE SAME SHAPE CUTTHROAT ALREADY HAS, and deliberately the same
  * id-as-gate pattern: an aura Ambush reads in `canCast`. Two routes to the same
@@ -38,22 +38,44 @@ import {
  * why Ambush checks for EITHER rather than being given a second condition.
  *
  * ----------------------------------------------------------------------------
+ * AND THE SECOND THING RULED IN IS THAT IT **ENDS**, WHICH THIS NOTE USED TO
+ * SAY IT DID NOT. It read "there is no break-on-damage", true on the day and
+ * since answered: "Almost every completed cast or attack breaks stealth/prowl,
+ * and for the purposes of this simulation the only thing that doesn't is a
+ * rogue's premeditation." `brokenByAction` below is that, and it is the whole
+ * of it -- taking damage still does nothing, because nothing attacks a Rogue
+ * here, so the rule is about the Rogue's OWN actions and not about the fight's.
+ *
+ * IT IS STILL NOT A STEALTH SYSTEM. There is one aura with one gate and one
+ * way to lose it; what changed is that losing it is now the engine's rule
+ * rather than a line inside Ambush.
+ *
+ * ----------------------------------------------------------------------------
  * ONE DURATION FOR BOTH ROUTES, AND THE SOURCE ONLY STATES IT FOR VANISH.
  * "Entering an improved stealth mode for 10 sec" is Vanish's own line. Plain
  * Stealth at the pull has no stated duration at all -- it lasts until something
- * breaks it, and nothing here models anything that would.
+ * breaks it, and what breaks it is now `brokenByAction` above.
  *
  * The opener reuses Vanish's ten seconds rather than being given an invented
- * number or an unbounded one, and THE CHOICE IS NOT LOAD-BEARING: the list
- * spends the opening window inside the first two global cooldowns, so ten
- * seconds and forever behave identically. It is named once so there is a single
- * place to change if the owner states a figure for plain Stealth.
+ * number or an unbounded one, and THE CHOICE IS LESS LOAD-BEARING THAN IT WAS
+ * RATHER THAN MORE: the duration was only ever reached by a window nothing
+ * spent, and the owner's rule means the FIRST action takes it -- a cast or a
+ * swing, well inside ten seconds on every build. It is named once so there is a
+ * single place to change if the owner states a figure for plain Stealth.
  * ----------------------------------------------------------------------------
  * ============================================================================
  */
 export const STEALTH_DURATION_MS = seconds(10);
 
 export const STEALTH: AuraDefinition = {
+  /*
+   * ANY COMPLETED CAST OR ATTACK ENDS IT, which is the owner's general rule and
+   * replaces Ambush removing this by hand: "almost every completed cast or
+   * attack breaks stealth/prowl, and for the purposes of this simulation the
+   * only thing that doesn't is a rogue's premeditation." See
+   * `AuraDefinition.brokenByAction`.
+   */
+  brokenByAction: true,
   id: 'stealth',
   name: 'Stealth',
   durationMs: STEALTH_DURATION_MS,

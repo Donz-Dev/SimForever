@@ -620,6 +620,37 @@ export interface AuraDefinition {
    * ----------------------------------------------------------------------------
    */
   readonly resourceRegenMultiplier?: Partial<Record<ResourceType, number>>;
+  /**
+   * A completed cast or attack ENDS this aura.
+   *
+   * ============================================================================
+   * THE RULESET OWNER'S RULE, STATED GENERALLY: "Almost every completed cast or
+   * attack breaks stealth/prowl, and for the purposes of this simulation the
+   * only thing that doesn't is a rogue's premeditation."
+   *
+   * SO IT IS AN ENGINE RULE WITH ONE DECLARED EXCEPTION, which is the only
+   * shape that survives: the alternative is every ability removing the aura in
+   * its own `onCast`, and this project has written down three times what
+   * happens then -- the one that forgets is silently wrong, and a stealth
+   * window that outlives the attack that should have ended it is a bigger
+   * number and no error. See `Ability.breaksActionAuras`.
+   *
+   * ----------------------------------------------------------------------------
+   * TWO AURAS CARRY IT AND NEITHER IS A PROC. `stealth` and `prowl` are the
+   * states the ruleset says an action ends. **CUTTHROAT DELIBERATELY DOES
+   * NOT**, though it gates the same Ambush: it is a ten-second window the
+   * owner ruled IS Ambush's stealth requirement, and it is spent by the Ambush
+   * rather than broken by any swing that happens to land first. Tagging it
+   * would quietly delete most of the talent.
+   *
+   * WHAT COUNTS AS AN ACTION IS THE ENGINE'S ANSWER AND IT IS TWO THINGS: a
+   * cast that COMPLETED -- `runCast`, so a channel's first tick counts and an
+   * interrupted cast does not -- and a SWING, including one replaced by an
+   * on-next-swing ability. A proc's own damage is not a third: whatever
+   * triggered it was already one of the two.
+   * ============================================================================
+   */
+  readonly brokenByAction?: boolean;
   readonly periodic?: PeriodicEffect;
   /**
    * The ruleset counts this aura as a BLEED.

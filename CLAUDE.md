@@ -286,7 +286,7 @@ together told someone their build was missing features that were never coming.
 | `crowdControl` | stuns, fears, roots, snares, silences, incapacitates, disorients, disarms, **and removing any of them** | 37 |
 | `threat` | threat, which is not tracked. Defensive Stance's +30% and Defiance are dropped, not deferred | 13 |
 | `healing` | healing THROUGHPUT. **Mana RETURN is NOT out of scope** — it changes a damage profile's sustain, so it is a live gap and gets no `scope` | 37 |
-| `stealth` | being stealthed, detecting it, and the openers requiring it — Ambush, Garrote, Cheap Shot. **NOT an in-combat proc that REMOVES a stealth requirement**, which is what Cutthroat is | 6 |
+| `stealth` | being stealthed, detecting it, and the openers requiring it — Ambush, Garrote, Cheap Shot. **NOT an in-combat proc that REMOVES a stealth requirement**, which is what Cutthroat is. **NOR an action BREAKING it**, which is now an engine rule | 6 |
 | `castPushback` | avoiding, resisting or reducing the interruption or DELAY of a cast or channel from damage taken. **NOT an interrupt the TARGET suffers** — Earth Shock's school lockout is about the enemy casting and is inert for a different reason | 7 |
 | `totemEntities` | a totem that BUFFS or HEALS on its own. **NOT a totem that deals DAMAGE**, which Searing Totem proved is expressible as a debuff that ticks | 4 |
 | `dispel` | removing a poison, disease, curse or magic effect, **and RESISTING a dispel**, which is the same concept from the other side. **NOT removing crowd control**, which `crowdControl` covers in its own words | 2 |
@@ -353,6 +353,21 @@ effect is deliberately kept out of the live-gap list and shown apart in the Tale
 panel -- so tagging something that DOES work, or that has since become
 expressible, deletes it from the one list that gets re-read. An ordinary
 `unmodelled` reason is counted and re-read; a scoped one is filed as answered.
+
+**AND THE STEALTH-BREAKING RULING IS THE FIRST WIDENING THAT CLOSED NONE OF
+THEM, WHICH IS WORTH RECORDING AS AN ANSWER RATHER THAN AS A NON-EVENT.** The
+rule below made an action end a stealth window, so the six entries were re-read
+on this file's own instruction -- and all six survive, for three different
+reasons: **detection** is three of them (Master of Deception, Heightened Senses,
+Improved Distract's second clause), **a stealth OPENER this project does not
+declare** is two (Garrote and Cheap Shot, named by Opportunity and Initiative
+beside clauses that DO apply), and Camouflage is the odd one -- it reduces "your
+speed penalty from your Stealth ability and its cooldown", and there is no
+Stealth ABILITY here at all: the window is an opening aura, so there is no
+cooldown to reduce and the penalty is positioning.
+**SO "CHECK THE SCOPE TAGS WHEN A RULING WIDENS SOMETHING" PAID BY RETURNING
+SIX NOs.** The check cost one read and the alternative is the Improved Ambush
+failure below, which went a whole release.
 
 It has now cost three Rogue talents at once. **Improved Ambush, Initiative and
 Opportunity's Ambush clause** all carried `scope: 'stealth'` with a reason saying
@@ -1421,6 +1436,60 @@ something that comes and goes.
   though that is true at the same moments: resting a ruleset reading on a field
   the engine happens to clear one line earlier survives until somebody reorders
   two statements.
+- **A COMPLETED CAST OR ATTACK BREAKS STEALTH AND PROWL, AND THAT IS AN ENGINE
+  RULE WITH EXACTLY ONE DECLARED EXCEPTION.** The owner's words and their only
+  exception in one sentence: "Almost every completed cast or attack breaks
+  stealth/prowl, and for the purposes of this simulation the only thing that
+  doesn't is a rogue's premeditation." `AuraDefinition.brokenByAction` on the
+  two states, `Ability.breaksActionAuras` as the opt-out, and
+  `AuraCollection.breakOnAction` called from `runCast` and from `swing`.
+  **DERIVED, NOT DECLARED**, which is `refundsCostOnMiss`' shape and is what the
+  word "almost" asks for: a new ability gets the rule for free and the one that
+  forgot would be the exception. It REPLACED Ambush and Ravage each removing the
+  aura in their own `onCast` -- and the Ravage line was flagged in the source as
+  a READING of an unstated clause, which is what got it ruled on. **The answer
+  came back wider than the question**: not Ravage's rule, everything's.
+  **CUTTHROAT DELIBERATELY DOES NOT CARRY IT**, though it gates the same Ambush.
+  The owner ruled its proc IS the stealth requirement, so it is a ten-second
+  PROC WINDOW spent by the Ambush rather than a state an action ends -- and a
+  Rogue reaches 60 energy in only 30 of 207 windows as it is, so tagging it
+  would quietly delete most of three talents. Ambush's `if`/`else` is gone with
+  it: one window is now spent by the ability and the other ended by the engine,
+  so with both up both go.
+  **TWO WAYS TO HALF-WIRE IT WERE WRITTEN, AND THE FULL SUITE PASSED ON BOTH.**
+  3,709 tests green on a rule that was inert for most characters and
+  self-defeating for the rest:
+
+  | | |
+  | --- | --- |
+  | below `runCast`'s early return | a character with no cast reaction leaves by another path, so the rule would have applied to Rogues and Druids with a talent and to nobody else -- the `resourceRegenMultiplier` failure exactly |
+  | after `onCast` instead of before | **Vanish and Prowl do nothing but apply one**, so it removed the window each had just opened: the whole of both abilities |
+
+  **THE SECOND IS NOT FIXED WITH MORE OPT-OUTS**, which is the tempting repair
+  and would have grown the exception list from one to three to cover a mistake
+  in an ordering. **The rule is about what was up BEFORE the action**: breaking
+  first says that exactly, and whatever the action establishes is newer than the
+  action. Neither Ambush nor Ravage reads the aura in `onCast` -- the gate is
+  `canCast`, which `checkCast` has already passed.
+  **AND A MISS STILL BREAKS IT**, because the attack happened and whether it
+  connected is the combat table's business. The swing call sits before the
+  on-next-swing early return too, so a queued Heroic Strike counts.
+  **WHAT IT COST IS THE VANISH-AMBUSH PAIR, BY ABOUT ONE AMBUSH A FIGHT.**
+  Vanish is off the global cooldown, so the actor is left FREE and
+  `nextDecisionTime` returns `now + ROTATION_POLL_MS` -- which is the documented
+  Charge problem, and in that 100ms gap a swing can take the window the Vanish
+  just opened. Rupture's Ambushes go **4.2 to 3.4** a fight and Hemo Dagger's
+  **2.7 to 2.2**, for **-6.6 +/- 5.4** and **-9.0 +/- 9.1**; the harness calls
+  both `noise` and the uses column is what says they are not. **The list
+  recovers most of it** -- 0.8 of 4.2 Ambushes is 3.3% of Rupture's damage,
+  about 23 DPS, and the energy goes to Hemorrhage instead. **Whether a Rogue
+  should be able to chain Vanish into Ambush without a swing intervening is a
+  question for the owner**, because the 100ms poll is a property of this
+  simulation rather than of the ruleset.
+  **THE CAT AND PURE HEMO ARE BIT-IDENTICAL ACROSS THE CHANGE**, 894.1 and
+  712.5 to the decimal, which is the containment check: Ravage ends Prowl by a
+  new route to the same outcome, and a Pure Hemo rogue's opening window was
+  never spent by anything.
 - **A channel is a cast that ticks, and nothing else about it is new.**
   `channelTicks` runs `onCast` that many times inside `castTimeMs`, the LAST tick
   where a plain cast's single effect already lands — so a one-tick channel and a

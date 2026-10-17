@@ -234,6 +234,19 @@ function swing(
   const target = context.defaultTargetFor(attacker);
   if (!target) return;
 
+  /*
+   * A SWING BREAKS STEALTH AND PROWL, which is the other half of the owner's
+   * rule -- "almost every completed cast or attack". Here rather than beside
+   * the `dealDamage` below, so the ON-NEXT-SWING path gets it too: an attack
+   * that arrives as a Heroic Strike is still an attack, and that branch returns
+   * before the swing's own damage.
+   *
+   * AND A MISS STILL BREAKS IT. The attack happened; whether it connected is
+   * the combat table's business, and a stealth window surviving a missed swing
+   * would be a bigger number and no error.
+   */
+  attacker.auras.breakOnAction(context);
+
   // An on-next-swing ability replaces this swing entirely. It was paid for and
   // armed when it was cast, so all that is left is to run its effect. The swing
   // timer is untouched either way, which is what makes these abilities free
