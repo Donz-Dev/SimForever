@@ -1200,32 +1200,37 @@ describe('what is left, which is the claim this deep dive makes', () => {
 
       /*
        * ========================================================================
-       * ELEMENTAL WARDING IS IN *BOTH* BUILDS NOW, and both times it arrived as
-       * a BUILD change rather than an engine one.
+       * ELEMENTAL WARDING IS OUT OF THE ENHANCEMENT BUILD AGAIN, AND THAT IS
+       * THIS ASSERTION DOING ITS JOB RATHER THAN NEEDING A REPAIR.
        *
        * It joined Enhancement at client build 1.60.1.70170, when the Elemental
        * Fury/Alacrity swap put Elemental Fury out of reach of that build's
-       * nineteen Elemental points. It joined ELEMENTAL with the owner's
-       * respecification to 32/6/13, which spends three of its tier-one points
-       * here where the old 38/13/0 spent five on Convection.
+       * nineteen Elemental points, and this test is what recorded the three
+       * points it cost. The optimisation round that read the record SPENT them:
+       * Warding's three plus Improved Ghost Wolf's and Spirit Weapons' are
+       * **Reverberation 5/5** now, worth +25.24 on the finished build.
        *
-       * IT IS A GENUINE LIVE GAP AND NOT A CENSUS ARTEFACT, unlike Elemental
-       * Weapons beside it: "reduces Fire, Frost and Nature damage TAKEN", and
-       * neither Shaman profile faces a target that deals any. That is the
-       * ENCOUNTER cause -- it expires if the encounter changes, not if the engine
-       * does -- and `damageTakenBySchool` lives on an aura rather than on a
-       * talent effect, which is the declaration it would need.
+       * SO THE ENHANCEMENT ROW IS `elemental_weapons` ALONE, which is a CENSUS
+       * ARTEFACT rather than a gap: its reason has said "APPLIES" in capitals
+       * since it was written -- `reactionsForClass` reads its rank off the
+       * allocation and builds the Windfury proc with it -- and the census counts
+       * non-unmodelled EFFECT ROWS, of which that talent has none.
        *
-       * SO THE ELEMENTAL BUILD NOW SPENDS THREE POINTS ON NOTHING MEASURABLE,
-       * which is the owner's call and is written down here rather than quietly
-       * absorbed -- it is the kind of thing a figure cannot show, because a
-       * talent that does nothing costs nothing and reports nothing.
+       * IT STAYS IN THE ELEMENTAL ROW. That build spends three tier-one points
+       * on Warding under the owner's 32/6/13 respecification, and it is a
+       * genuine live gap of the ENCOUNTER kind: "reduces Fire, Frost and Nature
+       * damage TAKEN", and neither Shaman profile faces a target that deals any.
+       * It expires if the encounter changes, not if the engine does.
+       *
+       * ------------------------------------------------------------------------
+       * AND THE TWO ROWS NOW DIFFER FOR TWO DIFFERENT REASONS, which is worth
+       * saying because they read alike: Enhancement's entry is a talent that
+       * WORKS and the census cannot see, and Elemental's is a talent that does
+       * nothing and the census reports correctly.
        * ========================================================================
        */
       expect(gaps, preset).toEqual(
-        preset === 'shaman_enhancement'
-          ? ['elemental_warding', 'elemental_weapons']
-          : ['elemental_warding'],
+        preset === 'shaman_enhancement' ? ['elemental_weapons'] : ['elemental_warding'],
       );
     }
   });

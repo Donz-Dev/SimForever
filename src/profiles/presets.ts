@@ -873,23 +873,89 @@ const SHAMAN_ELEMENTAL_TALENTS: TalentAllocation = {
   tidal_focus: 5, totemic_focus: 4,
 };
 
+/*
+ * ============================================================================
+ * FIVE DEAD POINTS BECAME REVERBERATION 5/5, worth **+16.19 +/- 3.61** paired
+ * over 3000 iterations. 17/34/0 -> **19/32/0**, and Enhancement is still the
+ * majority tree.
+ *
+ * WHAT CAME OUT, AND ALL THREE WERE RULED OUT RATHER THAN MERELY SMALL:
+ *
+ *   elemental_warding 3    reduces Fire, Frost and Nature damage TAKEN, and
+ *                          this profile sets `targetAttacks: false`
+ *   improved_ghost_wolf 1  `scope: 'positioning'` -- a travel form
+ *   spirit_weapons 1       `scope: 'threat'` -- an unquantified parry chance
+ *                          plus two threat clauses
+ *
+ * WHAT IT BUYS IS A SHOCK CHARGE. All three shocks share one `cooldownGroup`,
+ * so 1.0 second off takes the group from 6.0s to 5.0s -- 12 charges in a 60
+ * second fight where there were 10 -- and the build was already spending 9.1 of
+ * the 10 (5.90 Earth Shocks plus 3.22 Flame Shocks). Flame Shock is
+ * duration-bound at 21 seconds, so the extra charges all go to Earth Shock.
+ *
+ * ----------------------------------------------------------------------------
+ * THE TIER ARITHMETIC IS WHY THESE THREE DESTINATIONS AND NOT OTHERS, and it
+ * bounds the search in both trees at once.
+ *
+ * ELEMENTAL's seventeen sat exactly on `trial_by_fire`'s tier-15 gate -- 5 + 6 +
+ * 4 below it is 15 -- so Elemental Warding's three could not LEAVE the tree
+ * without stranding Fire Nova's cooldown reduction. They could move DOWN a row,
+ * which is what makes Reverberation reachable and Restoration's Tidal Focus not.
+ *
+ * ENHANCEMENT held every gate with slack -- 17 below tier 15 where 15 is wanted,
+ * 33 below tier 30 where 30 is wanted -- so at most THREE points could leave it
+ * and at most TWO of those from rows 0-2. `mental_dexterity` 3 and
+ * `mental_quickness` 2 are locked by `requiresRanks` on Flurry and on the
+ * capstone.
+ *
+ * ----------------------------------------------------------------------------
+ * EVERY OTHER DESTINATION WAS MEASURED AND THREE OF THEM ARE WORTH EXACTLY
+ * NOTHING, which is a statement about the tree rather than a gap in the search:
+ *
+ *   convection 3           **IDENTICAL FIGHTS.** 10% off the shocks and the
+ *                          bolt, on a build ending the fight with 1,984 mana of
+ *                          headroom. The containment check that this build is
+ *                          NOT mana-bound, which `docs/handoff/shaman.md` still
+ *                          says it is
+ *   elemental_alacrity 3   **IDENTICAL FIGHTS.** Cast time on Lightning Bolt,
+ *                          which this list only ever casts at five Maelstrom
+ *                          stacks, where it is already instant
+ *   improved_stormstrike 1 +0.50 +/- 3.89, noise. Its live clause is 50% mana
+ *                          regeneration while casting, which is the same
+ *                          nothing Convection buys
+ *
+ * And two are real and smaller: `tidal_focus` 2 is **+3.46 +/- 1.51** (spell
+ * miss 9% -> 7%; melee and specials are already capped) and the fifth rank of
+ * `ancestral_knowledge` is **+1.47 +/- 0.15**. Reverberation 5 plus either of
+ * them is inside Reverberation 5's own interval -- +17.28 and +16.48 against
+ * +16.19 -- so the smallest edit wins and both live clauses stay whole.
+ *
+ * ----------------------------------------------------------------------------
+ * AND THE OWNER'S OWN URL DISAGREED WITH THIS PRESET ABOUT EXACTLY THESE THREE
+ * POINTS BEFORE ANY OF IT: `decode_talent_build.mjs --presets` reports
+ * `elemental_alacrity 0->3, elemental_warding 3->0`, so the stored link spends
+ * them on Alacrity where the preset spends them on Warding. **Both measure
+ * zero**, which is why the drift cost nothing and why it is worth recording
+ * rather than quietly resolving -- which of the two is stale is the owner's.
+ * ============================================================================
+ */
 const SHAMAN_ENHANCEMENT_TALENTS: TalentAllocation = {
+  // Elemental, 19
   concussion: 5,
-  elemental_warding: 3,
   call_of_flame: 3,
   elemental_devastation: 3,
+  reverberation: 5,
   elemental_focus: 1,
   // Trial by Fire is Improved Fire Nova renamed, same row and same two clauses.
   trial_by_fire: 2,
+  // Enhancement, 32
   thundering_strikes: 5,
   ancestral_knowledge: 4,
   mental_dexterity: 3,
-  improved_ghost_wolf: 1,
   elemental_weapons: 3,
   shamanistic_focus: 1,
   flurry: 5,
   stormstrike: 1,
-  spirit_weapons: 1,
   mental_quickness: 2,
   improved_stormstrike: 2,
   maelstrom_weapon: 5,
@@ -2575,6 +2641,21 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'shaman_enhancement',
     label: 'Enh Shaman',
+    /*
+     * THIS LINE WAS WRONG FOR SEVERAL ROUNDS AND IS RIGHT AGAIN BY ACCIDENT,
+     * which is worth a sentence rather than a silent edit.
+     *
+     * It read 19/32 while the tree was **17/34**: the client swap that moved
+     * Elemental Fury to tier 25 cost this build five Elemental points, the owner
+     * chose where they went, and the split moved with them while the description
+     * did not. The Reverberation round has now taken the tree to 19/32, so the
+     * stale sentence became true -- and a reader who checks it against the
+     * allocation today learns nothing about how long it was wrong.
+     *
+     * SO DERIVE THE THEME, DO NOT RECALL IT. `encode_talent_build.mjs --all`
+     * prints the split and a URL the owner can audit, which is Step 0 of
+     * `docs/profile-optimisation.md` and is the only reading that cannot drift.
+     */
     detail: 'Tauren, two-hander, standing target. 19 Elemental / 32 Enhancement',
     characterClass: 'shaman',
     build: () => ({
@@ -2596,15 +2677,79 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * imbue is up, and the box can be ticked honestly.
        */
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: hybridConsumables({
-        school: 'school_fire',
-        meleeWeaponEffect: true,
-        blastedLands: 'blasted_strength',
-      }),
+      /*
+       * ========================================================================
+       * TWO ROWS OVERRIDE THE SHARED HYBRID SELECTION, which is the arrangement
+       * the three Paladins already use -- `hybridConsumables` hands all four of
+       * its callers `flask_hit_points` and `food_attack_power`, and a preset that
+       * wants otherwise says so here rather than moving the shared row under
+       * three profiles nobody measured.
+       *
+       * THE FLASK IS +33.45 +/- 0.24 PAIRED OVER 400 ITERATIONS, which is the
+       * largest single thing found on this profile and was never asked before:
+       * +1200 Hit Points reaches NOTHING here (`targetAttacks` is false, so
+       * health never leaves maximum, and a Shaman has no `D x 10 / H` rage rule
+       * for a bigger pool to feed) and +150 Spell Power reaches 26.4% of the
+       * damage table. The stat weight predicted 150 x 0.2227 = 33.4.
+       *
+       * AND SPELL POWER BEATS ATTACK POWER PER POINT ON A 73.5% PHYSICAL BUILD,
+       * which reads like a contradiction and is not: attack power sits at 1,965
+       * and spell power at 124, so a point of the second is a far larger share
+       * of the smaller thing it reaches. It is also why the potion row does not
+       * divide -- Spellblasting's +40 Spell Power beats Frenzy's +40 Attack
+       * Power by 0.85, measured.
+       *
+       * THE FOOD IS +0.72 +/- 0.01, the same arithmetic that moved 2H Arms, DW
+       * Fury, Venom and the Cat: +20 Strength is 7.91 against +40 Attack Power's
+       * 7.19, because a Shaman makes 2 attack power from a point of strength.
+       * ========================================================================
+       */
+      consumables: {
+        ...hybridConsumables({
+          school: 'school_fire',
+          meleeWeaponEffect: true,
+          blastedLands: 'blasted_strength',
+        }),
+        flask: 'flask_spell_power',
+        food: 'food_strength',
+      },
+      /*
+       * ========================================================================
+       * THE OWNER'S THREE LINES, PLUS ONE ADDITION WORTH **+12.71 +/- 3.00**
+       * paired over 5000 iterations -- declared separately in
+       * `tests/profiles/precombatOpeners.test.ts` so a reader can tell whose
+       * decision each line is.
+       *
+       * RAGE OF THE FARSEER PASSES GATE B TRIVIALLY: its `onCast` applies an
+       * aura and calls `dealDamage` never, so it is not a damaging action and the
+       * at-most-one rule does not reach it. A 0s lead on an instant is the
+       * safest edit available -- it cannot fail B2 either.
+       *
+       * WHAT IT BUYS IS THE GLOBAL COOLDOWN, which `abilities/shaman.ts`
+       * deliberately leaves it paying: the capture says "Instant" and says
+       * nothing about the GCD, and guessing it off would be free uptime nobody
+       * granted. Pre-combat mode skips the GCD the action would start, so the
+       * whole 25 second window arrives for nothing -- and the cooldown is 180
+       * seconds, three times the fight, so nothing is lost at the other end.
+       *
+       * ------------------------------------------------------------------------
+       * AND IT MEASURED **-4.79, NOISE** EARLIER IN THIS SAME ROUND, which is
+       * the knock-on the loop exists for rather than a contradiction.
+       *
+       * Before the talent and flask changes this list made about 33 casts in a
+       * 60 second fight and had global cooldowns to spare, so a saved one bought
+       * nothing -- which is the retraction `docs/profile-optimisation.md`
+       * records in the other direction. Reverberation's two extra shock charges
+       * took Earth Shock from 5.90 casts to 7.60 and Fire Nova to 9.40, and a
+       * GCD that was free became worth something. **A figure can go stale inside
+       * the round that produced it.**
+       * ========================================================================
+       */
       precombat: [
         ...before(3, 'windfury_weapon'),
         ...before(1.5, 'searing_totem'),
         ...before(0, 'flame_shock'),
+        ...before(0, 'rage_of_the_farseer'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
