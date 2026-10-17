@@ -265,6 +265,13 @@ The owner's brief, given twice and then a third time for one profile:
 one of the five below is a process failure rather than a wrong number, which is
 why they are here and not beside a constant.
 
+**THE PROCEDURE IS [docs/profile-optimisation.md](docs/profile-optimisation.md),
+AND IT IS WHERE THESE FIVE TURN INTO GATES.** The five below are the diagnosis;
+that file is the thing to follow -- the theme written down before anything, the
+three gates every candidate passes BEFORE it is measured, and the loop order
+that follows the knock-on. Its Appendix A audits all 28 openers against the
+pre-combat ruling and **four of them fail**, three on a line this project added.
+
 ### 1. The named scope is the scope
 
 **ASKED FOR SIX PROFILES ACROSS THREE CLASSES, THIS PROJECT AUDITED NINE

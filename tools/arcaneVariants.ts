@@ -5,20 +5,29 @@
  *   PRESET=mage_arcane VARIANTS=arcApl npx vite-node tools/probe_build.ts
  *
  * ------------------------------------------------------------------------------
- * WHERE ITS DAMAGE IS, off a 30-fight `USES=1` run at 1088.0 DPS:
+ * WHERE ITS DAMAGE IS, off a 30-fight `USES=1` run at **1090.3 DPS** on the
+ * current legal build:
  *
- *   arcane_missiles  78.0%  on 14.7 casts   (the entry appears TWICE, pooled)
- *   arcane_blast     17.1%  on 11.8 casts
- *   pyroblast         4.5%  on  0.9 casts
- *   Ignite            0.3%  not in the list
+ *   arcane_missiles  75.6%  on 13.5 casts   (the entry appears TWICE, pooled)
+ *   arcane_blast     16.7%  on 14.0 casts
+ *   pyroblast         7.7%  on  2.0 casts
+ *   Ignite            0.1%  not in the list
  *
- * **EVERY FIGURE IN THIS FILE IS AGAINST THE PRE-ROUND OPENER**, which cast ONE
- * Arcane Blast before the pull. `arcShipping` is what shipped, so its +95.88 is
- * now the baseline and the other groups are priced against a build that no
- * longer exists -- kept because each one is a decision somebody would otherwise
- * re-measure, and re-pricing nineteen losing variants against the new opener
- * would cost an hour to confirm nineteen losses. **A prior measurement is true
- * of the build it was taken in**, and this is that sentence as a header.
+ * **THE GROUPS IN THIS FILE SPLIT INTO TWO ERAS AND THE OLDER ONE IS VOID.**
+ * `arcPrecombat`, `arcStackGate`'s first run, `arcCombined`, `arcPackage`,
+ * `arcShipping`, `arcIterate` and `arcLegal` were all measured against an opener
+ * that finished FOUR damaging casts before the pull -- about 1,200 to 1,400
+ * damage dealt before the clock started -- which the owner has ruled starts
+ * combat. **`arcLegal` is the worst-named group here**: it was named for the
+ * OVERLAP constraint and every one of its rows breaks the binding one.
+ *
+ * THE LIVE GROUPS, all measured on the legal opener: `arcGate` (the opener's
+ * whole remaining design space), `arcChannel` (the +13.2 that shipped),
+ * `arcPass2` (its knock-on), `arcWeapon`, `arcMaintain`, and re-runs of
+ * `arcApl`, `arcTalents`, `arcaneWrath` and `arcConsumables` -- **every one of
+ * which still loses on the legal build**, which is most of what this round
+ * found. A prior measurement is true of the build it was taken in; these were
+ * re-taken rather than carried over.
  *
  * SO IT IS 95% ARCANE AND 4.8% FIRE, AND ELEVEN OF ITS FIFTY-ONE POINTS ARE IN
  * FIRE. That ratio is the whole question this file exists to answer.
@@ -50,7 +59,7 @@ import {
   removeEntry,
   removePrecombat,
 } from './buildVariants';
-import { selfHas, selfStacks } from '../src/game/rotations/apl/shorthand';
+import { all, selfHas, selfStacks, selfTime } from '../src/game/rotations/apl/shorthand';
 import { ARCANE_BLAST_MAX_STACKS } from '../src/game/auras/mage';
 
 /* --------------------------------------------------------------- the trees */
@@ -219,6 +228,269 @@ const openerOf =
 const fireBlast = { abilityId: 'fire_blast' };
 
 export const VARIANT_GROUPS: Readonly<Record<string, readonly Variant[]>> = {
+  /*
+   * ==========================================================================
+   * THE OPENER UNDER GATE B, WHICH IS A DESIGN SPACE OF ABOUT FOUR ROWS.
+   *
+   * **THE RULING: "Once you deal damage or finish casting a damaging ability
+   * combat has started."** So a pre-combat list may finish AT MOST ONE damaging
+   * ability and it must finish at exactly t=0. Everything the earlier rounds
+   * measured here -- `arcPrecombat`, `arcStackGate`, `arcCombined`, `arcPackage`
+   * and `arcLegal` -- holds four or five damaging casts and is void; `arcLegal`
+   * is the worst-named group in this file, because it was named for the OVERLAP
+   * constraint and every one of its rows breaks the binding one.
+   *
+   * WHAT IS LEFT. One damaging cast, so it is Arcane Blast OR Pyroblast and not
+   * both. A CHANNEL IS REFUSED outright by `runPrecombat`, so Arcane Missiles
+   * and Evocation cannot go here at all. Everything else that may be added is a
+   * non-damaging instant at any lead, and this build owns exactly four of those:
+   * Arcane Power, Presence of Mind, Eureka and the Spellblasting potion.
+   *
+   * THE CONTROL IS THE SHIPPED LEGAL OPENER -- mage_armor t-3, arcane_blast
+   * t-1.5 (the pull), arcane_power t0.
+   * ==========================================================================
+   */
+  /*
+   * ==========================================================================
+   * IS ARCANE BLAST A MAINTENANCE BUFF? The owner: "Arcane Blast changed
+   * significantly to be a maintenance buff that is meant to be kept at 4 stacks
+   * for an entire fight."
+   *
+   * `refreshBehaviour: 'ignore'` CANNOT EXPRESS THAT -- the window is fifteen
+   * seconds from FIRST application and no cast extends it -- so these rows are
+   * measured with the aura flipped to `'reset'` in `game/auras/mage.ts`. With
+   * the flip alone nothing maintains anything, because at four stacks the
+   * shipped list casts MISSILES; the maintenance entry below is what actually
+   * holds the buff up, and it is the thing the ruling would buy.
+   *
+   * THE COST IS WHY THIS IS NOT OBVIOUSLY A WIN. A stack raises Arcane Blast's
+   * own cost by 175%, so a refresh cast at four stacks costs EIGHT TIMES base
+   * -- about 3,660 mana against a pool of 7,182 and a fight that already ends
+   * with 2,618 to spare. Four refreshes would spend more than the pool holds.
+   * ==========================================================================
+   */
+  arcMaintain: [
+    { label: 'the flip alone, nothing maintaining it -- the control', apply: (p) => p },
+    ...[1, 2, 3, 4].map((seconds) => ({
+      label: `maintain: re-blast at 4 stacks with <= ${seconds}s left`,
+      apply: addAbove(
+        {
+          abilityId: 'arcane_blast',
+          condition: all(
+            selfStacks('exactly', ARCANE_BLAST_MAX_STACKS, 'arcane_blast'),
+            selfTime('atMost', seconds, 'arcane_blast'),
+          ),
+        },
+        'arcane_missiles',
+      ),
+    })),
+  ],
+  /*
+   * ==========================================================================
+   * THE WEAPON ENCHANT, WHICH IS THE ONLY ENCHANT SLOT ARITHMETIC CANNOT
+   * SETTLE -- and which `tools/enchant_report.ts` could not even SHOW when this
+   * was measured, because that report covered ten armour slots and no weapon.
+   * It has a second block for the four weapon slots now, and a guard derived
+   * from the enchant catalogue that throws if any enchantable slot is in
+   * neither.
+   *
+   * Every armour slot is decided off the stat weight table (1% crit 8.74, 1%
+   * haste 6.50, spell power 0.643, intellect 0.404, and agility, strength,
+   * stamina, spirit and mana-per-5 all exactly nothing on this build), so the
+   * shipped loadout is provably best-available there: +1% Haste beats +8
+   * Intellect on head and legs, +20 Spell Power beats +1% Haste on gloves, and
+   * cloak and feet have NO option worth anything at all.
+   *
+   * REVELATION IS A PROC AND THEREFORE NEEDS A FIGHT. "A chance to trigger when
+   * a non-periodic spell fails to critically strike", granting a guaranteed crit
+   * on the next spell, with "chance to trigger diminished as your critical
+   * strike chance increases" -- and this build is at 14.48% spell crit.
+   * ==========================================================================
+   */
+  /*
+   * ==========================================================================
+   * THE 22.3% OF THE FIGHT WITH NO ARCANE BLAST BUFF AT ALL, which is the one
+   * thing the uptime table says and no previous group asked about.
+   *
+   * Arcane Blast's window is FIFTEEN SECONDS FROM FIRST APPLICATION
+   * (`refreshBehaviour: 'ignore'`), the ramp spends 6s of it reaching four
+   * stacks, and the list then spends the rest on Arcane Missiles -- which is a
+   * CHANNEL. So the window expires part-way through a channel, the remaining
+   * missiles are paid at the unbuffed price, and the re-ramp cannot start until
+   * the channel ends. **Measured uptime is 77.7%, and the missing 22.3% is a
+   * channel straddling the expiry.**
+   *
+   * SO THE CANDIDATE IS: DO NOT START A CHANNEL THE WINDOW CANNOT COVER. If the
+   * buff has less than N seconds left, fall through to the filler instead and
+   * let the window die on a cheap cast rather than an expensive one.
+   *
+   * AND THE COUNTER-ARGUMENT IS THE COST, which is why it has to be measured:
+   * the filler is Arcane Blast, and at four stacks Arcane Blast costs EIGHT
+   * TIMES base for a stack that is about to vanish anyway.
+   * ==========================================================================
+   */
+  /*
+   * ==========================================================================
+   * SECOND PASS, WHICH EXISTS BECAUSE THE FIRST ONE CHANGED WHAT THE LIST DOES.
+   *
+   * The channel floor now refuses a Missiles channel with under two seconds of
+   * Arcane Blast left, and what it falls through to is the Arcane Blast filler
+   * at EIGHT TIMES base cost. So the obvious new question is whether something
+   * cheaper belongs in that gap -- Fire Blast is instant, this build already
+   * spends two points on `improved_fire_blast`, and the ability is in the book
+   * and in no list.
+   *
+   * AND THE STACK GATE IS RE-SWEPT, because a gate measured before the floor
+   * existed is a measurement of a different list. That is the knock-on the
+   * owner's brief names, and re-running it costs one group.
+   * ==========================================================================
+   */
+  arcPass2: [
+    { label: 'the shipped list with the channel floor -- the control', apply: (p) => p },
+    {
+      label: 'fire_blast in the straddle gap (4 stacks, < 2s left)',
+      apply: addAbove(
+        {
+          abilityId: 'fire_blast',
+          condition: all(
+            selfStacks('exactly', ARCANE_BLAST_MAX_STACKS, 'arcane_blast'),
+            selfTime('atMost', 2, 'arcane_blast'),
+          ),
+        },
+        'arcane_blast',
+      ),
+    },
+    {
+      label: 'fire_blast in the gap AND whenever the window is down',
+      apply: addAbove(
+        { abilityId: 'fire_blast', condition: selfTime('atMost', 2, 'arcane_blast') },
+        'arcane_blast',
+      ),
+    },
+    /* The barrage entry given the same floor -- the assumption it should NOT have one. */
+    {
+      label: 'the BARRAGE missiles entry given the floor too',
+      apply: apl((entries) =>
+        entries.map((e, i) =>
+          e.abilityId === 'arcane_missiles' && entries[i + 1]?.abilityId === 'arcane_missiles'
+            ? { ...e, condition: all(selfHas('missile_barrage'), selfTime('atLeast', 2, 'arcane_blast')) }
+            : e,
+        ),
+      ),
+    },
+    /* The stack gate re-swept against the floor. */
+    ...[3, 5].map((n) => ({
+      label: `stack gate ${n} instead of 4, with the floor in place`,
+      apply: apl((entries) =>
+        entries.map((e, i) =>
+          e.abilityId === 'arcane_missiles' &&
+          i > 0 &&
+          entries[i - 1]?.abilityId === 'arcane_missiles'
+            ? {
+                ...e,
+                condition: all(
+                  selfStacks('exactly', n, 'arcane_blast'),
+                  selfTime('atLeast', 2, 'arcane_blast'),
+                ),
+              }
+            : e,
+        ),
+      ),
+    })),
+  ],
+  arcChannel: [
+    { label: 'the shipped list -- the control', apply: (p) => p },
+    ...[0.5, 1, 1.5, 2, 2.5, 3].map((seconds) => ({
+      label: `no missiles channel with < ${seconds}s of arcane_blast left`,
+      apply: apl((entries) =>
+        entries.map((e, i) =>
+          e.abilityId === 'arcane_missiles' &&
+          i > 0 &&
+          entries[i - 1]?.abilityId === 'arcane_missiles'
+            ? {
+                ...e,
+                condition: all(
+                  selfStacks('exactly', ARCANE_BLAST_MAX_STACKS, 'arcane_blast'),
+                  selfTime('atLeast', seconds, 'arcane_blast'),
+                ),
+              }
+            : e,
+        ),
+      ),
+    })),
+    /* And the two cooldowns re-gated onto the high-spell-power window. */
+    {
+      label: 'arcane_power gated on the 4-stack cap instead of a barrage proc',
+      apply: apl((entries) =>
+        entries.map((e) =>
+          e.abilityId === 'arcane_power'
+            ? { ...e, condition: selfStacks('exactly', ARCANE_BLAST_MAX_STACKS, 'arcane_blast') }
+            : e,
+        ),
+      ),
+    },
+    {
+      label: 'spellblasting potion gated on the 4-stack cap instead of PoM',
+      apply: apl((entries) =>
+        entries.map((e) =>
+          e.abilityId === 'major_spellblasting_potion'
+            ? { ...e, condition: selfStacks('exactly', ARCANE_BLAST_MAX_STACKS, 'arcane_blast') }
+            : e,
+        ),
+      ),
+    },
+  ],
+  arcWeapon: [
+    { label: 'the shipped +65 Spell Power -- the control', apply: (p) => p },
+    { label: 'Revelation on the staff (was +65 Spell Power)', apply: enchant('twoHand', 900032) },
+    { label: '+25 Agility on the staff (the inert control)', apply: enchant('twoHand', 900031) },
+    /* Two arithmetic predictions, verified with fights rather than trusted. */
+    { label: 'head +8 Intellect (arithmetic says -3.3 vs +1% Haste)', apply: enchant('head', 900006) },
+    { label: 'gloves +1% Haste (arithmetic says -6.4 vs +20 Spell Power)', apply: enchant('gloves', 900002) },
+  ],
+  arcGate: [
+    { label: 'the shipped legal opener -- the control', apply: (p) => p },
+    /*
+     * THE VOID OPENER RESTORED, to price the revert honestly rather than by
+     * subtracting two figures taken at different iteration counts. This row is
+     * ILLEGAL and is here only as a measurement.
+     */
+    {
+      label: 'ILLEGAL (void): the 4-cast pre-ramp restored',
+      apply: openerOf([
+        ['pyroblast', 13.5],
+        ['arcane_blast', 7.5],
+        ['arcane_blast', 6],
+        ['arcane_blast', 4.5],
+        ['mage_armor', 3],
+        ['arcane_blast', 1.5],
+        ['arcane_power', 0],
+      ]),
+    },
+    /* Arcane Power re-priced on the legal opener rather than on the ramp. */
+    { label: 'no arcane_power at t0 (prices the one legal addition)', apply: removePrecombat('arcane_power') },
+    /* The other three non-damaging instants this build owns. */
+    { label: '+ presence_of_mind at t0', apply: addPrecombat(0, 'presence_of_mind') },
+    { label: '+ eureka at t0', apply: addPrecombat(0, 'eureka') },
+    { label: '+ major_spellblasting_potion at t0', apply: addPrecombat(0, 'major_spellblasting_potion') },
+    /* Pyroblast as the pull INSTEAD of the Arcane Blast -- still exactly one. */
+    {
+      label: 'pyroblast as the pull instead of arcane_blast (6s cast, free)',
+      apply: openerOf([
+        ['mage_armor', 3],
+        ['pyroblast', 6],
+        ['arcane_power', 0],
+      ]),
+    },
+    /* No damaging cast at all, which is the floor. */
+    {
+      label: 'NO damaging cast at all -- the floor',
+      apply: openerOf([
+        ['mage_armor', 3],
+        ['arcane_power', 0],
+      ]),
+    },
+  ],
   /*
    * ==========================================================================
    * THE APL, AND THE FIRST ROUND ASKED NOTHING OF IT -- which is what the owner
