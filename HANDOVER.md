@@ -57,6 +57,7 @@ the tooling to be a bit more sophisticated as well."
 | 25 | **THE AUDIT FOLDED BACK INTO THE PROCEDURE, and a figure RETRACTED in the documents people read** -- all four audit findings share one cause, so the procedure gains a section naming what a paired probe structurally cannot see | **no figure moved**; documentation only, suite green at 3731 | see below |
 | 26 | **A RULING REVERSED: AUTO SHOT IS NOT SUSPENDED BY A HUNTER'S THREE CAST SHOTS** -- a THIRD `Ability.swingTimer` mode, because the suspension had two halves and `hold` only removes one | **LW Ranged 977.4 -> 1021.0 (+43.7 REAL)** and BM Hunter 963.4 -> 968.2 (+4.8); **25 of 28 rows 0.0 to the decimal**. Dropping the now-pointless weave gate on top is **+27.6 REAL on BM Hunter** and is the owner's call | see below |
 | 27 | **THE SAME RULING ON IMPROVED SLAM, where it is CORRECT AND WORTH 0.0** -- `continue` not `hold`, and the client's tooltip said "interrupts **or delays**" all along while this project quoted half of it | **28 of 28 rows 0.0 to the decimal**, and the bound is the finding: 2H Arms takes rank 2, whose 1.0s cast never reaches the next swing because rage arrives per SWING. **At rank 1 the branch fires 12 times in 40 fights** | see below |
+| 28 | **PRESENCE OF MIND WAS A HAND-WRITTEN LIST AND IT HAD DRIFTED** -- it missed Arcane Wrath, which the owner found, and it NAMED Arcane Missiles, a channel it would have delivered one missile of. It is the owner's rule now: catch-all + `requiresCastTime` + a new `excludesChannel` | **28 of 28 rows 0.0**, every reason accounted for off the charge ledger -- Arcane Wrath is in no profile's book, and the PoM charge only ever reached Pyroblast. **Clearcasting shared the list and the gap** | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -100,8 +101,9 @@ write-up; none is an engine gap.
 | **How long is a fight, and how much does it vary?** Every profile carries `durationSeconds: 60` and a FIXED `FIGHT_DURATION_VARIANCE` of 5%, both modelling choices rather than ruleset numbers. You: "rotations need to be built for longer than 1 minute ... ensure that variable combat time is taken into account." The Arcane Mage loses **17% DPS from 60s to 300s** and crosses from GLOBAL-COOLDOWN bound to MANA bound on the way | round 25 | **every published figure on all 28 profiles**, and three "settled" answers on the Arcane Mage alone -- the Major Mana Potion at -12.7, `manaPer5` and `spirit` weighing 0.000, and the Evocation pin |
 | **`shaman_elemental`'s opener finishes TWO damaging casts, and both lines are yours** -- Lightning Bolt at a 2s lead plus Flame Shock at 0s. A player cannot complete both at t=0, so one of them has to move or the ruling has to bend | round 23 | that opener, and whether the at-most-one rule has an exception |
 | **Should the shot-window gate come off the three Hunter cast entries?** With auto shot no longer suspended, "only if a ranged auto-attack fired in the last 0.5s" spends something to buy nothing -- it makes a cast WAIT for a window that is now worthless. Removing it from all three measures **+27.6 REAL on BM Hunter** and +8.6 (noise) on LW Ranged. **They are YOUR conditions, so they are kept**: this is one line per entry, on `aimed_shot` in Beast Mastery and `aimed_shot` plus `sniper_shot` in Lone Wolf Ranged | round 26 | about 28 DPS on one profile, and the reason the gate exists at all |
+| **Should the Arcane Mage take Arcane Wrath, now that Presence of Mind works on it?** You have raised the spell twice, and its "very solid justification for not taking" expired with the Arcane Blast reading it rested on. It has been un-pricable since: a 3.5-second cast whose one obvious pairing did not work on it. No Mage preset spends the point today | round 28 | the Arcane build and its list, and a spell you have twice said looks worth taking |
 
-**TWELVE ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**THIRTEEN ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
@@ -115,8 +117,9 @@ has added three at once**. **The number goes both ways**, which is the half an
 "increment" habit gets wrong even when the direction is right, and the
 two-Judgements row lasted exactly one round -- tying the Vanish row for the
 shortest yet, ELEVEN once round 25 added the clock and the Shaman's own
-opener, **and TWELVE now that round 26 has added the Hunter weave gate.**
-Counted from the table, as the sentence says to.
+opener, TWELVE once round 26 added the Hunter weave gate, **and THIRTEEN now
+that round 28 has made Arcane Wrath pricable again.** Counted from the table,
+as the sentence says to.
 **AND THE THREE NEW ONES ARE A DIFFERENT KIND FROM THE SIX ABOVE THEM.** Those
 are defensible readings that became load-bearing; these are **a ruling that
 contradicts a shipped field, a rule the engine does not enforce, and a category
@@ -257,6 +260,105 @@ ruled on, and Arcane Wrath is closed by measurement under both readings.
    The old justification's REASONING had expired; its CONCLUSION had not.
 5. **Then the four profiles that were never done** -- Enh Shaman, Frostfire
    Mage, Fire Mage, Shadow Priest -- one at a time, through the procedure.
+
+## Round TWENTY-EIGHT: Presence of Mind, where a NAMED LIST had drifted
+
+**THE OWNER FOUND IT IN THE APP:** "Presence of Mind is bugged for at least
+Arcane Wrath. It's not actually making it instant cast. Presence of Mind should
+make the next non-channeled, non-instant spell an instant cast."
+
+**IT WAS A HAND-WRITTEN LIST OF SEVEN SPELL IDS.** Arcane Wrath arrived at
+client build 1.60.1.70425 as a 3.5-second cast, nobody added it, and the aura
+**took the charge and reported its uptime** while the Mage cast the full 3.5
+seconds. A charge spent on nothing looks exactly like a charge that worked.
+
+**AND THE LIST WAS WRONG IN THE OTHER DIRECTION TOO, WHICH NOBODY HAD
+REPORTED.** It named **Arcane Missiles**, a channel -- and zeroing a channel's
+cast delivers ONE tick's worth of effect, one missile of five, and reports a
+successful cast. The Arcane list spends the charge on Pyroblast through a
+`sequence`, so the case was reachable and never reached.
+
+### The owner's sentence, clause by clause
+
+| the clause | what expresses it |
+| --- | --- |
+| "the next ... spell" | `ALL_ABILITIES`, the catch-all |
+| "non-instant" | `requiresCastTime`, which already existed |
+| "non-channeled" | `CastModifier.excludesChannel`, new |
+
+**`requiresCastTime` IS THE NEAR MISS ON THE LAST ONE**: a channel HAS a cast
+time and satisfies it gladly. Two words in the owner's sentence, two different
+questions.
+
+### "Is this a channel" had two answers and needed one
+
+`spreadsEffectAcrossCast` is the one answer now, and **the obvious test is not
+enough**:
+
+| the shape | the test | the example |
+| --- | --- | --- |
+| a series of ticks | `channelTicks > 1` | Arcane Missiles, five missiles |
+| a WINDOW that must last the cast | `onCastStart` | **Evocation** |
+
+**EVOCATION IS WHY.** It declares NO `channelTicks` and is still a channel --
+its own comment says so: "ticks exist for an ability whose EFFECT repeats, and
+this one's effect is a RATE rather than a series of events." Made instant, its
+`onCastStart` window opens and closes in the same millisecond: **an eight-minute
+cooldown for no mana, logged as a successful cast.**
+
+**`onCastStart` IS A READING OF THE DECLARATION RATHER THAN A PROXY FOR ONE.**
+That field's contract is "an effect that has to be in place FOR the cast rather
+than after it" -- and an effect that has to be in place for the cast is one a
+zero-length cast cannot deliver. So both shapes are covered by what the ability
+already says, and a new channel of either kind is covered the day it lands.
+
+**`runPrecombat` HAD THE SAME GAP** -- it refused `channelTicks > 1` -- and now
+shares the predicate. No opener pre-casts Evocation, so that half is a latent
+case rather than a live one, and it is labelled as one.
+
+### Clearcasting shared the broken list, so it inherited the gap
+
+It read `[...PRESENCE_OF_MIND_SPELLS, 'fire_blast', 'ice_lance', 'blast_wave']`,
+so **Arcane Wrath was the one Mage nuke Clearcasting could never make free.**
+One drifting list, two talents.
+
+It is "your next damage spell" as the catch-all with `requiresCost` and
+`requiresAttackTable` now -- the arrangement the Druid's own Clearcasting
+already uses -- which selects every Mage damage spell and leaves out Mage Armor,
+the one costed Mage ability that rolls nothing. **It takes no `excludesChannel`,
+deliberately**: making a channel FREE is coherent where making it instant
+destroys it, so Arcane Missiles stays in its reach.
+
+### 28 of 28 rows at 0.0, and every reason is accounted for
+
+| | why it cannot move a published figure |
+| --- | --- |
+| Arcane Wrath becoming instant | **it is in NO profile's book** -- the ability is talent-granted and no Mage preset spends the point |
+| Arcane Missiles no longer eligible | the `presence_of_mind` charge is spent on **Pyroblast, 20 times in 20 fights** on the Arcane Mage, and **never at all** on Fire or Frostfire |
+| Evocation no longer eligible | same: the charge never reached it |
+| Clearcasting's rewrite | its reach is **identical** apart from Arcane Wrath -- Ice Lance and Blast Wave both cost mana and roll a table, so both are still covered |
+
+**THE CHARGE LEDGER IS WHAT SETTLED IT**, read off `cast_charge_spent` rather
+than argued: 387 charges over 20 Arcane fights, and the `presence_of_mind` ones
+go to Pyroblast and nothing else. **An unexplained 0.0 is indistinguishable
+from a change that did not apply**, and this is the third round running where
+the explanation was the deliverable.
+
+### And it makes an open question answerable
+
+The owner has asked about **Arcane Wrath** twice, and CLAUDE.md records that its
+"very solid justification for not taking" expired with the Arcane Blast reading
+it rested on. It has been un-pricable since: a 3.5-second cast whose one obvious
+pairing -- Presence of Mind -- **did not work on it.** That pairing works now,
+so re-pricing Arcane Wrath on the Arcane Mage is newly worth doing and is on the
+questions table.
+
+**THE WHOLE SUITE PASSED BEFORE THIS CHANGE**, which is a statement about the
+suite. The existing test on this aura checked PYROBLAST, and its own comment
+named the hazard it was not covering: "`PRESENCE_OF_MIND_SPELLS` is a NAMED
+LIST, so a spell absent from it takes the full cast with every condition reading
+true." **The hazard was identified, written down, and checked for exactly one
+spell.**
 
 ## Round TWENTY-SEVEN: Improved Slam, where the fix is correct and worth 0.0
 
