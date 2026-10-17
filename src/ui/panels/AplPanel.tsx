@@ -7,6 +7,7 @@ import { describeCondition } from '../../game/rotations/apl';
 import { resolveCombatStyle } from '../../game/character';
 import type { Ability, PrecombatAction } from '../../engine';
 import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
+import { precombatStateFor } from '../../game/abilities/precombatStates';
 import { RACIAL_ABILITIES, racialsFor } from '../../game/racials';
 import { consumableAbilities } from '../../game/buffs/consumables';
 import type { CatalogAura } from '../../game/auras/auraCatalog';
@@ -158,6 +159,7 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
         * order the fight happens in.
         */}
       <PrecombatSection
+        profile={profile}
         actions={profile.precombat ?? []}
         abilities={abilities}
         nameOf={nameOf}
@@ -201,11 +203,19 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
  * ==============================================================================
  */
 function PrecombatSection({
+  profile,
   actions,
   abilities,
   nameOf,
   onChange,
 }: {
+  /*
+   * THE WHOLE PROFILE, FOR ONE QUESTION: is a declared action already in
+   * effect? `PRECOMBAT_STATES` answers it per CHARACTER rather than per id --
+   * `cat_form` is true for a Druid in Cat Form and false for a Moonkin -- so a
+   * list of ids would not have been enough.
+   */
+  readonly profile: CharacterProfile;
   readonly actions: readonly PrecombatAction[];
   readonly abilities: readonly { readonly id: string; readonly name: string }[];
   readonly nameOf: (abilityId: string) => string;
@@ -234,10 +244,20 @@ function PrecombatSection({
                 onChange={(event) => replace(index, { ...action, abilityId: event.target.value })}
               >
                 {/* Kept so a loaded profile naming an ability this build does
-                    not have SAYS so rather than silently showing another. */}
+                    not have SAYS so rather than silently showing another.
+
+                    AND "ALREADY IN EFFECT" IS A THIRD ANSWER, not a kinder
+                    wording of the second. Seven of the owner's opener lines
+                    name a STATE -- the three Druid forms and a Rogue's Stealth
+                    -- which no ability provides, so this read "Cat Form (not in
+                    this build)" on a Druid that is in Cat Form. Exactly
+                    backwards, and on the one row a reader is checking to see
+                    that it IS. See `PRECOMBAT_STATES`. */}
                 {abilities.some((ability) => ability.id === action.abilityId) ? null : (
                   <option value={action.abilityId}>
-                    {nameOf(action.abilityId)} (not in this build)
+                    {precombatStateFor(profile, action.abilityId)
+                      ? `${precombatStateFor(profile, action.abilityId)!.name} (already in effect)`
+                      : `${nameOf(action.abilityId)} (not in this build)`}
                   </option>
                 )}
                 {abilities.map((ability) => (

@@ -190,27 +190,28 @@ const RANGED_HUNTER_RAID_BUFFS: readonly string[] = PRESET_RAID_BUFFS.map((id) =
  * queued swing the buff.
  *
  * ------------------------------------------------------------------------------
- * FOUR OF THE OWNER'S LINES NAME SOMETHING THAT IS ALREADY TRUE AND SO HAVE NO
- * ENTRY, which is said here rather than left as an apparent omission:
+ * SEVEN OF THE OWNER'S LINES NAME A STATE RATHER THAN AN ABILITY, AND ALL SEVEN
+ * ARE WRITTEN OUT ANYWAY -- ON THEIR INSTRUCTION.
  *
- *   "2s before Stealth"          a Rogue's `openingAuras` carry `stealth`; there
- *                                is no Stealth ABILITY and deliberately so, and
- *                                `openingAuras` are applied BEFORE `onPrecombat`
- *   "3s before Moonkin Form"     a COMBAT STYLE on the profile, not an ability
- *   "1s before Cat Form"         the same
- *   "1.5s before Dire Bear Form" the same
+ *   "2s before Stealth"          x3  a Rogue's `openingAuras` carry `stealth`;
+ *                                    there is no Stealth ABILITY, deliberately
+ *   "2s before cat form"             a COMBAT STYLE on the profile
+ *   "3s before Moonkin Form"         the same
+ *   "1.5s before Dire Bear Form"     the same
  *
- * So each of those characters is already in the state the line asks for by the
- * time a pre-combat action could be taken. An entry naming an ability the build
- * does not have is SKIPPED IN SILENCE, so writing one would have looked like a
- * working opener and done nothing at all.
+ * **THEY WERE LEFT OUT AT FIRST AND THE OWNER ASKED FOR THEM BACK**: "Even if
+ * lines were already true, like Moonkin Form, just leave it in the pre-combat so
+ * users know that." The argument for omitting them was that `runPrecombat` finds
+ * no ability and skips in silence, so the entry does nothing -- which is true of
+ * the ENGINE and misses what the list is for. It is also what a person reads to
+ * see how the fight is opened, and a step missing from it reads as a step the
+ * character does not take.
  *
- * AND ONE LINE CANNOT BE IMPLEMENTED: the Cat's "0s Ravage". It is in the
- * Druid spellbook capture -- "Ravage the target, causing 350% damage plus 343.
- * **Must be prowling and behind the target**" -- and is declared as an ability
- * nowhere, because both of its requirements are `OutOfScope` members:
- * `stealth` and `positioning`. Flagged in HANDOVER rather than approximated,
- * which for a 350%-weapon-damage opener would be a large invented number.
+ * SO `PRECOMBAT_STATES` CARRIES THE SEVEN, with what makes each one true, and
+ * two readers that would otherwise misreport them use it: the APL panel, which
+ * labelled them "(not in this build)" -- exactly backwards -- and the opener
+ * guard, which asserts every declared action FIRES and must check the state
+ * instead. See `game/abilities/precombatStates.ts`.
  * ==============================================================================
  */
 const before = (
@@ -1884,14 +1885,19 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        */
       consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea', food: 'food_agility' },
       /*
-       * STEALTH IS NOT AN ENTRY AND IS STILL TRUE: a Rogue's `openingAuras`
-       * carry the `stealth` aura, which is the one thing about stealth this
-       * project models and is applied BEFORE `onPrecombat` runs. So Ambush's
-       * own gate -- a dagger main hand AND Cutthroat or Stealth -- is already
-       * satisfied here, and the pre-combat Ambush SPENDS that window exactly as
-       * the list's first entry used to.
+       * STEALTH IS A STATE RATHER THAN A CAST, AND IS LISTED ANYWAY. A Rogue's
+       * `openingAuras` carry the `stealth` aura -- the one thing about stealth
+       * this project models -- and `openingAuras` are applied BEFORE
+       * `onPrecombat`, so it is already true when the opener runs. The owner
+       * asked for the line to stay so the sequence reads completely; see
+       * `PRECOMBAT_STATES`.
+       *
+       * SO AMBUSH'S OWN GATE IS ALREADY SATISFIED -- a dagger main hand AND
+       * Cutthroat or Stealth -- and the pre-combat Ambush SPENDS that window
+       * exactly as the list's first entry used to.
        */
       precombat: [
+        ...before(2, 'stealth'),
         ...before(1, 'premeditation'),
         ...before(0, 'ambush'),
       ],
@@ -1936,6 +1942,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
       precombat: [
+        ...before(2, 'stealth'),
         ...before(1, 'premeditation'),
         ...before(0, 'ambush'),
       ],
@@ -1980,6 +1987,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
          * -- inheriting the spread would have carried it.
          */
         precombat: [
+          ...before(2, 'stealth'),
           ...before(1, 'premeditation'),
         ],
       };
@@ -2015,11 +2023,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_arcane'),
       /*
-       * MOONKIN FORM IS NOT AN ENTRY AND IS STILL TRUE: it is a COMBAT STYLE on
-       * this profile rather than an ability, so the character is in it before a
-       * pre-combat action could be taken. See `before`.
+       * MOONKIN FORM IS A STATE RATHER THAN A CAST, AND IS LISTED ANYWAY -- on
+       * the owner's instruction, and it is the example they used: "Even if lines
+       * were already true, like Moonkin Form, just leave it in the pre-combat so
+       * users know that." It is a COMBAT STYLE on this profile, so the character
+       * is in it before a pre-combat action could be taken. See
+       * `PRECOMBAT_STATES`.
        */
       precombat: [
+        ...before(3, 'moonkin_form'),
         ...before(1.5, 'wrath'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
@@ -2093,13 +2105,34 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         food: 'food_strength',
       },
       /*
-       * CAT FORM IS THE STYLE, so it needs no entry -- and RAVAGE CANNOT BE
-       * ONE. The owner asked for "0s Ravage"; it is in the Druid spellbook
-       * capture and is declared as an ability nowhere, because "must be
-       * prowling and behind the target" is `stealth` AND `positioning`, both
-       * `OutOfScope` members. So this opener is the form and nothing else, and
-       * the missing half is flagged in HANDOVER rather than approximated.
+       * ======================================================================
+       * THE STEALTH OPENER, AND IT IS THE ONE THE OWNER HAD TO RESTATE.
+       *
+       * "Cat Druid -- the precombat should be 2s before cat form, 1s before
+       * prowl, 0s Ravage", with Ravage supplied outright: "60 energy, Instant
+       * cast ... 350% damage plus 343 ... Must be prowling and behind the
+       * target. Awards 1 combo points."
+       *
+       * IT WAS EMPTY, ON TWO READINGS THAT WERE BOTH WRONG. Cat Form was left
+       * out as "already true" -- the owner wants the line shown -- and Ravage
+       * was refused as unimplementable, because "must be prowling AND behind
+       * the target" looked like `stealth` and `positioning` together. The
+       * ruling: **"You do NOT need to scope in behind the target positioning.
+       * Once again this should be assumed in all cases EXCEPT when 'Target
+       * attacks back' is checked."** This profile sets `targetAttacks: false`.
+       *
+       * PROWL IS A REAL CAST HERE, unlike the form above it: it is declared,
+       * costs nothing, has a ten second cooldown, and leaves the aura Ravage
+       * reads. See `PROWL` and `RAVAGE` in the Druid files for the one clause
+       * neither source states -- whether Ravage SPENDS the window -- which
+       * follows Ambush.
+       * ======================================================================
        */
+      precombat: [
+        ...before(2, 'cat_form'),
+        ...before(1, 'prowl'),
+        ...before(0, 'ravage'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -2145,9 +2178,12 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * that reads the same and pays less. `runPrecombat` sorts stably, so the
        * order written here is the order taken.
        *
-       * DIRE BEAR FORM IS THE STYLE and needs no entry.
+       * DIRE BEAR FORM IS A STATE RATHER THAN A CAST and is listed anyway, on
+       * the owner's instruction -- see `PRECOMBAT_STATES`. The profile is in the
+       * Bear combat style, so it is already true when the opener runs.
        */
       precombat: [
+        ...before(1.5, 'bear_form'),
         ...before(0, 'enrage', 'mighty_rage_potion', 'maul', 'mangle'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: true },
@@ -2643,26 +2679,30 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * the owner's word "queue" describes, and it is the distinction they drew
        * between the two halves of this line.
        *
-       * MONGOOSE BITE CANNOT BE ONE, AND NOTHING IS LOST BY LEAVING IT OUT.
-       * "Can only be performed after you dodge", and nothing attacks a Hunter
-       * here -- so the only route to it is EXPOSE PREY, the Survival talent
-       * this build takes at 2/2: "your attacks against targets with Hunter's
-       * Mark have a 10% chance to activate your Mongoose Bite". Its `canCast`
-       * reads the aura that proc applies, and **before the pull no attack has
-       * landed, so the window cannot be open**. A pre-combat Mongoose Bite is
-       * refused and skipped in silence.
+       * AND MONGOOSE BITE WAS REPLACED BY STRIDER KICK, WHICH IS THE OWNER'S
+       * ANSWER TO A PROBLEM THE OPENER GUARD FOUND.
        *
-       * IT IS IN THE LIST, so the ability still fires the moment the proc
-       * lands -- what cannot happen is having it ready AT the pull. Written out
-       * here rather than left as an absence, because the owner named it.
-       * `precombatOpeners.test.ts` pins the reason so this cannot be "fixed"
-       * by granting the aura, which would hand the build a free 10% proc.
+       * Their line was "queue Raptor Strike + cast Mongoose Bite", and Mongoose
+       * Bite "can only be performed after you dodge" -- nothing attacks a
+       * Hunter here, so its only route is EXPOSE PREY, the Survival talent this
+       * build takes at 2/2: "your attacks against targets with Hunter's Mark
+       * have a 10% chance to activate your Mongoose Bite". **Before the pull no
+       * attack has landed, so the window cannot be open**, and the pre-combat
+       * cast was refused and skipped in silence. `precombatOpeners.test.ts`
+       * caught it the first time it ran; the owner: "good catch. Replace
+       * Mongoose Bite with Strider kick instead for those pre-combat
+       * instances."
+       *
+       * STRIDER KICK HAS NO GATE AT ALL -- 100% melee weapon damage, instant,
+       * free, an eight second cooldown -- so it simply happens. Mongoose Bite
+       * keeps its list entry and still fires when the proc lands; what it
+       * cannot do is open.
        * ======================================================================
        */
       precombat: [
         ...before(3, 'hunters_mark'),
         ...before(1.5, 'aspect_of_the_beast'),
-        ...before(0, 'raptor_strike'),
+        ...before(0, 'raptor_strike', 'strider_kick'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -2704,12 +2744,12 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         mana_regen: 'mana_regen_12',
         other: 'demonic_rune',
       },
-      // The same opener as LW Melee, and Mongoose Bite is absent for the same
-      // reason: its dodge window cannot be open before the pull. See there.
+      // The same opener as LW Melee, including Strider Kick in Mongoose Bite's
+      // place -- the dodge window cannot be open before the pull. See there.
       precombat: [
         ...before(3, 'hunters_mark'),
         ...before(1.5, 'aspect_of_the_beast'),
-        ...before(0, 'raptor_strike'),
+        ...before(0, 'raptor_strike', 'strider_kick'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),

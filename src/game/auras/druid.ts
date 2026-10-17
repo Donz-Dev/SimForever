@@ -98,6 +98,38 @@ const PHYSICAL = 'physical' as const;
 /** Percentage POINTS, stated by both tooltips. */
 export const PARTY_CRIT_AURA_PERCENT = 3;
 
+/*
+ * ============================================================================
+ * PROWL, AND IT IS A GATE ON RAVAGE AND NOTHING ELSE.
+ *
+ * "Allows the Druid to prowl around, but reduces your movement speed by 30%.
+ * Lasts until cancelled." Instant, 10 second cooldown, requires Cat Form.
+ *
+ * THE SAME SHAPE STEALTH ALREADY HAS, deliberately: one permanent aura whose
+ * only reader is the opener it unlocks. A Rogue's `stealth` makes Ambush
+ * castable and does nothing else, and this makes Ravage castable and does
+ * nothing else -- so there is one mechanism for "an opener needs to be hidden"
+ * rather than two that can drift.
+ *
+ * THE MOVEMENT SPEED IS THE ONLY CLAUSE WITH A NUMBER AND IT IS `positioning`.
+ * Nothing here has a position, so -30% movement is unmodelled and the ability
+ * says so where it is declared.
+ *
+ * AND IT IS NOT APPLIED BY `openingAuras` THE WAY A ROGUE'S STEALTH IS, which
+ * is the one difference and it is the owner's: a Rogue "opens from stealth" as
+ * a fact about the class, where a Druid's opener names Prowl as a STEP -- "2s
+ * before cat form, 1s before prowl, 0s Ravage". So it is cast, which also means
+ * its ten second cooldown is on the clock at the pull with the lead rewound.
+ * ============================================================================
+ */
+export const PROWL: AuraDefinition = {
+  id: 'prowl',
+  name: 'Prowl',
+  // Lasts until cancelled, which is what every stance, form and Stealth here
+  // expresses as a permanent aura.
+  durationMs: 0,
+};
+
 /**
  * ============================================================================
  * TWO AURAS NOW, WHERE THERE WAS ONE, AND THE PATCH SPLIT THEM BY ATTACK TYPE.

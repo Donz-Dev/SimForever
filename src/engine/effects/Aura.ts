@@ -23,6 +23,48 @@ export interface PeriodicEffect {
   /** Runs on every tick, including one at the moment the aura expires. */
   onTick(context: SimulationContext, aura: AuraInstance): void;
   /**
+   * Its ticks STILL HAPPENED if this aura's window elapsed before the pull.
+   *
+   * ============================================================================
+   * DECLARED, NOT DERIVED, AND THE REASON IS THAT THE ENGINE CANNOT TELL THE
+   * TWO KINDS OF PERIODIC EFFECT APART.
+   *
+   * A pre-combat action's lead time is real: `runPrecombat` ages whatever the
+   * cast applied, and an aura whose window is already over is REMOVED, because
+   * "a twenty-second buff used thirty seconds before the pull is not a buff the
+   * character has". For a BUFF that is the whole story. For a periodic it
+   * throws the ticks away, and whether that is right depends entirely on what
+   * the ticks DO:
+   *
+   *   a resource granted to the carrier   ACCRUAL. The character spent those
+   *                                       seconds generating it and arrives
+   *                                       with it, so it has to be delivered
+   *   damage dealt to a target            NOT accrual. It would be damage in a
+   *                                       fight that had not started, and "a
+   *                                       fight that began before it started
+   *                                       would be a different fight"
+   *
+   * NOTHING ON THE DEFINITION DISTINGUISHES THEM: both are an `onTick` closure,
+   * and what it does is decided inside. So the aura says which it is, and the
+   * default is the safe one -- an undeclared periodic loses its elapsed ticks,
+   * which is what every DoT in the project wants.
+   *
+   * ----------------------------------------------------------------------------
+   * BLOODRAGE IS THE ONE CALLER AND THE OWNER SPECIFIED THE TOTAL: "you get 10
+   * rage instantly, and then another 1 rage per second for 10 seconds ... You
+   * end up with exactly 20 rage generated from Bloodrage after 10 seconds."
+   * Their own openers use it at a TEN SECOND lead on all three Warriors, which
+   * is exactly the duration -- so without this the over-time half was lost and
+   * the warrior arrived with 10 of the 20.
+   *
+   * THE ARITHMETIC DOES NOT DOUBLE-COUNT AT A SHORTER LEAD, which is the thing
+   * to check rather than assume. The ticks already scheduled keep firing after
+   * the pull and stop when the AGED window closes, so a four-second lead
+   * delivers four here and six in the fight. `precombat.test.ts` drives both.
+   * ============================================================================
+   */
+  readonly accruesBeforeCombat?: boolean;
+  /**
    * A POOL OF DAMAGE THIS APPLICATION CONTRIBUTES, delivered a share per tick,
    * with a re-application ROLLING the undelivered remainder into the new total.
    *

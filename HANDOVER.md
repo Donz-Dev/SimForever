@@ -46,7 +46,7 @@ the tooling to be a bit more sophisticated as well."
 | 17 | **A PATCH: nine racials and forty-odd class notes**, fed in as official notes. The client is TWO BUILDS AHEAD and carries NONE of them, so every figure here comes from a note | **not re-baselined**, on the owner's standing instruction. Four commits, and **thirteen notes are blocked on tree data** | see below |
 | 18 | **TWO OWNER RULINGS, both answering questions round 17 raised and refused to decide** -- the five Tauren templates gain 10 hit rating each, and the two Druid auras stop excluding each other | **not re-baselined**, on the owner's standing instruction. Every caster gains 3% spell crit and the five Tauren rows go back on their hit caps | see below |
 | 18b | **A THIRD RULING, arriving straight after the merge** -- Ice Lance's coefficient is `1.5/3.5/3`, so the divisor tracks the frozen multiplier and the implemented reading was wrong for one release | the frozen coefficient 0.3214 -> **0.4286**, +33% on the spell-power half of a spell that is **8.6% of Frostfire** and is cast by no other profile | see below |
-| 19 | **BEFORE THE PULL, FOR ALL 28 PROFILES** -- the owner specified an opener per profile, and three Warrior lists lose the entries it replaces | **not re-baselined**, on the owner's standing instruction. 26 of 28 openers fire; two of their lines cannot be implemented and are named below | see below |
+| 19 | **BEFORE THE PULL, FOR ALL 28 PROFILES** -- the owner specified an opener per profile, and three Warrior lists lose the entries it replaces | **not re-baselined**, on the owner's standing instruction. Every line of theirs is implemented after one round of corrections: a positioning RULING, two new Druid abilities, a substitution and a periodic that accrues | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -369,29 +369,96 @@ the feature was designed, was "Cast Fireball <= 2.5 sec before combat initiates"
 therefore finishes at the pull. `precombat.test.ts` has asserted that since the
 feature shipped and it still passes untouched.
 
-### Two of the owner's lines cannot be implemented, and both are named
+### The owner corrected four readings, and every line is implemented now
+
+**THE FIRST PASS LEFT THREE THINGS OUT AND GOT THE PHRASING CONFIRMED.** Their
+reply is the clearest statement of the method this round produced: a flagged
+reading gets answered, an omission does not.
+
+| | the first reading | the owner |
+| --- | --- | --- |
+| the LEAD TIME | "N seconds before" is when the action STARTED, so a cast finishing at the pull ages by nothing | **confirmed**: "'3s before Battle Stance' means t-minus 3 seconds from combat starting ... everything listed is meant to be a set sequence to properly initiate combat at 0s with all non-combat skills already pre-fired" |
+| the Cat's **RAVAGE** | unimplementable: "must be prowling AND behind the target" is `stealth` plus `positioning`, two `OutOfScope` members | **"You do NOT need to scope in behind the target positioning. Once again this should be assumed in all cases EXCEPT when 'Target attacks back' is checked."** Plus the whole ability, stated |
+| the melee Hunters' **MONGOOSE BITE** | impossible before the pull -- its dodge window needs a landed attack | **"good catch. Replace Mongoose Bite with Strider kick instead for those pre-combat instances."** |
+| the SEVEN state lines | omitted, because `runPrecombat` skips them in silence | **"Even if lines were already true, like Moonkin Form, just leave it in the pre-combat so users know that."** |
+
+### The positioning ruling overturned four caveats at once
+
+Shred, Backstab and Ambush each carried an `unmodelled` entry saying the
+position "is dropped ... and is not pretended to be met", and the Cat's own list
+called the drop "generous to the build".
+
+**THE BEHAVIOUR NEVER CHANGED AND THE NOTES WERE WRONG.** All three always dealt
+their damage; what the caveats did was tell a reader the build was getting
+something it had not earned, while three `unmodelled` entries inflated the gap
+census with a decision. **A caveat that apologises for the engine can be wrong
+about the RULESET**, and nothing in the code contradicts it.
+
+**THE EXCEPTION IS NOT BUILT, BECAUSE NOTHING REACHES IT.** A character whose
+target swings back stands in FRONT of it -- that is why the encounter grants the
+target 14% parry -- so a behind-the-target ability should be refused on such a
+build. No engine field carries `targetAttacks`, and every profile that can cast
+one of these sets it false, so a gate would be unreachable.
+`positioning.test.ts` asserts the invariant instead, and **the day a tank build
+takes Shred that test fails and the gate becomes worth building.**
+
+### Prowl and Ravage, the two new Druid abilities
+
+The owner supplied Ravage outright -- "60 energy, Instant cast ... 350% damage
+plus 343 ... Must be prowling and behind the target. Awards 1 combo points" --
+and **every figure agrees with `forever-druid-spellbook.json` at rank 4, word
+for word**. So the numbers were never what could be wrong; the SHAPE was:
 
 | | |
 | --- | --- |
-| **the Cat's "0s Ravage"** | declared as an ability NOWHERE. The spellbook capture has it -- "350% damage plus 343. **Must be prowling and behind the target**" -- and both requirements are `OutOfScope` members, `stealth` and `positioning`. A 350%-weapon-damage opener is not something to approximate |
-| **the melee Hunters' "cast Mongoose Bite"** | "Can only be performed after you dodge", and its only route here is EXPOSE PREY's 10% proc on a landed attack -- so before the pull the window cannot be open. **The ability is not lost**: it is in the list and fires when the proc lands. What is impossible is having it ready AT the pull |
+| the 350% | a WEAPON FRACTION, with the 343 OUTSIDE it -- Shred's shape one row up, and the owner's own flat-damage ruling |
+| the gate | the `PROWL` aura, which is Ambush's arrangement: a permanent aura whose only reader is the opener it unlocks |
+| the SPEND | **the one clause neither source states.** Ambush is the precedent and removes the aura gating it. Without it a Cat holding Prowl could Ravage whenever the energy allowed -- a repeatable 350% instant, which is a very large invented number. Labelled as a reading, and one line to flip |
 
-**THE GUARD IS WHAT FOUND THE SECOND ONE.** `precombatOpeners.test.ts`
-transcribes the owner's message a second time and then drives all 28 fights,
-asserting every declared action emits a cast at timestamp zero. It failed on
-`lw_melee` and `hawk_melee` the first time it ran. **The tempting fix is to
-grant `expose_prey` before the pull, which would hand both builds a free 10%
-proc every fight**, so the test pins the reason rather than the absence.
+**PROWL IS A REAL CAST AND THE FORM ABOVE IT IS NOT**, which is the distinction
+the opener makes visible: it is declared, free, on a ten second cooldown, and at
+the pull that cooldown reads **nine seconds** -- the lead rewound, which is the
+half of `runPrecombat` a reader is least likely to expect from the panel.
 
-### Four more lines name something already true
+### A periodic that accrues before the pull
 
-"2s before Stealth" on three Rogues -- a Rogue's `openingAuras` carry the
-`stealth` aura and there is no Stealth ABILITY, deliberately -- and "Moonkin
-Form", "Cat Form" and "Dire Bear Form", which are COMBAT STYLES on the profile.
-`onPrecombat` runs AFTER the `openingAuras` loop, so each character is already
-in the state the line asks for. **Writing an entry anyway would have been an
-action that reads correctly and is skipped in silence**, which is the same
-failure as a typo.
+**BLOODRAGE AT A TEN SECOND LEAD WAS TEN RAGE AND SHOULD BE TWENTY.** The owner:
+"you get 10 rage instantly, and then another 1 rage per second for 10 seconds
+... **You end up with exactly 20 rage generated from Bloodrage after 10
+seconds**." All three Warrior openers press it at exactly its duration, so the
+whole over-time half elapsed before the pull -- and the aura was aged past its
+own end and removed with that half undelivered.
+
+`PeriodicEffect.accruesBeforeCombat` is the fix, and it is **declared rather
+than derived because the engine cannot tell the two kinds of periodic apart**:
+both are an `onTick` closure and what it does is decided inside. A resource
+granted to the CARRIER is accrual; damage dealt to a TARGET would be damage in a
+fight that had not started. The default loses the elapsed ticks, which is what
+every DoT wants, and Bloodrage is the one caller.
+
+**IT DOES NOT DOUBLE-COUNT AT A SHORTER LEAD**, which is the half to check
+rather than reason about: the ticks already scheduled keep firing after the pull
+and stop when the AGED window closes, so a four-second lead is four before and
+six after. Probed by switching the flag off -- **10 against 20**, exactly the
+two halves.
+
+### And the seven state lines are listed rather than omitted
+
+"2s before Stealth" on three Rogues, and "Cat Form", "Moonkin Form" and "Dire
+Bear Form". None is an ability: a Druid's form is a COMBAT STYLE and a Rogue's
+Stealth is an `openingAura`, and `onPrecombat` runs AFTER that loop, so each is
+already true when the opener runs.
+
+**THE ARGUMENT FOR OMITTING THEM WAS TRUE OF THE ENGINE AND BESIDE THE POINT.**
+A pre-combat list is also the thing a person reads to see how the fight opens,
+and a missing step reads as a step not taken. So `PRECOMBAT_STATES` carries the
+seven with what makes each one true, and the two readers that would otherwise
+misreport them use it: the APL panel, which labelled them "(not in this build)"
+-- exactly backwards on the row somebody is checking -- and the opener guard,
+which asserts every action FIRES.
+
+**IT IS NOT A WAY TO DECLARE SOMETHING INERT.** Each entry reads the PROFILE, so
+a Moonkin naming `cat_form` is still wrong, and the guard drives that both ways.
 
 ### The ordering inside one lead time is load-bearing
 
@@ -471,12 +538,17 @@ rage, it puts its own cooldowns on the clock with the lead time rewound, and the
 Mighty Rage Potion + queue Maul + Primal Bite" is four actions in the instant a
 priority list could spend one.
 
-**AND ONE THING IS WORTH THE OWNER'S ATTENTION**: Bloodrage grants 10 rage
-instantly AND ten more over ten seconds, and at a 10-second lead the over-time
-half is LOST -- the aura is aged past its own end, so its ticks never happen.
-Physically a warrior who pressed it ten seconds out would arrive with all of it.
-`runPrecombat` cannot deliver a periodic effect's accrued resource, and shortening
-the lead is the owner's call rather than a fix to make here.
+**AND THE ONE THING FLAGGED FOR THE OWNER CAME BACK ANSWERED**, which is this
+round's own method working: the note read "Bloodrage grants 10 rage instantly
+AND ten more over ten seconds, and at a 10-second lead the over-time half is
+LOST ... `runPrecombat` cannot deliver a periodic effect's accrued resource, and
+shortening the lead is the owner's call rather than a fix to make here."
+
+They neither shortened the lead nor left it: they stated the total. "You end up
+with exactly 20 rage generated from Bloodrage after 10 seconds." So the fix was
+the engine's after all -- see **A periodic that accrues before the pull** above.
+**Flagging it was what produced the figure that settled it**, and the figure
+ruled out the option the note had offered.
 
 ## Round TWENTY is scoped and not started: the client caught up
 

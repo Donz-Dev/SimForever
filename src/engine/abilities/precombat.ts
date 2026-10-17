@@ -241,6 +241,27 @@ function rewindAuras(
 
       aura.appliedAt -= leadMs;
       aura.expiresAt -= leadMs;
+
+      /*
+       * THE TICKS THAT HAPPENED BEFORE THE PULL, FOR AN AURA THAT SAYS THEY
+       * COUNT. See `PeriodicEffect.accruesBeforeCombat`: Bloodrage's "another 1
+       * rage per second for 10 seconds" is rage the character spent those
+       * seconds generating, and at the ten-second lead the owner's own openers
+       * use, ALL of it elapsed before the clock started.
+       *
+       * ONE TICK PER WHOLE INTERVAL INSIDE THE LEAD, capped by the aura's own
+       * duration -- a thirty-second lead on a ten-second window is still ten
+       * ticks. The ticks the engine already scheduled keep firing after the
+       * pull and stop when the aged window closes, so the two halves meet
+       * exactly rather than overlapping.
+       */
+      const periodic = aura.definition.periodic;
+      if (periodic?.accruesBeforeCombat === true && periodic.intervalMs > 0) {
+        const elapsed = Math.min(leadMs, aura.definition.durationMs);
+        const ticks = Math.floor(elapsed / periodic.intervalMs);
+        for (let tick = 0; tick < ticks; tick += 1) periodic.onTick(context, aura);
+      }
+
       if (aura.expiresAt <= context.clock.now()) {
         combatant.auras.remove(context, aura.definition.id);
       }

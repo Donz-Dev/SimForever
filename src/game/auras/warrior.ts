@@ -431,6 +431,16 @@ export function bloodrageAura(rageMultiplier = 1): AuraDefinition {
     durationMs: BLOODRAGE_DURATION_MS,
     periodic: {
       intervalMs: BLOODRAGE_TICK_INTERVAL_MS,
+      /*
+       * ITS TICKS COUNT IF THEY HAPPENED BEFORE THE PULL, which is the owner's
+       * own arithmetic: "You end up with exactly 20 rage generated from
+       * Bloodrage after 10 seconds." All three Warrior openers press it at a
+       * TEN SECOND lead -- exactly the duration -- so without this the warrior
+       * arrives with the instant 10 and the over-time 10 is thrown away with
+       * the expired aura. THE ONLY CALLER, and see the field for why a DoT must
+       * not have it.
+       */
+      accruesBeforeCombat: true,
       onTick: (context, aura) => {
         const actor = combatantIn(context, aura.targetId);
         if (!actor) return;

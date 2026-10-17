@@ -3,6 +3,10 @@ import type { TelemetryEvent } from '../../src/engine';
 import { Simulation } from '../../src/engine';
 import { PROFILE_PRESETS, PRESETS_BY_ID } from '../../src/profiles/presets';
 import { characterAtCombatStart } from '../../src/simulator';
+import {
+  PRECOMBAT_STATES,
+  precombatStateFor,
+} from '../../src/game/abilities/precombatStates';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 
 /*
@@ -47,20 +51,21 @@ import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncount
  * they wrote each line.
  *
  * ------------------------------------------------------------------------------
- * FOUR LINES OF THEIRS ARE NOT HERE BECAUSE THEY NAME SOMETHING ALREADY TRUE,
- * and one cannot be implemented at all:
+ * EVERY LINE OF THEIRS IS HERE NOW, INCLUDING THE SEVEN THAT NAME A STATE.
  *
- *   "2s before Stealth"           x3  a Rogue's `openingAuras` carry `stealth`
- *   "3s before Moonkin Form"          a COMBAT STYLE, not an ability
- *   "1s before Cat Form"              the same
- *   "1.5s before Dire Bear Form"      the same
- *   "0s Ravage"                       DECLARED NOWHERE: "must be prowling and
- *                                     behind the target" is `stealth` AND
- *                                     `positioning`, both `OutOfScope` members
+ * Four were omitted at first as "already true" -- the three Druid forms and a
+ * Rogue's Stealth, none of which is an ability -- and the owner asked for them
+ * back: "Even if lines were already true, like Moonkin Form, just leave it in
+ * the pre-combat so users know that." They are declared, `runPrecombat` finds
+ * no ability and skips them, and `PRECOMBAT_STATES` is what stops this file and
+ * the panel reporting that as a fault.
  *
- * The first four are satisfied before a pre-combat action could run, because
- * `onPrecombat` is called AFTER the `openingAuras` loop. The fifth is flagged
- * in HANDOVER rather than approximated.
+ * AND ONE OMISSION WAS A MISREADING OF A RULING. The Cat's "0s Ravage" was
+ * refused as unimplementable because "must be prowling AND behind the target"
+ * looked like `stealth` plus `positioning`; the owner: **"You do NOT need to
+ * scope in behind the target positioning. Once again this should be assumed in
+ * all cases EXCEPT when 'Target attacks back' is checked."** Prowl and Ravage
+ * are declared and the Cat has a three-step opener.
  * ------------------------------------------------------------------------------
  */
 const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string])[]>> = {
@@ -89,19 +94,33 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
   rogue_combat_mut: [[1, 'blade_flurry']],
   rogue_combat: [[1, 'blade_flurry']],
   rogue_rupture: [
+    [2, 'stealth'],
     [1, 'premeditation'],
     [0, 'ambush'],
   ],
   rogue_hemo: [
+    [2, 'stealth'],
     [1, 'premeditation'],
     [0, 'ambush'],
   ],
   // No Ambush: this build's main hand is a SWORD and Ambush asks for a dagger.
-  rogue_pure_hemo: [[1, 'premeditation']],
-  druid_moonkin: [[1.5, 'wrath']],
-  // The form is the style and Ravage is undeclared, so this one is empty.
-  druid_cat: [],
+  rogue_pure_hemo: [
+    [2, 'stealth'],
+    [1, 'premeditation'],
+  ],
+  druid_moonkin: [
+    [3, 'moonkin_form'],
+    [1.5, 'wrath'],
+  ],
+  // "2s before cat form, 1s before prowl, 0s Ravage" -- the one opener the
+  // owner had to restate, and the one that needed new abilities declaring.
+  druid_cat: [
+    [2, 'cat_form'],
+    [1, 'prowl'],
+    [0, 'ravage'],
+  ],
   druid_bear: [
+    [1.5, 'bear_form'],
     [0, 'enrage'],
     [0, 'mighty_rage_potion'],
     [0, 'maul'],
@@ -158,23 +177,26 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
     [4, 'sniper_shot'],
   ],
   /*
-   * "0s queue Raptor Strike + cast Mongoose Bite" -- AND THE BITE IS ABSENT.
-   * This test is what found that: the action was declared, it was silently
-   * refused, and the assertion below said so. "Can only be performed after you
-   * dodge", and its only route here is EXPOSE PREY's 10% proc on an attack
-   * against a marked target -- so before the pull no attack has landed and the
-   * window cannot be open. It is in the LIST, so the ability still fires in the
-   * fight; what is impossible is having it up AT the pull.
+   * STRIDER KICK WHERE THE OWNER FIRST WROTE MONGOOSE BITE, AND THIS TEST IS
+   * WHY. Their line was "queue Raptor Strike + cast Mongoose Bite"; the bite
+   * "can only be performed after you dodge" and its only route here is EXPOSE
+   * PREY's 10% proc on a landed attack, so before the pull the window cannot be
+   * open and the cast was refused and skipped in silence. This file caught it
+   * the first time it ran, and the owner replaced it: "good catch. Replace
+   * Mongoose Bite with Strider kick instead for those pre-combat instances."
+   * Strider Kick has no gate at all.
    */
   lw_melee: [
     [3, 'hunters_mark'],
     [1.5, 'aspect_of_the_beast'],
     [0, 'raptor_strike'],
+    [0, 'strider_kick'],
   ],
   hawk_melee: [
     [3, 'hunters_mark'],
     [1.5, 'aspect_of_the_beast'],
     [0, 'raptor_strike'],
+    [0, 'strider_kick'],
   ],
   warlock_smds: [[2.5, 'shadow_bolt']],
   warlock_firelock: [[2, 'incinerate']],
@@ -201,17 +223,20 @@ function castsIn(presetId: string): readonly { id: string; at: number }[] {
 }
 
 describe("the owner's openers are transcribed exactly", () => {
-  it('declares one for all 28 profiles, and the two empty ones are empty', () => {
+  it('declares one for all 28 profiles, and only Venom has none', () => {
     expect(Object.keys(OWNER_OPENERS).sort()).toEqual(
       PROFILE_PRESETS.map((preset) => preset.id).sort(),
     );
 
     /*
-     * ABSENT RATHER THAN EMPTY, for the two with nothing to declare. The field
+     * ABSENT RATHER THAN EMPTY, for the one with nothing to declare. The field
      * is optional and `absent` is what every profile saved before format 16
-     * carries, so writing `precombat: []` would make those two profiles differ
-     * from a hand-edited one for no reason -- and `roundTrip.test.ts` compares
-     * the whole structure.
+     * carries, so writing `precombat: []` would make that profile differ from a
+     * hand-edited one for no reason -- and `roundTrip.test.ts` compares the
+     * whole structure.
+     *
+     * IT WAS TWO: the Cat was empty while Ravage was thought unimplementable
+     * and Cat Form was thought not worth listing. Both readings were wrong.
      */
     for (const [id, opener] of Object.entries(OWNER_OPENERS)) {
       const declared = PRESETS_BY_ID.get(id)!.build().precombat;
@@ -267,9 +292,19 @@ describe('every declared action actually happens', () => {
   for (const [id, opener] of Object.entries(OWNER_OPENERS)) {
     if (opener.length === 0) continue;
 
-    it(`${id} casts all ${opener.length} of them at the pull`, () => {
+    it(`${id} does all ${opener.length} of them at the pull`, () => {
+      const profile = PRESETS_BY_ID.get(id)!.build();
       const casts = castsIn(id);
       for (const [, abilityId] of opener) {
+        /*
+         * A STATE LINE IS SATISFIED RATHER THAN CAST, and it is checked against
+         * `PRECOMBAT_STATES` rather than waved through by id: `cat_form` is
+         * already true for a Druid in Cat Form and NOT for a Moonkin, so a
+         * profile naming the wrong one still fails here.
+         */
+        const state = precombatStateFor(profile, abilityId);
+        if (state) continue;
+
         const found = casts.filter((cast) => cast.id === abilityId);
         expect(found.length, `${id}: ${abilityId} never happened`).toBeGreaterThan(0);
         expect(found[0].at, `${id}: ${abilityId} was not at the pull`).toBe(0);
@@ -278,7 +313,66 @@ describe('every declared action actually happens', () => {
   }
 });
 
-describe('the two lines of the owner that could NOT be implemented', () => {
+describe('the seven lines that name a STATE rather than a cast', () => {
+  /*
+   * ============================================================================
+   * DECLARED, SKIPPED, AND NOT A FAULT -- on the owner's instruction: "Even if
+   * lines were already true, like Moonkin Form, just leave it in the pre-combat
+   * so users know that."
+   *
+   * SO THE CLAIM IS THAT THE STATE IS TRUE AT THE PULL, which is a stronger
+   * assertion than the cast would have been: it fails if a profile names the
+   * wrong form, and it fails if the mechanism that makes it true -- a combat
+   * style, or `openingAuras` -- ever stops running before `onPrecombat`.
+   * ============================================================================
+   */
+  it('is satisfied for every profile that declares one', () => {
+    const declared: string[] = [];
+    for (const preset of PROFILE_PRESETS) {
+      const profile = preset.build();
+      for (const action of profile.precombat ?? []) {
+        if (!(action.abilityId in PRECOMBAT_STATES)) continue;
+        declared.push(`${preset.id}:${action.abilityId}`);
+        expect(
+          precombatStateFor(profile, action.abilityId),
+          `${preset.id} is already in ${action.abilityId}`,
+        ).toBeDefined();
+      }
+    }
+
+    // Exactly the seven the owner named, so a new one has to be deliberate.
+    expect(declared.sort()).toEqual(
+      [
+        'druid_bear:bear_form',
+        'druid_cat:cat_form',
+        'druid_moonkin:moonkin_form',
+        'rogue_hemo:stealth',
+        'rogue_pure_hemo:stealth',
+        'rogue_rupture:stealth',
+      ].sort(),
+    );
+  });
+
+  it('is not a way to declare something inert: a wrong form still reads wrong', () => {
+    /*
+     * THE GUARD ON THE GUARD. `PRECOMBAT_STATES` exists so a state line is not
+     * reported as a failure, and the danger is that it becomes a list of ids
+     * that excuses anything. Each entry reads the PROFILE, so naming a form the
+     * character is not in is still false -- which is what keeps the assertion
+     * above meaningful.
+     */
+    const moonkin = PRESETS_BY_ID.get('druid_moonkin')!.build();
+    expect(precombatStateFor(moonkin, 'moonkin_form')).toBeDefined();
+    expect(precombatStateFor(moonkin, 'cat_form')).toBeUndefined();
+    expect(precombatStateFor(moonkin, 'stealth')).toBeUndefined();
+
+    const rogue = PRESETS_BY_ID.get('rogue_rupture')!.build();
+    expect(precombatStateFor(rogue, 'stealth')).toBeDefined();
+    expect(precombatStateFor(rogue, 'bear_form')).toBeUndefined();
+  });
+});
+
+describe('the one line of the owner that needed replacing', () => {
   /*
    * ============================================================================
    * BOTH ARE RECORDED HERE RATHER THAN APPROXIMATED, and both would otherwise
@@ -287,26 +381,40 @@ describe('the two lines of the owner that could NOT be implemented', () => {
    * nothing at all.
    * ============================================================================
    */
-  it('cannot give the Cat its Ravage, because the ability is declared nowhere', () => {
+  it('gives the Cat its Ravage, which this file first said was impossible', () => {
     /*
-     * "1s before Cat Form, 0s Ravage." The form is a COMBAT STYLE and needs no
-     * action; Ravage is in the Druid spellbook capture -- "Ravage the target,
-     * causing 350% damage plus 343. **Must be prowling and behind the
-     * target**" -- and is declared as an ability nowhere, because both of its
-     * requirements are `OutOfScope` members: `stealth` and `positioning`.
+     * ========================================================================
+     * THIS TEST ASSERTED THE OPPOSITE: "cannot give the Cat its Ravage,
+     * because the ability is declared nowhere".
      *
-     * ASSERTED AS AN ABSENCE FROM THE BOOK, so the day somebody declares it
-     * this test fails and the opener can be completed.
+     * That was right about the declaration and wrong about why. The capture
+     * reads "Must be prowling and behind the target", which was read as
+     * `stealth` PLUS `positioning` -- two `OutOfScope` members, so the opener
+     * was left empty and flagged. The owner: **"You do NOT need to scope in
+     * behind the target positioning. Once again this should be assumed in all
+     * cases EXCEPT when 'Target attacks back' is checked."**
+     *
+     * AND THE PROWLING HALF WAS NEVER OUT OF SCOPE EITHER, which is the part
+     * worth noticing: `stealth` covers "being stealthed and the openers
+     * REQUIRING it", and the owner had already ruled Ambush's requirement
+     * modellable as an aura a cast reads. Prowl is that shape exactly -- a
+     * permanent aura whose only job is to gate one opener.
+     * ========================================================================
      */
     const cat = PRESETS_BY_ID.get('druid_cat')!.build();
-    expect(cat.precombat, 'so the Cat declares no opener at all').toBeUndefined();
-
     const player = characterAtCombatStart(cat)!;
-    expect(player.abilities.get('ravage'), 'no such ability').toBeUndefined();
-    expect(player.auras.has('cat_form') || cat.character.combatStyle === 'cat').toBe(true);
+    expect(player.abilities.get('ravage'), 'declared now').toBeDefined();
+    expect(player.abilities.get('prowl'), 'and so is Prowl').toBeDefined();
+    expect(cat.encounter.targetAttacks, 'so behind the target is assumed').toBe(false);
+
+    // And it lands: the opener prowls and then spends the window.
+    const casts = castsIn('druid_cat');
+    expect(casts.some((cast) => cast.id === 'prowl')).toBe(true);
+    expect(casts.some((cast) => cast.id === 'ravage')).toBe(true);
+    expect(player.auras.has('prowl'), 'Ravage spent the window').toBe(false);
   });
 
-  it('cannot give the melee Hunters their Mongoose Bite, because the window needs a hit', () => {
+  it('replaces Mongoose Bite with Strider Kick, because the window needs a hit', () => {
     /*
      * "0s queue Raptor Strike + cast Mongoose Bite." The queue half works --
      * an on-next-swing ability is armed by `castAbility` -- and the cast half
@@ -325,6 +433,15 @@ describe('the two lines of the owner that could NOT be implemented', () => {
       const player = characterAtCombatStart(built)!;
       expect(player.auras.has('expose_prey'), id + ' has no window at the pull').toBe(false);
       expect(player.abilities.get('mongoose_bite'), id + ' knows the ability').toBeDefined();
+
+      // So the opener kicks instead, and the bite keeps its list entry.
+      const opener = (built.precombat ?? []).map((action) => action.abilityId);
+      expect(opener, id + ' kicks').toContain('strider_kick');
+      expect(opener, id + ' does not try to bite').not.toContain('mongoose_bite');
+      expect(
+        built.rotation.entries.some((entry) => entry.abilityId === 'mongoose_bite'),
+        id + ' still bites in the fight',
+      ).toBe(true);
     }
   });
 });

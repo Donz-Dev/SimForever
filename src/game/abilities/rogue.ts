@@ -60,11 +60,14 @@ import { EVISCERATE_AP_COEFFICIENT_PER_COMBO_POINT } from '../combat/coefficient
  *     stealth and is absent", which stopped being true the day Ambush was
  *     declared. Clearing a blocker is not finished until every reason naming
  *     it has been re-read.
- *   - POSITIONAL REQUIREMENTS, still dropped. Backstab and Ambush "must be
- *     behind the target". Nothing in this simulator has a facing, so the
- *     requirement is dropped and SAID to be dropped rather than silently met.
- *     The dagger half of the same sentence is enforced, because a weapon type
- *     is knowable.
+ *   - POSITIONAL REQUIREMENTS, NOW MET BY A RULING rather than dropped. This
+ *     read "still dropped ... SAID to be dropped rather than silently met",
+ *     which was right about the engine and wrong about the ruleset: the owner
+ *     has ruled that behind-the-target "should be assumed in all cases EXCEPT
+ *     when 'Target attacks back' is checked". Backstab and Ambush are on
+ *     builds whose target does not swing back, so the requirement holds.
+ *     The dagger half of the same sentence is enforced as it always was,
+ *     because a weapon type is knowable.
  * ----------------------------------------------------------------------------
  */
 
@@ -176,10 +179,14 @@ export const BACKSTAB: Ability = {
     if (!result.avoided) awardComboPoint(simulation, caster, target, ability.id, ability.name);
     consumeColdBlood(simulation, caster, ability.id);
   },
-  unmodelled:
-    'Its "must be behind the target" is dropped: nothing in this simulator ' +
-    'has a facing, so the requirement cannot be checked and is not pretended ' +
-    'to be met. The dagger requirement IS enforced.',
+  /*
+   * ITS "MUST BE BEHIND THE TARGET" IS *MET* BY THE OWNER'S RULING, and the
+   * dagger requirement is enforced in `canCast` as it always was. This carried
+   * an `unmodelled` entry saying the position "is not pretended to be met",
+   * which was honest about the engine and wrong about the ruleset -- see
+   * `SHRED` in `abilities/druid.ts` for the ruling and
+   * `positioning.test.ts` for the one case it excepts.
+   */
 };
 
 /**
@@ -744,11 +751,11 @@ export const AMBUSH: Ability = {
     consumeColdBlood(simulation, caster, ability.id);
   },
   unmodelled:
-    'Its "must be behind the target" is dropped: nothing here has a facing. ' +
-    'Its "must be stealthed" is satisfied by Cutthroat rather than modelled, ' +
-    "by the ruleset owner's ruling -- so a Rogue without that talent can " +
-    'never cast this at all, which is correct for an encounter that opens in ' +
-    'combat.',
+    'Its "must be stealthed" is satisfied by Cutthroat or by the opening ' +
+    'stealth window rather than by a stealth model, by the ruleset owner\'s ' +
+    'ruling. Its "must be behind the target" is MET by their later ruling that ' +
+    'the position is assumed unless the target attacks back -- this entry used ' +
+    'to say it was dropped.',
 };
 
 /**
