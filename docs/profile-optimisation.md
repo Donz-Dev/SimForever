@@ -10,6 +10,7 @@ failures are three different kinds:
 | **an illegal talent tree** | the Shockadin's optimised spread was refused by the game's own calculator; 896.0 and 1008.2 became 856.0 and 933.2 | **Gate A** |
 | **an illegal pre-combat list** | the Arcane Mage opener dealt ~1,200-1,400 damage before the clock started; its **+95.9** headline is void | **Gate B** |
 | **not going deep enough** | four of six named profiles got a tree repair and a pre-combat line and **no APL pass at all**; meanwhile six classes nobody named were audited | **Step 1**, **Step 6.6**, and the scope rule in **Step 0** |
+| **measuring inside a fixed frame** | the fight is 60s, two cooldowns were silently on the GCD, and an entry was called dead that fires twice at 240s — none of it visible to a paired probe, because it is true of the baseline too | **Step 1's sixth read**, and *"What the loop cannot find"* |
 
 Every rule here exists because one of those happened. Read
 [CLAUDE.md](../CLAUDE.md)'s section *"An optimisation brief, and five ways this
@@ -25,7 +26,7 @@ is the order of one **pass**, and a pass is repeated until it ships nothing.
 
 ```
   STEP 0   write the theme down                              once, 5 min
-  STEP 1   read the build: 5 commands, ~25 seconds total     every pass
+  STEP 1   read the build: 5 runs + 1 READ, ~25s total       every pass
   STEP 2   every candidate passes Gates A, B and C           before it is measured
   STEP 3   write the candidates into tools/<x>Variants.ts    one group per dimension
   STEP 4   measure PAIRED, one group at a time               ~20s per 10 variants
@@ -38,6 +39,13 @@ Stop when a whole pass produces no shipped change. Two passes with nothing in
 them means the profile is at a local optimum, and **that is a result worth
 reporting** -- the Arcane round's most valuable output was nineteen variants of
 which seventeen lost.
+
+**BUT "A LOCAL OPTIMUM" MEANS *INSIDE THE FRAME THE LOOP MEASURES IN*.** A
+paired probe cannot see anything true of the baseline and the variant alike --
+the fight length, an ability's own declarations, the shape of the list. The
+first profile taken through this procedure was then audited by the owner, who
+found four things in that blind spot. See **What the loop cannot find** before
+calling a profile done.
 
 ---
 
@@ -87,10 +95,14 @@ weights. Do not report a tank round as a DPS round.
 
 ## Step 1 — Read the build before you change it
 
-Five commands, about twenty-five seconds in total on one thread. **Run all five
-every pass.** They are not interchangeable: each answers a question the others
-cannot, and skipping one is how a round spends an hour tuning the wrong
-rotation.
+Five commands, about twenty-five seconds in total on one thread, **and a sixth
+step that runs nothing at all.** Run all six every pass. They are not
+interchangeable: each answers a question the others cannot, and skipping one is
+how a round spends an hour tuning the wrong rotation.
+
+**COUNT THESE FROM THE LIST RATHER THAN FROM THIS SENTENCE** — it said "five"
+for exactly as long as there were five, which is this project's own
+re-count-don't-increment rule applied to its own procedure.
 
 ```bash
 npx vite-node tools/encode_talent_build.mjs --all              # theme + legality + a URL the owner can audit
@@ -107,6 +119,36 @@ PROFILE=<id> PLAN=1 npx vite-node tools/stat_weights.ts        # which stats thi
 | `probe_resources` | `headroom` at the end of the fight: large means **GCD-bound**, zero with `wasted` means **capping** | one batch, so it is a diagnostic and not a measurement |
 | `probe_profile_report` | the damage table, buff/debuff uptime, and the `avoid` column | a row is pooled by ability **name**, so a proc sharing a name merges into it |
 | `stat_weights PLAN=1` | the hit ladder and the list of stats reported **not measured** — no fights are run | **the hit ladder undercounts school-scoped hit.** See Appendix B |
+
+### And a sixth, which is a READ rather than a run
+
+```bash
+grep -n "triggersGcd" src/game/abilities/<class>.ts
+```
+
+**IS EVERY COOLDOWN ACTUALLY OFF THE GLOBAL COOLDOWN?** `triggersGcd(ability)`
+is `ability.triggersGcd ?? ability.onNextSwing === undefined`, so **an ordinary
+ability is ON the global cooldown unless it opts out** — and three ability files
+had no `triggersGcd: false` anywhere in them.
+
+**THIS WAS WORTH +33 DPS ON ONE PROFILE AND IT IS NOT A MEASUREMENT.** The owner
+found it by reading the list, not by running anything: *"Ensure Presence of Mind
+and Arcane Power don't trigger a global cooldown."* Both did.
+
+**AND IT IS INVISIBLE IN EVERYTHING EXCEPT THE DPS** — an ability wrongly taking
+a global cooldown still applies the right aura, for the right duration, on the
+right cooldown, and reports an ordinary row. There is no zero to notice.
+
+So for every ability in the build that is a *cooldown* rather than a cast —
+trinket-likes, a damage window, a charge-granter, a potion — **check the flag
+against what the spell is.** Two rules bound it:
+
+- **it must declare a `cooldownMs`**, which `freeCastChain.test.ts` asserts for
+  every off-GCD ability across all nine classes: one with no cooldown would win
+  the list forever and **hang** a fight rather than fail one;
+- **off the GCD means it does not START one.** It is still *blocked* by one
+  running. What it buys is that the action after it is free — which is what
+  makes a cooldown stack expressible at all.
 
 **THE RESOURCE ANSWER DECIDES THE WHOLE APL PASS**, because resource-bound and
 GCD-bound builds want opposite orders. The Fire Mage ends a fight with
@@ -365,6 +407,27 @@ Five rules that have each cost this project a wrong conclusion:
   the interval" is indistinguishable from "did not apply". Measure the thing
   itself: the resolved cost, the stack count, the uptime, the rage total, the
   attacks received.
+- **STATE WHAT A FIGURE IS A DELTA *FROM*, INCLUDING WHAT STAYED IN PLACE.**
+  "Pre-casting Arcane Power is +24.2" survived a PR and a merge before the owner
+  asked the question that undid it: *"is pre-casting arcane power +24.2 over a
+  normal rotational use, or is it +24.2 over the sandwiched in cooldown
+  overlap?"* It was neither of the interesting ones — it was
+  `removePrecombat(...)` with the **list entry left in place**, and that entry
+  was gated on a proc with nothing to do with the thing being tested. **A delta
+  without its comparand is not a measurement, it is a number**, and the reader
+  cannot tell which of three questions it answered.
+- **AND A FIGURE CAN GO STALE INSIDE THE SAME ROUND THAT PRODUCED IT.** That
+  +24.2 was taken before another change in the same session took Arcane Power
+  off the global cooldown — so part of what it priced was a cost that no longer
+  existed. Re-measured, it did not reproduce at any fight length. **"A prior
+  measurement is true of the build it was taken in" applies to the build you had
+  an hour ago**, not only to last month's. When a round ships something that
+  changes what an ability costs, re-run the figures that priced that ability.
+- **MEASURE A PLACEMENT AT A LENGTH LONGER THAN THE COOLDOWN.** The same
+  question answered at three durations gave +4.19, +0.52 and +8.07 — and only
+  the longest one is `real`. A cooldown longer than the fight is cast once
+  whatever the list says, so at the default duration **every placement
+  conclusion is a conclusion about the clock**.
 - **AN ISOLATION PROBE MUST REVERT EVERY FILE THE CHANGE TOUCHED**, and must
   print `legalAllocation(...).dropped` beside every figure. Removing three
   points to price a talent once took a capstone with them and reported
@@ -484,11 +547,22 @@ Pre-combat mode skips **three** things the fight would charge for: the global
 cooldown the action would start, the swing reset, and the cast time. The mana is
 still spent and the cooldown still runs.
 
-**SO A COOLDOWN IS A CANDIDATE TO MOVE HERE.** A 15-second window opened at a
-**0s** lead is the same window the fight would get, bought for no GCD —
-`elemental_mastery` is **+13.9** and `arcane_power` **+24.9** on exactly that
-argument. A **0s lead on an instant is the safest edit in this whole document**:
-it cannot fail B2, and B1 is satisfied as long as the action is not damaging.
+**SO A COOLDOWN IS A CANDIDATE TO MOVE HERE** — a 15-second window opened at a
+**0s** lead is the same window the fight would get, bought for no global
+cooldown. `elemental_mastery` is **+13.9** on exactly that argument. A **0s lead
+on an instant is the safest edit in this whole document**: it cannot fail B2,
+and B1 is satisfied as long as the action is not damaging.
+
+**BUT THE ARGUMENT IS WORTH LESS THAN IT LOOKS, AND THIS IS WHERE IT WAS
+OVERSOLD.** `arcane_power` was cited here at **+24.9** and the figure is
+**retracted**: most of what it bought was a global cooldown the ability should
+never have been paying (Step 1's sixth read), and once that was fixed, pre-casting
+it measured **+4.19 ±6.81 at 60s and −8.07 by 300s**. **Pre-casting is only worth
+the GCD it saves, so it is worth nothing on an ability that is correctly off the
+GCD already** — and it *costs* something on a cooldown short enough to come back
+inside the fight, because the window is burned before the build is at full
+strength. **Check the GCD flag before pricing a pre-cast**, or the measurement
+prices a bug.
 
 The lead has **four** observable consequences, and treat that list as open
 rather than closed: an aura it applied has N seconds less left; its cooldown
@@ -566,6 +640,43 @@ Ten structural facts, each of which has produced a wrong list here:
   on 2H Arms and **-33.25** on DW Fury.
 - **A DUPLICATE ABILITY ID CAN BE CORRECT** — gated on a proc above and ungated
   as the filler below. Two Mage and Warlock lists do it on purpose.
+
+**AN ENTRY THAT NEVER FIRES IS NOT A DEAD ENTRY UNTIL YOU HAVE CHECKED IT
+AGAINST THE CLOCK.** Two entries can look identical in the uses column — both
+0.00, both apparently redundant with a pre-combat action — and be completely
+different things:
+
+| | why it reads 0.00 | verdict |
+| --- | --- | --- |
+| Mage Armor | a **thirty-minute** buff, pre-cast at a 3s lead | genuinely dead. **No fight length brings it back** |
+| Arcane Power | a **three-minute** cooldown, pre-cast at t=0 | **not dead.** 1.40 casts at 180s, 2.00 at 240s |
+
+**THE OWNER CAUGHT THIS AS A WRITE-UP ERROR**: *"arcane power being pre-cast
+doesn't remove it from the main combat APL because the moment a combat run
+exceeds 3 minutes it'll want to be cast a second time."* The entry had been
+flagged as dead "for the same reason Mage Armor was", which was a fact about
+the **clock** written down as a fact about the **list**.
+
+**SO THE TEST IS ONE COMPARISON: the ability's cooldown (or its buff duration)
+against the fight length.** Shorter than the fight means the entry is
+load-bearing and a longer fight will reach it; longer than any fight you will
+ever run means it is genuinely redundant. Count the casts at a longer
+`DURATION=` before removing anything.
+
+**A SEQUENCE IS A GUARANTEE; ENTRIES THAT FIRE TOGETHER ARE AN ACCIDENT.** When
+several entries always go off as a group, that holds only while nothing between
+them is castable — and **your own change can create or destroy that in the same
+round**. Three Arcane entries emerged as a stack only because all three were off
+the global cooldown, and two of them became so in the same commit. Writing them
+as one `AplEntry.sequence` measured **bit-identical** and was still worth doing,
+because the old shape would have come apart silently the moment anything above
+it took a global cooldown. **Measure it as neutral and ship it as structure.**
+
+**AND WHEN YOU ADOPT AN APL FEATURE, CHECK THE REPORTING UNDERSTANDS IT.**
+`printUses` keys on `abilityId`, so the moment the stack shipped, every
+sequence *step* vanished from the numbered list and fell into **"not in the list,
+and still dealing damage"** — the one heading there that means nobody asked for
+this damage. A new feature's first bug is usually in the thing that reports it.
 
 **ISOLATE A LOSS; DO NOT BLAME THE OBVIOUS SUSPECT.** The owner's Venom list
 measured -24.3 and the suspect was its Venom entry, which three earlier
@@ -670,6 +781,57 @@ immediately by going dark. The only things that read as progress are a tool
 call, a figure or a commit.
 
 ---
+
+## What the loop cannot find, and why an audit still finds it
+
+**THE FIRST PROFILE RUN THROUGH THIS PROCEDURE WAS THEN AUDITED BY THE OWNER,
+WHO FOUND FOUR THINGS IT HAD NOT.** They are worth reading together, because
+they have one cause:
+
+| what they found | what the loop did instead |
+| --- | --- |
+| a dead `mage_armor` entry | `USES=1` reported it as **1.0 uses** — the pre-combat cast, counted against the entry |
+| two cooldowns wrongly **on** the GCD | nothing asks whether an ability is *configured* right |
+| the cooldown stack | no measurement proposes a shape nobody wrote |
+| the one-minute clock | every tool defaults to it, so it is in the baseline **and** in every variant |
+
+**EVERY ONE IS AN ASSUMPTION THE HARNESS TAKES AS GIVEN.** A paired probe
+measures a *variant against a baseline* — so anything true of both sides
+cancels and becomes invisible. The clock cancels. An ability's GCD flag cancels
+until something changes it. A list's *shape* cancels, because a variant can only
+reorder, add or remove the entries somebody already thought of.
+
+**SO THE PROCEDURE IS SOUND AND INCOMPLETE IN A PREDICTABLE PLACE**, and the
+answer is not more variants. It is to read these by hand, once per pass, because
+no amount of measuring reaches them:
+
+1. **The clock.** Is the fight longer than the cooldowns in the list? Run
+   `DURATION=` past the longest one and count casts. Note what the build is
+   *bound by* at each length — the Arcane Mage is GCD-bound at 60s with 2,638
+   mana spare and **mana-bound by 300s**, which is a different optimisation
+   problem wearing the same name.
+2. **The declarations.** `triggersGcd`, `cooldownMs`, `castTimeMs`, the cost —
+   read them against what the spell is *supposed* to be. This is reading, not
+   running.
+3. **The pre-combat/APL overlap.** For each entry that looks redundant with the
+   opener, compare the ability's cooldown to the fight length before calling it
+   dead.
+4. **The shape.** Which entries always fire together, and is that a guarantee or
+   an accident?
+
+**AND THE OWNER'S READING HAS NOW BEATEN THE TOOLING FIVE TIMES** — the hit
+ladder, parry haste's direction, a proc rate at half its value, Crusader on a
+feral Druid, and this audit. **Every one was a case where the tools were working
+correctly on a question nobody had asked them.** Put the rates, the cast counts
+and the declarations in front of them, not just the DPS.
+
+**ONE FIGURE-HYGIENE RULE CAME OUT OF THE SAME ROUND AND BELONGS HERE.** Never
+write a number you have not measured — not in a comment, not as a placeholder,
+not as an estimate you intend to replace. Two went into source in that round
+before being caught: a revert cost written as `-162.5` before it was measured
+at **-96.5**, and a buff uptime written as `31.4%` before it was read at
+**32.2%**. Both read exactly like findings. **If the measurement has not run
+yet, leave the sentence unfinished.**
 
 ## Appendix A — the 28 openers against Gate B
 
