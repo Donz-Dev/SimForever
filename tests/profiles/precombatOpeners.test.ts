@@ -248,12 +248,79 @@ describe("the owner's openers are transcribed exactly", () => {
     }
   });
 
-  it('matches what every preset declares, ability for ability and lead for lead', () => {
+  /*
+   * ============================================================================
+   * FIVE PROFILES NOW DECLARE MORE THAN THE OWNER GAVE, AND THE ADDITIONS ARE
+   * LISTED SEPARATELY RATHER THAN FOLDED INTO `OWNER_OPENERS`.
+   *
+   * The owner's six-profile optimisation brief names pre-combat explicitly --
+   * "evaluate pre-combat, and APL decisions to maximize throughput" -- so these
+   * are a measured answer to it. **But `OWNER_OPENERS` is a transcription of
+   * what they WROTE**, and a transcription that quietly absorbs somebody else's
+   * additions stops being one: the next reader could not tell which lines came
+   * from the owner and which from a probe.
+   *
+   * SO THE TWO ARE KEPT APART AND THE TEST CHECKS THE SUM. Every owner line is
+   * still asserted present, at its stated lead, in its stated order -- so a
+   * change that DROPPED one still fails -- and the additions are asserted
+   * exactly, so one that crept in unmeasured fails too.
+   *
+   * EACH ONE IS ONE LINE TO REVERT, which is the point of listing them with
+   * their figures: if the owner wants their opener back, the number beside it
+   * is what it costs.
+   * ============================================================================
+   */
+  const OPTIMISATION_ADDITIONS: Readonly<
+    Record<string, readonly (readonly [number, string, string])[]>
+  > = {
+    shaman_elemental: [
+      [1.5, 'searing_totem', '+11.0 -- the Enhancement opener already did this'],
+      [0, 'elemental_mastery', '+13.9 -- a new capstone, claimed for no GCD'],
+    ],
+    mage_frostfire: [[1.5, 'scorch', '+25.1 -- one Fire Vulnerability stack at the pull']],
+    mage_arcane: [[0, 'arcane_power', '+24.9 -- a 15s window, claimed for no GCD']],
+    mage_fire: [[1.5, 'scorch', '+15.2 -- the same stack, worth less behind a 3s Fireball']],
+    shadow_priest: [
+      [0, 'shadow_word_pain', '+26.8 alone, +35.5 with the plague'],
+      [0, 'devouring_plague', '+26.7 alone'],
+    ],
+  };
+
+  it('keeps every owner line, at its stated lead and in its stated order', () => {
     for (const [id, opener] of Object.entries(OWNER_OPENERS)) {
       const declared = (PRESETS_BY_ID.get(id)!.build().precombat ?? []).map(
         (action) => [action.secondsBefore, action.abilityId] as const,
       );
-      expect(declared, id).toEqual(opener);
+      const added = new Set(
+        (OPTIMISATION_ADDITIONS[id] ?? []).map(([seconds, ability]) => `${seconds}:${ability}`),
+      );
+      /*
+       * THE OWNER'S LINES IN ORDER, with the additions filtered out -- so an
+       * addition may be inserted anywhere but may not REORDER or REPLACE
+       * anything the owner wrote. `Array.prototype.sort` being stable is what
+       * makes declaration order load-bearing in `runPrecombat`, and two actions
+       * at the same lead run in the order they are written here.
+       */
+      const ownerLinesOnly = declared.filter(
+        ([seconds, ability]) => !added.has(`${seconds}:${ability}`),
+      );
+      expect(ownerLinesOnly, id).toEqual(opener);
+    }
+  });
+
+  it('adds exactly what the optimisation pass measured, and nothing else', () => {
+    for (const preset of PROFILE_PRESETS) {
+      const declared = (PRESETS_BY_ID.get(preset.id)!.build().precombat ?? []).map(
+        (action) => `${action.secondsBefore}:${action.abilityId}`,
+      );
+      const owner = new Set(
+        (OWNER_OPENERS[preset.id] ?? []).map(([seconds, ability]) => `${seconds}:${ability}`),
+      );
+      const extra = declared.filter((line) => !owner.has(line)).sort();
+      const expected = (OPTIMISATION_ADDITIONS[preset.id] ?? [])
+        .map(([seconds, ability]) => `${seconds}:${ability}`)
+        .sort();
+      expect(extra, preset.id).toEqual(expected);
     }
   });
 

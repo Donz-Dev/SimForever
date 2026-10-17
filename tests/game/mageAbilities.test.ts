@@ -2229,7 +2229,33 @@ describe('what the Results panel divides its rates by', () => {
      */
     const scorchRow = batch.abilities.find((row) => row.abilityName === 'Scorch');
     expect(scorchRow, 'no Scorch row to compare against').toBeDefined();
-    expect(scorchRow!.attempts, 'Scorch pools no burn').toBe(scorchRow!.uses);
+    /*
+     * ========================================================================
+     * AT MOST ITS CASTS, NOT EXACTLY ITS CASTS -- and the equality was fragile
+     * from the day it was written rather than broken by anything.
+     *
+     * THE CLAIM IS THAT NOTHING POOLS INTO THIS ROW, which is a statement about
+     * attempts EXCEEDING casts: a hybrid's burn adds damage events to its
+     * caster's row and nothing else can. Frostfire Bolt is asserted that way
+     * below, `toBeGreaterThan`, and this is the same claim pointed the other
+     * direction.
+     *
+     * WHAT MAKES THE *EQUALITY* FAIL IS A CAST STILL IN FLIGHT WHEN THE FIGHT
+     * ENDS. A cast emits its `cast` event when it STARTS and its damage inside
+     * `onCast` when it finishes, so a 1.5-second Scorch begun at 62.7 seconds
+     * of a 62.9-second fight is one use and no attempt. Measured: **three of
+     * forty seeds** do exactly that, with the last Scorch at 62724ms, 62263ms
+     * and 62724ms against fights ending at 62907ms, 62533ms and 62953ms.
+     *
+     * SO THE ROW READS 6.975 USES AGAINST 6.95 ATTEMPTS, and every one of those
+     * 0.025 is a cast the fight cut off. Nothing is pooled, the denominator is
+     * as clean as it ever was, and the equality was only ever true because this
+     * profile's cast timing happened not to land there. **A boundary this test
+     * never meant to assert**, surfaced by the Scorch the optimisation pass
+     * moved before the pull -- which shifted every later cast by 1.5 seconds.
+     * ========================================================================
+     */
+    expect(scorchRow!.attempts, 'Scorch pools no burn').toBeLessThanOrEqual(scorchRow!.uses);
 
     const cleanRate = 100 * scorchRow!.avoidRate;
     const reported = 100 * bolt.avoidRate;

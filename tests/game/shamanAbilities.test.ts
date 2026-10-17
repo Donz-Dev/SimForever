@@ -365,7 +365,7 @@ describe('the fights', () => {
     expect(reasons).not.toMatch(/PLACEHOLDER/i);
   });
 
-  it('CLOSES MOST OF THE GAP to the Enhancement shaman, and that is the point', () => {
+  it('keeps the two Shaman specs within a factor of two, in either order', () => {
     /*
      * --------------------------------------------------------------------------
      * THIS TEST ASSERTED A RATIO OF THREE AND NOW ASSERTS A RATIO OF ONE AND A
@@ -386,10 +386,42 @@ describe('the fights', () => {
      * mechanism.
      * --------------------------------------------------------------------------
      */
+    /*
+     * ========================================================================
+     * THE ELEMENTAL SHAMAN HAS OVERTAKEN THE ENHANCEMENT ONE, AND THAT IS A
+     * RESULT RATHER THAN A REGRESSION.
+     *
+     * This asserted `enhancement > elemental` and was written when the gap was
+     * the thing being closed. The six-profile optimisation pass closed it and
+     * went past: Elemental **808.5** against Enhancement **776.9**, because the
+     * Elemental build had two whole dimensions left on the table and the
+     * Enhancement build had almost none.
+     *
+     *   ELEMENTAL     +24.4  its new capstone was in NO priority list
+     *                 +13.9  that capstone, claimed before the pull for no GCD
+     *                 +11.0  Searing Totem pre-cast, which the Enhancement
+     *                        opener had been doing all along
+     *                 +3.0   four points of Restoration filler into Intellect
+     *   ENHANCEMENT   +1.9   one dead boot enchant, and nothing else: its list
+     *                        was measured entry by entry and every removal
+     *                        lost, Fire Nova by 69.6
+     *
+     * SO WHAT THIS TEST PINNED WAS A RANKING, which is a measurement outcome
+     * and not an invariant -- the thing CLAUDE.md warns about in its own words,
+     * "assert what should stay true, not what happens to be true today". The
+     * ranking moved the moment somebody optimised one of the two.
+     *
+     * WHAT IS LEFT IS THE CLAIM WORTH KEEPING: the two are within a factor of
+     * two of each other, in either order. That is the real statement -- two
+     * specs of one class should be comparable builds rather than one being
+     * twice the other -- and it survives whichever is ahead this week.
+     * ========================================================================
+     */
     const elemental = batchOf('shaman_elemental', 40, 5).dps.mean;
     const enhancement = batchOf('shaman_enhancement', 40, 5).dps.mean;
-    expect(enhancement).toBeGreaterThan(elemental);
-    expect(enhancement).toBeLessThan(elemental * 2);
+    expect(Math.max(elemental, enhancement)).toBeLessThan(
+      Math.min(elemental, enhancement) * 2,
+    );
   });
 });
 

@@ -7330,8 +7330,8 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Arcane Mage | Mage | 35/11/5 | 866.8 | | SM/DS | Warlock | 35/11/5 | 722.4 |
 | Frostfire Mage | Mage | 0/29/22 | 863.3 | | Rupture Rogue | Rogue | 12/8/31 | 719.4 |
 | BM Hunter | Hunter | 31/20/0 | 856.2 | | Venom Rogue | Rogue | 37/12/2 | 718.9 |
-| 2H Arms | Warrior | 39/10/2 | 849.7 | | Ele Shaman | Shaman | 32/6/13 | 671.1 |
-| Fire Mage | Mage | 16/31/4 | 843.7 | | Prot Warr | Warrior | 17/0/34 | 469.7 |
+| 2H Arms | Warrior | 39/10/2 | 849.7 | | Ele Shaman | Shaman | 32/10/9 | 671.1 |
+| Fire Mage | Mage | 15/31/5 | 843.7 | | Prot Warr | Warrior | 17/0/34 | 469.7 |
 | LW Melee | Hunter | 5/13/33 | 831.5 | | Prot Pally | Paladin | 8/34/9 | 434.5 |
 | Combat Rogue | Rogue | 18/33/0 | 824.1 | | Bear Druid | Druid | 9/42/0 | 386.1 † |
 | Combat Mut | Rogue | 30/21/0 | 790.6 | | | | | | |
