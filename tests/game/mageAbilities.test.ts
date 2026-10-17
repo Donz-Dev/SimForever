@@ -2522,7 +2522,7 @@ describe('Evocation, which pays out during its own channel', () => {
     expect(compiled(entry.condition)!(simulation, actor, target)).toBe(true);
   });
 
-  it('is reached ONCE in sixty runs, and only by the Arcane Mage', () => {
+  it('is reached ONCE in sixty runs at a 60s fight, and only by the Arcane Mage', () => {
     /*
      * ==========================================================================
      * THIS TEST IS A TRIPWIRE AND IT HAS NOW FIRED ONCE, WHICH IS THE POINT.
@@ -2546,10 +2546,26 @@ describe('Evocation, which pays out during its own channel', () => {
      * The ruling is unchanged; what changed is that the safety net caught
      * something.
      *
-     * PINNED PER PROFILE AND EXACTLY, so it stays a tripwire. Fire and
-     * Frostfire are still zero and a cast on either is a different finding
-     * entirely; Arcane is one, and both a rise and a fall are worth somebody
-     * looking.
+     * ==========================================================================
+     * **AND THESE NUMBERS DESCRIBE A SIXTY-SECOND CLOCK, NOT THE RULESET.** The
+     * owner: "rotations need to be built for longer than 1 minute, so things
+     * like evocation not firing might just be the short nature of combat." It
+     * is exactly that. Arcane Mage casts of Evocation over twenty seeds:
+     *
+     *     60s  0.05      120s  0.40      180s  0.70      240s  1.00      300s  1.00
+     *
+     * So "never fires" was never a property of the list. Every profile carries
+     * `durationSeconds: 60`, and at five minutes this build is MANA bound where
+     * at one minute it ends with 2,638 spare. **The ruling "This is intended"
+     * was given about a one-minute fight**, and if the default duration moves,
+     * this test is the first thing that should be re-asked rather than
+     * re-pinned.
+     * ==========================================================================
+     *
+     * PINNED PER PROFILE AND EXACTLY, so it stays a tripwire AT THIS DURATION.
+     * Fire and Frostfire are still zero and a cast on either is a different
+     * finding entirely; Arcane is one, and both a rise and a fall are worth
+     * somebody looking.
      * ==========================================================================
      */
     const casts = (preset: string) => {

@@ -380,6 +380,75 @@ export const VARIANT_GROUPS: Readonly<Record<string, readonly Variant[]>> = {
    * it displaces nothing. This is the measurement that was actually missing.
    * ==========================================================================
    */
+  /*
+   * ==========================================================================
+   * WHERE ARCANE POWER BELONGS, ASKED PROPERLY. The owner: "is pre-casting
+   * arcane power +24.2 over a normal rotational use, or is it +24.2 over the
+   * sandwiched in cooldown overlap? I just find it hard to believe that arcane
+   * power would want to be used prior to reaching 4 stacks of arcane blast."
+   *
+   * **IT WAS OVER A NORMAL ROTATIONAL USE, AND THE FIGURE IS STALE ANYWAY.**
+   * The +24.2 was `removePrecombat('arcane_power')` with the list entry left
+   * in place -- and that entry is gated on a MISSILE BARRAGE PROC, which has
+   * nothing to do with the Arcane Blast ramp. So it priced "pre-cast" against
+   * "cast on the first barrage", never against the cap and never against the
+   * stack.
+   *
+   * **AND IT WAS MEASURED BEFORE ARCANE POWER CAME OFF THE GLOBAL COOLDOWN.**
+   * Part of what pre-casting bought was a GCD the in-fight cast no longer
+   * pays. A prior measurement is true of the build it was taken in, and that
+   * build is gone.
+   *
+   * SO THE MATRIX IS FOUR PLACEMENTS, AND IT HAS TO BE RUN AT MORE THAN ONE
+   * FIGHT LENGTH. Arcane Power is a THREE MINUTE cooldown and the profile is
+   * sixty seconds, so at the default duration it is cast once whatever the list
+   * says and every conclusion is about the clock. Run it with `DURATION=`.
+   * ==========================================================================
+   */
+  arcApPlacement: [
+    { label: 'SHIPPED: pre-cast at t0, entry on a barrage proc', apply: (p) => p },
+    {
+      label: 'no pre-cast, entry on a barrage proc (the NORMAL rotational use)',
+      apply: removePrecombat('arcane_power'),
+    },
+    {
+      label: 'no pre-cast, entry gated at the 4-stack CAP',
+      apply: chain(
+        removePrecombat('arcane_power'),
+        apl((entries) =>
+          entries.map((e) =>
+            e.abilityId === 'arcane_power'
+              ? { ...e, condition: selfStacks('exactly', ARCANE_BLAST_MAX_STACKS, 'arcane_blast') }
+              : e,
+          ),
+        ),
+      ),
+    },
+    {
+      label: 'no pre-cast, SANDWICHED into the stack at the cap',
+      apply: chain(
+        removePrecombat('arcane_power'),
+        removeEntry('arcane_power'),
+        apl((entries) =>
+          entries.map((e) =>
+            e.abilityId === 'major_spellblasting_potion'
+              ? { ...e, sequence: ['arcane_power', ...(e.sequence ?? [])] }
+              : e,
+          ),
+        ),
+      ),
+    },
+    {
+      label: 'pre-cast at t0 AND the entry gated at the cap (both)',
+      apply: apl((entries) =>
+        entries.map((e) =>
+          e.abilityId === 'arcane_power'
+            ? { ...e, condition: selfStacks('exactly', ARCANE_BLAST_MAX_STACKS, 'arcane_blast') }
+            : e,
+        ),
+      ),
+    },
+  ],
   arcBurst: (() => {
     /* Strip the three entries the stack absorbs, then insert it as one. */
     const asStack = (entry: AplEntry): Apply =>

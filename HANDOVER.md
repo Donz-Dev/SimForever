@@ -328,14 +328,60 @@ reported exactly that way the moment the stack shipped. Steps now print indented
 under their entry with their own cast counts and **no verdict column**, because
 a step has no condition of its own and cannot be "never fired" independently.
 
-### And one left alone on purpose
+### And one I got wrong: the `arcane_power` entry is NOT dead
 
-**THE `arcane_power` ENTRY IN THE LIST IS DEAD FOR THE SAME REASON MAGE ARMOR
-WAS** -- pre-cast at t=0 on a three-minute cooldown, in a one-minute fight, so
-it can never fire. The owner named Mage Armor and not this, and an entry that
-would come back to life the day the opener changes is a reasonable thing to keep.
-**Flagged rather than removed**, because which of those two readings is wanted is
-theirs.
+This round flagged it as dead "for the same reason Mage Armor was" -- pre-cast
+at t=0 on a three-minute cooldown, in a one-minute fight. **The owner: "arcane
+power being pre-cast doesn't remove it from the main combat APL because the
+moment a combat run exceeds 3 minutes it'll want to be cast a second time."**
+
+**THEY ARE RIGHT, AND IT IS MEASURABLE.** Cast counts over twenty seeds:
+
+| fight | arcane_power | evocation |
+| --- | --- | --- |
+| 60s | 1.00 | **0.05** |
+| 120s | 1.00 | 0.40 |
+| 180s | **1.40** | 0.70 |
+| 240s | **2.00** | **1.00** |
+| 300s | 2.00 | 1.00 |
+
+So the entry starts firing at 180s and fires every fight by 240s. **The two
+cases are not alike at all**: Mage Armor is a thirty-minute buff that no fight
+length brings back, and Arcane Power is a three-minute cooldown that a fight
+longer than three minutes reaches again. **"It never fires" was a fact about the
+CLOCK and was written down as a fact about the LIST.**
+
+### Which makes the Evocation tripwire a clock artefact too
+
+The same table answers the owner's other point -- "things like evocation not
+firing might just be the short nature of combat". It is exactly that: **0.05
+casts at 60s and 1.00 at 240s.** The ruling "This is intended" was given about
+a sixty-second fight, and the test now says so rather than pinning a bare
+number as though it described the ruleset.
+
+### And the profile changes REGIME with length, which is the larger finding
+
+**DPS falls 1147.9 -> 954.1 from 60s to 300s, about -17%.** At sixty seconds the
+build ends with 2,638 mana spare and is GLOBAL-COOLDOWN bound; by five minutes it
+is MANA bound. That is not a smaller number, it is a different optimisation
+problem -- and several of this profile's "settled" answers are answers about a
+one-minute clock:
+
+- the Major Mana Potion measured **-12.7** against Spellblasting;
+- `manaPer5` and `spirit` both weigh **~0.000**;
+- Evocation's gate was never reached.
+
+**ALL THREE WOULD BE RE-ASKED AT A LONGER DURATION**, and none of them has been.
+
+### So fight length is an axis now, and the global default is the owner's call
+
+`tools/probe_build.ts` takes `DURATION=` and applies it to the baseline AND
+every variant, so a placement question can be asked at the length it actually
+matters at. Every profile still carries `durationSeconds: 60` from
+`createDefaultProfile`, with a fixed +/-5% `FIGHT_DURATION_VARIANCE`.
+**Changing that default moves every published figure on all 28 profiles**, so
+it is not a thing to pick unilaterally -- it is put to the owner with the table
+above.
 
 ## Round TWENTY-THREE: the Arcane Mage, run from a written procedure
 

@@ -103,6 +103,17 @@ describe('Charge is used exactly once, as the first action', () => {
     }
   });
 
+  /*
+   * AN EXPLICIT LIMIT, BECAUSE THIS RUNS A MONTE CARLO BATCH AND THE DEFAULT IS
+   * 5,000ms. Standalone it takes about 1,340ms; under the full suite, with 167 test
+   * files transforming and running in parallel, it has been measured at 5,620ms --
+   * a ~4x slowdown from CPU contention and nothing else. It reads no files, so
+   * this is not the `filesDeclaring` disk-I/O cause.
+   *
+   * PER TEST RATHER THAN A GLOBAL `testTimeout`, which is the rule this file
+   * already follows for the Vanguard test below: widening all of them hides the
+   * next one that genuinely gets slower.
+   */
   it('fires exactly once a fight for 2H Arms, and pays 21 rage', () => {
     const batch = runProfileBatch(preset('two_hand_arms'));
     const charge = batch.abilities.find((a) => a.abilityName === 'Charge');
@@ -120,7 +131,7 @@ describe('Charge is used exactly once, as the first action', () => {
     expect(presetTalents('two_hand_arms').improved_charge).toBe(2);
     const rage = resourceFlowOf(batch, 'rage').gained.find((row) => row.sourceId === 'charge');
     expect(rage?.amount).toBeCloseTo(CHARGE_RAGE_GENERATED + 6, 6);
-  });
+  }, 30_000);
 });
 
 // ---------------------------------------------------------------------------
