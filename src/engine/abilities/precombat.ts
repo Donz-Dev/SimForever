@@ -4,6 +4,7 @@ import type { AuraInstance } from '../effects/Aura';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import type { Milliseconds } from '../time';
 import type { Ability } from './Ability';
+import { spreadsEffectAcrossCast } from './channelled';
 import { resolveCast } from './castModifiers';
 import { castAbility, castLength } from './casting';
 
@@ -129,8 +130,15 @@ export function runPrecombat(
      * report it as the whole channel -- a smaller number and no error. There
      * is no sensible pre-pull reading of a channel anyway: it is the one kind
      * of cast whose effect is spread across the time it occupies.
+     *
+     * IT ASKED `channelTicks > 1` AND MISSED EVOCATION, which declares no ticks
+     * and is still a channel -- so a pre-combat Evocation would have opened and
+     * closed its regeneration window in the same millisecond and handed back no
+     * mana, for an eight-minute cooldown. No opener pre-casts one, so this is a
+     * latent case rather than a live one; `spreadsEffectAcrossCast` is now the
+     * one shared answer, written for Presence of Mind and used here.
      */
-    if ((ability.channelTicks ?? 1) > 1) continue;
+    if (spreadsEffectAcrossCast(ability)) continue;
 
     const target = context.defaultTargetFor(actor);
 

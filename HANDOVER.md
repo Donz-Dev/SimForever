@@ -55,9 +55,11 @@ the tooling to be a bit more sophisticated as well."
 | 23 | **THE ARCANE MAGE THROUGH THE WHOLE LOOP, and the first round run from a WRITTEN PROCEDURE** -- `docs/profile-optimisation.md`. The illegal opener reverted, every other dimension re-priced on the legal build, and one new finding off the UPTIME table | legal **1080.1 +/- 9.9** -> **1090.3 +/- 12.1**. The revert is **-96.5 +/- 9.4** paired and the channel floor **+13.2 +/- 3.2 REAL**; **every other candidate in all seven dimensions loses** | see below |
 | 24 | **THE OWNER'S AUDIT OF THE ARCANE PROFILE -- three items, and the second was worth all of it** -- Mage Armor out of the list, Presence of Mind and Arcane Power OFF the global cooldown, and the cooldown stack written as a real `sequence` | **1090.3 -> 1123.4 (+33.1)**, and Fire and Frostfire **0.0 to the decimal** | see below |
 | 25 | **THE AUDIT FOLDED BACK INTO THE PROCEDURE, and a figure RETRACTED in the documents people read** -- all four audit findings share one cause, so the procedure gains a section naming what a paired probe structurally cannot see | **no figure moved**; documentation only, suite green at 3731 | see below |
-| 27 | **THE ENH SHAMAN THROUGH THE WHOLE LOOP, AND THE OWNER'S OWN OPENER LINE WAS HIDING AN ENGINE BUG** -- five shipped changes across four dimensions, plus a correctness fix found by chasing a figure that read as an optimisation: a pre-cast aura outlived its own window by the lead, so a refresh landed inside the stale 1.5s and got a window that ticked **zero times** | 761.9 -> **829.4** from the round (**+67.01 +/- 3.35** paired over 4000) -> **838.8** with the fix. Identical uptime, identical casts, **30% fewer ticks** -- only the tick COUNT saw it. Three answers CHANGED SIGN or VALUE as the round progressed | see below |
+| 30 | **THE ENH SHAMAN THROUGH THE WHOLE LOOP, AND THE OWNER'S OWN OPENER LINE WAS HIDING AN ENGINE BUG** -- five shipped changes across four dimensions, plus a correctness fix found by chasing a figure that read as an optimisation: a pre-cast aura outlived its own window by the lead, so a refresh landed inside the stale 1.5s and got a window that ticked **zero times** | 761.9 -> **829.4** from the round (**+67.01 +/- 3.35** paired over 4000) -> **838.8** with the fix. Identical uptime, identical casts, **30% fewer ticks** -- only the tick COUNT saw it. Three answers CHANGED SIGN or VALUE as the round progressed | see below |
 | 26 | **A RULING REVERSED: AUTO SHOT IS NOT SUSPENDED BY A HUNTER'S THREE CAST SHOTS** -- a THIRD `Ability.swingTimer` mode, because the suspension had two halves and `hold` only removes one | **LW Ranged 977.4 -> 1021.0 (+43.7 REAL)** and BM Hunter 963.4 -> 968.2 (+4.8); **25 of 28 rows 0.0 to the decimal**. Dropping the now-pointless weave gate on top is **+27.6 REAL on BM Hunter** and is the owner's call | see below |
 | 27 | **THE SAME RULING ON IMPROVED SLAM, where it is CORRECT AND WORTH 0.0** -- `continue` not `hold`, and the client's tooltip said "interrupts **or delays**" all along while this project quoted half of it | **28 of 28 rows 0.0 to the decimal**, and the bound is the finding: 2H Arms takes rank 2, whose 1.0s cast never reaches the next swing because rage arrives per SWING. **At rank 1 the branch fires 12 times in 40 fights** | see below |
+| 28 | **THE FIRE MAGE THROUGH THE WHOLE LOOP, and the first round where THE CLOCK REVERSED A `real` WINNER** (the Arcane round reversed a `noise` row) -- the illegal opener reverted, four changes shipped, and a talent that measures +2.92 at 60s measures **-33.76 at 300s** | legal **1040.1** at 60s, which includes the owner's COMBUSTION RULING arriving mid-round (**+23.9**). The Gate B revert is **-24.23 +/- 4.29** and the loop recovered **+16.77 +/- 3.35** of it, for **-7.53 +/- 4.88** against the published illegal figure; at 300s every row is noise | see below |
+| 29 | **PRESENCE OF MIND WAS A HAND-WRITTEN LIST AND IT HAD DRIFTED** -- it missed Arcane Wrath, which the owner found, and it NAMED Arcane Missiles, a channel it would have delivered one missile of. It is the owner's rule now: catch-all + `requiresCastTime` + a new `excludesChannel` | **28 of 28 rows 0.0**, every reason accounted for off the charge ledger -- Arcane Wrath is in no profile's book, and the PoM charge only ever reached Pyroblast. **Clearcasting shared the list and the gap** | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -99,12 +101,15 @@ write-up; none is an engine gap.
 | **Should the engine REFUSE a pre-combat list that deals damage before the pull?** Today `runPrecombat` resolves everything at timestamp zero and nothing asks. An illegal opener was measured, written up, tested, CI'd and merged | round 22 | whether this class of error can recur. The alternative is that it stays the author's arithmetic |
 | **Does an effect that merely TICKS before the pull start combat?** Searing Totem at a 1.5s lead on both Shamans applies a damaging ground effect before t=0 -- added by this project, not by you. The Paladin seals and Holy Shield deal nothing when cast, so they look fine, but they are the same shape of question | round 22 | two Shaman openers, and a rule for the next one |
 | **How long is a fight, and how much does it vary?** Every profile carries `durationSeconds: 60` and a FIXED `FIGHT_DURATION_VARIANCE` of 5%, both modelling choices rather than ruleset numbers. You: "rotations need to be built for longer than 1 minute ... ensure that variable combat time is taken into account." The Arcane Mage loses **17% DPS from 60s to 300s** and crosses from GLOBAL-COOLDOWN bound to MANA bound on the way | round 25 | **every published figure on all 28 profiles**, and three "settled" answers on the Arcane Mage alone -- the Major Mana Potion at -12.7, `manaPer5` and `spirit` weighing 0.000, and the Evocation pin |
+| **Fire Blast's Clearcasting gate costs this build about 3.4 DPS, and it is your own gate.** "Fire Blast only while Clearcasting is NOT up" is right reasoning -- a 340-mana instant under the proc eats a charge a 410-mana Fireball wanted -- and it is reasoning about a build the MANA binds. This one ends a 60-second fight with 2,615 mana unspent and `manaPer5` weighs 0.0000, so the gate trades a real global cooldown for a saving worth nothing. **It measured +7.68 +/- 3.22 while Combustion paid a global cooldown and +3.44 +/- 2.03 at 4,000 iterations once your ruling stopped it** -- a knock-on rather than a contradiction: the build has one more free global cooldown now, so holding a 1.5-second instant costs less of one. Still `real`, still not shipped, because your list outranks a measurement of ours | round 28, re-priced after the Combustion ruling | one condition, and whether the gate should be conditioned on the mana instead of removed |
+| **The Scorch refresh window is now TWO constants and only one of them has been swept.** `FIRE_SCORCH_REFRESH_SECONDS` is 5 on the Fire list, from a six-cell sweep (2s -13.7, 3s 0, 4s +6.6, 5s +9.7, 6s +9.8, 8s +8.6); `FROSTFIRE_SCORCH_REFRESH_SECONDS` is left at the 3 the two used to share, because nothing about the Fire sweep transfers to a build with a faster filler. Not a question about the ruleset -- a note that whoever sweeps the Frostfire list owns that number | round 28 | one constant on a profile this round did not touch |
 | **`shaman_elemental`'s opener finishes TWO damaging casts, and both lines are yours** -- Lightning Bolt at a 2s lead plus Flame Shock at 0s. A player cannot complete both at t=0, so one of them has to move or the ruling has to bend | round 23 | that opener, and whether the at-most-one rule has an exception |
 | **Should the shot-window gate come off the three Hunter cast entries?** With auto shot no longer suspended, "only if a ranged auto-attack fired in the last 0.5s" spends something to buy nothing -- it makes a cast WAIT for a window that is now worthless. Removing it from all three measures **+27.6 REAL on BM Hunter** and +8.6 (noise) on LW Ranged. **They are YOUR conditions, so they are kept**: this is one line per entry, on `aimed_shot` in Beast Mastery and `aimed_shot` plus `sniper_shot` in Lone Wolf Ranged | round 26 | about 28 DPS on one profile, and the reason the gate exists at all |
 | **Are RAGE OF THE FARSEER and ELEMENTAL MASTERY meant to trigger a global cooldown?** Both are instants on a 180 second cooldown, and `abilities/shaman.ts` leaves both ON the GCD as the DEFAULT rather than as a decision -- the spellbook capture states no cost, no cast time and nothing about the GCD, and both comments say so in as many words, including "the owner has ruled several cooldowns off the GCD individually, so if this is one of them it is one line". **THIS ONE PRICES A SHIPPED CHANGE**: pre-casting the farseer at a 0s lead is worth **+13.30** entirely because it dodges the GCD, so if the ability should never have been paying one, that figure is pricing a bug and goes the way Arcane Power's +24.9 did | round 27 | **+13.30 on Enh Shaman**, and the Elemental Shaman's +13.9 for the same pre-cast of Elemental Mastery -- two profiles, same question |
 | **Your Searing Totem pre-cast at a 1.5s lead measures +3.09 +/- 3.02 to REMOVE**, on the Enhancement Shaman. It is kept because it is your line and the figure barely clears its interval -- but it is **also** the subject of the ticking-effect question three rows above, so the same line is now flagged for two independent reasons: it may be worth a little to delete, and it may be illegal before the pull | round 27 | one opener line, and it would answer half of the ticking-effect question by removing the only case | 
+| **Should the Arcane Mage take Arcane Wrath, now that Presence of Mind works on it?** You have raised the spell twice, and its "very solid justification for not taking" expired with the Arcane Blast reading it rested on. It has been un-pricable since: a 3.5-second cast whose one obvious pairing did not work on it. No Mage preset spends the point today | round 29 | the Arcane build and its list, and a spell you have twice said looks worth taking |
 
-**FOURTEEN ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**SEVENTEEN ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
@@ -118,11 +123,53 @@ has added three at once**. **The number goes both ways**, which is the half an
 "increment" habit gets wrong even when the direction is right, and the
 two-Judgements row lasted exactly one round -- tying the Vanish row for the
 shortest yet, ELEVEN once round 25 added the clock and the Shaman's own
-opener, TWELVE once round 26 added the Hunter weave gate, **and FOURTEEN now
-that round 27 has added the Shaman's two global-cooldown-shaped questions.**
-Counted from the table, as the sentence says to.
-**AND THE COUNT IS NOT THE ONLY INTEGER THAT COLLIDES.** Round 27 is numbered 27
-because 26 was taken by the Hunter commit that landed while it was being
+opener, TWELVE when the Hunter weave gate arrived, FOURTEEN when the Fire Mage
+round added three at once, THIRTEEN the same day because the owner answered the
+Combustion question before that round merged -- **and FOURTEEN again once the
+two were MERGED, which neither branch's number described.** Counted from the
+table every time, as the sentence says to: `awk` from the heading to this
+paragraph and `grep -c` the rows.
+
+**THE COLLISION IS THE POINT, AND IT IS THIS FILE'S OWN DOCUMENTED FAILURE.**
+Two branches each moved this count from the same base -- one to 12, one to 13 --
+and git merged the two tables with no conflict in the rows themselves. Either
+number would have been wrong by one in a different direction. **Re-sum from the
+rows rather than reconciling two adjusted totals**, which is exactly what the
+talent census and the scope table already say.
+
+**AND THE SAME MERGE PUT TWO ROUNDS BOTH CALLING THEMSELVES 26 SIDE BY SIDE.**
+The Fire Mage round is **28** now: the next free integer after the two that
+landed on main, rather than renumbering somebody else's work -- which is the
+arrangement that let round 11 be dropped into its gap four days late.
+**AND THE THREE ROUND-22 ONES ARE A DIFFERENT KIND FROM THE SIX ABOVE THEM.**
+Those are defensible readings that became load-bearing; these are **a ruling
+that contradicts a shipped field, a rule the engine does not enforce, and a
+category nobody has defined** -- so they block work rather than merely pricing
+it, and the first of the three blocks a whole profile.
+
+**AND ROUND 28's WERE A FOURTH KIND: EACH A FIGURE WAITING ON ONE WORD, NONE OF
+THEM BLOCKING ANYTHING.** Combustion's global cooldown was +24.93, Fire Blast's
+Clearcasting gate +7.68, and the Scorch window's second constant a note rather
+than a question. All three were implemented at the conservative reading and
+measured at the other, which is the shape that got Ice Lance answered in one
+message -- a flagged reading with both figures beside it.
+
+**AND THE FIRST OF THEM WAS ANSWERED BEFORE THE ROUND MERGED: "Combustion is off
+the GCD, implement it."** Which is the argument for the habit rather than for
+the figure -- the question cost one paragraph to write and the answer arrived in
+one sentence, and it is worth **+23.9** on the shipped build. It also re-priced
+the question BELOW it from +7.68 to +3.44, because the two were never
+independent.
+
+**AND IT HAPPENED AGAIN IN THE SAME MERGE, WHICH IS WHY THE PARAGRAPH ABOVE IS
+KEPT RATHER THAN TRIMMED.** The Presence of Mind round ALSO called itself 28
+from the same base and ALSO moved this count by one -- to 13 against the Fire
+Mage round's 14 -- so a third adjusted total met the two. It is round **29**
+now, and the count above is **FIFTEEN**, counted from the rows a third time.
+**A documented failure is not a prevented one**: both branches had this
+paragraph in front of them.
+**AND THE COUNT IS NOT THE ONLY INTEGER THAT COLLIDES.** Round 30 is numbered 30
+because 26 to 29 were taken by the Hunter commit that landed while it was being
 measured, and **four other optimisation branches were in flight in the same
 checkout at the same time** -- frostfire, ele-shaman, fire and shadow-priest.
 Two of them picking "the next free integer" independently is the clean-merge
@@ -135,7 +182,7 @@ ruling that contradicts a shipped field, a rule the engine does not enforce, and
 a category nobody has defined** -- so they block work rather than merely pricing
 it, and the first of the three blocks a whole profile.
 **NAMED BY ROUND RATHER THAN AS "the three new ones", WHICH IS WHAT IT SAID.**
-That phrasing was true the day it was written and described round 27's two by
+That phrasing was true the day it was written and described round 30's two by
 the time anybody read it again -- which is the same expiring-pointer failure
 this file records for a `scope` reason and for an `unmodelled` claim, in the one
 paragraph whose whole subject is a count nobody re-reads.
@@ -157,7 +204,7 @@ asking about the moment a round made it the biggest thing on a profile -- which
 is CLAUDE.md's rule that an interpretation flagged as one is what gets it ruled
 on, and that the label has to survive until the answer arrives.
 
-## ROUND 27 — THE ENH SHAMAN, AND THE BASELINE MOVED FOUR TIMES INSIDE THE ROUND
+## ROUND 30 — THE ENH SHAMAN, AND THE BASELINE MOVED FOUR TIMES INSIDE THE ROUND
 
 **761.9 → 829.4 from the optimisation, and → 838.8 with the engine fix the
 round turned up.** The optimisation half is `+67.01 ±3.35` paired over 4000
@@ -509,7 +556,493 @@ ruled on, and Arcane Wrath is closed by measurement under both readings.
    and **-85.9** under `reset` and by **-76.7** and **-118.2** under `ignore`.
    The old justification's REASONING had expired; its CONCLUSION had not.
 5. **Then the four profiles that were never done** -- Enh Shaman, Frostfire
-   Mage, Fire Mage, Shadow Priest -- one at a time, through the procedure.
+   Mage, ~~Fire Mage~~, Shadow Priest -- one at a time, through the procedure.
+   **THE FIRE MAGE IS DONE, in round 28 below**, and its Gate B failure is
+   fixed with it; `mage_frostfire` and `shaman_elemental` are the two that still
+   fail the gate. Three left.
+
+## Round TWENTY-EIGHT: the Fire Mage, and the first time the CLOCK reversed a winner
+
+**THE SECOND PROFILE TAKEN THROUGH `docs/profile-optimisation.md`, AND THE
+HEADLINE IS NOT A DPS FIGURE.** It is that a change which measures **+2.92 at a
+one-minute fight measures -33.76 at a five-minute one**, and the only reason it
+was caught is that the procedure's own *"What the loop cannot find"* section
+says to re-run at a longer clock before calling anything settled.
+
+**"REVERSED A WINNER" IS A NARROWER CLAIM THAN "THE CLOCK CHANGED A FIGURE",
+AND THE ARCANE ROUND ALREADY DID THE SECOND.** Pre-casting Arcane Power measured
+**+4.19 +/- 6.81 at 60s and -8.07 by 300s**, which is a sign change -- but the
+60s figure was inside its own interval, so there was no winner there to reverse:
+the long run told you a `noise` row was actually a loss. Here BOTH 60s readings
+are `real` and positive (+8.00 +/- 3.10 against the pre-round build, +2.92 +/-
+2.81 on the finished list) and the 300s reading is `real`, negative, and
+**eleven times larger**. That is the difference worth recording -- a round can
+pass every gate, measure a real gain twice, and still be shipping a loss.
+
+| | | |
+| --- | --- | --- |
+| **Gate B: the illegal opener reverted** | **-24.23 +/- 4.29** | not a choice |
+| the loop's recovery, against a LEGAL unoptimised build | **+16.77 +/- 3.35** | the four APL changes |
+| **net against the published ILLEGAL figure** | **-7.53 +/- 4.88** | 1500 paired iterations, 60s |
+| **and the owner's Combustion ruling on top** | **+23.9** | 1016.2 -> **1040.1** |
+| the same package at 300s | every row **noise** | 600 paired iterations |
+
+### The owner ruled mid-round, on the largest figure in it
+
+**"Combustion is off the GCD, implement it."** It was raised as a question and
+priced at **+24.93 +/- 4.21** with the flag flipped at runtime between two
+paired samplings; implemented, it takes the shipped build **1016.2 -> 1040.1**,
+**+23.9**. One flag, one `cooldownMs` already in place, and
+`freeCastChain.test.ts` green.
+
+**IT RE-PRICED FOUR FIGURES THIS ROUND HAD ALREADY PUBLISHED, which is the
+procedure's own rule about a figure going stale inside the round that produced
+it.** Every number below is the re-run, not the first run:
+
+| | before the ruling | after |
+| --- | --- | --- |
+| pre-casting Combustion at a 0s lead | -4.69 +/- 10.91 `noise` | **-36.38 +/- 5.52 `real`** |
+| Fire Blast's Clearcasting gate | +7.68 +/- 3.22 `real` | **+3.44 +/- 2.03** at 4,000 iterations |
+| the Scorch window, reverted to 3s | -9.83 | **-10.75 +/- 3.35** |
+| the Eureka gate, ungated | -6.81 | **-5.45 +/- 0.23** |
+
+**THE PRE-CAST IS THE RETRACTED ARCANE POWER FIGURE POINTING THE OTHER WAY.**
+There, +24.9 for a pre-cast turned out to be mostly a global cooldown the
+ability should never have paid. Here the same fix took a pre-cast from `noise`
+to a clear loss -- because the saved GCD was the only thing offsetting a
+three-minute window burned at t=0 on a target with no debuff stacks. **The GCD
+flag is part of what a pre-cast is worth, in both directions.**
+
+### What shipped, in five rows
+
+| dimension | change | marginal value |
+| --- | --- | --- |
+| **engine/content** | **Combustion off the global cooldown**, the owner's ruling | **+23.9** |
+| **APL gate** | the Scorch refresh window **3s -> 5s**, on the Fire list only | **+10.75 +/- 3.35** |
+| **APL** | **Eureka held for three Heating Up stacks** -- the Pyroblast it makes bigger | **+5.45 +/- 0.23** |
+| **APL** | **the potion and Combustion as one `sequence` entry** | **bit-identical** against the two-entry arrangement; the potion gate alone is +0.74 +/- 0.06 |
+| **APL** | the dead `mage_armor` entry removed | **bit-identical**, and that is the proof |
+
+**MARGINAL, NOT ADDENDS.** 10.75 + 5.45 + 0.74 is 16.94 against a measured
+16.77, because all three buy casts out of the same global cooldowns.
+
+### The ruling made Combustion and the potion an accidental stack
+
+**BOTH ARE OFF THE GLOBAL COOLDOWN NOW, so they resolve in ONE instant**: the
+Combustion cast leaves the actor free, `nextDecisionTime` returns at once, and
+the potion goes out before anything else can act. The old arrangement was the
+potion as a separate entry ABOVE Combustion gated on Combustion's own AURA --
+which worked, and depended on the list ORDER and on a second decision happening.
+
+**THAT IS THE ARCANE ROUND'S SHAPE AND IT HAS A VERDICT: measure it as neutral
+and ship it as structure.** One `AplEntry.sequence` entry, and putting the old
+two-entry arrangement back runs **bit-identical fights** -- which is as clean as
+that claim gets: the sequence changes no decision anywhere and cannot come apart
+if either ability's GCD flag moves again. One of them moved in this round, which
+is the Arcane note's own warning that "your own change can create or destroy
+that in the same round."
+
+**AND THE FIRST VERSION OF IT MEASURED -14.81 AND WAS A MALFORMED ENTRY.**
+`selectAction` casts `entry.abilityId` and sets `pendingSequence.index = 0`, so
+`sequence` holds the steps AFTER the id -- naming the first step in BOTH places
+casts it, finds it on cooldown on the resume, clears the pointer, and **the
+second step never fires at all**. The tell was the SPREAD: **0.08** on a
+1500-iteration paired run is the same loss in every fight, which is 40 spell
+power for 30 seconds going missing rather than any decision moving. `USES=1`
+would have shown it too -- it prints a sequence step as its own `then <id>` row
+-- and this round found it the slower way, by asking the damage table whether
+the potion was cast at all. **The Arcane list had the convention right all
+along**, and the entry is written its way round now: the potion names the stack
+and Combustion is the step.
+
+### Shipping a sequence turned two variant groups into landmines
+
+**A SELECTED CONSUMABLE AS A SEQUENCE STEP IS INVISIBLE TO ANYTHING THAT KEYS
+ON `abilityId`, AND TWO READERS NEEDED TELLING.** `midFightConsumables.test.ts`
+asserts that every preset has a list entry for exactly what it selected, and it
+failed -- correctly -- the moment the potion became a step. It reads
+`[abilityId, ...sequence]` now, because a selection can legitimately be a step
+and **the failure mode is the one that test exists for**: a potion that is
+selected, paid for and never drunk reads as a profile that is merely a bit worse
+than expected. (`printUses` had already learned the same thing.)
+
+**AND `replace('major_spellblasting_potion', ...)` STOPPED MEANING WHAT IT
+MEANT.** The potion is the `abilityId` of the two-step stack now, so swapping
+that entry for a bare potion throws **Combustion** away with it -- and two rows
+in `tools/fireVariants.ts` did exactly that for one run, reporting **-64.11**
+and **-77.24** that were a missing three-minute cooldown rather than anything
+either row claimed to measure. **A group that cannot apply reports a figure that
+reads like a finding**, which is the one thing a variant file must not do.
+`fireSequence` is deleted with its figures recorded in the file header, the two
+`fireWindows` potion rows are gone the same way, and `fireRevert` has a
+`withoutTheStack` helper that puts the old arrangement back by hand.
+
+**THE FIGURES IT COST WERE CHEAP AND THE LESSON IS NOT: when a change alters the
+SHAPE of a list, re-run the variant groups that edit that list before trusting
+any of their rows.** Two of the four groups in this file edited it.
+
+### The Scorch window: the sweep found its peak in the direction nobody predicted
+
+**THE HYPOTHESIS WAS THAT THE WINDOW CLIPS** -- refreshing a 30-second debuff at
+3 seconds left throws 3 seconds away, which is the Moonkin's Nature's Grace
+failure and says the window should be made *smaller*. Swept on the legal build,
+as a delta from the shipped 3 seconds:
+
+| 2s | 3s | 4s | 5s | 6s | 8s |
+| --- | --- | --- | --- | --- | --- |
+| **-13.70** | 0 | +6.56 | **+9.74** | **+9.84** | +8.63 |
+
+**A TWO-POINT COMPARISON AT 3s AND 1s WOULD HAVE CONCLUDED "KEEP 3"** and been
+confident about it. What is actually being traded is a REBUILD: Fire
+Vulnerability is five stacks at 3% each on a build whose damage is 84% Fire, and
+if it *lapses* all five go -- so the next five Scorches climb back rather than
+maintain, at 562 damage a second of global cooldown against the filler's 712. A
+three-second margin is a gamble against a 2.5-second Fireball being in flight
+when the debuff ends, and the clip is the cheaper of the two mistakes. The curve
+turning over above 6s is the clip finally costing more than the gamble.
+
+**5s AND 6s ARE TIED AND 4s TO 8s IS A PLATEAU**, so 5 is mid-plateau rather
+than tuned -- the reading `ARCANE_BLAST_CHANNEL_FLOOR_SECONDS` already takes of
+its own flat range. **It is now TWO constants**: Frostfire keeps the 3 the two
+used to share, because nothing here transfers to a build with a faster filler
+and a shared constant serving two unswept answers is the Thistle Tea gate's
+documented mistake.
+
+### The two free damage windows were being spent on the first poll of the fight
+
+**THE ARCANE ROUND LEFT THIS HERE BY NAME.** `mage.ts` records, beside the
+Arcane list's own Eureka gate, that the ruling arrived as an audit of the Arcane
+profile and that a list is changed for the profile that was named -- *"Recorded
+here so the next Mage round starts with it."* This is that round, and the Fire
+Mage is also a Gnome.
+
+| gate | |
+| --- | --- |
+| **3 Heating Up stacks** | **+5.34 +/- 0.55** -- a 1.5-second Pyroblast is the next cast |
+| a Combustion window | +4.69 +/- 0.42 |
+| 5 Fire Vulnerability stacks | +2.58 +/- 0.41 |
+| a Missile Barrage proc | +2.50 +/- 0.51 -- **the Arcane list's own answer, and the worst of the four here** |
+| `any` of the two best | **+3.51**, worse than either alone |
+| no entry at all | **-8.94**, the sign check |
+
+**A LOOSER GATE IS NOT A SAFER ONE.** `any(3 stacks, combustion)` is worse than
+either branch, because the Combustion branch spends the window on a poll where
+no Pyroblast is coming. And **the potion on Combustion is a real second gain
+rather than a restatement of the first**: the pair measures +6.58 +/- 0.59
+against +5.34 alone, 1.24 apart on a combined interval of 0.81.
+
+**THE INTERVALS ARE TENTHS BECAUSE A GATE ON A FREE OFF-GCD COOLDOWN CANNOT FLIP
+A ROLL** -- spread 5.5 against the 90-odd a talent or an opener change produces.
+A small figure here is not a small sample.
+
+### The talent that the clock reversed
+
+**THE FIRE TREE IS FORCED AND THE ARCANE ONE IS NOT.** Combustion sits at tier
+30 and `pointsBelowTier` counts strictly below it, so all 30 Fire points under
+the capstone are load-bearing -- and the Fire tree has exactly **two** unspent
+slots that are not a declared `OutOfScope` member: `improved_fire_blast`'s
+second rank and `blast_wave`. Everything else left in Fire is range, a stun,
+threat, cast pushback, an absorb or an area spell.
+
+| | 60s | 300s |
+| --- | --- | --- |
+| `improved_fire_blast` 2/2, from `arcane_concentration` | **+2.92 +/- 2.81** | **-33.76 +/- 7.52** |
+| the same, re-run after the Combustion ruling | | **-35.51 +/- 8.11** |
+| the whole package, reverted | -16.77 | noise |
+
+**THE RULING DID NOT RESCUE IT**, which is worth saying because the ruling frees
+a global cooldown and that is the resource the talent was trading for. It is
+still a 35-point loss at 300s, because what binds there is mana and the talent
+spends more of it per global cooldown either way.
+
+**THE MECHANISM WAS PREDICTED BEFORE IT WAS MEASURED, which is the only reason
+it was looked for.** This build is global-cooldown bound at 60s with 2,615 mana
+spare and MANA bound by 300s with 196 -- and Fire Blast costs 340 mana for about
+1,347 where the filler costs 410 for 1,781. More Fire Blasts is more damage per
+global cooldown and LESS damage per mana, so the change is worth something
+exactly as long as the global cooldown is what binds.
+
+**SO IT IS NOT SHIPPED**, on your own standing instruction: *"rotations need to
+be built for longer than 1 minute ... ensure that variable combat time is taken
+into account."* A change that buys 2.9 at one minute and gives back 33.8 at five
+is not a change.
+
+**AND THE SCORCH WINDOW THAT SHIPPED ALONGSIDE IT HOLDS AT BOTH LENGTHS**
+(+9.83 at 60s, +0.36 noise at 300s), which is what makes this a statement about
+the talent rather than about the round.
+
+### Blast Wave: two variants that agreed to the decimal
+
+**TAKING IT MEASURED +2.59 +/- 1.70, AND SO DID TAKING IT *AND GIVING IT A LIST
+ENTRY*** -- the same figure with the same spread, which is this project's own
+tell for a patch that did not apply. **It applied.** An ungated `fireball` sits
+at the bottom of the list and an unconditional entry is a FLOOR under everything
+below it, so a new entry there can never be reached. Every point of that +2.59
+was the *other* half of the variant: one fewer rank of Arcane Concentration.
+
+The arithmetic agrees and settles it without a fight: 493 base plus a 0.129
+coefficient is about 594 before multipliers, which is **582 damage a second of
+global cooldown against the filler's 712**.
+
+### Clearcasting is worth negative ten DPS, and the reason is not the mana
+
+`arcane_concentration 0/5`, with all five points parked in `improved_channeling`
+(pure cast pushback, a declared `OutOfScope` member), measures **+10.02 +/-
+5.68**. And `fire_blast ungated`, tree untouched, measures **+7.68 +/- 3.22** --
+so nearly all of it is the gate rather than the talent.
+
+**THE TWO ARE PROVABLY THE SAME THING.** With the talent at 0/5 the condition
+`selfLacks('clearcasting')` is permanently true, so removing the gate as well
+runs **bit-identical fights** and reports the identical +10.02 +/- 5.68. The
+talent's own contribution is 10.02 - 7.68, about 2.3 on an interval of 6.5,
+which is nothing: the build ends a 60-second fight with 2,615 mana unspent and
+`manaPer5` weighs 0.0000.
+
+**THE GATE IS YOURS AND IS NOT TOUCHED.** It is in the questions table above
+with its figure, the way Hunter's Mark's -10.1 is the price of your list rather
+than an argument against it.
+
+### Every other dimension said "every alternative loses"
+
+| dimension | what was tried | result |
+| --- | --- | --- |
+| **gear** | nothing -- fixed by the brief | verified only. **The preset's `detail` string said "39 Fire / 10 Arcane"**, which is the spread from before round 8; it reads 15 Arcane / 31 Fire / 5 Frost now |
+| **enchants** | Revelation and +25 Agility on the staff, +8 Intellect on the head | **-32.33**, **-45.01**, **-5.50**. Eight of the ten armour slots are settled by the stat table without a fight and **two are settled as DEAD** -- every option the cloak and the feet offer weighs zero on a caster nothing attacks |
+| **talents** | six spreads | **nothing shipped**; see above |
+| **pre-combat** | Combustion at a 0s lead | **-4.69 +/- 10.91**, which reproduces the -4.9 +/- 11.6 the preset's own comment recorded on the illegal build. Your `fireball` line is worth **+42.68 +/- 10.93** |
+| **APL order** | six reorders | **every one loses or is noise.** Arcane Missiles moved up is -11.68 and -12.19, which the slack explains: Missile Barrage lasts 20 seconds and its measured uptime is already the channel time it pays for |
+| **APL gates** | the window swept six ways, a Pyroblast salvage, Fire Blast ungated, the Combustion floor swept | the window shipped. The **salvage and both Combustion floors run bit-identical fights** |
+| **consumables** | the Major Mana Potion for Spellblasting | **-14.74 +/- 2.18**. The twelve stat rows are settled by the same table the enchants are and every one is already the best its category offers |
+
+**THE PYROBLAST SALVAGE IS YOUR OWN FROSTFIRE LINE AND IS WORTH NOTHING HERE.**
+Heating Up is `consumedByCast: 'all'`, so a build that reaches two stacks and not
+three throws both away -- and this build reaches three reliably, so an entry at
+`exactly 2 stacks with 3.5s left` never fires. Bit-identical, which is the
+honest zero rather than a loss.
+
+**AND BOTH COMBUSTION FLOORS ARE INERT AT THIS CLOCK.** The entry wants five
+Fire Vulnerability stacks AND ten seconds of them left; the debuff sits at 99.9%
+uptime with a 30-second duration, so once five stacks exist there are always
+more than twenty seconds on it. Moving the floor to 0 or to 20 changes nothing.
+
+### One question left of the two, and the other was answered in a sentence
+
+**COMBUSTION'S GLOBAL COOLDOWN IS RULED ON AND IMPLEMENTED.** The Clearcasting
+gate is the one still open, and the ruling re-priced it from **+7.68 +/- 3.22**
+to **+3.44 +/- 2.03** at 4,000 iterations -- a knock-on rather than a
+contradiction, since the build has one more free global cooldown now and holding
+a 1.5-second instant costs less of one. Still `real`, still the owner's gate,
+still not shipped.
+
+**THAT THE TWO WERE NOT INDEPENDENT IS THE REASON TO RAISE BOTH RATHER THAN THE
+BIGGER ONE.** Had only Combustion been asked about, the Clearcasting figure
+would have sat in this file at +7.68 against a build where it is worth half
+that.
+
+### Two reporting bugs, one of them in this procedure's own Step 1 tool
+
+**`tools/probe_profile_report.ts` PRINTED THE RAW CRIT STAT AND IGNORED
+`critRating`, on every profile.** The Fire Mage read **3.00% melee and 10.82%
+spell where the engine rolls 14.00% and 21.82%**. It is the identical bug you
+caught in `CharacterSheetPanel` -- *"if the character sheet is saying 10.82% it's
+likely missing proper calculation"* -- and that panel was fixed while this tool
+was not.
+
+**A FIX IS NOT LANDED UNTIL EVERY READER OF THE SAME STAT HAS IT**, which is
+this project's own rule about a join that is missing in one place being worth
+grepping for in all of them. And it is worse here than in a panel: this tool is
+**Step 1 of `docs/profile-optimisation.md`**, so the line a round reads to decide
+whether to buy crit was the one line understating it. The neighbours were always
+right -- spell power goes through the engine's own function and haste is printed
+as the rating it is -- which is what made it invisible.
+
+**AND THE DEMONIC RUNE NOW READS `<-- NEVER FIRED` WHERE IT READ 0.1 USES.**
+That is the clock and not a defect: its gate is 10% mana, which this build no
+longer reaches at 60s, and it fires 0.97 times at 120s, 1.02 at 180s and 2.02 at
+300s. Same shape as Evocation's pinned zero, which you have already ruled
+intended, and the same test as always -- the ability's cooldown against the
+fight length.
+
+### What the clock does to this profile, for the record
+
+| fight | DPS | mana headroom | combustion | evocation | demonic rune |
+| --- | --- | --- | --- | --- | --- |
+| 60s | **1036.4** | 2,969 | 1.00 | **0.00** | **0.00** |
+| 120s | 971.2 | 2,862 | 1.00 | 0.57 | 0.85 |
+| 180s | 941.5 | 1,852 | 1.02 | 1.00 | 1.00 |
+| 300s | 797.3 | **204** | 2.00 | 1.00 | 2.00 |
+
+**IT CROSSES FROM GLOBAL-COOLDOWN BOUND TO MANA BOUND, which is the second
+profile to do it** after the Arcane Mage's 17% fall over the same range. That is
+the open *"How long is a fight?"* question in the table above, now with two
+profiles behind it rather than one -- and this round is the first time it
+changed a decision rather than only a figure.
+
+### A note on the 30-fight read, because it disagrees with the paired one
+
+`USES=1 SEEDS=3` reports **996.7 +/- 6.6** before this round and **1023.6 +/-
+5.3** after, which reads as +26.9. **The paired figure is -6.49 +/- 4.75 and it
+is the one to believe.** A `SEEDS=3` interval is the spread of three seed means
+and understates the uncertainty badly: `probe_build` puts the same pre-round
+build at **1022.7** over 1500 iterations against that run's 996.7. The
+`USES=1` pass is in Step 7 because it catches the entry that cannot fire, not
+because it measures anything.
+
+### Two peer rounds merged underneath this one, and nothing moved
+
+**ROUNDS 26 AND 27 LANDED ON `main` WHILE THIS ONE WAS OPEN** -- the Hunter auto
+shot ruling and the same ruling on Improved Slam -- so this round is **28**, the
+next free integer rather than a renumbering of theirs. That is the arrangement
+that let round 11 be dropped into its gap four days and five rounds late.
+
+**THEY TOUCHED FOUR ENGINE FILES, WHICH IS WHY THE MERGE NEEDED A MEASUREMENT
+AND NOT JUST A DIFF.** `Ability.ts`, `casting.ts`, `Combatant.ts` and
+`autoAttack.ts` all moved, and this project's rule is that the baseline is
+whatever `main` says on the day -- a peer branch that merges first invalidates
+the figures, not only the diff.
+
+**EVERY ROW REPRODUCED TO THE DECIMAL.** The baseline is 1040.1 either side of
+the merge and all seven `fireRevert` rows are identical, which is the
+containment check: both rulings are about a SWING TIMER, and this profile is
+`caster` with no auto-attack row in its damage table at all. Said as a
+measurement rather than as an argument from the file names.
+
+**AND THE MERGE COLLIDED ON TWO COUNTS, BOTH OF THEM THIS FILE'S OWN DOCUMENTED
+FAILURE.** Two branches each moved the outstanding-question total from the same
+base -- one to 12, one to 13 -- and git merged the two tables with no conflict
+in the rows themselves, so either number would have been wrong by one in a
+different direction. It is **14**, counted from the merged rows. And both
+branches took round 26. **Re-sum from the rows; never reconcile two adjusted
+totals.**
+
+### Housekeeping
+
+- `tools/fireVariants.ts`, 13 groups, registered in `probe_build.ts`.
+- `tools/probe_combustion_gcd.ts` **is deleted, by its own design.** It flipped
+  the flag at RUNTIME between two paired samplings rather than editing the
+  source -- `probe_parry_haste.ts`'s arrangement -- and it THREW if
+  `COMBUSTION_ABILITY` ever declared `triggersGcd`, because the question it
+  existed to ask would then have been answered. The owner answered it, so the
+  probe would now throw on every run: a layer that announces its own redundancy
+  gets removed rather than kept standing empty, which is
+  `PATCH_NOTE_TALENT_VALUES`' lesson. `git log` has it if the question reopens.
+- **THREE FULL-SUITE RUNS PRODUCED THREE DIFFERENT SETS OF TIMEOUT FAILURES,
+  AND THE TWO I CAN NAME BOTH WALK `src` WITH `readdirSync`.**
+  `variableCostIsReported`'s *"has no `.drain(` call in src/game"* and
+  `protectedChannelTicks`' *"is Mind Flay alone"* each pass in about 200ms
+  standalone and time out at 5000ms under the suite. That is the flake
+  `stealthBreaking.test.ts` was fixed for by caching its OWN walk, and **the fix
+  was never shared** -- these two files each read the whole tree again.
+  Outstanding work, named here rather than done, since it belongs to no profile.
+  The only real failure in any of the three runs was `talentSpreads`, which was
+  a genuine stale-doc catch and is fixed.
+
+  **AND THE FIRST RUN IS THE ONE I CANNOT ACCOUNT FOR, WHICH IS THE LESSON
+  RATHER THAN A FOOTNOTE.** It reported 4 failed FILES and 3 failed tests and
+  the output was not captured, so two of the four are unidentifiable: a file can
+  fail without a test failing. The second and third runs were written to a file
+  first, which is the only reason they could be diagnosed. `npx vitest run >
+  run.txt 2>&1` costs nothing and a re-run destroys the evidence -- this
+  project has recorded that three times and it has now happened a fourth.
+
+## Round TWENTY-NINE: Presence of Mind, where a NAMED LIST had drifted
+
+**THE OWNER FOUND IT IN THE APP:** "Presence of Mind is bugged for at least
+Arcane Wrath. It's not actually making it instant cast. Presence of Mind should
+make the next non-channeled, non-instant spell an instant cast."
+
+**IT WAS A HAND-WRITTEN LIST OF SEVEN SPELL IDS.** Arcane Wrath arrived at
+client build 1.60.1.70425 as a 3.5-second cast, nobody added it, and the aura
+**took the charge and reported its uptime** while the Mage cast the full 3.5
+seconds. A charge spent on nothing looks exactly like a charge that worked.
+
+**AND THE LIST WAS WRONG IN THE OTHER DIRECTION TOO, WHICH NOBODY HAD
+REPORTED.** It named **Arcane Missiles**, a channel -- and zeroing a channel's
+cast delivers ONE tick's worth of effect, one missile of five, and reports a
+successful cast. The Arcane list spends the charge on Pyroblast through a
+`sequence`, so the case was reachable and never reached.
+
+### The owner's sentence, clause by clause
+
+| the clause | what expresses it |
+| --- | --- |
+| "the next ... spell" | `ALL_ABILITIES`, the catch-all |
+| "non-instant" | `requiresCastTime`, which already existed |
+| "non-channeled" | `CastModifier.excludesChannel`, new |
+
+**`requiresCastTime` IS THE NEAR MISS ON THE LAST ONE**: a channel HAS a cast
+time and satisfies it gladly. Two words in the owner's sentence, two different
+questions.
+
+### "Is this a channel" had two answers and needed one
+
+`spreadsEffectAcrossCast` is the one answer now, and **the obvious test is not
+enough**:
+
+| the shape | the test | the example |
+| --- | --- | --- |
+| a series of ticks | `channelTicks > 1` | Arcane Missiles, five missiles |
+| a WINDOW that must last the cast | `onCastStart` | **Evocation** |
+
+**EVOCATION IS WHY.** It declares NO `channelTicks` and is still a channel --
+its own comment says so: "ticks exist for an ability whose EFFECT repeats, and
+this one's effect is a RATE rather than a series of events." Made instant, its
+`onCastStart` window opens and closes in the same millisecond: **an eight-minute
+cooldown for no mana, logged as a successful cast.**
+
+**`onCastStart` IS A READING OF THE DECLARATION RATHER THAN A PROXY FOR ONE.**
+That field's contract is "an effect that has to be in place FOR the cast rather
+than after it" -- and an effect that has to be in place for the cast is one a
+zero-length cast cannot deliver. So both shapes are covered by what the ability
+already says, and a new channel of either kind is covered the day it lands.
+
+**`runPrecombat` HAD THE SAME GAP** -- it refused `channelTicks > 1` -- and now
+shares the predicate. No opener pre-casts Evocation, so that half is a latent
+case rather than a live one, and it is labelled as one.
+
+### Clearcasting shared the broken list, so it inherited the gap
+
+It read `[...PRESENCE_OF_MIND_SPELLS, 'fire_blast', 'ice_lance', 'blast_wave']`,
+so **Arcane Wrath was the one Mage nuke Clearcasting could never make free.**
+One drifting list, two talents.
+
+It is "your next damage spell" as the catch-all with `requiresCost` and
+`requiresAttackTable` now -- the arrangement the Druid's own Clearcasting
+already uses -- which selects every Mage damage spell and leaves out Mage Armor,
+the one costed Mage ability that rolls nothing. **It takes no `excludesChannel`,
+deliberately**: making a channel FREE is coherent where making it instant
+destroys it, so Arcane Missiles stays in its reach.
+
+### 28 of 28 rows at 0.0, and every reason is accounted for
+
+| | why it cannot move a published figure |
+| --- | --- |
+| Arcane Wrath becoming instant | **it is in NO profile's book** -- the ability is talent-granted and no Mage preset spends the point |
+| Arcane Missiles no longer eligible | the `presence_of_mind` charge is spent on **Pyroblast, 20 times in 20 fights** on the Arcane Mage, and **never at all** on Fire or Frostfire |
+| Evocation no longer eligible | same: the charge never reached it |
+| Clearcasting's rewrite | its reach is **identical** apart from Arcane Wrath -- Ice Lance and Blast Wave both cost mana and roll a table, so both are still covered |
+
+**THE CHARGE LEDGER IS WHAT SETTLED IT**, read off `cast_charge_spent` rather
+than argued: 387 charges over 20 Arcane fights, and the `presence_of_mind` ones
+go to Pyroblast and nothing else. **An unexplained 0.0 is indistinguishable
+from a change that did not apply**, and this is the third round running where
+the explanation was the deliverable.
+
+### And it makes an open question answerable
+
+The owner has asked about **Arcane Wrath** twice, and CLAUDE.md records that its
+"very solid justification for not taking" expired with the Arcane Blast reading
+it rested on. It has been un-pricable since: a 3.5-second cast whose one obvious
+pairing -- Presence of Mind -- **did not work on it.** That pairing works now,
+so re-pricing Arcane Wrath on the Arcane Mage is newly worth doing and is on the
+questions table.
+
+**THE WHOLE SUITE PASSED BEFORE THIS CHANGE**, which is a statement about the
+suite. The existing test on this aura checked PYROBLAST, and its own comment
+named the hazard it was not covering: "`PRESENCE_OF_MIND_SPELLS` is a NAMED
+LIST, so a spell absent from it takes the full cast with every condition reading
+true." **The hazard was identified, written down, and checked for exactly one
+spell.**
 
 ## Round TWENTY-SEVEN: Improved Slam, where the fix is correct and worth 0.0
 
