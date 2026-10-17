@@ -1882,9 +1882,73 @@ something that comes and goes.
   thrown away on the wrong thing** — and a charge spent on the wrong ability is
   the invisible failure: the proc still fires, the aura still reports its uptime,
   and the saving simply lands somewhere it should not.
-  **SELECTING BY SCHOOL IS STILL NOT THERE.** "Your next SPELL" is a different
-  set from "every ability" and only one of them is expressible; Presence of Mind
-  still says so.
+  **SELECTING BY SCHOOL IS STILL NOT THERE**, and "your next SPELL" is still a
+  different set from "every ability" -- there is no `school` on `Ability` to
+  select by, and a field like that is silent when forgotten.
+  **PRESENCE OF MIND USED TO BE THIS ENTRY'S EXAMPLE OF WHAT THE CATCH-ALL
+  CANNOT DO, AND IT IS NOW AN EXAMPLE OF WHAT IT CAN.** What closed the gap was
+  not a school but one more NARROWING CLAUSE: "your next non-channeled,
+  non-instant spell" is the catch-all plus `requiresCastTime` plus
+  `excludesChannel`, and for a Mage those select exactly the spells -- which
+  `presenceOfMind.test.ts` MEASURES over every built Mage book, racials and
+  consumables included, rather than assuming.
+- **AND A NAMED LIST IS THE LAST RESORT RATHER THAN THE SAFE DEFAULT, WHICH
+  COST A TALENT AND THEN A SECOND ONE.** Presence of Mind named seven spell ids
+  by hand. Arcane Wrath arrived at client build 1.60.1.70425 as a 3.5-second
+  cast, nobody added it, and the aura **took the charge and reported its
+  uptime** while the Mage cast the full 3.5 seconds. The owner found it in the
+  app.
+  **A CLAUSE THAT DESCRIBES THE SET COVERS THE ABILITY ADDED NEXT YEAR; A LIST
+  COVERS THE ABILITIES SOMEBODY REMEMBERED.** That is the whole of it, and the
+  exceptions are the sets no clause can express -- `MAGE_COSTED_SPELL_IDS` is
+  one, because "every ability that costs mana" has no field to read.
+  **AND THE LIST WAS WRONG IN THE OTHER DIRECTION AT THE SAME TIME**, which is
+  what a list does rather than a second mistake: it named ARCANE MISSILES, a
+  channel, and zeroing a channel's cast delivers one tick of five and reports a
+  successful cast.
+  **CLEARCASTING BORROWED THAT LIST AND INHERITED THE GAP** -- `[...PRESENCE_OF_MIND_SPELLS,
+  ...]` -- so Arcane Wrath was also the one Mage nuke it could never make free.
+  **One drifting list, two talents.**
+  **AND A COMMENT CLAIMING A NEIGHBOUR IS GUARDED IS NOT A GUARD.** Arcane
+  Power's note said its own list was kept in step by a test and that this "is
+  the same argument `PRESENCE_OF_MIND_SPELLS` already rested on, made
+  checkable" -- and that list had no such test, which is how one had Arcane
+  Wrath and the other did not.
+  **THE TEST THAT EXISTED NAMED THE HAZARD AND CHECKED ONE CASE.** Its comment
+  read "a NAMED LIST, so a spell absent from it takes the full cast with every
+  condition reading true", and it asserted on PYROBLAST. A hazard identified,
+  written down, and then tested in the one place it was not happening.
+- **"IS THIS A CHANNEL" HAS TWO SHAPES AND `channelTicks` ONLY SEES ONE.**
+  `spreadsEffectAcrossCast` is the one shared answer, and anything that ZEROES
+  a cast time has to ask it -- a cast modifier and `runPrecombat` both do.
+
+  | the shape | the test | the example |
+  | --- | --- | --- |
+  | a series of ticks | `channelTicks > 1` | Arcane Missiles, five missiles |
+  | a WINDOW that must last the cast | `onCastStart` | **Evocation** |
+
+  **EVOCATION IS WHY, AND ITS OWN COMMENT SAYS SO**: "ticks exist for an ability
+  whose EFFECT repeats, and this one's effect is a RATE rather than a series of
+  events." So the obvious test calls it an ordinary eight-second cast, and made
+  instant its `onCastStart` window opens and closes in the same millisecond --
+  **an eight-minute cooldown for no mana, logged as a successful cast.**
+  **`onCastStart` IS A READING OF THE DECLARATION AND NOT A PROXY FOR ONE**,
+  because that field's contract is "an effect that has to be in place FOR the
+  cast": such an effect is exactly one a zero-length cast cannot deliver. So
+  both shapes fall out of what an ability already says, and a declared
+  `channelled` flag -- the alternative -- would have been silent on the one
+  that forgot.
+  **`requiresCastTime` IS THE NEAR MISS AND REFUSES NOTHING HERE**: a channel
+  HAS a cast time and satisfies it gladly. "Non-channeled" and "non-instant"
+  are two words in the owner's sentence and two different questions.
+- **AND THE CHARGE LEDGER IS HOW A CAST-MODIFIER CHANGE THAT MEASURES 0.0 GETS
+  EXPLAINED.** `cast_charge_spent` carries the aura, the ability and the saving,
+  so "which ability actually spends this charge" is a count rather than an
+  argument: 387 charges over 20 Arcane fights, with the `presence_of_mind` ones
+  going to **Pyroblast and nothing else**, is what showed that excluding Arcane
+  Missiles could not move a figure. **Read the ledger before explaining a zero**,
+  because an unexplained 0.0 is indistinguishable from a change that did not
+  apply.
 - **`requiresAttackTable` IS THE OWNER'S DEFINITION OF "OFFENSIVE", REUSED.**
   Asked which abilities Focused Rage reduces, they ruled that "an ability is
   offensive if it is PROCESSED THROUGH A COMBAT TABLE. Heroic Strike, Thunder

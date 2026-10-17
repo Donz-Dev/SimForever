@@ -1493,8 +1493,11 @@ describe('Combustion, whose end condition is four crits rather than a clock', ()
     /*
      * THE SCHOOL IS WRITTEN OUT AS IDS, so a new Fire spell has to be added to
      * `FIRE_SPELL_IDS` by hand. This is the test that says so the day one is
-     * not -- the same argument `PRESENCE_OF_MIND_SPELLS` rests on, which is
-     * also a list standing in for a property of the ability.
+     * not -- which Presence of Mind's own list did NOT have, and is how that
+     * list came to be missing Arcane Wrath. A list standing in for a property
+     * of the ability needs either a clause that describes the set or a test
+     * that derives it; Presence of Mind has the clause now, and this has the
+     * test.
      */
     const fire = MAGE_ABILITIES.filter((ability) =>
       // Every Mage ability that deals Fire damage, found from its own source.
@@ -2881,8 +2884,15 @@ describe('the three lists, after the owner tuned them', () => {
     /*
      * ASSERT THE MECHANISM AND NOT ONLY THE CONDITIONS. Two entries can be
      * correctly gated and still buy nothing if the charge does not reach the
-     * ability -- `PRESENCE_OF_MIND_SPELLS` is a NAMED LIST, so a spell absent
-     * from it takes the full cast with every condition reading true.
+     * ability.
+     *
+     * THIS COMMENT NAMED THE BUG AND THIS TEST DID NOT COVER IT. It read
+     * "`PRESENCE_OF_MIND_SPELLS` is a NAMED LIST, so a spell absent from it
+     * takes the full cast with every condition reading true" -- and a spell WAS
+     * absent from it: Arcane Wrath, which the owner found. The hazard was
+     * identified, written down, and checked for exactly one spell. Presence of
+     * Mind is a rule rather than a list now, and `presenceOfMind.test.ts`
+     * asserts it over the whole book.
      */
     const mage = createPlayer({
       race: 'gnome', characterClass: 'mage', combatStyle: 'caster',
