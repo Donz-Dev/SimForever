@@ -46,6 +46,7 @@ the tooling to be a bit more sophisticated as well."
 | 17 | **A PATCH: nine racials and forty-odd class notes**, fed in as official notes. The client is TWO BUILDS AHEAD and carries NONE of them, so every figure here comes from a note | **not re-baselined**, on the owner's standing instruction. Four commits, and **thirteen notes are blocked on tree data** | see below |
 | 18 | **TWO OWNER RULINGS, both answering questions round 17 raised and refused to decide** -- the five Tauren templates gain 10 hit rating each, and the two Druid auras stop excluding each other | **not re-baselined**, on the owner's standing instruction. Every caster gains 3% spell crit and the five Tauren rows go back on their hit caps | see below |
 | 18b | **A THIRD RULING, arriving straight after the merge** -- Ice Lance's coefficient is `1.5/3.5/3`, so the divisor tracks the frozen multiplier and the implemented reading was wrong for one release | the frozen coefficient 0.3214 -> **0.4286**, +33% on the spell-power half of a spell that is **8.6% of Frostfire** and is cast by no other profile | see below |
+| 19d | **REGENERATION IS CREDITED ACROSS A PRE-COMBAT LEAD**, with the five second rule stamped when the spend happened -- the lead's THIRD and FOURTH observable consequence | **23 of 28 rows BIT-IDENTICAL**; only the two Combat Rogues and three Mages move at all, mean 798.91 -> 798.76. The Combat Rogues open on **85 energy rather than 75** | see below |
 | 19c | **A FREE OFF-GCD CAST ACTS AGAIN AT ONCE** -- the owner's answer to 19b's question, and the CHARGE PROBLEM fixed at the root rather than worked around by position | all 28 rows moved: mean **795.6 -> 798.9**, 20 up and 8 down, one `REAL` (**LW Melee +14.9**). **Rupture +8.7 and Hemo Dagger +14.2** more than recover what 19b cost them. Four tests broke, every one a fixture pinning a timing it never meant to | see below |
 | 19b | **A COMPLETED CAST OR ATTACK BREAKS STEALTH AND PROWL** -- an ENGINE rule with Premeditation as its one declared exception, replacing Ambush and Ravage each removing the aura by hand | Rupture's Ambushes **4.2 -> 3.4** a fight and Hemo Dagger's **2.7 -> 2.2**, for **-6.6** and **-9.0**; the Cat and Pure Hemo are **bit-identical**. Two ways to half-wire it were written and the full suite passed on both | see below |
 | 19 | **BEFORE THE PULL, FOR ALL 28 PROFILES** -- the owner specified an opener per profile, and three Warrior lists lose the entries it replaces | **not re-baselined**, on the owner's standing instruction. Every line of theirs is implemented after one round of corrections: a positioning RULING, two new Druid abilities, a substitution and a periodic that accrues | see below |
@@ -554,6 +555,93 @@ with exactly 20 rage generated from Bloodrage after 10 seconds." So the fix was
 the engine's after all -- see **A periodic that accrues before the pull** above.
 **Flagging it was what produced the figure that settled it**, and the figure
 ruled out the option the note had offered.
+
+## Round NINETEEN d: the lead time buys regeneration
+
+**ASKED, THEN RULED.** The question was whether natural regeneration happens
+during the pre-combat phase -- it did not, because `Simulation.begin()` calls
+`onPrecombat` and only then `startResourceRegeneration`, and every pre-combat
+action resolves at timestamp zero. The owner: **"yes, credit the regen and
+back-date the five-second rule."**
+
+**IT MAKES THE LEAD'S OBSERVABLE CONSEQUENCES FOUR.** Their original ruling
+enumerated exactly TWO -- "an aura it applied has N seconds less left at the
+pull, and its own cooldown comes back N seconds sooner" -- and
+`accruesBeforeCombat` made it three for Bloodrage's rage. **So a list of
+consequences in this project is open rather than closed**, which is the thing to
+carry forward from this round more than the rule itself.
+
+### What it is
+
+`runPrecombat` keeps a NEGATIVE local offset and walks the window: credit each
+pool for the gap before every action, cast it, stamp its spend at the moment it
+happened, and credit the final gap to the pull.
+
+**THE CLOCK IS NOT MOVED AND CANNOT BE.** `SimulationClock` only goes forward
+and every scheduled event, swing timer and aura window is expressed against it
+-- the reason this whole feature resolves at timestamp zero. So
+`ResourceRegen.amountPerTick` takes an optional `at`, and **each tick is
+evaluated at its own moment**.
+
+**THAT IS THE RULE, AND `rate x seconds` WOULD HAVE GOT IT WRONG.** A single
+multiplication hands a caster back every point its own lockout should have
+suppressed. Asking per tick is what makes the two halves of the ruling compose
+instead of cancel.
+
+**AND THE STAMP IS A PLAIN NUMBER, SO A NEGATIVE ONE IS ARITHMETIC RATHER THAN A
+SPECIAL CASE.** `spentWithin` asks `now - last < windowMs`: a spend at -4500
+reads as 4.5 seconds ago at the pull, and the lockout expires 500ms into the
+fight by itself with nothing to clear. Before this it sat at ZERO, so a Mage
+that drank Mage Armor 4.5 seconds early arrived with the full five seconds still
+to run.
+
+**THE BOUNDARY TICK IS FREE**, which is worth recording because the test got it
+wrong first: the comparison is STRICT, so the tick at exactly five seconds after
+a spend is already unlocked. A six-second lead credits **21** ticks of its
+one-second tail, not 20 -- the draft expected 9,100 and the engine said 9,105.
+
+### The two halves fight each other, on purpose
+
+| | |
+| --- | --- |
+| **energy** | no lockout, so a Rogue banks the lot. Blade Flurry's one-second lead is **ten energy**, and the two Combat Rogues open on **85 rather than 75** |
+| **mana** | the back-dated lockout suppresses almost exactly what the lead would have bought. Fire spends 900 at leads of 4.5s and 3s and gets **91** back |
+
+**SO A CASTER'S CREDIT BEING NEARLY ZERO IS THE RULING WORKING RATHER THAN
+FAILING**, and it is why both halves had to land in one commit: crediting alone
+would have been a quiet buff to every caster in the project.
+
+**TEN A SECOND AND NOT TWENTY.** `ENERGY_PER_SECOND` is `0.5 x 20` -- half an
+energy twenty times a second -- because the literal reading of the owner's "1
+energy 20 times a second" was built, measured at +35% to +53% on every energy
+build, and withdrawn. **The figure was quoted as twenty when this question was
+first answered and corrected off the constant**: the CADENCE is twenty and the
+RATE is ten.
+
+### What it moved: almost nothing, and the reason is the useful part
+
+| | |
+| --- | --- |
+| **bit-identical** | **23 of 28** |
+| moved | Combat Mut **-5.09**, Combat **+0.71**, Arcane +0.24, Fire -0.17, Frostfire +0.10 |
+| mean | 798.91 -> **798.76** |
+
+Every one of the five is inside its own interval, and the two Combat Rogues
+move in OPPOSITE directions on the same +10 energy -- one changed decision
+reorders the whole random stream, so that is noise rather than a finding.
+
+**A POOL GAIN ONLY MOVES A FIGURE IF IT CROSSES A CAST'S COST AT A DECISION
+POINT.** That is what explains 23 identical rows on a change that moves what 22
+profiles arrive with: BM Hunter gains **63 mana** and runs a bit-identical
+fight, because 63 does not buy another Aimed Shot, so no decision anywhere
+differs. Twelve more profiles gain mana the lockout then makes irrelevant.
+
+**AND NO TEST BROKE**, which is the first round in several where that is true --
+3,728 passing, against four repairs last round.
+
+`tools/probe_precombat_pools.ts` prints the pool and the lockout remainder per
+profile, because neither quantity has a zero anywhere to notice: **a pool
+arriving short reads exactly like a pool that was meant to be short.**
 
 ## Round NINETEEN c: a free cast acts again at once
 

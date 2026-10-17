@@ -101,6 +101,24 @@ export function runPrecombat(
 ): void {
   const ordered = [...actions].sort((a, b) => b.secondsBefore - a.secondsBefore);
 
+  /*
+   * ==========================================================================
+   * HOW FAR BEFORE THE PULL WE HAVE GOT TO, as a NEGATIVE offset from it.
+   *
+   * The owner's ruling: "credit the regen and back-date the five-second rule."
+   * So the pre-combat window is walked rather than collapsed -- each action is
+   * cast at its own moment and the pools tick between them, which is what a
+   * character stood there doing this would actually arrive with.
+   *
+   * THE CLOCK IS NOT MOVED AND CANNOT BE. `SimulationClock` only goes forward
+   * and every scheduled event, swing timer and aura window is expressed against
+   * it, which is the reason this whole feature resolves at timestamp zero. This
+   * is one local number instead, handed to the things that need to be asked
+   * about a moment before the pull.
+   * ==========================================================================
+   */
+  let at = ordered.length > 0 ? -Math.max(0, Math.round(ordered[0].secondsBefore * 1000)) : 0;
+
   for (const action of ordered) {
     const ability = actor.abilities.get(action.abilityId);
     if (!ability) continue;
@@ -114,7 +132,6 @@ export function runPrecombat(
      */
     if ((ability.channelTicks ?? 1) > 1) continue;
 
-    const leadMs = rewindFor(actor, ability, action.secondsBefore);
     const target = context.defaultTargetFor(actor);
 
     /*
@@ -124,13 +141,102 @@ export function runPrecombat(
      * auras is an ability that can forget to, and the one that forgot would be
      * silently exempt from the lead time while everything else obeyed it.
      */
+    /*
+     * THE POOLS TICK UP TO THIS ACTION BEFORE IT IS CAST, so a cast finds the
+     * resource a waiting character would have had. The first gap is almost
+     * always wasted -- a pool starts FULL and `grantResource` clamps -- and it
+     * is credited anyway rather than special-cased, because "the pool was full"
+     * is a fact about the character and not about the rule.
+     */
+    const finishedAt = -rewindFor(actor, ability, action.secondsBefore);
+    creditRegen(context, actor, at, finishedAt);
+    at = finishedAt;
+
+    const leadMs = -finishedAt;
     const before = auraWindows(context);
     const result = castAbility(context, actor, ability, target, { precombat: true });
     if (!result.ok) continue;
 
+    /*
+     * AND THE SPEND IS STAMPED WHEN IT HAPPENED, which is the whole of
+     * "back-date the five-second rule": `castAbility` records it at the clock,
+     * which is zero here, so a Mage that drank its Mage Armor 4.5 seconds early
+     * arrived with the FULL five second lockout still to run instead of half a
+     * second of it.
+     *
+     * THE STAMP IS A PLAIN NUMBER AND A NEGATIVE ONE IS ARITHMETIC, not a
+     * special case: `spentWithin` asks `now - last < windowMs`, so a spend at
+     * -4500 reads as 4.5 seconds ago at the pull and the lockout expires 500ms
+     * into the fight, by itself, with nothing to clear.
+     *
+     * THE DECLARED COST ONLY. An ability that drains a pool inside its own
+     * `onCast` is not covered, and nothing in any opener does -- said here
+     * because the alternative is snapshotting every pool around the cast, which
+     * is what `AbilityCastEvent.spent` does and would re-stamp a pool the
+     * ability merely GRANTED. Bloodrage grants rage in its `onCast`.
+     */
+    if (ability.cost && leadMs > 0) {
+      actor.recordResourceSpend(ability.cost.resource, finishedAt);
+    }
+
     if (leadMs > 0) {
       rewindAuras(context, before, leadMs);
       actor.abilities.rewindCooldown(ability.id, leadMs);
+    }
+  }
+
+  // And the last gap, from whatever happened last to the pull itself.
+  creditRegen(context, actor, at, 0);
+}
+
+/**
+ * Tick every pool the actor regenerates across `[from, to)`, both negative.
+ *
+ * ==============================================================================
+ * THE SAME SHAPE `accruesBeforeCombat` ALREADY USES for Bloodrage's rage: count
+ * the intervals the window contains and run the effect that many times. There is
+ * no other way to do it without a clock that can go backwards.
+ *
+ * EACH TICK IS EVALUATED AT ITS OWN MOMENT, which is the half that matters and
+ * the half a single multiplication would get wrong. Mana's five second rule is
+ * read per tick, so a caster that spent at -3000 is correctly locked out for the
+ * three seconds that follow -- and crediting `rate x seconds` in one go would
+ * hand it every point of that back.
+ *
+ * SO FOR A CASTER THE CREDIT IS USUALLY ZERO, and that is the ruling working
+ * rather than failing: the openers spend mana and the lockout then suppresses
+ * exactly the regeneration the lead would have bought. Energy has no such rule,
+ * so a Rogue really does bank its ten a second.
+ * ==============================================================================
+ */
+function creditRegen(
+  context: SimulationContext,
+  actor: Combatant,
+  from: Milliseconds,
+  to: Milliseconds,
+): void {
+  const windowMs = to - from;
+  if (windowMs <= 0) return;
+
+  for (const regen of actor.regeneration) {
+    if (regen.intervalMs <= 0) continue;
+    const ticks = Math.floor(windowMs / regen.intervalMs);
+    for (let tick = 1; tick <= ticks; tick += 1) {
+      /*
+       * THE TICK LANDS AT THE END OF ITS OWN INTERVAL, which is
+       * `scheduleTick`'s rule in the live path -- "the first tick lands one
+       * full interval into the fight, not at time zero" -- so a pool that
+       * starts full does not waste one and a window shorter than one interval
+       * credits nothing.
+       */
+      const atTick = from + tick * regen.intervalMs;
+      const amount = regen.amountPerTick(actor, context, atTick);
+      if (amount > 0) {
+        context.grantResource(actor, regen.resource, amount, {
+          id: `precombat_regen_${regen.resource}`,
+          name: 'Regeneration before the pull',
+        });
+      }
     }
   }
 }

@@ -352,7 +352,13 @@ export const MANA_REGEN_LOCKOUT_MS = seconds(5);
 export const MANA_REGEN: ResourceRegen = {
   resource: 'mana',
   intervalMs: MANA_TICK_INTERVAL_MS,
-  amountPerTick: (actor, context) => manaPerTick(actor, context.clock.now()),
+  /*
+   * `at` WHEN THERE IS ONE, which is pre-combat and nowhere else. The five
+   * second rule is the only regeneration rule in the project that reads a
+   * clock, so it is the only one that can be asked the wrong question when a
+   * tick is credited for a moment before the pull. See `ResourceRegen`.
+   */
+  amountPerTick: (actor, context, at) => manaPerTick(actor, at ?? context.clock.now()),
 };
 
 /**

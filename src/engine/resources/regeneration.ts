@@ -19,7 +19,32 @@ import type { ResourceType } from './Resource';
 export interface ResourceRegen {
   readonly resource: ResourceType;
   readonly intervalMs: Milliseconds;
-  readonly amountPerTick: (actor: Combatant, context: SimulationContext) => number;
+  /**
+   * What one tick grants, evaluated now.
+   *
+   * ==========================================================================
+   * `at` IS THE MOMENT THE TICK BELONGS TO, AND IT IS NEGATIVE BEFORE THE PULL.
+   *
+   * Every live tick is evaluated at `context.clock.now()` and passes nothing,
+   * which is why this is optional and why every existing rule is unchanged.
+   * **`runPrecombat` is the one caller that needs it**: the owner has ruled
+   * that regeneration is credited across a pre-combat lead, and the clock
+   * cannot go there -- `SimulationClock` only moves forward, which is the
+   * reason the whole pre-combat feature resolves at timestamp zero.
+   *
+   * SO THE TIME IS PASSED RATHER THAN THE CLOCK MOVED, and only a rule that
+   * reads a clock has to care. Mana does, for the five second rule; energy and
+   * focus are flat per tick and ignore it, which is not the "general field read
+   * by only some of its rules" failure this project keeps meeting -- those two
+   * do not depend on WHEN they are asked, so there is nothing for them to get
+   * wrong.
+   * ==========================================================================
+   */
+  readonly amountPerTick: (
+    actor: Combatant,
+    context: SimulationContext,
+    at?: Milliseconds,
+  ) => number;
 }
 
 /**
