@@ -34,7 +34,7 @@ user is speculation, and would be removed.
 | `abilityCost` | Reduces one ability's cost | Improved Heroic Strike |
 | `abilityCooldown` | Reduces one ability's cooldown | Improved Intercept |
 | `abilityCastTime` / `abilityGcd` | Shortens a cast or its GCD | Improved Slam |
-| `abilityHoldsSwing` | Stops a cast resetting the swing timer | Improved Slam |
+| `abilitySwingTimer` | Stops a cast resetting the swing timer, and says whether a swing due DURING it waits (`hold`) or lands (`continue`) | Improved Slam, at `continue` |
 | `abilityCrit` | Crit chance for ONE ability | Improved Overpower |
 | `abilityDamage` | Damage multiplier for ONE ability | Improved Rend |
 | `critDamageBonus` | Crit damage for every ability | Impale |
