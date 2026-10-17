@@ -4,6 +4,7 @@ import {
   ELEMENTAL_MASTERY_AURA,
   FLAME_SHOCK_COEFFICIENTS,
   FLAME_SHOCK_DOT,
+  flameShockDot,
   RAGE_OF_THE_FARSEER,
   SEARING_TOTEM_DOT,
   STORMSTRIKE_DAMAGE_BONUS,
@@ -301,6 +302,27 @@ export const EARTH_SHOCK: Ability = {
 
 export const FLAME_SHOCK_DIRECT = 166;
 
+/**
+ * Call of Flame's added burn duration, in SECONDS, handed to the cast.
+ *
+ * THE PRIEST HAS THE IDENTICAL THING -- `SWP_EXTRA_SECONDS_BONUS`, for Improved
+ * Shadow Word: Pain -- so this is a second instance of a settled pattern rather
+ * than a new shape, and `flameShockDot` takes the same unit its factory does.
+ *
+ * ==============================================================================
+ * AN `abilityBonus` AND NOT AN AURA FIELD, because the number belongs to the
+ * CHARACTER's talents and the aura is built per application. Mind Flay's
+ * escalation and Wrack's Soul Siphon figures arrive the same way, and for the
+ * same reason: `onCast` is the only place that has both the talent's value and
+ * the aura it is about to apply.
+ *
+ * SECONDS, which is the unit the talent states, converted once here. Every
+ * other time in this project below the UI is integer milliseconds, so the
+ * conversion has exactly one site and `seconds()` does it.
+ * ==============================================================================
+ */
+export const FLAME_SHOCK_EXTRA_DURATION_BONUS = 'flameShockExtraDurationSeconds';
+
 export const FLAME_SHOCK: Ability = {
   id: 'flame_shock',
   name: 'Flame Shock',
@@ -322,7 +344,14 @@ export const FLAME_SHOCK: Ability = {
       powerCoefficient: FLAME_SHOCK_COEFFICIENTS.direct,
       attackTable: ability.attackTable,
     });
-    if (!result.avoided) simulation.applyAura(target, FLAME_SHOCK_DOT, caster.id);
+    if (result.avoided) return;
+    /*
+     * CALL OF FLAME'S NINE SECONDS, read off the character rather than baked
+     * into the definition. A build without the talent reads nothing and gets
+     * the base twelve seconds, which is what `flameShockDot()` returns.
+     */
+    const extraSeconds = ability.bonuses?.[FLAME_SHOCK_EXTRA_DURATION_BONUS] ?? 0;
+    simulation.applyAura(target, flameShockDot(extraSeconds), caster.id);
   },
 };
 

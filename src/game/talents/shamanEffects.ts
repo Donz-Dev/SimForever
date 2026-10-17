@@ -1,4 +1,5 @@
 import type { TalentEffects } from './TalentEffect';
+import { FLAME_SHOCK_EXTRA_DURATION_BONUS } from '../abilities/shaman';
 
 /**
  * What each Shaman talent does, as data.
@@ -159,9 +160,37 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * Magma Totem is left.
      */
     { kind: 'abilityDamage', abilityId: 'fire_nova' },
+    /*
+     * ==========================================================================
+     * AND ITS DURATION CLAUSE, WHICH REACHED NOTHING AND SAID NOTHING.
+     *
+     * "as well as increases the duration of your Flame Shock spell by {1} sec"
+     * -- NINE seconds at 3/3, which both Shaman profiles take. It was absent
+     * entirely, and the `unmodelled` entry below named only the Magma Totem
+     * half: **a reason that describes the clauses that DO work is a claim about
+     * the code, and this one was silent about a clause worth 75% of a DoT.**
+     *
+     * EXTRA TICKS OF THE SAME SIZE. 12 seconds is four ticks of 44 and 21 is
+     * seven, so this is a bigger burn rather than the same burn stretched -- see
+     * `flameShockDot` and `FLAME_SHOCK_BASE_TICKS`, which is named precisely so
+     * the per-tick figure cannot be divided by the extended count.
+     *
+     * `valueIndex: 1`, which is the seconds. Index 0 is the 15% damage the four
+     * `abilityDamage` entries above already read, and reading it here would add
+     * FIFTEEN seconds to the burn instead of nine -- a plausible number, in the
+     * generous direction, on a row this project has already been caught by four
+     * times.
+     * ==========================================================================
+     */
+    {
+      kind: 'abilityBonus',
+      abilityId: 'flame_shock',
+      key: FLAME_SHOCK_EXTRA_DURATION_BONUS,
+      valueIndex: 1,
+    },
     {
       kind: 'unmodelled',
-      reason: `Its Magma Totem clause does nothing; every other clause is modelled. ${MAGMA_TOTEM_UNDECLARED}`,
+      reason: `Its Magma Totem clause does nothing; every other clause is modelled, including the Flame Shock duration. ${MAGMA_TOTEM_UNDECLARED}`,
     },
   ],
 
