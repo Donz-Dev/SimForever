@@ -1632,6 +1632,56 @@ something that comes and goes.
   is what makes a cast a real cost to a melee character rather than free damage
   between swings. `Ability.swingTimer: 'hold'` is the exception: the timer runs
   on behind the cast and a swing due during it waits rather than being lost.
+- **AND `continue` IS A THIRD MODE, WHICH IS WHERE THE SUSPENSION'S SECOND HALF
+  LIVES.** The owner has ruled that a Hunter's three cast shots do not pause
+  auto shot at all -- "the ranged auto-attack is not paused or suspended. It
+  will trigger DURING the cast of the named skills above", for Sniper Shot,
+  Aimed Shot and Multi-Shot -- so the bow keeps its own rhythm straight
+  through.
+  **THE SUSPENSION WAS TWO MECHANISMS AND `hold` ONLY REMOVES ONE.** The cast
+  RESET the timer (`resetSwingTimers`, in `runCast`) and a swing that then came
+  due INSIDE the cast was HELD to its end (the mid-cast branch in
+  `scheduleSwing`). `hold` clears the first and keeps the second, and on a
+  four-second Sniper Shot against a 2.4-second bow a shot comes due inside the
+  cast every time -- so `hold` would still have deferred it by over a second.
+  **A SMALLER NUMBER AND NO ERROR, and `hold` is what a reader reaches for**:
+  it is the existing exception, it is named for the right idea, and it is
+  wrong by exactly the half nobody looks at.
+  **SO WHEN A RULING REMOVES A BEHAVIOUR, COUNT THE MECHANISMS THAT PRODUCE
+  IT** rather than the field that names it. Reinstating each half separately is
+  the check -- it failed 7 and 6 of 16 tests here -- and a test that passes
+  with either half back is a test of the declaration rather than of the rule.
+  **THE SWING HANDLER HAS TO ASK AT THE MOMENT A SWING COMES DUE, AND BY THEN
+  THE ONLY THING IT HAS IS `castEndsAt`** -- a number that says when the cast
+  ends and nothing about which ability is casting.
+  `Combatant.castAllowsSwings` is the fact, assigned unconditionally beside
+  `castEndsAt` at the ONE site where a cast starts, so the two cannot disagree
+  and an ordinary cast following a `continue` one closes the window by itself
+  with nothing to clear at the end. **`Combatant.channelling` IS THE FIELD THAT
+  LOOKS LIKE THE ANSWER**: it holds an ability only for a CHANNEL, so a plain
+  Aimed Shot sets it to null, and widening it would change what every reader of
+  it means.
+  **DECLARED ON THE THREE ABILITIES THE OWNER NAMED, not derived from "it is a
+  shot"** -- a ruling covers what it says, which is the rule that made
+  Immolation Trap wait to be named rather than following Explosive Trap in.
+  **AND NOTHING SCOPES TO THE RANGED SLOT**, because no combatant here swings a
+  melee weapon and a bow at once: `swingingSlots` returns `['ranged']` for a
+  ranged style and never includes it otherwise, so "the ranged auto-attack
+  continues" and "the auto-attack continues" are the same set. Asserted rather
+  than gated, which is `positioning.test.ts`' arrangement -- the day a style
+  swings both, the test fails and the gate becomes worth writing.
+  **WORTH +43.7 REAL TO LW RANGED AND +4.8 TO BM HUNTER, with 26 of 28 rows at
+  0.0 to the decimal** -- including BOTH melee Hunters, whose lists hold no
+  cast and which never swing the bow. "It is a Hunter profile" does not predict
+  that a Hunter change moves it.
+  **AND IT RETIRES THE ARGUMENT FOR A CONDITION IN THREE OF THE OWNER'S OWN
+  ENTRIES WITHOUT RETIRING THE CONDITION.** "Only if a ranged auto-attack fired
+  in the last 0.5 seconds" existed to weave a cast into the gap between shots;
+  with no gap to protect it now makes a cast WAIT for nothing, measured at
+  **+27.6 REAL on BM Hunter** to remove. The entries are the owner's and are
+  kept -- their list outranks a measurement of ours, and that cuts both ways, so
+  a ruling about the ENGINE is not authority to rewrite a list. It is a question
+  for them, recorded where the condition is declared.
 - **AN EFFECT THAT HAS TO LAST THE CAST GOES IN `onCastStart`, NOT `onCast`.**
   `onCast` runs at the END of a cast and once per tick of a channel, so
   anything that must be in place FOR the cast had nowhere to go. Evocation is

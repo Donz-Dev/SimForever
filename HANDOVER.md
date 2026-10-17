@@ -55,6 +55,7 @@ the tooling to be a bit more sophisticated as well."
 | 23 | **THE ARCANE MAGE THROUGH THE WHOLE LOOP, and the first round run from a WRITTEN PROCEDURE** -- `docs/profile-optimisation.md`. The illegal opener reverted, every other dimension re-priced on the legal build, and one new finding off the UPTIME table | legal **1080.1 +/- 9.9** -> **1090.3 +/- 12.1**. The revert is **-96.5 +/- 9.4** paired and the channel floor **+13.2 +/- 3.2 REAL**; **every other candidate in all seven dimensions loses** | see below |
 | 24 | **THE OWNER'S AUDIT OF THE ARCANE PROFILE -- three items, and the second was worth all of it** -- Mage Armor out of the list, Presence of Mind and Arcane Power OFF the global cooldown, and the cooldown stack written as a real `sequence` | **1090.3 -> 1123.4 (+33.1)**, and Fire and Frostfire **0.0 to the decimal** | see below |
 | 25 | **THE AUDIT FOLDED BACK INTO THE PROCEDURE, and a figure RETRACTED in the documents people read** -- all four audit findings share one cause, so the procedure gains a section naming what a paired probe structurally cannot see | **no figure moved**; documentation only, suite green at 3731 | see below |
+| 26 | **A RULING REVERSED: AUTO SHOT IS NOT SUSPENDED BY A HUNTER'S THREE CAST SHOTS** -- a THIRD `Ability.swingTimer` mode, because the suspension had two halves and `hold` only removes one | **LW Ranged 977.4 -> 1021.0 (+43.7 REAL)** and BM Hunter 963.4 -> 968.2 (+4.8); **25 of 28 rows 0.0 to the decimal**. Dropping the now-pointless weave gate on top is **+27.6 REAL on BM Hunter** and is the owner's call | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -97,8 +98,9 @@ write-up; none is an engine gap.
 | **Does an effect that merely TICKS before the pull start combat?** Searing Totem at a 1.5s lead on both Shamans applies a damaging ground effect before t=0 -- added by this project, not by you. The Paladin seals and Holy Shield deal nothing when cast, so they look fine, but they are the same shape of question | round 22 | two Shaman openers, and a rule for the next one |
 | **How long is a fight, and how much does it vary?** Every profile carries `durationSeconds: 60` and a FIXED `FIGHT_DURATION_VARIANCE` of 5%, both modelling choices rather than ruleset numbers. You: "rotations need to be built for longer than 1 minute ... ensure that variable combat time is taken into account." The Arcane Mage loses **17% DPS from 60s to 300s** and crosses from GLOBAL-COOLDOWN bound to MANA bound on the way | round 25 | **every published figure on all 28 profiles**, and three "settled" answers on the Arcane Mage alone -- the Major Mana Potion at -12.7, `manaPer5` and `spirit` weighing 0.000, and the Evocation pin |
 | **`shaman_elemental`'s opener finishes TWO damaging casts, and both lines are yours** -- Lightning Bolt at a 2s lead plus Flame Shock at 0s. A player cannot complete both at t=0, so one of them has to move or the ruling has to bend | round 23 | that opener, and whether the at-most-one rule has an exception |
+| **Should the shot-window gate come off the three Hunter cast entries?** With auto shot no longer suspended, "only if a ranged auto-attack fired in the last 0.5s" spends something to buy nothing -- it makes a cast WAIT for a window that is now worthless. Removing it from all three measures **+27.6 REAL on BM Hunter** and +8.6 (noise) on LW Ranged. **They are YOUR conditions, so they are kept**: this is one line per entry, on `aimed_shot` in Beast Mastery and `aimed_shot` plus `sniper_shot` in Lone Wolf Ranged | round 26 | about 28 DPS on one profile, and the reason the gate exists at all |
 
-**ELEVEN ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**TWELVE ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
@@ -111,8 +113,9 @@ two-Judgements question, SIX when it was answered, and **NINE now that round 22
 has added three at once**. **The number goes both ways**, which is the half an
 "increment" habit gets wrong even when the direction is right, and the
 two-Judgements row lasted exactly one round -- tying the Vanish row for the
-shortest yet, **and ELEVEN now that round 25 has added the clock and the
-Shaman's own opener.** Counted from the table, as the sentence says to.
+shortest yet, ELEVEN once round 25 added the clock and the Shaman's own
+opener, **and TWELVE now that round 26 has added the Hunter weave gate.**
+Counted from the table, as the sentence says to.
 **AND THE THREE NEW ONES ARE A DIFFERENT KIND FROM THE SIX ABOVE THEM.** Those
 are defensible readings that became load-bearing; these are **a ruling that
 contradicts a shipped field, a rule the engine does not enforce, and a category
@@ -253,6 +256,112 @@ ruled on, and Arcane Wrath is closed by measurement under both readings.
    The old justification's REASONING had expired; its CONCLUSION had not.
 5. **Then the four profiles that were never done** -- Enh Shaman, Frostfire
    Mage, Fire Mage, Shadow Priest -- one at a time, through the procedure.
+
+## Round TWENTY-SIX: auto shot is not suspended, and the suspension had two halves
+
+**THE OWNER REVERSED A PREVIOUS RULING:** "a previous ruling where ranged
+auto-attack on hunters is paused while casting sniper shot, aimed shot, and
+multi-shot. This is no longer the case. The ranged auto-attack is not paused or
+suspended. It will trigger DURING the cast of the named skills above."
+
+| | before | after | |
+| --- | --- | --- | --- |
+| **LW Ranged** | 977.4 | **1021.0** | **+43.7 REAL** |
+| BM Hunter | 963.4 | 968.2 | +4.8, noise |
+| the other 26 | — | — | **0.0 to the decimal** |
+
+**THE CONTAINMENT CHECK IS THE 26 ROWS AND IT INCLUDES BOTH MELEE HUNTERS.** LW
+Melee and Hawk Melee moved 0.0 and correctly so: the ruling names the RANGED
+auto-attack, those builds swing two melee hands and never the bow, and their
+lists contain no cast at all. So "it is a Hunter profile" does not predict that
+a Hunter change moves it -- the same shape as the melee miss change that
+measured 0.0 on both feral Druids.
+
+### The suspension had two halves and `hold` only removes one
+
+| | the half | what it did |
+| --- | --- | --- |
+| 1 | `resetSwingTimers`, in `runCast` | starting the cast threw the bow's progress away and restarted the timer |
+| 2 | the mid-cast branch in `scheduleSwing` | a shot that then came due INSIDE the cast was held until the cast ended |
+
+`Ability.swingTimer: 'hold'` already existed -- the Warrior's Improved Slam --
+and it removes the first half only. **IT IS THE NEAR MISS, AND IT IS WHAT A
+READER REACHES FOR.** On a four-second Sniper Shot against a 2.4-second bow a
+shot comes due inside the cast every time, so `hold` would have deferred it by
+over a second: most of the loss, kept, with nothing on the results page to show
+it. `continue` is a THIRD mode -- the swing lands mid-cast and the weapon keeps
+its own rhythm straight through.
+
+**PROVED BY REINSTATING EACH HALF SEPARATELY**, which is the only way to know a
+test is not passing on a half fix: putting back the hold fails **7 of the 16**
+tests, putting back the reset fails **6**.
+
+**THE SWING HANDLER HAS TO ASK AT THE MOMENT A SWING COMES DUE, and by then the
+only thing it has is `castEndsAt` -- a number.** `Combatant.castAllowsSwings`
+carries the fact, assigned unconditionally beside `castEndsAt` at the one site
+where a cast starts, so the two cannot disagree and an ordinary cast following a
+`continue` one closes the window by itself with nothing to clear.
+`Combatant.channelling` is the field that LOOKS like the answer and is not: it
+holds an ability only for a CHANNEL, so a plain Aimed Shot sets it to null.
+
+**DECLARED ON THE THREE THE OWNER NAMED**, not derived from "it is a shot" --
+the rule that made Immolation Trap wait to be named rather than following
+Explosive Trap in. Every other cast in the game still interrupts the swing.
+
+### Two tests, because the first one was VACUOUS
+
+**THE FIRST VERSION COMPARED A FIGHT WITH A SNIPER SHOT AGAINST ONE WITHOUT AND
+PASSED WITH THE OLD SUSPENSION DELIBERATELY REINSTATED.** LW Ranged's opener
+pre-casts Sniper Shot at a four-second lead, so the ability is on its
+fifteen-second cooldown for the first ELEVEN seconds of the fight -- the cast at
+one second was refused, both arms ran the identical fight, and "the timestamps
+match" was true for the wrong reason.
+
+**AND THE GUARD IT CARRIED COULD NOT SEE IT EITHER.** It asserted that a shot
+landed inside the cast window, which is true anyway when nothing is cast. **A
+test whose fixture cannot express the mistake proves nothing about it** -- the
+stock Warlock list's lesson, and Preparation's three tests.
+
+**THE PRESET CANNOT BE COMPARED SHOT FOR SHOT AT ALL, WHICH IS THE SECOND
+FINDING.** Deadly Aspects is a 10% haste proc on Auto Shot, so the bow's cadence
+is RNG-driven -- and the engine draws from ONE stream, so Sniper Shot's own
+attack roll reorders every later draw and the two fights decorrelate. The arms
+matched on one harness and differed by a shot on another. So there are two
+fixtures now:
+
+| | answers | cannot answer |
+| --- | --- | --- |
+| a SCRIPTED archer -- a fixed bow, no haste, no rotation, the real abilities | the exact timings, deterministically | whether a real build reaches it |
+| the LW RANGED preset | that the real character does it | the exact timings |
+
+**EVERY CASE NOW ASSERTS THE CAST HAPPENED**, by its `cast` event at the chosen
+timestamp, which is what makes a refused cast a failure rather than a pass.
+**AND EACH CAST IS CENTRED ON A SHOT** rather than started at a fixed moment:
+at a flat one second, Multi-Shot's half-second window contained no shot at all,
+so its row was passing because there was nothing to suspend. A failing guard is
+how that was found.
+
+### What it makes stale is the REASONING, not the entries
+
+**ALL THREE HUNTER LISTS ARE UNCHANGED.** They are the owner's, and their list
+outranks a measurement of ours -- which cuts both ways, so a ruling about the
+ENGINE is not authority to rewrite them. What is rewritten is every figure
+around them that priced a cast against a lost bow cycle, each of which now says
+so:
+
+- the **+23** for removing Aimed Shot from the Marksmanship list;
+- the **-1** for Multi-Shot, whose first clause has expired and whose second
+  ("three targets where there is one") has not;
+- the **-12.1** that Sniper Shot was kept IN SPITE OF, on the owner's own call.
+  That bill was a cycle and a quarter of bow; what the ability costs now is a
+  global cooldown and 365 mana.
+
+**AND THE SHOT-WINDOW GATE NOW COSTS RATHER THAN SAVES**, which is this round's
+question for the owner. Removing it from all three gated entries measures
+**+27.6 REAL on BM Hunter** and +8.6 (noise) on LW Ranged. It is kept, and the
+asymmetry explains BM Hunter's small +4.8 above: its Aimed Shot was already
+timed to lose no shot, so the ruling hands it little and the gate is what is
+left on the table.
 
 ## Round TWENTY-FIVE: what the loop structurally cannot find
 

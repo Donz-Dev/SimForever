@@ -355,6 +355,14 @@ list is probably wrong now; it wants the full 30-batch method before it changes,
 and it is not changed here. The profile is genuinely weaker either way: it had
 been casting a 295-damage shot at a 160-damage instant's price.
 
+**AND THE RULE THAT PARAGRAPH RESTS ON IS GONE.** The owner has since ruled that
+auto shot is NOT suspended by Sniper Shot, Aimed Shot or Multi-Shot, so a cast
+no longer resets the ranged swing timer — which is most of why the four-second
+cast cost what it did. The transcription above is unaffected: 295 damage, 365
+mana, a 4-second cast and a 15-second cooldown are what the capture says and
+still are. What expired is the CONSEQUENCE drawn from the cast time, including
+the +7.9 for dropping the shot. Round 26 in `HANDOVER.md`.
+
 ~~**THE HAWK'S 32 PER STRIKE IS IN NEITHER SOURCE.**~~ **IT WAS IN ONE OF THEM,
 AND THIS ENTRY WAS WRONG FOR AS LONG AS IT STOOD.** 32 is the TALENT tooltip's
 figure — `src/data/talents/values/hunter.json` reads "dealing 32 Physical damage

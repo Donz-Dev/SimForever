@@ -286,6 +286,16 @@ pay for a cycle and a quarter of bow. **Asked directly, the owner kept it**, and
 list. `petsAndHunter.test.ts` pins the invariant — the ability is cast — and
 carries the figure.
 
+**THAT WHOLE ARGUMENT HAS EXPIRED, AND THE OWNER IS THE ONE WHO RETIRED IT.**
+Auto shot is no longer suspended by Sniper Shot, Aimed Shot or Multi-Shot —
+"the ranged auto-attack is not paused or suspended. It will trigger DURING the
+cast" — so there is no bow cycle to lose however the cast is timed, and the
+12.1 was almost entirely that cycle. What Sniper Shot costs now is a global
+cooldown and 365 mana on a build that runs dry. The ability was KEPT against
+that measurement, so the ruling removes the argument the decision was made over
+rather than changing the decision. **This profile is +43.7 REAL on the ruling**,
+977.4 to 1021.0; see round 26 in `HANDOVER.md`.
+
 **LW MELEE'S OLDER −237.1 STANDS AS A RECORD, NOT A QUESTION.** −100.6 from
 Raptor Strike becoming on-next-swing, which its capture said all along, and
 −136.6 from the owner's list dropping Serpent Sting, Arcane Shot and Rapid Fire

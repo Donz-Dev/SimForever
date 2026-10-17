@@ -400,6 +400,14 @@ export function castAbility(
   }
 
   caster.castEndsAt = now + castTime;
+  /*
+   * PAIRED WITH `castEndsAt` AND ASSIGNED UNCONDITIONALLY, which is what keeps
+   * it from going stale: the swing handler reads it only while this cast is
+   * still running, and every cast that sets the one sets the other. A `reset`
+   * or `hold` cast following a `continue` one therefore closes the window by
+   * itself, with nothing to clear when the cast ends.
+   */
+  caster.castAllowsSwings = ability.swingTimer === 'continue';
 
   /*
    * AFTER `castEndsAt`, deliberately: an effect that has to last the cast may
