@@ -66,6 +66,13 @@ LABELS = {
     'Fire Mage': 'mage_fire',
     'Seal Twist Ret': 'pally_ret',
     'Shockadin': 'pally_shockadin',
+    # ADDED BY THE SET ASSERTION DOING ITS JOB. `pally_shockadin_2h` has been a
+    # preset for several rounds with no row in the table at all, and this script
+    # refused to run until it had one -- which is exactly what the assertion is
+    # for: a profile added to the presets and not to the table is an error
+    # rather than a quiet omission, and a mean over 27 of 28 rows is wrong
+    # without saying so.
+    'Shockadin 2H': 'pally_shockadin_2h',
     'Prot Pally': 'prot_pally',
     'BM Hunter': 'bm_hunter',
     'LW Ranged': 'lw_ranged',

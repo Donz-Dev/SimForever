@@ -7321,32 +7321,48 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 17/34/0 | 989.6 | | Shockadin | Paladin | 23/0/28 | 787.7 |
-| LW Ranged | Hunter | 5/41/5 | 912.5 | | Hemo Dagger | Rogue | 17/3/31 | 787.0 |
-| Cat Druid | Druid | 9/34/8 | 892.7 | | Moonkin | Druid | 41/0/10 | 785.9 |
-| Firelock | Warlock | 5/11/35 | 885.5 | | Shadow Priest | Priest | 13/3/35 | 774.7 |
-| Hawk Melee | Hunter | 16/11/24 | 883.0 | | Enh Shaman | Shaman | 17/34/0 | 750.7 |
-| Seal Twist Ret | Paladin | 15/0/36 | 876.4 | | Pure Hemo | Rogue | 21/8/22 | 723.5 |
-| Arcane Mage | Mage | 35/11/5 | 866.8 | | SM/DS | Warlock | 35/11/5 | 722.4 |
-| Frostfire Mage | Mage | 0/29/22 | 863.3 | | Rupture Rogue | Rogue | 12/8/31 | 719.4 |
-| BM Hunter | Hunter | 31/20/0 | 856.2 | | Venom Rogue | Rogue | 37/12/2 | 718.9 |
-| 2H Arms | Warrior | 39/10/2 | 849.7 | | Ele Shaman | Shaman | 32/10/9 | 671.1 |
-| Fire Mage | Mage | 15/31/5 | 843.7 | | Prot Warr | Warrior | 17/0/34 | 469.7 |
-| LW Melee | Hunter | 5/13/33 | 831.5 | | Prot Pally | Paladin | 8/34/9 | 434.5 |
-| Combat Rogue | Rogue | 18/33/0 | 824.1 | | Bear Druid | Druid | 9/42/0 | 386.1 † |
-| Combat Mut | Rogue | 30/21/0 | 790.6 | | | | | | |
+| **Frostfire Mage** | Mage | 0/29/22 | **1086.4** | | LW Melee | Hunter | 5/13/33 | 878.8 |
+| **Arcane Mage** | Mage | 35/11/5 | **1078.1** | | Shockadin | Paladin | 23/0/28 | 867.8 |
+| DW Fury | Warrior | 17/34/0 | 1068.4 | | Combat Mut | Rogue | 30/21/0 | 847.8 |
+| **Fire Mage** | Mage | 15/31/5 | **1020.7** | | Hemo Dagger | Rogue | 17/3/31 | 840.2 |
+| LW Ranged | Hunter | 5/41/5 | 977.4 | | Moonkin | Druid | 41/0/10 | 820.3 |
+| Cat Druid | Druid | 9/34/8 | 966.9 | | **Ele Shaman** | Shaman | 32/10/9 | **792.7** |
+| BM Hunter | Hunter | 31/20/0 | 963.4 | | Pure Hemo | Rogue | 21/8/22 | 775.9 |
+| Seal Twist Ret | Paladin | 15/0/36 | 948.6 | | Venom Rogue | Rogue | 37/12/2 | 771.6 |
+| Hawk Melee | Hunter | 16/11/24 | 937.6 | | **SM/DS** | Warlock | 35/11/5 | **769.4** |
+| Shockadin 2H | Paladin | 22/0/29 | 935.2 | | **Enh Shaman** | Shaman | 17/34/0 | **761.9** |
+| **Shadow Priest** | Priest | 13/3/35 | **931.0** | | Rupture Rogue | Rogue | 12/8/31 | 754.9 |
+| 2H Arms | Warrior | 39/10/2 | 927.0 | | Prot Pally | Paladin | 8/34/9 | 549.9 |
+| Firelock | Warlock | 5/11/35 | 910.5 | | Prot Warr | Warrior | 17/0/34 | 499.5 |
+| Combat Rogue | Rogue | 18/33/0 | 899.7 | | Bear Druid | Druid | 9/42/0 | 432.8 |
 
-The mean across **27** is **774.0**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **28** is **857.7**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
-**† THE BEAR'S FIGURE IS STALE AND THE MEAN IS THEREFORE A MEAN OVER ONE STALE
-ROW.** Dire Bear Form's armor multiplier and the 75% armor cap both landed after
-this table was last rebuilt, and the Bear measures **~402.9** now. It is flagged
-rather than patched, because patching one row publishes a difference between two
-baselines -- this file's own rule. The TALENT columns above were corrected in
-place, because a build is a fact rather than a measurement: Arcane 35/11/5, Fire
-16/31/4, Ele Shaman 32/6/13, LW Ranged 5/41/5, LW Melee 5/13/33, Moonkin
-41/0/10.
+**EVERY ROW ABOVE IS ONE MEASUREMENT, AND NO ROW IS FLAGGED ANY MORE.** All 28
+come from a single 300-fight-per-profile run at the optimisation commit, with the
+`BASELINE=` comparison taken against `main` -- so the mean is a mean over 28
+current rows and the dagger that used to sit on the Bear is gone with the thing
+it described. The Bear measures **432.8** here, which supersedes the ~402.9 that
+footnote carried: Dire Bear Form's armor multiplier and the 75% armor cap had
+landed after the table was last rebuilt, and this rebuild includes them.
+
+**AND THE TABLE WAS MISSING A WHOLE PROFILE, WHICH THE SCRIPT REFUSED TO RUN
+WITHOUT.** `pally_shockadin_2h` has been a preset for several rounds with no row
+here at all, so the mean was over 27 of 28 and said 27 -- correct about its own
+arithmetic and wrong about the project. `update_baseline_table.py`'s SET
+assertion is what caught it, which is exactly what that assertion is for: "a
+profile added to the presets and not to the table is an error rather than a quiet
+omission". The script's label map and the table both have it now.
+
+**THE TALENT COLUMNS ARE READ FROM THE ROWS AND NEVER RETYPED**, which is why
+the old footnote's list of them is gone rather than updated. It read "Arcane
+35/11/5, Fire 16/31/4, Ele Shaman 32/6/13 ..." and two of those three had moved
+underneath it -- Fire is 15/31/5 and Ele Shaman 32/10/9 after the optimisation
+pass. **A figure written twice is a figure that drifts once**, and this file had
+already written that sentence about this same footnote. `talentSpreads.test.ts`
+reads every doc table and compares it to `PRESETS_BY_ID`, which is what makes the
+rows safe and the prose not -- so the prose is deleted instead of maintained.
 
 **AND THIS SENTENCE CONTRADICTED THE TABLE ABOVE IT FOR ONE COMMIT**, which is
 the failure `update_baseline_table.py` already has a paragraph about: the ROWS
