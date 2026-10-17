@@ -2576,6 +2576,36 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       consumables: casterConsumables('school_arcane'),
       /*
        * ========================================================================
+       * **THIS OPENER IS ILLEGAL AND EVERYTHING BELOW IT IS VOID. DO NOT READ
+       * THE ARGUMENT AS THOUGH IT HOLDS.**
+       *
+       * The owner's ruling: **"Once you deal damage or finish casting a damaging
+       * ability combat has started."** So a pre-combat list may finish AT MOST
+       * ONE damaging ability and it must finish at t=0 -- that cast is the pull.
+       * This one finishes FOUR first: `pyroblast` at t-7.5 for 520 to 646, and
+       * three `arcane_blast` at t-6, t-4.5 and t-3 for 218 to 254 each. **About
+       * 1,200 to 1,400 damage dealt before the clock started**, plus a four-stack
+       * ramp bought for no global cooldown, which is where the figure came from.
+       *
+       * IT PASSED THE SUITE, CI, AND A SELF-AUTHORED CHECK FOR A DIFFERENT
+       * PRE-COMBAT DEFECT -- see the overlap argument further down, which is
+       * real, was acted on, and is the WEAKER of the two constraints. Finding a
+       * constraint was mistaken for finding the binding one.
+       *
+       * **AND THE APL REASONING IS WRONG TOO, FOR A SECOND REASON**: Arcane
+       * Blast is a MAINTENANCE BUFF the owner means held at four stacks for the
+       * whole fight, not a ramp that is spent and rebuilt. `refreshBehaviour:
+       * 'ignore'` cannot express that and is a question for the owner before
+       * anything here is re-measured.
+       *
+       * WHAT TO DO: revert to the owner's own two lines -- `mage_armor` at 3 and
+       * `arcane_blast` at 1.5, which completes AT the pull and is legal -- plus
+       * `arcane_power` at t=0, which deals no damage. Then settle the refresh
+       * behaviour, then re-measure. HANDOVER.md has the ordered list.
+       * ========================================================================
+       */
+      /*
+       * ========================================================================
        * THE OPENER IS THE WHOLE OPTIMISATION, WORTH **+104.0 +/- 7.9** -- about
        * **+9.7%**, and the largest single thing on this profile.
        *

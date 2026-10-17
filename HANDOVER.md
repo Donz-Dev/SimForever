@@ -89,8 +89,11 @@ write-up; none is an engine gap.
 | **Judgement of Command is left on the sheet's 0.43** where Righteousness and Fury took the exact `1.5 / 3.5`. The note names two abilities; a ruling covers what it says | round 17 | 0.33% on one seal, and whether all three should be the expression |
 | **Explosive Trap's 5% of attack power is on its BURN and not its initial hit.** One figure for two abilities, and only this one has two damage components | round 17 | which half carries it |
 | **"Touch of the Dead"** is the name the Undead note uses for what is plainly Touch of the Grave -- the same block, and the only part of that racial that has ever scaled with anything | round 17 | a naming question, not an ambiguity about which effect |
+| **Does Arcane Blast's window REFRESH?** You describe it as "a maintenance buff that is meant to be kept at 4 stacks for an entire fight", and `refreshBehaviour: 'ignore'` makes that impossible -- fifteen seconds from first application, no cast extends it. `reset` would express what you describe | round 22 | **the entire Arcane rotation.** A maintained buff has no stack-gate question at all, and Arcane Wrath's justification for being left out expires with the ramp reading |
+| **Should the engine REFUSE a pre-combat list that deals damage before the pull?** Today `runPrecombat` resolves everything at timestamp zero and nothing asks. An illegal opener was measured, written up, tested, CI'd and merged | round 22 | whether this class of error can recur. The alternative is that it stays the author's arithmetic |
+| **Does an effect that merely TICKS before the pull start combat?** Searing Totem at a 1.5s lead on both Shamans applies a damaging ground effect before t=0 -- added by this project, not by you. The Paladin seals and Holy Shield deal nothing when cast, so they look fine, but they are the same shape of question | round 22 | two Shaman openers, and a rule for the next one |
 
-**SIX ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**NINE ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
@@ -99,10 +102,16 @@ somebody wrote down: the first draft of this very sentence said eight, by
 subtracting four from a miscount of eleven, and then seven, then six once Ice
 Lance came off, then seven when round 19b added one, **and six again now that
 round 19c has answered it in a single message**, SEVEN when round 20 raised the
-two-Judgements question, and **SIX again now that it is answered**. **The number
-goes both ways**, which is the half an "increment" habit gets wrong even when
-the direction is right, and the two-Judgements row lasted exactly one round --
-tying the Vanish row for the shortest yet.
+two-Judgements question, SIX when it was answered, and **NINE now that round 22
+has added three at once**. **The number goes both ways**, which is the half an
+"increment" habit gets wrong even when the direction is right, and the
+two-Judgements row lasted exactly one round -- tying the Vanish row for the
+shortest yet.
+**AND THE THREE NEW ONES ARE A DIFFERENT KIND FROM THE SIX ABOVE THEM.** Those
+are defensible readings that became load-bearing; these are **a ruling that
+contradicts a shipped field, a rule the engine does not enforce, and a category
+nobody has defined** -- so they block work rather than merely pricing it, and
+the first of the three blocks a whole profile.
 
 **AND SIX HAVE COME OFF IN THREE ROUNDS, WHICH IS WHAT THE TABLE IS FOR.** Four
 were ruled on by the owner -- the five Tauren hit caps and the Druid aura
@@ -121,7 +130,127 @@ asking about the moment a round made it the biggest thing on a profile -- which
 is CLAUDE.md's rule that an interpretation flagged as one is what gets it ruled
 on, and that the label has to survive until the answer arrives.
 
+## THE SIX-PROFILE OPTIMISATION IS NOT DONE, AND THE PART THAT SHIPPED IS INVALID
+
+**READ THIS BEFORE THE TWO ROUNDS BELOW, BOTH OF WHICH IT CORRECTS.** The owner's
+assessment, after three attempts at one brief:
+
+> This failed spectacularly.
+
+It is accurate, and the rounds below are written as though they succeeded. What
+follows is what is actually true, so nobody starts from their figures.
+
+### 1. The headline figure came from an illegal move
+
+**THE OWNER'S RULING: "Once you deal damage or finish casting a damaging ability
+combat has started."** So a pre-combat list may finish **at most one** damaging
+ability, and it must finish at exactly t=0 -- that cast is the pull.
+
+The Arcane Mage opener merged in `e4cc9d8` finishes **four** of them first:
+
+| | completes | deals |
+| --- | --- | --- |
+| `pyroblast` t-13.5, 6s cast | **t-7.5** | 520 to 646 |
+| `arcane_blast` t-7.5 | **t-6.0** | 218 to 254 |
+| `arcane_blast` t-6 | **t-4.5** | 218 to 254 |
+| `arcane_blast` t-4.5 | **t-3.0** | 218 to 254 |
+| `arcane_blast` t-1.5 | t0 | the owner's own line, and legal |
+
+**About 1,200 to 1,400 damage before the clock starts, plus a full four-stack
+spell-power ramp bought for no global cooldown.** That is where **+95.9 +/- 8.2**
+came from. The figure is void and `src/profiles/presets.ts` carries a long
+write-up of it that is now wrong at the top.
+
+**IT PASSED EVERYTHING.** Suite green at 3731, CI green on Node 20 and 22, a
+self-authored overlap check that it satisfied, and a 2,000-word comment arguing
+for it. `runPrecombat` resolves every action at timestamp zero and nothing asks
+whether the fight had started.
+
+**AND THE OVERLAP CHECK IS THE INSTRUCTIVE PART.** This project found, flagged
+and wrote up a *different* pre-combat defect in the same round -- an opener
+holding two overlapping casts -- discarded a +105.3 for it, and documented the
+lesson as "a pre-combat list is a claim about what the character did and the
+engine does not check it". **The binding constraint was one question further
+on**, and finding a constraint was mistaken for finding the constraint.
+
+### 2. Arcane Blast is a maintenance buff, and every APL conclusion assumed a ramp
+
+**THE OWNER: "Arcane Blast changed significantly to be a maintenance buff that
+is meant to be kept at 4 stacks for an entire fight. That was entirely
+missed."**
+
+`refreshBehaviour: 'ignore'` cannot express that -- the window is fifteen seconds
+from FIRST application and no cast extends it -- and **the comment above it
+argued for `ignore` on the grounds that `reset` "would make the window unbounded
+in practice."** Unbounded in practice is the intent.
+
+**SO THE WHOLE ARCANE APL ANALYSIS ANSWERS THE WRONG QUESTION.** The stack gate
+was swept and 4 came back the peak of 1/2/3/4/5, monotone either side; the
+Pyroblast pair was priced at +13.2; Fire Blast was placed three ways. All correct
+arithmetic about a rotation that spends a ramp and rebuilds it. **A build that
+holds four stacks all fight does not have a stack-gate question** -- it has "what
+fills the global cooldowns once the buff is up", which was never asked.
+
+**THIS IS A RULESET QUESTION AND NOT A TUNING ONE.** The owner's sentence and the
+shipped `refreshBehaviour` disagree; nothing here changes a refresh behaviour on
+an inference. **It is the first thing to settle.**
+
+### 3. Arcane Wrath was missed three times
+
+Named by the owner twice and re-raised by them a third time. It shipped instant,
+at the wrong damage band, with a borrowed coefficient -- four facts about one
+spell, three of them wrong, all traceable to one field read by the wrong name
+(`castTime` for a capture that says `"cast": "3.5 sec cast"`).
+
+**AND THE "VERY SOLID JUSTIFICATION FOR NOT TAKING" EXPIRES WITH ITEM 2.** It
+rested entirely on the Wrath displacing Arcane Blasts and breaking the ramp. A
+maintained buff has no ramp to break. The -77 to -119 figures are true of a
+rotation the owner does not intend.
+
+### 4. Four of the six profiles were never optimised
+
+Named: **Ele Shaman, Enh Shaman, Frostfire Mage, Arcane Mage, Fire Mage, Shadow
+Priest.** What they got:
+
+| profile | what was actually done |
+| --- | --- |
+| Ele Shaman | tree repair, pre-combat, some APL -- **and its Searing Totem opener is in the "does a tick before the pull count" bucket** |
+| Arcane Mage | all five dimensions, and the result is void per item 1 |
+| Enh Shaman | tree repair and a pre-combat line. **No APL, enchant or consumable pass** |
+| Frostfire Mage | tree repair and a Scorch pre-cast. **No APL pass** |
+| Fire Mage | tree repair and a Scorch pre-cast. **No APL pass** |
+| Shadow Priest | tree repair, two DoTs pre-combat, one entry removed. **No systematic APL pass** |
+
+**AND THE SCOPE WENT THE OTHER WAY INSTEAD.** Seven talent spreads were repaired
+across the Warlock, Paladin, Hunter, Rogue, Druid and Warrior -- classes nobody
+named -- because "diff every class, every time" is a rule about a PATCH and was
+applied to an OPTIMISATION. One of the seven belonged to a named profile.
+
+### What to do next, in order
+
+1. **Rule on `refreshBehaviour` for Arcane Blast.** Everything on that profile
+   is downstream of it.
+2. **Revert the Arcane Mage opener** to the owner's own two lines plus the legal
+   `arcane_power` at t=0, and re-measure. Nothing from round twenty-two's
+   pre-combat survives.
+3. **Audit the other openers against the ruling.** Searing Totem at t-1.5 on both
+   Shamans applies a ticking effect before the pull and was added by this
+   project; the Paladin seals and Holy Shield deal nothing when cast and are the
+   owner's own lines, so they are almost certainly fine -- but they have not been
+   ruled on.
+4. **Re-ask Arcane Wrath** under whatever item 1 settles.
+5. **Then the four profiles that were never done**, one at a time, five
+   dimensions each, scope restricted to the profile named.
+
 ## Round TWENTY-TWO: the Arcane Mage, all five dimensions
+
+> **THE PRE-COMBAT HALF OF THIS ROUND IS VOID** -- its opener deals about 1,200
+> to 1,400 damage before the pull, which the owner has ruled starts combat, so
+> the +95.9 headline is an artefact. **And its APL half answers the wrong
+> question**, because Arcane Blast is a maintenance buff held at four stacks
+> rather than a ramp that is spent. See the section above. The negative results
+> below -- the enchants, the consumables, the Fire investment -- were measured
+> against the old opener and are still informative about those dimensions.
 
 **THE OWNER RE-ASKED FOR ONE PROFILE BECAUSE THE FIRST PASS LEFT ITS APL
 UNTOUCHED** -- "Spotting check Arcane mage profile. Nothing changed in the APL."

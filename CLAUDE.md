@@ -246,6 +246,90 @@ Run `npm run typecheck` **and** `npm test` before opening a PR. The typechecker
 catches what the tests do not — a mutation of a shared readonly array, a stat
 rename that silently invalidated a test.
 
+## An optimisation brief, and five ways this project has failed one
+
+The owner's brief, given twice and then a third time for one profile:
+
+> Optimization means the damage per second is maximized. To optimize a profile
+> consider the following rules:
+> 1. Use the E65 template gear only. Do not change the stats on this gear.
+> 2. Evaluate enchant options to maximize throughput.
+> 3. Evaluate talent tree choices to maximize throughput.
+> 4. Evaluate pre-combat, and APL decisions to maximize throughput. To include
+>    skill selection, resource monitoring, buff/debuff timings, cast sequencing,
+>    hold points, triggers, etc.
+> 5. Evaluate consumable options to maximize throughput.
+> This process is iterative because some decisions have a knock-on effect.
+
+**IT HAS BEEN RUN THREE TIMES AND GOT A DIFFERENT THING WRONG EACH TIME.** Every
+one of the five below is a process failure rather than a wrong number, which is
+why they are here and not beside a constant.
+
+### 1. The named scope is the scope
+
+**ASKED FOR SIX PROFILES ACROSS THREE CLASSES, THIS PROJECT AUDITED NINE
+CLASSES.** Ele Shaman, Enh Shaman, Frostfire Mage, Arcane Mage, Fire Mage and
+Shadow Priest were named; hours went into talent-tree diffs, allocation probes
+and spread repairs for the Warlock, Paladin, Hunter, Rogue, Druid and Warrior as
+well -- seven spreads repaired, of which **one** belonged to a named profile.
+**THE DIFF TOOL IS WHY, AND IT IS A GOOD RULE APPLIED AT THE WRONG SCOPE.** This
+file says "diff every class, every time", and that is correct for **a PATCH**:
+a client refresh changes trees nobody mentioned. It is not a licence to optimise
+them. **A refresh is global and an optimisation is a list of profiles.**
+**AND THE COST IS NOT THE WASTED TIME, IT IS THE FIVE PROFILES THAT WERE NEVER
+DONE.** Two of the six have been optimised. The other four -- Enh Shaman,
+Frostfire Mage, Fire Mage, Shadow Priest -- got a tree repair and a pre-combat
+line, which is not what was asked for.
+
+### 2. Announcing a continuation is not continuing
+
+**"I'll continue without going dark" WAS FOLLOWED IMMEDIATELY BY GOING DARK**,
+and the owner downgraded the session for it. A sentence promising work is worth
+nothing; the work is worth something. **Do not narrate intent mid-task** -- the
+only thing that reads as progress is a tool call, a figure or a commit.
+
+### 3. Five dimensions means five dimensions
+
+**THE FIRST SIX-PROFILE RUN TOUCHED TALENTS AND PRE-COMBAT AND ASKED THE APL
+NOTHING AT ALL.** The owner caught it in one line -- "Spotting check Arcane mage
+profile. Nothing changed in the APL." Dimensions 2 and 5 were also unexamined on
+most of the six.
+**SO ENUMERATE THE FIVE AND REPORT A ROW FOR EACH, INCLUDING THE ONES THAT DID
+NOT MOVE.** A dimension with no row is indistinguishable from a dimension that
+was skipped, and the owner cannot tell which from the result. The Arcane round
+that finally did this reported **five rows, nineteen variants, two shipped** --
+and four of the five rows were "every alternative loses", which is the useful
+half of the answer.
+
+### 4. A measured gain built on an illegal move is worth less than nothing
+
+**THE SECOND RUN'S HEADLINE FIGURE CAME FROM DEALING DAMAGE BEFORE THE PULL.**
+See the ruling under **Before the pull**: four damaging casts completing at t-7.5
+to t-3, about 1,200 to 1,400 damage and a full spell-power ramp, for +95.9. It
+passed the suite, passed CI, passed a self-authored overlap check, and was
+merged.
+**WHAT WOULD HAVE CAUGHT IT IS ASKING WHAT THE RULES OF THE GAME ARE BEFORE
+ASKING WHAT THE ENGINE ALLOWS.** The engine allowed it because nothing had been
+built to forbid it, and "the engine allowed it" was treated as "the ruleset
+allows it" -- which is the inverse of this file's own rule that an `unmodelled`
+reason is a claim about the engine rather than about the game.
+
+### 5. Re-evaluating an APL means re-reading what the spells now DO
+
+**ARCANE BLAST HAD BEEN REDESIGNED INTO A MAINTENANCE BUFF AND THREE ROUNDS OF
+APL WORK TREATED IT AS A FILLER.** See the entry under **Three causes of
+inert**. The stack gate was swept, the Pyroblast pair was priced, Fire Blast was
+placed three ways -- all of it correct arithmetic about the wrong rotation.
+**AND ARCANE WRATH WAS NOT RE-ASKED**, though the owner had named it twice. Its
+"very solid justification for not taking" rested entirely on it displacing
+Arcane Blasts and breaking the ramp -- and **a maintained buff has no ramp to
+break**, so the justification expires with the reading it was built on. It is
+this file's own rule about a measurement being true of the build it was taken
+in, and it was not applied to the measurement this project was proudest of.
+**SO BEFORE TUNING A LIST, RE-READ THE TOOLTIP OF EVERY SPELL IN IT** -- not the
+constant, not the comment, the client's own words for what the spell is for. A
+list is a claim about what the spells do, and this one was three patches stale.
+
 ## The one architectural rule
 
 > **The simulation engine is completely independent of the UI.**
@@ -2641,23 +2725,45 @@ within the same panel". `engine/abilities/precombat.ts`.
   `tools/probe_precombat_pools.ts` prints the pool and the lockout remainder per
   profile, because neither has a zero anywhere to notice -- **a pool arriving
   short reads exactly like a pool that was meant to be short.**
-- **NOTHING CHECKS THAT THE OPENER IS A POSSIBLE CAST SEQUENCE, AND THAT IS
-  WORTH A FREE 105 DPS TO ANYBODY WHO DOES NOT ADD UP THE LEADS.**
-  `runPrecombat` resolves every action at timestamp zero and never asks whether
-  one cast was still in progress when the next began -- so an Arcane Mage opener
-  holding a **Pyroblast from t-6 to t0 AND an Arcane Blast from t-1.5 to t0**
-  measured **+105.3** and banked five casts into four seconds of real time.
-  **IT LOOKED EXACTLY LIKE THE LEGAL ROWS BESIDE IT**: 1.3 DPS above the best of
-  them, inside its own interval, in a variant table where every other row was
-  honest. There is no zero anywhere, nothing reads too large, and the `USES=1`
-  "before the pull" block prints it as cheerfully as any other opener.
-  **SO SUM THE LEADS AND THE CAST TIMES BY HAND BEFORE BELIEVING A PRE-COMBAT
-  FIGURE** -- an action occupies `t-lead` to `t-lead+castTime`, an instant
-  occupies a zero-width point and cannot overlap anything, and the sequence has
-  to be free of overlaps for the list to be a claim about what a character
-  actually did. Whether the engine should REFUSE an overlapping opener is a
-  question for the owner; today it is the author's arithmetic that stands
-  between a measurement and an artefact.
+- **A PRE-COMBAT LIST MAY FINISH AT MOST *ONE* DAMAGING ABILITY, AND IT MUST
+  FINISH AT EXACTLY t=0. THE OWNER'S RULING: "Once you deal damage or finish
+  casting a damaging ability combat has started."**
+  So the one damaging cast an opener may hold **is the pull**. Anything that
+  completes earlier has started the fight before the fight started, and every
+  figure measured on it is an artefact.
+  **THIS IS THE MOST EXPENSIVE THING IN THIS FILE AND IT WAS SHIPPED TO `main`.**
+  An Arcane Mage opener was written with **four damaging casts completing before
+  the pull** -- a Pyroblast at t-7.5 for 520 to 646, and three Arcane Blasts at
+  t-6, t-4.5 and t-3 for 218 to 254 each -- which is about **1,200 to 1,400
+  damage dealt before the clock started**, plus four stacks of a spell-power ramp
+  bought for no global cooldown. It measured **+95.9 +/- 8.2** and that figure
+  means nothing.
+  **NOTHING IN THE ENGINE ENFORCES IT.** `runPrecombat` resolves every action at
+  timestamp zero, so the damage, the procs and the auras all arrive free. There
+  is no zero anywhere to notice, nothing reads too large, the suite is green, and
+  the `USES=1` opener block prints it as cheerfully as any legal opener.
+  **AND THE AUTHOR'S OWN CHECK WAS FOR THE WRONG CONSTRAINT**, which is the part
+  worth keeping. This entry previously read "nothing checks that the opener is a
+  possible cast SEQUENCE" and described summing leads and cast times to find
+  OVERLAPS -- a real problem, found and fixed, and **the weaker of the two
+  constraints by far**. A sequence can be perfectly non-overlapping and still
+  deal damage four times before the pull, which is exactly what shipped: the
+  overlap check passed it. **Having found one constraint, ask whether it is the
+  binding one** -- "is this sequence physically castable" is a question about the
+  character's hands, and "has combat started" is a question about the target.
+  **AND A TOOL FOR IT WAS WRITTEN, CAME OUT INVERTED, AND WAS DELETED.** A probe
+  meant to classify each pre-combat action flagged every Paladin SEAL as illegal
+  -- a seal deals nothing when cast; the swing does -- while reporting the four
+  Arcane Blasts as merely questionable, because the fixture auto-attacks during
+  the 1.5s cast and the damage event did not land on the instant being compared.
+  **Wrong in the generous direction, on the one case it was written for.** It is
+  not in `tools/`: the facts are readable off the ability definitions, and a
+  checker that excuses the offender while accusing the owner is worse than
+  arithmetic done by hand.
+  **WHAT IS STILL OPEN**: whether the engine should REFUSE such an opener, and
+  whether an effect that merely TICKS before the pull counts -- Searing Totem at
+  a 1.5s lead on both Shamans is in that bucket and was also added by this
+  project rather than by the owner.
 - **AND `USES=1` CANNOT TELL YOU THE OPENER'S RAMP ARRIVED.** Its "before the
   pull" block prints each pre-combat action beside **the ability's whole-fight
   cast count**, so four `arcane_blast` rows all read 13.2 and the
@@ -4390,6 +4496,26 @@ Plus the permanent rulings under **Scope**.
   is a stated fifteen seconds, the damage clause is spell power from Intellect
   instead, and `arcaneBlastSpender` is deleted. **The question was answered by
   being removed.** The flag is still what made it findable.
+  **AND THE REWRITE WAS THEN MISREAD AS A RAMP WHEN THE OWNER MEANS A
+  MAINTENANCE BUFF**, which is a bigger error than the one it replaced.
+  Their words: **"Arcane Blast changed significantly to be a maintenance buff
+  that is meant to be kept at 4 stacks for an entire fight."**
+  **`refreshBehaviour: 'ignore'` MAKES THAT IMPOSSIBLE**, and its own comment
+  says so while arguing for it: "`reset` would restart the clock on every cast
+  and make the window unbounded in practice." **Unbounded in practice is the
+  intent** -- a buff held at four stacks for a sixty-second fight is exactly a
+  fifteen-second window that keeps being refreshed. So the comment identified the
+  right two readings, and chose the one the owner did not mean, on the grounds
+  that the other sounded too strong.
+  **EVERY ARCANE APL CONCLUSION THIS PROJECT HAS DRAWN RESTS ON THE WRONG ONE.**
+  A build that SPENDS a ramp and rebuilds it wants the stack gate swept for a
+  peak -- which was done, and 4 came back the best of 1/2/3/4/5, monotone either
+  side. A build that MAINTAINS four stacks does not have that question at all:
+  it has "what fills the global cooldowns once the buff is up", which is the
+  question Arcane Wrath exists to answer and which was never asked.
+  **SO THIS IS A RULESET QUESTION AND NOT A TUNING ONE**: the owner's sentence
+  and the shipped `refreshBehaviour` disagree, and nothing here changes a refresh
+  behaviour on an inference. It is the first thing to settle on that profile.
 - **AND ONE WENT THE OTHER WAY IN THE SAME PATCH: A SETTLED FACT BECAME A
   QUESTION AGAIN, AND THE ANSWER WAS THAT THE RULING HAD COVERED THE PRODUCT.**
   While Ice Lance's frozen multiplier and the divisor in the owner's
@@ -4435,6 +4561,21 @@ Plus the permanent rulings under **Scope**.
   So the thing to carry forward is not the figure but the shape: a caveat on
   this constant has been written, removed, rewritten and removed again, and
   every cycle was cheap because it named both readings and what each would cost.
+  **AND THE OWNER HAS NOW RULED ON THIS ONE CONSTANT FIVE TIMES, WHICH IS NOT A
+  SUCCESS STORY FOR THE FLAGGING HABIT.** Their fifth was "this will be the
+  FIFTH time I've ruled on Ice Lance ... DO NOT ASK AGAIN ABOUT ICE LANCE."
+  The paragraphs above call each cycle "cheap" because the flag produced an
+  answer in one message -- **true of this project's cost and false of the
+  owner's.** Four of the five asked the same question in different words, and
+  what moved between them was a client figure that this project's own rule says
+  does not reopen a ruling about which terms a multiplier reaches.
+  **SO A FLAG IS CHEAP AND ASKING IS NOT.** The rule stands -- implement the
+  default, label the reading -- and it has a second half it did not have before:
+  **a flagged reading on a constant the owner has already ruled on is a NOTE,
+  not a question.** Write it where the next reader finds it and leave the
+  message unsent; the ruling is in `git log` and in this file, and re-asking
+  spends the one resource this project cannot measure. **"N% increased" is
+  `1 + N/100`** and that arithmetic was the whole of two of the five.
 - **TWO CORRECT HALVES WITH NOTHING JOINING THEM IS A SHAPE NO HALF'S TEST CAN
   CATCH.** `armorPenetration` shipped declared, granted by three talents,
   counted as fully modelled and READ BY NOTHING -- `resolveDamage` took the
@@ -4666,6 +4807,32 @@ five two-handed weapon types. So the reading was right, the clause was real, and
 it then expired on its own. **A requirement line is DATA and it moves like any
 other number** -- which is the second reason to re-read the captures on a patch
 rather than only the damage.
+
+**ARCANE WRATH IS THE WORST SINGLE READING IN THIS PROJECT'S HISTORY AND IT IS
+WORTH COUNTING THE WAYS.** The owner: "Arcane Wrath seems entirely different to
+what you're suggesting." Five facts about one spell, four of them wrong at once:
+
+| | shipped | the owner |
+| --- | --- | --- |
+| cast time | **instant** | **3.5 second cast** |
+| damage | 406-496 (the capture) | **439 to 529** |
+| coefficient | `PLACEHOLDER_` 0.429, borrowed from Fire Blast | **100% of spell power** |
+| the mana clause | +5% of maximum mana | +5% of maximum mana -- the one that was right |
+| whether to take it | not taken, for want of data | "a spell worth taking, or at least providing very solid justification for not taking" |
+
+**AND THE FOUR ERRORS WERE NOT INDEPENDENT -- ONE MISREAD FIELD PRODUCED THE
+OTHER THREE.** The cast time was read by the wrong field name, which made the
+source look silent, which made every rule below generous, which made Fire
+Blast's coefficient borrowable on the argument that "the sheet gives every Mage
+INSTANT the same `1.5 / 3.5`". The borrow was well argued and rested on a fact
+that was not true; `3.5 / 3.5` is 1.0, which is the owner's own figure.
+**THEN IT WAS MISSED A THIRD TIME.** Asked twice more to optimise the Arcane
+Mage, this project did not re-open Arcane Wrath at all -- it cited its own
+earlier measurement of -77 to -119, which had been taken on the reading that
+Arcane Blast is a ramp the Wrath would break. **That reading is also wrong**
+(see **Three causes of inert**), so the justification expired with it and
+nothing noticed, because a measurement of one's own is the last thing anybody
+re-reads.
 
 **AND A FIELD READ BY THE WRONG NAME REPORTS AS A SOURCE THAT IS SILENT, WHICH
 TURNS EVERY RULE IN THIS SECTION INTO A LICENCE.** Arcane Wrath shipped as an
