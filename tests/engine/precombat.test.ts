@@ -406,3 +406,113 @@ describe('the profile field', () => {
     expect(toSeconds(simulation.clock.now())).toBe(0);
   });
 });
+
+describe('ageing the window reschedules the expiration, which it did not', () => {
+  /*
+   * ============================================================================
+   * AN AURA MUST NOT OUTLIVE ITS OWN `expiresAt`, AND A PRE-CAST ONE DID -- by
+   * exactly the lead.
+   *
+   * `rewindAuras` wrote `appliedAt` and `expiresAt` directly and left the
+   * EXPIRATION EVENT scheduled against the old time, so for `leadMs` after the
+   * window closed `remainingMs` read zero while `has` still answered true.
+   *
+   * WHAT IT COST WAS A TICKING EFFECT, AT AN IDENTICAL UPTIME. A periodic tick
+   * chains itself and stops when the next one would fall past `expiresAt`, and
+   * `refresh` extends the window without restarting a chain that has already
+   * stopped. So a list whose entry is "recast when it has run out" fired inside
+   * the stale window, REFRESHED the still-present aura, and got a window that
+   * ticked **zero times**: the Enhancement Shaman's Searing Totem delivered
+   * 41.15 ticks against 76.36 over a 120 second fight, on the same number of
+   * casts and at 98% uptime either way.
+   *
+   * SO THE DPS SAID -15.1 AT 240s AND NOTHING SAID WHY. It read as an argument
+   * for deleting the owner's opener line -- "+14.60 to remove it" -- which was
+   * a figure pricing a bug, and the tick COUNT is the only thing that told them
+   * apart. **Measure the mechanism's own quantity.**
+   * ============================================================================
+   */
+  it('ages the window by the lead, which is the half that always worked', () => {
+    /*
+     * KEPT AS A REGRESSION GUARD ON THE PROPERTY AND LABELLED AS ONE, because
+     * it does NOT demonstrate the bug: the window has always been aged
+     * correctly, and what was wrong was the expiration event left pointing at
+     * the old time.
+     *
+     * ------------------------------------------------------------------------
+     * AND THE OBVIOUS SHARPER ASSERTION -- "gone one millisecond past the aged
+     * end" -- WAS WRITTEN, PASSED WITHOUT THE FIX, AND IS NOT HERE. Two
+     * versions of it were tried and both proved nothing:
+     *
+     *   "gone at the aged end"      this build's list RECASTS Searing Totem the
+     *                               moment it runs out, so the assertion is a
+     *                               claim about the rotation
+     *   "never present with         `remainingMs` clamps at zero and the list
+     *    nothing left on it"        refreshes inside the next poll, so every
+     *                               sampled moment looks fine
+     *
+     * **A TEST THAT PASSES EITHER WAY PROVES NOTHING**, and the one below is
+     * the one that fails: 44 ticks against 77 with the fix reverted. The
+     * mechanism's own quantity is the only thing that saw this.
+     */
+    const lead = 1.5;
+    const { simulation } = fightWith('shaman_enhancement', [
+      { abilityId: 'searing_totem', secondsBefore: lead },
+    ]);
+    const target = simulation.combatants.find((actor) => actor.kind !== 'player')!;
+    const full = toSeconds(target.auras.get('searing_totem')!.definition.durationMs);
+
+    expect(
+      toSeconds(target.auras.remainingMs('searing_totem', simulation.clock.now())),
+      'the window is aged by the lead',
+    ).toBeCloseTo(full - lead, 5);
+  });
+
+  it('gives a pre-cast damage-over-time effect as many ticks as an in-fight one', () => {
+    /*
+     * THE SAME BUG READ OFF THE EVENT STREAM RATHER THAN OFF THE COLLECTION,
+     * because that is where it was costing damage. Two fights long enough for
+     * the list to refresh the totem twice: one opens with the owner's 1.5s
+     * pre-cast and one has no opener at all, so the list casts it at the pull.
+     *
+     * THE PRE-CAST SHOULD BE AHEAD, NEVER BEHIND -- it arrives at t=0 for no
+     * global cooldown. A tolerance rather than an equality, because the two
+     * fights are different fights: the comparison that matters is the SIGN.
+     */
+    const ticksOf = (precombat: readonly { abilityId: string; secondsBefore: number }[]) => {
+      const profile = PRESETS_BY_ID.get('shaman_enhancement')!.build();
+      let ticks = 0;
+      const simulation = new Simulation(
+        trainingDummyEncounter(
+          {
+            ...profile,
+            precombat,
+            simulation: { ...profile.simulation, durationSeconds: 120 },
+          } as never,
+          4242,
+        ),
+        {
+          emit: (event: TelemetryEvent) => {
+            if (
+              event.type === 'damage' &&
+              (event as { abilityId?: string }).abilityId === 'searing_totem'
+            ) {
+              ticks += 1;
+            }
+          },
+        },
+      );
+      simulation.run();
+      return ticks;
+    };
+
+    const precast = ticksOf([
+      { abilityId: 'windfury_weapon', secondsBefore: 3 },
+      { abilityId: 'searing_totem', secondsBefore: 1.5 },
+    ]);
+    const inFight = ticksOf([{ abilityId: 'windfury_weapon', secondsBefore: 3 }]);
+
+    expect(inFight, 'the control delivered a fight of ticks').toBeGreaterThan(50);
+    expect(precast, 'the pre-cast is not a window short').toBeGreaterThanOrEqual(inFight);
+  });
+});

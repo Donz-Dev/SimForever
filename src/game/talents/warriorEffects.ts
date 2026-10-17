@@ -276,7 +276,31 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   improved_slam: [
     { kind: 'abilityCastTime', abilityId: 'slam', valueIndex: 0 },
     { kind: 'abilityGcd', abilityId: 'slam', valueIndex: 0 },
-    { kind: 'abilityHoldsSwing', abilityId: 'slam' },
+    /*
+     * ------------------------------------------------------------------------
+     * `continue`, NOT `hold`: THE SWING LANDS DURING THE SLAM. The ruleset
+     * owner's ruling -- "the warrior is able to auto-attack during a slam cast
+     * without it being suspended or paused but only if rank 1 or rank 2
+     * improved slam talent is taken" -- and it is the Hunter auto-shot ruling
+     * applied to a talent instead of to an ability.
+     *
+     * THE CLIENT'S OWN TOOLTIP ALREADY SAID IT, IN TWO VERBS: "Slam no longer
+     * interrupts **or delays** your melee swing". `hold` is the first verb
+     * only -- it stops the cast throwing the swing away and then makes the
+     * swing WAIT for the cast to end. Slam is a 1.25 or 1.0 second cast with
+     * this talent against a 3.3-second two-hander, so the two modes agree on
+     * most casts and differ on the ones where a swing comes due inside the
+     * window. **This project quoted the clause for years without its second
+     * verb**, in CLAUDE.md and in `Ability.swingTimer`'s own documentation.
+     *
+     * "RANK 1 OR RANK 2" IS THE WHOLE TALENT, because it has exactly two
+     * ranks -- so this stays value-free and rank-blind, as it was. That
+     * equivalence is a fact about the tree rather than about the ruling, so
+     * `slamSwingTimer.test.ts` pins `ranks: 2`: if Forever ever adds a third,
+     * the owner's wording stops meaning "taken" and somebody has to ask.
+     * ------------------------------------------------------------------------
+     */
+    { kind: 'abilitySwingTimer', abilityId: 'slam', mode: 'continue' },
     { kind: 'abilityCooldown', abilityId: 'slam', unit: 'seconds', valueIndex: 1 },
   ],
 

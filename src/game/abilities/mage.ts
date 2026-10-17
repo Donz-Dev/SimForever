@@ -243,9 +243,47 @@ export const BLAST_WAVE: Ability = {
  * ----------------------------------------------------------------------------
  */
 export const COMBUSTION_ABILITY: Ability = {
+  /*
+   * ==========================================================================
+   * OFF THE GLOBAL COOLDOWN, ON THE OWNER'S RULING: "Combustion is off the
+   * GCD."
+   *
+   * IT IS THE THIRD MAGE ABILITY OF ONE SHAPE AND THE LAST TO BE ASKED ABOUT.
+   * Their earlier ruling named the other two -- "Ensure Presence of Mind and
+   * Arcane Power don't trigger a global cooldown" -- and in
+   * `src/data/abilities/forever-mage-spellbook.json` all three are the same
+   * row: no cost, "Instant", "3 min cooldown", no rank, each granted by a
+   * capstone. Combustion was not named because that ruling arrived as an audit
+   * of the ARCANE profile and Combustion is in the FIRE list.
+   *
+   * SO WAITING TO BE TOLD WAS RIGHT AND IT WAS NOT FREE. A ruling covers what
+   * it says and is not extended by analogy -- the rule that made waiting for
+   * Explosive Trap correct -- and the price of waiting here was one release in
+   * which the Fire Mage paid a global cooldown it should not have. The
+   * alternative was changing a ruleset fact on an inference, which is failure
+   * mode 4 in CLAUDE.md: asking what the engine allows instead of what the
+   * rules of the game are.
+   *
+   * WORTH **+24.93 +/- 4.21** AT 60s AND **+5.58 +/- 3.76** AT 180s, measured
+   * before the ruling with the flag flipped at runtime between two paired
+   * samplings. It falls with fight length because the saved global cooldown is
+   * one of fewer and fewer, and because the build is mana bound by then.
+   *
+   * AND IT DECLARES A `cooldownMs`, which is not incidental:
+   * `freeCastChain.test.ts` asserts across all nine classes that every off-GCD
+   * ability has one, because an off-GCD ability with no cooldown would win the
+   * list forever and HANG a fight rather than fail one.
+   *
+   * BEING OFF IT MEANS ONE THING -- the ability does not START a global
+   * cooldown. It is still BLOCKED by one running, and what it buys is that the
+   * action AFTER it is free, which is what makes the potion that waits for this
+   * window resolve in the same instant rather than a global cooldown later.
+   * ==========================================================================
+   */
   id: 'combustion',
   name: 'Combustion',
   cooldownMs: seconds(180),
+  triggersGcd: false,
   onCast: ({ simulation, caster }) => {
     simulation.applyAura(caster, COMBUSTION, caster.id);
   },

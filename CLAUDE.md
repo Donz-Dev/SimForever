@@ -297,9 +297,18 @@ file says "diff every class, every time", and that is correct for **a PATCH**:
 a client refresh changes trees nobody mentioned. It is not a licence to optimise
 them. **A refresh is global and an optimisation is a list of profiles.**
 **AND THE COST IS NOT THE WASTED TIME, IT IS THE FIVE PROFILES THAT WERE NEVER
-DONE.** Two of the six have been optimised. The other four -- Enh Shaman,
-Frostfire Mage, Fire Mage, Shadow Priest -- got a tree repair and a pre-combat
-line, which is not what was asked for.
+DONE.** Four of the six -- Enh Shaman, Frostfire Mage, Fire Mage, Shadow Priest
+-- got a tree repair and a pre-combat line, which is not what was asked for.
+
+**NAMED RATHER THAN COUNTED, BECAUSE THE COUNT IS BEING MOVED BY SEVERAL
+BRANCHES AT ONCE.** This read "Two of the six have been optimised" and that
+sentence is the increment habit this file keeps catching: **Enh Shaman has had
+its full pass** (round 27 in `HANDOVER.md`, +67.19), and the Elemental Shaman,
+Frostfire, Fire and Shadow Priest were each in flight on their own branch in
+the same checkout while it ran. So a reader finding a stale number here should
+**check each profile's own handoff document** rather than trust a total that
+four sessions are editing simultaneously -- which is the clean-merge arithmetic
+failure one level up from a census column.
 
 ### 2. Announcing a continuation is not continuing
 
@@ -1682,6 +1691,52 @@ something that comes and goes.
   kept -- their list outranks a measurement of ours, and that cuts both ways, so
   a ruling about the ENGINE is not authority to rewrite a list. It is a question
   for them, recorded where the condition is declared.
+- **AND THE SAME RULING REACHED A TALENT, WHERE IT IS CORRECTLY WORTH NOTHING
+  AT THE RANK EVERY PROFILE TAKES.** Improved Slam grants `continue` now, not
+  `hold`, on the owner's ruling -- "the warrior is able to auto-attack during a
+  slam cast without it being suspended or paused but only if rank 1 or rank 2
+  improved slam talent is taken."
+  **THE CLIENT'S TOOLTIP HAD SAID IT IN TWO VERBS ALL ALONG**: "Slam no longer
+  interrupts **or delays** your melee swing". `hold` is the first verb only, and
+  `Ability.swingTimer`'s own documentation quoted the clause as "Slam no longer
+  interrupts your melee swing time" -- **a misquote, missing the verb that
+  decides between the two modes**, used as the justification for the mode it
+  implements. A tooltip with two verbs in it is a tooltip that distinguishes two
+  mechanisms.
+  **MEASURED AT 0.0 TO THE DECIMAL ON ALL 28 ROWS, AND THAT IS THE BUILD'S OWN
+  CADENCE RATHER THAN A PATCH THAT DID NOT APPLY** -- which is what 28 identical
+  rows otherwise means here. 2H Arms is the only build that takes the talent, at
+  2/2, where the cast is **1.0s against a 3.6s swing**; the mid-cast branch in
+  `scheduleSwing` is reached **0 times in 40 fights**, because every one of 158
+  Slam casts starts within **2,500ms** of the previous main-hand attack and a
+  swing could only fall inside the window if one started after 2,600ms. **Rage
+  is why**: it arrives per SWING, so the instant a spender becomes affordable is
+  a swing instant and the list acts on it -- a warrior cannot go 2.6 seconds
+  without something to cast.
+  **AND THE MARGIN IS 100ms, SO RANK 1 DOES REACH IT.** At 1/2 the cast is
+  1.25s, the threshold falls to 2,350ms, and the branch fires **12 times in 40
+  fights** -- all 12 allowed. So the mechanism is live and the rank-2 zero is a
+  property of the cast time, which is the same talent's other clause. **A change
+  worth nothing at one rank of a talent can be worth something at another**, and
+  the owner's "rank 1 or rank 2" wording turns out to matter in a way the ruling
+  did not intend.
+  **"RANK 1 OR RANK 2" IS THE WHOLE TALENT ONLY BECAUSE IT HAS EXACTLY TWO
+  RANKS**, which is a fact about the TREE rather than about the ruling -- so the
+  effect stays value-free and `slamSwingTimer.test.ts` pins `ranks: 2`. A third
+  rank would make the wording mean something narrower and nobody would be asked.
+- **AND THE APL BUILTIN WOULD HAVE SILENTLY STOPPED 2H ARMS CASTING SLAM, which
+  is the cost of a predicate that tests a VALUE where its name states a
+  CONCEPT.** `ability_holds_swing_timer` asked `=== 'hold'` while its own name
+  and its panel description say "does not cost a swing" -- the same question
+  only while one swing-keeping mode existed. The Arms list gates Slam on it, so
+  the moment the talent granted `continue` the entry went false for the one
+  build that takes the talent, and an 8.1% damage source would have vanished
+  with nothing on the results page to explain it. It asks for anything but
+  `reset` now, so a third mode is covered the day it lands -- the `isBleed`
+  argument, which reads the TAG rather than a list of the values it can take.
+  **ADDING A MEMBER TO AN ENUM IS A CHANGE TO EVERY `===` AGAINST IT**, and a
+  rotation condition is the worst place for one to be left behind: it fails by
+  casting less, which looks like a tuning problem.
 - **AN EFFECT THAT HAS TO LAST THE CAST GOES IN `onCastStart`, NOT `onCast`.**
   `onCast` runs at the END of a cast and once per tick of a channel, so
   anything that must be in place FOR the cast had nowhere to go. Evocation is
@@ -1836,9 +1891,73 @@ something that comes and goes.
   thrown away on the wrong thing** — and a charge spent on the wrong ability is
   the invisible failure: the proc still fires, the aura still reports its uptime,
   and the saving simply lands somewhere it should not.
-  **SELECTING BY SCHOOL IS STILL NOT THERE.** "Your next SPELL" is a different
-  set from "every ability" and only one of them is expressible; Presence of Mind
-  still says so.
+  **SELECTING BY SCHOOL IS STILL NOT THERE**, and "your next SPELL" is still a
+  different set from "every ability" -- there is no `school` on `Ability` to
+  select by, and a field like that is silent when forgotten.
+  **PRESENCE OF MIND USED TO BE THIS ENTRY'S EXAMPLE OF WHAT THE CATCH-ALL
+  CANNOT DO, AND IT IS NOW AN EXAMPLE OF WHAT IT CAN.** What closed the gap was
+  not a school but one more NARROWING CLAUSE: "your next non-channeled,
+  non-instant spell" is the catch-all plus `requiresCastTime` plus
+  `excludesChannel`, and for a Mage those select exactly the spells -- which
+  `presenceOfMind.test.ts` MEASURES over every built Mage book, racials and
+  consumables included, rather than assuming.
+- **AND A NAMED LIST IS THE LAST RESORT RATHER THAN THE SAFE DEFAULT, WHICH
+  COST A TALENT AND THEN A SECOND ONE.** Presence of Mind named seven spell ids
+  by hand. Arcane Wrath arrived at client build 1.60.1.70425 as a 3.5-second
+  cast, nobody added it, and the aura **took the charge and reported its
+  uptime** while the Mage cast the full 3.5 seconds. The owner found it in the
+  app.
+  **A CLAUSE THAT DESCRIBES THE SET COVERS THE ABILITY ADDED NEXT YEAR; A LIST
+  COVERS THE ABILITIES SOMEBODY REMEMBERED.** That is the whole of it, and the
+  exceptions are the sets no clause can express -- `MAGE_COSTED_SPELL_IDS` is
+  one, because "every ability that costs mana" has no field to read.
+  **AND THE LIST WAS WRONG IN THE OTHER DIRECTION AT THE SAME TIME**, which is
+  what a list does rather than a second mistake: it named ARCANE MISSILES, a
+  channel, and zeroing a channel's cast delivers one tick of five and reports a
+  successful cast.
+  **CLEARCASTING BORROWED THAT LIST AND INHERITED THE GAP** -- `[...PRESENCE_OF_MIND_SPELLS,
+  ...]` -- so Arcane Wrath was also the one Mage nuke it could never make free.
+  **One drifting list, two talents.**
+  **AND A COMMENT CLAIMING A NEIGHBOUR IS GUARDED IS NOT A GUARD.** Arcane
+  Power's note said its own list was kept in step by a test and that this "is
+  the same argument `PRESENCE_OF_MIND_SPELLS` already rested on, made
+  checkable" -- and that list had no such test, which is how one had Arcane
+  Wrath and the other did not.
+  **THE TEST THAT EXISTED NAMED THE HAZARD AND CHECKED ONE CASE.** Its comment
+  read "a NAMED LIST, so a spell absent from it takes the full cast with every
+  condition reading true", and it asserted on PYROBLAST. A hazard identified,
+  written down, and then tested in the one place it was not happening.
+- **"IS THIS A CHANNEL" HAS TWO SHAPES AND `channelTicks` ONLY SEES ONE.**
+  `spreadsEffectAcrossCast` is the one shared answer, and anything that ZEROES
+  a cast time has to ask it -- a cast modifier and `runPrecombat` both do.
+
+  | the shape | the test | the example |
+  | --- | --- | --- |
+  | a series of ticks | `channelTicks > 1` | Arcane Missiles, five missiles |
+  | a WINDOW that must last the cast | `onCastStart` | **Evocation** |
+
+  **EVOCATION IS WHY, AND ITS OWN COMMENT SAYS SO**: "ticks exist for an ability
+  whose EFFECT repeats, and this one's effect is a RATE rather than a series of
+  events." So the obvious test calls it an ordinary eight-second cast, and made
+  instant its `onCastStart` window opens and closes in the same millisecond --
+  **an eight-minute cooldown for no mana, logged as a successful cast.**
+  **`onCastStart` IS A READING OF THE DECLARATION AND NOT A PROXY FOR ONE**,
+  because that field's contract is "an effect that has to be in place FOR the
+  cast": such an effect is exactly one a zero-length cast cannot deliver. So
+  both shapes fall out of what an ability already says, and a declared
+  `channelled` flag -- the alternative -- would have been silent on the one
+  that forgot.
+  **`requiresCastTime` IS THE NEAR MISS AND REFUSES NOTHING HERE**: a channel
+  HAS a cast time and satisfies it gladly. "Non-channeled" and "non-instant"
+  are two words in the owner's sentence and two different questions.
+- **AND THE CHARGE LEDGER IS HOW A CAST-MODIFIER CHANGE THAT MEASURES 0.0 GETS
+  EXPLAINED.** `cast_charge_spent` carries the aura, the ability and the saving,
+  so "which ability actually spends this charge" is a count rather than an
+  argument: 387 charges over 20 Arcane fights, with the `presence_of_mind` ones
+  going to **Pyroblast and nothing else**, is what showed that excluding Arcane
+  Missiles could not move a figure. **Read the ledger before explaining a zero**,
+  because an unexplained 0.0 is indistinguishable from a change that did not
+  apply.
 - **`requiresAttackTable` IS THE OWNER'S DEFINITION OF "OFFENSIVE", REUSED.**
   Asked which abilities Focused Rage reduces, they ruled that "an ability is
   offensive if it is PROCESSED THROUGH A COMBAT TABLE. Heroic Strike, Thunder
@@ -2502,6 +2621,29 @@ The twelve that came before them, and which the rest of this section is about:
   twenty seconds against 40 for thirty, plus the rage — and the two Paladin
   hybrids take Spellblasting where the WEAPON EFFECT row splits them on their
   physical share, so one answer serves four builds that another row divides.
+- **AND A SHARED SELECTION ROW THAT MOST OF ITS CALLERS OVERRIDE IS A ROW THE
+  REST WERE NEVER ASKED ABOUT.** `hybridConsumables` hands all four of its
+  callers `flask_hit_points` and `food_attack_power`, and THREE of the four --
+  Retribution and both Shockadins -- override the pair per preset, priced at
+  +59.9 and +73.3. The Enhancement Shaman kept the default and nobody had ever
+  measured it: **+1200 Hit Points reaches nothing on a build with
+  `targetAttacks: false`** -- health never leaves maximum and a Shaman has no
+  `D x 10 / H` rage rule for a bigger pool to feed -- and +150 Spell Power is
+  **+36.00 +/- 0.08**, the largest single thing on that profile.
+  **THE OVERRIDES ARE THE TELL.** A shared row every caller keeps is a decision;
+  a shared row three of four callers override is a DEFAULT that stopped fitting,
+  and the one that still carries it is the one nobody checked. Read the
+  overrides before trusting the helper.
+- **AND SPELL POWER CAN BEAT ATTACK POWER PER POINT ON A BUILD THAT IS MOSTLY
+  PHYSICAL, WHICH READS AS A CONTRADICTION AND IS ARITHMETIC.** The Enh Shaman
+  is 73.5% physical and weighs `spellPower` at **0.2227** against
+  `attackPower`'s **0.1798**, because attack power sits at 1,965 and spell power
+  at 124 -- so a point of the second is a far larger share of the smaller thing
+  it reaches. It is why that profile's potion row does not divide the way its
+  weapon-effect row does: Spellblasting's +40 Spell Power beats Frenzy's +40
+  Attack Power by 0.88, measured. **Read the weight, not the damage share** --
+  the share says where the damage comes from and the weight says what a point
+  buys, and on a hybrid they point different ways.
 - **THE `other` SLOT IS THE OWNER'S OWN THREE-WAY PARTITION, AND THE DRUIDS ARE
   WHY IT IS A TABLE RATHER THAN A DERIVATION.** "Demonic rune being used at 10%
   mana remaining should be the default behavior for pure mana users. Specifically
@@ -2774,6 +2916,17 @@ within the same panel". `engine/abilities/precombat.ts`.
   cooldown short enough to come back inside the fight -- the window is burned
   before the build is at full strength. **Check the GCD flag before pricing a
   pre-cast, or the measurement prices a bug.**
+- **AND THAT RULE POINTS BOTH WAYS: WHETHER A GLOBAL COOLDOWN IS WORTH ANYTHING
+  IS A PROPERTY OF THE LIST RATHER THAN OF THE ABILITY.** Pre-casting the Enh
+  Shaman's Rage of the Farseer at a 0s lead measured **-4.79, noise** at the
+  start of a round and **+12.71 +/- 3.00 REAL** at the end of the same round,
+  with nothing about the ability changed: Reverberation 5/5 had added two shock
+  charges a fight, the list went from about 33 casts in a 60 second fight to
+  about 36, and the spare global cooldowns the pre-cast was saving into went
+  away. **So "pre-casting buys a GCD" is only a gain while the GCD is
+  contested**, and a build with idle decision points pays nothing for the cast
+  it was going to make anyway. Arcane Power's retraction is the same sentence
+  with the ability fixed and the list held still; this is the list moving.
 - **IT IS NOT A FREE CAST.** The mana is spent and the cooldown runs, which is
   what a character who opened with a Fireball actually arrives with. What
   pre-combat mode skips is three things: the global cooldown it would start,
@@ -2956,6 +3109,33 @@ test -- and the owner then specified an opener for every profile in one message.
   after the pull and stop when the AGED window closes, so a four-second lead is
   four before and six after. Probed by switching the flag off -- 10 against 20,
   exactly the two halves.
+- **AND AGEING THE WINDOW MEANS RESCHEDULING THE EXPIRATION, WHICH IT DID NOT --
+  SO A PRE-CAST AURA OUTLIVED ITS OWN `expiresAt` BY THE LEAD.** `rewindAuras`
+  wrote `appliedAt` and `expiresAt` directly and the expiration event stayed
+  scheduled against the old time, so for `leadMs` after the window closed
+  **`remainingMs` read zero while `has` answered true**. It goes through
+  `AuraCollection.rewindWindow` now, which cancels and reschedules.
+  **WHAT IT COST WAS A TICKING EFFECT AT AN IDENTICAL UPTIME**, which is the
+  inert-buff-with-visible-uptime shape for the third time and the first time the
+  silent thing was a DoT. A tick chains itself and stops when the next would
+  fall past `expiresAt`, and `refresh` extends the window WITHOUT restarting a
+  chain that has already stopped -- so a list entry reading "recast when it has
+  run out" fired inside the stale window, REFRESHED the still-present aura
+  instead of applying a new one, and got a window that ticked **zero times**.
+  The Enhancement Shaman's pre-cast Searing Totem: **41.15 ticks against 76.36**
+  over a 120 second fight, same casts, **98% uptime either way**.
+  **AND THE COMMENT AT THE CHAIN ASSERTS THE MISSING BEHAVIOUR** -- "ticks chain
+  themselves rather than being scheduled up front, so a refresh that extends the
+  duration automatically gets more ticks" -- true while the chain is alive and
+  false once it has stopped. **The general case is still latent**: a refresh on
+  any aura whose chain has stopped gets a silent window, whatever stopped it, and
+  the rewind was only the route that reached it reliably. Outstanding work.
+  **WHAT FOUND IT WAS REFUSING TO PUBLISH A FIGURE THAT READ AS A FINDING.**
+  Removing the owner's own opener line measured **+3.09 at 60s and +14.60 at
+  240s**, both real, which is an argument for deleting it -- and it was pricing
+  this bug. **"Isolate a loss, do not blame the obvious suspect" applies to a
+  GAIN**, and here the obvious suspect was the owner's judgement. The DPS could
+  not tell; the TICK COUNT could.
 - **SEVEN OF THE OWNER'S LINES NAME A STATE RATHER THAN A CAST, AND ALL SEVEN
   ARE LISTED ANYWAY.** "2s before Stealth" on three Rogues -- `openingAuras`
   carry `stealth` and there is no Stealth ABILITY -- and "Cat Form", "Moonkin
@@ -3415,6 +3595,24 @@ was sitting right there to be believed. Slice the file at the list's own
   nothing, so a reader who DERIVES the threshold from the grant gets a
   defensible, different, wrong number. Assert that a stated boundary is SAFE
   rather than that it is tight.
+- **AND A GATE'S VALUE IS A FACT ABOUT HOW SCARCE THE THING IT RATIONS IS, SO A
+  SWEEP CAN BE REAL AT THE START OF A ROUND AND WORTH NOTHING AT THE END OF
+  IT.** The Enh Shaman's Earth Shock is gated on Flame Shock having three
+  seconds left, because all three shocks share ONE `cooldownGroup` and spending
+  it on the wrong shock costs the burn. Swept seven ways, loosening it measured
+  **+4.44 +/- 3.15 REAL**; the same seven cells after Reverberation 5/5 shipped
+  measured **+0.35 +/- 0.54**, a third of a DPS. The talent took the shock
+  cooldown 6.0s to 5.0s, which is twelve charges a fight instead of ten, and
+  **the contention the gate existed to mediate mostly went away.**
+  **THE OTHER END OF THE SWEEP MOVED THE OPPOSITE WAY AND IS WHAT CONFIRMS IT**:
+  tightening to eight seconds went -8.69 to **-23.50**, so the owner's three
+  seconds did not become unimportant, it became the top of a FLAT PLATEAU with a
+  cliff below it. A gate nobody can improve is not the same as a gate that does
+  nothing.
+  **SO RE-SWEEP A GATE AFTER SHIPPING ANYTHING THAT CHANGES THE SUPPLY OF WHAT
+  IT RATIONS** -- a cooldown, a cost, a charge count, a resource grant -- and do
+  not publish the first sweep. This is the knock-on the owner's "iterative"
+  means, and it is the cheapest instance of it to check.
 
 Three things decide a list and none is visible in per-use damage:
 
@@ -5894,6 +6092,22 @@ shape should fail loudly, not render a tree with a broken arrow.
   this file and the default is what was too tight for any test touching the
   disk. **A timeout is the symptom; ask what the test READS before widening
   anything**, and never set `testTimeout` globally.
+- **AND THE SIXTH AND SEVENTH NAME THE PRECIPITATING CONDITION: A COLD FILE
+  CACHE IN A FRESH WORKTREE.** `protectedChannelTicks.test.ts` and
+  `variableCostIsReported.test.ts` both timed out on the **first** full-suite run
+  in a worktree created minutes earlier, and both passed standalone at **188ms
+  and 176ms** -- and both walk `src` with `readdirSync`/`readFile`, which is the
+  class above. Four consecutive full-suite runs after that were green at 3,742,
+  with and without the branch's changes.
+  **SO THE LOAD THAT MATTERS IS NOT ONLY HOW MANY TESTS RUN BESIDE IT.** The same
+  645-odd reads are cheap once the OS has the tree cached and expensive the first
+  time, which is exactly the state a new `git worktree` leaves the machine in --
+  and a worktree is what this project's own rules say to measure in. **The first
+  full-suite run in a fresh worktree is the expected place for a tree-walking
+  test to time out**, so capture it, run it again, and run it standalone before
+  concluding anything. Neither of these two caches its walk yet; both are the
+  same one-line fix `stealthBreaking.test.ts` already took, and they are
+  outstanding work rather than a decision.
 - **A SYNCHRONOUS TEST CANNOT TIME OUT.** The body blocks the event loop, so
   vitest's timer never fires — `bloodCraze.test.ts` has a test that takes 5491ms
   and passes against a 5000ms default. So a slow test is not a flaky one, and a
@@ -6485,6 +6699,23 @@ in a throwaway `git worktree` at a named commit, never in the shared working
 tree: a measurement there once came back a clean −2.0% on two profiles, which
 read exactly like a real regression and was another session's uncommitted work.
 Never commit files you find modified there.
+
+**AND "THE TREE WAS CLEAN WHEN I STARTED" IS NOT A REASON TO STAY IN IT.** The
+Enh Shaman round opened on a `(clean)` git status, took five dimensions of
+measurements, and then found **ten modified files it had not touched** --
+`talentBuild.ts`, `TalentEffect.ts`, `warriorEffects.ts`,
+`abilitiesForClass.ts`, `apl/builtins.ts`, `mage.ts`, two tests, another
+session's edits inside `presets.ts`, and **`probe_build.ts`, which is the
+measurement tool itself.** Four sibling optimisation branches were live in their
+own worktrees at the same time. The whole round was redone at a named commit;
+the talent figure then reproduced to the decimal, so the pollution happened not
+to reach that profile -- **which is a fact established afterwards and worth
+nothing as a reason to have skipped the worktree.**
+**BRANCH FIRST, BEFORE THE FIRST EDIT, NOT BEFORE THE FIRST MEASUREMENT.**
+Pollution arrives DURING a session, so a status check at the start proves
+nothing about the figures at the end -- and backing a round out of a shared tree
+afterwards means reverse-applying your own hunks out of a file somebody else is
+also editing, which is a second chance to damage their work.
 
 **A FRESH WORKTREE HAS NO `node_modules` AND `npm install` IS NOT THE ANSWER.**
 Junction the existing one in -- from PowerShell, because the Bash tool's path

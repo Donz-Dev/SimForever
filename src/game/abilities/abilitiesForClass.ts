@@ -239,17 +239,25 @@ function applyTalentChanges(ability: Ability, build: TalentBuild): Ability {
   const castReduction = build.abilityCastTimeReductionMs.get(ability.id) ?? 0;
   const gcdReduction = build.abilityGcdReductionMs.get(ability.id) ?? 0;
   /*
-   * A TALENT MAY NOT DOWNGRADE `continue` TO `hold`, which is the one way these
-   * two could meet. `hold` leaves the timer running and DEFERS a swing that
-   * comes due mid-cast; `continue` lets it land. So a talent granting hold to
-   * an ability the ruleset already exempts entirely would quietly reinstate
-   * half the suspension -- a smaller number and no error. Nothing reaches this
-   * today: Improved Slam is the only grant and the three Hunter shots are the
-   * only `continue`, so the guard is here for the next pair rather than for a
-   * live case.
+   * THE STRONGER OF WHAT THE ABILITY DECLARES AND WHAT A TALENT GRANTS, and the
+   * order is `reset` < `hold` < `continue` -- each keeps strictly more of the
+   * swing than the one before it.
+   *
+   * A MAXIMUM RATHER THAN AN OVERRIDE, because either direction of override is
+   * wrong in one case. A talent granting `hold` to an ability the ruleset
+   * already exempts entirely would reinstate half a suspension -- a smaller
+   * number and no error. And an ability declaring `hold` while a talent grants
+   * `continue` is Improved Slam's own shape with the two sources swapped.
+   * Nothing hits either case today: Slam declares no mode and the three Hunter
+   * shots have no talent, so this is here for the next pair.
    */
-  const holdsSwing =
-    build.abilitiesHoldingSwing.has(ability.id) && ability.swingTimer !== 'continue';
+  const SWING_TIMER_ORDER = { reset: 0, hold: 1, continue: 2 } as const;
+  const grantedSwingTimer = build.abilitySwingTimer.get(ability.id);
+  const swingTimer =
+    grantedSwingTimer &&
+    SWING_TIMER_ORDER[grantedSwingTimer] > SWING_TIMER_ORDER[ability.swingTimer ?? 'reset']
+      ? grantedSwingTimer
+      : undefined;
   /*
    * ADDED TO the ability's own stances, never replacing them. Vanguard gives
    * Charge Defensive Stance and must not take Battle Stance away; an ability
@@ -268,7 +276,7 @@ function applyTalentChanges(ability: Ability, build: TalentBuild): Ability {
     cooldownReduction === 0 &&
     castReduction === 0 &&
     gcdReduction === 0 &&
-    !holdsSwing &&
+    !swingTimer &&
     !stances &&
     !bonuses
   ) {
@@ -278,7 +286,7 @@ function applyTalentChanges(ability: Ability, build: TalentBuild): Ability {
   return {
     ...ability,
     ...(bonuses ? { bonuses } : {}),
-    ...(holdsSwing ? { swingTimer: 'hold' as const } : {}),
+    ...(swingTimer ? { swingTimer } : {}),
     ...(stances ? { stances: stances as Ability['stances'] } : {}),
     ...(ability.castTimeMs && castReduction > 0
       ? { castTimeMs: Math.max(0, ability.castTimeMs - castReduction) }

@@ -1,5 +1,5 @@
 import type { AuraDefinition, DamageSchool } from '../../engine';
-import { dealDamage, flat, seconds } from '../../engine';
+import { ALL_ABILITIES, dealDamage, flat, seconds } from '../../engine';
 import {
   FIREBALL_SP_COEFFICIENT,
   FIREBALL_TICK_SP_COEFFICIENT,
@@ -833,8 +833,15 @@ export function arcaneBlastAura(intellect: number): AuraDefinition {
  * THE LIST EXISTS AND THE TEST IS WHAT KEEPS IT IN STEP. `MAGE_COSTED_SPELL_IDS`
  * is every Mage ability that costs mana, and `mageAbilities.test.ts` derives
  * the same set from `MAGE_ABILITIES` and fails if the two disagree -- so a new
- * spell is caught by a test rather than by nobody. That is the same argument
- * `PRESENCE_OF_MIND_SPELLS` already rested on, made checkable.
+ * spell is caught by a test rather than by nobody.
+ *
+ * IT USED TO SAY "the same argument `PRESENCE_OF_MIND_SPELLS` already rested
+ * on, made checkable", AND THAT LIST HAD NO SUCH TEST -- which is how it came
+ * to be missing Arcane Wrath while this one had it. A comment claiming a
+ * neighbour is guarded is not a guard; Presence of Mind is a RULE now rather
+ * than a list, and this remains the one place a hand-written set of Mage ids
+ * survives, because "every ability that costs mana" has no clause to express
+ * it.
  *
  * NO `consumedByCast`, because this is a DURATION effect: every spell inside
  * the fifteen seconds pays more, not just the next one.
@@ -870,39 +877,54 @@ export const ARCANE_POWER: AuraDefinition = {
 };
 
 /**
- * Presence of Mind: "your next Mage spell with a casting time less than 10 sec
- * becomes an instant cast spell."
+ * Presence of Mind: the owner's rule -- "should make the next non-channeled,
+ * non-instant spell an instant cast."
  *
- * EVERY CAST-TIME SPELL IN THE BOOK, LISTED. `CastModifier` selects by ability
- * id and not by school or class, deliberately -- a `school` on every `Ability`
- * is a field that is silent when forgotten. Listing a single class's spells is
- * maintainable, and `requiresCastTime` does the "with a casting time" half, so
- * an instant cannot eat the charge.
+ * ==============================================================================
+ * IT WAS A HAND-WRITTEN LIST OF SEVEN SPELLS AND THE LIST HAD DRIFTED. Arcane
+ * Wrath arrived at client build 1.60.1.70425 as a 3.5-second cast and nobody
+ * added it, so Presence of Mind took the charge, reported its uptime, and let
+ * the Mage cast a full 3.5 seconds. The owner found it: "Presence of Mind is
+ * bugged for at least Arcane Wrath. It's not actually making it instant cast."
  *
- * The "less than 10 sec" clause is satisfied by every spell here; the longest
- * is Pyroblast at six.
+ * AND THE LIST WAS WRONG IN THE OTHER DIRECTION TOO: it named ARCANE MISSILES,
+ * which is a channel. Zeroing a channel's cast delivers ONE tick's worth of
+ * effect -- one missile of five -- and reports a successful cast. Nothing had
+ * reported that either, because the Arcane list spends the charge on Pyroblast
+ * through a `sequence`, so the case was reachable and not reached.
+ *
+ * SO IT IS THE RULE NOW RATHER THAN A LIST, in the owner's own two clauses:
+ *
+ * | the clause | what expresses it |
+ * | --- | --- |
+ * | "the next ... spell" | `ALL_ABILITIES`, the catch-all |
+ * | "non-instant" | `requiresCastTime` |
+ * | "non-channeled" | `excludesChannel` |
+ *
+ * THE CATCH-ALL IS SAFE HERE BECAUSE OF WHAT A MAGE OWNS, AND THAT IS MEASURED
+ * RATHER THAN ASSUMED. `Aura.ts` still records that "every ability" and "every
+ * SPELL" are different sets -- there is no `school` on `Ability` to select by --
+ * and for a Mage the two clauses above close the gap: every ability in a built
+ * Mage's book with a cast time IS a spell, racials and consumables included.
+ * `mageAbilities.test.ts` asserts that over all three Mage presets, so the day
+ * a cast-time racial exists the test fails rather than the charge going astray.
+ *
+ * "LESS THAN 10 SEC" NEEDS NOTHING: the longest cast a Mage has is Evocation's
+ * eight seconds, and that is a channel and excluded by the clause above.
+ * ==============================================================================
  */
 export const PRESENCE_OF_MIND_DURATION_MS = seconds(30);
-
-export const PRESENCE_OF_MIND_SPELLS = [
-  'fireball',
-  'frostbolt',
-  'frostfire_bolt',
-  'scorch',
-  'pyroblast',
-  'arcane_blast',
-  'arcane_missiles',
-] as const;
 
 export const PRESENCE_OF_MIND: AuraDefinition = {
   id: 'presence_of_mind',
   name: 'Presence of Mind',
   durationMs: PRESENCE_OF_MIND_DURATION_MS,
   castModifier: {
-    abilityIds: [...PRESENCE_OF_MIND_SPELLS],
+    abilityIds: [ALL_ABILITIES],
     castTimeFraction: 1,
     consumedByCast: 'all',
     requiresCastTime: true,
+    excludesChannel: true,
   },
 };
 
@@ -912,6 +934,25 @@ export const PRESENCE_OF_MIND: AuraDefinition = {
  *
  * THE SIBLING OF PRESENCE OF MIND, and the reason `CastModifier` carries cost
  * as well as cast time. The Priest's Inner Focus is the same shape again.
+ *
+ * ------------------------------------------------------------------------------
+ * AND IT SHARED PRESENCE OF MIND'S LIST, SO IT INHERITED THE SAME GAP. It read
+ * `[...PRESENCE_OF_MIND_SPELLS, 'fire_blast', 'ice_lance', 'blast_wave']`, so
+ * Arcane Wrath -- a 395-mana damage spell -- was the one Mage nuke Clearcasting
+ * could never make free. One drifting list, two talents.
+ *
+ * "YOUR NEXT DAMAGE SPELL" IS THE CATCH-ALL WITH TWO CLAUSES, the arrangement
+ * the Druid's own Clearcasting already uses: `requiresCost` keeps a free
+ * ability from eating the charge, and `requiresAttackTable` is the owner's
+ * definition of offensive -- processed through a combat table. Together they
+ * select exactly the Mage's damage spells and leave out Mage Armor, which costs
+ * mana and rolls nothing, and Evocation, which rolls nothing and is free.
+ *
+ * NO `excludesChannel`, which is the difference from its sibling and is not an
+ * oversight: making a channel FREE is a coherent thing to do to it, where
+ * making it instant destroys it. Arcane Missiles has always been in this list
+ * and stays.
+ * ------------------------------------------------------------------------------
  */
 export const CLEARCASTING_DURATION_MS = seconds(15);
 
@@ -920,9 +961,11 @@ export const CLEARCASTING: AuraDefinition = {
   name: 'Clearcasting',
   durationMs: CLEARCASTING_DURATION_MS,
   castModifier: {
-    abilityIds: [...PRESENCE_OF_MIND_SPELLS, 'fire_blast', 'ice_lance', 'blast_wave'],
+    abilityIds: [ALL_ABILITIES],
     costFraction: 1,
     consumedByCast: 'all',
+    requiresCost: true,
+    requiresAttackTable: true,
   },
 };
 

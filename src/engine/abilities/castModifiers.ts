@@ -3,6 +3,7 @@ import type { Combatant } from '../actors/Combatant';
 import type { AuraInstance } from '../effects/Aura';
 import type { Milliseconds } from '../time';
 import type { Ability } from './Ability';
+import { spreadsEffectAcrossCast } from './channelled';
 
 /**
  * What a caster's auras do to one cast, resolved BEFORE the cast starts.
@@ -60,6 +61,12 @@ function matches(caster: Combatant, instance: AuraInstance, ability: Ability): b
   if (modifier.exceptAbilityIds?.includes(ability.id)) return false;
   // An instant must not eat a charge meant for a cast.
   if (modifier.requiresCastTime && (ability.castTimeMs ?? 0) <= 0) return false;
+  /*
+   * NOR MUST A CHANNEL TAKE ONE THAT WOULD ZERO ITS CAST. "Your next
+   * non-channeled, non-instant spell" is two clauses because a channel has a
+   * cast time and satisfies the one above. See `spreadsEffectAcrossCast`.
+   */
+  if (modifier.excludesChannel && spreadsEffectAcrossCast(ability)) return false;
   // Nor must a free ability eat one meant for something that costs.
   if (modifier.requiresCost && (ability.cost?.amount ?? 0) <= 0) return false;
   /*

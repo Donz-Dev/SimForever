@@ -387,8 +387,28 @@ describe('what selecting one does to the priority list', () => {
         profile.character.characterClass,
         profile.consumables,
       ).map((ability) => ability.id);
+      /*
+       * ========================================================================
+       * A SELECTION CAN BE A SEQUENCE *STEP* AND NOT AN ENTRY, which this read
+       * as "never drunk" for one commit.
+       *
+       * The Fire Mage's Spellblasting potion and Combustion are one
+       * `AplEntry.sequence` -- both off the global cooldown, so they resolve in
+       * one instant and the pairing is written as a guarantee rather than left
+       * emergent. Whichever of the two is `abilityId`, the OTHER is a step with
+       * no `abilityId` of its own, and a reader that maps over `abilityId`
+       * cannot see it.
+       *
+       * SO THE SET IS THE ENTRY IDS *PLUS* EVERY STEP, which is what the engine
+       * actually casts. `printUses` had to learn the same thing -- it prints a
+       * step as its own `then <id>` row -- and this is the second reader of a
+       * list to need it. **The failure mode is the one this test exists for:** a
+       * potion that is selected, paid for and never drunk reads as a profile
+       * that is simply a bit worse than expected.
+       * ========================================================================
+       */
       const inList = profile.rotation.entries
-        .map((entry) => entry.abilityId)
+        .flatMap((entry) => [entry.abilityId, ...(entry.sequence ?? [])])
         .filter((id) => CONSUMABLE_ABILITY_IDS.has(id));
       expect(inList.slice().sort(), preset.id).toEqual(selected.slice().sort());
     }
