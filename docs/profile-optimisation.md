@@ -1,0 +1,722 @@
+# Optimising a profile
+
+**MAXIMISE DPS FOR ONE NAMED PROFILE, WITHOUT CHANGING WHAT THE PROFILE IS.**
+This is the repeatable form of the ruleset owner's brief. It has been run
+**three times and got a different thing wrong each time**, and the three
+failures are three different kinds:
+
+| | what happened | the gate below that catches it |
+| --- | --- | --- |
+| **an illegal talent tree** | the Shockadin's optimised spread was refused by the game's own calculator; 896.0 and 1008.2 became 856.0 and 933.2 | **Gate A** |
+| **an illegal pre-combat list** | the Arcane Mage opener dealt ~1,200-1,400 damage before the clock started; its **+95.9** headline is void | **Gate B** |
+| **not going deep enough** | four of six named profiles got a tree repair and a pre-combat line and **no APL pass at all**; meanwhile six classes nobody named were audited | **Step 1**, **Step 6.6**, and the scope rule in **Step 0** |
+
+Every rule here exists because one of those happened. Read
+[CLAUDE.md](../CLAUDE.md)'s section *"An optimisation brief, and five ways this
+project has failed one"* for the narrative; this file is the procedure.
+
+**THE OWNER'S FRAMING IS A LOOP AND NOT A PIPELINE** -- *"this process is
+iterative because some decisions have a knock-on effect"* -- so the order below
+is the order of one **pass**, and a pass is repeated until it ships nothing.
+
+---
+
+## 0. The loop, in one page
+
+```
+  STEP 0   write the theme down                              once, 5 min
+  STEP 1   read the build: 5 commands, ~25 seconds total     every pass
+  STEP 2   every candidate passes Gates A, B and C           before it is measured
+  STEP 3   write the candidates into tools/<x>Variants.ts    one group per dimension
+  STEP 4   measure PAIRED, one group at a time               ~20s per 10 variants
+  STEP 5   ship the winners, then run the loop again         knock-on is the point
+  STEP 6   per-dimension playbooks                           the levers and their traps
+  STEP 7   close the pass: typecheck, test, write it down
+```
+
+Stop when a whole pass produces no shipped change. Two passes with nothing in
+them means the profile is at a local optimum, and **that is a result worth
+reporting** -- the Arcane round's most valuable output was nineteen variants of
+which seventeen lost.
+
+---
+
+## Step 0 — Fix the theme, in writing, before anything
+
+Dimension 1 of the brief, and it is a **scope limit** rather than a dimension to
+optimise. An Arcane Mage spends the majority of its points in Arcane and
+considers Arcane spells; a DW Fury Warrior stays in Berserker stance, holds two
+one-handers, and lives in Fury.
+
+**DERIVE IT, DO NOT RECALL IT.** One command prints the tree split and the
+build URL for every preset:
+
+```bash
+npx vite-node tools/encode_talent_build.mjs --all
+```
+
+`2H Arms  (two_hand_arms)   39/10/2   51 points` is the theme's first line. The
+rest is on the preset: `preset.detail` already states race, weapon or style,
+stance or form, and whether the target swings back -- for example
+`Gnome, caster, standing target. 39 Fire / 10 Arcane`.
+
+Write these five invariants into the variant file's header. **They may not
+move:**
+
+| invariant | read from |
+| --- | --- |
+| class | `preset.characterClass` |
+| **majority tree, and that it stays the majority** | `encode_talent_build.mjs --all` |
+| combat style and weapons in hand | `preset.detail`, `profile.combatStyle` |
+| stance or form | `preset.detail`, `profile.stance` |
+| whether the target swings back | `profile.encounter.targetAttacks` |
+
+**AND THE NAMED PROFILE IS THE WHOLE SCOPE.** *"Diff every class, every time"*
+is a rule about a **patch**, where a client refresh moves trees nobody
+mentioned. An optimisation is a list of profiles. Applying the patch rule to an
+optimisation is what cost four of six profiles their APL pass, and the figure
+to remember is that of seven talent spreads repaired in that round, **one**
+belonged to a named profile.
+
+**A TANK IS THE ONE PROFILE WHOSE FIGURE OF MERIT IS NOT DPS.** If
+`targetAttacks` is true, the quantity is the **death count**, DPS is secondary,
+and the tools are `tools/bear_survival.ts` and the survival half of the stat
+weights. Do not report a tank round as a DPS round.
+
+---
+
+## Step 1 — Read the build before you change it
+
+Five commands, about twenty-five seconds in total on one thread. **Run all five
+every pass.** They are not interchangeable: each answers a question the others
+cannot, and skipping one is how a round spends an hour tuning the wrong
+rotation.
+
+```bash
+npx vite-node tools/encode_talent_build.mjs --all              # theme + legality + a URL the owner can audit
+USES=1 SEEDS=3 PROFILES=<id> npx vite-node tools/measure_profiles.ts   # what each list entry actually did
+PROFILE=<id> npx vite-node tools/probe_resources.ts            # is the build resource-bound or GCD-bound
+PRESET=<id> npx vite-node tools/probe_profile_report.ts        # where the damage is, uptimes, avoid rates
+PROFILE=<id> PLAN=1 npx vite-node tools/stat_weights.ts        # which stats this build can even read
+```
+
+| command | the question it answers | its trap |
+| --- | --- | --- |
+| `encode_talent_build` | is the tree legal, and is it still on theme | — |
+| `USES=1` | which entries fire, which never fire, and what is dealing damage from **outside** the list | the **"before the pull"** block prints each action beside the ability's **whole-fight** cast count, so four `arcane_blast` rows all read 13.2 and `<-- NEVER HAPPENED` can never fire for a spell that is also the filler |
+| `probe_resources` | `headroom` at the end of the fight: large means **GCD-bound**, zero with `wasted` means **capping** | one batch, so it is a diagnostic and not a measurement |
+| `probe_profile_report` | the damage table, buff/debuff uptime, and the `avoid` column | a row is pooled by ability **name**, so a proc sharing a name merges into it |
+| `stat_weights PLAN=1` | the hit ladder and the list of stats reported **not measured** — no fights are run | **the hit ladder undercounts school-scoped hit.** See Appendix B |
+
+**THE RESOURCE ANSWER DECIDES THE WHOLE APL PASS**, because resource-bound and
+GCD-bound builds want opposite orders. The Fire Mage ends a fight with
+`headroom 2920` mana, so it is GCD-bound and the question is what fills a
+global cooldown; a geared Hunter empties its mana by the 30-second mark and the
+question is damage per mana.
+
+**AND A NEVER-FIRED ENTRY HAS SEVEN CAUSES, SIX OF WHICH ARE INVISIBLE.** The
+id names no ability; the build never learned it; the entry above never yields; a
+preset raid **debuff** already supplies it; the condition reads something
+nothing sets; the entry is **switched off** (`disabled`); or **the owner meant
+it** — Evocation sits in all three Mage lists at a 10% mana gate, fires zero
+times on every one, and the ruling was *"This is intended"*. `USES=1` labels
+`(not learned by this build)` and `(switched off in the list)` for you; the
+other causes need the built character's own ability book. **So a never-fired
+entry is a question before it is a defect.**
+
+---
+
+## Step 2 — The three gates
+
+**A CANDIDATE PASSES ALL THREE BEFORE IT IS MEASURED.** A measurement of an
+illegal build is worse than no measurement, because it is a number somebody
+will publish. All three failures in the table at the top of this file were
+measured, reviewed, tested, CI'd and merged.
+
+### Gate A — the talent tree is legal
+
+Write the allocation out **in full** and hand it to `treeFor`, which throws
+rather than returning something plausible:
+
+```ts
+import { MAGE_TREE as tree } from './buildVariants';
+{ label: '...', apply: tree({ arcane_focus: 5, /* ...all 51 points... */ }) }
+```
+
+It checks three things that a delta cannot:
+
+1. **Total is exactly 51.**
+2. **`legalAllocation` drops nothing.** It reports `dropped[]`, and
+   `createPlayer` would strip an illegal talent **silently** — so a variant
+   written as a delta measures a build nobody chose and reports it as a finding.
+3. **A tier counts the points STRICTLY BELOW it** (`pointsBelowTier`) — not the
+   talent's own ranks and not its neighbours' in the same row. 14 points below
+   tier 15 plus Divine Favor is refunded; one point in **each** of two tier-15
+   talents is refunded **both** times.
+
+**THE CASE THAT SEPARATES THE RIGHT RULE FROM THE WRONG ONE IS A TREE THAT
+STOPS AT THE TIER IT IS SPENDING IN** — which is exactly what an optimiser
+produces and no hand-written build does. That is why this cost 40 DPS on the
+Shockadin and nothing historically.
+
+**ALSO READ `requiresRanks`.** A prerequisite can demand the **full** rank —
+three of the Warrior's seven do — so a talent whose own effect is worth nothing
+can be five points that cannot be moved. Read the tree before pricing a point;
+the tier sums can be perfect and the build still illegal.
+
+**AND PRINT THE URL.** `encode_talent_build.mjs` turns the allocation into a
+`talentsforever.com` link, which is the independent second opinion and is how
+the tier bug was found in the first place — the owner asked for the build as a
+link so they could audit it.
+
+### Gate B — the pre-combat list is legal
+
+**THE RULING: *"Once you deal damage or finish casting a damaging ability combat
+has started."*** So a pre-combat list may finish **at most one** damaging
+ability, and it must finish at **exactly t=0** — that cast is the pull.
+
+**NOTHING IN THE ENGINE ENFORCES THIS AND NO FIGHT CAN REVEAL IT.**
+`runPrecombat` resolves every action at timestamp zero, so the damage, the procs
+and the auras all arrive free; there is no zero anywhere to notice, the suite
+stays green, and `USES=1` prints an illegal opener as cheerfully as a legal one.
+**The gate is arithmetic on the declared leads.**
+
+**THE ARITHMETIC.** `rewindFor` is `max(0, lead - castTime)`, so:
+
+```
+finish(action) = -max(0, lead - hastedCastTime)        # 0 means "at the pull"
+hastedCastTime = castLength(ability, haste, resolveCast(actor, ability).baseCastTimeMs)
+```
+
+Three clauses, in this order:
+
+- **B1 — at most ONE damaging action in the whole list.** Two casts cannot both
+  complete at t=0. This is the clause that catches most violations and it needs
+  no arithmetic at all.
+- **B2 — that action must finish at 0**, i.e. `lead <= hastedCastTime`.
+- **B3 — no two casts may overlap.** Sum the leads and the cast times by hand.
+  Real, and **the weakest of the three**: the Arcane opener satisfied B3 and
+  broke B1 four times over. *Having found one constraint, ask whether it is the
+  binding one.*
+
+**WHAT COUNTS AS DAMAGING IS READ OFF THE ABILITY'S OWN `onCast`**, and there
+are three answers, not two. This is where the deleted checker went wrong — it
+flagged every Paladin seal as the offender while reporting the four Arcane
+Blasts as merely questionable:
+
+| | test | examples | verdict |
+| --- | --- | --- | --- |
+| **damaging** | `onCast` calls `dealDamage` and there is **no** `onNextSwing` | `scorch`, `wrath`, `lightning_bolt`, `flame_shock`, `judgement`, `frostfire_bolt`, `fireball`, `pyroblast`, `arcane_blast`, `shadow_bolt`, `incinerate`, `mind_blast`, `aimed_shot`, `sniper_shot`, `ambush`, `ravage`, `mangle`, `strider_kick` | subject to B1 and B2 |
+| **not damaging** | no `dealDamage`, **or** `onNextSwing` is declared so the ability only **arms** a swing that lands after the pull | every stance, form, seal, aspect, mark, potion, `charge` (rage only), `heroic_strike`, `maul`, `raptor_strike`, `holy_shield`, `righteous_fury`, `mage_armor`, `arcane_power`, `shadowform`, `prowl`, `premeditation`, `blade_flurry`, `bloodrage_cast`, `battle_shout_cast`, `enrage`, `elemental_mastery`, `windfury_weapon` | free at any lead |
+| **pure DoT** | no damage at the cast, but it applies a periodic that damages | `shadow_word_pain`, `devouring_plague`, `searing_totem` | **legal at a 0s lead** (the first tick is after the pull); at a lead > 0 it is an **open owner question** |
+
+**A SEAL DEALS NOTHING WHEN CAST — THE SWING CARRYING IT DOES.** That is why
+`judgement` at 0s is the Paladins' one damaging action and the seals above it
+are free, and why a checker that accuses the owner's own line while excusing the
+offender is worse than arithmetic done by hand.
+
+**THE HASTE ROUNDING IS NOT A VIOLATION TO FIX.** The owner wrote every
+"start casting" lead as that spell's **declared** cast time, and haste makes the
+real cast shorter — so `frostfire_bolt` at a 2.5s lead finishes 0.049s before
+the pull. Classify it: if `lead <= declaredCastTime`, the deficit is the haste
+artefact on the owner's own transcription. **Record it, do not "fix" it, and
+never ADD a line that relies on it.** A whole extra cast fitting in the gap is a
+different thing entirely — that is `[EARLY]`, and it is B2 failing.
+
+**AND AN OPTIMISATION MAY ADD TO THE OWNER'S OPENER AND MAY NOT REWRITE IT.**
+`tests/profiles/precombatOpeners.test.ts` transcribes their message a second
+time and asserts *their lines plus an explicitly declared set of additions*, so
+every addition is listed separately with the figure it is worth. An addition may
+be inserted anywhere; it may not reorder or replace anything they wrote. **That
+test is what caught a round that had moved `mage_armor` off its stated lead** —
+and the two arrangements then measured 8.1 apart against a combined interval of
+11.4, so there was no measurement to trade against keeping the transcription.
+
+**FINALLY, CONFIRM THE OPENER ARRIVED.** `USES=1` cannot:
+
+```bash
+npx vite-node tools/verify_opener.ts          # reads auras.stacksOf AFTER begin()
+PROFILE=<id> npx vite-node tools/probe_precombat_pools.ts
+```
+
+Counting `aura_applied` says 1 where the answer is 4, because the casts after
+the first are **refreshes**. The stack count on the combatant at the pull is the
+only thing that answers it.
+
+### Gate C — the theme and the gear are untouched
+
+- **E65 gear, and no stat on it changes.** `withBenchmarkGear` attaches it to
+  every preset, so this is structural: a variant may set **`enchantId`** and
+  nothing else. `buildVariants.ts` has no helper that can reach `itemId`,
+  `benchmarkTemplateId` or an item's stats — if you find yourself needing one,
+  you are outside the brief.
+- **The five Step 0 invariants hold.** Check the tree split in
+  `encode_talent_build.mjs` output, not your memory of it.
+- **`syncDefaultRotation` after every edit**, which `probe_build.ts` already
+  does — a talent change moves which stock list applies, so a variant that
+  changed the talents and kept the old list would be measuring two things and
+  reporting one. Conversely an APL edit must mark the list `custom`, or the
+  re-derivation throws the edit away; `apl()` does that for you.
+
+---
+
+## Step 3 — The variant file
+
+One file per profile or class, `tools/<name>Variants.ts`, registered in
+`tools/probe_build.ts`'s `VARIANT_GROUPS`. **One group per dimension**, named
+with a short prefix because group names share a command-line namespace:
+
+```
+<x>Talents   <x>Enchants   <x>Precombat   <x>Apl   <x>Consumables
+<x>Combined  — the winners together, which is the knock-on check
+```
+
+Four conventions, each of which has been paid for:
+
+1. **Every group contains its own control** — `{ label: 'the shipped X -- the
+   control', apply: (p) => p }`. A group without one cannot tell "this loses"
+   from "this group did not apply".
+2. **Write the header as the profile's damage table**, off a `USES=1` run, with
+   the DPS it was taken at. A figure in a comment expires; one that states the
+   build it was taken in merely becomes dated.
+3. **A prior measurement is true of the build it was taken in.** When a group
+   ships something, say so in the header rather than re-pricing nineteen losing
+   variants against the new baseline.
+4. **One decision per variant, and one variant per decision.** Three pre-combat
+   Arcane Blasts are **one** variant, because a build cannot arrive at three
+   stacks by taking two of them.
+
+---
+
+## Step 4 — Measuring
+
+```bash
+PRESET=<id> VARIANTS=<group> npx vite-node tools/probe_build.ts     # ITER=400, SEED=20260101
+PRESET=<id> VARIANTS=<group> ITER=1000 npx vite-node tools/probe_build.ts
+```
+
+**PAIRED, UNDER SHARED SEEDS.** `deriveSeed(baseSeed, i)` fixes iteration *i*'s
+fight, so the two runs share fight lengths and the difference is four orders of
+magnitude quieter: +30 strength on DW Fury is **17.55 ±0.18** paired against
+**16.15 ±12.33** independent. Measured on this machine, one thread: about **390
+fights a second**, so ten variants at 400 iterations is roughly **20 seconds**.
+
+**READ THE VERDICT COLUMN, AND IT HAS THREE VALUES:**
+
+| verdict | means |
+| --- | --- |
+| `real` | `|delta| > interval` |
+| `noise` | inside the interval. **A statement about variance, not about whether anything happened** — where the mechanism predicts an exact ratio, check the ratio |
+| `IDENTICAL FIGHTS` | spread is zero. Either the change is worth nothing **or the patch did not apply**. Both readings are reported and never collapsed to "0.0" |
+
+Five rules that have each cost this project a wrong conclusion:
+
+- **TWO ROWS IN ONE TABLE ARE NOT PAIRED WITH EACH OTHER.** Each interval is for
+  that row's difference from the **baseline**; the difference between two rows
+  needs roughly `sqrt(a² + b²)`. 2H Arms' Heroic Strike floor read +61.24 at 70
+  rage against +57.29 at 90 — a clear 3.95 beside intervals of 3.39 and 3.29,
+  and an honest combined interval of **4.73**. Indistinguishable.
+- **SWEEP A PARAMETER, DO NOT COMPARE TWO READINGS SOMEBODY WROTE DOWN.** A
+  point gate, a threshold or a refresh window is one number and the whole range
+  costs the same measurement each. Combat's Eviscerate gate swept 577.7,
+  **588.5**, 587.2, 580.6, 572.2 — and the two values previously compared were
+  the two **worst** cells, with +10.8 sitting between them. "It does not matter"
+  is what two points hand you whenever they happen to agree.
+- **MARGINAL VALUES DO NOT SUM, AND CAN EXCEED THE TOTAL.** The Cat's four
+  changes price at +61.0, +45.1, +43.7 and +6.3 — 156.1 against a measured
+  +142.4. Say *marginal*, never present addends.
+- **A ZERO ON A CORRECTNESS FIX NEEDS THE MECHANISM MEASURED INSTEAD.** "Inside
+  the interval" is indistinguishable from "did not apply". Measure the thing
+  itself: the resolved cost, the stack count, the uptime, the rage total, the
+  attacks received.
+- **AN ISOLATION PROBE MUST REVERT EVERY FILE THE CHANGE TOUCHED**, and must
+  print `legalAllocation(...).dropped` beside every figure. Removing three
+  points to price a talent once took a capstone with them and reported
+  "+62.9 for Predatory Strikes", which was three talents.
+
+**AND A ONE-SHOT STRING REPLACE IS UNSAFE WHEREVER THE STRING IS NOT UNIQUE.**
+Count the matches and refuse unless there is exactly one — the Rogue's Slice and
+Dice entry is textually identical in all three of its lists, and twelve cells of
+a sweep came back identical to the decimal because the patch landed in the wrong
+one. **Two variants that agree exactly are a patch that did not apply**, because
+a change worth nothing still shifts the RNG sequence.
+
+---
+
+## Step 5 — The loop
+
+**ONE PASS IS: Step 1, then dimensions 4 → 5 → 6 → 3 → 7, then Step 1 again.**
+That order follows the knock-on, which is the owner's own reason for calling
+this a loop:
+
+```
+   talents  ──▶  changes which abilities exist, so the APL and the opener change
+   opener   ──▶  changes what the fight opens with, so the APL's early entries change
+   APL      ──▶  changes which resource binds, so the enchants and consumables change
+   enchants ──▶  changes the stat weights, so the next pass's enchant answer changes
+   consumables ─▶ changes which pool runs dry, so the APL's gates change
+```
+
+**MEASURE THE WINNERS TOGETHER IN A `Combined` GROUP** before shipping. Two
+winners measured separately against the same baseline do not add, and they can
+**invert**: gating the Firelock's Life Tap made the build genuinely mana-bound,
+so the Major Mana Potion beat Spellblasting measured **alone** (+33.0 against
++18.4) and lost to it measured **paired with the Demonic Rune** (+38.5 against
++41.5). A category that is not exclusive with another makes a second source of
+the same pool redundant.
+
+**AND WHEN A LOOP CHANGES WHAT A LIST CAN REACH, RE-READ THE COMMENTS ON THE
+ENTRIES AROUND IT.** A measurement in a comment expires exactly the way an
+`unmodelled` reason does — Battle Shout sits in four Warrior lists carrying
+"+11.83 DPS", measured before raid buffs were selected rather than assumed, and
+the entry's own condition now refuses it for the whole fight.
+
+**STOP WHEN A PASS SHIPS NOTHING.** Report the negative results: *"every
+alternative loses"* is the useful half of an answer, and four of the Arcane
+round's five dimensions said exactly that.
+
+---
+
+## Step 6 — The dimensions
+
+### 6.2 Gear — nothing to do but verify
+
+Fixed by the brief. Confirm Gate C and move on. A variant that changes an item
+is out of scope, and the helper set cannot express one.
+
+### 6.3 Enchants — settle them with arithmetic, not fights
+
+```bash
+PROFILE=<id> PLAN=1 npx vite-node tools/stat_weights.ts      # ~4s, no fights
+PROFILE=<id> npx vite-node tools/stat_weights.ts             # ITERATIONS=3000 default
+PROFILE=<id> ITERATIONS=500 STATS=spellPower,critRating,hasteRating npx vite-node tools/stat_weights.ts
+npx vite-node tools/enchant_report.ts                        # all 28 profiles' current loadouts
+```
+
+**MOST ENCHANTS ARE PURE STATS, SO THE STAT WEIGHT TABLE ANSWERS THEM WITHOUT A
+FIGHT.** `+8 Intellect` against `+1% Haste` on a head slot is
+`8 × weight(intellect)` against `2 × weight(hasteRating) / 2` — read off one
+table, for every slot at once. Twenty stats are weightable: the five primaries,
+`attackPower`, `rangedAttackPower`, `spellPower`, `hitChance`, `critRating`,
+`hasteRating`, `armorPenetration`, `dodgeParryReduction`, `blockValue`,
+`manaPer5`, `armor`, `defenseSkill`, `dodgeChance`, `parryChance`, `blockChance`.
+
+**THE EXCEPTIONS NEED A PAIRED FIGHT** because they are not stats: **Crusader**
+and **Revelation** (procs), the ranged **+2% Crit Chance** (an
+`attackTableModifiers` entry the owner ruled must not reach the pet), **+60
+Armor**, **Minor Speed**, and both threat enchants. Four enchants do nothing at
+all and say so in their own `unmodelled` entry — healing power, threat in both
+directions, and Minor Speed.
+
+**CHECK THE LADDER BEFORE BUYING HIT**, and distrust it — see Appendix B. A
+melee or ranged build has **no miss floor** and a usable cap of **8**, so the
+ninth point buys a non-dual-wielder literally nothing; a dual-wielder takes the
++19% penalty in full on both hands and still collects. Spells miss on a flat
+**17%** floored at **1%**, so the usable spell cap is **16** — arriving by two
+routes, only one of which the ladder folds.
+
+### 6.4 Talents — find the forced points first
+
+**MOST TREES HAVE ALMOST NO FREEDOM, AND ESTABLISHING THAT IS THE FIRST
+RESULT.** Both Warrior damage trees turned out completely forced; BM Hunter's
+entire design space is **two points**. Work out what is forced before writing
+variants:
+
+1. Tier gates — `pointsBelowTier`, counted **strictly below**.
+2. `requiresRanks` — three of the Warrior's seven prerequisites want the **full**
+   rank, so points below a wanted talent are held hostage.
+3. The capstone's tier, which usually fixes 30+ of the 51.
+
+What is left is the spare points, and there are only three questions about them:
+**is a maxed talent in the majority tree still unbought** (usually no); **do the
+spare points do more outside the majority tree** (the Arcane Mage's eleven Fire
+points are **+49.9** against moving them, because the Arcane talents they would
+buy do nothing); and **is a point dead but immovable**.
+
+**A DEAD POINT'S DESTINATIONS CAN BE PROVABLY EQUALLY DEAD** — Enrage 2, Blood
+Craze 2 and Booming Voice 2 each ran **bit-identical fights**, so the choice is
+legibility and the smallest edit wins. Say which it is, because an identical
+triple is normally this project's tell for a patch that did not apply.
+
+**AND RE-READ THE TOOLTIPS OF THE SPELLS THE TREE FEEDS.** Three rounds of
+Arcane APL work treated Arcane Blast as a filler after a patch had redesigned it
+into a maintenance buff. A talent spread is a claim about what the spells do.
+
+### 6.5 Pre-combat — what can be bought for free
+
+Pre-combat mode skips **three** things the fight would charge for: the global
+cooldown the action would start, the swing reset, and the cast time. The mana is
+still spent and the cooldown still runs.
+
+**SO A COOLDOWN IS A CANDIDATE TO MOVE HERE.** A 15-second window opened at a
+**0s** lead is the same window the fight would get, bought for no GCD —
+`elemental_mastery` is **+13.9** and `arcane_power` **+24.9** on exactly that
+argument. A **0s lead on an instant is the safest edit in this whole document**:
+it cannot fail B2, and B1 is satisfied as long as the action is not damaging.
+
+The lead has **four** observable consequences, and treat that list as open
+rather than closed: an aura it applied has N seconds less left; its cooldown
+comes back N seconds sooner; regeneration is credited across the lead; and the
+five-second rule is stamped where the spend happened. **A buff moved here with a
+long lead can therefore expire before it is useful.**
+
+`addPrecombat`, `removePrecombat` and `precombatLead` are the helpers. A
+**channel is refused** outright. Every candidate goes through Gate B.
+
+### 6.6 Combat APL — the meat, and the dimension that keeps getting skipped
+
+**THIS IS THE ONE THAT WAS SKIPPED ON FOUR OF SIX PROFILES.** Budget most of the
+pass here, and start from Step 1's resource answer.
+
+The complete lever set — nineteen condition kinds plus four entry fields, so
+there is no excuse for "the list had nothing to try":
+
+```
+  aura   auraTime   auraStacks            buff/debuff presence, seconds left, stacks
+  resource   resourceFraction   comboPoints          pools and gates
+  cooldown   cooldownTime                 ready/on-cooldown, and seconds left as a clock
+  health   fightElapsed   fightRemaining   phase and forecasting
+  swingIn   swungWithin   castsInstantly   timing
+  hasReaction   builtin                    what the build has; the escape hatch
+  all   any   not                          composition
+  ---
+  condition   interruptsChannel   disabled   sequence        on the entry itself
+```
+
+Ten structural facts, each of which has produced a wrong list here:
+
+- **AN UNGATED, ALWAYS-CASTABLE ENTRY IS A FLOOR UNDER EVERYTHING BELOW IT.**
+  The Rupture Rogue's six-entry list was really three. **Both halves matter**:
+  Sniper Shot moved below an ungated Arcane Shot still fires twice a fight,
+  because Arcane Shot's own six-second cooldown lets the list fall past it.
+- **AND THE SAME RULE UPSIDE DOWN — A CHEAPER ENTRY STARVES AN EXPENSIVE ONE
+  FROM BENEATH, HOWEVER HIGH THE EXPENSIVE ONE SITS.** Ambush sat **second** and
+  could not be cast, because a 35-energy Hemorrhage sat seventh and took the
+  pool every time it passed 35. **Priority does not reserve a resource.** The
+  fix is a condition on the **cheap** entry, not a reorder.
+- **READ COSTS OFF THE BUILT CHARACTER, NOT THE ABILITY DECLARATION.** The Cat's
+  Claw fired zero times at any energy because Improved Shred takes Shred to 42
+  and Ferocity takes Claw to 42 — the fallback costs the same as the thing it
+  falls back from.
+- **A REFRESH WINDOW CLIPS.** Refreshing a debuff at two seconds left throws the
+  remainder away, so a **haste buff can measure as a loss**: Nature's Grace cost
+  the Moonkin 14.9 DPS doing nothing but speeding it up. The owner's lists say
+  *"if not active"* instead, and that one word was the Elemental Shaman's entire
+  +16.4.
+- **A HOLD POINT NEEDS THE FINISHER'S TABLE CHECKED FIRST.** `EVISCERATE_BY_COMBO_POINT`
+  is 278/448/618/788/958 — 278 for the first point and 170 for each after — so
+  damage per point **falls**. "Hold for the maximum" is a rule about a
+  *proportional* table. And a bleed has **two** tables: Rupture's durations
+  8/10/12/14/16 slope the same way.
+- **THE SAME ABILITY WANTS DIFFERENT THRESHOLDS IN TWO LISTS OF ONE CLASS.**
+  Eviscerate peaks at **two** points on Combat and **five** on Rupture, because
+  on Subtlety a point taken by Eviscerate is a point Rupture needed. Do not
+  normalise a threshold across lists.
+- **A GATE CAN BE WORTH POSITIVE DPS** when the ability **grants** a resource.
+  Gating the Cat's Shifting Power at `energy <= 50` made the list cast it less
+  and collect more, **+13.2** — the ungated version wasted 40 energy a fight and
+  the reliable waster is the pull, since every fight opens on a full bar. Read
+  `wasted` on the `resource_gained` event.
+- **A NEW ENTRY GOES AT THE BOTTOM** — the only position that cannot change what
+  the list already does. Except a **free off-GCD cooldown**, which goes
+  **second** (a list with anything castable never falls to the bottom: five of
+  seven profiles never cast their racial there), and **last in a tank list**, so
+  nothing delays a survival cooldown.
+- **AN EVENT COUNT READS BOTH WAYS.** More events for an identical log is pure
+  cost. **Fewer events with more casts is an actor that is idle less** — putting
+  Hamstring at the bottom of 2H Arms took a fight from 33 casts and 351 events
+  to 42 casts and 247, and that is the cheapest available proof that a filler is
+  filling something. It is also what separated the same entry being **+26.74**
+  on 2H Arms and **-33.25** on DW Fury.
+- **A DUPLICATE ABILITY ID CAN BE CORRECT** — gated on a proc above and ungated
+  as the filler below. Two Mage and Warlock lists do it on purpose.
+
+**ISOLATE A LOSS; DO NOT BLAME THE OBVIOUS SUSPECT.** The owner's Venom list
+measured -24.3 and the suspect was its Venom entry, which three earlier
+placements had each measured as a loss. Removing that entry dropped the list
+further — Venom is **+17.7** there, and the whole -24.3 was two aura-duration
+floors on Eviscerate. **A prior measurement is true of the list it was taken
+in**, and *"a point spent on Venom is a point not spent on Eviscerate"* stops
+holding when Eviscerate cannot fire.
+
+**AND A MEASUREMENT THAT REMOVES ONE ENTRY CAN SILENTLY REMOVE ANOTHER.** Wrack
+is gated on three bleeds having six seconds left, one of them Siphon Life — so
+removing Siphon Life's entry took Wrack from 5.7 casts to **zero**, and the
+profile read like a clean -24.1 when the honest figure was -13.6. **When an
+entry names an aura, grep for who else reads it before measuring its removal**,
+and read the `USES=1` column, which is where the zero shows.
+
+**A LIST CAN CHANGE COMPLETELY AND BE WORTH NOTHING.** Combat's Eviscerate went
+from 1.1 casts a fight to 9.0 for **+0.6**. The uses column says whether the
+list changed; the DPS says whether it mattered.
+
+**THE OWNER'S LIST OUTRANKS A MEASURED DECISION OF OURS, AND THE MEASUREMENT
+STAYS.** Hunter's Mark measures **-10.1** in the melee list and the owner's list
+names it, so it is in and -10.1 is the price of that choice. A test that pins a
+rotation decision gives way when the decision changes owner; one that pins an
+invariant does not.
+
+### 6.7 Consumables — twelve stat rows and two action rows
+
+```bash
+npx vite-node tools/consumable_report.ts              # all 28 profiles' rows
+npx vite-node tools/probe_consumable_choice.ts        # every mid-fight candidate, with its CASTS
+npx vite-node tools/probe_other_assignment.ts
+```
+
+**AT MOST ONE PER CATEGORY, AND THE EXCLUSIVITY IS STRUCTURAL** — a selection is
+a map from category id to consumable id, so holding two from one category is not
+representable. **The categories are not exclusive with each other**, which is
+why no mana potion is selected anywhere: the Demonic Rune covers mana from
+`other`, leaving `potion` free for something that hits.
+
+**THE TWELVE STAT ROWS ARE STATS AND NOT AURAS**, so they are a layer of the
+starting stat block — which means **the stat weight table settles them the same
+way it settles enchants**, with no fight. Flask, weapon effect (main hand and
+off hand **separately** — a dual-wielder coats two weapons), strength, agility,
+attack power, blasted lands, mana regen, hit points, armor, spell power, school
+spell power, food.
+
+**THE TWO ACTION ROWS NEED FIGHTS**, because `potion` and `other` carry an
+`Ability`, join the ability book, and get an APL entry — so **when** to use one
+is a decision, and `syncDefaultRotation` puts the entry in the list for you. The
+written-down rule, measured rather than derived: **`other` takes the pool the
+build runs out of and `potion` takes the damage buff.**
+
+**THE SELECTION RULE FOR THE TWELVE:** take every category the build can
+actually read, choose within a category by what the build scales with, and leave
+empty only what is worth literally nothing. **Two things decide it and both are
+measured, not guessed:** the conversion table (a Cat Druid takes **strength**
+where a Rogue takes agility, because a Druid is 2 attack power per strength) and
+the measured damage **school** (the Moonkin is 71% arcane, the Frostfire Mage
+62% fire, the Elemental Shaman 56% nature).
+
+**A ROW WORTH NOTHING IS NOT THE SAME AS A ROW THAT SHOULD BE BLANK** — the
+owner gave 2H Arms and DW Fury a Healthstone that fires 0.00 times.
+
+---
+
+## Step 7 — Closing a pass
+
+```bash
+npm run typecheck
+npm test
+USES=1 SEEDS=3 PROFILES=<id> npx vite-node tools/measure_profiles.ts
+```
+
+**DO NOT RE-BASELINE.** The owner's standing instruction: *"don't deliberate so
+much over baselining. I'm already doing that and tell you what to implement ...
+often times we're wasting hours a day re-baselining profiles."* So a pass is
+implement, typecheck, test, `USES=1`, commit, PR. The `USES=1` pass stays
+because it is seconds and it catches the entry that cannot fire. **Measure only
+when the change itself raises a question a figure answers, and say what was NOT
+measured rather than measuring to be safe.**
+
+**IF YOU RAN ISOLATION PROBES, RE-RUN THE PROFILE AFTERWARDS AND CHECK IT
+REPRODUCES TO THE DECIMAL.** Five hand-reverted probes in one round is five
+chances to leave one in, and the only thing that says you did not is the figure
+coming back identical.
+
+What to write down, in the commit and in `HANDOVER.md`:
+
+- **the figure with its interval and iteration count** — a figure without them
+  is a rumour;
+- **one row per dimension, including the dimensions that did not move.** A
+  dimension with no row is indistinguishable from a dimension that was skipped,
+  and the owner cannot tell which. *"Every alternative loses"* is a row;
+- **the negative results**, which are usually most of the round;
+- **every question the round raised**, in `HANDOVER.md`'s table — a question
+  nobody can find is a question nobody answers;
+- **a table a row can be added to**, and the round each figure belongs to.
+
+**AND DO NOT NARRATE INTENT.** *"I'll continue without going dark"* was followed
+immediately by going dark. The only things that read as progress are a tool
+call, a figure or a commit.
+
+---
+
+## Appendix A — the 28 openers against Gate B
+
+Audited at commit `c147ec0`. **Arithmetic only, by the recipe in Gate B** — no
+fight reveals any of this.
+
+**THREE PROFILES STILL FAIL. `mage_arcane` HAS SINCE BEEN FIXED** — its four
+illegal casts were removed in the first run of this procedure, which cost
+**-96.5 +/- 9.4** and is the honest price of the ruling:
+
+| profile | damaging actions | verdict |
+| --- | --- | --- |
+| `mage_arcane` | ~~`pyroblast` -7.618s, `arcane_blast` -6.029s, -4.529s, -3.029s~~, `arcane_blast` -0.029s | **FIXED.** Now one damaging cast, the owner's own, at the haste-rounding boundary |
+| `mage_fire` | `fireball` -0.059s, `scorch` -0.029s | **FAIL — two.** `scorch` is a project addition (+15.2) |
+| `mage_frostfire` | `frostfire_bolt` -0.049s, `scorch` -0.029s | **FAIL — two.** `scorch` is a project addition (+25.1) |
+| `shaman_elemental` | `lightning_bolt` -0.039s, `flame_shock` 0.000s | **FAIL — two, and BOTH ARE THE OWNER'S OWN LINES.** A question for them, not an edit |
+
+**AND THE GATE COST ALMOST NOTHING TO APPLY, WHICH IS THE ARGUMENT FOR IT.**
+Reverting the Arcane Mage's four illegal casts took one edit; the loop then
+recovered **+13.2 +/- 3.2** of it legally, from a mechanism nobody had looked at
+— so the net against the last *honest* figure is positive. **A gate is not a tax
+on the optimisation; it is what stops the optimisation measuring a fiction.**
+
+The other twenty-four pass, and the interesting passes are the ones a careless
+checker would fail:
+
+- **the three Paladins and Prot Pally** — `judgement` at 0s is the one damaging
+  action; the seals and `holy_shield` above it deal nothing when cast;
+- **`druid_bear`** — `maul` is `onNextSwing` and merely armed, so `mangle` at 0s
+  is the only damaging action;
+- **`lw_melee` / `hawk_melee`** — `raptor_strike` is armed, `strider_kick` at 0s
+  is the one cast;
+- **`bm_hunter` / `lw_ranged`** — `aimed_shot` at a 2s lead and `sniper_shot` at
+  4s both finish at **exactly 0.000s**, because a Hunter carries no haste here;
+- **the five haste-rounding rows** — `druid_moonkin` (-0.029s),
+  `warlock_smds` (-0.096s), `warlock_firelock` (-0.039s),
+  `shadow_priest` (-0.029s) and the single-cast Mage rows above. Every one has
+  `lead == declaredCastTime`, so each is the owner's transcription meeting haste.
+
+**TWO THINGS ARE NOT GATE B FAILURES AND ARE STILL OPEN:**
+
+- **`searing_totem` at a 1.5s lead on both Shamans** applies a ticking damage
+  effect before the pull. It deals nothing *at the cast*, and its DoT does not
+  declare `accruesBeforeCombat`, so **the simulation delivers no pre-pull tick**
+  — the aura is merely 1.5s older. Whether the real game would have started
+  combat is `HANDOVER.md`'s open question. Added by this project.
+- **`rogue_venom` has no opener at all**, where its three siblings do.
+
+---
+
+## Appendix B — tool caveats that change an answer
+
+**THE HIT LADDER UNDERCOUNTS SCHOOL-SCOPED HIT, AND THE WEIGHT BESIDE IT IS THE
+ONE TO TRUST.** On `mage_fire`, `stat_weights` prints both of these in one run:
+
+```
+  Hit rating — slice by slice:
+    Spells                     now   6.00%   to cap +5.00%
+  ...
+  Hit rating +5.00% → caps Spells    5%   0.00   0.0000   nothing: this build cannot read it
+```
+
+**The weight is right and the ladder is wrong.** Hit arrives by **two** routes
+and only the character-wide `hitChance` stat goes through `attackChances`; a
+school-scoped `hitBonus` is folded in later by `withModifier`. All three Mages
+sit at 11 points of school-blind hit against a usable spell cap of 16, and the
+missing five arrive as school-scoped hit from a talent — Arcane Focus 5/5 or
+Elemental Precision 5/5. So the Fire Mage's own schools **are** capped, its
+`avoid` column reads 0.8-2.2% against a 1% floor, and the five points of
+"headroom" the ladder offers would buy nothing.
+
+**So read the `avoid` column on `probe_profile_report` before buying hit**, and
+treat a `nothing: this build cannot read it` verdict on a hit rung as the
+answer rather than as a contradiction. This is CLAUDE.md's own *"a floor on one
+route is a floor the other walks around"*, pointed at the ladder.
+
+**AND `USES=1`'s "BEFORE THE PULL" BLOCK SHOWS WHOLE-FIGHT CAST COUNTS**, so it
+can neither confirm an opener arrived nor flag one that did not. Use
+`tools/verify_opener.ts`.
+
+**AND `rotation_fingerprint.ts` ANSWERS "IS THIS LOG BYTE-IDENTICAL", WHICH IS
+THE SAME QUESTION AS "DID ANY DECISION CHANGE" ONLY FOR A CHANGE THAT CANNOT
+WRITE A LINE.** An aura applied at the pull writes a line and consumes no random
+number, so selecting one more raid buff moved all 84 hashes and that was not a
+finding. Say which question you are asking before offering a hash as a
+containment check.

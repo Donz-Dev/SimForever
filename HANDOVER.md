@@ -52,6 +52,7 @@ the tooling to be a bit more sophisticated as well."
 | 19c | **A FREE OFF-GCD CAST ACTS AGAIN AT ONCE** -- the owner's answer to 19b's question, and the CHARGE PROBLEM fixed at the root rather than worked around by position | all 28 rows moved: mean **795.6 -> 798.9**, 20 up and 8 down, one `REAL` (**LW Melee +14.9**). **Rupture +8.7 and Hemo Dagger +14.2** more than recover what 19b cost them. Four tests broke, every one a fixture pinning a timing it never meant to | see below |
 | 19b | **A COMPLETED CAST OR ATTACK BREAKS STEALTH AND PROWL** -- an ENGINE rule with Premeditation as its one declared exception, replacing Ambush and Ravage each removing the aura by hand | Rupture's Ambushes **4.2 -> 3.4** a fight and Hemo Dagger's **2.7 -> 2.2**, for **-6.6** and **-9.0**; the Cat and Pure Hemo are **bit-identical**. Two ways to half-wire it were written and the full suite passed on both | see below |
 | 19 | **BEFORE THE PULL, FOR ALL 28 PROFILES** -- the owner specified an opener per profile, and three Warrior lists lose the entries it replaces | **not re-baselined**, on the owner's standing instruction. Every line of theirs is implemented after one round of corrections: a positioning RULING, two new Druid abilities, a substitution and a periodic that accrues | see below |
+| 23 | **THE ARCANE MAGE THROUGH THE WHOLE LOOP, and the first round run from a WRITTEN PROCEDURE** -- `docs/profile-optimisation.md`. The illegal opener reverted, every other dimension re-priced on the legal build, and one new finding off the UPTIME table | legal **1080.1 +/- 9.9** -> **1090.3 +/- 12.1**. The revert is **-96.5 +/- 9.4** paired and the channel floor **+13.2 +/- 3.2 REAL**; **every other candidate in all seven dimensions loses** | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -89,7 +90,7 @@ write-up; none is an engine gap.
 | **Judgement of Command is left on the sheet's 0.43** where Righteousness and Fury took the exact `1.5 / 3.5`. The note names two abilities; a ruling covers what it says | round 17 | 0.33% on one seal, and whether all three should be the expression |
 | **Explosive Trap's 5% of attack power is on its BURN and not its initial hit.** One figure for two abilities, and only this one has two damage components | round 17 | which half carries it |
 | **"Touch of the Dead"** is the name the Undead note uses for what is plainly Touch of the Grave -- the same block, and the only part of that racial that has ever scaled with anything | round 17 | a naming question, not an ambiguity about which effect |
-| **Does Arcane Blast's window REFRESH?** You describe it as "a maintenance buff that is meant to be kept at 4 stacks for an entire fight", and `refreshBehaviour: 'ignore'` makes that impossible -- fifteen seconds from first application, no cast extends it. `reset` would express what you describe | round 22 | **the entire Arcane rotation.** A maintained buff has no stack-gate question at all, and Arcane Wrath's justification for being left out expires with the ramp reading |
+| **Does Arcane Blast's window REFRESH?** You describe it as "a maintenance buff that is meant to be kept at 4 stacks for an entire fight", and `refreshBehaviour: 'ignore'` makes that impossible -- fifteen seconds from first application, no cast extends it. `reset` would express what you describe. **STILL OPEN AND NO LONGER BLOCKING: it is now PRICED AT ABOUT ZERO** -- `reset` alone measures 1089.0 against 1090.3, and a maintenance entry on top of it is **-1.1**, because a four-stack refresh costs EIGHT TIMES base and the channel floor shipped in round 23 already captures what maintenance was buying. So this is a CORRECTNESS question about your intent, not a rotation question | round 22, priced in round 23 | the field, and whether the tooltip means what it says. **Not the rotation**: the stack gate still peaks at 4 under both readings, and Arcane Wrath loses by 52 to 86 under both |
 | **Should the engine REFUSE a pre-combat list that deals damage before the pull?** Today `runPrecombat` resolves everything at timestamp zero and nothing asks. An illegal opener was measured, written up, tested, CI'd and merged | round 22 | whether this class of error can recur. The alternative is that it stays the author's arithmetic |
 | **Does an effect that merely TICKS before the pull start combat?** Searing Totem at a 1.5s lead on both Shamans applies a damaging ground effect before t=0 -- added by this project, not by you. The Paladin seals and Holy Shield deal nothing when cast, so they look fine, but they are the same shape of question | round 22 | two Shaman openers, and a rule for the next one |
 
@@ -228,19 +229,127 @@ applied to an OPTIMISATION. One of the seven belonged to a named profile.
 
 ### What to do next, in order
 
-1. **Rule on `refreshBehaviour` for Arcane Blast.** Everything on that profile
-   is downstream of it.
-2. **Revert the Arcane Mage opener** to the owner's own two lines plus the legal
-   `arcane_power` at t=0, and re-measure. Nothing from round twenty-two's
-   pre-combat survives.
-3. **Audit the other openers against the ruling.** Searing Totem at t-1.5 on both
-   Shamans applies a ticking effect before the pull and was added by this
-   project; the Paladin seals and Holy Shield deal nothing when cast and are the
-   owner's own lines, so they are almost certainly fine -- but they have not been
-   ruled on.
-4. **Re-ask Arcane Wrath** under whatever item 1 settles.
-5. **Then the four profiles that were never done**, one at a time, five
-   dimensions each, scope restricted to the profile named.
+**THREE OF THE ORIGINAL FIVE ARE DONE, IN ROUND 23 BELOW.** The opener is
+reverted and legal, the refresh behaviour is priced at about zero rather than
+ruled on, and Arcane Wrath is closed by measurement under both readings.
+
+1. ~~Rule on `refreshBehaviour` for Arcane Blast~~ -- **priced, not ruled.** It
+   is worth about nothing either way, so it no longer blocks anything; it is a
+   correctness question about intent and is back in the questions table.
+2. ~~Revert the Arcane Mage opener~~ -- **done**, at a cost of **-96.5 +/- 9.4**.
+3. **Audit the other openers against the ruling** -- **done as arithmetic, not
+   as edits.** `docs/profile-optimisation.md` Appendix A has all 28; three still
+   fail: **`mage_fire`** and **`mage_frostfire`** (each two damaging casts, the
+   second being a `scorch` this project added) and **`shaman_elemental`** (two,
+   and BOTH are the owner's own lines -- a question for them rather than an
+   edit).
+4. ~~Re-ask Arcane Wrath~~ -- **closed by measurement.** It loses by **-52.2**
+   and **-85.9** under `reset` and by **-76.7** and **-118.2** under `ignore`.
+   The old justification's REASONING had expired; its CONCLUSION had not.
+5. **Then the four profiles that were never done** -- Enh Shaman, Frostfire
+   Mage, Fire Mage, Shadow Priest -- one at a time, through the procedure.
+
+## Round TWENTY-THREE: the Arcane Mage, run from a written procedure
+
+**THE FIRST ROUND DRIVEN BY [docs/profile-optimisation.md](docs/profile-optimisation.md)
+RATHER THAN BY JUDGEMENT**, which is the thing being tested as much as the
+profile. The procedure's three gates are checked before anything is measured,
+and Gate B is what made this round mostly a demolition.
+
+### One row per dimension, including the five that did not move
+
+| dimension | what was tried | result |
+| --- | --- | --- |
+| **1 theme** | 35 Arcane / 11 Fire / 5 Frost, Gnome, caster, standing target | unchanged and legal. `encode_talent_build.mjs` decodes to 51 points |
+| **2 gear** | E65, untouched | nothing to do. `buildVariants.ts` cannot express an item change |
+| **3 enchants** | the whole armour set settled by ARITHMETIC off the stat weights; the weapon measured | **no change.** +65 Spell Power beats Revelation by **24.5** and +25 Agility by **41.8** |
+| **4 talents** | the shipped spread, Heating Up, Fire out, Fire hit out, **Arcane Wrath** | **no change.** All Fire out is **-52.4**; Arcane Wrath is **-76.7** and **-118.2** |
+| **5 pre-combat** | the whole remaining design space under Gate B -- seven rows | **the four illegal casts REMOVED, -96.5 +/- 9.4.** Arcane Power at t=0 confirmed at **+24.2** |
+| **6 combat APL** | the stack gate re-swept, Fire Blast in four places, the PoM/Pyroblast pair, two cooldown re-gates, and **the channel floor** | **+13.2 +/- 3.2 SHIPPED.** Everything else loses |
+| **7 consumables** | Spellblasting vs Major Mana, Rune vs Healthstone, Blasted Lands | **no change.** Major Mana is **-12.7** |
+
+### The one finding, and it came off the uptime table
+
+**ARCANE BLAST'S BUFF WAS DOWN FOR 22.3% OF THE FIGHT AND NOTHING HAD ASKED
+WHY.** The window is fifteen seconds from FIRST application, the ramp spends six
+of them, and Arcane Missiles is a CHANNEL -- so the window kept expiring
+part-way through a channel, the remaining missiles were paid unbuffed, and the
+re-ramp could not start until the channel ended.
+
+Refusing a channel with under two seconds of window left is **+13.2 +/- 3.2**,
+and uptime goes **77.7% -> 83.0%** with Arcane Blast's own casts going 13.1 to
+14.0 a fight at a higher average -- 948 to 1,021 -- because each now lands
+inside a window rather than after it.
+
+**TWO SECONDS IS MID-PLATEAU RATHER THAN TUNED.** Swept: 0.5s **+4.9**, then 1s
+through 3s all **+13.1 to +13.5** and indistinguishable, 4s and 5s back to
+noise. The boundary is SAFE, not tight.
+
+**AND THE 30-BATCH HARNESS CALLS IT `noise`** -- 1090.3 against 1080.1 with an
+interval of 12.1 -- which is the documented case of a change with a known exact
+mechanism being real and labelled noise. The paired figure and the uptime are
+what settle it.
+
+### What the gates actually cost, and what they bought
+
+**GATE B DELETED THE PREVIOUS ROUND'S ENTIRE HEADLINE.** The opener finished
+FOUR damaging casts before the pull; removing them is **-96.5 +/- 9.4**, measured
+by RESTORING them as a variant rather than by subtracting two figures taken at
+different iteration counts.
+
+**AND THE REMAINING DESIGN SPACE IS NEARLY EMPTY, WHICH IS WORTH RECORDING SO
+NOBODY RE-DERIVES IT.** One damaging cast, so it is Arcane Blast OR Pyroblast;
+a channel is refused outright, so Missiles and Evocation cannot go there at all;
+everything else must be a non-damaging instant. Of the four this build owns:
+**Arcane Power +24.2**, the potion **+1.4**, Eureka **-2.0**, Presence of Mind
+**-17.7** (its charge is spent on the filler).
+
+**PYROBLAST AS THE PULL INSTEAD OF THE ARCANE BLAST IS +13.8 +/- 9.3 AND IS NOT
+TAKEN**, because it would DELETE one of the owner's own two lines rather than add
+to it -- which `precombatOpeners.test.ts` refuses and the procedure forbids. **It
+is a priced option for the owner, not a decision for us.**
+
+### Two questions answered by measurement rather than by asking
+
+**THE REFRESH BEHAVIOUR IS WORTH ABOUT NOTHING.** HANDOVER called it "the first
+thing to settle" and said it blocked the whole profile. Flipped to `reset` the
+profile reads **1089.0 against 1090.3**, and a maintenance entry holding four
+stacks all fight is **-1.1** on top of that -- because a four-stack refresh costs
+EIGHT TIMES base, and the channel floor already captures what maintenance was
+buying. **The mechanism was verified before the figure was believed**: under
+`reset` plus maintenance, uptime does reach 89.5%, so the rotation the owner
+describes is achievable and simply is not worth anything.
+
+**AND ARCANE WRATH IS CLOSED.** Its old justification rested on displacing Arcane
+Blasts and breaking the ramp, and CLAUDE.md records that the justification
+expires with the ramp reading. Re-measured under BOTH readings it still loses
+heavily: **-76.7** and **-118.2** under `ignore`, **-52.2** and **-85.9** under
+`reset`. **The reasoning had expired; the conclusion had not.**
+
+### And two reporting gaps found while using the tools
+
+- **`tools/enchant_report.ts` COVERED TEN ARMOUR SLOTS AND NO WEAPON** -- nine
+  of the thirteen slots an enchant can target, and a tenth column (`shoulders`)
+  that no enchant can target at all. So the staff's +65 Spell Power, the single
+  largest enchant on the profile at about 41.8 DPS, was invisible in the report
+  that exists to show enchants. **FIXED**: the weapons get a second block, and
+  the slot list is checked against one DERIVED from the enchant catalogue, which
+  throws naming any enchantable slot that has no column -- verified by removing
+  a column and watching it fail. The armour block keeps the owner's
+  spreadsheet shape so it still reads against their table by eye.
+  **It immediately raised a question outside this profile's scope**, which is
+  the point of fixing a report: the Cat and Bear Druids carry
+  `Enchant Weapon - Crusader` on a held two-hander they never swing -- a paw is
+  built from that weapon, but Crusader is a PPM proc that fires on a weapon USE.
+  Whether it procs at all for a feral Druid is unmeasured here and is the next
+  thing to ask on those two profiles, not this one.
+- **THE HIT LADDER AND THE HIT WEIGHT CONTRADICT EACH OTHER IN ONE RUN.** The
+  ladder offers "+5.00% to cap Spells" and the weight says "nothing: this build
+  cannot read it". **The weight is right**: all three Mages carry 11 points of
+  school-BLIND hit against a usable cap of 16 and the missing five arrive as
+  SCHOOL-scoped hit from a talent, which the ladder does not fold. Measured
+  `avoid` is 0.9-2.0% against a 1% floor. Written up as Appendix B of the
+  procedure.
 
 ## Round TWENTY-TWO: the Arcane Mage, all five dimensions
 

@@ -2576,120 +2576,65 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       consumables: casterConsumables('school_arcane'),
       /*
        * ========================================================================
-       * **THIS OPENER IS ILLEGAL AND EVERYTHING BELOW IT IS VOID. DO NOT READ
-       * THE ARGUMENT AS THOUGH IT HOLDS.**
+       * THE OPENER IS THE OWNER'S OWN TWO LINES PLUS ONE FREE WINDOW, AND THAT
+       * IS A GATE RATHER THAN A MEASUREMENT.
        *
-       * The owner's ruling: **"Once you deal damage or finish casting a damaging
+       * **THE RULING: "Once you deal damage or finish casting a damaging
        * ability combat has started."** So a pre-combat list may finish AT MOST
-       * ONE damaging ability and it must finish at t=0 -- that cast is the pull.
-       * This one finishes FOUR first: `pyroblast` at t-7.5 for 520 to 646, and
-       * three `arcane_blast` at t-6, t-4.5 and t-3 for 218 to 254 each. **About
-       * 1,200 to 1,400 damage dealt before the clock started**, plus a four-stack
-       * ramp bought for no global cooldown, which is where the figure came from.
+       * ONE damaging ability and it must finish at exactly t=0 -- that cast is
+       * the pull. This list is:
        *
-       * IT PASSED THE SUITE, CI, AND A SELF-AUTHORED CHECK FOR A DIFFERENT
-       * PRE-COMBAT DEFECT -- see the overlap argument further down, which is
-       * real, was acted on, and is the WEAKER of the two constraints. Finding a
-       * constraint was mistaken for finding the binding one.
-       *
-       * **AND THE APL REASONING IS WRONG TOO, FOR A SECOND REASON**: Arcane
-       * Blast is a MAINTENANCE BUFF the owner means held at four stacks for the
-       * whole fight, not a ramp that is spent and rebuilt. `refreshBehaviour:
-       * 'ignore'` cannot express that and is a question for the owner before
-       * anything here is re-measured.
-       *
-       * WHAT TO DO: revert to the owner's own two lines -- `mage_armor` at 3 and
-       * `arcane_blast` at 1.5, which completes AT the pull and is legal -- plus
-       * `arcane_power` at t=0, which deals no damage. Then settle the refresh
-       * behaviour, then re-measure. HANDOVER.md has the ordered list.
-       * ========================================================================
-       */
-      /*
-       * ========================================================================
-       * THE OPENER IS THE WHOLE OPTIMISATION, WORTH **+104.0 +/- 7.9** -- about
-       * **+9.7%**, and the largest single thing on this profile.
-       *
-       * ARCANE BLAST IS A RAMP, NOT A NUKE. Each stack grants 15% of Intellect
-       * as spell power -- 433 Intellect, so **+65 a stack and +260 at four** on
-       * a base of 850 -- inside a FIFTEEN second window that refreshes with
-       * `refreshBehaviour: 'ignore'`. Arcane Missiles is **78% of the damage**
-       * and carries the highest coefficient in the kit, so what the ramp is
-       * really doing is pricing every missile in the fight.
-       *
-       * AND A PRE-COMBAT CAST SKIPS THE GLOBAL COOLDOWN, THE SWING RESET AND
-       * THE CAST TIME, which makes the ramp the one thing here that can be
-       * bought for free. The old opener cast ONE blast, so the fight began on
-       * one stack and the 78% spell waited three real casts for a full ramp.
-       * Stack count against the shipped one, paired over 400 iterations:
-       *
-       *   0 stacks  **-21.0**     1 stack  the old baseline
-       *   2 stacks  **+31.1**     3 stacks **+49.9**     4 stacks **+74.7**
-       *
-       * Monotone to the cap, which is what says the boundary is the cap and not
-       * a peak somewhere inside it.
-       *
-       * AND PYROBLAST JOINS IT FOR A FURTHER **+25**, because a six-second cast
-       * is the most expensive thing this build owns and pre-combat mode makes it
-       * free of its cast time. Together they are **+95.9 +/- 8.2** over 800
-       * paired iterations; apart they are +74.7 and +41.5, which do not sum
-       * because both buy the same opening seconds.
+       *   mage_armor    instant at t-3     the owner's line. Deals nothing
+       *   arcane_blast  t-1.5 -> t0        the owner's line. THE one damaging
+       *                                    cast, and it IS the pull
+       *   arcane_power  instant at t0      deals nothing; a 15s window claimed
+       *                                    for no global cooldown (+24.9)
        *
        * ------------------------------------------------------------------------
-       * **THE OWNER'S OWN TWO LINES ARE KEPT, AND A TEST IS WHAT INSISTED.**
-       * The first arrangement measured was 8 DPS better and had moved
-       * `mage_armor` from its stated 3s lead to 13.5 and replaced their single
-       * `arcane_blast` at 1.5 with four at other leads --
-       * `precombatOpeners.test.ts` transcribes their openers a second time and
-       * failed on exactly that. The owner asked for the opener to be OPTIMISED
-       * rather than rewritten, and the two arrangements measure **+104.0 +/- 7.9**
-       * against **+95.9 +/- 8.2** -- 8.1 apart against a combined interval of
-       * **11.4**, so indistinguishable. **There was no measurement to trade
-       * against keeping their transcription**, so the three new blasts go in
-       * front of the one they wrote and Mage Armor stays where they put it.
+       * **WHAT WAS HERE BEFORE DEALT ABOUT 1,200 TO 1,400 DAMAGE BEFORE THE
+       * CLOCK STARTED, AND ITS +95.9 IS VOID.** A Pyroblast finishing at t-7.5
+       * and three Arcane Blasts finishing at t-6, t-4.5 and t-3, for a
+       * four-stack spell-power ramp bought for no global cooldown. Reverting it
+       * costs **-96.5 +/- 9.4** over 600 paired iterations -- measured by
+       * restoring it as a variant rather than by subtracting two figures taken
+       * at different iteration counts. That is the honest price of the ruling
+       * and not a regression: the build never legally had it.
+       *
+       * AND THE OWNER'S OWN SINGLE BLAST IS WORTH **+23.6 +/- 9.8** against no
+       * damaging cast at all, so the pull being a real spell is most of what a
+       * legal opener can buy here.
+       *
+       * **AND NOTHING IN THE ENGINE WOULD HAVE CAUGHT IT.** `runPrecombat`
+       * resolves every action at timestamp zero, so the damage, the procs and
+       * the auras all arrive free -- there is no zero anywhere to notice, the
+       * suite was green at 3731, CI passed on Node 20 and 22, and `USES=1`
+       * printed the illegal opener as cheerfully as this one. It passed a
+       * self-authored OVERLAP check too, which is the instructive part: a
+       * sequence can be perfectly non-overlapping and still deal damage four
+       * times before the pull. **Finding a constraint was mistaken for finding
+       * the constraint.** The gate is arithmetic on the declared leads and is
+       * written down in docs/profile-optimisation.md as Gate B.
        *
        * ------------------------------------------------------------------------
-       * **AND THE BEST FIGURE THE SWEEP PRODUCED IS DISCARDED, WHICH MATTERS
-       * MORE THAN THE ONE THAT SHIPPED.** An opener holding a Pyroblast from
-       * t-6 to t0 AND an Arcane Blast from t-1.5 to t0 measured **+105.3** --
-       * and it is not a possible cast sequence. `runPrecombat` resolves every
-       * action at timestamp zero and **never asks whether one cast was still in
-       * progress when the next began**, so that list banked five casts into
-       * four seconds of real time.
-       *
-       * It was found by adding up the leads and the cast times by hand, because
-       * nothing else could: the figure sat 1.3 DPS above the best legal row,
-       * inside its interval, in a table where every other row was honest. **A
-       * pre-combat list is a claim about what the character did and the engine
-       * does not check it.** So the leads below are written out with each
-       * action's cast time and the sequence is verified to leave no overlap:
-       *
-       *   pyroblast     t-13.5 -> t-7.5     (6s, added)
-       *   arcane_blast  t-7.5  -> t-6.0     (added, and the FIRST stack)
-       *   arcane_blast  t-6.0  -> t-4.5     (added)
-       *   arcane_blast  t-4.5  -> t-3.0     (added)
-       *   mage_armor    instant at t-3      (**the owner's line, untouched**)
-       *   arcane_blast  t-1.5  -> t0        (**the owner's line, untouched**)
-       *   arcane_power  instant at t0       (added the round before)
-       *
-       * Four stacks at the pull, and the stack window runs to **t+9**.
+       * **THE 0.029s IS THE OWNER'S TRANSCRIPTION MEETING HASTE, NOT A
+       * VIOLATION.** `rewindFor` is `max(0, lead - hastedCastTime)`, and their
+       * leads are each spell's DECLARED cast time -- so a 1.5s lead on an Arcane
+       * Blast hasted to 1.471s finishes 29ms before the pull. Recorded rather
+       * than "fixed", because the line is theirs; what may never happen is
+       * ADDING a line that relies on that gap.
        *
        * ------------------------------------------------------------------------
-       * AND NOTHING IN THE REPORTING COULD CONFIRM THE RAMP ARRIVES, which is
-       * why `tools/verify_opener.ts` exists. `USES=1`'s "before the pull" block
-       * prints each pre-combat action beside the ability's **whole-fight** cast
-       * count, so the four `arcane_blast` rows all read 13.2 and its
-       * `<-- NEVER HAPPENED` flag can never fire for a spell that is also the
-       * filler -- and `aura_applied` fires ONCE, because the other three casts
-       * REFRESH. Counting that event says 1 where the answer is 4. The stack
-       * count on the combatant at the pull is the only thing that answers it,
-       * and it reads **4 of 4**.
+       * **AND THE OPENER'S DESIGN SPACE UNDER THE GATE IS ALMOST EMPTY**, which
+       * is worth stating so nobody re-derives it: one damaging cast, so it is
+       * Arcane Blast OR Pyroblast and not both; a channel is refused outright,
+       * so Arcane Missiles and Evocation cannot go here at all; and everything
+       * else that may be added is a non-damaging instant at any lead. That
+       * leaves Arcane Power, Presence of Mind, Eureka and the potion as the only
+       * candidates, and only Arcane Power is worth anything -- see
+       * `tools/arcaneVariants.ts`, group `arcGate`.
        * ========================================================================
        */
       precombat: [
-        ...before(13.5, 'pyroblast'),
-        ...before(7.5, 'arcane_blast'),
-        ...before(6, 'arcane_blast'),
-        ...before(4.5, 'arcane_blast'),
         ...before(3, 'mage_armor'),
         ...before(1.5, 'arcane_blast'),
         ...before(0, 'arcane_power'),

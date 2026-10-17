@@ -65,6 +65,14 @@ const selfExpired = (auraId: string) => selfTime('atMost', 0, auraId);
 /** "<buff> stacks = N", on the Mage. */
 const selfStacksExactly = (auraId: string, count: number) => selfStacks('exactly', count, auraId);
 
+/**
+ * HOW MUCH ARCANE BLAST WINDOW A MISSILES CHANNEL NEEDS TO BE WORTH STARTING.
+ *
+ * Mid-plateau rather than tuned: 1s to 3s all measure +13.1 to +13.5 and are
+ * indistinguishable, 0.5s is +4.9 and 4s is noise. See the entry that reads it.
+ */
+const ARCANE_BLAST_CHANNEL_FLOOR_SECONDS = 2;
+
 /** "<buff> stacks > 0", on the Mage. */
 const selfHasStack = (auraId: string) => selfStacks('atLeast', 1, auraId);
 
@@ -603,17 +611,50 @@ export const MAGE_ARCANE: AplList = {
   },
   { abilityId: 'arcane_missiles', condition: selfHasStack('missile_barrage') },
   /*
-   * AND AT THE ARCANE BLAST CAP WITHOUT ONE. Four is the cap, where the next
-   * Blast costs 175% more for no further damage bonus -- so the list spends the
-   * stack on Missiles rather than paying that price, and the debuff falls off
-   * during the channel.
+   * AND AT THE ARCANE BLAST CAP WITHOUT ONE -- BUT ONLY IF THE WINDOW CAN COVER
+   * THE CHANNEL. Four is the cap, where the next Blast costs 175% more for no
+   * further damage bonus, so the list spends the stack on Missiles rather than
+   * paying that price.
+   *
+   * ==========================================================================
+   * THE SECOND CLAUSE IS WORTH **+13.2 +/- 3.2** AND CAME OFF THE UPTIME TABLE.
+   *
+   * Arcane Blast's window is fifteen seconds FROM FIRST APPLICATION --
+   * `refreshBehaviour: 'ignore'`, so no cast extends it -- the ramp spends six
+   * of those reaching four stacks, and Arcane Missiles is a CHANNEL. So the
+   * window kept expiring part-way through a channel: the remaining missiles were
+   * paid at the unbuffed price AND the re-ramp could not start until the channel
+   * ended. **Measured uptime was 77.7%, and the missing 22.3% was that
+   * straddle.** With this clause it is **83.0%**, and Arcane Blast's own casts
+   * go 13.1 to 14.0 a fight at a higher average -- 948 to 1,021 -- because each
+   * one now lands inside a window rather than after it.
+   *
+   * SO THE GATE TURNS A STRADDLING CHANNEL INTO A SINGLE BLAST AND AN EARLIER
+   * FRESH RAMP, which is not obviously a win and is why it is measured: the
+   * entry it falls through to is Arcane Blast, and at four stacks that costs
+   * EIGHT TIMES base for a stack about to vanish.
+   *
+   * **TWO SECONDS IS THE MIDDLE OF A PLATEAU, NOT A TUNED EDGE.** Swept over
+   * 1,200 paired iterations: 0.5s **+4.9**, then 1s, 1.5s, 2s, 2.5s and 3s all
+   * between **+13.1 and +13.5** -- indistinguishable, since the differences are
+   * far inside the combined intervals -- and 4s and 5s fall back to noise. The
+   * boundary is therefore SAFE rather than tight, which is the thing to assert
+   * about a stated threshold.
+   *
+   * THE BARRAGE ENTRY ABOVE DELIBERATELY KEEPS NO SUCH CLAUSE: a Missile Barrage
+   * proc is worth channelling through an expiry, and gating it would throw the
+   * proc away.
+   * ==========================================================================
    *
    * A repeated ability id is legal; what is not is a copy below an
    * UNCONDITIONAL one. Both entries are gated and Arcane Blast is the filler.
    */
   {
     abilityId: 'arcane_missiles',
-    condition: selfStacksExactly('arcane_blast', ARCANE_BLAST_MAX_STACKS),
+    condition: all(
+      selfStacksExactly('arcane_blast', ARCANE_BLAST_MAX_STACKS),
+      selfTime('atLeast', ARCANE_BLAST_CHANNEL_FLOOR_SECONDS, 'arcane_blast'),
+    ),
   },
   { abilityId: 'arcane_blast' },
   ],
