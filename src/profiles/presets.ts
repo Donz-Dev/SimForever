@@ -2533,26 +2533,47 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_fire'),
       /*
-       * ONE SCORCH ADDED BEFORE THE PULL, WORTH **+25.1 +/- 8.1**.
+       * ==================================================================
+       * THE OWNER'S OPENER, AND NOTHING ELSE -- A PRE-PULL SCORCH REVERTED
+       * FOR **-25.90 +/- 9.70** OVER 400 PAIRED ITERATIONS.
        *
-       * Improved Scorch stacks a Fire vulnerability five times at 3% each, and
-       * this build spends six to seven casts a fight building and holding it --
-       * so a stack moved before the pull is a stack the fight OPENS with, on a
-       * debuff that raises every point of Fire damage the build deals.
+       * **THE RULING: "Once you deal damage or finish casting a damaging
+       * ability combat has started."** So a pre-combat list may finish AT
+       * MOST ONE damaging ability, and it must finish at exactly t=0.
        *
-       * AT A 1.5 SECOND LEAD, WHICH IS SCORCH'S CAST TIME, so it lands at t=0
-       * exactly as the owner's own openers do -- every one of their ten "start
-       * casting" leads is that spell's cast time on that build.
+       *   mage_armor       4.0s   not damaging, free at any lead
+       *   frostfire_bolt   2.5s   DAMAGING, finishes -0.049s   the pull
+       *   scorch           1.5s   DAMAGING, finishes -0.029s   REMOVED
        *
-       * THE MAGE ARMOR LEAD IS LEFT ALONE. Moving it to 0s measured +0.37,
-       * noise, and REMOVING it is -26.2 -- so the buff is load-bearing and its
-       * lead is not.
+       * Both deficits are the haste artefact on a lead written as the
+       * spell's declared cast time, which is not a violation to fix.
+       * **B1 is the violation: there were two damaging casts**, so the
+       * Scorch dealt its damage and put a Fire Vulnerability stack on the
+       * boss before the clock started, and the +25.1 it was credited with
+       * was bought with a fight that had already begun.
+       *
+       * THIS IS THE ARCANE MAGE'S FAILURE A SECOND TIME, in a profile
+       * `docs/profile-optimisation.md`'s Appendix A had already flagged as
+       * failing -- audited, written down, and still shipped. Nothing in the
+       * engine enforces the rule, no fight reveals it, and `USES=1` prints
+       * an illegal opener as cheerfully as a legal one.
+       *
+       * AND THE LEGAL DESIGN SPACE HERE IS EMPTY, which is why nothing
+       * replaces it. An addition has to be a NON-damaging action, and this
+       * build's only non-damaging castables are Mage Armor (already here),
+       * Evocation (a channel, refused outright) and two things that are
+       * ALREADY off the global cooldown -- the Spellblasting potion and the
+       * Gnome racial. **Pre-casting is only worth the global cooldown it
+       * saves**, and both were measured at a 0s lead: each ran a
+       * BIT-IDENTICAL fight to this opener. That is the retracted Arcane
+       * Power figure's lesson, measured rather than asserted.
+       *
+       * THE MAGE ARMOR LEAD IS LEFT ALONE. Moving it to 0s is **+0.49**
+       * against an interval of 9.70, and REMOVING it was -26.2 -- so the
+       * buff is load-bearing and its lead is not.
+       * ==================================================================
        */
-      precombat: [
-        ...before(4, 'mage_armor'),
-        ...before(2.5, 'frostfire_bolt'),
-        ...before(1.5, 'scorch'),
-      ],
+      precombat: [...before(4, 'mage_armor'), ...before(2.5, 'frostfire_bolt')],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },

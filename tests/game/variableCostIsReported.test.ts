@@ -70,6 +70,24 @@ function spends(events: readonly TelemetryEvent[], resource: string, from = 0) {
     .map((e) => e as unknown as { amount: number; source?: string; sourceName?: string });
 }
 
+/*
+ * ==============================================================================
+ * THIS FILE READS THE SOURCE TREE, SO ITS SCANNING TESTS CARRY THEIR OWN LIMIT.
+ *
+ * A test that walks `src` and reads every `.ts` file is the one kind that gets
+ * SLOWER the more tests run beside it: vitest transforms 167 test files in
+ * parallel and they compete for the same disk. CLAUDE.md's "Testing" section
+ * records SIX instances of the resulting timeout across three files, and two
+ * surfaced in consecutive full-suite runs while this round was being closed --
+ * each in a different file, each passing standalone with a 15x margin.
+ *
+ * SO THE LIMIT IS PER-TEST AND `vite.config.ts` STILL SETS NO `testTimeout`.
+ * Widening the global default would hide the next test that genuinely gets
+ * slower, which is the thing a timeout is actually good at catching.
+ * ==============================================================================
+ */
+const READS_THE_SOURCE_TREE_MS = 30_000;
+
 describe('Execute reports the whole bar it spends, not just its declared 15', () => {
   function castExecute(startingRage: number) {
     const { player, target, simulation, events } = fight(() =>
@@ -227,5 +245,5 @@ describe('nothing outside the engine drains a pool silently', () => {
     }
 
     expect(offenders).toEqual([]);
-  });
+  }, READS_THE_SOURCE_TREE_MS);
 });

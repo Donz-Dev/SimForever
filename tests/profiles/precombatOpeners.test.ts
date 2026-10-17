@@ -277,7 +277,14 @@ describe("the owner's openers are transcribed exactly", () => {
       [1.5, 'searing_totem', '+11.0 -- the Enhancement opener already did this'],
       [0, 'elemental_mastery', '+13.9 -- a new capstone, claimed for no GCD'],
     ],
-    mage_frostfire: [[1.5, 'scorch', '+25.1 -- one Fire Vulnerability stack at the pull']],
+    /*
+     * `mage_frostfire` HAS NO ADDITIONS, AND IT HELD ONE.
+     *
+     * A Scorch at a 1.5s lead, credited with +25.1, was a SECOND damaging
+     * cast finishing before the pull -- which Gate B forbids outright. It is
+     * reverted for **-25.90 +/- 9.70**, and the owner's two lines are the
+     * whole opener again. Nothing legal replaces it: see the preset.
+     */
     /*
      * THE ARCANE MAGE'S RAMP IS GONE, AND THIS IS WHAT IS LEFT OF IT.
      *

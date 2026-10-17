@@ -52,6 +52,24 @@ function auraIdsIn(condition: AplCondition | undefined, found: Set<string>): voi
   if (condition.kind === 'not') auraIdsIn(condition.of, found);
 }
 
+/*
+ * ==============================================================================
+ * THIS FILE READS THE SOURCE TREE, SO ITS SCANNING TESTS CARRY THEIR OWN LIMIT.
+ *
+ * A test that walks `src` and reads every `.ts` file is the one kind that gets
+ * SLOWER the more tests run beside it: vitest transforms 167 test files in
+ * parallel and they compete for the same disk. CLAUDE.md's "Testing" section
+ * records SIX instances of the resulting timeout across three files, and two
+ * surfaced in consecutive full-suite runs while this round was being closed --
+ * each in a different file, each passing standalone with a 15x margin.
+ *
+ * SO THE LIMIT IS PER-TEST AND `vite.config.ts` STILL SETS NO `testTimeout`.
+ * Widening the global default would hide the next test that genuinely gets
+ * slower, which is the thing a timeout is actually good at catching.
+ * ==============================================================================
+ */
+const READS_THE_SOURCE_TREE_MS = 30_000;
+
 describe('the catalog covers what the stock lists ask about', () => {
   /*
    * THE ASSERTION THAT MATTERS. Anything a stock list can name must be
@@ -161,7 +179,7 @@ describe('the catalog covers what the stock lists ask about', () => {
       missing.map((aura) => `${aura.id} (${aura.file})`),
       'declared but offered to nobody -- a factory-built aura needs listing in its module CATALOG_AURAS',
     ).toEqual([]);
-  });
+  }, READS_THE_SOURCE_TREE_MS);
 
   it('offers each one from a real DEFINITION, not from the stock-list safety net', () => {
     /*
@@ -272,7 +290,7 @@ describe('the catalog covers what the stock lists ask about', () => {
       onlyViaTheNet,
       'reachable only through the stock-list safety net -- a factory-built aura needs a representative call in its module CATALOG_AURAS',
     ).toEqual([]);
-  });
+  }, READS_THE_SOURCE_TREE_MS);
 
   it('names an aura from an id, for one that came out of a saved file', () => {
     expect(auraName('rend')).toBe('Rend');
