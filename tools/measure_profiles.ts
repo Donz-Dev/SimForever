@@ -303,6 +303,34 @@ function printUses(presetId: string, profile: CharacterProfile): void {
       `    ${String(index + 1).padStart(2)}. ${entry.abilityId.padEnd(26)}` +
         `${uses.toFixed(1).padStart(7)} uses ${share.toFixed(1).padStart(6)}%${flag}`,
     );
+    /*
+     * ========================================================================
+     * AND THE REST OF A SEQUENCE, WHICH THIS LOOP COULD NOT SEE.
+     *
+     * `AplEntry.sequence` holds further abilities cast after the entry's own,
+     * as ONE action -- and this loop keys on `abilityId`, so every step after
+     * the first was invisible here AND fell into the "not in the list, and
+     * still dealing damage" block below, which reads as an unlisted damage
+     * source. The Arcane Mage's Pyroblast is step three of its cooldown stack
+     * and reported exactly that way.
+     *
+     * **A STEP IS NOT AN ENTRY AND MUST NOT BE FLAGGED LIKE ONE.** It has no
+     * condition of its own and cannot be "never fired" independently -- the
+     * gate is the entry's, the whole sequence resolves as a unit, and a step
+     * refused ABANDONS the rest. So these are indented under their entry with
+     * their own cast counts and no verdict column.
+     * ========================================================================
+     */
+    for (const step of entry.sequence ?? []) {
+      const stepName = ABILITY_NAMES.get(step);
+      const stepRow = stepName === undefined ? undefined : byName.get(stepName);
+      const stepUses = stepRow?.uses ?? 0;
+      const stepShare = (stepRow?.share ?? 0) * 100;
+      console.log(
+        `        then ${step.padEnd(23)}${stepUses.toFixed(1).padStart(7)} uses ` +
+          `${stepShare.toFixed(1).padStart(6)}%`,
+      );
+    }
   });
 
   /*
@@ -311,7 +339,16 @@ function printUses(presetId: string, profile: CharacterProfile): void {
    * melee Hunter's largest single source is its own swing, which appears in no
    * priority list anywhere.
    */
-  const listed = new Set(record.list.entries.map((entry) => ABILITY_NAMES.get(entry.abilityId)));
+  /*
+   * A SEQUENCE STEP COUNTS AS LISTED. Without this, every step after the first
+   * appears under "not in the list" -- which is the one heading in this report
+   * that means "nobody asked for this damage".
+   */
+  const listed = new Set(
+    record.list.entries.flatMap((entry) =>
+      [entry.abilityId, ...(entry.sequence ?? [])].map((id) => ABILITY_NAMES.get(id)),
+    ),
+  );
   const unlisted = batch.abilities
     .filter((row) => !listed.has(row.abilityName) && row.damage > 0)
     .sort((a, b) => b.share - a.share);

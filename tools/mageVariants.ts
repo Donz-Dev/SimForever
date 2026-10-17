@@ -194,7 +194,13 @@ const ARCANE_MISSILE_BARRAGE_1 = {
  * Barrage's second rank took one.
  * ==============================================================================
  */
-const ARCANE_WITH_WRATH = {
+/*
+ * EXPORTED so `arcaneVariants.ts` can build a cooldown-stack variant on it
+ * rather than keeping a second copy of a 51-point allocation. Two copies of a
+ * tree is two places for it to drift, and `treeFor` only catches the ILLEGAL
+ * kind of drift.
+ */
+export const ARCANE_WITH_WRATH = {
   // Arcane, 35 -- two points out of Improved Channeling
   arcane_focus: 5,
   improved_channeling: 3,

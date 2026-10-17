@@ -58,12 +58,35 @@ export type Variant = {
   readonly apply: (profile: CharacterProfile) => CharacterProfile;
 };
 
-const base = PRESETS_BY_ID.get(PRESET)!.build();
+/*
+ * ============================================================================
+ * FIGHT LENGTH IS AN AXIS, NOT A CONSTANT. The owner: "rotations need to be
+ * built for longer than 1 minute ... ensure that variable combat time is taken
+ * into account."
+ *
+ * Every profile carries `durationSeconds: 60` from `createDefaultProfile`, and
+ * a minute is SHORTER THAN SEVERAL OF THE COOLDOWNS THE LIST HOLDS -- Arcane
+ * Power and Presence of Mind are three minutes each. At 60s such an ability is
+ * cast once and its list entry can never be reached a second time, so any
+ * conclusion about WHERE it belongs in the list is a conclusion about the
+ * clock rather than about the rotation.
+ *
+ * APPLIED TO THE BASELINE AND EVERY VARIANT ALIKE, which is the whole point:
+ * the comparison stays paired and only the clock moves.
+ * ============================================================================
+ */
+const DURATION = process.env.DURATION === undefined ? undefined : Number(process.env.DURATION);
+
+const preset = PRESETS_BY_ID.get(PRESET)!.build();
+const base: CharacterProfile =
+  DURATION === undefined
+    ? preset
+    : { ...preset, simulation: { ...preset.simulation, durationSeconds: DURATION } };
 const slice = { from: 0, to: ITER };
 
 const baseline = profileSamples(base, SEED, slice);
 const baseMean = baseline.dps.reduce((a, b) => a + b, 0) / baseline.dps.length;
-console.log(`${PRESET}   baseline ${baseMean.toFixed(1)} DPS over ${ITER} paired iterations\n`);
+console.log(`${PRESET}   baseline ${baseMean.toFixed(1)} DPS over ${ITER} paired iterations at ${base.simulation.durationSeconds}s\n`);
 
 const groups = WANTED.includes('all') ? Object.keys(VARIANT_GROUPS) : WANTED;
 

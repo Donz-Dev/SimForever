@@ -114,7 +114,7 @@ GCD-bound builds want opposite orders. The Fire Mage ends a fight with
 global cooldown; a geared Hunter empties its mana by the 30-second mark and the
 question is damage per mana.
 
-**AND A NEVER-FIRED ENTRY HAS SEVEN CAUSES, SIX OF WHICH ARE INVISIBLE.** The
+**AND A NEVER-FIRED ENTRY HAS EIGHT CAUSES, SEVEN OF WHICH ARE INVISIBLE.** The
 id names no ability; the build never learned it; the entry above never yields; a
 preset raid **debuff** already supplies it; the condition reads something
 nothing sets; the entry is **switched off** (`disabled`); or **the owner meant
@@ -123,6 +123,14 @@ times on every one, and the ruling was *"This is intended"*. `USES=1` labels
 `(not learned by this build)` and `(switched off in the list)` for you; the
 other causes need the built character's own ability book. **So a never-fired
 entry is a question before it is a defect.**
+
+**AND THE EIGHTH IS THE CLOCK: the fight is shorter than the cooldown the entry
+waits for.** The Arcane Mage's `arcane_power` entry fires 0.00 times at 60s and
+**2.00 times at 240s**, because the ability is a three-minute cooldown that is
+pre-cast at the pull. Writing that up as a dead entry is writing down a fact
+about the clock as a fact about the list — **count the casts at a longer
+DURATION before concluding anything about an entry whose ability has a cooldown
+longer than the fight.**
 
 ---
 
@@ -293,7 +301,35 @@ Four conventions, each of which has been paid for:
 ```bash
 PRESET=<id> VARIANTS=<group> npx vite-node tools/probe_build.ts     # ITER=400, SEED=20260101
 PRESET=<id> VARIANTS=<group> ITER=1000 npx vite-node tools/probe_build.ts
+PRESET=<id> VARIANTS=<group> DURATION=180 npx vite-node tools/probe_build.ts
 ```
+
+**AND FIGHT LENGTH IS AN AXIS, NOT A CONSTANT.** The owner: *"rotations need to
+be built for longer than 1 minute ... ensure that variable combat time is taken
+into account."* Every profile carries `durationSeconds: 60` with a fixed ±5%
+`FIGHT_DURATION_VARIANCE`, and **a minute is shorter than several of the
+cooldowns a list holds** — so at the default length such an ability is cast once
+and its entry can never be reached again. **Any conclusion about where it
+belongs is then a conclusion about the clock.**
+
+It is not a small effect. The Arcane Mage over twenty seeds:
+
+| fight | DPS | `arcane_power` casts | `evocation` casts |
+| --- | --- | --- | --- |
+| 60s | 1147.9 | 1.00 | **0.05** |
+| 180s | 1017.8 | **1.40** | 0.70 |
+| 300s | 954.1 | **2.00** | **1.00** |
+
+**DPS FALLS 17% AND THE BUILD CHANGES REGIME** — global-cooldown bound at one
+minute with 2,638 mana spare, mana bound at five. So three "settled" answers on
+that profile are answers about a one-minute clock: the Major Mana Potion losing
+by 12.7, `manaPer5` and `spirit` weighing zero, and Evocation never firing.
+
+**SO: BEFORE CALLING A COOLDOWN'S PLACEMENT SETTLED, RE-RUN IT AT A LENGTH
+LONGER THAN THAT COOLDOWN.** And before writing "this entry never fires", check
+whether the fight is simply shorter than the thing it waits for — that is an
+**eighth** cause for the never-fired list, and the only one a different clock
+makes disappear.
 
 **PAIRED, UNDER SHARED SEEDS.** `deriveSeed(baseSeed, i)` fixes iteration *i*'s
 fight, so the two runs share fight lengths and the difference is four orders of

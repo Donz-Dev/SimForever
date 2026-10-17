@@ -2,7 +2,6 @@ import type { Rotation } from '../../engine';
 import type { AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
 import {
-  buffPotionCooldown,
   consumableCooldowns,
   CONSUMABLE_COOLDOWNS,
   CONSUMABLE_HEALS,
@@ -123,7 +122,6 @@ const selfResourceBelowPercent = (resource: 'mana', percent: number) =>
 const selfLacks = selfMissing;
 
 /** "<buff> is up", on the Mage -- `auras.has`, not a reading of the clock. */
-const selfActive = selfHas;
 
 /** "<buff> has at most N seconds left", on the Mage. */
 const selfAuraAtMost = (auraId: string, secondsLeft: number) =>
@@ -482,24 +480,27 @@ export const MAGE_ARCANE: AplList = {
   name: 'Mage (Arcane)',
   entries: [
   /*
-   * "MAGE ARMOR IS NOT UP", AND IT IS *NOT* THE "HAS RUN OUT" THE OTHER TWO
-   * LISTS USE.
+   * ==========================================================================
+   * MAGE ARMOR IS NOT IN THIS LIST, BY THE OWNER'S RULING: "Mage Armor doesn't
+   * need to be captured in the main APL section. It's being taken care of in
+   * the pre-combat section."
    *
-   * --------------------------------------------------------------------------
-   * The owner's Arcane panel reads `aura present: false` where the Fire and
-   * Frostfire panels read the clock, and the two are different tests: an aura
-   * can be PRESENT with nothing left on it. `AplCompare` carries both because
-   * the nine class files wrote both and meant both.
+   * The entry was `mage_armor` gated on `selfLacks('mage_armor')`, and it could
+   * never fire: the opener casts it at a 3 second lead, the buff lasts THIRTY
+   * MINUTES against a one-minute fight, and nothing in the encounter dispels.
+   * So the gate was false from the pull onward and the entry was a poll that
+   * could only ever be skipped.
    *
-   * IT IS WORTH NOTHING TODAY AND IS TRANSCRIBED ANYWAY. Mage Armor lasts
-   * thirty minutes against a one-minute fight, so neither reading can be
-   * reached after the opener and the entry fires exactly once either way. What
-   * is being preserved is that opening the panel and changing nothing leaves
-   * the condition byte-identical -- the editor's one promise -- and a list that
-   * quietly normalises the owner's two readings into one breaks it.
-   * --------------------------------------------------------------------------
+   * REMOVING IT RUNS BIT-IDENTICAL FIGHTS, which is the containment check and
+   * is the only thing that distinguishes "redundant" from "load-bearing".
+   *
+   * THE OTHER TWO MAGE LISTS STILL CARRY THEIRS. Fire pre-casts Mage Armor at a
+   * 4.5s lead and Frostfire at 4s, so the entry is equally dead in both -- but
+   * this ruling arrived as part of an AUDIT OF THE ARCANE PROFILE, and a list
+   * is changed for the profile that was named rather than by analogy. Recorded
+   * here so the next Mage round starts with it.
+   * ==========================================================================
    */
-  { abilityId: 'mage_armor', condition: selfLacks('mage_armor') },
   /*
    * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
    *
@@ -549,10 +550,17 @@ export const MAGE_ARCANE: AplList = {
    * the NOTE with it: a note is a frozen string, and an override that touched
    * only the condition would leave the panel explaining a gate that is gone.
    */
-  buffPotionCooldown('major_spellblasting_potion', {
-    id: 'presence_of_mind',
-    label: 'Presence of Mind',
-  }),
+  /*
+   * THE SPELLBLASTING POTION IS NOT A STANDALONE ENTRY HERE ANY MORE -- it is
+   * step one of the cooldown stack below, which is where the owner's gate
+   * ("held for Presence of Mind") actually belongs now that a sequence can
+   * express it.
+   *
+   * THE OTHER TWO MAGE LISTS SPREAD THE SHARED `CONSUMABLE_COOLDOWNS` BLOCK,
+   * which carries the potion UNGATED -- so `buffPotionCooldown` now has no
+   * caller in this file at all and its import is gone. It is still used by the
+   * Druid, Shaman and Warlock lists.
+   */
   ...CONSUMABLE_HEALS,
   { abilityId: 'evocation', condition: evocationFor(EVOCATION_FIGHT_SECONDS) },
   /*
@@ -572,42 +580,54 @@ export const MAGE_ARCANE: AplList = {
   { abilityId: 'arcane_power', condition: selfHasStack('missile_barrage') },
   /*
    * ==========================================================================
-   * PRESENCE OF MIND AT THE ARCANE BLAST CAP, AND THE PYROBLAST BENEATH IT IS
-   * WHAT IT IS FOR. The owner has moved both: the old entry fired at exactly
-   * ONE stack to make a cheap Blast instant, and these two make a SIX-SECOND
-   * PYROBLAST instant instead.
+   * THE COOLDOWN STACK, AS ONE ACTION. The owner: "Take a look at setting up a
+   * cooldown overlap condition with Arcane Wrath / Pyroblast. This is often
+   * times how real players use their cooldowns."
    *
-   * THE PAIR IS THE ROTATION AND NEITHER HALF WORKS ALONE. Presence of Mind
-   * applies an aura with `requiresCastTime`, so the charge survives every
-   * instant and off-GCD entry above it and is spent by the next real cast --
-   * and the next real cast is the Pyroblast directly below, because its
-   * condition is this entry's condition plus "the charge is in hand". Nothing
-   * between them can take it.
+   * The potion, Presence of Mind and the Pyroblast it is for were three
+   * separate entries that happened to fire together. `AplEntry.sequence` says
+   * so outright: the condition gates the WHOLE thing, the steps resolve as a
+   * unit, and nothing may be cast between them.
    *
-   * WHY PYROBLAST IS THE RIGHT TARGET. It is the longest cast the build owns at
-   * six seconds against Arcane Blast's two and a half, so making it free of its
-   * cast time is worth two and a half times what the old one-stack entry bought
-   * -- and the four-stack clause is why the pair sits where it does: at the cap
-   * the next Blast costs 175% more for no further damage, so a global cooldown
-   * spent on something else is a global cooldown saved.
+   * ------------------------------------------------------------------------
+   * **IT RUNS BIT-IDENTICAL FIGHTS TODAY, AND IS STILL WORTH MAKING EXPLICIT.**
+   * The three already emerged as a sequence -- but ONLY because the potion,
+   * Arcane Power and Presence of Mind are all off the global cooldown, and two
+   * of those three became so in the same change as this one. **Emergence is an
+   * accident of what is castable; a sequence is a guarantee.** The old shape
+   * would have come apart silently the moment anything above it took a global
+   * cooldown, and nothing would have reported it.
    *
-   * PYROBLAST IS NEW TO THIS BUILD AND IS PAID FOR IN TALENTS. The
-   * respecification moves eleven points into Fire for Ignite and Pyroblast;
-   * without the talent the ability is not in the book and `PriorityRotation`
-   * skips the entry in SILENCE, which is the fourth cause of inert. THE LIST
-   * AND THE ALLOCATION ARE ONE CHANGE.
+   * PYROBLAST IS THE PAYLOAD AND ARCANE WRATH IS NOT, which is the half the
+   * owner asked to be looked at. Presence of Mind erases a CAST TIME, so the
+   * payload wants to be the longest cast in the kit: Pyroblast is **six
+   * seconds** against Arcane Wrath's 3.5, and Arcane Wrath also costs a talent
+   * point. Measured over 1,000 paired iterations:
+   *
+   *   potion > PoM > pyroblast          **bit-identical** (this entry)
+   *   potion > PoM > arcane_wrath       **-72.4**
+   *   potion > AP > PoM > pyroblast     **-34.9**
+   *   potion > AP > PoM > arcane_wrath  **-43.8**   (the screenshot's shape)
+   *
+   * **ARCANE POWER STAYS IN THE OPENER RATHER THAN JOINING THE STACK**, and
+   * that is what the last two rows price. It cannot be both: the whole sequence
+   * is resolved before any of it is cast, so a step on cooldown refuses the lot
+   * -- the stack would silently never fire. Pre-cast at a 0s lead it is worth
+   * **+24.2** for no global cooldown, and giving that up to group it here costs
+   * more than the grouping is worth.
+   *
+   * **AND THIS IS THE FIRST TIME ARCANE WRATH HAS BEEN PRICED AS ANYTHING BUT A
+   * FILLER.** Its -76.7 and -118.2 were measured DISPLACING Arcane Blasts every
+   * cycle; here it displaces nothing and is cast once inside a +30% window, and
+   * it still loses. The old conclusion survives a reading it was never tested
+   * under.
    * ==========================================================================
    */
   {
-    abilityId: 'presence_of_mind',
+    abilityId: 'major_spellblasting_potion',
+    sequence: ['presence_of_mind', 'pyroblast'],
     condition: selfStacksExactly('arcane_blast', ARCANE_BLAST_MAX_STACKS),
-  },
-  {
-    abilityId: 'pyroblast',
-    condition: all(
-      selfStacksExactly('arcane_blast', ARCANE_BLAST_MAX_STACKS),
-      selfActive('presence_of_mind'),
-    ),
+    note: 'Cooldown stack: the potion, Presence of Mind and an instant Pyroblast, at the Arcane Blast cap.',
   },
   { abilityId: 'arcane_missiles', condition: selfHasStack('missile_barrage') },
   /*

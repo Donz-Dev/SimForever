@@ -2522,35 +2522,67 @@ describe('Evocation, which pays out during its own channel', () => {
     expect(compiled(entry.condition)!(simulation, actor, target)).toBe(true);
   });
 
-  it('is reached by NO profile now, which is a LIST cause rather than a gap', () => {
+  it('is reached ONCE in sixty runs at a 60s fight, and only by the Arcane Mage', () => {
     /*
-     * The figure the test above refuses to assert, measured and recorded in one
-     * place so it is a known fact rather than a surprise. Three profiles, twenty
-     * seeds each, zero casts -- because none of them drops to a tenth of its
-     * pool any more.
+     * ==========================================================================
+     * THIS TEST IS A TRIPWIRE AND IT HAS NOW FIRED ONCE, WHICH IS THE POINT.
      *
-     * IT IS NOT AN ENGINE CAUSE AND NOT A BUILD CAUSE. The ability is declared,
-     * granted, in every Mage list and fully modelled; what changed is that the
-     * Fire build stopped running dry when Pyroblast stopped being castable
-     * thirteen times a fight. That expires the day a list or a mana cost moves.
+     * It asserted ZERO casts across three profiles and twenty seeds each, with
+     * the owner's ruling beside it -- "This is intended", 2026-10-08 -- and the
+     * note that it "fails if a change makes Evocation start firing, which is
+     * the right moment to go back to the owner."
      *
-     * AND IT IS THE OWNER'S INTENT RATHER THAN AN OUTSTANDING ITEM. Ruled
-     * 2026-10-08: "This is intended." A never-fired entry is usually one of four
-     * causes worth chasing; this one is a fifth -- somebody meant it. So this
-     * asserts zero as a FACT ABOUT THE RULESET, and it fails if a change makes
-     * Evocation start firing, which is the right moment to go back to the owner.
+     * WHAT MOVED: Presence of Mind and Arcane Power came OFF the global
+     * cooldown, on the owner's instruction. That is more casts a fight on the
+     * Arcane Mage, and an Arcane Blast at four stacks costs EIGHT TIMES base --
+     * so the build now reaches a tenth of its pool on **seed 10 of 20**, and
+     * casts Evocation once. Mean headroom is still 2,638 mana, so this is a
+     * TAIL rather than a shift: the build is not mana-bound and one fight in
+     * twenty goes differently.
+     *
+     * **WHICH IS THE HONEST READING OF THE ENTRY RATHER THAN A REGRESSION.** A
+     * conditional entry that is almost never true costs the entries below it
+     * nothing and pays out in a fight that does not go like the measured ones.
+     * The ruling is unchanged; what changed is that the safety net caught
+     * something.
+     *
+     * ==========================================================================
+     * **AND THESE NUMBERS DESCRIBE A SIXTY-SECOND CLOCK, NOT THE RULESET.** The
+     * owner: "rotations need to be built for longer than 1 minute, so things
+     * like evocation not firing might just be the short nature of combat." It
+     * is exactly that. Arcane Mage casts of Evocation over twenty seeds:
+     *
+     *     60s  0.05      120s  0.40      180s  0.70      240s  1.00      300s  1.00
+     *
+     * So "never fires" was never a property of the list. Every profile carries
+     * `durationSeconds: 60`, and at five minutes this build is MANA bound where
+     * at one minute it ends with 2,638 spare. **The ruling "This is intended"
+     * was given about a one-minute fight**, and if the default duration moves,
+     * this test is the first thing that should be re-asked rather than
+     * re-pinned.
+     * ==========================================================================
+     *
+     * PINNED PER PROFILE AND EXACTLY, so it stays a tripwire AT THIS DURATION.
+     * Fire and Frostfire are still zero and a cast on either is a different
+     * finding entirely; Arcane is one, and both a rise and a fall are worth
+     * somebody looking.
+     * ==========================================================================
      */
-    let casts = 0;
-    for (const preset of ['mage_fire', 'mage_frostfire', 'mage_arcane']) {
+    const casts = (preset: string) => {
+      let total = 0;
       for (let seed = 1; seed <= 20; seed += 1) {
         const run = runProfile(PRESETS_BY_ID.get(preset)!.build(), seed);
-        casts += run.timeline.filter(
+        total += run.timeline.filter(
           (event) =>
             'auraId' in event && event.auraId === 'evocation' && event.type === 'aura_applied',
         ).length;
       }
-    }
-    expect(casts).toBe(0);
+      return total;
+    };
+
+    expect(casts('mage_fire')).toBe(0);
+    expect(casts('mage_frostfire')).toBe(0);
+    expect(casts('mage_arcane')).toBe(1);
   }, 20_000);
 });
 
@@ -2619,24 +2651,30 @@ describe('the three lists, after the owner tuned them', () => {
     expect(compiled(entry.condition)?.(simulation, mage, undefined)).toBe(true);
   });
 
-  it('spends Presence of Mind at the Arcane Blast CAP, to make Pyroblast instant', () => {
+  it('spends Presence of Mind at the Arcane Blast CAP, as one cooldown stack', () => {
     /*
      * ==========================================================================
-     * THE OWNER MOVED THIS ENTRY AND THIS TEST GIVES WAY, which is the rule:
-     * **a test that pins a rotation decision has to give way when the decision
-     * changes owner; a test that pins an invariant does not.**
+     * THE OWNER RESHAPED THIS AND THIS TEST GIVES WAY AGAIN -- which is the
+     * rule it already carried: **a test that pins a rotation decision has to
+     * give way when the decision changes owner; a test that pins an INVARIANT
+     * does not.** The invariant is unchanged and is what is asserted below; the
+     * SHAPE it is expressed in is what moved.
      *
-     * WHAT IT USED TO ASSERT, and why that was a decision rather than an
-     * invariant: Presence of Mind at exactly ONE Arcane Blast stack and no
-     * Missile Barrage, on the argument that each stack raises the Blast's cost
-     * by 175% so the CHEAP Blast is the one worth making instant. Sound, and
-     * about a two-and-a-half second cast.
+     * WHAT IT USED TO PIN: two separate entries, `presence_of_mind` at the cap
+     * and `pyroblast` at the cap AND with the charge in hand, which emerged as
+     * a pair because nothing between them was castable.
      *
-     * WHAT IT ASSERTS NOW: the cap, so the charge goes on the SIX-SECOND
-     * Pyroblast directly below. The pair is the rotation -- `requiresCastTime`
-     * on the aura is what carries the charge past every instant and off-GCD
-     * entry in between, and the Pyroblast entry's condition is this one's plus
-     * "the charge is in hand", so nothing else can take it.
+     * WHAT IT PINS NOW: ONE entry with a `sequence`, on the owner's ask for "a
+     * cooldown overlap condition ... this is often times how real players use
+     * their cooldowns". The potion is step one, Presence of Mind step two, and
+     * the six-second Pyroblast step three -- gated once, resolved as a unit,
+     * with nothing able to be cast between the steps.
+     *
+     * **AND THAT IS A STRONGER CLAIM THAN THE OLD PAIR, WHICH IS WHY THE
+     * RESHAPE WAS WORTH MAKING AT ZERO MEASURED COST.** The pair held together
+     * only because every entry between the two happened to be off the global
+     * cooldown -- and two of those became so in the same change. A sequence
+     * says it outright instead of depending on it.
      * ==========================================================================
      */
     const built = PRESETS_BY_ID.get('mage_arcane')!.build();
@@ -2646,41 +2684,53 @@ describe('the three lists, after the owner tuned them', () => {
     });
     const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
     simulation.begin();
-    const entryFor = (abilityId: string, at: number) =>
-      MAGE_ARCANE.entries.filter((row) => row.abilityId === abilityId)[at]!;
-    const fires = (entry: { condition?: unknown }) =>
-      compiled(entry.condition as never)?.(simulation, mage, undefined) ?? true;
-    const presenceOfMind = entryFor('presence_of_mind', 0);
-    const pyroblast = entryFor('pyroblast', 0);
-
-    expect(fires(presenceOfMind)).toBe(false);
-
-    // Not on the way up: one, two and three stacks are all refused.
-    for (let stacks = 1; stacks < ARCANE_BLAST_MAX_STACKS; stacks += 1) {
-      simulation.applyAura(mage, arcaneBlastAura(mage.stats.effective.intellect), mage.id);
-      expect(mage.auras.stacksOf('arcane_blast')).toBe(stacks);
-      expect(fires(presenceOfMind)).toBe(false);
-      // And the Pyroblast beneath it is refused the whole way up too.
-      expect(fires(pyroblast)).toBe(false);
-    }
-
-    simulation.applyAura(mage, arcaneBlastAura(mage.stats.effective.intellect), mage.id);
-    expect(mage.auras.stacksOf('arcane_blast')).toBe(ARCANE_BLAST_MAX_STACKS);
-    expect(fires(presenceOfMind)).toBe(true);
 
     /*
-     * AND THE PYROBLAST WAITS FOR THE CHARGE, which is the half that makes the
-     * pair a pair: at the cap with no Presence of Mind up it is still refused,
-     * so the list cannot cast a SIX-SECOND Pyroblast at full cast time.
+     * THE STACK IS FOUND BY ITS STEPS RATHER THAN BY ITS POSITION, so a list
+     * reorder does not silently point this at a different entry.
      */
-    expect(fires(pyroblast)).toBe(false);
-    simulation.applyAura(mage, PRESENCE_OF_MIND, mage.id);
-    expect(fires(pyroblast)).toBe(true);
+    const stacks = MAGE_ARCANE.entries.filter(
+      (row) => (row.sequence ?? []).includes('presence_of_mind'),
+    );
+    expect(stacks).toHaveLength(1);
+    const stack = stacks[0]!;
 
-    // A Barrage no longer excludes either of them: the owner dropped that
-    // clause from this entry when they moved it.
+    /*
+     * ORDER IS THE MECHANISM: Presence of Mind has to be cast BEFORE the
+     * Pyroblast it makes instant. A sequence holding the two in the other order
+     * would read as a working stack and buy nothing.
+     */
+    expect([stack.abilityId, ...(stack.sequence ?? [])]).toEqual([
+      'major_spellblasting_potion',
+      'presence_of_mind',
+      'pyroblast',
+    ]);
+
+    /*
+     * AND PYROBLAST IS IN NO OTHER ENTRY, which is what stops the list casting
+     * a six-second Pyroblast at full cast time outside the stack.
+     */
+    expect(MAGE_ARCANE.entries.filter((row) => row.abilityId === 'pyroblast')).toHaveLength(0);
+
+    const fires = () =>
+      compiled(stack.condition as never)?.(simulation, mage, undefined) ?? true;
+
+    // Refused with no stacks, and the whole way up: one, two and three.
+    expect(fires()).toBe(false);
+    for (let n = 1; n < ARCANE_BLAST_MAX_STACKS; n += 1) {
+      simulation.applyAura(mage, arcaneBlastAura(mage.stats.effective.intellect), mage.id);
+      expect(mage.auras.stacksOf('arcane_blast')).toBe(n);
+      expect(fires()).toBe(false);
+    }
+
+    // And taken at the cap.
+    simulation.applyAura(mage, arcaneBlastAura(mage.stats.effective.intellect), mage.id);
+    expect(mage.auras.stacksOf('arcane_blast')).toBe(ARCANE_BLAST_MAX_STACKS);
+    expect(fires()).toBe(true);
+
+    // A Barrage does not exclude it: the owner dropped that clause.
     simulation.applyAura(mage, MISSILE_BARRAGE, mage.id);
-    expect(fires(presenceOfMind)).toBe(true);
+    expect(fires()).toBe(true);
   });
 
   it('makes that Pyroblast actually instant, which is the whole point of the pair', () => {

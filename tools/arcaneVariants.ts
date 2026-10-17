@@ -60,6 +60,8 @@ import {
   removePrecombat,
 } from './buildVariants';
 import { all, selfHas, selfStacks, selfTime } from '../src/game/rotations/apl/shorthand';
+import { ARCANE_WITH_WRATH } from './mageVariants';
+import type { AplEntry } from '../src/game/rotations/apl';
 import { ARCANE_BLAST_MAX_STACKS } from '../src/game/auras/mage';
 
 /* --------------------------------------------------------------- the trees */
@@ -345,6 +347,159 @@ export const VARIANT_GROUPS: Readonly<Record<string, readonly Variant[]>> = {
    * owner's brief names, and re-running it costs one group.
    * ==========================================================================
    */
+  /*
+   * ==========================================================================
+   * THE COOLDOWN STACK, WHICH IS HOW A REAL PLAYER SPENDS THESE. The owner:
+   * "Take a look at setting up a cooldown overlap condition with Arcane Wrath /
+   * Pyroblast. This is often times how real players use their cooldowns."
+   *
+   * `AplEntry.sequence` IS EXACTLY THAT SHAPE -- the condition gates the WHOLE
+   * thing, the steps resolve as one unit, and nothing may be cast between them.
+   * Two ordinary entries cannot express it: the potion, Arcane Power and
+   * Presence of Mind are all off the global cooldown now, so the instant one
+   * goes out the list is re-read and the filler wins the gap.
+   *
+   * ------------------------------------------------------------------------
+   * THE TWO REAL DECISIONS, AND BOTH ARE MEASURED RATHER THAN REASONED:
+   *
+   * **WHERE ARCANE POWER LIVES.** It is pre-cast at t=0 today and that is worth
+   * +24.2. It cannot be BOTH pre-cast and a step here: the whole sequence is
+   * resolved before any of it is cast, so a step on cooldown refuses the lot --
+   * which would make the burst silently never fire. So either the opener keeps
+   * it and the stack is built around it, or the opener gives it up.
+   *
+   * **WHAT THE PAYLOAD IS.** Presence of Mind makes the next cast instant, so
+   * the payload wants to be the longest cast in the kit. Pyroblast is SIX
+   * seconds and already in the build; Arcane Wrath is 3.5 and costs a talent
+   * point out of `improved_channeling`, which is a declared `OutOfScope` cast
+   * pushback talent and therefore provably inert.
+   *
+   * **AND ARCANE WRATH HAS ONLY EVER BEEN MEASURED AS A FILLER**, at -76.7 and
+   * -118.2, which is a different question entirely: that priced it DISPLACING
+   * Arcane Blasts every cycle. As a once-a-fight payload inside a +30% window
+   * it displaces nothing. This is the measurement that was actually missing.
+   * ==========================================================================
+   */
+  /*
+   * ==========================================================================
+   * WHERE ARCANE POWER BELONGS, ASKED PROPERLY. The owner: "is pre-casting
+   * arcane power +24.2 over a normal rotational use, or is it +24.2 over the
+   * sandwiched in cooldown overlap? I just find it hard to believe that arcane
+   * power would want to be used prior to reaching 4 stacks of arcane blast."
+   *
+   * **IT WAS OVER A NORMAL ROTATIONAL USE, AND THE FIGURE IS STALE ANYWAY.**
+   * The +24.2 was `removePrecombat('arcane_power')` with the list entry left
+   * in place -- and that entry is gated on a MISSILE BARRAGE PROC, which has
+   * nothing to do with the Arcane Blast ramp. So it priced "pre-cast" against
+   * "cast on the first barrage", never against the cap and never against the
+   * stack.
+   *
+   * **AND IT WAS MEASURED BEFORE ARCANE POWER CAME OFF THE GLOBAL COOLDOWN.**
+   * Part of what pre-casting bought was a GCD the in-fight cast no longer
+   * pays. A prior measurement is true of the build it was taken in, and that
+   * build is gone.
+   *
+   * SO THE MATRIX IS FOUR PLACEMENTS, AND IT HAS TO BE RUN AT MORE THAN ONE
+   * FIGHT LENGTH. Arcane Power is a THREE MINUTE cooldown and the profile is
+   * sixty seconds, so at the default duration it is cast once whatever the list
+   * says and every conclusion is about the clock. Run it with `DURATION=`.
+   * ==========================================================================
+   */
+  arcApPlacement: [
+    { label: 'SHIPPED: pre-cast at t0, entry on a barrage proc', apply: (p) => p },
+    {
+      label: 'no pre-cast, entry on a barrage proc (the NORMAL rotational use)',
+      apply: removePrecombat('arcane_power'),
+    },
+    {
+      label: 'no pre-cast, entry gated at the 4-stack CAP',
+      apply: chain(
+        removePrecombat('arcane_power'),
+        apl((entries) =>
+          entries.map((e) =>
+            e.abilityId === 'arcane_power'
+              ? { ...e, condition: selfStacks('exactly', ARCANE_BLAST_MAX_STACKS, 'arcane_blast') }
+              : e,
+          ),
+        ),
+      ),
+    },
+    {
+      label: 'no pre-cast, SANDWICHED into the stack at the cap',
+      apply: chain(
+        removePrecombat('arcane_power'),
+        removeEntry('arcane_power'),
+        apl((entries) =>
+          entries.map((e) =>
+            e.abilityId === 'major_spellblasting_potion'
+              ? { ...e, sequence: ['arcane_power', ...(e.sequence ?? [])] }
+              : e,
+          ),
+        ),
+      ),
+    },
+    {
+      label: 'pre-cast at t0 AND the entry gated at the cap (both)',
+      apply: apl((entries) =>
+        entries.map((e) =>
+          e.abilityId === 'arcane_power'
+            ? { ...e, condition: selfStacks('exactly', ARCANE_BLAST_MAX_STACKS, 'arcane_blast') }
+            : e,
+        ),
+      ),
+    },
+  ],
+  arcBurst: (() => {
+    /* Strip the three entries the stack absorbs, then insert it as one. */
+    const asStack = (entry: AplEntry): Apply =>
+      chain(
+        removeEntry('major_spellblasting_potion'),
+        removeEntry('presence_of_mind'),
+        removeEntry('pyroblast'),
+        addAbove(entry, 'arcane_missiles'),
+      );
+    const atCapGate = selfStacks('exactly', ARCANE_BLAST_MAX_STACKS, 'arcane_blast');
+
+    const stack = (
+      label: string,
+      steps: readonly string[],
+      opts: { gated: boolean; wrath?: boolean; dropPrecombatAp?: boolean },
+    ): Variant => ({
+      label,
+      apply: chain(
+        opts.wrath === true ? tree(ARCANE_WITH_WRATH) : (p) => p,
+        opts.dropPrecombatAp === true ? removePrecombat('arcane_power') : (p) => p,
+        asStack({
+          abilityId: steps[0],
+          sequence: steps.slice(1),
+          ...(opts.gated ? { condition: atCapGate } : {}),
+        }),
+      ),
+    });
+
+    return [
+      { label: 'the shipped list -- the control', apply: (p) => p },
+      /* Arcane Power stays pre-cast; the stack is potion + PoM + payload. */
+      stack('AP pre-cast | potion>PoM>pyroblast, at the 4-stack cap',
+        ['major_spellblasting_potion', 'presence_of_mind', 'pyroblast'], { gated: true }),
+      stack('AP pre-cast | potion>PoM>arcane_wrath, at the cap',
+        ['major_spellblasting_potion', 'presence_of_mind', 'arcane_wrath'],
+        { gated: true, wrath: true }),
+      /* The opener gives Arcane Power up and the stack owns it -- the owner's shape. */
+      stack('AP in the stack | potion>AP>PoM>pyroblast, at the cap',
+        ['major_spellblasting_potion', 'arcane_power', 'presence_of_mind', 'pyroblast'],
+        { gated: true, dropPrecombatAp: true }),
+      stack('AP in the stack | potion>AP>PoM>arcane_wrath, at the cap -- THE SCREENSHOT',
+        ['major_spellblasting_potion', 'arcane_power', 'presence_of_mind', 'arcane_wrath'],
+        { gated: true, wrath: true, dropPrecombatAp: true }),
+      /* Ungated, to separate "the stack" from "waiting for the cap". */
+      stack('AP pre-cast | potion>PoM>pyroblast, UNGATED',
+        ['major_spellblasting_potion', 'presence_of_mind', 'pyroblast'], { gated: false }),
+      stack('AP in the stack | potion>AP>PoM>arcane_wrath, UNGATED',
+        ['major_spellblasting_potion', 'arcane_power', 'presence_of_mind', 'arcane_wrath'],
+        { gated: false, wrath: true, dropPrecombatAp: true }),
+    ];
+  })(),
   arcPass2: [
     { label: 'the shipped list with the channel floor -- the control', apply: (p) => p },
     {

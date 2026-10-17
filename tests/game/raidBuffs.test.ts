@@ -341,6 +341,17 @@ describe('debuffs on the target', () => {
     expect(applyHaste(1500, multiplier)).toBe(1800);
   });
 
+  /*
+   * AN EXPLICIT LIMIT, BECAUSE THIS RUNS A MONTE CARLO BATCH AND THE DEFAULT IS
+   * 5,000ms. Standalone it takes about 1,660ms; under the full suite, with 167 test
+   * files transforming and running in parallel, it has been measured at 5,584ms --
+   * a ~4x slowdown from CPU contention and nothing else. It reads no files, so
+   * this is not the `filesDeclaring` disk-I/O cause.
+   *
+   * PER TEST RATHER THAN A GLOBAL `testTimeout`, which is the rule this file
+   * already follows for the Vanguard test below: widening all of them hides the
+   * next one that genuinely gets slower.
+   */
   it('takes a fifth off the swings the target gets through', () => {
     /*
      * The consequence, and the thing worth measuring: at 2.40 seconds instead
@@ -358,7 +369,7 @@ describe('debuffs on the target', () => {
 
     const swings = (b: typeof withSlow) => b.damageTaken[0]?.attempts ?? 0;
     expect(swings(withSlow)).toBeLessThan(swings(withoutSlow));
-  });
+  }, 30_000);
 
   it('leave the target alone when nothing is selected', () => {
     const { target } = opened([], true);
