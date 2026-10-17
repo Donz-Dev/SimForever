@@ -54,6 +54,7 @@ the tooling to be a bit more sophisticated as well."
 | 19 | **BEFORE THE PULL, FOR ALL 28 PROFILES** -- the owner specified an opener per profile, and three Warrior lists lose the entries it replaces | **not re-baselined**, on the owner's standing instruction. Every line of theirs is implemented after one round of corrections: a positioning RULING, two new Druid abilities, a substitution and a periodic that accrues | see below |
 | 23 | **THE ARCANE MAGE THROUGH THE WHOLE LOOP, and the first round run from a WRITTEN PROCEDURE** -- `docs/profile-optimisation.md`. The illegal opener reverted, every other dimension re-priced on the legal build, and one new finding off the UPTIME table | legal **1080.1 +/- 9.9** -> **1090.3 +/- 12.1**. The revert is **-96.5 +/- 9.4** paired and the channel floor **+13.2 +/- 3.2 REAL**; **every other candidate in all seven dimensions loses** | see below |
 | 24 | **THE OWNER'S AUDIT OF THE ARCANE PROFILE -- three items, and the second was worth all of it** -- Mage Armor out of the list, Presence of Mind and Arcane Power OFF the global cooldown, and the cooldown stack written as a real `sequence` | **1090.3 -> 1123.4 (+33.1)**, and Fire and Frostfire **0.0 to the decimal** | see below |
+| 25 | **THE AUDIT FOLDED BACK INTO THE PROCEDURE, and a figure RETRACTED in the documents people read** -- all four audit findings share one cause, so the procedure gains a section naming what a paired probe structurally cannot see | **no figure moved**; documentation only, suite green at 3731 | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -94,8 +95,10 @@ write-up; none is an engine gap.
 | **Does Arcane Blast's window REFRESH?** You describe it as "a maintenance buff that is meant to be kept at 4 stacks for an entire fight", and `refreshBehaviour: 'ignore'` makes that impossible -- fifteen seconds from first application, no cast extends it. `reset` would express what you describe. **STILL OPEN AND NO LONGER BLOCKING: it is now PRICED AT ABOUT ZERO** -- `reset` alone measures 1089.0 against 1090.3, and a maintenance entry on top of it is **-1.1**, because a four-stack refresh costs EIGHT TIMES base and the channel floor shipped in round 23 already captures what maintenance was buying. So this is a CORRECTNESS question about your intent, not a rotation question | round 22, priced in round 23 | the field, and whether the tooltip means what it says. **Not the rotation**: the stack gate still peaks at 4 under both readings, and Arcane Wrath loses by 52 to 86 under both |
 | **Should the engine REFUSE a pre-combat list that deals damage before the pull?** Today `runPrecombat` resolves everything at timestamp zero and nothing asks. An illegal opener was measured, written up, tested, CI'd and merged | round 22 | whether this class of error can recur. The alternative is that it stays the author's arithmetic |
 | **Does an effect that merely TICKS before the pull start combat?** Searing Totem at a 1.5s lead on both Shamans applies a damaging ground effect before t=0 -- added by this project, not by you. The Paladin seals and Holy Shield deal nothing when cast, so they look fine, but they are the same shape of question | round 22 | two Shaman openers, and a rule for the next one |
+| **How long is a fight, and how much does it vary?** Every profile carries `durationSeconds: 60` and a FIXED `FIGHT_DURATION_VARIANCE` of 5%, both modelling choices rather than ruleset numbers. You: "rotations need to be built for longer than 1 minute ... ensure that variable combat time is taken into account." The Arcane Mage loses **17% DPS from 60s to 300s** and crosses from GLOBAL-COOLDOWN bound to MANA bound on the way | round 25 | **every published figure on all 28 profiles**, and three "settled" answers on the Arcane Mage alone -- the Major Mana Potion at -12.7, `manaPer5` and `spirit` weighing 0.000, and the Evocation pin |
+| **`shaman_elemental`'s opener finishes TWO damaging casts, and both lines are yours** -- Lightning Bolt at a 2s lead plus Flame Shock at 0s. A player cannot complete both at t=0, so one of them has to move or the ruling has to bend | round 23 | that opener, and whether the at-most-one rule has an exception |
 
-**NINE ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**ELEVEN ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
@@ -108,7 +111,8 @@ two-Judgements question, SIX when it was answered, and **NINE now that round 22
 has added three at once**. **The number goes both ways**, which is the half an
 "increment" habit gets wrong even when the direction is right, and the
 two-Judgements row lasted exactly one round -- tying the Vanish row for the
-shortest yet.
+shortest yet, **and ELEVEN now that round 25 has added the clock and the
+Shaman's own opener.** Counted from the table, as the sentence says to.
 **AND THE THREE NEW ONES ARE A DIFFERENT KIND FROM THE SIX ABOVE THEM.** Those
 are defensible readings that became load-bearing; these are **a ruling that
 contradicts a shipped field, a rule the engine does not enforce, and a category
@@ -249,6 +253,43 @@ ruled on, and Arcane Wrath is closed by measurement under both readings.
    The old justification's REASONING had expired; its CONCLUSION had not.
 5. **Then the four profiles that were never done** -- Enh Shaman, Frostfire
    Mage, Fire Mage, Shadow Priest -- one at a time, through the procedure.
+
+## Round TWENTY-FIVE: what the loop structurally cannot find
+
+**THE OWNER AUDITED THE FIRST PROFILE THE PROCEDURE PRODUCED AND FOUND FOUR
+THINGS IT HAD NOT.** This round is the fold-back, and the thing worth keeping is
+not the four fixes -- it is that **all four sat in the same blind spot**:
+
+| what the audit found | what the loop did instead |
+| --- | --- |
+| a dead `mage_armor` entry | `USES=1` reported **1.0 uses** -- the pre-combat cast, charged to the entry |
+| two cooldowns wrongly ON the GCD | nothing in this project asks whether an ability is CONFIGURED right |
+| the cooldown stack | no measurement proposes a shape nobody wrote |
+| the one-minute clock | every tool defaults to it, so it is in the baseline AND in every variant |
+
+**A PAIRED PROBE MEASURES A VARIANT AGAINST A BASELINE, SO ANYTHING TRUE OF BOTH
+SIDES CANCELS AND IS INVISIBLE.** The clock cancels. An ability's `triggersGcd`
+cancels until something changes it. A list's SHAPE cancels, because a variant
+can only reorder, add or remove entries somebody already thought of.
+
+**SO THE PROCEDURE IS SOUND AND INCOMPLETE IN A PREDICTABLE PLACE**, and the
+answer is not more variants. `docs/profile-optimisation.md` carries the section
+now, with four things to read by hand once a pass -- the clock, the
+declarations, the pre-combat/APL overlap, and which entries fire together --
+and **"stop when a pass ships nothing" now says explicitly that it means a local
+optimum INSIDE THE FRAME THE LOOP MEASURES IN.**
+
+**AND THE RETRACTION HAD LANDED IN THE TWO PLACES NOBODY READS.** The +24.2 for
+pre-casting Arcane Power was withdrawn in `tools/arcaneVariants.ts` and in a
+commit message, while **three places in this file went on asserting it** and the
+procedure cited it approvingly in a third. All four are corrected. **A
+correction that reaches one copy is this file's own drift failure**, and the
+cheap guard is to grep the figure rather than the file being edited.
+
+**THE GENERAL RULE IS WORTH MORE THAN THE NUMBER: pre-casting is only worth the
+GLOBAL COOLDOWN it saves.** Nothing on an ability correctly off the GCD, and a
+COST on a cooldown short enough to return inside the fight, because the window
+is burned before the build is at full strength.
 
 ## Round TWENTY-FOUR: the owner's audit of the Arcane profile
 

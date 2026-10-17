@@ -270,7 +270,20 @@ AND IT IS WHERE THESE FIVE TURN INTO GATES.** The five below are the diagnosis;
 that file is the thing to follow -- the theme written down before anything, the
 three gates every candidate passes BEFORE it is measured, and the loop order
 that follows the knock-on. Its Appendix A audits all 28 openers against the
-pre-combat ruling and **four of them fail**, three on a line this project added.
+pre-combat ruling; **three still fail**, and `shaman_elemental` fails on two of
+the OWNER'S OWN lines, which is a question rather than an edit.
+
+**IT HAS BEEN RUN ONCE, ON THE ARCANE MAGE, AND THEN AUDITED BY THE OWNER -- AND
+THE AUDIT IS THE MORE USEFUL HALF.** The run reverted an illegal opener
+(**-96.5**) and found one gain off the UPTIME table (**+13.2**); the audit then
+found four things the loop had not, **all of them in the same blind spot**: a
+paired probe cannot see anything true of the baseline AND the variant, so the
+clock, an ability's own declarations and the SHAPE of a list all cancel in a
+difference. See the measurement section further down, and
+[HANDOVER.md](HANDOVER.md)'s rounds 23 to 25.
+**SO A GREEN LOOP IS NOT A FINISHED PROFILE.** "Two passes shipping nothing"
+means a local optimum inside the frame the measurement is taken in, and the
+frame is the part a person has to read.
 
 ### 1. The named scope is the scope
 
@@ -403,13 +416,13 @@ together told someone their build was missing features that were never coming.
 
 | `scope` | Covers | Entries |
 | --- | --- | --- |
-| `positioning` | positions, range, facing, movement, "nearby", radius, travel forms | 21 |
+| `positioning` | positions, range, facing, movement, "nearby", radius, travel forms | 23 |
 | `crowdControl` | stuns, fears, roots, snares, silences, incapacitates, disorients, disarms, **and removing any of them** | 37 |
-| `threat` | threat, which is not tracked. Defensive Stance's +30% and Defiance are dropped, not deferred | 13 |
+| `threat` | threat, which is not tracked. Defensive Stance's +30% and Defiance are dropped, not deferred | 11 |
 | `healing` | healing THROUGHPUT. **Mana RETURN is NOT out of scope** — it changes a damage profile's sustain, so it is a live gap and gets no `scope` | 37 |
 | `stealth` | being stealthed, detecting it, and the openers requiring it — Ambush, Garrote, Cheap Shot. **NOT an in-combat proc that REMOVES a stealth requirement**, which is what Cutthroat is. **NOR an action BREAKING it**, which is now an engine rule | 6 |
 | `castPushback` | avoiding, resisting or reducing the interruption or DELAY of a cast or channel from damage taken. **NOT an interrupt the TARGET suffers** — Earth Shock's school lockout is about the enemy casting and is inert for a different reason | 7 |
-| `totemEntities` | a totem that BUFFS or HEALS on its own. **NOT a totem that deals DAMAGE**, which Searing Totem proved is expressible as a debuff that ticks | 4 |
+| `totemEntities` | a totem that BUFFS or HEALS on its own. **NOT a totem that deals DAMAGE**, which Searing Totem proved is expressible as a debuff that ticks | 5 |
 | `dispel` | removing a poison, disease, curse or magic effect, **and RESISTING a dispel**, which is the same concept from the other side. **NOT removing crowd control**, which `crowdControl` covers in its own words | 2 |
 | `immunity` | an immunity that **also stops the character attacking** — Blessing of Protection, Divine Protection, Ice Block. **NOT one you can attack through**: Forever's Divine Shield reduces your damage 50% instead of disarming you, so it stays a live gap | 3 |
 
@@ -436,6 +449,14 @@ from the same base, both write the same number, git merges them without a
 conflict and the total is short. **So re-count rather than increment**, the same
 rule the talent census follows, and the one-liner that does it is a loop over the
 nine `*_TALENT_EFFECTS` tables counting `unmodelled` effects that carry a `scope`.
+
+**AND IT HAS DRIFTED A THIRD TIME, FOUND WHILE EDITING THIS FILE FOR SOMETHING
+ELSE ENTIRELY.** `positioning` read 21 against **23**, `threat` 13 against
+**11**, `totemEntities` 4 against **5**, and the total 130 against **131** --
+so three rows were stale in two directions at once and the sum was wrong by
+one. **Two paragraphs immediately below this already say this column drifts**,
+which is the whole lesson: a note saying a number is derived does not derive it,
+and a file that documents its own drift twice still drifts. Run the one-liner.
 
 **AND A FOURTH WAS WRONG, WHICH IS THE POINT OF SAYING SO FOR THE SECOND TIME.**
 `threat` read 14 against 13 declarations, and the paragraph above had already
@@ -535,7 +556,7 @@ expressible, and Searing Totem is modelled as a debuff that ticks.
 
 **AND THE COUNT ABOVE IS NINE MEMBERS, NOT SEVEN, WHICH THIS FILE SAID FOR
 SEVERAL RELEASES.** `OutOfScope` declares nine and the table above has nine rows
-summing to **130 entries**. "Seven members, all of them the owner's" was true the
+summing to **131 entries**. "Seven members, all of them the owner's" was true the
 day the Shaman dive's `castPushback` and `totemEntities` were ratified; `dispel`
 and `immunity` came later, from the one question whose answer split in two, and
 the sentence recording the earlier ratification was left with a total that had
@@ -1592,6 +1613,21 @@ something that comes and goes.
   free — declaring it per ability fails silently, because an ability wrongly
   taking a GCD still costs the right resource and deals the right damage.
   [docs/global-cooldown.md](docs/global-cooldown.md)
+- **AND THAT SILENCE CUTS BOTH WAYS: THE DEFAULT IS *ON*, AND THREE ABILITY
+  FILES HAD NO `triggersGcd: false` ANYWHERE IN THEM.** The derivation reads
+  `?? onNextSwing === undefined`, so an ordinary ability — one that is not
+  on-next-swing — is ON the global cooldown unless somebody opts it out. The
+  owner found two Mage cooldowns paying one they should never have paid:
+  *"Ensure Presence of Mind and Arcane Power don't trigger a global cooldown."*
+  **Worth +33 DPS on that profile, and it is a READ rather than a
+  measurement** — nothing in this project asks whether an ability is CONFIGURED
+  correctly, only whether it is connected, whether its damage scales and whether
+  its entry fired. **So when a class is touched, grep its ability file for
+  `triggersGcd` and check every cooldown-shaped ability against what the spell
+  is**; the mistake is invisible in everything but the DPS.
+- **AN OFF-GCD ABILITY MUST DECLARE A `cooldownMs`**, which `freeCastChain.test.ts`
+  pins across all nine classes: one without would win the list forever and HANG
+  a fight rather than fail one. Both Mage cooldowns already had one.
 - **A cast interrupts the swing in progress and the swing timer resets**, which
   is what makes a cast a real cost to a melee character rather than free damage
   between swings. `Ability.swingTimer: 'hold'` is the exception: the timer runs
@@ -2678,6 +2714,16 @@ within the same panel". `engine/abilities/precombat.ts`.
   IS THE WHOLE REASON.** That one runs BEFORE the `openingAuras` loop, where a
   stance and a form are applied -- so a pre-combat action fired there would act
   on a character that is not yet in its stance.
+- **AND PRE-CASTING A COOLDOWN IS ONLY WORTH THE GLOBAL COOLDOWN IT SAVES**,
+  which is the whole of why a pre-cast is ever worth anything and is easy to
+  overstate. Moving Arcane Power to a 0s lead was recorded at **+24.2** and the
+  figure is **RETRACTED**: most of what it bought was a global cooldown the
+  ability should never have been paying, and once `triggersGcd: false` was set
+  the same move measured **+4.19 +/- 6.81 at 60s and -8.07 by 300s**. So it is
+  worth nothing on an ability correctly off the GCD, and it COSTS something on a
+  cooldown short enough to come back inside the fight -- the window is burned
+  before the build is at full strength. **Check the GCD flag before pricing a
+  pre-cast, or the measurement prices a bug.**
 - **IT IS NOT A FREE CAST.** The mana is spent and the cooldown runs, which is
   what a character who opened with a Fireball actually arrives with. What
   pre-combat mode skips is three things: the global cooldown it would start,
@@ -3421,14 +3467,32 @@ findings. **A zero has to say which kind it is, or the flag that means "this is
 the bug" stops meaning anything** -- which is the cost of adding a cause without
 teaching the reporting about it.
 
+**AND AN EIGHTH, WHICH IS THE CLOCK: THE FIGHT IS SHORTER THAN THE COOLDOWN THE
+ENTRY WAITS FOR.** Every profile carries `durationSeconds: 60`, and several
+abilities a list holds are on a THREE MINUTE cooldown -- so such an ability is
+cast once whatever the list says and its entry can never be reached again.
+**The Arcane Mage's `arcane_power` entry fires 0.00 times at 60s and 2.00 times
+at 240s**, and it was written up as a dead entry on the strength of the first
+figure. The owner: *"arcane power being pre-cast doesn't remove it from the main
+combat APL because the moment a combat run exceeds 3 minutes it'll want to be
+cast a second time."*
+**IT IS THE ONLY CAUSE A DIFFERENT CLOCK MAKES DISAPPEAR**, and the test is one
+comparison -- the ability's cooldown, or its buff duration, against the fight
+length. Mage Armor at THIRTY MINUTES is genuinely dead and no fight length
+brings it back; Arcane Power at three minutes is not. **The two read identically
+in the uses column and are opposites.** `DURATION=` on `tools/probe_build.ts`
+applies a length to the baseline and every variant alike, so count the casts
+there before removing anything.
+
 **AND THE HEADER ABOVE SAYS FOUR, WHICH IS THIS FILE'S OWN COUNT PROBLEM AGAIN.**
 Counted from the paragraphs rather than incremented: the id names no ability;
 the build never learned it; the entry above never yields; the ENCOUNTER already
-supplies it; the condition reads something nothing sets; **the entry is switched
-off** -- SIX, and SEVEN with "the owner meant it", which is deliberately filed
-as not-a-problem. The sentence that opens this section was written when there
-were four and each addition has been labelled by its own ordinal since, so
-**re-count the paragraphs rather than trusting the number in the header.**
+supplies it; the condition reads something nothing sets; the entry is switched
+off; **the fight is shorter than the cooldown** -- SEVEN, and EIGHT with "the
+owner meant it", which is deliberately filed as not-a-problem. The sentence that
+opens this section was written when there were four and each addition has been
+labelled by its own ordinal since, so **re-count the paragraphs rather than
+trusting the number in the header.**
 
 **"A NEW ENTRY GOES AT THE BOTTOM" IS A RULE ABOUT AN ENTRY THAT COSTS
 SOMETHING, AND BOTH ENDS OF THE LIST WERE MEASURED TO FIND THAT OUT.** The four
@@ -6181,6 +6245,37 @@ and one run per stat with it added; what is worth knowing here is the four
 things that decide the answer, because **three of them apply to every
 before-and-after this project takes.**
 
+**A PAIRED PROBE CANNOT SEE ANYTHING TRUE OF THE BASELINE *AND* THE VARIANT, AND
+THAT IS A STRUCTURAL BLIND SPOT RATHER THAN A GAP TO FILL WITH MORE VARIANTS.**
+The owner audited the first profile this project optimised from a written
+procedure and found four things it had missed -- a dead list entry, two
+cooldowns wrongly on the global cooldown, a rotation SHAPE nobody had written,
+and the one-minute clock. **All four cancel in a difference**: the fight length
+is in both runs, an ability's `triggersGcd` is in both until something changes
+it, and a variant can only reorder, add or remove entries somebody already
+thought of.
+**SO FOUR THINGS HAVE TO BE READ BY HAND AND NOT MEASURED** -- the clock, the
+declarations, which entries are redundant with the opener, and which entries
+always fire together. `docs/profile-optimisation.md` carries them as a step.
+**"A local optimum" means inside the frame the measurement is taken in.**
+
+**AND THREE RULES ABOUT REPORTING A FIGURE, ALL THREE PAID FOR IN ONE ROUND:**
+
+- **STATE WHAT A DELTA IS *FROM*, INCLUDING WHAT STAYED IN PLACE.** "+24.2 for
+  pre-casting Arcane Power" passed a review and a merge before the owner asked
+  which of three questions it had answered -- it was `removePrecombat(...)` with
+  the list entry LEFT IN, gated on a proc unrelated to the thing under test. **A
+  delta without its comparand is a number, not a measurement.**
+- **A FIGURE CAN GO STALE INSIDE THE ROUND THAT PRODUCED IT.** That same +24.2
+  was taken before a later change in the same session removed the cost it was
+  mostly pricing. "A prior measurement is true of the build it was taken in"
+  applies to the build you had an hour ago.
+- **NEVER WRITE A NUMBER YOU HAVE NOT MEASURED** -- not in a comment, not as a
+  placeholder you mean to replace. Two went into source in that round before
+  being caught: a revert cost written as `-162.5` and measured at **-96.5**, and
+  a buff uptime written as `31.4%` and read at **32.2%**. Both read exactly like
+  findings. **If the measurement has not run, leave the sentence unfinished.**
+
 **GIVE THE BEFORE AND THE AFTER THE SAME BASE SEED, AND THE DIFFERENCE GETS
 FOUR ORDERS OF MAGNITUDE QUIETER.** `deriveSeed(baseSeed, i)` fixes iteration
 `i`'s fight and a Simulation rolls its duration BEFORE anything else, so two
@@ -6576,7 +6671,16 @@ for these removed and the history was rewritten to strip them.
   correctly; format by hand to match the file around you. It was reverted with
   `git checkout --` and the edit redone.
 - `gh` is at `/c/Program Files/GitHub CLI/gh.exe`, not on PATH. `jq` is
-  unavailable — use `gh --jq`.
+  unavailable — use `gh --jq`, **and note that `--jq` requires `--json` beside
+  it**: `gh pr checks N --jq ...` alone errors out.
+- **AND `jq` IN A BACKGROUND MONITOR FAILS SILENTLY, WHICH IS THE WORST PLACE
+  FOR IT.** A CI watcher built on `gh pr checks --json ... | jq` produced NO
+  output for thirteen minutes and exited 0 — every iteration's `jq` failed, the
+  filter matched nothing, and **"no notification" is indistinguishable from
+  "still pending"**. A second attempt used `--jq` without `--json` and broke the
+  same way. **A monitor whose filter cannot emit on failure is a monitor that
+  reports success by saying nothing**, so check the filter produces a line
+  before trusting the silence.
 - `.gitattributes` forces LF. CRLF warnings on commit are expected and harmless.
 - The app is live at <https://donz-dev.github.io/SimForever/>, republished by
   `.github/workflows/deploy.yml` on every push to `main` that passes.
