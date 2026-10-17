@@ -1169,7 +1169,18 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   **A test that reconstructs the thing under test will reproduce its mistakes**
   -- drive the real reaction and read the event stream.
 
-### The modifier scopes — three keyed, two conditional
+### The modifier scopes — three keyed in the table, and three more in the prose
+
+**COUNT THEM FROM THE ENTRIES RATHER THAN FROM THIS HEADER, WHICH HAS BEEN WRONG
+TWICE.** It read "three keyed, two conditional", which described the table when
+it was written and then stopped describing the section: the prose below adds
+`nonPeriodicDamageMultiplier` as "a FIFTH", `attackerAbilityModifiers` as "a
+FOURTH that belongs to the other side of the attack" and
+`schoolDamagePerTargetEffect` as "a SIXTH" -- **three ordinals that are not a
+sequence**, because each was numbered against whatever the section looked like
+on the day. This is the same arithmetic failure this file records for the scope
+table, the talent census and the never-fired-entry list, and the fix is the same
+one: **re-count the entries, never increment the number in the header.**
 
 Per-ability crit and damage go through modifiers **on the combatant**, never
 through an ability's own `onCast`: `dealDamage` consults them, so an ability
@@ -1228,6 +1239,41 @@ them, including `ALL_ABILITIES`.
   that is written down. **It is also what stops Rip amplifying Rip** — a bleed's
   own ticks being raised by the bleed being up is self-referential, and the looser
   reading measured the Cat Druid a third higher.
+
+**AND A SIXTH, WHICH IS THE SECOND ONE CONDITIONED ON THE DEFENDER AND THE
+FIRST THAT READS A *COUNT*.** `Combatant.schoolDamagePerTargetEffect` is Fire
+Power's "3% per your Fire effects on the target, up to a maximum increase of
+12%" -- a SCHOOL, a COUNT, a CAP and a question about the defender, none of
+which the five scopes above can hold. `bleedingTargetModifiers` reads one
+BOOLEAN off the target and this reads how MANY, and everything else about it is
+a `SchoolModifiers` entry: built once with the character, keyed by school.
+
+**ITS EFFECT LIST IS NAMED AND NOT DERIVED**, which is `WARLOCK_SOUL_SIPHON_EFFECTS`'
+arrangement for the identical reason: an `AuraDefinition` carries no school,
+because the school of a periodic effect is decided inside its own `onTick`, and
+**a derivation that has to RUN the effect to answer is not a derivation** -- the
+argument `isBleed` already makes about "physical, periodic and ignoring armor".
+So the list can be narrower than the ruleset's and says so where it is declared.
+
+**THE CAP IS ON THE PERCENTAGE AND NOT ON THE COUNT**, because the tooltip
+states a maximum increase. `Math.min(count * perEffect, maxPercent)` and not
+`Math.min(count, 4) * perEffect`: the two agree at every current rank, which is
+precisely when writing the wrong one is free.
+
+**AND IT READS `countsAsSchools`, WITH THE TWO HALVES OF ONE SENTENCE POINTING
+OPPOSITE WAYS.** Frostfire Bolt "counts as both Frost and Fire damage", so it IS
+a Fire spell and Fire Power raises it -- and its DoT is an effect that MIXES two
+schools, so it does not qualify as one of the Fire effects on the target. The
+same spell collects the bonus and does not contribute to it, and both halves are
+the tooltip read literally. **The mixed-school exclusion is enforced by the list
+simply not naming that aura**, so a reader adding the next Fire DoT has to
+decide the same question with nothing in the code to remind them.
+
+**THE OLD DECLARATION WAS `schoolDamage` READING INDEX 0, A FLAT 3%** -- the
+per-effect figure used as though it were the whole talent, between a quarter and
+a third of its value. **The wrong number was the RIGHT number for the wrong
+operation**, which is why no figure looked odd and why this needed a new effect
+kind rather than a different index.
 
 **AND A FOURTH THAT BELONGS TO THE OTHER SIDE OF THE ATTACK.**
 `AuraDefinition.attackerAbilityModifiers` is keyed by ability id like the first
@@ -4054,22 +4100,39 @@ one piece of scraped data that IS hand-editable, and the importer disagrees:
 `null` -- which is to say only for a SINGLE-RANK talent with no `{0}` to match.
 **A hand edit to a MULTI-rank row survives exactly until the next `--write`.**
 
-`PATCH_NOTE_TALENT_VALUES` in `game/talents/patchNoteValues.ts` is that layer,
-and it is consulted in **`talentValue`, the ROOT** -- which is the second place
-it went. Wired into `talentBuild` first, which would have left the Talent panel
-printing the client's 1/2/3/4/5 for a Shadow Mastery the engine ran at
-2/4/6/8/10: **the character sheet's crit bug exactly**, a panel disagreeing with
-the fight about a number, invisible because every neighbour is right.
-`talentNumber`, `talentNumbers` and `talentDescription` all come through the root.
+**THAT LAYER EXISTED, DID ITS JOB AND IS DELETED, WHICH IS THE OUTCOME IT WAS
+BUILT FOR.** `PATCH_NOTE_TALENT_VALUES` in `game/talents/patchNoteValues.ts`
+carried three figures -- Shadow Mastery's 2/4/6/8/10, Champion of the Light's
+10/20/30 and Mental Strength's 2/4/6/8/10 -- and client build **1.60.1.70425**
+ships every one of them verbatim. An override on top of a row that now agrees
+with it is a silent no-op, so the file, its test and its call site all went.
 
-**EVERY ENTRY RECORDS WHAT THE CLIENT SAYS, WHICH IS WHAT MAKES THE LAYER EXPIRE
-RATHER THAN ACCUMULATE.** `patchNoteValues.test.ts` fails when a refresh moves
-the generated row, naming the talent; fails separately if an entry ever AGREES
-with the file, because an override that is a silent no-op is worse than none;
-and fails on a stale talent id, which is the failure a RENAME already cost this
-project once. **ONLY A VALUE MAY GO IN IT, never a tree SHAPE** -- a rank count,
-a row and a prerequisite are read by the decoder and the legality rules, so
-inventing one is inventing game data with a build URL that will not decode.
+**IT ANNOUNCED ITS OWN REDUNDANCY RATHER THAN WAITING TO BE REMEMBERED.** Every
+entry recorded what the CLIENT said beside what the note said, and
+`patchNoteValues.test.ts` failed the moment a refresh moved a generated row --
+naming the talent. That failure is what triggered the deletion. **A layer that
+cannot tell you it is finished becomes permanent**, and this one could.
+
+**AND THE RISK IT WAS WRITTEN AGAINST DID NOT MATERIALISE.** The Dual Wield
+Specialization case had a note and a client tooltip disagree with the owner
+ruling for the CLIENT; here a note-derived figure held on all three entries, two
+builds later. So the shape is worth rebuilding the next time a note runs ahead
+of the client, and `git log` has it -- **but it must not be kept standing
+empty**, because a table with no rows reads exactly like a mechanism that is
+doing something.
+
+THE TWO THINGS TO REBUILD IT WITH, if that day comes:
+
+- **CONSULT IT IN `talentValue`, THE ROOT** -- which is the second place it went
+  the first time. Wired into `talentBuild` it would have left the Talent panel
+  printing the client's 1/2/3/4/5 for a Shadow Mastery the engine ran at
+  2/4/6/8/10: **the character sheet's crit bug exactly**, a panel disagreeing
+  with the fight about a number, invisible because every neighbour is right.
+  `talentNumber`, `talentNumbers` and `talentDescription` all come through the
+  root.
+- **ONLY A VALUE MAY GO IN IT, never a tree SHAPE** -- a rank count, a row and a
+  prerequisite are read by the decoder and the legality rules, so inventing one
+  is inventing game data with a build URL that will not decode.
 
 **AND A NOTE'S PARENTHETICAL HISTORY CAN DISAGREE WITH EVERY SOURCE WHILE ITS
 PRESCRIPTION STANDS.** "Shadow Word: Death cooldown increased to 18 seconds (was

@@ -1052,10 +1052,23 @@ put the client at **1.60.1.70425**, where round seventeen captured 70291 -- and
 **every tree change the notes described is in it**, plus eleven that are in no
 note at all.
 
-**THE REFRESH IS NOT ON THE BRANCH.** It was run, read, and reverted, because
-its blocker is six profile build URLs that only the owner can respecify -- see
-below. The data on disk is still 70291 and round seventeen is coherent against
-it.
+**THE REFRESH IS ON THE BRANCH NOW.** This paragraph read "it was run, read, and
+reverted, because its blocker is six profile build URLs that only the owner can
+respecify" -- and the blocker turned out not to need them. Seven preset
+allocations had stopped being legal, and five of the seven were a point going
+where the client put its replacement: a rename, a lost rank paying for a gained
+one, two tier rows swapping places. **Only the Warlock's needed a judgement**, and
+its own opener decided it -- the owner's "2.5s before start casting Shadow Bolt"
+is a 3.0 second cast with Bane 5/5 on it, so Malediction's five deleted points
+had a stated destination.
+
+**SO "ONLY THE OWNER CAN RESPECIFY THIS" WAS TRUE OF THE 1.60.1.70170 PATCH AND
+NOT OF THIS ONE**, and the difference is what the client did rather than how many
+points moved: that patch DELETED talents every Paladin build spent points on with
+nothing in their place, and this one mostly renamed and reshuffled. **A blocker
+inherited from the last patch of the same kind is a dated claim like any other**
+-- `tools/probe_allocations.ts` prints the `dropped` list per preset, which is
+the cheap way to tell a rename from a deletion before concluding either.
 
 ### The three note-derived values are CONFIRMED, which is the headline
 
@@ -1071,8 +1084,19 @@ expose a wrong one. 70425 ships all three **verbatim**:
 
 **THE DETECTOR SAID SO BY FAILING**, which is what it is for: the importer run
 failed `patchNoteValues.test.ts`'s "the client still says it" on
-`shadow_mastery`, naming the talent and printing both rows. **Delete that whole
-file in the commit that lands the refresh** -- the failing test is the reminder.
+`shadow_mastery`, naming the talent and printing both rows.
+
+**AND THE INSTRUCTION THIS PARAGRAPH GAVE ITSELF WAS FOLLOWED.** It read "delete
+that whole file in the commit that lands the refresh -- the failing test is the
+reminder", and the refresh commit deletes `patchNoteValues.ts`, its test and its
+call site in `talentValue`. **A layer built to expire, which announced its own
+redundancy and was removed on that announcement**, which is the first time
+anything in this project has gone round that whole loop.
+
+The shape is kept in CLAUDE.md with the two things to rebuild it with, because
+the next note that runs ahead of the client will want it -- and the note there
+says what matters more: **it must not be left standing empty**, since a table
+with no rows reads exactly like a mechanism that is doing something.
 
 So the risk the layer was written against -- the Dual Wield Specialization case,
 where a note and a client tooltip disagreed and the owner ruled for the CLIENT --
