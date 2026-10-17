@@ -248,9 +248,11 @@ export const DRUID_MOONKIN: AplList = {
 /**
  * CAT — Rake and Rip held up, Ferocious Bite otherwise, Shred as the builder.
  *
- * SHRED IS THE BUILDER DESPITE ITS POSITIONAL REQUIREMENT, which this project
- * drops because nothing here has a facing. That is generous to the build and
- * the ability says so where it is declared.
+ * SHRED IS THE BUILDER AND ITS POSITIONAL REQUIREMENT IS MET, which this note
+ * used to call generous: "this project drops [it] because nothing here has a
+ * facing. That is generous to the build." The owner has since ruled the
+ * position ASSUMED unless the target attacks back, and this profile's target
+ * does not -- so nothing is being given away. See `SHRED`.
  *
  * RIP ABOVE FEROCIOUS BITE. Rip at five points is 855 over twelve seconds for
  * 30 energy; Bite is 817 plus whatever the energy bar converts, for 35 and the

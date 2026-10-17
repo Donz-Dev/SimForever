@@ -172,6 +172,20 @@ describe('dual-wield in Berserker Stance uses its own list', () => {
       character: { ...base.character, combatStyle: 'dual_wield', stance: 'berserker' },
       equipment: startingEquipmentFor('warrior', 'dual_wield'),
       talents,
+    /*
+       * BLOODRAGE *THEN* BATTLE SHOUT, AND THE ORDER IS LOAD-BEARING. The
+       * Berserker list no longer casts the shout -- the owner moved it, the stance
+       * and Charge into `precombat` on all three Warrior profiles -- so a
+       * hand-built warrior has to declare it. And a shout ALONE is silently
+       * refused: it costs 10 rage, a warrior opens on an empty bar, and
+       * `runPrecombat` skips a cast it cannot pay for. Bloodrage's instant 10 is
+       * what makes the next line affordable, which is why the owner's own openers
+       * write the two in this order at the same lead.
+       */
+      precombat: [
+        { abilityId: 'bloodrage_cast', secondsBefore: 10 },
+        { abilityId: 'battle_shout_cast', secondsBefore: 10 },
+      ],
       simulation: { ...base.simulation, seed: 9, durationSeconds: 100 },
     } as never);
   }
@@ -197,11 +211,20 @@ describe('dual-wield in Berserker Stance uses its own list', () => {
     expect(log.some((line) => line.includes('casts Rend'))).toBe(false);
   });
 
-  it('opens with Battle Shout and keeps it up without recasting', () => {
+  it('opens with Battle Shout BEFORE the pull and never recasts it', () => {
+    /*
+     * ONE CAST STILL, AND IT IS NOT IN THE LIST ANY MORE. The owner moved the
+     * shout to `precombat`, so the single cast happens before the clock starts
+     * rather than as the list's second entry -- and three minutes of buff in a
+     * hundred-second fight means nothing recasts it either way.
+     *
+     * THE COUNT IS WHAT THIS TEST IS ABOUT and it is unchanged. What moved is
+     * WHEN, which the timestamp asserts: a pre-combat cast is logged at zero.
+     */
     const log = fight().combatLog;
     const shouts = log.filter((line) => line.includes('casts Battle Shout'));
-    // Three minutes of buff in a hundred second fight is one cast.
     expect(shouts.length).toBe(1);
+    expect(shouts[0]).toContain('0.00');
   });
 
   it('builds Sunder Armor to five stacks', () => {
@@ -277,8 +300,14 @@ const OWNER_ORDER = [
   'death_wish',
   'major_healing_potion',
   'healthstone',
-  'berserker_stance_cast',
-  'battle_shout_cast',
+  /*
+   * TWO IDS LEFT THIS ARRAY AND WENT BEFORE THE PULL: `berserker_stance_cast`
+   * and `battle_shout_cast`, on the owner's instruction with the 28 openers --
+   * "Berserker Stance and Battle Shout should be removed from the normal APL."
+   * **BOTH FIRED ZERO TIMES HERE**: the preset opens in Berserker Stance and
+   * `battle_shout` is in `PRESET_RAID_BUFFS`, so the shout's own condition
+   * refused it all fight. See the profile's `precombat` list.
+   */
   'sunder_armor_cast',
   'execute',
   'heroic_strike',
@@ -301,8 +330,6 @@ const ORC_FURY_ORDER = [
   'recklessness_cast',
   'death_wish',
   'healthstone',
-  'berserker_stance_cast',
-  'battle_shout_cast',
   'sunder_armor_cast',
   'execute',
   'heroic_strike',
@@ -319,7 +346,7 @@ describe('the Berserker list order', () => {
     );
   });
 
-  it('narrows to fifteen entries for the preset that runs it', () => {
+  it('narrows to thirteen entries for the preset that runs it', () => {
     /*
      * THE PANEL IS WHAT THE OWNER READ, and it shows the NARROWED list: every
      * stock list names all four racial cooldowns and all nine consumables, and
@@ -352,14 +379,20 @@ describe('the Berserker list order', () => {
      * ==========================================================================
      */
     const ids = WARRIOR_DUAL_WIELD_BERSERKER.entries.map((entry) => entry.abilityId);
-    for (const passed of [
-      'healthstone',
-      'berserker_stance_cast',
-      'battle_shout_cast',
-      'sunder_armor_cast',
-      'execute',
-    ]) {
+    /*
+     * TWO OF THE FOUR IT PASSED HAVE LEFT THE LIST ALTOGETHER -- the stance and
+     * the shout are `precombat` actions now -- so what Death Wish is above is
+     * the Healthstone, Sunder Armor and Execute. The claim is unchanged and the
+     * set it applies to is smaller, which is why the ids are checked for
+     * PRESENCE first: `indexOf` returns -1 for a missing entry and
+     * `toBeLessThan(-1)` would have passed for the wrong reason.
+     */
+    for (const passed of ['healthstone', 'sunder_armor_cast', 'execute']) {
+      expect(ids.indexOf(passed), `${passed} is in the list`).toBeGreaterThanOrEqual(0);
       expect(ids.indexOf('death_wish'), passed).toBeLessThan(ids.indexOf(passed));
+    }
+    for (const gone of ['berserker_stance_cast', 'battle_shout_cast']) {
+      expect(ids.indexOf(gone), `${gone} went before the pull`).toBe(-1);
     }
 
     const built = PRESETS_BY_ID.get('dw_fury')!.build();
@@ -369,8 +402,18 @@ describe('the Berserker list order', () => {
     } as never);
     const uses = (name: string) =>
       batch.abilities.find((row) => row.abilityName === name)?.uses ?? 0;
-    for (const name of ['Healthstone', 'Berserker Stance', 'Battle Shout', 'Sunder Armor']) {
+    /*
+     * THE STANCE AND THE SHOUT NOW HAVE ONE USE EACH, from the opener rather
+     * than from the list -- a pre-combat cast goes through `castAbility` and is
+     * counted like any other. So they move out of the zero list and into their
+     * own assertion, which is a stronger statement than the zero was: it says
+     * the opener happened rather than that the entry did not.
+     */
+    for (const name of ['Healthstone', 'Sunder Armor']) {
       expect(uses(name), name).toBe(0);
+    }
+    for (const name of ['Berserker Stance', 'Battle Shout']) {
+      expect(uses(name), name).toBeCloseTo(1, 1);
     }
     // And Death Wish itself does fire, so this is not four zeros and a fifth.
     expect(uses('Death Wish')).toBeGreaterThan(0);

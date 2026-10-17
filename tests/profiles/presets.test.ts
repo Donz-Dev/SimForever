@@ -791,22 +791,58 @@ describe('2H Arms', () => {
     expect(sunder?.uptime ?? 0).toBeGreaterThan(0.99);
   });
 
-  it('does NOT cast Battle Shout, because the raid already did', () => {
+  it('shouts ONCE before the pull, over the raid own copy rather than beside it', () => {
     /*
-     * The reuse paying off. The raid entry and the Warrior's own ability are
-     * the SAME aura, so the list's "if not active" condition finds it up from
-     * the pull and falls straight through -- saving a global cooldown and ten
-     * rage every fight rather than stacking a second copy.
+     * ========================================================================
+     * THIS HAS FLIPPED TWICE AND THE THING IT IS ABOUT HAS NOT MOVED.
      *
-     * This test asserted the opposite until the raid was added to the presets,
-     * which is exactly the change that should have flipped it.
+     *   1  "DOES cast Battle Shout"        before the raid was selected
+     *   2  "does NOT cast Battle Shout"    the raid supplies it, so the list's
+     *                                      "if not active" condition refused it
+     *   3  "shouts once before the pull"   the owner moved it to `precombat`,
+     *                                      which has no such condition
+     *
+     * WHAT IS INVARIANT IS THE REUSE: the raid entry and the Warrior's own
+     * ability are the SAME AURA with the same id, so a cast over the raid's
+     * copy REFRESHES it rather than stacking a second one. That is what this
+     * test has always actually been for, and it is the one assertion below
+     * that has survived all three readings.
+     *
+     * AND THE CAST IS NOT FREE OF CONSEQUENCE, which is worth seeing: it ages
+     * the raid's buff by its ten-second lead, because `rewindAuras` ages what
+     * a pre-combat cast applied OR REFRESHED. The raid's copy is applied at
+     * twice the fight duration, so ten seconds off it cannot run out.
+     * ========================================================================
      */
     const p = profile();
     const batch = runProfileBatch({ ...p, simulation: { ...p.simulation, iterations: 40 } });
-    expect(batch.abilities.find((row) => row.abilityName === 'Battle Shout')).toBeUndefined();
 
-    const shout = batch.buffUptime.find((row) => row.auraId === 'battle_shout');
+    const row = batch.abilities.find((entry) => entry.abilityName === 'Battle Shout');
+    expect(row, 'the pre-combat cast is reported').toBeDefined();
+    expect(row!.uses).toBeCloseTo(1, 1);
+    expect(row!.damage).toBe(0);
+
+    const shout = batch.buffUptime.find((entry) => entry.auraId === 'battle_shout');
     expect(shout?.uptime ?? 0).toBeGreaterThan(0.99);
-    expect(shout?.applications ?? 0).toBeCloseTo(1, 1);
+
+    /*
+     * TWO APPLICATIONS AND ONE AURA, which is the distinction this test exists
+     * for and the number that moved. It asserted ~1 while the list's condition
+     * refused the cast; the opener casts it, so the count is the raid's own
+     * apply PLUS the pre-combat REFRESH -- `applications` counts a refresh.
+     *
+     * SO THE "one aura, not two" CLAIM IS ASSERTED DIRECTLY INSTEAD, on the
+     * built character: `AuraCollection.apply` refreshes a matching id in place,
+     * so there is exactly one live instance however many sources reach it. The
+     * application count could never have said that on its own -- two separate
+     * auras would read 2 as well, and would be worth twice the attack power.
+     */
+    expect(shout?.applications ?? 0).toBeCloseTo(2, 1);
+
+    const player = characterAtCombatStart(p)!;
+    const instances = [...player.auras.active].filter(
+      (aura) => aura.definition.id === 'battle_shout',
+    );
+    expect(instances, 'one instance, two sources').toHaveLength(1);
   });
 });

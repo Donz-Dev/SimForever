@@ -22,9 +22,6 @@ import type { CombatStyleId, StanceId } from '../character';
 import { isTankBuild } from '../character';
 import {
   BATTLE_SHOUT,
-  BATTLE_STANCE,
-  BERSERKER_STANCE,
-  DEFENSIVE_STANCE,
   DEMORALIZING_SHOUT,
   LAST_STAND,
   REND,
@@ -160,35 +157,32 @@ const spendableRageAtLeast = (cost: number): AplCondition =>
   builtin('spendable_rage_at_least', cost);
 
 /** An entry that only fires when it can be paid for out of spare rage. */
-/**
- * Charge, at the pull, and NEVER by changing stance to reach it.
+/*
+ * ==============================================================================
+ * `chargeAtThePull` IS GONE, AND THE BUILTIN IT USED IS NOT.
  *
- * ----------------------------------------------------------------------------
- * TWO RULES IN ONE CONDITION, and the second is the one that bites.
+ * It was the Charge entry for the two lists that carried one, with a condition
+ * saying "only from a stance that already allows it" -- because
+ * `PriorityRotation` treats a wrong stance as "not yet, and here is how" and
+ * would otherwise have sent the TANK into Battle Stance at the pull. The owner
+ * has moved Charge to `precombat` on both profiles, so neither list names it.
  *
- * WHEN. The ability's own `canCast` allows it only at timestamp zero -- it
- * cannot be used in combat, and a fight that opens in combat leaves exactly
- * one legal moment. That rule lives on `CHARGE` so every list gets it.
- *
- * AND ONLY FROM A STANCE THAT ALREADY ALLOWS IT. `PriorityRotation` treats a
- * wrong stance as "not yet, and here is how" and will cast a stance change to
- * unblock an entry. That is right for Revenge and wrong here: dropping Charge
- * into the Protection list sent the tank into Battle Stance at the pull,
- * which is a different character. A `condition` is checked BEFORE the swap is
- * considered, so refusing here refuses the swap too.
- *
- * IT IS ALSO EXACTLY THE VANGUARD GATE the ruleset owner asked for, with no
- * talent named anywhere. Charge allows Battle Stance; Vanguard adds Defensive
- * to the character's own copy. A Protection warrior without it is in a stance
- * Charge does not list, so this returns false; with it, the same entry starts
- * working. Reading the ability's stance list rather than the talent means the
+ * THE RULE IT ENCODED STILL HOLDS AND IS NOW THE ENGINE'S. A pre-combat cast
+ * goes through `castAbility`, which stance-checks exactly as usual and has no
+ * rotation attached to swap anything -- so a Charge the character cannot make
+ * from the stance it is in is refused and skipped, which is what the condition
+ * existed to produce. **The Vanguard gate survives with no talent named**:
+ * Charge lists Battle Stance, Vanguard adds Defensive to the character's own
+ * copy, and reading the ability's stance list rather than the talent means the
  * rule cannot drift from the talent that grants it.
- * ----------------------------------------------------------------------------
+ *
+ * `charge_stance_allowed` STAYS REGISTERED THOUGH NO STOCK LIST NAMES IT, and
+ * that is not tidiness. A stored priority list is written out IN FULL on every
+ * saved profile, and `compileCondition` THROWS on a builtin id it does not
+ * know -- so deleting it would make every profile saved before this change
+ * fail when its fight starts, which is the worst place to find out.
+ * ==============================================================================
  */
-const chargeAtThePull: AplEntry = {
-  abilityId: 'charge',
-  condition: builtin('charge_stance_allowed'),
-};
 
 function pooled(abilityId: string, cost: number, extra?: AplCondition): AplEntry {
   return {
@@ -268,9 +262,15 @@ const OPENERS: readonly AplEntry[] = [
    * pull and this condition refuses the cast for the whole fight: the entry
    * fires ZERO times in every preset and is worth exactly nothing there.
    *
-   * It is kept, like the stance casts, because a character built by hand
-   * without the raid buff needs it and it costs a build that has the buff
-   * nothing at all. Re-confirmed as deliberate 2026-09-30.
+   * It is kept because a character built by hand without the raid buff needs it,
+   * and it costs a build that has the buff nothing at all. Re-confirmed as
+   * deliberate 2026-09-30.
+   *
+   * THIS SENTENCE READ "kept, LIKE THE STANCE CASTS" AND THERE ARE NONE LEFT TO
+   * be like. The owner moved the stances and the shout to `precombat` on all
+   * three Warrior PROFILES, so the three profile-specific lists carry neither --
+   * and this generic list keeps its shout for the reason above, which is the
+   * same reason it always had and no longer has a neighbour to share.
    * ----------------------------------------------------------------------------
    */
   {
@@ -671,20 +671,23 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: AplList = {
   },
   ...CONSUMABLE_HEALS,
   /*
-   * THE PRESET ALREADY OPENS IN BERSERKER STANCE, so this fires zero times --
-   * the same shape as the Arms list's Battle Stance entry, and kept for the
-   * same reason: a character built by hand in another stance needs it, and the
-   * entry costs a build that does not exactly nothing.
+   * ============================================================================
+   * TWO ENTRIES MOVED TO **BEFORE THE PULL**: BERSERKER STANCE AND BATTLE
+   * SHOUT. The owner's instruction with the 28 openers -- "Berserker Stance and
+   * Battle Shout should be removed from the normal APL."
+   *
+   * NO CHARGE TO MOVE, which is this list agreeing with the ability: Charge
+   * lists Battle Stance, Vanguard adds Defensive, and a Fury warrior takes
+   * neither -- so this list has never carried the entry and the owner did not
+   * ask for one in the opener either.
+   *
+   * BOTH FIRED ZERO TIMES HERE. The preset already opens in Berserker Stance,
+   * and `battle_shout` is in `PRESET_RAID_BUFFS` so the shout's own condition
+   * refused it all fight. The figure does not move; the opener is now visible
+   * in the panel rather than being two never-fired rows. See the Arms list for
+   * the full argument, and `presets.ts` for the opener.
+   * ============================================================================
    */
-  {
-    abilityId: 'berserker_stance_cast',
-    condition: selfTime('atMost', 0, BERSERKER_STANCE.id),
-  },
-  // Once, and it lasts three minutes.
-  {
-    abilityId: 'battle_shout_cast',
-    condition: selfTime('atMost', 0, BATTLE_SHOUT.id),
-  },
   /*
    * Build to five stacks, then hold it there.
    *
@@ -815,9 +818,35 @@ export const WARRIOR_DUAL_WIELD_BERSERKER_ROTATION: Rotation = compileRotation(W
 export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
   name: 'Warrior (Shield, Defensive)',
   entries: [
-  // At the pull, and only with Vanguard. See `chargeAtThePull`, which reads
-  // the stance list rather than naming the talent.
-  chargeAtThePull,
+  /*
+   * ============================================================================
+   * THREE ENTRIES MOVED TO **BEFORE THE PULL** AND ARE NOT HERE ANY MORE:
+   * CHARGE, THE STANCE, AND BATTLE SHOUT.
+   *
+   * The owner's instruction with the 28 openers: "Charge, Defensive Stance, and
+   * Battle Shout should be removed from the normal APL." They are in this
+   * profile's `precombat` list instead -- see `presets.ts` -- which is where a
+   * one-instant action belongs: `runPrecombat` is not on the fight's clock, so
+   * none of the three costs a global cooldown or a poll.
+   *
+   * WHAT EACH ONE WAS WORTH HERE IS WHY IT MOVED, and all three were awkward
+   * in a priority list for a different reason:
+   *
+   *   Charge         castable for ONE INSTANT -- `clock.now() === 0` -- so it
+   *                  had to be first or it fired zero times, which it once did
+   *   the stance     the preset already opens in it, so the entry existed for a
+   *                  hand-built character and fired zero times on this one
+   *   Battle Shout   `battle_shout` is in `PRESET_RAID_BUFFS`, so its own
+   *                  condition refused it for the whole fight in every profile
+   *
+   * SO NONE OF THE THREE FIRED ON THIS PRESET and the figure does not move;
+   * what changes is that the opener is now visible in the panel instead of
+   * being three never-fired rows. **THE TWO GENERIC WARRIOR LISTS KEEP ALL
+   * THREE**, deliberately: they are the fallbacks for a Warrior whose style and
+   * stance match no specific list, that character has no pre-combat list of its
+   * own, and for it the entries are live.
+   * ============================================================================
+   */
   /*
    * THE STANCE SECOND, ON THE OWNER'S RESPECIFICATION -- IT WAS SIXTH, AND IT
    * WAS BELOW THE TWO SURVIVAL COOLDOWNS ON PURPOSE.
@@ -842,10 +871,6 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
    * when it should fire".
    * --------------------------------------------------------------------------
    */
-  {
-    abilityId: 'defensive_stance_cast',
-    condition: selfTime('atMost', 0, DEFENSIVE_STANCE.id),
-  },
   /*
    * SURVIVAL NEXT. Two entries that nothing in this project could have
    * written a week ago, because the character could not drop below one health
@@ -900,10 +925,6 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
    * below them because those are the bigger answer. See `CONSUMABLE_HEALS`.
    */
   ...CONSUMABLE_HEALS,
-  {
-    abilityId: 'battle_shout_cast',
-    condition: selfTime('atMost', 0, BATTLE_SHOUT.id),
-  },
   /*
    * BLOODRAGE BELOW BATTLE SHOUT NOW, where it used to sit two entries above
    * it -- the owner's order.
@@ -1190,13 +1211,37 @@ export const WARRIOR_TWO_HAND_BATTLE: AplList = {
   name: 'Warrior (Two-Hander, Battle)',
   entries: [
   /*
-   * FIRST, because it is the one entry whose window is a single instant: put
-   * it below anything and that anything takes the instant. It is off the
-   * global cooldown, so it costs the entries below it nothing.
+   * ============================================================================
+   * THREE ENTRIES MOVED TO **BEFORE THE PULL** AND ARE NOT HERE ANY MORE:
+   * CHARGE, THE STANCE, AND BATTLE SHOUT.
+   *
+   * The owner's instruction with the 28 openers: "Charge, Battle Stance, and
+   * Battle Shout should be removed from the normal APL." They are in this
+   * profile's `precombat` list instead -- see `presets.ts` -- which is where a
+   * one-instant action belongs: `runPrecombat` is not on the fight's clock, so
+   * none of the three costs a global cooldown or a poll.
+   *
+   * WHAT EACH ONE WAS WORTH HERE IS WHY IT MOVED, and all three were awkward
+   * in a priority list for a different reason:
+   *
+   *   Charge         castable for ONE INSTANT -- `clock.now() === 0` -- so it
+   *                  had to be first or it fired zero times, which it once did
+   *   the stance     the preset already opens in it, so the entry existed for a
+   *                  hand-built character and fired zero times on this one
+   *   Battle Shout   `battle_shout` is in `PRESET_RAID_BUFFS`, so its own
+   *                  condition refused it for the whole fight in every profile
+   *
+   * SO NONE OF THE THREE FIRED ON THIS PRESET and the figure does not move;
+   * what changes is that the opener is now visible in the panel instead of
+   * being three never-fired rows. **THE TWO GENERIC WARRIOR LISTS KEEP ALL
+   * THREE**, deliberately: they are the fallbacks for a Warrior whose style and
+   * stance match no specific list, that character has no pre-combat list of its
+   * own, and for it the entries are live.
+   * ============================================================================
    */
-  chargeAtThePull,
   /*
-   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   * THE RACIAL COOLDOWNS, AND THEY OPEN THIS LIST NOW THAT CHARGE HAS GONE
+   * BEFORE THE PULL.
    *
    * Free, off the global cooldown, and skipped in silence by every build
    * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
@@ -1216,18 +1261,6 @@ export const WARRIOR_TWO_HAND_BATTLE: AplList = {
    * Berserker list for the same reason.
    */
   { abilityId: 'bloodrage_cast' },
-  /*
-   * The stance first, and only when it is not already up. A stance lasts until
-   * another replaces it, so this fires once at the pull and then never again.
-   */
-  {
-    abilityId: 'battle_stance_cast',
-    condition: selfTime('atMost', 0, BATTLE_STANCE.id),
-  },
-  {
-    abilityId: 'battle_shout_cast',
-    condition: selfTime('atMost', 0, BATTLE_SHOUT.id),
-  },
   /*
    * SURPLUS RAGE INTO THE NEXT SWING, AND IT IS NOW THE FIRST THING BELOW THE
    * SHOUTS rather than the fourth -- the owner's order.
@@ -1330,13 +1363,22 @@ export const WARRIOR_TWO_HAND_BATTLE: AplList = {
    * missing a quarter of a fight at guaranteed crit.
    *
    * THE DANCE IS WHY IT GOES LAST, WHICH IS THE OPPOSITE OF HOW A DAMAGE
-   * COOLDOWN IS USUALLY PLACED. Recklessness requires Berserker Stance,
-   * `PriorityRotation` will cast a stance change to reach an ability, and this
-   * list's own `battle_stance_cast` entry sits above Heroic Strike and brings it
-   * straight back. At the BOTTOM the dance happens in a moment the list had
-   * nothing castable for anyway; above Heroic Strike it takes a global cooldown
-   * something else wanted -- **+34.28 against +40.24** at 400 iterations, and
-   * the ordering held at 1,500.
+   * COOLDOWN IS USUALLY PLACED. Recklessness requires Berserker Stance and
+   * `PriorityRotation` will cast a stance change to reach an ability. At the
+   * BOTTOM the dance happens in a moment the list had nothing castable for
+   * anyway; above Heroic Strike it takes a global cooldown something else
+   * wanted -- **+34.28 against +40.24** at 400 iterations, and the ordering held
+   * at 1,500.
+   *
+   * ** WHAT BROUGHT THE STANCE BACK WAS THIS LIST'S OWN `battle_stance_cast`
+   * ENTRY, AND THAT ENTRY HAS GONE BEFORE THE PULL.** The sentence above said so
+   * and the measurement was taken with it in. What returns the warrior to Battle
+   * Stance now is the same mechanism pointing the other way -- the next
+   * Battle-Stance ability the list reaches for, of which it has five, makes
+   * `PriorityRotation` swap back. **THE FIGURES ABOVE ARE THEREFORE DATED**, and
+   * they were taken on an entry that is DISABLED by default, so no shipped
+   * profile exercises any of it. Re-measure before trusting the ordering if the
+   * eye is ever opened.
    *
    * AND IT MAKES IMPROVED TACTICAL MASTERY LIVE. Those five points retain up to
    * fifteen rage across a stance change, and this list previously made none --

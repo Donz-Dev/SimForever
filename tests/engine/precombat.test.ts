@@ -164,6 +164,88 @@ describe('the lead time is real, which is the owner s ruling', () => {
     expect(left(3)).toBe(fresh - seconds(3));
   });
 
+  it('delivers the ticks that happened before the pull, when the aura says they count', () => {
+    /*
+     * ========================================================================
+     * BLOODRAGE AT A TEN SECOND LEAD IS TWENTY RAGE, AND IT USED TO BE TEN.
+     *
+     * The owner's arithmetic, given with the 28 openers: "you get 10 rage
+     * instantly, and then another 1 rage per second for 10 seconds. During this
+     * time the warrior's rage does not decay. **You end up with exactly 20 rage
+     * generated from Bloodrage after 10 seconds.**"
+     *
+     * ALL THREE WARRIOR OPENERS PRESS IT AT EXACTLY TEN SECONDS, which is
+     * exactly its duration -- so the whole over-time half elapsed before the
+     * pull, the aura was aged past its own end, and `rewindAuras` removed it
+     * with its ten remaining rage undelivered. The warrior arrived with half
+     * of what the ability gives.
+     *
+     * `PeriodicEffect.accruesBeforeCombat` is the fix and it is DECLARED rather
+     * than inferred: nothing on an aura distinguishes "a resource the character
+     * spent those seconds generating" from "damage in a fight that had not
+     * started", and only the first should survive the pull.
+     *
+     * MEASURED AS A DIFFERENCE AGAINST THE SAME CAST AT NO LEAD, so neither
+     * Bloodrage's own figures nor Improved Bloodrage's multiplier has to be
+     * restated here -- what is asserted is that the ten seconds are worth the
+     * over-time half, which is the claim.
+     * ========================================================================
+     */
+    const rageWith = (secondsBefore: number) => {
+      const { player } = fightWith('prot_warr', [
+        { abilityId: 'bloodrage_cast', secondsBefore },
+      ]);
+      return player.resources.require('rage').current;
+    };
+
+    const instantOnly = rageWith(0);
+    expect(instantOnly, 'the instant half landed').toBeGreaterThan(0);
+
+    // Ten seconds out: the whole over-time half has accrued, and it is equal to
+    // the instant half by the ruleset's own figures -- 10 and 10.
+    expect(rageWith(10)).toBeCloseTo(instantOnly * 2, 6);
+
+    // And the aura is gone, because its window really is over.
+    const { player } = fightWith('prot_warr', [
+      { abilityId: 'bloodrage_cast', secondsBefore: 10 },
+    ]);
+    expect(player.auras.has('bloodrage')).toBe(false);
+  });
+
+  it('does not double-count at a lead shorter than the window', () => {
+    /*
+     * THE ARITHMETIC THAT MAKES THE ABOVE SAFE, and the thing to check rather
+     * than reason about: the ticks the engine already scheduled keep firing
+     * after the pull and stop when the AGED window closes. So a four-second
+     * lead is four rage here and six in the fight -- never ten plus ten.
+     *
+     * DRIVEN TO THE END OF THE WINDOW, because the failure this guards against
+     * is only visible once both halves have had their chance.
+     */
+    const { simulation, player } = fightWith('prot_warr', [
+      { abilityId: 'bloodrage_cast', secondsBefore: 4 },
+    ]);
+    const atPull = player.resources.require('rage').current;
+    const full = fightWith('prot_warr', [
+      { abilityId: 'bloodrage_cast', secondsBefore: 10 },
+    ]).player.resources.require('rage').current;
+
+    // Four of the ten accrued, so it sits between the instant half and all of it.
+    const instantOnly = full / 2;
+    expect(atPull).toBeGreaterThan(instantOnly);
+    expect(atPull).toBeLessThan(full);
+
+    /*
+     * AND THE AURA IS STILL UP WITH THE REMAINDER ON IT. The total cannot be
+     * asserted by running the clock -- a Protection warrior's own rotation
+     * spends rage and its target hands more back -- so what is checked is that
+     * the window was SHORTENED rather than restarted, which is the half that
+     * would double-count.
+     */
+    expect(player.auras.has('bloodrage')).toBe(true);
+    expect(player.auras.remainingMs('bloodrage', simulation.clock.now())).toBe(seconds(6));
+  });
+
   it('drops a buff that would already have run out', () => {
     /*
      * ALREADY OVER MEANS GONE, not present with nothing left. Leaving it would
@@ -300,12 +382,24 @@ describe('the profile field', () => {
 
   it('changes nothing for a character that declares none', () => {
     /*
-     * THE CONTAINMENT CHECK IN MINIATURE, and the reason all 75 combat-log
-     * hashes are unchanged: no preset carries a pre-combat list, so the hook
-     * returns immediately.
+     * ========================================================================
+     * THE CONTAINMENT CHECK IN MINIATURE: the hook returns immediately when
+     * there is nothing to do.
+     *
+     * ITS REFERENCE USED TO BE THE PRESET AS SHIPPED, on the reasoning that
+     * "no preset carries a pre-combat list". **Every one of them does now** --
+     * the owner specified an opener for all 28 -- so that reference spends mana
+     * on Mage Armor and a Fireball and the two sides stopped being comparable.
+     * It read 7182 against 6282.
+     *
+     * SO BOTH SIDES DECLARE NONE. This project's own rule: a test that reads a
+     * profile to pin a MECHANISM must not depend on what that profile happens
+     * to carry, and this one was reading the profile for its baseline.
+     * ========================================================================
      */
     const { player, simulation } = fightWith('mage_fire', []);
-    const reference = characterAtCombatStart(PRESETS_BY_ID.get('mage_fire')!.build())!;
+    const base = PRESETS_BY_ID.get('mage_fire')!.build();
+    const reference = characterAtCombatStart({ ...base, precombat: [] })!;
     expect(player.resources.require('mana').current).toBe(
       reference.resources.require('mana').current,
     );

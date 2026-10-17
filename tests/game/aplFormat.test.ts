@@ -102,9 +102,34 @@ describe('every built-in list is data', () => {
         .filter((id): id is string => id !== undefined),
     );
     for (const id of used) expect(isBuiltinConditionId(id), id).toBe(true);
-    // And the other direction: a builtin nothing uses is dead weight that
-    // would go on passing every check above.
-    for (const id of BUILTIN_CONDITION_IDS) expect(used.has(id), `${id} is unused`).toBe(true);
+
+    /*
+     * ========================================================================
+     * AND THE OTHER DIRECTION: a builtin nothing uses is dead weight that
+     * would go on passing every check above.
+     *
+     * ONE EXCEPTION, AND IT MAY NOT BE DELETED. `charge_stance_allowed` was the
+     * condition on the two lists that carried a Charge entry, refusing unless
+     * the character was already in a stance Charge allows -- without it
+     * `PriorityRotation` would cast a stance change to unblock the entry and
+     * drag the TANK into Battle Stance at the pull. The owner has since moved
+     * Charge to `precombat` on both profiles, so no stock list names it.
+     *
+     * **A STORED LIST IS WRITTEN OUT IN FULL ON EVERY SAVED PROFILE AND
+     * `compileCondition` THROWS ON A BUILTIN ID IT DOES NOT KNOW.** So deleting
+     * this one would make every profile saved before that change fail when its
+     * fight starts, which is the worst possible place to find out. It stays,
+     * it is dead in the stock lists, and that is recorded here rather than left
+     * for somebody to tidy up.
+     *
+     * THE LIST IS ASSERTED EXHAUSTIVE, so a SECOND unused builtin still fails:
+     * this is an exception for one id with one reason, not a hole.
+     * ========================================================================
+     */
+    const UNUSED_BY_DESIGN = ['charge_stance_allowed'];
+    const unused = BUILTIN_CONDITION_IDS.filter((id) => !used.has(id));
+    expect([...unused].sort()).toEqual([...UNUSED_BY_DESIGN].sort());
+    for (const id of UNUSED_BY_DESIGN) expect(isBuiltinConditionId(id), id).toBe(true);
   });
 });
 

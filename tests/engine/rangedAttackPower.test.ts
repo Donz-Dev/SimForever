@@ -261,9 +261,15 @@ describe('what the fix switched back on', () => {
      * something that happened to be true. What the fix is actually about is that
      * the Aspect reaches the RANGED pool and not the melee one, which is the
      * same claim at any raid composition.
+     *
+     * AND THE PROFILE'S OWN OPENER IS STRIPPED, because it now CASTS the Aspect
+     * before the pull: `canCast` refuses a second one while the aura is up, so
+     * a test that casts it itself has to start from a character that has not.
+     * The mechanism is the subject here, not what this preset opens with.
      * ------------------------------------------------------------------------
      */
-    const profile = PRESETS_BY_ID.get('lw_ranged')!.build();
+    const base = PRESETS_BY_ID.get('lw_ranged')!.build();
+    const profile = { ...base, precombat: [] };
     const atPull = characterAtCombatStart(profile)!;
 
     expect(atPull.auras.has('aspect_of_the_hawk')).toBe(false);

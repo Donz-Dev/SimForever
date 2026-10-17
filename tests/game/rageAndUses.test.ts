@@ -29,6 +29,27 @@ function berserker(talents: Record<string, number> = {}, iterations = 300) {
     character: { ...base.character, combatStyle: 'dual_wield', stance: 'berserker' },
     equipment: startingEquipmentFor('warrior', 'dual_wield'),
     talents,
+    /*
+     * BATTLE SHOUT BEFORE THE PULL, because the Berserker list no longer
+     * carries it -- the owner moved it, the stance and Charge out of the three
+     * profile-specific Warrior lists and into `precombat`. This fixture is a
+     * HAND-BUILT warrior with no raid buffs, so without this line it gets no
+     * shout at all and the row below would be missing.
+     *
+     * WHICH MAKES THIS TEST SHARPER THAN IT WAS: a pre-combat cast goes through
+     * `castAbility` like any other, so it emits a cast event and the Uses
+     * column counts it. That is now asserted rather than assumed.
+     *
+     * AND BLOODRAGE HAS TO COME FIRST. A shout alone was SILENTLY REFUSED here
+     * -- it costs 10 rage, a warrior opens on an empty bar, and `runPrecombat`
+     * skips what it cannot pay for -- so the row was still missing and this
+     * test still failed. The owner's own openers write the two in this order at
+     * the same lead time, which is the same fact from the other side.
+     */
+    precombat: [
+      { abilityId: 'bloodrage_cast', secondsBefore: 10 },
+      { abilityId: 'battle_shout_cast', secondsBefore: 10 },
+    ],
     simulation: { ...base.simulation, iterations, seed: 5, durationSeconds: 60 },
   } as never);
 }

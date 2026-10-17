@@ -58,6 +58,7 @@ PRESET=bm_hunter npx vite-node tools/probe_profile_report.ts   # one profile's w
 npx vite-node tools/encode_talent_build.mjs --all   # every preset's build as a talentsforever.com URL
 npx vite-node tools/probe_shared_cd.ts            # does a shared cooldown actually BITE, off the event stream
 PRESET=bm_hunter npx vite-node tools/probe_jow.ts   # which ACTIONS roll for Judgement of Wisdom, by instant
+ABILITIES=mark npx vite-node tools/probe_precombat_abilities.ts   # map an owner's ability NAME to an id, per profile
 ```
 
 The three audits in the middle are AUDITS rather than measurements and none of
@@ -1039,6 +1040,36 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   IDENTITY rather than asserting they are equal**, which is
   `critRageMultiplierFor`'s arrangement and is what stopped the last divergence
   failing in the constant that did not move.
+- **"BEHIND THE TARGET" IS ASSUMED, EXCEPT WHEN THE TARGET ATTACKS BACK**, and
+  that one ruling overturned FOUR written-down caveats at once. The owner, giving
+  Ravage: "You do NOT need to scope in behind the target positioning. **Once
+  again this should be assumed in all cases EXCEPT when 'Target attacks back' is
+  checked.**" Shred, Backstab and Ambush each carried an `unmodelled` entry
+  saying the position "is dropped ... and is not pretended to be met", and the
+  Cat's own list called the drop "generous to the build".
+  **THE BEHAVIOUR NEVER CHANGED AND THE NOTES WERE WRONG**, which is the shape
+  this file keeps recording: all three abilities always dealt their damage, and
+  what the caveats did was tell a reader the build was getting something it had
+  not earned, while three `unmodelled` entries inflated the gap census with a
+  decision. **A caveat that apologises for the engine can be wrong about the
+  RULESET**, and nothing in the code contradicts it.
+  **THE EXCEPTION IS NOT BUILT, BECAUSE NOTHING REACHES IT.** A character whose
+  target swings back stands in FRONT of it -- that is why the encounter grants
+  the target 14% parry -- so a behind-the-target ability should be refused on
+  such a build. No engine field carries `targetAttacks`: it is baked into the
+  chance provider and into whether the enemy has a rotation. Every profile that
+  can cast one of these sets `targetAttacks: false`, so a gate would be
+  unreachable, and `positioning.test.ts` ASSERTS that instead -- which is the
+  `isWeaponUseOf(attack, 'ranged')` guard applied to a rule rather than a
+  predicate. **The day a tank build takes Shred, that test fails and the gate
+  becomes worth building.**
+  **AND IT UNBLOCKED A WHOLE OPENER**, which is why it is here and not only in a
+  caveat: the Cat's Ravage was refused as unimplementable on the reading that
+  "must be prowling AND behind the target" was `stealth` plus `positioning`, two
+  `OutOfScope` members. Neither half held -- the owner had already ruled Ambush's
+  stealth requirement modellable as an aura a cast reads, and `PROWL` is that
+  shape exactly. **When a ruling WIDENS what is modelled, the scope tags are the
+  first place to look**, and this is the second time that sentence has paid.
 - **A COEFFICIENT PICKS ITS POOL BY SCHOOL, AND THAT IS RIGHT EXCEPT ONCE.**
   `scaleByPower` reads attack power when `isPhysical(school)` and spell power
   otherwise, which is what lets one field serve every ability here. A FIRE
@@ -2278,6 +2309,120 @@ within the same panel". `engine/abilities/precombat.ts`.
   `startAutoAttack` AND the cast-time zeroing removed -- because at t=0 there is
   no swing in progress to lose. It is kept as a regression guard on the property
   and LABELLED as one, rather than left to imply it demonstrates a mechanism.
+
+**AND ALL 28 PROFILES HAVE ONE NOW, WHICH IS THE FEATURE'S SECOND ROUND AND IS
+WHERE EVERYTHING BELOW WAS ACTUALLY TESTED.** It shipped with the mechanism and
+no caller -- "no preset carries a pre-combat list" was a sentence in its own
+test -- and the owner then specified an opener for every profile in one message.
+
+- **`secondsBefore` IS WHEN THE ACTION STARTED, AND FOR A CAST THAT IS NOT WHEN
+  IT FINISHED.** The owner drew the distinction in their own wording: an instant
+  is "3s before Battle Stance" and a cast is "**2.5s before start casting**
+  Frostfire Bolt". **Every one of the ten "start casting" leads they gave is
+  exactly that spell's cast time on that build** -- Wrath 1.5, Arcane Blast 1.5,
+  Mind Blast 1.5, Lightning Bolt 2, Aimed Shot 2, Incinerate 2, Frostfire Bolt
+  2.5, Fireball 3, **Sniper Shot 4**, and **Shadow Bolt 2.5 which is 3.0 MINUS
+  BANE**. The last two are what make it a reading rather than a coincidence:
+  neither is a number anybody would pick, and the second is not the figure on
+  the ability at all.
+  **SO `runPrecombat` AGES BY THE LEAD MINUS THE CAST TIME**, clamped at zero.
+  Without it a pre-cast spell was incoherent with itself -- the damage landed at
+  t=0 while everything the same cast applied was already aged: Fireball's DoT
+  three seconds into an eight second burn, Arcane Blast's fifteen second window a
+  tenth gone, Aimed Shot's six second cooldown back at t=4. **Two of those are a
+  bigger number and no error.**
+  **THE CLAMP IS A CASE AND NOT A GUARD**, because the owner's ORIGINAL example
+  was "Cast Fireball <= 2.5 sec before combat initiates" -- a 2.5 second lead on
+  a three second cast, which cannot have finished and therefore finishes at the
+  pull.
+  **AND THE OWNER HAS SINCE STATED THE PHRASING OUTRIGHT, WHICH CONFIRMS IT:**
+  "'3s before Battle Stance' means t-minus 3 seconds from combat starting ...
+  everything listed is meant to be a set sequence to properly initiate combat at
+  0s with all non-combat skills already pre-fired." A lead is t-MINUS, and the
+  sequence is complete AT zero -- which is the reading above, said from the
+  other end: a three second cast begun at t-3 is one of the things that is
+  "already pre-fired" by the pull.
+- **IT SKIPS WHAT IT CANNOT DO IN SILENCE, SO SOMETHING HAS TO ASK WHETHER THE
+  OPENER HAPPENED.** That is `PriorityRotation`'s rule and it is right -- a plan
+  can be unaffordable -- but it makes a mistyped id or a wrong ORDER into a line
+  that reads perfectly and does nothing. `precombatOpeners.test.ts` transcribes
+  the owner's message a second time and then drives all 28 fights, asserting
+  each action emits a cast at timestamp zero.
+  **IT FOUND TWO THE MOMENT IT RAN, AND ONE OF THEM THE OWNER THEN FIXED.**
+  Mongoose Bite "can only be performed after you dodge" and its only route here
+  is Expose Prey's 10% proc on a landed attack -- so before the pull the window
+  cannot be open, on both melee Hunters. Reported, and the answer was a
+  substitution: "good catch. Replace Mongoose Bite with Strider kick instead for
+  those pre-combat instances." **Strider Kick has no gate at all**, the bite
+  keeps its list entry, and what was impossible was only the OPENING.
+  And **BATTLE SHOUT COSTS 10 RAGE AND A WARRIOR OPENS ON AN EMPTY BAR**, so a
+  shout written before its Bloodrage is refused: the owner's own openers put
+  them in the right order at one lead time, and THREE hand-built test fixtures
+  did not. `Array.prototype.sort` being stable is the whole mechanism keeping
+  two actions at the same lead in declaration order.
+- **A PERIODIC EFFECT'S ACCRUED RESOURCE SURVIVES THE PULL, AND IT HAS TO BE
+  DECLARED.** Bloodrage is "10 rage at once and another 1 a second for 10
+  seconds", the owner's openers press it at a TEN second lead, and the aura was
+  therefore aged past its own end and removed with the over-time half
+  undelivered -- **the warrior arrived with 10 of the owner's stated 20**.
+  `PeriodicEffect.accruesBeforeCombat` is the fix.
+  **DECLARED RATHER THAN DERIVED, because the engine cannot tell the two kinds
+  of periodic apart**: both are an `onTick` closure and what it does is decided
+  inside. A resource granted to the CARRIER is accrual the character arrives
+  with; damage dealt to a TARGET is damage in a fight that had not started. So
+  the default loses the elapsed ticks, which is what every DoT wants, and
+  Bloodrage is the one caller.
+  **THE ARITHMETIC DOES NOT DOUBLE-COUNT AT A SHORTER LEAD**, which is the half
+  to check rather than reason about: the ticks already scheduled keep firing
+  after the pull and stop when the AGED window closes, so a four-second lead is
+  four before and six after. Probed by switching the flag off -- 10 against 20,
+  exactly the two halves.
+- **SEVEN OF THE OWNER'S LINES NAME A STATE RATHER THAN A CAST, AND ALL SEVEN
+  ARE LISTED ANYWAY.** "2s before Stealth" on three Rogues -- `openingAuras`
+  carry `stealth` and there is no Stealth ABILITY -- and "Cat Form", "Moonkin
+  Form" and "Dire Bear Form", which are COMBAT STYLES. `onPrecombat` runs AFTER
+  the `openingAuras` loop, so each character is already in the state the line
+  asks for.
+  **THEY WERE OMITTED FIRST AND THE OWNER ASKED FOR THEM BACK**: "Even if lines
+  were already true, like Moonkin Form, just leave it in the pre-combat so users
+  know that." The argument for leaving them out was that `runPrecombat` finds no
+  ability and skips in silence, so the entry does nothing -- true of the ENGINE
+  and beside the point. **A pre-combat list is also the thing a person reads to
+  see how the fight opens, and a missing step reads as a step not taken.**
+  **SO `PRECOMBAT_STATES` CARRIES THEM WITH WHAT MAKES EACH ONE TRUE**, and the
+  two readers that would otherwise misreport them use it: the APL panel, which
+  labelled them "(not in this build)" -- exactly backwards on the row somebody
+  is checking -- and the opener guard, which asserts every action FIRES. **It is
+  not a way to declare something inert**: each entry reads the PROFILE, so a
+  Moonkin naming `cat_form` is still wrong, and `precombatOpeners.test.ts`
+  drives that both ways.
+- **MOVING AN ENTRY OUT OF A LIST AND INTO AN OPENER IS NOT NEUTRAL FOR
+  ANYTHING THAT SHARES THAT LIST.** The owner asked for Charge, the stance and
+  Battle Shout out of the three Warrior PROFILES, and a profile-specific list is
+  also what any hand-built character of that style and stance runs -- so such a
+  character now gets none of the three unless it declares them. The two GENERIC
+  Warrior lists keep theirs, which is the right scope and is why they were left
+  alone. **Four test fixtures had to be given openers** before their assertions
+  about Battle Shout meant anything again.
+- **AND A PRECOMBAT ACTION WAS INVISIBLE TO `USES=1`, WHICH IS THE REPORTING
+  HALF OF THE SAME CHANGE.** A pre-combat cast is not a list entry, so the uses
+  loop never reaches it, and the "not in the list, and still dealing damage"
+  block filters on `damage > 0` -- which a shout and a stance never have. So
+  three actions a fight simply vanished from the report the day they moved.
+  `measure_profiles.ts` prints a **"before the pull"** block now, with a
+  `<-- NEVER HAPPENED` flag, because a zero there is the finding for exactly the
+  reason a zero in the list is.
+- **A ZERO-SECOND ACTION IS OFF THE GLOBAL COOLDOWN, AND THAT IS THE DESIGN
+  RATHER THAN A LOOPHOLE.** The Bear's whole opener is "Enrage + Mighty Rage
+  Potion + queue Maul + Primal Bite" at 0s, and only Primal Bite would have cost
+  a GCD in the fight. Pre-combat mode skips the GCD it would start, the swing
+  reset and the cast time -- so an opener really is four actions in the instant
+  a list could spend one, which is what "before the pull" means.
+- **"QUEUE" IS A WORD THE OWNER USED AND THE ENGINE ALREADY HAD.** Heroic
+  Strike, Maul and Raptor Strike are on-next-swing: `castAbility` ARMS one --
+  paid for now, delivered by the first swing that lands -- and returns before
+  the cast path. So "0s queue Heroic Strike" is exactly what happens to it, and
+  it spends the rage Bloodrage just banked.
 
 ### Editing a priority list
 

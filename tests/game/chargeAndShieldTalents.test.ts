@@ -9,19 +9,17 @@ import {
 import { WARRIOR_TALENT_EFFECTS } from '../../src/game/talents/warriorEffects';
 import { talentBuild, talentContextFor } from '../../src/game/talents/talentBuild';
 import { weaponsFor } from '../../src/game/actors/createPlayer';
-import { PRESETS_BY_ID } from '../../src/profiles/presets';
+import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
 import { runProfileBatch, characterAtCombatStart, resourceFlowOf } from '../../src/simulator';
 import { legalise } from '../helpers/legalTalents';
-import type { AplCondition } from '../../src/game/rotations/apl';
-import { compileCondition } from '../../src/game/rotations/apl';
-
 /*
- * A condition is DATA now. `compileCondition` turns one back into the closure
- * the engine runs, which is what these assertions have always been calling --
- * the step used to be implicit because a list held closures directly.
+ * NO `compiled` HELPER ANY MORE. It turned a condition back into the closure
+ * the engine runs, and both of its callers were asserting on the CHARGE
+ * ENTRY'S condition -- which the owner has moved to `precombat`, where
+ * `castAbility`'s own stance check does the job the condition did. Both
+ * assertions now read the resulting STATE instead, which is what they were
+ * really about and survives the gate moving again.
  */
-const compiled = (condition: AplCondition | undefined) =>
-  condition ? compileCondition(condition) : undefined;
 
 /*
  * Charge at the pull, Vanguard as its gate, and Master of Defense's shield.
@@ -71,9 +69,38 @@ describe('Charge is used exactly once, as the first action', () => {
     expect(at(15_000)).toBe(false); // its own cooldown would have elapsed
   });
 
-  it('opens the two-hander and Protection lists, and no others', () => {
-    expect(WARRIOR_TWO_HAND_BATTLE.entries[0].abilityId).toBe('charge');
-    expect(WARRIOR_SHIELD_DEFENSIVE.entries[0].abilityId).toBe('charge');
+  it('opens the two-hander and Protection PROFILES, and no others', () => {
+    /*
+     * ========================================================================
+     * THIS READ "lists" AND CHARGE IS IN NO LIST ANY MORE.
+     *
+     * The owner moved it to `precombat` on both profiles -- "Charge ... should
+     * be removed from the normal APL" -- which is where an action castable for
+     * a single instant belongs: `runPrecombat` is not on the fight's clock, so
+     * it cannot be beaten to the moment by anything.
+     *
+     * THE CLAIM IS UNCHANGED AND IS NOW ASSERTED WHERE IT LIVES: exactly two
+     * profiles Charge, and both do it at 0 seconds. Checked over ALL 28 rather
+     * than on the two by name, which is what makes "and no others" mean
+     * something -- the old version asserted two lists and said nothing about
+     * the rest.
+     * ========================================================================
+     */
+    const charging = PROFILE_PRESETS.filter((preset) =>
+      (preset.build().precombat ?? []).some((action) => action.abilityId === 'charge'),
+    ).map((preset) => preset.id);
+    expect(charging).toEqual(['two_hand_arms', 'prot_warr']);
+
+    for (const id of charging) {
+      const action = PRESETS_BY_ID.get(id)!.build().precombat!.find(
+        (entry) => entry.abilityId === 'charge',
+      );
+      expect(action!.secondsBefore, id).toBe(0);
+    }
+
+    for (const list of [WARRIOR_TWO_HAND_BATTLE, WARRIOR_SHIELD_DEFENSIVE]) {
+      expect(list.entries.some((entry) => entry.abilityId === 'charge'), list.name).toBe(false);
+    }
   });
 
   it('fires exactly once a fight for 2H Arms, and pays 21 rage', () => {
@@ -173,9 +200,11 @@ describe('Vanguard is what lets a tank Charge', () => {
      * the Protection list sent the tank into Battle Stance at the pull, and
      * three separate stance tests caught it.
      *
-     * The entry's condition refuses unless the character is ALREADY in a
-     * stance Charge allows, and a condition is checked before the swap is
-     * considered.
+     * IT IS THE ENGINE'S OWN STANCE CHECK NOW, which is a stronger version of
+     * the same guarantee. Charge is a PRE-COMBAT action on this profile and a
+     * pre-combat cast has no rotation attached to swap anything -- so without
+     * Vanguard the tank is in a stance Charge does not list, `castAbility`
+     * refuses it, and `runPrecombat` skips it.
      * ----------------------------------------------------------------------
      */
     const built = PRESETS_BY_ID.get('prot_warr')!.build();
@@ -188,15 +217,21 @@ describe('Vanguard is what lets a tank Charge', () => {
     } as never;
 
     const batch = runProfileBatch(profile);
+    /*
+     * NO *BATTLE* STANCE ROW, where this asserted no row containing "Stance"
+     * at all. That was safe only while nothing cast a stance: the opener now
+     * re-casts DEFENSIVE Stance before the pull, which is a correct row and
+     * has to be allowed through. The claim was always about the wrong stance.
+     */
     for (const row of batch.abilities) {
-      expect(row.abilityName).not.toContain('Stance');
+      expect(row.abilityName, 'never swaps to Battle').not.toContain('Battle Stance');
+      expect(row.abilityName, 'nor to Berserker').not.toContain('Berserker Stance');
     }
 
-    // And the condition itself says no, which is what prevents the swap.
+    // And Charge itself never happens, which is what the stance refusal means.
+    expect(batch.abilities.find((row) => row.abilityName === 'Charge')).toBeUndefined();
     const tank = characterAtCombatStart(profile)!;
-    expect(
-      compiled(WARRIOR_SHIELD_DEFENSIVE.entries[0].condition)?.(undefined as never, tank, undefined),
-    ).toBe(false);
+    expect(tank.auras.has('defensive_stance'), 'still Defensive at the pull').toBe(true);
   });
 });
 

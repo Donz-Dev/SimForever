@@ -1,8 +1,11 @@
 import type { Combatant } from '../actors/Combatant';
+import { hasteMultiplierFrom } from '../combat/ratings';
 import type { AuraInstance } from '../effects/Aura';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import type { Milliseconds } from '../time';
-import { castAbility } from './casting';
+import type { Ability } from './Ability';
+import { resolveCast } from './castModifiers';
+import { castAbility, castLength } from './casting';
 
 /**
  * Something the character did before the pull.
@@ -39,12 +42,34 @@ import { castAbility } from './casting';
 export interface PrecombatAction {
   readonly abilityId: string;
   /**
-   * How long before the pull it was used.
+   * How long before the pull the character STARTED this action.
    *
    * THE OWNER WROTE IT AS "<= 2 sec", which is a budget rather than an exact
    * moment -- the action is taken AT MOST this long before combat. It is read
    * as the exact figure, because "at most" has no other number in it to use
    * and the two readings differ only in how a person says it.
+   *
+   * ==========================================================================
+   * STARTED, NOT FINISHED, AND FOR AN INSTANT THOSE ARE THE SAME MOMENT.
+   *
+   * The distinction only exists for an ability with a CAST TIME, and the owner
+   * drew it themselves in the words they specified all 28 openers with: an
+   * instant is "3s before Battle Stance" and a cast is "**2.5s before start
+   * casting** Frostfire Bolt". Every one of the ten "start casting" leads they
+   * gave is exactly that spell's cast time on that build:
+   *
+   *     Wrath 1.5    Arcane Blast 1.5    Mind Blast 1.5    Lightning Bolt 2
+   *     Aimed Shot 2    Incinerate 2    Frostfire Bolt 2.5    Fireball 3
+   *     Sniper Shot 4    Shadow Bolt 2.5 -- which is 3.0 MINUS BANE
+   *
+   * Sniper Shot's 4 and Shadow Bolt's talent-reduced 2.5 are what make that a
+   * reading rather than a coincidence: neither is a number somebody would pick
+   * out of the air, and the second is not even the figure on the ability.
+   *
+   * SO THE LEAD IS WHEN THE CAST BEGAN AND THE SPELL LANDS AT THE PULL, and
+   * `rewindFor` ages by the time since the action FINISHED -- which for all ten
+   * of those is zero.
+   * ==========================================================================
    */
   readonly secondsBefore: number;
 }
@@ -89,7 +114,7 @@ export function runPrecombat(
      */
     if ((ability.channelTicks ?? 1) > 1) continue;
 
-    const leadMs = Math.max(0, Math.round(action.secondsBefore * 1000));
+    const leadMs = rewindFor(actor, ability, action.secondsBefore);
     const target = context.defaultTargetFor(actor);
 
     /*
@@ -108,6 +133,60 @@ export function runPrecombat(
       actor.abilities.rewindCooldown(ability.id, leadMs);
     }
   }
+}
+
+/**
+ * How long ago the action FINISHED, which is what the lead time gets spent on.
+ *
+ * ==============================================================================
+ * THE CAST TIME COMES OFF THE LEAD, BECAUSE THE LEAD WAS SPENT CASTING.
+ *
+ * "3s before begin casting Fireball" is a three-second cast that ENDS at the
+ * pull, so nothing about it has aged: the spell lands at t=0 and its burn
+ * starts there. An instant has no cast time to subtract, so every instant is
+ * unchanged and so is every existing caller.
+ *
+ * ------------------------------------------------------------------------------
+ * WITHOUT THIS, A PRE-CAST SPELL WAS INCOHERENT WITH ITSELF -- the damage
+ * landed at t=0 while everything the same cast applied was already aged.
+ * Concretely, on the openers the owner specified:
+ *
+ *   Fireball at 3s          its DoT 3 seconds into an 8 second burn at the pull
+ *   Frostfire Bolt at 2.5s  the same, and it is 62% of that profile's damage
+ *   Arcane Blast at 1.5s    its 15 second stacking buff already a tenth gone
+ *   Aimed Shot at 2s        a 6 second cooldown back at t=4 rather than t=6
+ *   Sniper Shot at 4s       a 15 second cooldown back at t=11
+ *   Mind Blast at 1.5s      a 6 second cooldown back at t=4.5
+ *
+ * Two of those are a bigger number and no error, which is this project's own
+ * description of the bugs it keeps finding.
+ *
+ * ------------------------------------------------------------------------------
+ * CLAMPED AT ZERO, which is the owner's ORIGINAL example and is why the clamp
+ * is not a safety net but a case: "Cast Fireball <= 2.5 sec before combat
+ * initiates" is a 2.5 second lead on a THREE second cast. Read as "at most",
+ * the character cannot have finished it -- so it finishes at the pull, which is
+ * the same answer the ten openers give and is what `precombat.test.ts` has
+ * asserted since the feature shipped.
+ *
+ * THE RESOLVED, HASTED LENGTH rather than the declared one, because that is
+ * what the cast would actually have taken this character: Bane takes the
+ * SM/DS Warlock's Shadow Bolt from 3.0 to 2.5 before haste touches it, and
+ * reading `ability.castTimeMs` would have left half a second of ageing on the
+ * one profile whose number proves the whole reading. `resolveCast` is pure --
+ * `consumeCastCharges` is the half with the side effects -- so asking it before
+ * the cast is safe and is the state this cast is about to be made in.
+ * ==============================================================================
+ */
+function rewindFor(actor: Combatant, ability: Ability, secondsBefore: number): Milliseconds {
+  const leadMs = Math.max(0, Math.round(secondsBefore * 1000));
+  const resolved = resolveCast(actor, ability);
+  const castMs = castLength(
+    ability,
+    hasteMultiplierFrom(actor.stats.effective),
+    resolved.baseCastTimeMs,
+  );
+  return Math.max(0, leadMs - castMs);
 }
 
 /** Every live aura in the fight, and which window each is on. */
@@ -162,6 +241,27 @@ function rewindAuras(
 
       aura.appliedAt -= leadMs;
       aura.expiresAt -= leadMs;
+
+      /*
+       * THE TICKS THAT HAPPENED BEFORE THE PULL, FOR AN AURA THAT SAYS THEY
+       * COUNT. See `PeriodicEffect.accruesBeforeCombat`: Bloodrage's "another 1
+       * rage per second for 10 seconds" is rage the character spent those
+       * seconds generating, and at the ten-second lead the owner's own openers
+       * use, ALL of it elapsed before the clock started.
+       *
+       * ONE TICK PER WHOLE INTERVAL INSIDE THE LEAD, capped by the aura's own
+       * duration -- a thirty-second lead on a ten-second window is still ten
+       * ticks. The ticks the engine already scheduled keep firing after the
+       * pull and stop when the aged window closes, so the two halves meet
+       * exactly rather than overlapping.
+       */
+      const periodic = aura.definition.periodic;
+      if (periodic?.accruesBeforeCombat === true && periodic.intervalMs > 0) {
+        const elapsed = Math.min(leadMs, aura.definition.durationMs);
+        const ticks = Math.floor(elapsed / periodic.intervalMs);
+        for (let tick = 0; tick < ticks; tick += 1) periodic.onTick(context, aura);
+      }
+
       if (aura.expiresAt <= context.clock.now()) {
         combatant.auras.remove(context, aura.definition.id);
       }

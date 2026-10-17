@@ -20,6 +20,7 @@ import {
   FRENZIED_REGENERATION_COOLDOWN_MS,
   NATURES_SWIFTNESS,
   NATURES_SWIFTNESS_COOLDOWN_MS,
+  PROWL,
   berserkAura,
   lengthened,
   ripAura,
@@ -269,9 +270,121 @@ export const SHRED: Ability = {
     });
     if (!result.avoided) awardComboPoint(simulation, caster, target, ability.id, ability.name);
   },
+  /*
+   * ==========================================================================
+   * ITS "MUST BE BEHIND THE TARGET" IS *MET*, BY THE OWNER'S RULING, AND THIS
+   * ENTRY USED TO SAY THE OPPOSITE.
+   *
+   * It read: 'Its "must be behind the target" is dropped: nothing here has a
+   * facing, so the requirement cannot be checked and is not pretended to be
+   * met.' That was honest about the engine and wrong about the ruleset. The
+   * owner, giving Ravage the same clause: **"You do NOT need to scope in behind
+   * the target positioning. Once again this should be assumed in all cases
+   * EXCEPT when 'Target attacks back' is checked."**
+   *
+   * SO THE BEHAVIOUR DOES NOT CHANGE AND THE CAVEAT DOES. Shred has always
+   * dealt its damage; what was wrong was a note telling a reader the build was
+   * getting something it had not earned, and an `unmodelled` entry inflating
+   * the gap census with a decision.
+   *
+   * THE EXCEPTION IS NOT ENFORCED AND NOTHING REACHES IT. A character whose
+   * target swings back is in FRONT of it -- that is why the encounter grants
+   * the target 14% parry -- so a behind-the-target ability should be refused on
+   * such a build. No profile combines the two: Shred, Backstab and Ambush
+   * belong to the Cat Druid and the four Rogues, and all five set
+   * `targetAttacks: false`. `positioning.test.ts` asserts that rather than
+   * leaving it assumed, because **a condition nobody declared is not an
+   * omission, it is a bonus being paid** -- and the day a tank build takes one
+   * of these, that test is what says so.
+   * ==========================================================================
+   */
+};
+
+/*
+ * ============================================================================
+ * PROWL AND RAVAGE, THE CAT'S OPENER, AND THE OWNER SUPPLIED BOTH FIGURES.
+ *
+ * "Cat Druid -- the precombat should be 2s before cat form, 1s before prowl, 0s
+ * Ravage", with the ability stated outright: "60 energy, Instant cast, Ravage
+ * the target, causing 350% damage plus 343 to the target. Must be prowling and
+ * behind the target. Awards 1 combo points."
+ *
+ * EVERY ONE OF THOSE AGREES WITH `forever-druid-spellbook.json` AT RANK 4, which
+ * is the rare case of a stated figure and a capture matching exactly -- 60
+ * Energy, Instant, and the description word for word.
+ *
+ * ----------------------------------------------------------------------------
+ * 350% IS A WEAPON FRACTION AND THE 343 IS OUTSIDE IT, which is Shred's shape
+ * one row up and the owner's own ruling about flat damage: `weapon x 3.5 + 343`,
+ * never `(weapon + 343) x 3.5`. For a Druid the weapon is the PAW, so the
+ * fraction goes through `weaponScaling` and picks up the form's cadence, the
+ * held weapon's dps and the Druid's attack power.
+ *
+ * NO `powerCoefficient`, because a weapon-damage row carries none -- attack
+ * power reaches it through the paw at `speed / 14`. The owner stated no
+ * coefficient and `WoWSimWorksheet.xlsx` has no Ravage row.
+ *
+ * ----------------------------------------------------------------------------
+ * IT CONSUMES PROWL, AND THAT IS THE ONE THING NEITHER SOURCE STATES.
+ *
+ * Ambush is the precedent and it is exact: a stealth opener that removes the
+ * aura gating it, so the window is spent rather than reusable. Without it a Cat
+ * holding Prowl would be able to Ravage again whenever the energy allowed --
+ * 350% weapon damage on a 60-energy instant, repeatable, which is a very large
+ * invented number. **So this is the conservative reading of an unstated
+ * clause**, recorded here as a reading rather than as a fact, and it is cheap
+ * to flip: one line in `onCast`.
+ *
+ * NOT IN THE CAT'S PRIORITY LIST, and that follows from the above rather than
+ * being a separate decision: once Prowl is spent nothing re-applies it, so an
+ * entry could never fire. The owner asked for it as an OPENER.
+ * ============================================================================
+ */
+export const PROWL_ABILITY: Ability = {
+  id: 'prowl',
+  name: 'Prowl',
+  cooldownMs: seconds(10),
+  requiresTarget: false,
+  // Already prowling is not a reason to prowl again, which is the shape Mage
+  // Armor, Shadowform, Righteous Fury and the two Aspects all use.
+  canCast: ({ caster }) => !caster.auras.has(PROWL.id),
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, PROWL, caster.id);
+  },
   unmodelled:
-    'Its "must be behind the target" is dropped: nothing here has a facing, ' +
-    'so the requirement cannot be checked and is not pretended to be met.',
+    'Its "reduces your movement speed by 30%" is out of scope -- nothing here ' +
+    'has a position, so there is no speed for it to reduce. What the aura is ' +
+    'FOR is making Ravage castable, which it does.',
+};
+
+export const RAVAGE_BASE_DAMAGE = 343;
+export const RAVAGE_WEAPON_FRACTION = 3.5;
+
+export const RAVAGE: Ability = {
+  id: 'ravage',
+  name: 'Ravage',
+  cost: { resource: 'energy', amount: 60 },
+  attackTable: 'melee-special',
+  comboPointsAwarded: 1,
+  canCast: ({ caster }) => caster.auras.has(PROWL.id),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    // Spent, not merely required: see the note above on why this follows
+    // Ambush and why the alternative is a repeatable 350% instant.
+    caster.auras.remove(simulation, PROWL.id);
+    const result = dealDamage(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: PHYSICAL,
+      baseAmount: RAVAGE_BASE_DAMAGE,
+      weaponScaling: { slot: MAIN_HAND, fraction: RAVAGE_WEAPON_FRACTION },
+      attackTable: ability.attackTable,
+      weaponSlot: MAIN_HAND,
+    });
+    if (!result.avoided) awardComboPoint(simulation, caster, target, ability.id, ability.name);
+  },
 };
 
 /** "110% normal damage plus 126." */
@@ -762,6 +875,11 @@ export const DRUID_ABILITIES: readonly Ability[] = [
   SHRED,
   CLAW,
   RAKE,
+  // The Cat's opener. Style-gated the way Shred is -- by the LIST and the
+  // combat style rather than by a declaration, which is the existing shape for
+  // every "Requires Cat Form" ability in this catalogue.
+  PROWL_ABILITY,
+  RAVAGE,
   FEROCIOUS_BITE,
   RIP,
   MANGLE,

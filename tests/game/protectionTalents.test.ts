@@ -63,6 +63,26 @@ function tank(talents: Record<string, number> = {}, extra: Record<string, unknow
     },
     equipment: startingEquipmentFor('warrior', 'one_hand_shield'),
     talents,
+    /*
+     * BLOODRAGE *THEN* BATTLE SHOUT, AND THE ORDER IS LOAD-BEARING. The
+     * Protection list no longer casts the shout or the stance -- the owner moved
+     * both, and Charge, into `precombat` -- so a hand-built tank like this one,
+     * which also has no raid buffs, has to declare them.
+     *
+     * AND A SHOUT ALONE IS SILENTLY REFUSED: it costs 10 rage, a warrior opens
+     * on an empty bar, and `runPrecombat` skips a cast it cannot pay for.
+     * Bloodrage's instant 10 is what makes the next line affordable, which is
+     * why the owner's own openers write the two in this order at one lead.
+     *
+     * CHARGE IS LEFT OUT because this fixture takes a talent map per test and
+     * Charge needs VANGUARD -- including it would make the fixture behave
+     * differently depending on which test called it.
+     */
+    precombat: [
+      { abilityId: 'bloodrage_cast', secondsBefore: 10 },
+      { abilityId: 'battle_shout_cast', secondsBefore: 10 },
+      { abilityId: 'defensive_stance_cast', secondsBefore: 3 },
+    ],
     simulation: { ...base.simulation, iterations: 60, seed: 29, durationSeconds: 60 },
     encounter: { ...base.encounter, targetAttacks: true },
     ...extra,
