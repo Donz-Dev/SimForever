@@ -1110,6 +1110,101 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
    * Marginal values, not addends.
    * ==========================================================================
    */
+  /*
+   * ==========================================================================
+   * ONE POINT OF CLEARCASTING WOULD BUY FIRE BLAST'S SECOND COOLDOWN RANK --
+   * 7 seconds to 6 -- AND IT IS **NOT TAKEN**, because it is worth +2.92 at a
+   * one-minute fight and **-33.76 +/- 7.52 at a five-minute one.**
+   *
+   * ==========================================================================
+   * THE CLOCK IS WHAT DECIDES IT, AND A 60-SECOND MEASUREMENT SAID THE
+   * OPPOSITE. Against the pre-round build the swap measured **+8.00 +/- 3.10**
+   * at 1500 paired iterations, and on the finished list it is +2.92 +/- 2.81 --
+   * both real, both positive, and both answers about a one-minute clock.
+   *
+   * AT 300s IT IS THE LARGEST SINGLE LOSS THIS ROUND MEASURED. Reverting it on
+   * the shipped build is +33.76 +/- 7.52, and reverting the whole package is
+   * +34.12 -- so essentially all of the long-fight loss is this one point.
+   *
+   * AND THE MECHANISM WAS PREDICTED BEFORE IT WAS MEASURED, which is the only
+   * reason it was looked for. This build is GLOBAL-COOLDOWN bound at 60s with
+   * 2,615 mana spare and MANA bound by 300s with 196 -- and Fire Blast costs
+   * 340 mana for about 1,347, where the filler costs 410 for about 1,781. More
+   * Fire Blasts is more damage per global cooldown and LESS damage per mana, so
+   * the change is worth something exactly as long as the global cooldown is
+   * what binds.
+   *
+   * THE OWNER'S STANDING INSTRUCTION IS WHY THIS IS A REVERT RATHER THAN A
+   * FOOTNOTE: "rotations need to be built for longer than 1 minute ... ensure
+   * that variable combat time is taken into account." A change that buys 2.9
+   * DPS at one minute and gives back 33.8 at five is not a change.
+   *
+   * THE SCORCH WINDOW THAT SHIPPED ALONGSIDE IT HOLDS AT BOTH LENGTHS, which
+   * is what makes this a statement about the talent rather than about the
+   * round: +5.03 +/- 3.20 at 60s and -1.57 +/- 7.59 at 300s, which is noise.
+   * ==========================================================================
+   *
+   * WHAT IS BELOW IS STILL TRUE AND IS KEPT, because it is the map of this
+   * tree's whole design space and the next round should not re-derive it.
+   *
+   * THE FIRE TREE IS FORCED AND THE ARCANE ONE IS NOT, which is the whole of
+   * why the donor is the question. Combustion sits at tier 30 and
+   * `pointsBelowTier` counts STRICTLY below it, so all 30 Fire points under the
+   * capstone are load-bearing -- take one out anywhere and the capstone is
+   * refunded. What is not forced is WHICH of them, and the Fire tree has
+   * exactly TWO unspent slots that are not a declared `OutOfScope` member:
+   * this one, and Blast Wave.
+   *
+   * FIRE BLAST IS THE DESTINATION TO WANT FOR TWO REASONS RATHER THAN ONE. It
+   * is 898 damage a second of global cooldown against the filler's 712, AND it
+   * is the Heating Up engine -- "Fire Blast grants an additional stack every
+   * time it deals damage", so a crit gives two and a miss still gives one.
+   * More Fire Blasts is more Pyroblasts.
+   *
+   * CLEARCASTING IS THE DONOR BECAUSE IT IS WORTH NOTHING HERE, and that was
+   * measured rather than argued: `arcane_concentration 0/5` with all five
+   * points parked in `improved_channeling` -- pure cast pushback, a declared
+   * `OutOfScope` member -- is **+10.02 +/- 5.68**. Five points of Clearcasting
+   * are worth NEGATIVE ten DPS.
+   *
+   * AND THE REASON IS NOT THE MANA, IT IS THE FIRE BLAST GATE. `fire_blast` is
+   * gated on `selfLacks('clearcasting')` by the owner's own instruction, so
+   * every proc HOLDS the instant above -- and `fire_blast ungated` measures
+   * **+7.68 +/- 3.22** by itself, which accounts for nearly all of the 10.02.
+   * With the gate removed as well, dropping the talent entirely is still
+   * +10.02 and the two builds run bit-identical fights, because a 0/5 talent
+   * makes `selfLacks('clearcasting')` permanently true.
+   *
+   * SO THE DONOR CHOICE SURVIVES WHATEVER THE OWNER RULES ABOUT THAT GATE,
+   * which is why this ships and the gate does not: with the gate gone,
+   * Clearcasting's own contribution is 10.02 - 7.68 = about 2.3 on an interval
+   * of 6.5, which is nothing. This build ends a 60 second fight with 2,782 mana
+   * unspent and `manaPer5` weighs 0.0000, so a mana saving has nothing to buy.
+   *
+   * THE TWO ALTERNATIVE DONORS BOTH MEASURE WORSE AND NEITHER IS SEPARABLE
+   * FROM THIS ONE: `master_of_elements` 3 -> 2 is +4.63 +/- 2.69 and
+   * `arcane_impact` 3 -> 2 is +3.54 +/- 2.69, against +8.00 +/- 3.10 here. The
+   * gaps are inside the combined intervals, so what chose this one is the
+   * mechanism above rather than the ranking.
+   *
+   * `elemental_precision` IS NOT A CANDIDATE. Its fifth point is the Fire hit
+   * cap and measured +10.8 when it was bought: all three Mages sit at 11 points
+   * of school-blind hit against a usable spell cap of 16, and the missing five
+   * arrive as school-scoped hit from a talent.
+   *
+   * BLAST WAVE IS THE OTHER SLOT AND IS WORTH EXACTLY NOTHING, which took two
+   * measurements that agreed to the decimal to establish. Taking it measured
+   * +2.59 +/- 1.70 -- and so did taking it AND giving it a list entry, the same
+   * figure with the same spread, which is this project's own tell for a patch
+   * that did not apply. It applied: an ungated `fireball` sits at the bottom of
+   * the list and an unconditional entry is a FLOOR under everything below it,
+   * so a new entry there can never be reached. Every point of that +2.59 was
+   * the OTHER half of the variant -- one fewer rank of Clearcasting. The
+   * arithmetic agrees: 493 base plus a 0.129 coefficient is about 594 before
+   * multipliers, which is 582 damage a second of global cooldown against the
+   * filler's 712.
+   * ==========================================================================
+   */
   // Arcane, 15
   arcane_focus: 5,
   arcane_concentration: 5,
@@ -2645,7 +2740,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'mage_fire',
     label: 'Fire',
-    detail: 'Gnome, caster, standing target. 39 Fire / 10 Arcane',
+    detail: 'Gnome, caster, standing target. 15 Arcane / 31 Fire / 5 Frost',
     characterClass: 'mage',
     build: () => ({
       ...createDefaultProfile(),
@@ -2661,27 +2756,63 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_fire'),
       /*
-       * ONE SCORCH ADDED BEFORE THE PULL, WORTH **+15.2 +/- 10.2**, and it is
-       * the Frostfire build's line for the same reason: Improved Scorch stacks
-       * a Fire vulnerability five times at 3% each and this build spends eight
-       * casts a fight on it, so a stack moved before the pull is a stack the
-       * fight opens with on 90% of its damage.
+       * ========================================================================
+       * THE PRE-PULL SCORCH IS GONE, AT A COST OF **-24.23 +/- 4.29**, AND IT
+       * WAS NOT A CHOICE.
        *
-       * SMALLER HERE THAN ON FROSTFIRE (+25.1) BECAUSE FIREBALL IS SLOWER. A
-       * three second cast reaches the Scorch entry less often, so the ramp is
-       * already further along by the time it matters -- the pre-cast is worth
-       * more to the build that spends more of its early fight on short casts.
+       * THE OWNER'S RULING: "Once you deal damage or finish casting a damaging
+       * ability combat has started." So a pre-combat list may finish AT MOST
+       * ONE damaging ability and it must finish at exactly t=0 -- that cast is
+       * the pull. This opener finished TWO: their own `fireball` at a 3s lead,
+       * and a `scorch` at 1.5s that this project added and recorded here at
+       * +15.2 +/- 10.2.
        *
-       * COMBUSTION IS NOT ADDED. Pre-casting it measured -4.9 against an
-       * interval of 11.6, which is noise -- and its window is spent by four
-       * Fire crits rather than by a clock, so the global cooldown it saves is
-       * paid back by opening the window before the crits exist.
+       * NOTHING IN THE ENGINE ENFORCES IT AND NO FIGHT REVEALS IT.
+       * `runPrecombat` resolves every action at timestamp zero, so the damage,
+       * the procs and the auras all arrive free; there is no zero anywhere to
+       * notice, the suite stays green, and `USES=1` printed it as cheerfully as
+       * a legal opener. `docs/profile-optimisation.md` Appendix A had it as one
+       * of three profiles still failing Gate B.
+       *
+       * WHAT THE REVERT ACTUALLY COST IS LESS THAN THAT FIGURE, because the
+       * round recovered most of it legally: the whole package measures **-3.57
+       * +/- 4.83 against the illegal build**, which is noise. See HANDOVER.md.
+       *
+       * THE OWNER'S TWO LINES ARE UNTOUCHED, which is what
+       * `tests/profiles/precombatOpeners.test.ts` asserts: an optimisation may
+       * ADD to their opener and may not reorder or replace it. This round
+       * removed only the addition.
+       *
+       * AND THE OPENER HAS NOTHING LEFT TO ADD, WHICH THE COMBUSTION RULING
+       * MADE MUCH MORE TRUE RATHER THAN LESS.
+       *
+       * A pre-cast is worth only the global cooldown it saves, so anything
+       * already off the GCD is not a candidate -- which ruled out the potion,
+       * the Demonic Rune and Eureka, and now rules out **Combustion**, the one
+       * candidate that was left. The owner has ruled it off the global
+       * cooldown, so a pre-cast of it saves nothing and only pays the cost.
+       *
+       * AND THE COST IS LARGE. It measured **-4.69 +/- 10.91** (noise) while
+       * Combustion paid a GCD and **-36.38 +/- 5.52 (real)** once it stopped.
+       * The window is spent by four Fire crits rather than by a clock, and a
+       * three-minute cooldown pre-cast at t=0 can never be reached again inside
+       * a one-minute fight -- so the whole window is burned on a target with
+       * ZERO Fire Vulnerability stacks instead of at the five-stack cap about
+       * eight seconds in.
+       *
+       * THIS IS THE RETRACTED ARCANE POWER FIGURE POINTING THE OTHER WAY.
+       * There, +24.9 for a pre-cast turned out to be mostly a global cooldown
+       * the ability should never have paid, and once the flag was fixed the
+       * pre-cast was worth nothing. Here the same fix took a pre-cast from
+       * "noise" to a clear loss. **Check the GCD flag before pricing a
+       * pre-cast**, in both directions.
+       *
+       * REMOVING THE OWNER'S OWN `fireball` IS **-42.68 +/- 10.93**, which is
+       * what that line is worth and is here so nobody prices the opener by
+       * removing it.
+       * ========================================================================
        */
-      precombat: [
-        ...before(4.5, 'mage_armor'),
-        ...before(3, 'fireball'),
-        ...before(1.5, 'scorch'),
-      ],
+      precombat: [...before(4.5, 'mage_armor'), ...before(3, 'fireball')],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },

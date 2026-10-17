@@ -6,6 +6,7 @@
  */
 import { PRESETS_BY_ID } from '../src/profiles';
 import { runProfileBatch, characterAtCombatStart } from '../src/simulator';
+import { critChanceFrom, spellCritChanceFrom } from '../src/engine';
 
 const PRESET = process.env.PRESET ?? 'pally_shockadin_2h';
 const ITER = Number(process.env.ITER ?? 100);
@@ -21,8 +22,37 @@ console.log(`\n==== ${PRESET} ====`);
 console.log(
   `str ${n(s.strength)}  agi ${n(s.agility)}  int ${n(s.intellect)}  sta ${n(s.stamina)}  spi ${n(s.spirit)}`,
 );
+/*
+ * ============================================================================
+ * THROUGH `critChanceFrom` AND `spellCritChanceFrom`, NOT OFF THE STAT.
+ *
+ * These two rows read `stats.critChance` and `stats.spellCritChance` directly,
+ * and `critRating` is the OTHER HALF of both -- Forever grants crit as a rating
+ * and those functions are the only place the division by 14 lives. So on every
+ * profile that wears Forever gear this line was short by `rating / 14` in both
+ * columns: the Fire Mage printed 3.00% melee and 10.82% spell where the engine
+ * rolls 14.00% and 21.82%.
+ *
+ * IT IS THE SAME BUG THE OWNER CAUGHT IN `CharacterSheetPanel` -- "if the
+ * character sheet is saying 10.82% it's likely missing proper calculation" --
+ * and that panel was fixed while this tool was not. A FIX IS NOT LANDED UNTIL
+ * EVERY READER OF THE SAME STAT HAS IT, which is this project's own rule about
+ * a join that is missing in one place being worth grepping for in all of them.
+ *
+ * AND IT IS WORSE HERE THAN IN A PANEL, because this tool is Step 1 of
+ * `docs/profile-optimisation.md`: the line a round reads to decide whether to
+ * buy crit was the one line understating it.
+ *
+ * THE NEIGHBOURS WERE ALWAYS RIGHT, which is what made it invisible. Spell
+ * power and the haste rating go through the engine's own functions or are
+ * printed as the rating they are; crit was the one stat read raw.
+ * ============================================================================
+ */
+const stats = character!.stats.effective;
 console.log(
-  `AP ${n(s.attackPower)}  SP ${n(s.spellPower)}  crit ${n(s.critChance, 2)}%  spellCrit ${n(s.spellCritChance, 2)}%  ` +
+  `AP ${n(s.attackPower)}  SP ${n(s.spellPower)}  ` +
+    `crit ${n(critChanceFrom(stats) * 100, 2)}%  ` +
+    `spellCrit ${n(spellCritChanceFrom(stats) * 100, 2)}%  ` +
     `hit ${n(s.hitChance, 2)}%  hasteRating ${n(s.hasteRating)}`,
 );
 console.log(`\nDPS ${batch.dps.mean.toFixed(1)} +/- ${(batch.dps.max - batch.dps.min).toFixed(0)} range\n`);

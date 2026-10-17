@@ -297,7 +297,23 @@ describe("the owner's openers are transcribed exactly", () => {
     mage_arcane: [
       [0, 'arcane_power', '+24.9 -- a 15s window, claimed for no GCD'],
     ],
-    mage_fire: [[1.5, 'scorch', '+15.2 -- the same stack, worth less behind a 3s Fireball']],
+    /*
+     * THE FIRE MAGE HAS NO ADDITION ANY MORE, AND THE EMPTY ARRAY SAYS SO.
+     *
+     * It was `[1.5, 'scorch', '+15.2 -- the same stack, worth less behind a 3s
+     * Fireball']`, and it was the SECOND damaging cast in that opener: the
+     * owner's own `fireball` at a 3s lead already finishes at the pull, so the
+     * Scorch broke Gate B's at-most-one clause the way the Arcane ramp did.
+     * Reverting it measures **-24.23 +/- 4.29** paired, and the round that
+     * reverted it recovered **+20.7** of that from the list and the tree, for a
+     * net of -3.57 +/- 4.83 against the illegal build -- which is noise.
+     *
+     * LEFT AS AN EMPTY ENTRY RATHER THAN DELETED, because the key is what says
+     * this profile was AUDITED and has nothing added, where an absent key reads
+     * the same as a profile nobody has looked at. `mage_frostfire` below still
+     * carries the same addition and is the remaining Gate B failure.
+     */
+    mage_fire: [],
     shadow_priest: [
       [0, 'shadow_word_pain', '+26.8 alone, +35.5 with the plague'],
       [0, 'devouring_plague', '+26.7 alone'],
