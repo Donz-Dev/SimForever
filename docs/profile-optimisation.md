@@ -367,11 +367,18 @@ minute with 2,638 mana spare, mana bound at five. So three "settled" answers on
 that profile are answers about a one-minute clock: the Major Mana Potion losing
 by 12.7, `manaPer5` and `spirit` weighing zero, and Evocation never firing.
 
-**AND IT HAS NOW REVERSED A WINNER RATHER THAN ONLY RE-PRICING ONE.** The Fire
+**AND IT HAS NOW REVERSED A `real` WINNER AND NOT ONLY A `noise` ROW.** The Fire
 Mage's `improved_fire_blast` 2/2 measures **+8.00 +/- 3.10 against the pre-round
 build, +2.92 +/- 2.81 on the finished list, and -33.76 +/- 7.52 at 300s** — so
-three paired measurements, two of them real and positive, and the change is a
+three paired measurements, two of them `real` and positive, and the change is a
 loss. It was not shipped.
+
+**THAT IS A STEP UP FROM THE ARCANE CASE ABOVE.** Pre-casting Arcane Power went
++4.19 +/- 6.81 to -8.07, which is a sign change on a row that was inside its
+own interval at 60s -- the long run upgraded a `noise` row to a loss. This one
+had a `real` positive verdict at 60s, measured twice against two different
+baselines, and is eleven times worse at 300s. **A round can pass every gate,
+measure a real gain twice, and still be shipping a loss.**
 
 **THE MECHANISM IS THE REGIME CHANGE AND IT IS PREDICTABLE FROM STEP 1.** Fire
 Blast costs 340 mana for about 1,347 where the filler costs 410 for 1,781, so

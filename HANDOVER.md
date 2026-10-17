@@ -55,7 +55,7 @@ the tooling to be a bit more sophisticated as well."
 | 23 | **THE ARCANE MAGE THROUGH THE WHOLE LOOP, and the first round run from a WRITTEN PROCEDURE** -- `docs/profile-optimisation.md`. The illegal opener reverted, every other dimension re-priced on the legal build, and one new finding off the UPTIME table | legal **1080.1 +/- 9.9** -> **1090.3 +/- 12.1**. The revert is **-96.5 +/- 9.4** paired and the channel floor **+13.2 +/- 3.2 REAL**; **every other candidate in all seven dimensions loses** | see below |
 | 24 | **THE OWNER'S AUDIT OF THE ARCANE PROFILE -- three items, and the second was worth all of it** -- Mage Armor out of the list, Presence of Mind and Arcane Power OFF the global cooldown, and the cooldown stack written as a real `sequence` | **1090.3 -> 1123.4 (+33.1)**, and Fire and Frostfire **0.0 to the decimal** | see below |
 | 25 | **THE AUDIT FOLDED BACK INTO THE PROCEDURE, and a figure RETRACTED in the documents people read** -- all four audit findings share one cause, so the procedure gains a section naming what a paired probe structurally cannot see | **no figure moved**; documentation only, suite green at 3731 | see below |
-| 26 | **THE FIRE MAGE THROUGH THE WHOLE LOOP, and the first round where THE CLOCK REVERSED A WINNER** -- the illegal opener reverted, four changes shipped, and a talent that measures +2.92 at 60s measures **-33.76 at 300s** | legal **1016.2** at 60s. The revert is **-24.23 +/- 4.29** and the loop recovered **+17.74 +/- 3.39** of it, for **-6.49 +/- 4.75** against the published illegal figure; at 300s every row is noise | see below |
+| 26 | **THE FIRE MAGE THROUGH THE WHOLE LOOP, and the first round where THE CLOCK REVERSED A `real` WINNER** (the Arcane round reversed a `noise` row) -- the illegal opener reverted, four changes shipped, and a talent that measures +2.92 at 60s measures **-33.76 at 300s** | legal **1016.2** at 60s. The revert is **-24.23 +/- 4.29** and the loop recovered **+17.74 +/- 3.39** of it, for **-6.49 +/- 4.75** against the published illegal figure; at 300s every row is noise | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -277,6 +277,16 @@ HEADLINE IS NOT A DPS FIGURE.** It is that a change which measures **+2.92 at a
 one-minute fight measures -33.76 at a five-minute one**, and the only reason it
 was caught is that the procedure's own *"What the loop cannot find"* section
 says to re-run at a longer clock before calling anything settled.
+
+**"REVERSED A WINNER" IS A NARROWER CLAIM THAN "THE CLOCK CHANGED A FIGURE",
+AND THE ARCANE ROUND ALREADY DID THE SECOND.** Pre-casting Arcane Power measured
+**+4.19 +/- 6.81 at 60s and -8.07 by 300s**, which is a sign change -- but the
+60s figure was inside its own interval, so there was no winner there to reverse:
+the long run told you a `noise` row was actually a loss. Here BOTH 60s readings
+are `real` and positive (+8.00 +/- 3.10 against the pre-round build, +2.92 +/-
+2.81 on the finished list) and the 300s reading is `real`, negative, and
+**eleven times larger**. That is the difference worth recording -- a round can
+pass every gate, measure a real gain twice, and still be shipping a loss.
 
 | | | |
 | --- | --- | --- |
