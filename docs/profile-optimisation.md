@@ -108,6 +108,7 @@ re-count-don't-increment rule applied to its own procedure.
 npx vite-node tools/encode_talent_build.mjs --all              # theme + legality + a URL the owner can audit
 USES=1 SEEDS=3 PROFILES=<id> npx vite-node tools/measure_profiles.ts   # what each list entry actually did
 PROFILE=<id> npx vite-node tools/probe_resources.ts            # is the build resource-bound or GCD-bound
+PROFILE=<id> npx vite-node tools/probe_clock.ts                # ...AND AT WHICH FIGHT LENGTH
 PRESET=<id> npx vite-node tools/probe_profile_report.ts        # where the damage is, uptimes, avoid rates
 PROFILE=<id> PLAN=1 npx vite-node tools/stat_weights.ts        # which stats this build can even read
 ```
@@ -116,7 +117,8 @@ PROFILE=<id> PLAN=1 npx vite-node tools/stat_weights.ts        # which stats thi
 | --- | --- | --- |
 | `encode_talent_build` | is the tree legal, and is it still on theme | — |
 | `USES=1` | which entries fire, which never fire, and what is dealing damage from **outside** the list | the **"before the pull"** block prints each action beside the ability's **whole-fight** cast count, so four `arcane_blast` rows all read 13.2 and `<-- NEVER HAPPENED` can never fire for a spell that is also the filler |
-| `probe_resources` | `headroom` at the end of the fight: large means **GCD-bound**, zero with `wasted` means **capping** | one batch, so it is a diagnostic and not a measurement |
+| `probe_resources` | `headroom` at the end of the fight: large means **GCD-bound**, zero with `wasted` means **capping** | one batch, so it is a diagnostic and not a measurement. **And it answers for 60 seconds only** |
+| `probe_clock` | the same book plus the cast counts and the uptimes **at four fight lengths**, which is the one axis a paired probe cannot see | one batch per length, same caveat. Read `headroom` as a SHARE, because the absolute figure grows with the fight |
 | `probe_profile_report` | the damage table, buff/debuff uptime, and the `avoid` column | a row is pooled by ability **name**, so a proc sharing a name merges into it |
 | `stat_weights PLAN=1` | the hit ladder and the list of stats reported **not measured** — no fights are run | **the hit ladder undercounts school-scoped hit.** See Appendix B |
 
@@ -532,6 +534,36 @@ spare points do more outside the majority tree** (the Arcane Mage's eleven Fire
 points are **+49.9** against moving them, because the Arcane talents they would
 buy do nothing); and **is a point dead but immovable**.
 
+**AND A FOURTH, WHICH IS NOT ABOUT THE POINTS AT ALL: READ WHAT EACH TALENT IN
+THE TREE ACTUALLY DOES AGAINST WHAT THE CODE SAYS IT DOES.** The Elemental
+Shaman's Mindfulness is "Allows 17/33/50% of your Mana regeneration to continue
+while casting" and was declared `scope: 'threat'`, reason *"Threat, which the
+engine does not track"* — which is the tooltip of `natural_grace`, **one talent
+across in the same tier**. The two had each other's rulings. The owner's own
+spread spends 3 points there; an earlier round moved them out on that reason and
+measured **+2.95 ± 0.63** for the move, which was correct arithmetic on a talent
+that did nothing.
+
+**A `scope` TAG IS THE WORST PLACE FOR THIS, because its whole purpose is to
+stop anybody looking again** — a ruled-out effect is deliberately kept out of
+the live-gap list and shown apart in the Talent panel. So the census that exists
+to find unfinished work had nothing to report, exactly as it had nothing to
+report when Nature's Reach lost 4% hit the same way. Restoring it and buying
+Convection with five dead points is **+84.08 ± 2.84** at 180s.
+
+**SO AN OPTIMISATION PASS READS THE TREE'S DECLARATIONS, NOT ONLY ITS
+ALLOCATION.** It is the same read as Step 1's sixth — `triggersGcd` against what
+the spell is — pointed at talents, and like that one it is reading rather than
+running. Two cheap checks that would each have caught this:
+
+- **grep the class's effects file for `scope:` and read every tagged talent's
+  tooltip beside its reason.** A reason that is a different talent's sentence is
+  visible in one pass.
+- **compare the shipped spread against the owner's own**, which the variant file
+  usually still carries as a control. A point the owner spent and a later round
+  moved is the first thing to re-ask, because the move had a reason and reasons
+  expire.
+
 **A DEAD POINT'S DESTINATIONS CAN BE PROVABLY EQUALLY DEAD** — Enrage 2, Blood
 Craze 2 and Booming Voice 2 each ran **bit-identical fights**, so the choice is
 legibility and the smallest edit wins. Say which it is, because an identical
@@ -806,10 +838,26 @@ answer is not more variants. It is to read these by hand, once per pass, because
 no amount of measuring reaches them:
 
 1. **The clock.** Is the fight longer than the cooldowns in the list? Run
-   `DURATION=` past the longest one and count casts. Note what the build is
-   *bound by* at each length — the Arcane Mage is GCD-bound at 60s with 2,638
-   mana spare and **mana-bound by 300s**, which is a different optimisation
-   problem wearing the same name.
+   `npx vite-node tools/probe_clock.ts` — which prints the mana book, the cast
+   counts and the uptimes at four lengths at once — or `DURATION=` on
+   `probe_build.ts` for a paired figure. Note what the build is *bound by* at
+   each length: the Arcane Mage is GCD-bound at 60s with 2,638 mana spare and
+   **mana-bound by 300s**, which is a different optimisation problem wearing the
+   same name.
+   **AND THE ELEMENTAL SHAMAN IS THE SHARPEST CASE YET, WHERE THE CLOCK DID NOT
+   JUST RE-PRICE AN ANSWER BUT FALSIFIED A WRITTEN-DOWN FINDING.**
+   `shamanVariants.ts` carried, in capitals, "THE ELEMENTAL BUILD IS CAST-BOUND
+   AND NOT MANA-BOUND, WHICH IS THE FINDING THAT RULES OUT HALF ITS TREE" --
+   measured honestly at 60s, where the build has 14.3% mana headroom. At 180s it
+   has **1.3%** and its DPS has fallen **802 → 546 → 465**: it spends the whole
+   pool in the first minute and then stands still. Convection 5/5 went from
+   **-0.18, noise** to **+19.05 ± 2.35**, and three further answers inverted
+   outright — the Major Mana Potion from **-13.33 to +75.77**, removing the
+   Searing Totem entry from **+8.12 to -52.74**, removing the Lava Burst entry
+   from **-5.51 to +6.97**.
+   **A REGIME CLAIM IS A CLAIM ABOUT A CLOCK**, and because the clock is applied
+   to the baseline and to every variant alike it can never appear in a verdict.
+   So when a round writes down which resource binds, write the length beside it.
 2. **The declarations.** `triggersGcd`, `cooldownMs`, `castTimeMs`, the cost —
    read them against what the spell is *supposed* to be. This is reading, not
    running.
@@ -849,6 +897,13 @@ illegal casts were removed in the first run of this procedure, which cost
 | `mage_frostfire` | `frostfire_bolt` -0.049s, `scorch` -0.029s | **FAIL — two.** `scorch` is a project addition (+25.1) |
 | `shaman_elemental` | `lightning_bolt` -0.039s, `flame_shock` 0.000s | **FAIL — two, and BOTH ARE THE OWNER'S OWN LINES.** A question for them, not an edit |
 
+**`shaman_elemental` WAS RE-AUDITED IN ITS OWN OPTIMISATION ROUND AND STILL
+FAILS, UNCHANGED.** The round added nothing to that opener and moved nothing in
+it: both damaging casts are the owner's lines, so the ruling has to bend or one
+of the two has to move, and neither is this project's call. Both are also
+load-bearing at the published clock -- removing either is about **-16** at 60s
+and **noise** at 180s, which is a figure to quote if the answer is to drop one.
+
 **AND THE GATE COST ALMOST NOTHING TO APPLY, WHICH IS THE ARGUMENT FOR IT.**
 Reverting the Arcane Mage's four illegal casts took one edit; the loop then
 recovered **+13.2 +/- 3.2** of it legally, from a mechanism nobody had looked at
@@ -883,6 +938,50 @@ checker would fail:
 ---
 
 ## Appendix B — tool caveats that change an answer
+
+**AND A STAT WEIGHT IS A SLOPE, WHICH IS ONLY AN ANSWER IF THE FUNCTION IS
+MONOTONE.** `stat_weights.ts` adds ONE positive step per stat and divides. On
+the Elemental Shaman that reported `Haste  2%  -30.24  -15.1180  +-0.7663` at
+180s -- a large, statistically solid, **wrong-signed** weight. A paired swap
+taking the same 2% back *off*, through the two enchants that grant it, measured
+**-22.58 +/- 3.31**. Both directions lose, which no slope can express.
+
+Swept finely in both directions at 60s (`tools/probe_stat_sweep.ts`):
+
+```
+   -20     -10      -2      -1      +1      +2     +10     +20     +40
+ -12.04   -9.80   -1.01   -0.46   +0.54   +1.12   -4.34   -0.40   +7.74
+```
+
+**A SMALL POSITIVE SLOPE WITH A STEP OF ABOUT -10 SITTING ON TOP OF IT.** The
+step is a **Searing Totem boundary**: the totem lasts 55 seconds, its
+re-application is gated on the aura having fallen off, and whether that last
+application delivers any ticks before the fight ends moves with anything that
+changes the cast rhythm. Totem ticks read **35.0 at haste ratings 0, 9, 10, 11,
+30 and 60, and 37.7 at 19, 20 and 21** -- and 20 is exactly what the build
+wears. Per-tick damage is identical at every value, so it is a COUNT and not a
+magnitude.
+
+**SO THE PROCEDURE'S OWN RULE -- "most enchants are pure stats, so the stat
+weight table answers them without a fight" -- HAS AN EXCEPTION, AND NEITHER
+ROUTE RESOLVES IT.** The table is wrong-signed and the paired swap measures the
+same artefact. What settles that an enchant question is unanswerable rather than
+answered is the sweep: **two directions losing is not a weight.**
+
+**THE CHEAP GUARD IS ONE EXTRA COMMAND.** Before trusting any stat weight large
+enough to change a decision, ask for the same stat on the other side of where
+the build already sits. It costs one run and it is the only thing that
+distinguishes a weight from a discontinuity -- which is this document's own
+"sweep a parameter, do not compare two readings somebody wrote down", pointed at
+a stat instead of at a threshold.
+
+**AND `stat_weights.ts` NOW TAKES `DURATION=`, WHICH IT DID NOT.** Every weight
+it had ever printed was a weight at sixty seconds. On the Elemental Shaman
+`manaPer5` and `spirit` both read **0.000, "not measured: the interval swallows
+the value"** at the default and are **0.6623 and 0.3613 a point** at 180s, while
+Intellect goes 0.1337 to **0.6988** and spell power falls 0.6841 to 0.4647. The
+whole table re-sorts.
+
 
 **THE HIT LADDER UNDERCOUNTS SCHOOL-SCOPED HIT, AND THE WEIGHT BESIDE IT IS THE
 ONE TO TRUST.** On `mage_fire`, `stat_weights` prints both of these in one run:

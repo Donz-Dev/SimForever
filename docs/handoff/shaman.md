@@ -8,6 +8,34 @@ directory for what the census columns mean and how to reprint every figure below
 
 ---
 
+## Round 27 — the Elemental build is MANA-bound, and the file said otherwise
+
+**THE FIRST THING TO KNOW ABOUT THIS PROFILE IS THAT ITS PUBLISHED FIGURE IS
+TAKEN IN THE ONE REGIME WHERE ITS MANA IS FREE.** 802 DPS at 60 seconds, **546
+at 180 and 465 at 300**, with mana headroom falling 14.3% to **1.3%**: it
+empties the pool inside the first minute and then stands still.
+`npx vite-node tools/probe_clock.ts` prints it in one command.
+
+`shamanVariants.ts` carried, in capitals, *"THE ELEMENTAL BUILD IS CAST-BOUND
+AND NOT MANA-BOUND, WHICH IS THE FINDING THAT RULES OUT HALF ITS TREE."* Honest,
+measured at 60s, and the sentence had closed the whole question.
+
+**AND MINDFULNESS WAS A LIVE MANA TALENT FILED AS A RULED-OUT THREAT EFFECT**,
+carrying `natural_grace`'s tooltip from one talent across in the same tier. The
+owner's own spread spends 3 points there; an earlier round moved them out on
+that reason. Restored, with Convection 5 bought from five dead points, the pair
+is **+84.08 +/- 2.84 at 180s and noise at 60s**. See `HANDOVER.md`'s round 27
+for the full dimension table — and note that **four other answers on this
+profile invert between 60s and 180s** and are all waiting on the fight-length
+question.
+
+**HASTE IS NOT A STAT WEIGHT HERE.** `stat_weights` prices it wrong-signed
+because a 55 second Searing Totem's last re-application lands on a knife edge
+against the fight end. Use `tools/probe_stat_sweep.ts` before trusting any
+weight on this build.
+
+---
+
 ## Client build 1.60.1.70170 — a tier swap the patch notes do not mention
 
 **ENHANCEMENT WAS RE-SPECIFIED and the owner supplied the URL when asked.**
