@@ -151,6 +151,36 @@ owner supplied.
 without the Mage being touched, because spell hit, the 16% cap and the raid buff
 work all reached it. **Reprint rather than quote.**
 
+### The two profiles taken through the optimisation procedure
+
+**ARCANE IN ROUND 23-25 AND FIRE IN ROUND 28**, both through
+[../profile-optimisation.md](../profile-optimisation.md). Frostfire is the one
+that has not been, and it is also the Mage that still **fails Gate B**: its
+opener finishes `frostfire_bolt` at -0.049s AND a `scorch` at -0.029s, where the
+ruling allows one damaging cast. That Scorch is a project addition recorded at
++25.1, and the Fire list's identical addition cost **-24.23** to revert.
+
+**THREE THINGS THE FIRE ROUND LEFT FOR WHOEVER TAKES FROSTFIRE:**
+
+| | |
+| --- | --- |
+| `FROSTFIRE_SCORCH_REFRESH_SECONDS` | still **3**, the figure the two lists used to share. The Fire sweep landed on **5** (2s -13.70, 3s 0, 4s +6.56, 5s +9.74, 6s +9.84, 8s +8.63) and nothing about it transfers to a build with a faster filler. **Whoever sweeps that list owns that number** |
+| the `mage_armor` entry | still there, and equally dead -- the buff lasts thirty minutes and the opener pre-casts it. Out of the Fire list for **bit-identical fights**; left in Frostfire because the owner's ruling arrived as an audit of the ARCANE profile and a list is changed for the profile that was named |
+| the ungated `eureka` and potion | the Frostfire list spreads both shared blocks, so both free damage windows are spent on the first poll of the fight. Gating them was worth **+6.81** and **+1.39** on Fire -- but the gate that won there is *three Heating Up stacks*, and Frostfire's Pyroblast reaches three stacks far less often, which is why its own list carries a two-stack SALVAGE entry that Fire does not need |
+
+**AND COMBUSTION IS NOW OFF THE GLOBAL COOLDOWN ON THE OWNER'S RULING**, which
+closes the question round 28 raised: it is the third ability of the exact shape
+they had already ruled off it for Presence of Mind and Arcane Power. Worth
+**+23.9** on the Fire build, and **it reaches the Frostfire tree too** -- that
+build takes the Fire capstone as well, so its own figure has moved and has not
+been measured.
+
+**IT ALSO MADE COMBUSTION AND THE SPELLBLASTING POTION AN ACCIDENTAL STACK ON
+THE FIRE LIST**, both being off the GCD and therefore resolving in one instant.
+That pair is one `AplEntry.sequence` entry now -- bit-identical fights, shipped
+as structure so it cannot come apart if either ability's flag moves again.
+Frostfire's potion is still an ungated entry in the shared block.
+
 ### What the fine-tuning pass changed
 
 The ruleset owner's seven items, with what each was worth:
