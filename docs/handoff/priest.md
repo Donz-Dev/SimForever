@@ -68,7 +68,24 @@ rather than a ruling.
 
 | Profile | Talents | DPS | List | Entries |
 | --- | --- | --- | --- | --- |
-| Shadow | 13/3/35 | **597.9** | `PRIEST_SHADOW` | 7 |
+| Shadow | 14/2/35 | see HANDOVER | `PRIEST_SHADOW` | 8 |
+
+**THE DPS COLUMN IS DELIBERATELY NOT A FIGURE ANY MORE.** It read **597.9**
+for several releases after that number stopped being true: the enchants, the
+benchmark gear swap, every raid buff going onto every profile (+9.1 to a
+caster) and four Priest rulings have all landed since, and the published
+figure is **931.0** in [HANDOVER.md](../../HANDOVER.md)'s baseline table.
+**A figure in a per-class doc has no mechanism keeping it in step with the
+table that is actually maintained**, which is why this one drifted by 333 and
+why it now points at the table instead of copying it. The SPREAD stays,
+because `tests/game/talentSpreads.test.ts` pins it against the preset and
+that test is what caught the 13/3/35 above.
+
+**14 / 2 / 35, and the 13/3/35 this document used to state was right until
+Inner Focus.** One point came off `twilight_focus` -- three points of a
+`castPushback` ruling, permanently out of scope -- and bought Inner Focus,
+worth **+6.13 +/- 0.50** at 60s over 1200 paired iterations and **+2.40 +/-
+0.26** at 300s -- **with its list entry, and exactly 0.00 without it.**
 
 **516.4 → 597.9, +81.5, REAL**, and twenty-three of the twenty-four profiles
 identical to the decimal. Four things moved it, each isolated by removing it from
@@ -122,6 +139,88 @@ aura went on. 17% spell miss to 12% is +6.0% on what rolls, and a bit over a
 quarter of this build does not roll.
 
 ---
+
+## Round 26: the optimisation pass, and three things not to re-measure
+
+**ONE CHANGE SHIPPED OUT OF SIX DIMENSIONS.** Inner Focus, for **+6.13 +/- 0.50**
+at 60s and **+2.40 +/- 0.26** at 300s. The rest of this section is the negative
+results, which are the half worth keeping -- each one is a question that does
+not need asking again unless the ruleset moves.
+
+### The Mind Flay interrupt is priced now, and it loses at every length
+
+**IT HAD BEEN A SHIPPED ENGINE CAPABILITY WITH NO CALLER SINCE ROUND 19e.** Mind
+Flay declares `interruptibleChannel` and `protectedChannelTicks: 2`, and no
+entry in any of the 28 stock lists declares `interruptsChannel`. The owner asked
+for it knowing it might not pay -- *"this may no longer be optimal play, but I
+still want the functionality so the user can choose"* -- and the measurement
+agrees with them:
+
+| what interrupts it | 60s | 300s |
+| --- | --- | --- |
+| Shadow Word: Death | -18.36 | -12.31 |
+| Mind Blast | -21.62 | -3.07 |
+| everything above it | -23.96 | -9.18 |
+
+**IMPROVED MIND FLAY IS THE REASON AND IT IS ARITHMETIC, NOT TUNING.** The
+talent compounds 20% a tick, so the three ticks are 1, 1.2 and 1.44 of the base
+-- **the one tick an interrupt is permitted to take is the biggest of the three,
+39.6% of the channel.** Off the event stream, Mind Blast's interrupt takes
+ticks-per-channel from **2.929 to 2.307** and raises the cast count 13.10 to
+14.97: more channels, fewer ticks. **The two rulings arrived together and pull
+against each other**, so a figure for either is only readable with both in mind.
+
+### A refresh window on Shadow Word: Pain was shipped and reverted
+
+**THE OWNER'S `expired` WORDING WINS, AND IT TOOK TWO WRONG SHIPS TO ESTABLISH.**
+Swept against an explicit on-expiry control:
+
+| window | 60s | 300s |
+| --- | --- | --- |
+| **on expiry (shipped)** | control | control |
+| 0.5s / 1.0s | +2.78 | **-33.33** |
+| 2.0s | **+5.47** | **-118.00** |
+| 3.0s | -11.23 | -143.86 |
+
+**THE 60-SECOND PEAK IS THE 300-SECOND BUILD'S WORST LIVE CELL.** A window is
+paid once per CAST and the uptime it buys is paid once per FIGHT -- three casts
+at 60s against twelve at 300s -- so the clipping compounds and the closed gap
+does not. **Do not re-open this on a 60-second measurement.**
+
+**AND THE UPTIME TABLE IS THE WRONG MEASURE FOR THIS DoT**, which is the finding
+worth more than the revert:
+
+| window | SWP casts | ticks | uptime |
+| --- | --- | --- | --- |
+| on expiry | 3.00 | 18.96 | 97.42% |
+| 3.0s | 3.00 | **17.27** | **100.00%** |
+
+A three-second window -- exactly this DoT's tick period -- reaches **perfect
+uptime and loses 2.08 ticks a fight**. **A DoT at 100% uptime can be worth less
+than one at 97.4%**, because a refresh restarts the tick clock, and a reader
+optimising the uptime column would ship the worst cell in the sweep.
+
+### Devouring Plague is cooldown bound, so nothing in the list can reach it
+
+**ITS COOLDOWN AND ITS DURATION ARE BOTH 24 SECONDS**, so two seconds before the
+aura falls off the ability is still on cooldown. Both a refresh window and a
+channel interrupt on its entry measure **IDENTICAL FIGHTS** -- not "worth
+nothing", but *unreachable*, which is a different statement and the reason its
+94.9% uptime cannot be improved from the list. `selectInterrupt` accepts a
+candidate only when `already_casting` is the SOLE rejection reason, and for this
+entry the reason is the cooldown.
+
+### And the tree is forced, which is the first result rather than a shrug
+
+Every live Shadow talent this spread reaches is **already maxed**. The six soft
+points are rulings (`twilight_focus` 3, `shadow_reach` 2, `silence` 1), a
+mandatory prerequisite (`vampiric_embrace` 1 holds Shadowform), or live and
+worth nothing -- `dark_inspiration`'s Spirit weighs **0.0000** on this build and
+`meditation`'s regen is mana on a profile that leaves **52.5%** of it unspent.
+`shadow_reach 2 -> dark_inspiration 5/5` measures **IDENTICAL FIGHTS**.
+
+**SO INNER FOCUS IS THE ONLY LIVE DESTINATION IN THE WHOLE 51**, and all three
+legal ways to pay for it measure the same +6.13.
 
 ## The census
 

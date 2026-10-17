@@ -227,5 +227,13 @@ describe('nothing outside the engine drains a pool silently', () => {
     }
 
     expect(offenders).toEqual([]);
-  });
+    /*
+     * A WALK OF `src/game` NEEDS MORE THAN THE 5s DEFAULT, and this test timed
+     * out under the full suite while passing standalone in 277ms. Same cause
+     * and same per-test limit as `protectedChannelTicks.test.ts` and
+     * `stealthBreaking.test.ts`: synchronous-ish disk reads contending with
+     * vitest's parallel transform, not slow assertions. `vite.config.ts` still
+     * sets no global `testTimeout`, on purpose.
+     */
+  }, 30_000);
 });

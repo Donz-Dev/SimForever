@@ -7,6 +7,30 @@ import { ARCANE_MISSILES } from '../../src/game/abilities/mage';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 
+/**
+ * A test that walks `src/game` and reads every `.ts` file needs more than the
+ * 5s default.
+ *
+ * ------------------------------------------------------------------------------
+ * THIS TEST FAILED ON EVERY FULL-SUITE RUN AND PASSED STANDALONE IN 321ms,
+ * which is the sixth instance of a pattern CLAUDE.md records and the second
+ * with a counted mechanism: **a test that reads the source tree is the one kind
+ * that gets slower the more tests run beside it**, because its synchronous disk
+ * reads contend with vitest transforming 167 test files in parallel.
+ *
+ * THE LIMIT IS PER-TEST AND `vite.config.ts` STILL SETS NO `testTimeout`.
+ * Widening it globally would hide the next test that genuinely gets slower --
+ * and the two Monte Carlo tests that time out intermittently beside this one
+ * (`protectionRotation`, `raidBuffs`) have a DIFFERENT cause and are
+ * deliberately left alone, because they read no files.
+ *
+ * `stealthBreaking.test.ts` carries the same constant for the same reason and
+ * also caches its walk; this file makes ONE walk from ONE test, so the limit
+ * alone is enough.
+ * ------------------------------------------------------------------------------
+ */
+const READS_THE_SOURCE_TREE_MS = 30_000;
+
 /*
  * ==============================================================================
  * AN INTERRUPT MAY TAKE MIND FLAY'S LAST TICK AND NOT ITS FIRST TWO.
@@ -145,5 +169,5 @@ describe('what carries it', () => {
     walk('src/game');
 
     expect(declaring).toEqual(['src/game/abilities/priest.ts']);
-  });
+  }, READS_THE_SOURCE_TREE_MS);
 });
