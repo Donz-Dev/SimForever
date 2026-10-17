@@ -343,9 +343,33 @@ export interface Ability {
    * swing time" -- and it is worth far more than the quarter second of cast
    * time the same talent removes.
    *
+   * ----------------------------------------------------------------------------
+   * `continue` IS A THIRD MODE AND IT IS NOT A STRONGER `hold`. The auto attack
+   * is not paused, not reset and not DELAYED: a swing that comes due during the
+   * cast LANDS during the cast, and the weapon keeps its own rhythm straight
+   * through. The ruleset owner's ruling for the Hunter's three cast shots --
+   * "the ranged auto-attack is not paused or suspended. It will trigger DURING
+   * the cast."
+   *
+   * `hold` COULD NOT SAY IT, which is why this is a new member rather than a
+   * reuse. Hold leaves the timer running and then makes the swing WAIT for the
+   * cast to end, which is most of the loss on a cast longer than a swing
+   * cycle: a four-second Sniper Shot against a 2.8-second hasted bow would
+   * still have deferred a shot by 1.2 seconds, and the deferral is exactly the
+   * suspension the owner has ruled away. A reader is likely to reach for
+   * `hold` here, and it is a smaller number and no error.
+   *
+   * NOTHING DISTINGUISHES THE SLOT, because no combatant in this project swings
+   * a melee weapon and a ranged one at once -- `swingingSlots` returns
+   * `['ranged']` for a ranged style and never includes it otherwise. So "the
+   * RANGED auto-attack continues" and "the auto-attack continues" are the same
+   * set today, and `tests/game/hunterAutoShotDuringCast.test.ts` asserts that
+   * rather than building a per-slot gate nothing could reach.
+   * ----------------------------------------------------------------------------
+   *
    * Ignored by an instant ability, which never interrupts anything.
    */
-  readonly swingTimer?: 'reset' | 'hold';
+  readonly swingTimer?: 'reset' | 'hold' | 'continue';
 
   /**
    * Extra conditions beyond cooldown, cost and target, which the engine

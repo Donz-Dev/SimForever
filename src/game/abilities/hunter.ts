@@ -174,6 +174,38 @@ export const ARCANE_SHOT: Ability = {
 };
 
 /**
+ * AUTO SHOT IS NOT SUSPENDED BY ANY OF THE THREE CAST SHOTS, which is the
+ * ruleset owner's ruling and reverses the one every Hunter list here was
+ * written against.
+ *
+ * ----------------------------------------------------------------------------
+ * THEIR WORDS: "a previous ruling where ranged auto-attack on hunters is paused
+ * while casting sniper shot, aimed shot, and multi-shot. This is no longer the
+ * case. The ranged auto-attack is not paused or suspended. It will trigger
+ * DURING the cast of the named skills above."
+ *
+ * SO IT IS `swingTimer: 'continue'` AND NOT `'hold'`. The suspension had TWO
+ * halves and the ruling removes both: the cast no longer resets the ranged
+ * timer, AND a shot that comes due inside the cast lands inside the cast
+ * rather than waiting for it. `hold` only removes the first, which would have
+ * left a four-second Sniper Shot deferring a shot by over a second on a
+ * 2.8-second hasted bow -- most of the loss, kept, with nothing to show it.
+ *
+ * DECLARED ON THESE THREE AND NOT DERIVED FROM "it is a shot", because a
+ * ruling covers what it says and is not extended by analogy -- the rule that
+ * made Immolation Trap wait to be named rather than following Explosive Trap
+ * in. Every other cast in the game still interrupts the swing in progress.
+ *
+ * WHAT IT MAKES STALE IS THE REASONING IN `rotations/hunter.ts`, not its
+ * entries. All three of the owner's shot casts are gated there on "a ranged
+ * auto-attack has fired in the last 0.5 seconds", and the whole argument for
+ * that gate was the bow cycle a badly-timed cast threw away. The gate is the
+ * owner's and stays; that it now costs rather than saves is a question for
+ * them, recorded where the condition is declared.
+ * ----------------------------------------------------------------------------
+ */
+
+/**
  * Aimed Shot: "increases ranged damage by 166", a 2-second cast.
  *
  * A TALENT IN CLASSIC AND A TRAINER ABILITY IN FOREVER, learned at 20 by every
@@ -188,6 +220,8 @@ export const AIMED_SHOT: Ability = {
   name: 'Aimed Shot',
   cost: { resource: 'mana', amount: 310 },
   castTimeMs: seconds(2),
+  // Auto shot runs straight through it -- see the note above Aimed Shot.
+  swingTimer: 'continue',
   cooldownMs: seconds(6),
   // "Aimed Shot shares its cooldown with Multi-Shot."
   cooldownGroup: 'aimed_shot',
@@ -223,6 +257,8 @@ export const MULTI_SHOT: Ability = {
   name: 'Multi-Shot',
   cost: { resource: 'mana', amount: shareOfBase(0.139) },
   castTimeMs: seconds(0.5),
+  // Auto shot runs straight through it -- see the note above Aimed Shot.
+  swingTimer: 'continue',
   cooldownMs: seconds(6),
   cooldownGroup: 'aimed_shot',
   attackTable: 'ranged-special',
@@ -323,6 +359,8 @@ export const SNIPER_SHOT: Ability = {
   name: 'Sniper Shot',
   cost: { resource: 'mana', amount: 365 },
   castTimeMs: SNIPER_SHOT_CAST_MS,
+  // Auto shot runs straight through it -- see the note above Aimed Shot.
+  swingTimer: 'continue',
   cooldownMs: seconds(15),
   attackTable: 'ranged-special',
   onCast: ({ simulation, caster, target, ability }) => {

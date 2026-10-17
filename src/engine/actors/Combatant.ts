@@ -505,6 +505,28 @@ export class Combatant {
 
   /** When the current cast finishes, or 0 when not casting. */
   castEndsAt: Milliseconds = 0;
+
+  /**
+   * Whether the cast in progress lets auto attacks land DURING it.
+   *
+   * ----------------------------------------------------------------------------
+   * `Ability.swingTimer: 'continue'`, which the swing handler has to be able to
+   * ask about at the moment a swing comes due -- and by then the only thing it
+   * has is `castEndsAt`, a number that says when the cast ends and nothing
+   * about which ability is casting.
+   *
+   * NOT `channelling`, which is the field that looks like the answer. That one
+   * holds an ability only for a CHANNEL -- it exists so the remaining ticks can
+   * be cancelled -- so a plain two-second Aimed Shot sets it to null, and
+   * widening it to every cast would change what every reader of it means.
+   *
+   * SET AT THE ONE PLACE `castEndsAt` BECOMES POSITIVE, so the two cannot
+   * disagree. It is only ever read while `castEndsAt` is in the future, which
+   * is what makes a single paired assignment enough rather than needing
+   * clearing everywhere the cast ends.
+   * ----------------------------------------------------------------------------
+   */
+  castAllowsSwings = false;
   /**
    * The ability currently being channelled, if any, and its pending ticks.
    *

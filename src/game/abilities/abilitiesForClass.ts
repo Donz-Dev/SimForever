@@ -238,7 +238,18 @@ function applyTalentChanges(ability: Ability, build: TalentBuild): Ability {
   const bonuses = build.abilityBonuses.get(ability.id);
   const castReduction = build.abilityCastTimeReductionMs.get(ability.id) ?? 0;
   const gcdReduction = build.abilityGcdReductionMs.get(ability.id) ?? 0;
-  const holdsSwing = build.abilitiesHoldingSwing.has(ability.id);
+  /*
+   * A TALENT MAY NOT DOWNGRADE `continue` TO `hold`, which is the one way these
+   * two could meet. `hold` leaves the timer running and DEFERS a swing that
+   * comes due mid-cast; `continue` lets it land. So a talent granting hold to
+   * an ability the ruleset already exempts entirely would quietly reinstate
+   * half the suspension -- a smaller number and no error. Nothing reaches this
+   * today: Improved Slam is the only grant and the three Hunter shots are the
+   * only `continue`, so the guard is here for the next pair rather than for a
+   * live case.
+   */
+  const holdsSwing =
+    build.abilitiesHoldingSwing.has(ability.id) && ability.swingTimer !== 'continue';
   /*
    * ADDED TO the ability's own stances, never replacing them. Vanguard gives
    * Charge Defensive Stance and must not take Battle Stance away; an ability
