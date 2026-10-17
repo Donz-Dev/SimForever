@@ -27,6 +27,7 @@ npx vite-node tools/ability_audit.ts             # is every ability connected at
 npx vite-node tools/class_audit.ts warrior       # one class's gaps, lists and sources
 npx vite-node tools/coefficient_probe.ts         # does every ability's damage scale
 node tools/value_index_sweep.mjs                 # which talents index a multi-number row
+node tools/diff_forever_talents.mjs              # WHAT changed in each tree, talent by talent
 node tools/decode_talent_build.mjs --profiles    # does every profile's build URL still decode
 node tools/decode_talent_build.mjs --presets     # does each URL still MATCH its preset
 PROFILE=pally_ret npx vite-node tools/probe_resources.ts   # where one pool went
@@ -169,6 +170,26 @@ moved, and `decode_talent_build.mjs --profiles` says which builds stopped
 decoding. Seven of twenty did, and **three of the four removed talents are in no
 patch note at all** -- two of them with points spent in every Paladin build. The
 notes are a guide to what is intended, not a list of what changed.
+
+**AND `--check` REPORTS A COUNT, WHICH CANNOT SEE A SWAP.** That is what
+`tools/diff_forever_talents.mjs` is for, and it is the step that belongs FIRST
+now: a patch that replaces one talent with another leaves the count identical,
+and so does moving a row, changing a prerequisite, adding a rank or restating a
+value. Asked to check three classes the owner had named, the count said two of
+them changed and the diff said **EIGHT OF NINE** -- the Rogue alone was
+untouched, and the five nobody mentioned carried a removed talent (the Warlock's
+Malediction), a new one (Grim Reach) and a dozen restated descriptions between
+them.
+**SO "THE OWNER NAMED THREE CLASSES" IS A GUIDE TO WHAT THEY NOTICED**, which is
+the same rule as "the notes are a guide to what is intended" pointed one level
+up. Diff every class, every time.
+**READ THE DESCRIPTION DIFFS, WHICH IS WHERE A PATCH ACTUALLY HIDES.** A talent
+that keeps its name, row, ranks and prerequisite and changes only its NUMBERS
+has no structural tell at all -- and in that one refresh those included Mental
+Strength 15% to 10%, Critical Mass 6% to 10% over five ranks instead of three,
+Lava Burst's damage cut by a quarter, and **Ice Lance's frozen bonus from 300%
+to 200%**, which is the constant this file has already recorded three separate
+owner rulings about.
 
 **THE UI HAS HAD FOUR PASSES NOW, AND THIS LINE HAS ALREADY BEEN WRONG ONCE
 BY THE SAME ARITHMETIC.** It once read "THE UI HAS NOT HAD A PASS OF ITS OWN
