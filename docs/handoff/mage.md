@@ -168,11 +168,18 @@ ruling allows one damaging cast. That Scorch is a project addition recorded at
 | the `mage_armor` entry | still there, and equally dead -- the buff lasts thirty minutes and the opener pre-casts it. Out of the Fire list for **bit-identical fights**; left in Frostfire because the owner's ruling arrived as an audit of the ARCANE profile and a list is changed for the profile that was named |
 | the ungated `eureka` and potion | the Frostfire list spreads both shared blocks, so both free damage windows are spent on the first poll of the fight. Gating them was worth **+6.81** and **+1.39** on Fire -- but the gate that won there is *three Heating Up stacks*, and Frostfire's Pyroblast reaches three stacks far less often, which is why its own list carries a two-stack SALVAGE entry that Fire does not need |
 
-**AND COMBUSTION IS IN BOTH BUILDS' TREES AND IS ON THE GLOBAL COOLDOWN**, which
-is `HANDOVER.md`'s open question: it is the third ability of the exact shape the
-owner ruled off the GCD for Presence of Mind and Arcane Power, priced at
-**+24.93 +/- 4.21** at 60s and not shipped. It would move both Fire and
-Frostfire.
+**AND COMBUSTION IS NOW OFF THE GLOBAL COOLDOWN ON THE OWNER'S RULING**, which
+closes the question round 26 raised: it is the third ability of the exact shape
+they had already ruled off it for Presence of Mind and Arcane Power. Worth
+**+23.9** on the Fire build, and **it reaches the Frostfire tree too** -- that
+build takes the Fire capstone as well, so its own figure has moved and has not
+been measured.
+
+**IT ALSO MADE COMBUSTION AND THE SPELLBLASTING POTION AN ACCIDENTAL STACK ON
+THE FIRE LIST**, both being off the GCD and therefore resolving in one instant.
+That pair is one `AplEntry.sequence` entry now -- bit-identical fights, shipped
+as structure so it cannot come apart if either ability's flag moves again.
+Frostfire's potion is still an ungated entry in the shared block.
 
 ### What the fine-tuning pass changed
 

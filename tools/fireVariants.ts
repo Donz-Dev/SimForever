@@ -53,6 +53,35 @@
  *   fire_blast              1347 / 1.5s    898
  *   fireball                1781 / 2.5s    712     includes its own burn
  *   scorch                   843 / 1.5s    562     cast for the DEBUFF
+ *
+ * ------------------------------------------------------------------------------
+ * **THE OWNER RULED COMBUSTION OFF THE GLOBAL COOLDOWN PART-WAY THROUGH THIS
+ * FILE'S LIFE, AND IT MOVED FOUR FIGURES THAT WERE ALREADY WRITTEN DOWN.** The
+ * shipped build went **1016.2 -> 1040.1**, and `fireGcd`'s question is answered:
+ *
+ *   pre-casting Combustion    -4.69 `noise`  ->  **-36.38 `real`**
+ *   Fire Blast's CC gate      +7.68 `real`   ->  **+3.44** at 4,000 iterations
+ *   the Scorch window         +9.83          ->  **+10.75**
+ *   the Eureka gate           +6.81          ->  **+5.45**
+ *
+ * SO EVERY FIGURE IN THE GROUP COMMENTS BELOW IS DATED BY WHICH SIDE OF THAT
+ * RULING IT WAS TAKEN ON, and each one says so. A prior measurement is true of
+ * the build it was taken in, and that applies to the build you had an hour ago.
+ *
+ * ------------------------------------------------------------------------------
+ * AND THREE GROUPS HAVE ROWS THAT ARE NOW SILENT NO-OPS, which is worth knowing
+ * before reading an `IDENTICAL FIGHTS` verdict here as a finding. `replace()`
+ * maps over the entries and leaves the list alone when nothing matches, so:
+ *
+ *   `fireWindows` / `fireRevert`  the potion rows match NOTHING, because the
+ *                                 potion is a `sequence` STEP now and not an
+ *                                 entry with an `abilityId` of its own
+ *   `fireGates`                   the `3s -> 5s` row restates what shipped
+ *   `fireApl`                     `mage_armor` is gone, so that row is SKIPPED
+ *
+ * A row that cannot apply reports `IDENTICAL FIGHTS` exactly like a change worth
+ * nothing. The groups are kept as they were taken rather than rewritten, because
+ * the figures in the write-up were measured with them in this shape.
  * ==============================================================================
  */
 import {
@@ -75,6 +104,7 @@ import {
   any,
   hasReaction,
   selfHas,
+  selfMissing,
   selfStacks,
   selfTime,
   targetStacks,
@@ -207,6 +237,41 @@ const NO_CLEARCASTING = {
 /** Replace an entry in place, so a threshold sweep moves nothing else. */
 const replace = (id: string, entry: AplEntry): Apply =>
   apl((entries) => entries.map((e) => (e.abilityId === id ? entry : e)));
+
+/**
+ * THE ARRANGEMENT THE COMBUSTION STACK REPLACED, restored by hand.
+ *
+ * ==============================================================================
+ * `replace('major_spellblasting_potion', ...)` CANNOT EXPRESS THIS ANY MORE AND
+ * IS ACTIVELY WRONG. The potion is the `abilityId` of the two-step stack now, so
+ * swapping that entry for a bare potion throws COMBUSTION away with it -- which
+ * is what two rows in this file did for one run, reporting **-64.11** and
+ * **-77.24** that were the missing three-minute cooldown rather than anything
+ * either row claimed to measure.
+ *
+ * SO THE REVERT IS WRITTEN OUT: the stack entry becomes a plain Combustion entry
+ * with the same condition, and the potion goes back where the shared block had
+ * it -- an entry of its own, above, which is the arrangement the sequence
+ * replaced. The `gated` flag picks whether it carries the Combustion-aura gate
+ * this round shipped or the ungated row the block ships.
+ * ==============================================================================
+ */
+const withoutTheStack = (gated: boolean): Apply =>
+  chain(
+    replace('major_spellblasting_potion', {
+      abilityId: 'combustion',
+      condition: all(
+        targetStacks('atLeast', 5, 'fire_vulnerability'),
+        targetTime('atLeast', 10, 'fire_vulnerability'),
+      ),
+    }),
+    addAbove(
+      gated
+        ? { abilityId: 'major_spellblasting_potion', condition: selfHas('combustion') }
+        : { abilityId: 'major_spellblasting_potion' },
+      'evocation',
+    ),
+  );
 
 /**
  * THE OWNER'S FROSTFIRE SALVAGE, AIMED AT THE FIRE LIST. Heating Up is
@@ -503,20 +568,15 @@ export const VARIANT_GROUPS: Record<string, readonly Variant[]> = {
         condition: selfStacks('exactly', 3, 'heating_up'),
       }),
     },
-    {
-      label: 'the potion on 5 Fire Vulnerability stacks',
-      apply: replace('major_spellblasting_potion', {
-        abilityId: 'major_spellblasting_potion',
-        condition: targetStacks('atLeast', 5, 'fire_vulnerability'),
-      }),
-    },
-    {
-      label: 'the potion on a Combustion window',
-      apply: replace('major_spellblasting_potion', {
-        abilityId: 'major_spellblasting_potion',
-        condition: selfHas('combustion'),
-      }),
-    },
+    /*
+     * THE TWO POTION ROWS ARE GONE FROM THIS GROUP. They were
+     * `replace('major_spellblasting_potion', ...)` against a list where the
+     * potion was an entry of its own; it is the `abilityId` of the Combustion
+     * stack now, so the same call deletes a three-minute cooldown. Their
+     * figures -- +0.72 on five stacks and +1.07 on a Combustion window, both
+     * taken before the Combustion ruling -- are in the write-up, and
+     * `fireRevert`'s `withoutTheStack` rows are how the pairing is priced now.
+     */
     { label: 'eureka removed entirely -- the sign check', apply: removeEntry('eureka') },
   ],
 
@@ -774,32 +834,18 @@ export const VARIANT_GROUPS: Record<string, readonly Variant[]> = {
       label: 'eureka ungated again',
       apply: replace('eureka', { abilityId: 'eureka' }),
     },
-    {
-      label: 'the potion ungated again',
-      apply: replace('major_spellblasting_potion', {
-        abilityId: 'major_spellblasting_potion',
-        note: '40 Spell Power for 30 sec. Ungated: a flat window with nothing in this encounter to line it up against.',
-      }),
-    },
+    { label: 'the stack back to two entries, potion GATED', apply: withoutTheStack(true) },
+    { label: 'the stack back to two entries, potion UNGATED', apply: withoutTheStack(false) },
     {
       label: 'both windows ungated again',
-      apply: chain(
-        replace('eureka', { abilityId: 'eureka' }),
-        replace('major_spellblasting_potion', {
-          abilityId: 'major_spellblasting_potion',
-          note: '40 Spell Power for 30 sec. Ungated: a flat window with nothing in this encounter to line it up against.',
-        }),
-      ),
+      apply: chain(replace('eureka', { abilityId: 'eureka' }), withoutTheStack(false)),
     },
     {
       label: 'the whole round reverted, including the ILLEGAL scorch',
       apply: chain(
         replace('scorch', scorchGate(3)),
         replace('eureka', { abilityId: 'eureka' }),
-        replace('major_spellblasting_potion', {
-          abilityId: 'major_spellblasting_potion',
-          note: '40 Spell Power for 30 sec. Ungated: a flat window with nothing in this encounter to line it up against.',
-        }),
+        withoutTheStack(false),
         addPrecombat(1.5, 'scorch'),
       ),
     },
@@ -808,11 +854,64 @@ export const VARIANT_GROUPS: Record<string, readonly Variant[]> = {
       apply: chain(
         replace('scorch', scorchGate(3)),
         replace('eureka', { abilityId: 'eureka' }),
-        replace('major_spellblasting_potion', {
-          abilityId: 'major_spellblasting_potion',
-          note: '40 Spell Power for 30 sec. Ungated: a flat window with nothing in this encounter to line it up against.',
-        }),
+        withoutTheStack(false),
       ),
+    },
+  ],
+
+  /*
+   * ==========================================================================
+   * `fireSequence` IS DELETED, AND WHAT IT MEASURED IS WORTH KEEPING.
+   *
+   * It asked whether Combustion and the potion should be ONE `AplEntry.sequence`
+   * rather than two entries held together by both being off the global
+   * cooldown -- the Arcane round's shape, whose verdict is "measure it as
+   * neutral and ship it as structure." It measured **bit-identical fights** at
+   * 1500 paired iterations and shipped.
+   *
+   * AND ITS FIRST VERSION MEASURED **-14.81 +/- 0.08** BECAUSE THE ENTRY WAS
+   * MALFORMED. `selectAction` casts `entry.abilityId` and sets
+   * `pendingSequence.index = 0`, so `sequence` holds the steps AFTER the id --
+   * naming the first step in both places casts it, finds it on cooldown on the
+   * resume, clears the pointer, and the SECOND step never fires. The tell was
+   * the spread: 0.08 on 1500 paired iterations is the same loss in every fight.
+   *
+   * IT IS DELETED RATHER THAN KEPT BECAUSE IT CANNOT BE RE-RUN AGAINST THE
+   * LIST IT PRODUCED. Every row swapped the potion ENTRY for something else,
+   * and the potion is the `abilityId` of the stack now -- so each row threw
+   * Combustion away and reported a large loss that was the missing cooldown.
+   * A group that cannot apply reports a figure that reads like a finding, which
+   * is the one thing a variant file must not do. `git log` has it.
+   * ==========================================================================
+   */
+
+  /*
+   * ==========================================================================
+   * THE CLEARCASTING GATE, RE-PRICED AT 4000 ITERATIONS BECAUSE THE RULING
+   * SHRANK IT. It measured **+7.68 +/- 3.22 `real`** while Combustion paid a
+   * global cooldown and **+2.96 +/- 3.26 `noise`** once it stopped -- which is
+   * a knock-on rather than a contradiction: the build has one more free global
+   * cooldown now, so holding a 1.5-second instant costs less of one.
+   *
+   * THIS IS THE QUESTION PUT TO THE OWNER, so whether it survives the answer to
+   * the OTHER question matters more than the figure.
+   * ==========================================================================
+   */
+  fireClearcasting: [
+    { label: 'the owner gate, shipped -- the control', apply: (p) => p },
+    {
+      label: 'fire_blast ungated',
+      apply: replace('fire_blast', FIRE_BLAST_UNGATED),
+    },
+    {
+      label: 'fire_blast gated on Clearcasting having 0 charges left to waste',
+      apply: replace('fire_blast', {
+        abilityId: 'fire_blast',
+        condition: any(
+          selfMissing('clearcasting'),
+          targetStacks('below', 5, 'fire_vulnerability'),
+        ),
+      }),
     },
   ],
 

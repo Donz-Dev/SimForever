@@ -398,36 +398,13 @@ export const MAGE_FIRE: AplList = {
    * ==========================================================================
    */
   { abilityId: 'eureka', condition: selfStacksExactly('heating_up', HEATING_UP_MAX_STACKS) },
-  ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
   /*
-   * ==========================================================================
-   * AND THE SPELLBLASTING POTION HELD FOR COMBUSTION, WORTH **+1.07 +/- 0.12**
-   * on its own -- the PAIR measures **+6.58 +/- 0.59** against +5.34 for Eureka
-   * alone, which is 1.24 apart on a combined interval of 0.81 and therefore a
-   * real second gain rather than a restatement of the first.
-   *
-   * IT IS THE SAME SHAPE AS EUREKA: 40 spell power for 30 seconds, free, off
-   * the global cooldown, and ungated in the shared block, so it was spent on
-   * the first poll of the fight. Combustion is the longer of the two windows
-   * this build has, so the potion goes there and Eureka goes on the Pyroblast.
-   *
-   * WRITTEN OUT RATHER THAN THROUGH `buffPotionCooldown`, whose note says the
-   * cooldown entry below is reached "100ms later, because a potion takes no
-   * global cooldown". That is true of the Cat's Berserk and is NOT true here:
-   * Combustion is ON the global cooldown -- see HANDOVER.md's open question --
-   * so the potion arrives a GCD after it rather than a poll. A note is a FROZEN
-   * STRING and the wrong one is worse than none.
-   * ==========================================================================
+   * THE SPELLBLASTING POTION IS EXCLUDED HERE AND IS STEP TWO OF THE
+   * COMBUSTION STACK BELOW, where the owner's gate for it actually belongs
+   * now that a sequence can express the pairing. Excluding it keeps every
+   * other row of the shared block exactly where it was.
    */
-  {
-    abilityId: 'major_spellblasting_potion',
-    condition: selfHas('combustion'),
-    note:
-      '40 Spell Power for 30 sec, held for the Combustion window so the two stack. ' +
-      'The entry that casts Combustion is BELOW this one, so one poll casts the ' +
-      'cooldown and a later poll drinks this -- a global cooldown later rather than ' +
-      'a poll later, because Combustion starts one.',
-  },
+  ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
   ...CONSUMABLE_HEALS,
   { abilityId: 'evocation', condition: evocationFor(FIRE_EVOCATION_FIGHT_SECONDS) },
   { abilityId: 'scorch', condition: scorchNeededWithin(FIRE_SCORCH_REFRESH_SECONDS) },
@@ -438,17 +415,90 @@ export const MAGE_FIRE: AplList = {
    */
   { abilityId: 'pyroblast', condition: selfStacksExactly('heating_up', HEATING_UP_MAX_STACKS) },
   /*
+   * ==========================================================================
+   * COMBUSTION AND THE SPELLBLASTING POTION AS ONE ACTION, which is the
+   * Arcane list's cooldown stack reached from the other direction.
+   *
    * COMBUSTION ONLY WITH THE DEBUFF CAPPED AND HOLDING. It is a crit cooldown,
    * so it is worth most when every Fire spell under it is already taking the
    * full Fire Vulnerability -- and the ten-second floor is what stops it being
-   * spent on a stack about to fall off.
+   * spent on a stack about to fall off. **Both clauses are inert at a
+   * one-minute fight**: Fire Vulnerability sits at 99.9% uptime on a 30 second
+   * duration, so once five stacks exist there are always more than twenty
+   * seconds left, and moving the floor to 0 or to 20 runs bit-identical
+   * fights. They are kept because they are a claim about when the cooldown is
+   * worth spending rather than a claim about this clock.
+   *
+   * ------------------------------------------------------------------------
+   * THE POTION IS A STEP RATHER THAN AN ENTRY, AND THE OWNER'S COMBUSTION
+   * RULING IS WHAT MADE THAT POSSIBLE. It was a separate entry above this one,
+   * gated on Combustion's own AURA: one poll cast the cooldown and a later poll
+   * drank the potion, which worked and depended on two things no reader of
+   * either entry could see -- the list ORDER, and a second decision happening
+   * before anything took the global cooldown.
+   *
+   * WITH COMBUSTION OFF THE GLOBAL COOLDOWN the two resolve in ONE instant: the
+   * cast leaves the actor free, `nextDecisionTime` returns at once, and the
+   * potion goes out before anything else can act. **That is an emergent stack
+   * held together by both being off the GCD** -- and one of them became so in
+   * the same change, which is the Arcane round's own warning that "your own
+   * change can create or destroy that in the same round."
+   *
+   * SO IT IS WRITTEN AS A GUARANTEE. `AplEntry.sequence` means nothing may be
+   * cast between the steps whatever happens to either ability's GCD flag
+   * later. It measures **bit-identical fights** at 1500 paired iterations,
+   * which is the containment check and is also the Arcane verdict on the same
+   * shape: measure it as neutral and ship it as structure.
+   *
+   * `abilityId` IS STEP ONE AND `sequence` HOLDS WHAT FOLLOWS IT, which is the
+   * convention the Arcane stack uses and is easy to get wrong: `selectAction`
+   * casts `entry.abilityId` and sets `pendingSequence.index = 0`, so naming
+   * Combustion in BOTH places casts it, finds it on cooldown on the resume,
+   * clears the pointer, and the potion never fires -- **-14.81 with a spread of
+   * 0.08**.
+   *
+   * THE SPREAD IS WHAT SAID IT WAS A BUG RATHER THAN A FINDING. 0.08 on a
+   * 1500-iteration paired run means the same loss in every fight, which is 40
+   * spell power for 30 seconds going missing and not a decision changing
+   * anywhere. `USES=1` shows it too -- it prints a sequence step as its own
+   * `then <id>` row under the entry, so the step read 0.00 uses -- and this
+   * round found it by asking the damage table instead, which is the slower
+   * route to the same zero.
+   *
+   * AND THE GATE HAD TO MOVE OFF THE AURA ONTO THE SEQUENCE, which is forced
+   * rather than chosen: `sequenceIsAffordable` resolves every step before any
+   * of it is cast, so a step gated on what an earlier step APPLIES is refused
+   * outright. That is the Vanish-into-Ambush limit, and here it is free --
+   * Combustion's own condition is the right gate for the pair.
+   *
+   * ------------------------------------------------------------------------
+   * THE POTION IS `abilityId` AND COMBUSTION IS THE STEP, WHICH IS THE ARCANE
+   * STACK'S ARRANGEMENT TO THE LETTER and is not arbitrary. The two resolve in
+   * one instant either way, so nothing about the fight depends on it -- what
+   * depends on it is every READER that keys on `abilityId`, and a consumable
+   * has two of them.
+   *
+   * `midFightConsumables.test.ts` ASSERTS THAT EVERY PRESET HAS A LIST ENTRY
+   * FOR EXACTLY WHAT IT SELECTED, and it failed with Combustion as the id: the
+   * potion became invisible, which is a potion that reads as never drunk. The
+   * test has been taught to look inside a sequence as well -- a selection can
+   * legitimately be a STEP -- and this entry is also written the way round the
+   * precedent already is, so the two fixes are independent rather than one
+   * propping up the other.
+   * ==========================================================================
    */
   {
-    abilityId: 'combustion',
+    abilityId: 'major_spellblasting_potion',
+    sequence: ['combustion'],
     condition: all(
       targetStacksAtLeast('fire_vulnerability', IMPROVED_SCORCH_MAX_STACKS),
       targetAuraAtLeast('fire_vulnerability', 10),
     ),
+    note:
+      'Cooldown stack: the Spellblasting potion and Combustion as one action, at five ' +
+      'stacks of Fire Vulnerability with ten seconds left on them. Both are off the ' +
+      'global cooldown, so a player presses them together -- written as a sequence so ' +
+      'nothing can land between them if either ever starts taking one again.',
   },
   /*
    * ==========================================================================

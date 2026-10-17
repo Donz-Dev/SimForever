@@ -2783,16 +2783,29 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * ADD to their opener and may not reorder or replace it. This round
        * removed only the addition.
        *
-       * AND THE OPENER HAS NOTHING LEFT TO ADD. A pre-cast is worth only the
-       * global cooldown it saves, so anything already off the GCD is not a
-       * candidate -- which rules out the potion, the Demonic Rune and Eureka.
-       * COMBUSTION IS THE ONLY REMAINING ONE and it measures **-4.69 +/-
-       * 10.91** at a 0s lead, which reproduces the -4.9 +/- 11.6 this comment
-       * used to record on the illegal build. Its window is spent by four Fire
-       * crits rather than by a clock, so the GCD it saves is paid back by
-       * opening the window before the crits exist -- and on the legal opener
-       * the pull now arrives with ZERO Fire Vulnerability stacks rather than
-       * one, which makes it worse rather than better.
+       * AND THE OPENER HAS NOTHING LEFT TO ADD, WHICH THE COMBUSTION RULING
+       * MADE MUCH MORE TRUE RATHER THAN LESS.
+       *
+       * A pre-cast is worth only the global cooldown it saves, so anything
+       * already off the GCD is not a candidate -- which ruled out the potion,
+       * the Demonic Rune and Eureka, and now rules out **Combustion**, the one
+       * candidate that was left. The owner has ruled it off the global
+       * cooldown, so a pre-cast of it saves nothing and only pays the cost.
+       *
+       * AND THE COST IS LARGE. It measured **-4.69 +/- 10.91** (noise) while
+       * Combustion paid a GCD and **-36.38 +/- 5.52 (real)** once it stopped.
+       * The window is spent by four Fire crits rather than by a clock, and a
+       * three-minute cooldown pre-cast at t=0 can never be reached again inside
+       * a one-minute fight -- so the whole window is burned on a target with
+       * ZERO Fire Vulnerability stacks instead of at the five-stack cap about
+       * eight seconds in.
+       *
+       * THIS IS THE RETRACTED ARCANE POWER FIGURE POINTING THE OTHER WAY.
+       * There, +24.9 for a pre-cast turned out to be mostly a global cooldown
+       * the ability should never have paid, and once the flag was fixed the
+       * pre-cast was worth nothing. Here the same fix took a pre-cast from
+       * "noise" to a clear loss. **Check the GCD flag before pricing a
+       * pre-cast**, in both directions.
        *
        * REMOVING THE OWNER'S OWN `fireball` IS **-42.68 +/- 10.93**, which is
        * what that line is worth and is here so nobody prices the opener by

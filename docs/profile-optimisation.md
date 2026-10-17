@@ -135,6 +135,20 @@ had no `triggersGcd: false` anywhere in them.
 found it by reading the list, not by running anything: *"Ensure Presence of Mind
 and Arcane Power don't trigger a global cooldown."* Both did.
 
+**AND THE SAME READ FOUND A THIRD, ON THE NEXT PROFILE, IN THE SAME FILE.**
+Combustion is the Fire capstone and the spellbook capture gives it the identical
+row to those two -- no cost, "Instant", "3 min cooldown", no rank, granted by a
+capstone -- and it was on the global cooldown. **It was PRICED and not shipped**
+(+24.93 +/- 4.21 at 60s), because a ruling covers what it says and is not
+extended by analogy; the owner then ruled it off, which is worth +23.9 on that
+profile.
+
+**SO THE SIXTH READ IS NOT DONE WHEN THE FILE HAS SOME `triggersGcd: false` IN
+IT.** Two of the three were already there. Check every cooldown-shaped ability
+against what the spell is, and where the answer is a ruling rather than a fact,
+**price it, flag it, and leave the default alone** -- the figure is what makes
+the question answerable in one sentence.
+
 **AND IT IS INVISIBLE IN EVERYTHING EXCEPT THE DPS** — an ability wrongly taking
 a global cooldown still applies the right aura, for the right duration, on the
 right cooldown, and reports an ordinary row. There is no zero to notice.
@@ -570,6 +584,15 @@ into a maintenance buff. A talent spread is a claim about what the spells do.
 Pre-combat mode skips **three** things the fight would charge for: the global
 cooldown the action would start, the swing reset, and the cast time. The mana is
 still spent and the cooldown still runs.
+
+**AND A PRE-CAST CAN GO FROM "NOISE" TO A CLEAR LOSS WHEN THE GCD FLAG IS
+FIXED, WHICH IS THE RETRACTION POINTING THE OTHER WAY.** Pre-casting the Fire
+Mage's Combustion measured **-4.69 +/- 10.91 (noise)** while the ability paid a
+global cooldown and **-36.38 +/- 5.52 (`real`)** once the owner ruled it off --
+because the saved GCD was the only thing offsetting a three-minute window burned
+at t=0 on a target with no debuff stacks. Same lesson as Arcane Power's +24.9,
+same direction of error, opposite sign: **the GCD flag is part of what a
+pre-cast is worth, so price the pre-cast AFTER the flag is right.**
 
 **SO A COOLDOWN IS A CANDIDATE TO MOVE HERE** — a 15-second window opened at a
 **0s** lead is the same window the fight would get, bought for no global

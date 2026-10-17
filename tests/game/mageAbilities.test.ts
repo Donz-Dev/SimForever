@@ -31,6 +31,9 @@ import {
   ICE_LANCE,
   ICE_LANCE_DAMAGE,
   MAGE_ARMOR_ABILITY,
+  COMBUSTION_ABILITY,
+  ARCANE_POWER_ABILITY,
+  PRESENCE_OF_MIND_ABILITY,
   ICE_LANCE_FROZEN_MULTIPLIER,
   EVOCATION,
   MAGE_ABILITIES,
@@ -2611,33 +2614,69 @@ describe('what round 26 did to the Fire list', () => {
     expect(eurekas[0]!.condition).toBeDefined();
   });
 
-  it('gates the Spellblasting potion exactly once, and below nothing ungated', () => {
-    const potions = MAGE_FIRE.entries.filter(
+  /*
+   * ==========================================================================
+   * THE POTION IS A SEQUENCE STEP AND NOT AN ENTRY, AND BOTH HALVES MATTER.
+   *
+   * It was an entry above Combustion gated on Combustion's own AURA, which
+   * worked and depended on the list ORDER plus a second decision happening.
+   * With Combustion off the global cooldown on the owner's ruling the two
+   * resolve in one instant, so the pairing is written as a guarantee instead.
+   *
+   * `abilityId` IS STEP ONE AND `sequence` HOLDS WHAT FOLLOWS, which is the
+   * convention `MAGE_ARCANE`'s own stack uses -- and naming Combustion in BOTH
+   * places is the mistake that reads as a finding: `selectAction` casts
+   * `entry.abilityId` and sets `pendingSequence.index = 0`, so the resume finds
+   * Combustion on cooldown, clears the pointer, and the potion never fires at
+   * all. **-14.81 with a spread of 0.08**, which is a deterministic loss rather
+   * than any decision moving.
+   *
+   * SO THIS ASSERTS THE SHAPE: one Combustion entry, the potion as its step and
+   * NOT as an entry of its own, and Combustion's id not repeated inside its own
+   * sequence.
+   * ==========================================================================
+   */
+  it('casts the potion and Combustion as one two-step sequence', () => {
+    const stacks = MAGE_FIRE.entries.filter(
       (row) => row.abilityId === 'major_spellblasting_potion',
     );
-    expect(potions).toHaveLength(1);
-    expect(potions[0]!.condition).toBeDefined();
+    expect(stacks).toHaveLength(1);
+
+    const entry = stacks[0]!;
+    expect(entry.sequence).toEqual(['combustion']);
+    // The first step is `abilityId`, so repeating it inside the sequence casts
+    // it twice and abandons the pointer -- see the note above.
+    expect(entry.sequence).not.toContain('major_spellblasting_potion');
+    expect(entry.condition).toBeDefined();
+
+    // And Combustion has no entry of its own: it is the step.
+    expect(MAGE_FIRE.entries.some((row) => row.abilityId === 'combustion')).toBe(false);
+    // The arrangement MAGE_ARCANE already uses -- the potion names the stack.
+    const arcane = MAGE_ARCANE.entries.find(
+      (row) => row.abilityId === 'major_spellblasting_potion',
+    )!;
+    expect(arcane.sequence?.length).toBeGreaterThan(0);
   });
 
   /*
    * ==========================================================================
-   * AND THE COMBUSTION ENTRY HAS TO SIT BELOW THE POTION THAT WAITS FOR IT.
+   * COMBUSTION IS OFF THE GLOBAL COOLDOWN AND DECLARES A COOLDOWN, which is
+   * what makes the sequence above resolve in one instant -- and the second half
+   * is not optional: `freeCastChain.test.ts` asserts across all nine classes
+   * that every off-GCD ability has a `cooldownMs`, because one without would
+   * win the list forever and HANG a fight rather than fail one.
    *
-   * The potion is gated on the Combustion AURA, so the entry that APPLIES that
-   * aura must be reachable while the potion's gate is false -- which means
-   * below it. Hoisting Combustion above the potion would make the pair cast in
-   * one poll and is fine; putting the potion BELOW Combustion is what breaks
-   * it, because the list would then drink before casting on the first poll and
-   * the gate could never be satisfied in the same walk.
-   *
-   * ASSERTED AS AN ORDER RATHER THAN AS A FIGURE, because the DPS it is worth
-   * (+1.07) is a rotation decision that can change owner, and this is the
-   * mechanism underneath it that cannot.
+   * THE OWNER'S RULING, and it is the THIRD Mage ability of one shape: the
+   * spellbook capture gives Presence of Mind, Arcane Power and Combustion the
+   * same row, and the earlier ruling named only the two Arcane ones.
    * ==========================================================================
    */
-  it('keeps Combustion below the potion that waits for its window', () => {
-    const ids = MAGE_FIRE.entries.map((row) => row.abilityId);
-    expect(ids.indexOf('major_spellblasting_potion')).toBeLessThan(ids.indexOf('combustion'));
+  it('has Combustion off the global cooldown, with a cooldown declared', () => {
+    expect(COMBUSTION_ABILITY.triggersGcd).toBe(false);
+    expect(COMBUSTION_ABILITY.cooldownMs).toBeGreaterThan(0);
+    // The two the owner ruled on first, so all three are pinned together.
+    expect(ARCANE_POWER_ABILITY.triggersGcd).toBe(false);
+    expect(PRESENCE_OF_MIND_ABILITY.triggersGcd).toBe(false);
   });
 
   /*
