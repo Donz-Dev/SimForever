@@ -23,13 +23,31 @@ import type { TalentAllocation } from '../talents/Talent';
  * difference. The three lists disagree with each other on purpose, and each
  * says why.
  *
- * THE ONE RULE THAT DECIDED MOST OF IT: A CAST RESETS THE SWING TIMER.
- * `resetSwingTimers` runs for any ability with a cast time and covers the
- * RANGED slot, so a two-second Aimed Shot throws away most of a 3.2-second bow
- * cycle -- and auto-shot is 42% of a Marksmanship Hunter's damage. The per-use
- * damage of a shot says nothing about this, which is why every cast in the
- * owner's two ranged lists is gated on a shot having just landed and the melee
- * list contains no cast at all.
+ * THE ONE RULE THAT DECIDED MOST OF IT HAS BEEN REVERSED, AND THE ENTRIES
+ * BELOW ARE STILL THE OWNER'S. It read: a cast resets the swing timer,
+ * `resetSwingTimers` covers the RANGED slot, so a two-second Aimed Shot throws
+ * away most of a 3.2-second bow cycle -- and auto-shot is 42% of a Marksmanship
+ * Hunter's damage. That is why every cast in the owner's two ranged lists is
+ * gated on a shot having just landed, and why the melee list contains no cast
+ * at all.
+ *
+ * THE OWNER HAS SINCE RULED THAT AUTO SHOT IS NOT SUSPENDED AT ALL by Sniper
+ * Shot, Aimed Shot or Multi-Shot: the bow keeps its own rhythm straight through
+ * the cast. `swingTimer: 'continue'` on all three -- see the note above Aimed
+ * Shot in `abilities/hunter.ts`.
+ *
+ * SO EVERY FIGURE BELOW THAT PRICED A CAST AGAINST A LOST BOW CYCLE IS A
+ * MEASUREMENT OF A RULESET THAT NO LONGER APPLIES, and each says so where it
+ * is quoted. The ENTRIES do not move for that: they are the owner's, and
+ * CLAUDE.md's rule is that their list outranks a measurement of ours and the
+ * measurement stays. What changed is that the shot-window gate now costs
+ * rather than saves -- it makes a cast WAIT for a window that buys nothing --
+ * and whether to drop it is a question for them. Recorded at
+ * `shotLandedRecently`, which is where the condition is declared.
+ *
+ * THE MELEE LIST IS UNAFFECTED EITHER WAY. The ruling names the ranged
+ * auto-attack, and that build swings two melee hands and never the bow, so a
+ * cast there still costs a melee swing exactly as the note on it says.
  *
  * TWO OF THE THREE RUN OUT OF MANA, and that decides the rest. A geared Hunter
  * empties 3,651 mana by the 30-second mark and spends the REST OF THE FIGHT on
@@ -70,18 +88,32 @@ import type { TalentAllocation } from '../talents/Talent';
  * three of the owner's shot entries with a cast time carry.
  *
  * ----------------------------------------------------------------------------
- * IT IS ABOUT THE SWING IT WOULD THROW AWAY. A cast interrupts the swing in
- * progress and RESETS that slot's timer, and `resetSwingTimers` covers the
- * RANGED slot -- so a two-second Aimed Shot started at the wrong moment
- * discards most of a 3.2-second bow cycle, and the damage it loses is on a
- * different row of the table from the damage it deals.
+ * IT WAS ABOUT THE SWING IT WOULD THROW AWAY, AND THERE IS NO LONGER A SWING TO
+ * THROW AWAY. A cast interrupted the swing in progress and RESET that slot's
+ * timer, `resetSwingTimers` covered the RANGED slot, and so a two-second Aimed
+ * Shot started at the wrong moment discarded most of a 3.2-second bow cycle --
+ * damage lost on a different row of the table from the damage it dealt.
+ * Started just after a shot landed, the cast fitted inside the gap and cost
+ * almost nothing. ("Just after" is a question `pendingSwing` cannot answer --
+ * that is the NEXT swing -- which is why `lastSwingAt` had to be added.) It is
+ * also the rule that once removed Aimed Shot from the Marksmanship list, worth
+ * +23 DPS, with the owner's lists keeping the ability and gating it instead.
  *
- * Started just after a shot has landed, the cast fits inside the gap and costs
- * almost nothing. "Just after" is a question `pendingSwing` cannot answer --
- * that is the NEXT swing -- which is why `lastSwingAt` had to be added.
+ * THE OWNER HAS RULED THE SUSPENSION AWAY. Auto shot is not paused by Sniper
+ * Shot, Aimed Shot or Multi-Shot, so the cast no longer costs a bow cycle
+ * however it is timed -- and this gate now spends something to buy nothing: a
+ * list that reaches the entry 0.4 seconds after a shot REFUSES it and falls
+ * through to whatever is below, so the cast happens later than it would have
+ * or not at all.
  *
- * THIS IS THE RULE THAT REMOVED AIMED SHOT FROM THE MARKSMANSHIP LIST once,
- * worth +23 DPS, and the owner's lists keep the ability and gate it instead.
+ * IT IS KEPT, BECAUSE IT IS THE OWNER'S CONDITION AND NOT A MEASUREMENT OF
+ * OURS. Removing it would be rewriting their list on an inference from a
+ * ruling about the ENGINE, which is the thing this project does not do --
+ * their list outranks a measured decision of ours, and that cuts both ways.
+ * **A QUESTION FOR THEM**: with auto shot no longer suspended, should the
+ * weave window come off the three gated entries? It is one line per entry and
+ * the three are `aimed_shot` on Beast Mastery and `aimed_shot` plus
+ * `sniper_shot` on Lone Wolf Ranged.
  * ----------------------------------------------------------------------------
  */
 const RANGED_WEAVE_WINDOW_MS = 500;
@@ -226,14 +258,20 @@ export const HUNTER_BEAST_MASTERY: AplList = {
  * BOW, whose cycle is 3.2 seconds and whose auto-shots are 42% of this build's
  * damage", measured at +23 DPS for removing it. That was true of a list with no
  * shot-window condition. The owner's list keeps the ability and gates it on a
- * shot having just landed, which is the same rule answered a better way.
+ * shot having just landed, which was the same rule answered a better way --
+ * and **the rule itself is now gone**: a cast no longer resets the bow, so
+ * neither the +23 nor the gate it motivated is about the ruleset any more.
  *
  * THE RANKING IS DAMAGE PER MANA AND NOT DAMAGE PER CAST -- Serpent Sting 4.13,
  * Sniper Shot 3.19, Arcane Shot 2.57, Aimed Shot 2.53 -- because this Hunter is
  * dry by the 30-second mark and spends half the fight auto-shooting.
  *
  * MULTI-SHOT IS OUT, tested and worth -1: half a second of cast still resets
- * the same bow, and it hits three targets where there is one.
+ * the same bow, and it hits three targets where there is one. **THE FIRST HALF
+ * OF THAT REASON HAS EXPIRED** -- the owner's ruling means no shot resets the
+ * bow any more -- and the second half has not, so the entry would now be
+ * priced on its damage alone against one target. Not re-measured here: it is
+ * absent from the owner's list and adding it is their call.
  *
  * HUNTER'S MARK IS KEPT THOUGH IT MEASURES AS NOTHING, +0.8 inside a 3.3
  * interval. The 71 ranged attack power it buys is real and the 60 mana it
@@ -281,9 +319,16 @@ export const HUNTER_LONE_WOLF_RANGED: AplList = {
    * an entry with no cooldown, which is worth knowing before reordering any
    * list. The 12.1 is the price of the ability, not of its position.
    *
-   * WHY IT LOSES: four seconds of cast resets the ranged swing timer, and this
+   * WHY IT LOST: four seconds of cast reset the ranged swing timer, and this
    * build's auto-shot is 49.7% of its damage on a 3.2-second cycle. 295 damage
-   * and 365 mana do not pay for a cycle and a quarter of bow.
+   * and 365 mana did not pay for a cycle and a quarter of bow.
+   *
+   * **THAT IS THE WHOLE OF THE -12.1 AND IT NO LONGER HOLDS.** The owner has
+   * ruled that auto shot is not suspended by the cast, so the bow cycle is not
+   * spent -- what Sniper Shot costs now is a global cooldown and 365 mana on a
+   * build that runs dry, which is a far smaller bill. The ability was kept on
+   * the owner's call AGAINST that measurement, so the ruling removes the
+   * argument the call was made over rather than changing the entry.
    *
    * THE OWNER'S LIST OUTRANKS THE MEASUREMENT AND THE MEASUREMENT STAYS -- the
    * same arrangement Hunter's Mark's -10.1 has on the melee list below. Asked

@@ -1632,6 +1632,102 @@ something that comes and goes.
   is what makes a cast a real cost to a melee character rather than free damage
   between swings. `Ability.swingTimer: 'hold'` is the exception: the timer runs
   on behind the cast and a swing due during it waits rather than being lost.
+- **AND `continue` IS A THIRD MODE, WHICH IS WHERE THE SUSPENSION'S SECOND HALF
+  LIVES.** The owner has ruled that a Hunter's three cast shots do not pause
+  auto shot at all -- "the ranged auto-attack is not paused or suspended. It
+  will trigger DURING the cast of the named skills above", for Sniper Shot,
+  Aimed Shot and Multi-Shot -- so the bow keeps its own rhythm straight
+  through.
+  **THE SUSPENSION WAS TWO MECHANISMS AND `hold` ONLY REMOVES ONE.** The cast
+  RESET the timer (`resetSwingTimers`, in `runCast`) and a swing that then came
+  due INSIDE the cast was HELD to its end (the mid-cast branch in
+  `scheduleSwing`). `hold` clears the first and keeps the second, and on a
+  four-second Sniper Shot against a 2.4-second bow a shot comes due inside the
+  cast every time -- so `hold` would still have deferred it by over a second.
+  **A SMALLER NUMBER AND NO ERROR, and `hold` is what a reader reaches for**:
+  it is the existing exception, it is named for the right idea, and it is
+  wrong by exactly the half nobody looks at.
+  **SO WHEN A RULING REMOVES A BEHAVIOUR, COUNT THE MECHANISMS THAT PRODUCE
+  IT** rather than the field that names it. Reinstating each half separately is
+  the check -- it failed 7 and 6 of 16 tests here -- and a test that passes
+  with either half back is a test of the declaration rather than of the rule.
+  **THE SWING HANDLER HAS TO ASK AT THE MOMENT A SWING COMES DUE, AND BY THEN
+  THE ONLY THING IT HAS IS `castEndsAt`** -- a number that says when the cast
+  ends and nothing about which ability is casting.
+  `Combatant.castAllowsSwings` is the fact, assigned unconditionally beside
+  `castEndsAt` at the ONE site where a cast starts, so the two cannot disagree
+  and an ordinary cast following a `continue` one closes the window by itself
+  with nothing to clear at the end. **`Combatant.channelling` IS THE FIELD THAT
+  LOOKS LIKE THE ANSWER**: it holds an ability only for a CHANNEL, so a plain
+  Aimed Shot sets it to null, and widening it would change what every reader of
+  it means.
+  **DECLARED ON THE THREE ABILITIES THE OWNER NAMED, not derived from "it is a
+  shot"** -- a ruling covers what it says, which is the rule that made
+  Immolation Trap wait to be named rather than following Explosive Trap in.
+  **AND NOTHING SCOPES TO THE RANGED SLOT**, because no combatant here swings a
+  melee weapon and a bow at once: `swingingSlots` returns `['ranged']` for a
+  ranged style and never includes it otherwise, so "the ranged auto-attack
+  continues" and "the auto-attack continues" are the same set. Asserted rather
+  than gated, which is `positioning.test.ts`' arrangement -- the day a style
+  swings both, the test fails and the gate becomes worth writing.
+  **WORTH +43.7 REAL TO LW RANGED AND +4.8 TO BM HUNTER, with 26 of 28 rows at
+  0.0 to the decimal** -- including BOTH melee Hunters, whose lists hold no
+  cast and which never swing the bow. "It is a Hunter profile" does not predict
+  that a Hunter change moves it.
+  **AND IT RETIRES THE ARGUMENT FOR A CONDITION IN THREE OF THE OWNER'S OWN
+  ENTRIES WITHOUT RETIRING THE CONDITION.** "Only if a ranged auto-attack fired
+  in the last 0.5 seconds" existed to weave a cast into the gap between shots;
+  with no gap to protect it now makes a cast WAIT for nothing, measured at
+  **+27.6 REAL on BM Hunter** to remove. The entries are the owner's and are
+  kept -- their list outranks a measurement of ours, and that cuts both ways, so
+  a ruling about the ENGINE is not authority to rewrite a list. It is a question
+  for them, recorded where the condition is declared.
+- **AND THE SAME RULING REACHED A TALENT, WHERE IT IS CORRECTLY WORTH NOTHING
+  AT THE RANK EVERY PROFILE TAKES.** Improved Slam grants `continue` now, not
+  `hold`, on the owner's ruling -- "the warrior is able to auto-attack during a
+  slam cast without it being suspended or paused but only if rank 1 or rank 2
+  improved slam talent is taken."
+  **THE CLIENT'S TOOLTIP HAD SAID IT IN TWO VERBS ALL ALONG**: "Slam no longer
+  interrupts **or delays** your melee swing". `hold` is the first verb only, and
+  `Ability.swingTimer`'s own documentation quoted the clause as "Slam no longer
+  interrupts your melee swing time" -- **a misquote, missing the verb that
+  decides between the two modes**, used as the justification for the mode it
+  implements. A tooltip with two verbs in it is a tooltip that distinguishes two
+  mechanisms.
+  **MEASURED AT 0.0 TO THE DECIMAL ON ALL 28 ROWS, AND THAT IS THE BUILD'S OWN
+  CADENCE RATHER THAN A PATCH THAT DID NOT APPLY** -- which is what 28 identical
+  rows otherwise means here. 2H Arms is the only build that takes the talent, at
+  2/2, where the cast is **1.0s against a 3.6s swing**; the mid-cast branch in
+  `scheduleSwing` is reached **0 times in 40 fights**, because every one of 158
+  Slam casts starts within **2,500ms** of the previous main-hand attack and a
+  swing could only fall inside the window if one started after 2,600ms. **Rage
+  is why**: it arrives per SWING, so the instant a spender becomes affordable is
+  a swing instant and the list acts on it -- a warrior cannot go 2.6 seconds
+  without something to cast.
+  **AND THE MARGIN IS 100ms, SO RANK 1 DOES REACH IT.** At 1/2 the cast is
+  1.25s, the threshold falls to 2,350ms, and the branch fires **12 times in 40
+  fights** -- all 12 allowed. So the mechanism is live and the rank-2 zero is a
+  property of the cast time, which is the same talent's other clause. **A change
+  worth nothing at one rank of a talent can be worth something at another**, and
+  the owner's "rank 1 or rank 2" wording turns out to matter in a way the ruling
+  did not intend.
+  **"RANK 1 OR RANK 2" IS THE WHOLE TALENT ONLY BECAUSE IT HAS EXACTLY TWO
+  RANKS**, which is a fact about the TREE rather than about the ruling -- so the
+  effect stays value-free and `slamSwingTimer.test.ts` pins `ranks: 2`. A third
+  rank would make the wording mean something narrower and nobody would be asked.
+- **AND THE APL BUILTIN WOULD HAVE SILENTLY STOPPED 2H ARMS CASTING SLAM, which
+  is the cost of a predicate that tests a VALUE where its name states a
+  CONCEPT.** `ability_holds_swing_timer` asked `=== 'hold'` while its own name
+  and its panel description say "does not cost a swing" -- the same question
+  only while one swing-keeping mode existed. The Arms list gates Slam on it, so
+  the moment the talent granted `continue` the entry went false for the one
+  build that takes the talent, and an 8.1% damage source would have vanished
+  with nothing on the results page to explain it. It asks for anything but
+  `reset` now, so a third mode is covered the day it lands -- the `isBleed`
+  argument, which reads the TAG rather than a list of the values it can take.
+  **ADDING A MEMBER TO AN ENUM IS A CHANGE TO EVERY `===` AGAINST IT**, and a
+  rotation condition is the worst place for one to be left behind: it fails by
+  casting less, which looks like a tuning problem.
 - **AN EFFECT THAT HAS TO LAST THE CAST GOES IN `onCastStart`, NOT `onCast`.**
   `onCast` runs at the END of a cast and once per tick of a channel, so
   anything that must be in place FOR the cast had nowhere to go. Evocation is

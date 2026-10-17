@@ -153,7 +153,7 @@ work all reached it. **Reprint rather than quote.**
 
 ### The two profiles taken through the optimisation procedure
 
-**ARCANE IN ROUND 23-25 AND FIRE IN ROUND 26**, both through
+**ARCANE IN ROUND 23-25 AND FIRE IN ROUND 28**, both through
 [../profile-optimisation.md](../profile-optimisation.md). Frostfire is the one
 that has not been, and it is also the Mage that still **fails Gate B**: its
 opener finishes `frostfire_bolt` at -0.049s AND a `scorch` at -0.029s, where the
@@ -169,7 +169,7 @@ ruling allows one damaging cast. That Scorch is a project addition recorded at
 | the ungated `eureka` and potion | the Frostfire list spreads both shared blocks, so both free damage windows are spent on the first poll of the fight. Gating them was worth **+6.81** and **+1.39** on Fire -- but the gate that won there is *three Heating Up stacks*, and Frostfire's Pyroblast reaches three stacks far less often, which is why its own list carries a two-stack SALVAGE entry that Fire does not need |
 
 **AND COMBUSTION IS NOW OFF THE GLOBAL COOLDOWN ON THE OWNER'S RULING**, which
-closes the question round 26 raised: it is the third ability of the exact shape
+closes the question round 28 raised: it is the third ability of the exact shape
 they had already ruled off it for Presence of Mind and Arcane Power. Worth
 **+23.9** on the Fire build, and **it reaches the Frostfire tree too** -- that
 build takes the Fire capstone as well, so its own figure has moved and has not

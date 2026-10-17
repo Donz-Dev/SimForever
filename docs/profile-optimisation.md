@@ -117,7 +117,7 @@ PROFILE=<id> PLAN=1 npx vite-node tools/stat_weights.ts        # which stats thi
 | `encode_talent_build` | is the tree legal, and is it still on theme | — |
 | `USES=1` | which entries fire, which never fire, and what is dealing damage from **outside** the list | the **"before the pull"** block prints each action beside the ability's **whole-fight** cast count, so four `arcane_blast` rows all read 13.2 and `<-- NEVER HAPPENED` can never fire for a spell that is also the filler |
 | `probe_resources` | `headroom` at the end of the fight: large means **GCD-bound**, zero with `wasted` means **capping** | one batch, so it is a diagnostic and not a measurement |
-| `probe_profile_report` | the damage table, buff/debuff uptime, and the `avoid` column | a row is pooled by ability **name**, so a proc sharing a name merges into it. **Its crit columns printed the RAW stat and ignored `critRating` until round 26** — the Fire Mage read 3.00% melee and 10.82% spell where the engine rolls 14.00% and 21.82%, which is the bug the owner caught in `CharacterSheetPanel` surviving in the tool this step tells you to run |
+| `probe_profile_report` | the damage table, buff/debuff uptime, and the `avoid` column | a row is pooled by ability **name**, so a proc sharing a name merges into it. **Its crit columns printed the RAW stat and ignored `critRating` until round 28** — the Fire Mage read 3.00% melee and 10.82% spell where the engine rolls 14.00% and 21.82%, which is the bug the owner caught in `CharacterSheetPanel` surviving in the tool this step tells you to run |
 | `stat_weights PLAN=1` | the hit ladder and the list of stats reported **not measured** — no fights are run | **the hit ladder undercounts school-scoped hit.** See Appendix B |
 
 ### And a sixth, which is a READ rather than a run
@@ -902,7 +902,7 @@ in its own run of this procedure, at **-96.5 +/- 9.4** and
 | profile | damaging actions | verdict |
 | --- | --- | --- |
 | `mage_arcane` | ~~`pyroblast` -7.618s, `arcane_blast` -6.029s, -4.529s, -3.029s~~, `arcane_blast` -0.029s | **FIXED.** Now one damaging cast, the owner's own, at the haste-rounding boundary |
-| `mage_fire` | `fireball` -0.059s, ~~`scorch` -0.029s~~ | **FIXED** in round 26. One damaging cast, the owner's own, at the haste-rounding boundary; the revert cost **-24.23** and the loop recovered **+17.74** of it |
+| `mage_fire` | `fireball` -0.059s, ~~`scorch` -0.029s~~ | **FIXED** in round 28. One damaging cast, the owner's own, at the haste-rounding boundary; the revert cost **-24.23** and the loop recovered **+17.74** of it |
 | `mage_frostfire` | `frostfire_bolt` -0.049s, `scorch` -0.029s | **FAIL — two.** `scorch` is a project addition (+25.1) |
 | `shaman_elemental` | `lightning_bolt` -0.039s, `flame_shock` 0.000s | **FAIL — two, and BOTH ARE THE OWNER'S OWN LINES.** A question for them, not an edit |
 

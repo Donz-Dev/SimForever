@@ -2589,7 +2589,7 @@ describe('Evocation, which pays out during its own channel', () => {
   }, 20_000);
 });
 
-describe('what round 26 did to the Fire list', () => {
+describe('what round 28 did to the Fire list', () => {
   /*
    * ==========================================================================
    * THE FILTER-AND-RESTATE IS THE THING THAT CAN BREAK FROM A DISTANCE.

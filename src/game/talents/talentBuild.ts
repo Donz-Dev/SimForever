@@ -285,8 +285,15 @@ export interface TalentBuild {
   readonly abilityCastTimeReductionMs: ReadonlyMap<string, number>;
   /** Global cooldown to SUBTRACT from an ability, in milliseconds. */
   readonly abilityGcdReductionMs: ReadonlyMap<string, number>;
-  /** Abilities whose cast lets the swing timer run on rather than resetting. */
-  readonly abilitiesHoldingSwing: ReadonlySet<string>;
+  /**
+   * Abilities whose cast does not reset the swing timer, and how far that goes.
+   *
+   * `hold` runs the timer on behind the cast and defers a swing that comes due
+   * during it; `continue` lets that swing land mid-cast. A MAP rather than a
+   * set, because those two differ by a whole swing on any cast longer than a
+   * swing cycle -- see `TalentEffect`'s `abilitySwingTimer`.
+   */
+  readonly abilitySwingTimer: ReadonlyMap<string, 'hold' | 'continue'>;
   /**
    * Extra stances a talent makes an ability usable in.
    *
@@ -345,7 +352,7 @@ const EMPTY: TalentBuild = {
   abilityBonuses: new Map(),
   abilityCastTimeReductionMs: new Map(),
   abilityGcdReductionMs: new Map(),
-  abilitiesHoldingSwing: new Set(),
+  abilitySwingTimer: new Map(),
   abilityExtraStances: new Map(),
   castReactions: [],
   unmodelled: [],
@@ -640,7 +647,7 @@ export function talentBuild(
   const abilityBonuses = new Map<string, Record<string, number>>();
   const abilityCastTimeReductionMs = new Map<string, number>();
   const abilityGcdReductionMs = new Map<string, number>();
-  const abilitiesHoldingSwing = new Set<string>();
+  const abilitySwingTimer = new Map<string, 'hold' | 'continue'>();
   const abilityExtraStances = new Map<string, string[]>();
   const castReactions: CastReaction[] = [];
   let damageMultiplier = 1;
@@ -715,9 +722,14 @@ export function talentBuild(
         continue;
       }
 
-      // Takes no value: the ability either holds the swing or it does not.
-      if (effect.kind === 'abilityHoldsSwing') {
-        abilitiesHoldingSwing.add(effect.abilityId);
+      /*
+       * Takes no value: the ability either keeps its swing or it does not, and
+       * the EFFECT says which mode rather than the rank. Last declaration wins
+       * if two ever name one ability -- nothing does, and a second would be a
+       * ruleset question rather than something to resolve by precedence here.
+       */
+      if (effect.kind === 'abilitySwingTimer') {
+        abilitySwingTimer.set(effect.abilityId, effect.mode);
         continue;
       }
 
@@ -1303,7 +1315,7 @@ export function talentBuild(
     abilityBonuses,
     abilityCastTimeReductionMs,
     abilityGcdReductionMs,
-    abilitiesHoldingSwing,
+    abilitySwingTimer,
     abilityExtraStances,
     castReactions,
     unmodelled,

@@ -185,12 +185,23 @@ function scheduleSwing(
     createEvent(`auto-attack:${attacker.id}:${slot}`, EventPriority.AutoAttack, (ctx) => {
       if (!attacker.isAlive || ctx.hasEnded) return;
 
-      // A swing that comes due mid-cast is HELD, not lost: it waits for the
-      // cast to finish and then lands. A cast that resets the swing timer has
-      // already pushed this swing back, so in practice only a `hold` cast or a
-      // cast longer than a swing timer reaches here.
+      /*
+       * A swing that comes due mid-cast is HELD, not lost: it waits for the
+       * cast to finish and then lands. A cast that resets the swing timer has
+       * already pushed this swing back, so in practice only a `hold` cast or a
+       * cast longer than a swing timer reaches here.
+       *
+       * UNLESS THE CAST SAYS OTHERWISE, which is `swingTimer: 'continue'` and
+       * is the ruleset owner's ruling for the Hunter's three cast shots: the
+       * auto attack is not suspended at all and the swing lands DURING the
+       * cast. The hold is the second half of the suspension and this is where
+       * it lives -- the first half, the timer reset, is refused in `runCast`.
+       * Clearing only that one would still have deferred every shot that came
+       * due inside a four-second Sniper Shot, which is a smaller number and no
+       * error.
+       */
       const remainingCast = attacker.castEndsAt - ctx.clock.now();
-      if (remainingCast > 0) {
+      if (remainingCast > 0 && !attacker.castAllowsSwings) {
         scheduleSwing(ctx, attacker, slot, remainingCast);
         return;
       }

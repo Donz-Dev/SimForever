@@ -636,18 +636,39 @@ export type TalentEffect =
   | { readonly kind: 'abilityGcd'; readonly abilityId: string; readonly valueIndex?: number }
 
   /**
-   * Stops an ability's cast from resetting the melee swing timer.
+   * Stops an ability's cast from resetting the melee swing timer, and says HOW
+   * FAR that goes.
    *
-   * Takes no value: Improved Slam either lets the swing run behind the cast or
-   * it does not. Both ranks grant it, which is why it is separate from the cast
-   * time reduction that does scale.
+   * ----------------------------------------------------------------------------
+   * `mode` IS REQUIRED BECAUSE THE TWO ANSWERS ARE DIFFERENT and the difference
+   * is a swing. `hold` runs the timer on behind the cast and makes a swing that
+   * comes due DURING it wait; `continue` lets that swing land mid-cast. On a
+   * cast shorter than a swing cycle they are the same, which is exactly when
+   * writing the wrong one is free.
+   *
+   * IT WAS `abilityHoldsSwing`, VALUE-FREE AND MODE-FREE, AND IT MEANT `hold`.
+   * Improved Slam was its only declaration and the owner has since ruled that
+   * one `continue` -- so a boolean kind would now have to be read as granting
+   * the mode it is not named after. The client's own tooltip had said so all
+   * along: "Slam no longer interrupts **or delays** your melee swing". Two
+   * verbs, and `hold` implements one of them.
+   *
+   * STILL VALUE-FREE. Improved Slam either grants it or does not, and both of
+   * its ranks grant it -- which is why this is separate from the cast time
+   * reduction on the same talent, which does scale. A rank-sensitive version
+   * would need a value and nothing has asked for one.
+   * ----------------------------------------------------------------------------
    */
-  | { readonly kind: 'abilityHoldsSwing'; readonly abilityId: string }
+  | {
+      readonly kind: 'abilitySwingTimer';
+      readonly abilityId: string;
+      readonly mode: 'hold' | 'continue';
+    }
 
   /**
    * Makes an ability usable in a stance it otherwise is not.
    *
-   * Takes no value, like `abilityHoldsSwing`: Vanguard either lets Charge be
+   * Takes no value, like `abilitySwingTimer`: Vanguard either lets Charge be
    * used in Defensive Stance or it does not.
    *
    * ADDS to the ability's own list rather than replacing it, so a warrior with

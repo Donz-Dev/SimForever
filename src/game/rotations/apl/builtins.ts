@@ -113,16 +113,34 @@ const BUILTINS: Record<BuiltinConditionId, (args: readonly (string | number)[]) 
   hawks_below_cap: () => (_context, actor) => activeHawks(actor) < HAWK_MAX_ACTIVE,
 
   /**
-   * Whether an ability lets the swing timer run on behind its cast.
+   * Whether an ability's cast costs this character a swing.
    *
    * A question about the character's own copy of the ability rather than about
-   * the moment: `Ability.swingTimer: 'hold'` is what a talent sets, so the Arms
-   * list casts Slam only in a build where Slam does not throw a swing away.
-   * Constant for a whole fight, like `hasReaction`.
+   * the moment -- a talent is what sets the mode -- so the Arms list casts Slam
+   * only in a build where Slam does not throw a swing away. Constant for a
+   * whole fight, like `hasReaction`.
+   *
+   * ----------------------------------------------------------------------------
+   * IT ASKED `=== 'hold'` AND ITS OWN NAME AND DESCRIPTION SAY "does not cost a
+   * swing", which stopped being the same question the moment a second
+   * swing-keeping mode existed. The owner's ruling moved Improved Slam from
+   * `hold` to `continue`, and against the narrow test this entry would have
+   * evaluated FALSE for the one build that takes the talent -- so 2H Arms would
+   * have silently stopped casting Slam altogether. That is the fifth cause of a
+   * never-fired entry in CLAUDE.md, a condition reading something nothing sets,
+   * and it arrives as a DPS loss with nothing on the results page to explain it.
+   *
+   * SO IT ASKS THE CONCEPT ITS NAME ALREADY NAMED: anything but `reset`. A third
+   * mode is covered the day it lands, which is the `isBleed` argument -- read
+   * the tag, not a list of the values it can take.
+   * ----------------------------------------------------------------------------
    */
   ability_holds_swing_timer: (args) => {
     const abilityId = String(args[0] ?? '');
-    return (_context, actor) => actor.abilities.get(abilityId)?.swingTimer === 'hold';
+    return (_context, actor) => {
+      const mode = actor.abilities.get(abilityId)?.swingTimer;
+      return mode !== undefined && mode !== 'reset';
+    };
   },
 };
 
