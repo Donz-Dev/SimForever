@@ -337,12 +337,22 @@ heavily: **-76.7** and **-118.2** under `ignore`, **-52.2** and **-85.9** under
   throws naming any enchantable slot that has no column -- verified by removing
   a column and watching it fail. The armour block keeps the owner's
   spreadsheet shape so it still reads against their table by eye.
-  **It immediately raised a question outside this profile's scope**, which is
-  the point of fixing a report: the Cat and Bear Druids carry
-  `Enchant Weapon - Crusader` on a held two-hander they never swing -- a paw is
-  built from that weapon, but Crusader is a PPM proc that fires on a weapon USE.
-  Whether it procs at all for a feral Druid is unmeasured here and is the next
-  thing to ask on those two profiles, not this one.
+  **It made the Druids' Crusader visible, and the question raised about it was
+  a BAD one that one command closed.** Seeing `Enchant Weapon - Crusader` on a
+  held two-hander the Cat and Bear never swing, this was written up as "whether
+  it procs at all for a feral Druid is unmeasured". The owner: **"Crusader does
+  proc for feral druid forms, and you should already know that and also be able
+  to verify that."** Both halves are right -- a paw is BUILT from the held
+  weapon and a form swing is a `mainHand` use, which CLAUDE.md already states,
+  and the verification is one line of `probe_profile_report`:
+  **Holy Strength (Main Hand) reads 32.4% uptime on the Cat and 32.2% on the
+  Bear.** So the enchant is live and correctly chosen on both.
+  **THE LESSON IS ABOUT THE QUESTION, NOT THE ENCHANT.** A newly visible figure
+  invites a question, and the cost of asking one that is already answered in
+  this file AND readable in one command is paid by the person who has to answer
+  it. **Check the uptime table before writing down a doubt about a proc** --
+  which is this file's own rule that a flagged reading on something already
+  ruled on is a NOTE and not a question.
 - **THE HIT LADDER AND THE HIT WEIGHT CONTRADICT EACH OTHER IN ONE RUN.** The
   ladder offers "+5.00% to cap Spells" and the weight says "nothing: this build
   cannot read it". **The weight is right**: all three Mages carry 11 points of
