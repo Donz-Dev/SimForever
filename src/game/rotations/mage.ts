@@ -153,8 +153,48 @@ const either = any;
  * ----------------------------------------------------------------------------
  */
 const SCORCH_STACK_CAP = IMPROVED_SCORCH_MAX_STACKS;
-/** "or scorch duration <= 3 seconds", which refreshes it before it drops. */
-const SCORCH_REFRESH_SECONDS = 3;
+
+/*
+ * ============================================================================
+ * "OR THE VULNERABILITY IS ABOUT TO DROP", AND IT IS **FIVE SECONDS ON FIRE
+ * AND THREE ON FROSTFIRE** -- two constants, because the two lists were swept
+ * separately and only one of them has been.
+ *
+ * THE SWEEP ON THE FIRE LIST, 1500 paired iterations each against the legal
+ * opener, as a delta from the 3 seconds both lists used to share:
+ *
+ *   2s   -13.70      4s   +6.56      6s   +9.84
+ *   3s     0         5s   +9.74      8s   +8.63
+ *
+ * SO 5s AND 6s ARE TIED AT THE TOP and 4s to 8s is a plateau; 5 is mid-plateau
+ * rather than tuned, which is the reading `ARCANE_BLAST_CHANNEL_FLOOR_SECONDS`
+ * next door already takes of its own flat range.
+ *
+ * AND THE HYPOTHESIS THAT PRODUCED THIS SWEEP WAS WRONG IN BOTH DIRECTIONS.
+ * A refresh window CLIPS -- refreshing a 30 second debuff at 3 seconds left
+ * throws 3 seconds away -- which is the Moonkin's Nature's Grace failure and
+ * says the window should be made SMALLER. It measures -13.7 at two seconds.
+ *
+ * WHAT IS ACTUALLY BEING TRADED IS A REBUILD. Fire Vulnerability is five
+ * stacks at 3% each on a build whose damage is 84% Fire, and if it LAPSES all
+ * five go -- so the next five Scorches are spent climbing back rather than
+ * maintaining, at 562 damage a second of global cooldown against the filler's
+ * 712. A three second margin is a gamble against a 2.5 second Fireball being
+ * in flight when the debuff ends, and the clip is the cheaper of the two
+ * mistakes. The curve turning over above 6s is the clip finally costing more
+ * than the gamble.
+ *
+ * A TWO-POINT COMPARISON AT 3s AND 1s WOULD HAVE CONCLUDED "KEEP 3" and been
+ * confident about it, which is why this is a sweep.
+ *
+ * FROSTFIRE IS LEFT AT 3s ON PURPOSE. Its filler is faster and its Scorch
+ * carries Ice Shards' crit damage, so nothing here transfers -- and a shared
+ * constant serving two unswept answers is the Thistle Tea gate's documented
+ * mistake. Whoever sweeps that list owns that number.
+ * ============================================================================
+ */
+const FIRE_SCORCH_REFRESH_SECONDS = 5;
+const FROSTFIRE_SCORCH_REFRESH_SECONDS = 3;
 
 /*
  * ----------------------------------------------------------------------------
@@ -256,13 +296,14 @@ const evocationFor = (secondsLeft: number) =>
 const HEATING_UP_SALVAGE_STACKS = 2;
 const HEATING_UP_SALVAGE_SECONDS = 3.5;
 
-const scorchNeeded = all(
-  hasReaction('improved_scorch'),
-  either(
-    targetStacksBelow('fire_vulnerability', SCORCH_STACK_CAP),
-    targetAuraAtMost('fire_vulnerability', SCORCH_REFRESH_SECONDS),
-  ),
-);
+const scorchNeededWithin = (refreshSeconds: number) =>
+  all(
+    hasReaction('improved_scorch'),
+    either(
+      targetStacksBelow('fire_vulnerability', SCORCH_STACK_CAP),
+      targetAuraAtMost('fire_vulnerability', refreshSeconds),
+    ),
+  );
 
 // ---------------------------------------------------------------------------
 
@@ -285,7 +326,34 @@ const scorchNeeded = all(
 export const MAGE_FIRE: AplList = {
   name: 'Mage (Fire)',
   entries: [
-  { abilityId: 'mage_armor', condition: selfExpired('mage_armor') },
+  /*
+   * ==========================================================================
+   * MAGE ARMOR IS NOT IN THIS LIST, WHICH IS THE ARCANE RULING APPLIED TO THE
+   * PROFILE IT WAS LEFT FOR. The owner: "Mage Armor doesn't need to be captured
+   * in the main APL section. It's being taken care of in the pre-combat
+   * section." That arrived as an audit of the ARCANE profile, so only that list
+   * changed -- and `MAGE_ARCANE` records in its own words that Fire pre-casts
+   * the buff at a 4.5s lead and the entry is equally dead here, "so the next
+   * Mage round starts with it".
+   *
+   * THE ENTRY COULD NEVER FIRE. `selfExpired('mage_armor')` is false from the
+   * pull onward: the opener casts it, the buff lasts THIRTY MINUTES against a
+   * one-minute fight, and nothing in the encounter dispels. `USES=1` reported
+   * **1.0 uses** against it and that use was the PRE-COMBAT cast charged to the
+   * entry, which is why reading the uses column alone could not see this.
+   *
+   * REMOVING IT RUNS BIT-IDENTICAL FIGHTS at 1500 paired iterations, which is
+   * the containment check and the only thing separating "redundant" from
+   * "load-bearing" -- a change worth nothing still shifts the RNG sequence, so
+   * a zero spread here means the entry was never REACHED rather than reached
+   * and worth nothing.
+   *
+   * AND UNLIKE COMBUSTION, NO FIGHT LENGTH BRINGS IT BACK: the test is the
+   * buff's duration against the clock, and thirty minutes beats any fight this
+   * project runs. Frostfire still carries its copy, for the reason the Arcane
+   * ruling gave -- a list is changed for the profile that was named.
+   * ==========================================================================
+   */
   /*
    * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
    *
@@ -293,11 +361,76 @@ export const MAGE_FIRE: AplList = {
    * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
-  ...RACIAL_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
+  ...RACIAL_COOLDOWNS.filter((entry) => entry.abilityId !== 'eureka'),
+  /*
+   * ==========================================================================
+   * EUREKA HELD FOR THE PYROBLAST IT MAKES BIGGER, WORTH **+5.34 +/- 0.55**.
+   *
+   * The Gnome racial is an 8 SECOND WINDOW of +10% NON-PERIODIC damage, free
+   * and off the global cooldown -- and in the shared block it carries no
+   * condition, so it is spent on whatever the first poll of the fight happens
+   * to be. On the legal opener that poll faces a target with ZERO Fire
+   * Vulnerability stacks, which is the worst eight seconds of the fight to
+   * spend a damage window in.
+   *
+   * THREE HEATING UP STACKS IS A PYROBLAST ON THE NEXT CAST, which is the entry
+   * below. At three stacks Pyroblast is a 1.5 second cast for about 2,950 --
+   * the biggest single non-periodic hit this build has -- so the window opens
+   * exactly as it lands. **The four gates measure +5.34 here, +4.69 on a
+   * Combustion window, +2.58 on five Fire Vulnerability stacks and +2.50 on a
+   * Missile Barrage proc**, which last is the ARCANE list's own answer and is
+   * the worst of the four on this build.
+   *
+   * AND `any` OF THE TWO BEST IS WORSE THAN EITHER ALONE, at +3.51: the
+   * Combustion branch spends the window on a poll where no Pyroblast is coming,
+   * so a looser gate is not a safer one here. Removing the entry altogether is
+   * **-8.94**, which is the sign check that says a gate is not merely a tax.
+   *
+   * THE INTERVALS ARE TENTHS BECAUSE A GATE ON A FREE OFF-GCD COOLDOWN CANNOT
+   * FLIP A ROLL -- spread 5.5 against the 90-odd a talent or an opener change
+   * produces. A small figure here is not a small sample.
+   *
+   * GATING THE SHARED BLOCK IS NOT AVAILABLE: `RACIAL_COOLDOWNS` is spread into
+   * lists belonging to no race, so a condition written there would be a
+   * condition on three abilities this character cannot cast. Eureka is last of
+   * the four, so filtering it out and restating it here leaves every other
+   * racial exactly where it was.
+   * ==========================================================================
+   */
+  { abilityId: 'eureka', condition: selfStacksExactly('heating_up', HEATING_UP_MAX_STACKS) },
+  ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
+  /*
+   * ==========================================================================
+   * AND THE SPELLBLASTING POTION HELD FOR COMBUSTION, WORTH **+1.07 +/- 0.12**
+   * on its own -- the PAIR measures **+6.58 +/- 0.59** against +5.34 for Eureka
+   * alone, which is 1.24 apart on a combined interval of 0.81 and therefore a
+   * real second gain rather than a restatement of the first.
+   *
+   * IT IS THE SAME SHAPE AS EUREKA: 40 spell power for 30 seconds, free, off
+   * the global cooldown, and ungated in the shared block, so it was spent on
+   * the first poll of the fight. Combustion is the longer of the two windows
+   * this build has, so the potion goes there and Eureka goes on the Pyroblast.
+   *
+   * WRITTEN OUT RATHER THAN THROUGH `buffPotionCooldown`, whose note says the
+   * cooldown entry below is reached "100ms later, because a potion takes no
+   * global cooldown". That is true of the Cat's Berserk and is NOT true here:
+   * Combustion is ON the global cooldown -- see HANDOVER.md's open question --
+   * so the potion arrives a GCD after it rather than a poll. A note is a FROZEN
+   * STRING and the wrong one is worse than none.
+   * ==========================================================================
+   */
+  {
+    abilityId: 'major_spellblasting_potion',
+    condition: selfHas('combustion'),
+    note:
+      '40 Spell Power for 30 sec, held for the Combustion window so the two stack. ' +
+      'The entry that casts Combustion is BELOW this one, so one poll casts the ' +
+      'cooldown and a later poll drinks this -- a global cooldown later rather than ' +
+      'a poll later, because Combustion starts one.',
+  },
   ...CONSUMABLE_HEALS,
   { abilityId: 'evocation', condition: evocationFor(FIRE_EVOCATION_FIGHT_SECONDS) },
-  { abilityId: 'scorch', condition: scorchNeeded },
+  { abilityId: 'scorch', condition: scorchNeededWithin(FIRE_SCORCH_REFRESH_SECONDS) },
   /*
    * AT THREE STACKS, WHICH IS THE CAP. Heating Up takes a quarter off
    * Pyroblast's cast per stack, so three turns a six-second cast into a second
@@ -375,7 +508,7 @@ export const MAGE_FROSTFIRE: AplList = {
   ...CONSUMABLE_COOLDOWNS,
   ...CONSUMABLE_HEALS,
   { abilityId: 'evocation', condition: evocationFor(EVOCATION_FIGHT_SECONDS) },
-  { abilityId: 'scorch', condition: scorchNeeded },
+  { abilityId: 'scorch', condition: scorchNeededWithin(FROSTFIRE_SCORCH_REFRESH_SECONDS) },
   { abilityId: 'pyroblast', condition: selfStacksExactly('heating_up', HEATING_UP_MAX_STACKS) },
   /*
    * ==========================================================================

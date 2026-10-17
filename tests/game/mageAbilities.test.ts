@@ -2586,6 +2586,111 @@ describe('Evocation, which pays out during its own channel', () => {
   }, 20_000);
 });
 
+describe('what round 26 did to the Fire list', () => {
+  /*
+   * ==========================================================================
+   * THE FILTER-AND-RESTATE IS THE THING THAT CAN BREAK FROM A DISTANCE.
+   *
+   * The Fire list spreads `RACIAL_COOLDOWNS` with Eureka FILTERED OUT and
+   * restates it gated on three Heating Up stacks. If that shared block ever
+   * renames its Eureka entry, the filter silently stops matching and the list
+   * gets TWO entries for one ability -- the UNGATED one from the block, above
+   * the gated one. The gate would then be dead and nothing would error: the
+   * cooldown still fires once a fight, the uses column still reads 1.0, and the
+   * only thing that moved is WHEN.
+   *
+   * A DUPLICATE ABILITY ID IS LEGAL IN THIS PROJECT AND IS WHY THIS NEEDS A
+   * TEST. Arcane Missiles is in the Arcane list twice on purpose and the
+   * Frostfire list has two Pyroblasts, so "no ability twice" is not an
+   * invariant anything else checks.
+   * ==========================================================================
+   */
+  it('gates Eureka exactly once, with nothing ungated above it', () => {
+    const eurekas = MAGE_FIRE.entries.filter((row) => row.abilityId === 'eureka');
+    expect(eurekas).toHaveLength(1);
+    expect(eurekas[0]!.condition).toBeDefined();
+  });
+
+  it('gates the Spellblasting potion exactly once, and below nothing ungated', () => {
+    const potions = MAGE_FIRE.entries.filter(
+      (row) => row.abilityId === 'major_spellblasting_potion',
+    );
+    expect(potions).toHaveLength(1);
+    expect(potions[0]!.condition).toBeDefined();
+  });
+
+  /*
+   * ==========================================================================
+   * AND THE COMBUSTION ENTRY HAS TO SIT BELOW THE POTION THAT WAITS FOR IT.
+   *
+   * The potion is gated on the Combustion AURA, so the entry that APPLIES that
+   * aura must be reachable while the potion's gate is false -- which means
+   * below it. Hoisting Combustion above the potion would make the pair cast in
+   * one poll and is fine; putting the potion BELOW Combustion is what breaks
+   * it, because the list would then drink before casting on the first poll and
+   * the gate could never be satisfied in the same walk.
+   *
+   * ASSERTED AS AN ORDER RATHER THAN AS A FIGURE, because the DPS it is worth
+   * (+1.07) is a rotation decision that can change owner, and this is the
+   * mechanism underneath it that cannot.
+   * ==========================================================================
+   */
+  it('keeps Combustion below the potion that waits for its window', () => {
+    const ids = MAGE_FIRE.entries.map((row) => row.abilityId);
+    expect(ids.indexOf('major_spellblasting_potion')).toBeLessThan(ids.indexOf('combustion'));
+  });
+
+  /*
+   * ==========================================================================
+   * MAGE ARMOR IS OUT OF THE FIRE LIST AND STILL IN THE FROSTFIRE ONE, and
+   * both halves are the assertion.
+   *
+   * The owner's ruling -- "Mage Armor doesn't need to be captured in the main
+   * APL section" -- arrived as an audit of the ARCANE profile, and a list is
+   * changed for the profile that was named. Round 26 did the Fire one. The
+   * Frostfire list keeps its copy until somebody optimises that profile, so a
+   * test that asserted "no Mage list has one" would be extending a ruling by
+   * analogy, which is what this project does not do.
+   * ==========================================================================
+   */
+  it('has no Mage Armor entry, where Frostfire still does', () => {
+    expect(MAGE_FIRE.entries.some((row) => row.abilityId === 'mage_armor')).toBe(false);
+    expect(MAGE_FROSTFIRE.entries.some((row) => row.abilityId === 'mage_armor')).toBe(true);
+    expect(MAGE_ARCANE.entries.some((row) => row.abilityId === 'mage_armor')).toBe(false);
+  });
+
+  /*
+   * ==========================================================================
+   * THE TWO SCORCH WINDOWS ARE SEPARATE FACTS AND THIS PINS THAT THEY STILL
+   * DISAGREE.
+   *
+   * They were ONE shared constant at 3 seconds. Round 26 swept the Fire list
+   * and landed on 5 (2s -13.70, 3s 0, 4s +6.56, 5s +9.74, 6s +9.84, 8s +8.63)
+   * and left Frostfire at 3, because nothing about that sweep transfers to a
+   * build with a faster filler.
+   *
+   * PINNED BY WHAT EACH LIST ASKS RATHER THAN BY THE CONSTANTS, because the
+   * constants are not exported -- and because what would actually go wrong is
+   * somebody re-merging them, which this catches whichever value survived. It
+   * is `critRageMultiplierFor`'s rule pointed at a rotation: pin each by
+   * identity, never assert the two are equal.
+   * ==========================================================================
+   */
+  it('asks for a WIDER Scorch window on Fire than on Frostfire', () => {
+    const windowOf = (list: typeof MAGE_FIRE) => {
+      const entry = list.entries.find((row) => row.abilityId === 'scorch')!;
+      const json = JSON.stringify(entry.condition);
+      const match = /"auraId":"fire_vulnerability","compare":"atMost","seconds":([0-9.]+)/.exec(
+        json,
+      );
+      expect(match, `no fire_vulnerability duration clause in ${list.name}: ${json}`).not.toBeNull();
+      return Number(match![1]);
+    };
+    expect(windowOf(MAGE_FIRE)).toBe(5);
+    expect(windowOf(MAGE_FROSTFIRE)).toBe(3);
+  });
+});
+
 describe('the three lists, after the owner tuned them', () => {
   it('casts Scorch only if Improved Scorch is actually taken', () => {
     /*
