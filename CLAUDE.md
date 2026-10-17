@@ -1490,6 +1490,67 @@ something that comes and goes.
   712.5 to the decimal, which is the containment check: Ravage ends Prowl by a
   new route to the same outcome, and a Pure Hemo rogue's opening window was
   never spent by anything.
+- **A CAST THAT LEAVES THE ACTOR FREE NOW ACTS AGAIN AT ONCE, AND THE 100ms IT
+  USED TO WAIT WAS AN ARTEFACT RATHER THAN A COST.** The owner's ruling: "Vanish
+  into Ambush should not be interrupted by a swing." Vanish is off the global
+  cooldown, so it left the actor free -- and `nextDecisionTime` gave a free
+  actor `now + ROTATION_POLL_MS`, a tenth of a second in which an auto-attack
+  could land and take the stealth window the Vanish had just opened. A player
+  presses the two keys together and nothing in the ruleset puts a swing between
+  them.
+  **IT IS THE CHARGE PROBLEM, MET FROM THE OTHER SIDE, AND THAT IS WHY NO
+  POSITION COULD FIX IT.** This file already records the first instance --
+  Charge is castable for one instant, the off-GCD cast left the actor free, and
+  "the window is gone", one cast a fight to ZERO -- which was worked around by
+  MOVING THE ENTRY to second. That works when the thing that steals the gap is
+  another ENTRY; here it is a SWING, which no ordering can outrank.
+  **AND A SEQUENCE CANNOT EXPRESS IT EITHER**, which was tried first:
+  `AplEntry.sequence` steps ONE cast per decision, so the poll still sits
+  between the steps -- and `resumeSequence` then ABANDONS the pointer, because
+  the refusal is the stealth gate rather than `on_gcd`. It also cannot hold
+  "step one ENABLES step two" at all: `sequenceIsAffordable` checks Ambush
+  before the Vanish has been cast, so the window it is waiting for is not up
+  yet and the whole sequence is refused.
+  **WHAT MAKES IT TERMINATE IS THE ONLY THING THAT MAKES IT SAFE**, because a
+  decision scheduled at its own timestamp can recur forever. Two guards, and
+  both are load-bearing:
+
+  | | |
+  | --- | --- |
+  | only after a cast that SUCCEEDED | an IDLE actor is the unbounded case, and it still polls |
+  | every off-GCD ability declares a `cooldownMs` | so each can win at most once per instant, and the chain is bounded by the length of the list |
+
+  **THE SECOND IS NOBODY'S RULE AND IS NOW A TEST**, `freeCastChain.test.ts`,
+  across all nine classes, the four racials and the consumables: an ability
+  added later with no cooldown and no global cooldown would HANG a fight rather
+  than fail one, which is the worst failure available here.
+  **AN ON-NEXT-SWING ABILITY IS EXCLUDED OUTRIGHT AND IS THE REASON THE GUARD
+  IS NOT MERELY DEFENSIVE.** It is off the global cooldown by DERIVATION and is
+  the one family with no cooldown: Heroic Strike is refused while already armed,
+  but **Heroic Strike and Cleave share a slot** and would overwrite each other's
+  queue forever, draining a warrior's whole rage bar in one instant. Arming a
+  swing is the end of an action rather than the middle of one.
+  **IT MOVED ALL 28 ROWS AND THE SHAPE IS WHAT SAYS IT IS RIGHT**: mean 795.6
+  to 798.9, **20 up and 8 down**, every loss inside its own interval and the
+  only `REAL` verdict a **+14.9 on LW Melee** -- the build this file already
+  describes as global-cooldown-bound rather than resource-bound, which is
+  exactly who a recovered 100ms belongs to. The owner's own two profiles,
+  **Rupture +8.7 and Hemo Dagger +14.2**, more than recover what the
+  stealth-breaking rule had cost them.
+  **AND FOUR TESTS BROKE, ALL OF THEM FIXTURES READING A TIMING THEY NEVER MEANT
+  TO PIN** -- which is the lesson worth more than the rule:
+
+  | | what it was really asserting |
+  | --- | --- |
+  | `costRefund` x2 | a built character CARRIES ITS ROTATION, so one `advanceTo(1)` tick now cast a chain ending on the GCD; the hand-driven Hamstring was refused, cost nothing, and **a refund test read zero as "the full cost"** |
+  | `mageAbilities` | it `find`-ed "any row whose attempts equal its casts" as the comparison spell, so which spell it compared against was whatever the fight produced first. Named as **Scorch** now, which the sibling test beside it already did |
+  | `paladinTalents` | "nothing is left banked at the end of a fight that swung" is a claim about WHERE THE FIGHT STOPPED. It asks the event stream for applied-against-removed pairs now |
+
+  **AND AN ANCHOR THAT LOOKED LIKE A RULESET FACT WAS WRONG TOO**: the Mage
+  repair first asserted that no spell can report a miss rate below the owner's
+  1% FLOOR, which is true of the CHANCE and false of a measured frequency --
+  Frostfire Bolt measures 0.8% over sixty fights. **A floor bounds the roll, not
+  the sample**, and a rate read off a batch is an estimate like any other.
 - **A channel is a cast that ticks, and nothing else about it is new.**
   `channelTicks` runs `onCast` that many times inside `castTimeMs`, the LAST tick
   where a plain cast's single effect already lands — so a one-tick channel and a
