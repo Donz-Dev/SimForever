@@ -59,6 +59,7 @@ npx vite-node tools/encode_talent_build.mjs --all   # every preset's build as a 
 npx vite-node tools/probe_shared_cd.ts            # does a shared cooldown actually BITE, off the event stream
 PRESET=bm_hunter npx vite-node tools/probe_jow.ts   # which ACTIONS roll for Judgement of Wisdom, by instant
 ABILITIES=mark npx vite-node tools/probe_precombat_abilities.ts   # map an owner's ability NAME to an id, per profile
+npx vite-node tools/probe_precombat_pools.ts     # what each profile ARRIVES with, and its lockout remainder
 ```
 
 The three audits in the middle are AUDITS rather than measurements and none of
@@ -2426,6 +2427,56 @@ within the same panel". `engine/abilities/precombat.ts`.
   what a character who opened with a Fireball actually arrives with. What
   pre-combat mode skips is three things: the global cooldown it would start,
   the swing reset, and the cast time.
+- **AND REGENERATION IS CREDITED ACROSS THE LEAD, WITH THE FIVE SECOND RULE
+  STAMPED WHEN THE SPEND HAPPENED.** The owner's ruling -- "credit the regen and
+  back-date the five-second rule" -- which makes the lead's observable
+  consequences FOUR. The enumeration above said TWO when it was written and
+  `accruesBeforeCombat` made it three, so **treat any list of them here as open
+  rather than closed.**
+  **THE WINDOW IS WALKED RATHER THAN COLLAPSED**: `runPrecombat` keeps a
+  NEGATIVE local offset, credits each pool for the gap before every action, and
+  credits the last gap to the pull. The clock is not moved and cannot be --
+  `SimulationClock` only goes forward, which is the whole reason this feature
+  resolves at timestamp zero -- so `ResourceRegen.amountPerTick` takes an
+  optional `at`, and **each tick is evaluated at its own moment**.
+  **THAT LAST PART IS THE RULE AND A SINGLE MULTIPLICATION WOULD GET IT
+  WRONG.** `rate x seconds` hands a caster back every point the lockout should
+  have suppressed; asking per tick is what makes the two halves of the ruling
+  compose instead of cancel.
+  **THE STAMP IS A PLAIN NUMBER AND A NEGATIVE ONE IS ARITHMETIC.**
+  `spentWithin` asks `now - last < windowMs`, so a spend at -4500 reads as 4.5
+  seconds ago at the pull and the lockout expires 500ms into the fight, by
+  itself, with nothing to clear. Before this it sat at ZERO, so a Mage that
+  drank Mage Armor 4.5 seconds early arrived with the FULL five seconds to run.
+  **AND THE BOUNDARY TICK IS FREE, WHICH IS WORTH KNOWING BECAUSE A TEST GOT IT
+  WRONG FIRST.** The comparison is STRICT, so the tick at exactly five seconds
+  after a spend is already unlocked: a six-second lead credits **21** ticks of
+  its one-second tail and not 20.
+  **SO FOR A CASTER THE CREDIT IS USUALLY ZERO, AND THAT IS THE RULING WORKING
+  RATHER THAN FAILING.** The openers spend mana and the back-dated lockout then
+  suppresses exactly the regeneration the lead would have bought -- Fire spends
+  900 mana at leads of 4.5s and 3s and gains **91** of it back. Energy has no
+  such rule, so the two Combat Rogues really do bank **ten a second** across
+  Blade Flurry's one-second lead: 75 energy at the pull becomes **85**.
+  **TEN A SECOND AND NOT TWENTY, WHICH IS A FIGURE THIS PROJECT HAS ALREADY
+  REJECTED ONCE.** `ENERGY_PER_SECOND` is `0.5 x 20` -- half an energy twenty
+  times a second -- because the literal reading of "1 energy 20 times a second"
+  was built, measured at +35% to +53% on every energy build, and withdrawn. The
+  CADENCE is twenty and the RATE is ten, and quoting twenty is quoting the
+  version that went back.
+  **23 OF 28 ROWS ARE BIT-IDENTICAL, WHICH IS THE CONTAINMENT CHECK AND ALSO
+  THE FINDING.** Only the two Combat Rogues and the three Mages move at all
+  (-5.09, +0.71, +0.24, -0.17, +0.10; mean 798.91 -> 798.76), every one inside
+  its own interval. **A POOL GAIN ONLY MOVES A FIGURE IF IT CROSSES A CAST'S
+  COST AT A DECISION POINT** -- BM Hunter gains 63 mana and runs a
+  BIT-IDENTICAL fight, because 63 does not buy another Aimed Shot, so no
+  decision anywhere in the fight differs. That is why a change this broad can
+  be this quiet, and why the two Combat Rogues moving in OPPOSITE directions on
+  the same +10 energy is noise rather than a finding: one changed decision
+  reorders the whole random stream.
+  `tools/probe_precombat_pools.ts` prints the pool and the lockout remainder per
+  profile, because neither has a zero anywhere to notice -- **a pool arriving
+  short reads exactly like a pool that was meant to be short.**
 - **A CHANNEL IS REFUSED** rather than relying on the zeroed cast time, which
   would deliver one tick's worth of effect and report it as the whole channel.
 - **IT IS STORED ON THE PROFILE ROOT AND EDITED IN THE APL PANEL**, which is the
