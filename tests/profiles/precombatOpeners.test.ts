@@ -277,6 +277,25 @@ describe("the owner's openers are transcribed exactly", () => {
       [1.5, 'searing_totem', '+11.0 -- the Enhancement opener already did this'],
       [0, 'elemental_mastery', '+13.9 -- a new capstone, claimed for no GCD'],
     ],
+    /*
+     * THE ENHANCEMENT SHAMAN'S ONE ADDITION, AND IT MEASURED AS A LOSS EARLIER
+     * IN THE SAME ROUND THAT SHIPPED IT.
+     *
+     * Rage of the Farseer is +30% attack speed for 25 seconds on a 180 second
+     * cooldown, it applies an aura and deals no damage, and it is deliberately
+     * ON the global cooldown -- so a 0s lead claims the whole window for free
+     * and cannot fail either half of Gate B.
+     *
+     * At the start of the round it was **-4.79, noise**: the list made about 33
+     * casts in a 60 second fight and had global cooldowns to spare, so a saved
+     * one bought nothing. Reverberation 5/5 then added two shock charges a
+     * fight and the spare GCDs went -- and the same edit is **+12.71 +/- 3.00**
+     * over 5000 paired iterations. The figure belongs to the list it was taken
+     * in, which here means the list this round ended with.
+     */
+    shaman_enhancement: [
+      [0, 'rage_of_the_farseer', '+12.71 -- a 25s haste window, claimed for no GCD'],
+    ],
     mage_frostfire: [[1.5, 'scorch', '+25.1 -- one Fire Vulnerability stack at the pull']],
     /*
      * THE ARCANE MAGE'S RAMP IS GONE, AND THIS IS WHAT IS LEFT OF IT.

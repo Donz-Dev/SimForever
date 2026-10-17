@@ -345,8 +345,15 @@ function rewindAuras(
       const previously = before.get(aura);
       if (previously !== undefined && previously === aura.revision) continue;
 
-      aura.appliedAt -= leadMs;
-      aura.expiresAt -= leadMs;
+      /*
+       * THROUGH THE COLLECTION, NOT BY WRITING THE TWO FIELDS, because the
+       * EXPIRATION IS ALREADY SCHEDULED against the old `expiresAt`. Ageing the
+       * window by hand left the aura alive for `leadMs` past its own end, with
+       * `remainingMs` reading zero while `has` answered true -- and that
+       * disagreement cost a pre-cast Searing Totem a whole application of ticks
+       * at an identical uptime. See `AuraCollection.rewindWindow`.
+       */
+      combatant.auras.rewindWindow(context, aura, leadMs);
 
       /*
        * THE TICKS THAT HAPPENED BEFORE THE PULL, FOR AN AURA THAT SAYS THEY
