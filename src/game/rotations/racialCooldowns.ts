@@ -83,7 +83,10 @@ export const RACIAL_COOLDOWNS: readonly AplEntry[] = [
   { abilityId: 'berserking' },
   // Night Elf: +10% crit with everything for 15s.
   { abilityId: 'elunes_light' },
-  // Gnome: the next three damaging abilities cost 10% less and hit 10% harder.
+  // Gnome: an 8 SECOND WINDOW -- 10% cheaper and 10% harder, periodic
+  // effects excluded. It was three CHARGES until a patch deleted them, and
+  // this comment described the charges for a release after `racials/auras.ts`
+  // stopped implementing them.
   { abilityId: 'eureka' },
 ];
 

@@ -62,6 +62,7 @@ PRESET=bm_hunter npx vite-node tools/probe_jow.ts   # which ACTIONS roll for Jud
 ABILITIES=mark npx vite-node tools/probe_precombat_abilities.ts   # map an owner's ability NAME to an id, per profile
 npx vite-node tools/probe_precombat_pools.ts     # what each profile ARRIVES with, and its lockout remainder
 npx vite-node tools/probe_party_crit.ts          # does any profile hold a party crit aura TWICE
+npx vite-node tools/verify_opener.ts             # does the opener's RAMP actually arrive, read off the combatant
 ```
 
 The three audits in the middle are AUDITS rather than measurements and none of
@@ -2640,6 +2641,31 @@ within the same panel". `engine/abilities/precombat.ts`.
   `tools/probe_precombat_pools.ts` prints the pool and the lockout remainder per
   profile, because neither has a zero anywhere to notice -- **a pool arriving
   short reads exactly like a pool that was meant to be short.**
+- **NOTHING CHECKS THAT THE OPENER IS A POSSIBLE CAST SEQUENCE, AND THAT IS
+  WORTH A FREE 105 DPS TO ANYBODY WHO DOES NOT ADD UP THE LEADS.**
+  `runPrecombat` resolves every action at timestamp zero and never asks whether
+  one cast was still in progress when the next began -- so an Arcane Mage opener
+  holding a **Pyroblast from t-6 to t0 AND an Arcane Blast from t-1.5 to t0**
+  measured **+105.3** and banked five casts into four seconds of real time.
+  **IT LOOKED EXACTLY LIKE THE LEGAL ROWS BESIDE IT**: 1.3 DPS above the best of
+  them, inside its own interval, in a variant table where every other row was
+  honest. There is no zero anywhere, nothing reads too large, and the `USES=1`
+  "before the pull" block prints it as cheerfully as any other opener.
+  **SO SUM THE LEADS AND THE CAST TIMES BY HAND BEFORE BELIEVING A PRE-COMBAT
+  FIGURE** -- an action occupies `t-lead` to `t-lead+castTime`, an instant
+  occupies a zero-width point and cannot overlap anything, and the sequence has
+  to be free of overlaps for the list to be a claim about what a character
+  actually did. Whether the engine should REFUSE an overlapping opener is a
+  question for the owner; today it is the author's arithmetic that stands
+  between a measurement and an artefact.
+- **AND `USES=1` CANNOT TELL YOU THE OPENER'S RAMP ARRIVED.** Its "before the
+  pull" block prints each pre-combat action beside **the ability's whole-fight
+  cast count**, so four `arcane_blast` rows all read 13.2 and the
+  `<-- NEVER HAPPENED` flag can never fire for a spell that is also the list's
+  filler. **And counting `aura_applied` says 1 where the answer is 4**, because
+  the three casts after the first are REFRESHES. The stack count on the
+  combatant at the pull is the only thing that answers it --
+  `tools/verify_opener.ts`, which reads `auras.stacksOf` after `begin()`.
 - **A CHANNEL IS REFUSED** rather than relying on the zeroed cast time, which
   would deliver one tick's worth of effect and report it as the whole channel.
 - **IT IS STORED ON THE PROFILE ROOT AND EDITED IN THE APL PANEL**, which is the
@@ -2740,6 +2766,18 @@ test -- and the owner then specified an opener for every profile in one message.
   not a way to declare something inert**: each entry reads the PROFILE, so a
   Moonkin naming `cat_form` is still wrong, and `precombatOpeners.test.ts`
   drives that both ways.
+- **AND AN OPTIMISATION PASS MAY ADD TO THE OWNER'S OPENER AND MAY NOT REWRITE
+  IT, WHICH A TEST IS WHAT ENFORCED.** The Arcane Mage's best measured ramp had
+  moved `mage_armor` off its stated 3s lead and replaced the owner's single
+  `arcane_blast` at 1.5 with four at other leads; `precombatOpeners.test.ts`
+  transcribes their openers a second time and asserts a profile's list is
+  **their lines plus an explicitly declared set of additions**, so it failed on
+  exactly that. **The two arrangements then measured +104.0 +/- 7.9 and
+  +95.9 +/- 8.2 -- 8.1 apart against a combined interval of 11.4**, so there was
+  no measurement to trade against keeping the transcription: the three new
+  blasts went in front of the one the owner wrote. **A test that pins whose
+  decision a line is does not give way to a difference the measurement cannot
+  see**, which is the Hunter's Mark rule pointed at an opener instead of a list.
 - **MOVING AN ENTRY OUT OF A LIST AND INTO AN OPENER IS NOT NEUTRAL FOR
   ANYTHING THAT SHARES THAT LIST.** The owner asked for Charge, the stance and
   Battle Shout out of the three Warrior PROFILES, and a profile-specific list is
@@ -5551,6 +5589,23 @@ shape should fail loudly, not render a tree with a broken arrow.
   **AND THE ARTIFACT RULE IS WHAT PRODUCED THE NUMBER.** The duration was the
   whole diagnosis, and it survived only because the run was captured. A
   re-run passes and destroys it, which is what happened the first three times.
+- **AND THE FIFTH INSTANCE HAD A CAUSE, IN A DIFFERENT FILE, AND IT IS DISK
+  I/O.** `stealthBreaking.test.ts` timed out against the 5000ms default on **two
+  full-suite runs out of three** while passing standalone with the whole file at
+  **265ms of test time** -- and its `filesDeclaring` helper walked `src` and read
+  every one of its **215 TypeScript files** on each call, with three callers in
+  the file making about **645 synchronous reads** while vitest transformed 167
+  test files in parallel.
+  **SO "A REAL FLAKE UNDER LOAD" HAD A MECHANISM ALL ALONG, AND IT IS NOT CPU
+  CONTENTION.** A test that reads the source tree is the one kind that gets
+  slower the more tests run beside it, which is why this is the first instance
+  where the quantity was counted rather than guessed at. Caching the walk is the
+  fix -- the tree cannot change while a test file runs -- and three consecutive
+  full-suite runs are green where it previously failed two in three.
+  **THE LIMIT IS STILL THERE AND IS STILL PER-TEST**, because the fix addresses
+  this file and the default is what was too tight for any test touching the
+  disk. **A timeout is the symptom; ask what the test READS before widening
+  anything**, and never set `testTimeout` globally.
 - **A SYNCHRONOUS TEST CANNOT TIME OUT.** The body blocks the event loop, so
   vitest's timer never fires — `bloodCraze.test.ts` has a test that takes 5491ms
   and passes against a 5000ms default. So a slow test is not a flaky one, and a

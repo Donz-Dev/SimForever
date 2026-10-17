@@ -499,7 +499,36 @@ export const MAGE_ARCANE: AplList = {
    * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
-  ...RACIAL_COOLDOWNS,
+  ...RACIAL_COOLDOWNS.filter((entry) => entry.abilityId !== 'eureka'),
+  /*
+   * ==========================================================================
+   * EUREKA IS GATED ON THIS BUILD AND NOWHERE ELSE, WORTH **+1.92 +/- 0.28**.
+   *
+   * The Gnome racial is an 8 SECOND WINDOW of +10% non-periodic damage, and in
+   * the shared block it carries no condition -- so it is spent on whatever the
+   * first poll of the fight happens to be. Arcane Power's entry below is gated
+   * on a Missile Barrage proc for exactly this reason, and nothing did the same
+   * for the window beside it.
+   *
+   * THE BLOCK IS WHY IT HAD NO GATE RATHER THAN AN OVERSIGHT: that constant is
+   * spread into lists belonging to no race, so a condition written there would
+   * be a condition on three abilities this character cannot cast. Gating it is
+   * therefore a change to THIS list, which is what the filter does.
+   *
+   * ITS POSITION IS UNCHANGED. Eureka is last of the four, so taking it out of
+   * the spread and restating it immediately after leaves every other racial
+   * exactly where it was -- the arrangement `buffPotionCooldown` already uses
+   * for the Spellblasting potion a few lines down.
+   *
+   * THE FIGURE IS SMALL AND IT IS NOT NOISE: its spread is **2.8** against the
+   * 112 a pre-combat change produces, because a gate that only moves WHEN a free
+   * off-GCD cooldown fires cannot flip a roll. The three alternatives are worse
+   * -- on Arcane Power being up it runs **bit-identical** fights (Arcane Power is
+   * pre-cast, so it is already up at t=0 and the gate is never false), on the
+   * Arcane Blast cap **-2.92**, and with no entry at all **-16.35**.
+   * ==========================================================================
+   */
+  { abilityId: 'eureka', condition: selfHas('missile_barrage') },
   ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
   /*
    * AND THE SPELLBLASTING POTION HELD FOR PRESENCE OF MIND, which is the

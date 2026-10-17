@@ -9,7 +9,11 @@ import { STEALTH } from '../../src/game/auras/rogue';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import { makeAttacker, makeTarget } from '../helpers/actors';
+
 import { buildSimulation } from '../helpers/buildSimulation';
+
+/** A test that reads all 215 files under `src` needs more than the 5s default. */
+const READS_THE_SOURCE_TREE_MS = 30_000;
 
 /*
  * ==============================================================================
@@ -245,7 +249,15 @@ describe('Premeditation, the one exception', () => {
     // And nothing opts IN, because the default already is in: an explicit
     // `true` is a reader believing the field works the other way round.
     expect(filesDeclaring(/breaksActionAuras:\s*true/)).toEqual([]);
-  });
+    /*
+     * THE LIMIT IS INSURANCE RATHER THAN THE FIX -- `sourceFiles` caching the
+     * tree is the fix, and this is here because the thing that went wrong was a
+     * DEFAULT being too tight for a test that touches the disk at all. It is
+     * the arrangement `bloodCraze.test.ts` and `chargeAndShieldTalents.test.ts`
+     * already use, and it is per-test on purpose: widening `testTimeout`
+     * globally would hide the next test that genuinely gets slower.
+     */
+  }, READS_THE_SOURCE_TREE_MS);
 });
 
 describe('what carries the rule', () => {
@@ -337,17 +349,48 @@ describe('the Rogue opener, end to end', () => {
 });
 
 /** Every `.ts` file under `src` whose text matches, as repository-relative paths. */
-function filesDeclaring(pattern: RegExp): string[] {
-  const found: string[] = [];
+/*
+ * ==============================================================================
+ * THE SOURCE IS READ ONCE AND CACHED, AND THAT IS A TIMEOUT FIX.
+ *
+ * This walked `src` and read every one of its **215 TypeScript files** on each
+ * call, and the three callers in this file each made one -- so the file did
+ * about **645 synchronous reads** while vitest was transforming 167 test files
+ * in parallel. Standalone the whole file is **265ms of test time**; under the
+ * full suite one of its tests **timed out against the 5000ms default on two
+ * runs out of three**.
+ *
+ * SO THE CAUSE IS DISK I/O CONTENTION RATHER THAN CPU, which is worth saying
+ * because CLAUDE.md's entry on this pattern reads as "a real flake under load"
+ * and had no mechanism attached to it. **A test that reads the source tree is
+ * the one kind that gets slower the more tests run beside it**, and this is the
+ * first instance where the quantity was counted rather than guessed at.
+ *
+ * ONE READ, SHARED. The tree cannot change while a test file runs, so caching
+ * is safe by construction -- and it is the fix the limit below would otherwise
+ * have hidden.
+ * ==============================================================================
+ */
+let sourceCache: readonly { path: string; text: string }[] | undefined;
+
+function sourceFiles(): readonly { path: string; text: string }[] {
+  if (sourceCache) return sourceCache;
+  const found: { path: string; text: string }[] = [];
   const walk = (directory: string): void => {
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
       const path = `${directory}/${entry.name}`;
       if (entry.isDirectory()) walk(path);
-      else if (entry.name.endsWith('.ts') && pattern.test(readFileSync(path, 'utf8'))) {
-        found.push(path);
-      }
+      else if (entry.name.endsWith('.ts')) found.push({ path, text: readFileSync(path, 'utf8') });
     }
   };
   walk('src');
-  return found.sort();
+  sourceCache = found;
+  return sourceCache;
+}
+
+function filesDeclaring(pattern: RegExp): string[] {
+  return sourceFiles()
+    .filter((file) => pattern.test(file.text))
+    .map((file) => file.path)
+    .sort();
 }

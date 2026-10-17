@@ -1,0 +1,736 @@
+/*
+ * ==============================================================================
+ * THE ARCANE MAGE, OPTIMISED DIMENSION BY DIMENSION.
+ *
+ *   PRESET=mage_arcane VARIANTS=arcApl npx vite-node tools/probe_build.ts
+ *
+ * ------------------------------------------------------------------------------
+ * WHERE ITS DAMAGE IS, off a 30-fight `USES=1` run at 1088.0 DPS:
+ *
+ *   arcane_missiles  78.0%  on 14.7 casts   (the entry appears TWICE, pooled)
+ *   arcane_blast     17.1%  on 11.8 casts
+ *   pyroblast         4.5%  on  0.9 casts
+ *   Ignite            0.3%  not in the list
+ *
+ * **EVERY FIGURE IN THIS FILE IS AGAINST THE PRE-ROUND OPENER**, which cast ONE
+ * Arcane Blast before the pull. `arcShipping` is what shipped, so its +95.88 is
+ * now the baseline and the other groups are priced against a build that no
+ * longer exists -- kept because each one is a decision somebody would otherwise
+ * re-measure, and re-pricing nineteen losing variants against the new opener
+ * would cost an hour to confirm nineteen losses. **A prior measurement is true
+ * of the build it was taken in**, and this is that sentence as a header.
+ *
+ * SO IT IS 95% ARCANE AND 4.8% FIRE, AND ELEVEN OF ITS FIFTY-ONE POINTS ARE IN
+ * FIRE. That ratio is the whole question this file exists to answer.
+ *
+ * AND THE ARCANE TREE HAS NOTHING LEFT TO BUY, which is what makes the question
+ * unavoidable rather than academic. Every Arcane talent that touches damage is
+ * already at its maximum -- arcane_focus 5/5, arcane_impact 3/3, arcane_mind
+ * 5/5, arcane_instability 3/3, arcane_blast 1/1, presence_of_mind 1/1,
+ * arcane_power 1/1 -- and **missile_barrage has TWO ranks, not three**, so the
+ * obvious upgrade does not exist. What is left in that tree is a wand, a range
+ * increase, armour from Intellect, mana regeneration this build never needs,
+ * and `improved_channeling`, which is pure cast pushback and therefore a
+ * declared `OutOfScope` member. **The spare points have nowhere good to go
+ * inside Arcane, so the only live question is what they buy OUTSIDE it.**
+ * ==============================================================================
+ */
+import {
+  type Apply,
+  type Variant,
+  MAGE_TREE as tree,
+  addAbove,
+  addEntry,
+  addPrecombat,
+  apl,
+  chain,
+  consumable,
+  enchant,
+  precombatLead,
+  removeEntry,
+  removePrecombat,
+} from './buildVariants';
+import { selfHas, selfStacks } from '../src/game/rotations/apl/shorthand';
+import { ARCANE_BLAST_MAX_STACKS } from '../src/game/auras/mage';
+
+/* --------------------------------------------------------------- the trees */
+
+/** The shipped spread, written out as the control: 35 Arcane / 11 Fire / 5 Frost. */
+const CURRENT = {
+  arcane_focus: 5,
+  improved_channeling: 4,
+  missile_barrage: 2,
+  arcane_subtlety: 2,
+  arcane_concentration: 5,
+  arcane_impact: 3,
+  arcane_blast: 1,
+  arcane_meditation: 3,
+  presence_of_mind: 1,
+  arcane_mind: 5,
+  arcane_instability: 3,
+  arcane_power: 1,
+  improved_fire_blast: 2,
+  incineration: 3,
+  ignite: 5,
+  pyroblast: 1,
+  elemental_precision: 5,
+};
+
+/**
+ * FIRE HIT DROPPED. `elemental_precision` is "Frost and Fire spells by 5%" and
+ * this build casts no Frost at all -- so five points reach **4.8% of the
+ * damage**, taking Pyroblast and Ignite from the 16-point cap to 11 and their
+ * miss chance from 1% to 6%.
+ *
+ * The five go to `improved_channeling` 4 -> 5 and `arcane_geometry` 2, both
+ * provably inert, so this isolates the hit and nothing else.
+ */
+const NO_FIRE_HIT = {
+  ...CURRENT,
+  elemental_precision: 0,
+  improved_channeling: 5,
+  arcane_geometry: 2,
+  wand_specialization: 2,
+};
+
+/**
+ * THE WHOLE FIRE INVESTMENT OUT, which is the question the damage table asks:
+ * eleven points for 4.8%.
+ *
+ * `incineration` is the one Fire talent that pays an ARCANE bill -- "+6% crit
+ * to your Fire Blast, Ice Lance, **Arcane Blast** and Scorch" -- so it is kept
+ * and measured separately below. What goes is Pyroblast, its Ignite, and the
+ * two points of `improved_fire_blast` that are only there to open Ignite's tier.
+ */
+const NO_FIRE_AT_ALL = {
+  arcane_focus: 5,
+  improved_channeling: 5,
+  missile_barrage: 2,
+  arcane_subtlety: 2,
+  arcane_concentration: 5,
+  arcane_impact: 3,
+  arcane_blast: 1,
+  arcane_meditation: 3,
+  presence_of_mind: 1,
+  arcane_mind: 5,
+  arcane_instability: 3,
+  arcane_power: 1,
+  // the dump, all of it provably inert on this build
+  arcane_geometry: 2,
+  wand_specialization: 2,
+  arcane_resilience: 2,
+  magic_absorption: 2,
+  improved_counterspell: 2,
+  arcane_shielding: 2,
+  // and the one Fire talent that reaches Arcane Blast
+  incineration: 3,
+};
+
+/*
+ * AND `elemental_precision` GOES WITH THE FIRE, which is the knock-on the owner
+ * names: its five points are Frost AND Fire hit, so a build with no Fire spell
+ * left has nothing for them to reach at all. Dropping Pyroblast turns a talent
+ * worth 0.3% into one worth exactly nothing -- **one decision changing what a
+ * second decision is worth**, and the reason the two cannot be priced apart.
+ *
+ * ARCANE CANNOT ABSORB 51 POINTS. Its nineteen talents hold **49** between them
+ * (and that counts Arcane Wrath, which is measured at -77 to -119 wherever it is
+ * cast), so a spread with no Fire investment has to put something in Frost
+ * whatever it would prefer. That is a fact about the tree and not a choice.
+ */
+
+/** Incineration out as well, to price its +6% crit on Arcane Blast alone. */
+const NO_INCINERATION = {
+  ...NO_FIRE_AT_ALL,
+  incineration: 0,
+  elemental_precision: 3,
+};
+
+/**
+ * HEATING UP, WHICH NEEDS FOUR DEAD POINTS TO REACH AND A FIRE BLAST TO FEED.
+ *
+ * Fire row 3 wants 15 points above it and rows 0-2 hold 11, so the talent costs
+ * **five points: four of tier tax and one for itself.**
+ *
+ * AND ONLY FOUR OF THE FIVE CAN COME OUT OF ARCANE, which the harness is what
+ * said rather than a reading of the tree: the first attempt took four from
+ * `improved_channeling` and one from `arcane_subtlety` and `treeFor` REFUSED it
+ * -- "wanted 51 legal 50 dropped [arcane_power]" -- because that leaves 29
+ * points above Arcane's row 6 against a gate of 30. So the fifth comes out of
+ * `elemental_precision`, which the row below prices at noise. **A dead point is
+ * not always a movable one**, and the tier arithmetic is the cheapest place to
+ * find that out.
+ */
+const HEATING_UP = {
+  ...CURRENT,
+  improved_channeling: 0,
+  // Fire 11 -> 16, and the fifth point comes out of FROST rather than Arcane
+  improved_fireball: 4,
+  heating_up: 1,
+  elemental_precision: 4,
+};
+
+/* ------------------------------------------------------------------ the APL */
+
+const atCap = selfStacks('atLeast', ARCANE_BLAST_MAX_STACKS, 'arcane_blast');
+
+/**
+ * THE WINNING OPENER, named once so the second iteration can be written as
+ * `WINNER + the change` rather than as five copies of a six-call chain.
+ *
+ * Four Arcane Blasts and a Pyroblast before the pull, each at its own cast
+ * time, the sequence complete AT zero -- worth **+105.3 +/- 11.2** together
+ * against +74.7 and +41.5 apart.
+ */
+const WINNER = chain(
+  precombatLead('mage_armor', 13.5),
+  addPrecombat(12, 'arcane_blast'),
+  addPrecombat(10.5, 'arcane_blast'),
+  addPrecombat(9, 'arcane_blast'),
+  addPrecombat(6, 'pyroblast'),
+);
+
+/** The second Arcane Missiles entry's stack gate, as a function of the count. */
+const stackGate = (n: number) =>
+  apl((entries) =>
+    entries.map((e, i) =>
+      e.abilityId === 'arcane_missiles' && i > 0 && entries[i - 1]?.abilityId === 'arcane_missiles'
+        ? { ...e, condition: selfStacks('atLeast', n, 'arcane_blast') }
+        : e,
+    ),
+  );
+
+/**
+ * REPLACE THE WHOLE OPENER, rather than adding to the shipped one.
+ *
+ * `addPrecombat` appends, so stacking three blasts onto a list that already
+ * holds one at a 1.5s lead is how the ILLEGAL overlap above was built without
+ * anybody meaning to. Writing the sequence out in full is what makes the leads
+ * checkable against each action's cast time.
+ */
+const openerOf =
+  (actions: readonly [string, number][]): Apply =>
+  (profile) => ({
+    ...profile,
+    precombat: actions.map(([abilityId, secondsBefore]) => ({ abilityId, secondsBefore })),
+  });
+
+/** A Fire Blast entry, which the shipped list does not have at all. */
+const fireBlast = { abilityId: 'fire_blast' };
+
+export const VARIANT_GROUPS: Readonly<Record<string, readonly Variant[]>> = {
+  /*
+   * ==========================================================================
+   * THE APL, AND THE FIRST ROUND ASKED NOTHING OF IT -- which is what the owner
+   * caught. Every row here is a list change at the shipped talents.
+   *
+   * FIRE BLAST IS THE ENTRY THAT IS NOT THERE. It is a trainer spell every Mage
+   * owns, the build carries `improved_fire_blast` 2/2 for a **6 second**
+   * cooldown, and `incineration` 3/3 gives it +6% crit -- so the build pays for
+   * it three ways and never casts it. Two placements, because an instant on a
+   * cooldown is a filler and the floor rule says position decides whether it
+   * ever fires.
+   * ==========================================================================
+   */
+  arcApl: [
+    { label: 'fire_blast at the BOTTOM (below arcane_blast)', apply: addEntry(fireBlast) },
+    { label: 'fire_blast above arcane_blast (the filler slot)', apply: addAbove(fireBlast, 'arcane_blast') },
+    {
+      label: 'fire_blast above the gated arcane_missiles',
+      apply: addAbove(fireBlast, 'arcane_missiles'),
+    },
+    /*
+     * PRESENCE OF MIND OFF PYROBLAST AND ONTO ARCANE BLAST. The shipped pair
+     * spends a three-minute cooldown making ONE six-second Pyroblast instant,
+     * on a spell that is 4.5% of the damage -- where Arcane Blast is 17.1% and
+     * the Missiles the Blast feeds are 78%.
+     */
+    {
+      label: 'presence_of_mind spent on arcane_blast, pyroblast entry removed',
+      apply: chain(
+        removeEntry('pyroblast'),
+        apl((entries) =>
+          entries.map((e) =>
+            e.abilityId === 'presence_of_mind' ? { abilityId: 'presence_of_mind' } : e,
+          ),
+        ),
+      ),
+    },
+    /* The Pyroblast pair out entirely, leaving the talent paid for and unused. */
+    {
+      label: 'no pyroblast entry, no presence_of_mind entry',
+      apply: chain(removeEntry('pyroblast'), removeEntry('presence_of_mind')),
+    },
+    /* Pyroblast without waiting for Presence of Mind -- a real 6s cast. */
+    {
+      label: 'pyroblast at the cap WITHOUT presence_of_mind',
+      apply: apl((entries) =>
+        entries.map((e) => (e.abilityId === 'pyroblast' ? { abilityId: 'pyroblast', condition: atCap } : e)),
+      ),
+    },
+  ],
+
+  /*
+   * ==========================================================================
+   * THE ARCANE BLAST STACK GATE, SWEPT. The list spends the stack on Missiles
+   * at EXACTLY four and fills with Blast below -- so the gate decides how long
+   * the spell-power ramp is allowed to build before the 78% spell collects it.
+   *
+   * **SWEEP IT RATHER THAN COMPARING THE TWO READINGS SOMEBODY WROTE DOWN**,
+   * which is this project's own rule after a two-point Eviscerate comparison
+   * hid a +10.8 peak between its two cells.
+   * ==========================================================================
+   */
+  arcStackGate: [1, 2, 3, 5].map((n) => ({
+    label: `arcane_missiles at ${n} arcane_blast stacks (shipped: ${ARCANE_BLAST_MAX_STACKS})`,
+    apply: apl((entries) =>
+      entries.map((e, i) =>
+        e.abilityId === 'arcane_missiles' && i > 0 && entries[i - 1]?.abilityId === 'arcane_missiles'
+          ? { ...e, condition: selfStacks('atLeast', n, 'arcane_blast') }
+          : e,
+      ),
+    ),
+  })),
+
+  /*
+   * ==========================================================================
+   * THE TALENTS. Every row is measured at the shipped APL, and the knock-on is
+   * measured separately once a winner is known -- which is the owner's own
+   * point about this being iterative.
+   * ==========================================================================
+   */
+  /*
+   * ==========================================================================
+   * THE PACKAGE, WHICH IS THE OWNER'S OWN POINT ABOUT THIS BEING ITERATIVE.
+   *
+   * `heating_up` reduces the cast time of the NEXT Pyroblast by 25% a stack up
+   * to three, off non-periodic crits with Fireball, Frostfire Bolt, **Fire
+   * Blast** and Scorch -- and this build casts none of those four. So the
+   * talent measured alone is a talent with nothing to feed it, and Fire Blast
+   * measured alone is an instant with nothing to pay for it. **Both halves or
+   * neither**, which is the Berserker Rage lesson: measured one at a time, each
+   * half of a talent-plus-entry pair reads as worthless.
+   * ==========================================================================
+   */
+  arcPackage: [
+    { label: 'heating_up alone, nothing feeding it', apply: tree(HEATING_UP) },
+    { label: 'fire_blast entry alone, no heating_up', apply: addAbove(fireBlast, 'arcane_blast') },
+    {
+      label: 'heating_up AND a fire_blast above arcane_blast -- the pair',
+      apply: chain(tree(HEATING_UP), addAbove(fireBlast, 'arcane_blast')),
+    },
+    {
+      label: 'the pair, with fire_blast above the gated arcane_missiles',
+      apply: chain(tree(HEATING_UP), addAbove(fireBlast, 'arcane_missiles')),
+    },
+  ],
+
+  arcTalents: [
+    { label: 'the shipped spread -- the control', apply: (p) => p },
+    { label: 'elemental_precision 5 -> 0 (Fire hit dropped)', apply: tree(NO_FIRE_HIT) },
+    { label: 'ALL Fire out but incineration (11 -> 3)', apply: tree(NO_FIRE_AT_ALL) },
+    { label: 'ALL Fire out INCLUDING incineration', apply: tree(NO_INCINERATION) },
+    { label: 'heating_up, paid for with 5 dead Arcane points', apply: tree(HEATING_UP) },
+  ],
+
+  /*
+   * THE ENCHANTS. The caster loadout is head and legs +1% Haste, neck +6 Spell
+   * Power, chest +4 Stats, wrists +16 Spell Power, gloves +20 Spell Power,
+   * cloak, feet and the two-hander. Only the slots with a real alternative are
+   * here -- see `mageVariants.ts` for why the other six are no-ops.
+   */
+  /*
+   * ==========================================================================
+   * THE PRE-COMBAT RAMP, WHICH IS THE ONE DIMENSION WITH REAL HEADROOM LEFT.
+   *
+   * Arcane Blast is **1.5 seconds** and its stack is +15% of Intellect as spell
+   * power, four stacks deep, in a FIFTEEN second window that refreshes with
+   * `refreshBehaviour: 'ignore'`. The opener casts it once, so the fight starts
+   * on **one** stack and the 78% spell waits for three more real casts before it
+   * collects a full ramp.
+   *
+   * A PRE-COMBAT CAST SKIPS THE GLOBAL COOLDOWN, THE SWING RESET AND THE CAST
+   * TIME, so stacking the ramp before the pull is the one thing in this build
+   * that buys ramp for free. The lead for each is its own cast time, stepped --
+   * which is the owner's own "start casting" convention, and it is what makes
+   * the sequence complete AT zero.
+   *
+   * AND THE WINDOW IS WHAT BOUNDS IT: at a 6s lead the first stack has 9 of its
+   * 15 seconds left at the pull, so a deeper ramp is also an older one. That is
+   * the trade this group measures rather than reasons about.
+   * ==========================================================================
+   */
+  arcPrecombat: [
+    {
+      label: 'TWO arcane_blast before the pull -- 2 stacks at t=0',
+      apply: chain(precombatLead('mage_armor', 4.5), addPrecombat(3, 'arcane_blast')),
+    },
+    {
+      label: 'THREE arcane_blast before the pull -- 3 stacks at t=0',
+      apply: chain(
+        precombatLead('mage_armor', 6),
+        addPrecombat(4.5, 'arcane_blast'),
+        addPrecombat(3, 'arcane_blast'),
+      ),
+    },
+    {
+      label: 'FOUR arcane_blast before the pull -- the CAP at t=0',
+      apply: chain(
+        precombatLead('mage_armor', 7.5),
+        addPrecombat(6, 'arcane_blast'),
+        addPrecombat(4.5, 'arcane_blast'),
+        addPrecombat(3, 'arcane_blast'),
+      ),
+    },
+    {
+      label: 'no pre-combat arcane_blast at all -- 0 stacks, the control',
+      apply: removePrecombat('arcane_blast'),
+    },
+    {
+      label: 'pyroblast before the pull as well (6s cast, free of it)',
+      apply: chain(precombatLead('mage_armor', 9), addPrecombat(6, 'pyroblast')),
+    },
+  ],
+
+  /*
+   * ==========================================================================
+   * EUREKA, WHICH FIRES ON THE FIRST POLL AND IS UNGATED.
+   *
+   * The Gnome racial is "+10% damage for 8 seconds, periodic effects get
+   * nothing" -- a WINDOW, and it sits in the shared `RACIAL_COOLDOWNS` block
+   * with no condition, so it is spent on whatever the opening of the fight
+   * happens to be. Arcane Power's own entry is gated on a Missile Barrage proc
+   * for exactly this reason, and nothing does the same for Eureka.
+   *
+   * THE SHARED BLOCK IS WHY IT HAS NO GATE: the constant is spread into lists
+   * belonging to no race, so a per-race condition there would be a condition
+   * on three abilities the build cannot cast. Gating it is therefore a change
+   * to THIS list rather than to the block.
+   * ==========================================================================
+   */
+  arcEureka: [
+    {
+      label: 'eureka gated on a missile_barrage proc, like arcane_power',
+      apply: apl((entries) =>
+        entries.map((e) =>
+          e.abilityId === 'eureka'
+            ? { ...e, condition: selfHas('missile_barrage') }
+            : e,
+        ),
+      ),
+    },
+    {
+      label: 'eureka gated on arcane_power being up',
+      apply: apl((entries) =>
+        entries.map((e) =>
+          e.abilityId === 'eureka' ? { ...e, condition: selfHas('arcane_power') } : e,
+        ),
+      ),
+    },
+    {
+      label: 'eureka gated on the arcane_blast CAP',
+      apply: apl((entries) =>
+        entries.map((e) => (e.abilityId === 'eureka' ? { ...e, condition: atCap } : e)),
+      ),
+    },
+    { label: 'no eureka entry at all -- the control', apply: removeEntry('eureka') },
+  ],
+
+  /*
+   * ==========================================================================
+   * THE COMBINATIONS, BECAUSE MARGINAL VALUES DO NOT SUM.
+   *
+   * Three things measured positive alone -- a four-stack ramp at **+74.74**, a
+   * pre-combat Pyroblast at **+41.49** and Eureka's gate at **+1.92** -- and
+   * each was measured with the other two absent. They compete for the same
+   * pre-combat window and the same opening seconds, so the pair has to be
+   * measured as a pair; this project has already had a ranking INVERT that way
+   * on the Firelock's two mana sources.
+   *
+   * AND THE FOUR-STACK OPENER CHANGES WHAT THE LIST DOES AT t=0, which is the
+   * knock-on. Presence of Mind is gated on EXACTLY four stacks and the Pyroblast
+   * under it on the same clause plus the charge -- so a build that arrives at the
+   * cap fires that pair on the first poll instead of a third of the way into the
+   * fight. The ramp is not only bigger, it arrives before the cooldowns.
+   * ==========================================================================
+   */
+  arcCombined: [
+    {
+      label: 'FOUR stacks -- the single winner, repeated as this group control',
+      apply: chain(
+        precombatLead('mage_armor', 7.5),
+        addPrecombat(6, 'arcane_blast'),
+        addPrecombat(4.5, 'arcane_blast'),
+        addPrecombat(3, 'arcane_blast'),
+      ),
+    },
+    {
+      label: 'FOUR stacks + pyroblast before the pull',
+      apply: chain(
+        precombatLead('mage_armor', 13.5),
+        addPrecombat(12, 'arcane_blast'),
+        addPrecombat(10.5, 'arcane_blast'),
+        addPrecombat(9, 'arcane_blast'),
+        addPrecombat(6, 'pyroblast'),
+      ),
+    },
+    {
+      label: 'FOUR stacks + eureka gated on a barrage proc',
+      apply: chain(
+        precombatLead('mage_armor', 7.5),
+        addPrecombat(6, 'arcane_blast'),
+        addPrecombat(4.5, 'arcane_blast'),
+        addPrecombat(3, 'arcane_blast'),
+        apl((entries) =>
+          entries.map((e) =>
+            e.abilityId === 'eureka' ? { ...e, condition: selfHas('missile_barrage') } : e,
+          ),
+        ),
+      ),
+    },
+    {
+      label: 'FOUR stacks + pyroblast + eureka gate -- everything',
+      apply: chain(
+        precombatLead('mage_armor', 13.5),
+        addPrecombat(12, 'arcane_blast'),
+        addPrecombat(10.5, 'arcane_blast'),
+        addPrecombat(9, 'arcane_blast'),
+        addPrecombat(6, 'pyroblast'),
+        apl((entries) =>
+          entries.map((e) =>
+            e.abilityId === 'eureka' ? { ...e, condition: selfHas('missile_barrage') } : e,
+          ),
+        ),
+      ),
+    },
+    /*
+     * AND THE RAMP CAST LATE RATHER THAN EARLY. The stack window is FIFTEEN
+     * seconds with `refreshBehaviour: 'ignore'`, so it opens on the FIRST
+     * application and a four-cast ramp beginning at t-12 is already 12 seconds
+     * old at the pull. This row puts the Pyroblast FIRST and the blasts last,
+     * so the ramp is as young as the sequence allows.
+     */
+    {
+      label: 'pyroblast FIRST, then the four blasts -- the youngest ramp',
+      apply: chain(
+        precombatLead('mage_armor', 13.5),
+        addPrecombat(12, 'pyroblast'),
+        addPrecombat(6, 'arcane_blast'),
+        addPrecombat(4.5, 'arcane_blast'),
+        addPrecombat(3, 'arcane_blast'),
+      ),
+    },
+  ],
+
+  /*
+   * ==========================================================================
+   * THE SECOND ITERATION: EVERY EARLIER DECISION RE-ASKED ON TOP OF THE WINNER.
+   *
+   * "This process is iterative because some decisions have a knock-on effect"
+   * -- the owner's own brief, and the four-stack opener is exactly the kind of
+   * change that could move the others. It arrives at the Arcane Blast CAP, so
+   * Presence of Mind and the Pyroblast beneath it now fire on the FIRST poll;
+   * the ramp is full before a single in-fight cast; and the window the stack
+   * gate reads is already open when the fight starts.
+   *
+   * SO THE GATE, THE PYROBLAST PAIR, THE FIRE INVESTMENT AND THE HASTE ENCHANT
+   * ARE ALL PRICED AGAINST A DIFFERENT OPENING THAN THE ONE THAT PRICED THEM
+   * FIRST. Each row below is `WINNER + the change`, so the figure is the change
+   * at the new baseline rather than at the old one.
+   * ==========================================================================
+   */
+  arcIterate: [
+    { label: 'the WINNER alone -- this group control', apply: WINNER },
+    {
+      label: 'winner + arcane_missiles gate at 3 stacks (was 4)',
+      apply: chain(WINNER, stackGate(3)),
+    },
+    {
+      label: 'winner + arcane_missiles gate at 5 stacks (was 4)',
+      apply: chain(WINNER, stackGate(5)),
+    },
+    {
+      label: 'winner + no pyroblast/presence_of_mind entries',
+      apply: chain(WINNER, removeEntry('pyroblast'), removeEntry('presence_of_mind')),
+    },
+    {
+      label: 'winner + ALL Fire out but incineration',
+      apply: chain(WINNER, tree(NO_FIRE_AT_ALL)),
+    },
+    { label: 'winner + head +8 Intellect (was +1% Haste)', apply: chain(WINNER, enchant('head', 900006)) },
+    {
+      label: 'winner + fire_blast above arcane_blast',
+      apply: chain(WINNER, addAbove(fireBlast, 'arcane_blast')),
+    },
+  ],
+
+  /*
+   * ==========================================================================
+   * THE LEGAL OPENERS ONLY, AND THE BEST FIGURE IN THIS FILE IS DISCARDED.
+   *
+   * `arcCombined`'s top row measured **+105.33** and is **NOT A POSSIBLE CAST
+   * SEQUENCE**: it holds a Pyroblast from t-6 to t0 AND an Arcane Blast from
+   * t-1.5 to t0. `runPrecombat` resolves every action at timestamp zero and
+   * never asks whether one cast was still in progress when the next began, so
+   * the opener banked five casts into four seconds of real time.
+   *
+   * **A PRE-COMBAT LIST IS A CLAIM ABOUT WHAT THE CHARACTER DID, AND THE ENGINE
+   * DOES NOT CHECK IT.** That is a modelling gap rather than a free 105 DPS, and
+   * this project's rule is to flag one rather than bank it -- the figure reads
+   * exactly like the three legal rows beside it and is 6 DPS above the best of
+   * them, which is inside their combined interval. Nothing would have looked
+   * wrong.
+   *
+   * ------------------------------------------------------------------------
+   * AND THE TRADE BETWEEN THE TWO LEGAL ARRANGEMENTS IS THE PYROBLAST'S BURN
+   * AGAINST THE RAMP'S REMAINING WINDOW, which is a real decision:
+   *
+   *   Pyroblast LAST  (lead 6 = its cast time, burn unaged, completes at t0)
+   *     -> the blasts are pushed to t-12..t-7.5, the first stack lands t-10.5,
+   *        and the 15s stack window **expires 4.5s into the fight**
+   *   Pyroblast FIRST (lead 12, so its 12s burn arrives 6s aged)
+   *     -> the blasts sit in the last six seconds, first stack lands t-4.5,
+   *        and the window **lasts 10.5s into the fight**
+   *
+   * One trades half a Pyroblast DoT for six more seconds of a ramp that feeds
+   * 78% of the damage. Measured rather than argued.
+   * ==========================================================================
+   */
+  arcLegal: [
+    {
+      label: 'LEGAL: pyroblast first (aged burn), 4 blasts last -- window to t+10.5',
+      apply: openerOf([
+        ['mage_armor', 13.5],
+        ['pyroblast', 12],
+        ['arcane_blast', 6],
+        ['arcane_blast', 4.5],
+        ['arcane_blast', 3],
+        ['arcane_blast', 1.5],
+        ['arcane_power', 0],
+      ]),
+    },
+    {
+      label: 'LEGAL: 4 blasts first, pyroblast last (fresh burn) -- window to t+4.5',
+      apply: openerOf([
+        ['mage_armor', 13.5],
+        ['arcane_blast', 12],
+        ['arcane_blast', 10.5],
+        ['arcane_blast', 9],
+        ['arcane_blast', 7.5],
+        ['pyroblast', 6],
+        ['arcane_power', 0],
+      ]),
+    },
+    {
+      label: 'LEGAL: 3 blasts, pyroblast last (fresh burn) -- window to t+6',
+      apply: openerOf([
+        ['mage_armor', 12],
+        ['arcane_blast', 10.5],
+        ['arcane_blast', 9],
+        ['arcane_blast', 7.5],
+        ['pyroblast', 6],
+        ['arcane_power', 0],
+      ]),
+    },
+    {
+      label: 'LEGAL: 4 blasts, NO pyroblast -- window to t+10.5',
+      apply: openerOf([
+        ['mage_armor', 7.5],
+        ['arcane_blast', 6],
+        ['arcane_blast', 4.5],
+        ['arcane_blast', 3],
+        ['arcane_blast', 1.5],
+        ['arcane_power', 0],
+      ]),
+    },
+    {
+      label: 'the shipped opener -- one blast, the control',
+      apply: (p) => p,
+    },
+  ],
+
+  /*
+   * ==========================================================================
+   * THE SHIPPING CANDIDATE, WHICH KEEPS THE OWNER'S OWN TWO LINES.
+   *
+   * `precombatOpeners.test.ts` transcribes the owner's openers a second time
+   * and asserts that a profile's pre-combat list is **their lines plus an
+   * explicitly declared set of additions** -- so it FAILED on the first
+   * arrangement here, which had moved `mage_armor` from a 3s lead to 13.5 and
+   * replaced their single `arcane_blast` at 1.5 with four at other leads.
+   *
+   * THE TEST WAS RIGHT AND THE ARRANGEMENT WAS WRONG. The owner asked for the
+   * opener to be OPTIMISED, not rewritten, and the two best arrangements are
+   * **tied** -- 7.6 apart against a combined interval of 11.4 -- so there is no
+   * measurement to trade against keeping their transcription intact.
+   *
+   * SO THE BLASTS GO WHERE THE OWNER'S ONE ALREADY WAS and three more are
+   * stacked in front of it, with the Pyroblast ahead of those and Mage Armor
+   * left at its stated 3s lead, which falls in the gap the sequence leaves:
+   *
+   *   pyroblast     t-13.5 -> t-7.5    (6s, added)
+   *   arcane_blast  t-7.5  -> t-6.0    (added, and the first stack)
+   *   arcane_blast  t-6.0  -> t-4.5    (added)
+   *   arcane_blast  t-4.5  -> t-3.0    (added)
+   *   mage_armor    instant at t-3     (**the owner's own line, untouched**)
+   *   arcane_blast  t-1.5  -> t0       (**the owner's own line, untouched**)
+   *   arcane_power  instant at t0      (added last round)
+   *
+   * Four stacks, no overlap, and the stack window runs to **t+9**.
+   * ==========================================================================
+   */
+  arcShipping: [
+    {
+      label: 'the candidate: owner lines kept, 3 blasts + pyroblast added',
+      apply: openerOf([
+        ['pyroblast', 13.5],
+        ['arcane_blast', 7.5],
+        ['arcane_blast', 6],
+        ['arcane_blast', 4.5],
+        ['mage_armor', 3],
+        ['arcane_blast', 1.5],
+        ['arcane_power', 0],
+      ]),
+    },
+    {
+      label: 'the same, with eureka also gated on a barrage proc',
+      apply: chain(
+        openerOf([
+          ['pyroblast', 13.5],
+          ['arcane_blast', 7.5],
+          ['arcane_blast', 6],
+          ['arcane_blast', 4.5],
+          ['mage_armor', 3],
+          ['arcane_blast', 1.5],
+          ['arcane_power', 0],
+        ]),
+        apl((entries) =>
+          entries.map((e) =>
+            e.abilityId === 'eureka' ? { ...e, condition: selfHas('missile_barrage') } : e,
+          ),
+        ),
+      ),
+    },
+    { label: 'the shipped opener -- one blast, the control', apply: (p) => p },
+  ],
+
+  arcEnchants: [
+    { label: 'head +8 Intellect (was +1% Haste)', apply: enchant('head', 900006) },
+    { label: 'legs +8 Intellect (was +1% Haste)', apply: enchant('legs', 900006) },
+    { label: 'head +8 Spirit (was +1% Haste)', apply: enchant('head', 900007) },
+    { label: 'gloves +1% Haste (was +20 Spell Power)', apply: enchant('gloves', 900002) },
+    { label: 'feet +8 Agility (was Minor Speed)', apply: enchant('feet', 900026) },
+  ],
+
+  /*
+   * THE CONSUMABLES. **The Demonic Rune never fires** -- gated at 10% mana by
+   * the owner's ruling, on a build that ends the fight above it -- so the
+   * `other` row is the one with a real question, and the alternative is a
+   * category that does something at all.
+   */
+  arcConsumables: [
+    { label: 'blasted lands +25 Intellect (was Spirit)', apply: consumable('blasted_lands', 'blasted_intellect') },
+    { label: 'potion Major Mana (was Spellblasting)', apply: consumable('potion', 'major_mana_potion') },
+    { label: 'other: healthstone (was demonic_rune, which never fires)', apply: consumable('other', 'healthstone') },
+  ],
+};

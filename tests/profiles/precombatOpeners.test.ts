@@ -278,7 +278,26 @@ describe("the owner's openers are transcribed exactly", () => {
       [0, 'elemental_mastery', '+13.9 -- a new capstone, claimed for no GCD'],
     ],
     mage_frostfire: [[1.5, 'scorch', '+25.1 -- one Fire Vulnerability stack at the pull']],
-    mage_arcane: [[0, 'arcane_power', '+24.9 -- a 15s window, claimed for no GCD']],
+    /*
+     * THE ARCANE MAGE'S RAMP, AND IT IS THE LARGEST ADDITION IN THIS TABLE.
+     *
+     * Arcane Blast is a 1.5s cast granting 15% of Intellect as spell power a
+     * stack, four deep, and Arcane Missiles is 78% of the build -- so the three
+     * extra blasts are buying the price of every missile in the fight. Stack
+     * count against the owner's one, paired over 400 iterations: 0 stacks
+     * **-21.0**, 2 **+31.1**, 3 **+49.9**, 4 **+74.7**, monotone to the cap.
+     *
+     * THE THREE BLASTS SHARE ONE FIGURE because they are one decision: a build
+     * cannot arrive at three stacks by taking two of them. The Pyroblast is
+     * separable and is **+25** on top, for **+95.9 +/- 8.2** together.
+     */
+    mage_arcane: [
+      [0, 'arcane_power', '+24.9 -- a 15s window, claimed for no GCD'],
+      [13.5, 'pyroblast', '+25 on top of the ramp -- a 6s cast, free of its cast time'],
+      [7.5, 'arcane_blast', '+95.9 +/- 8.2 for the ramp and the Pyroblast together'],
+      [6, 'arcane_blast', 'the same decision -- the ramp is 4 stacks or it is not'],
+      [4.5, 'arcane_blast', 'the same decision'],
+    ],
     mage_fire: [[1.5, 'scorch', '+15.2 -- the same stack, worth less behind a 3s Fireball']],
     shadow_priest: [
       [0, 'shadow_word_pain', '+26.8 alone, +35.5 with the plague'],

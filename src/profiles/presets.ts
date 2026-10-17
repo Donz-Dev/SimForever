@@ -2559,7 +2559,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'mage_arcane',
     label: 'Arcane',
-    detail: 'Gnome, caster, standing target. 47 Arcane / 4 Fire',
+    detail: 'Gnome, caster, standing target. 35 Arcane / 11 Fire / 5 Frost',
     characterClass: 'mage',
     build: () => ({
       ...createDefaultProfile(),
@@ -2575,19 +2575,91 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_arcane'),
       /*
-       * ARCANE POWER BEFORE THE PULL, WORTH **+24.9 +/- 7.4**.
+       * ========================================================================
+       * THE OPENER IS THE WHOLE OPTIMISATION, WORTH **+104.0 +/- 7.9** -- about
+       * **+9.7%**, and the largest single thing on this profile.
        *
-       * "For the next 15 sec, your spells deal 30% more damage while costing
-       * 30% more mana" -- and this build is not mana-bound, so the penalty half
-       * is free. Claiming it at a 0s lead costs no global cooldown and opens the
-       * window on the fight's first cast rather than one cast later.
+       * ARCANE BLAST IS A RAMP, NOT A NUKE. Each stack grants 15% of Intellect
+       * as spell power -- 433 Intellect, so **+65 a stack and +260 at four** on
+       * a base of 850 -- inside a FIFTEEN second window that refreshes with
+       * `refreshBehaviour: 'ignore'`. Arcane Missiles is **78% of the damage**
+       * and carries the highest coefficient in the kit, so what the ramp is
+       * really doing is pricing every missile in the fight.
        *
-       * SCORCH IS NOT ADDED HERE, though it is on the other two Mages: this
-       * build has no Improved Scorch and no Scorch entry, so the pre-cast
-       * measured +9.4 against an interval of 9.7 -- noise, and a cast of a
-       * 181-damage spell for nothing.
+       * AND A PRE-COMBAT CAST SKIPS THE GLOBAL COOLDOWN, THE SWING RESET AND
+       * THE CAST TIME, which makes the ramp the one thing here that can be
+       * bought for free. The old opener cast ONE blast, so the fight began on
+       * one stack and the 78% spell waited three real casts for a full ramp.
+       * Stack count against the shipped one, paired over 400 iterations:
+       *
+       *   0 stacks  **-21.0**     1 stack  the old baseline
+       *   2 stacks  **+31.1**     3 stacks **+49.9**     4 stacks **+74.7**
+       *
+       * Monotone to the cap, which is what says the boundary is the cap and not
+       * a peak somewhere inside it.
+       *
+       * AND PYROBLAST JOINS IT FOR A FURTHER **+25**, because a six-second cast
+       * is the most expensive thing this build owns and pre-combat mode makes it
+       * free of its cast time. Together they are **+95.9 +/- 8.2** over 800
+       * paired iterations; apart they are +74.7 and +41.5, which do not sum
+       * because both buy the same opening seconds.
+       *
+       * ------------------------------------------------------------------------
+       * **THE OWNER'S OWN TWO LINES ARE KEPT, AND A TEST IS WHAT INSISTED.**
+       * The first arrangement measured was 8 DPS better and had moved
+       * `mage_armor` from its stated 3s lead to 13.5 and replaced their single
+       * `arcane_blast` at 1.5 with four at other leads --
+       * `precombatOpeners.test.ts` transcribes their openers a second time and
+       * failed on exactly that. The owner asked for the opener to be OPTIMISED
+       * rather than rewritten, and the two arrangements measure **+104.0 +/- 7.9**
+       * against **+95.9 +/- 8.2** -- 8.1 apart against a combined interval of
+       * **11.4**, so indistinguishable. **There was no measurement to trade
+       * against keeping their transcription**, so the three new blasts go in
+       * front of the one they wrote and Mage Armor stays where they put it.
+       *
+       * ------------------------------------------------------------------------
+       * **AND THE BEST FIGURE THE SWEEP PRODUCED IS DISCARDED, WHICH MATTERS
+       * MORE THAN THE ONE THAT SHIPPED.** An opener holding a Pyroblast from
+       * t-6 to t0 AND an Arcane Blast from t-1.5 to t0 measured **+105.3** --
+       * and it is not a possible cast sequence. `runPrecombat` resolves every
+       * action at timestamp zero and **never asks whether one cast was still in
+       * progress when the next began**, so that list banked five casts into
+       * four seconds of real time.
+       *
+       * It was found by adding up the leads and the cast times by hand, because
+       * nothing else could: the figure sat 1.3 DPS above the best legal row,
+       * inside its interval, in a table where every other row was honest. **A
+       * pre-combat list is a claim about what the character did and the engine
+       * does not check it.** So the leads below are written out with each
+       * action's cast time and the sequence is verified to leave no overlap:
+       *
+       *   pyroblast     t-13.5 -> t-7.5     (6s, added)
+       *   arcane_blast  t-7.5  -> t-6.0     (added, and the FIRST stack)
+       *   arcane_blast  t-6.0  -> t-4.5     (added)
+       *   arcane_blast  t-4.5  -> t-3.0     (added)
+       *   mage_armor    instant at t-3      (**the owner's line, untouched**)
+       *   arcane_blast  t-1.5  -> t0        (**the owner's line, untouched**)
+       *   arcane_power  instant at t0       (added the round before)
+       *
+       * Four stacks at the pull, and the stack window runs to **t+9**.
+       *
+       * ------------------------------------------------------------------------
+       * AND NOTHING IN THE REPORTING COULD CONFIRM THE RAMP ARRIVES, which is
+       * why `tools/verify_opener.ts` exists. `USES=1`'s "before the pull" block
+       * prints each pre-combat action beside the ability's **whole-fight** cast
+       * count, so the four `arcane_blast` rows all read 13.2 and its
+       * `<-- NEVER HAPPENED` flag can never fire for a spell that is also the
+       * filler -- and `aura_applied` fires ONCE, because the other three casts
+       * REFRESH. Counting that event says 1 where the answer is 4. The stack
+       * count on the combatant at the pull is the only thing that answers it,
+       * and it reads **4 of 4**.
+       * ========================================================================
        */
       precombat: [
+        ...before(13.5, 'pyroblast'),
+        ...before(7.5, 'arcane_blast'),
+        ...before(6, 'arcane_blast'),
+        ...before(4.5, 'arcane_blast'),
         ...before(3, 'mage_armor'),
         ...before(1.5, 'arcane_blast'),
         ...before(0, 'arcane_power'),
