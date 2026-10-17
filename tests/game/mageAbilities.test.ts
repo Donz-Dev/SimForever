@@ -1830,34 +1830,40 @@ describe('what the Results panel divides its rates by', () => {
      * ------------------------------------------------------------------------
      */
     /*
-     * AGAINST A SPELL WITH NOTHING TO DILUTE IT, on the same character and the
-     * same table -- which is the comparison the paragraph above names as what
-     * pinned the cause. A row whose attempts EQUAL its casts has no burn, so
-     * its rate was right even while the hybrid's was not.
+     * ========================================================================
+     * THE COMPARISON SPELL IS NAMED NOW, AND THAT IS THE WHOLE REPAIR.
      *
-     * NOT AGAINST `17 - hitChance`, which is the tempting arithmetic and is
-     * wrong here: Elemental Precision is a SCHOOL-SCOPED hit bonus folded in by
-     * `withModifier`, so it never appears on the stat block. The character
-     * reads 11 points of hit and its Frost spells miss 1% of the time, and
-     * both are true.
+     * It used to `find` "a row whose attempts EQUAL its casts" -- any row --
+     * and compare DISTANCES to it. **The claim was right and the SUBJECT was
+     * chosen by whatever the fight produced first**, which is this project's
+     * own lesson about a test that enumerates its subjects loosely: a change to
+     * the DECISION TIMING, a free off-GCD cast acting again in the same
+     * instant, moved which spell matched and the comparison inverted on a
+     * denominator that is as correct as it ever was.
+     *
+     * SCORCH, which the sibling test above already compares against by name
+     * for the same reason: it is on the same character, rolls on the spell
+     * table, and pools no burn into its row, so its rate was right even while
+     * the hybrid's was not.
+     *
+     * AND A MEASURED RATE IS NOT THE CHANCE, which ruled out the other anchor
+     * tried here -- the 1% floor the owner's rule guarantees. Frostfire Bolt
+     * measures **0.8%** against that floor across sixty fights, because a
+     * frequency is an estimate and a floor is a bound on the CHANCE. Asserting
+     * the figure could not fall below 1% failed on a build that is working.
+     * ========================================================================
      */
-    const clean = batch.abilities.find(
-      (row) => row.uses > 5 && row.attempts === row.uses && row.avoidRate > 0,
-    );
-    expect(clean, 'no undiluted spell row to compare against').toBeDefined();
+    const scorchRow = batch.abilities.find((row) => row.abilityName === 'Scorch');
+    expect(scorchRow, 'no Scorch row to compare against').toBeDefined();
+    expect(scorchRow!.attempts, 'Scorch pools no burn').toBe(scorchRow!.uses);
 
-    /*
-     * AS A COMPARISON OF DISTANCES rather than of values, because both numbers
-     * are now DOWN AT THE 1% FLOOR -- this build is spell-hit capped, so an
-     * absolute tolerance that means anything at 10% means nothing at 1%.
-     *
-     * The claim is the DENOMINATOR: the hybrid's reported rate has to sit
-     * nearer the undiluted spell's than the tick-diluted figure does. That
-     * holds at any miss chance, which is what makes it the right assertion.
-     */
-    const cleanRate = 100 * clean!.avoidRate;
+    const cleanRate = 100 * scorchRow!.avoidRate;
     const reported = 100 * bolt.avoidRate;
     const diluted = (reported * bolt.uses) / bolt.attempts;
+
+    // The row is genuinely a hybrid, or there is nothing to dilute and the
+    // test is asserting the same number twice.
+    expect(bolt.attempts, 'the burn pools into this row').toBeGreaterThan(bolt.uses);
 
     expect(Math.abs(reported - cleanRate)).toBeLessThan(Math.abs(diluted - cleanRate));
     expect(diluted).toBeLessThan(reported);

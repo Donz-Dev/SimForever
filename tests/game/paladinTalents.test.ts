@@ -751,8 +751,47 @@ describe("Reckoning's stored charges, which the patch gave it", () => {
      */
     expect(Math.max(...doubled)).toBeLessThanOrEqual(RECKONING_MAX_CHARGES + 1);
 
-    // And nothing is left banked at the end of a fight that swung.
-    expect(player.auras.has(RECKONING_CHARGES.id)).toBe(false);
+    /*
+     * ==========================================================================
+     * AND EVERY BANKED CHARGE IS RELEASED, WITH AT MOST ONE STILL IN FLIGHT.
+     *
+     * This read `expect(player.auras.has(RECKONING_CHARGES.id)).toBe(false)` --
+     * "nothing is left banked at the end of a fight that swung" -- which is a
+     * claim about WHERE THE FIGHT STOPPED rather than about the talent. A
+     * charge taken from the boss's last swing, with no swing of the tank's own
+     * after it, leaves the aura up at the final millisecond and the mechanism
+     * perfectly intact.
+     *
+     * IT HELD UNTIL THE DECISION TIMING MOVED. A free off-GCD cast now lets the
+     * actor act again in the same instant, which shifts every later event in
+     * the fight -- so the last thing to happen stopped being a swing. **The
+     * figure was a coincidence of the seed and the assertion was reading it as
+     * a rule**, which is this project's own lesson about a cast count being a
+     * rotation outcome, pointed at a fight's final state.
+     *
+     * SO IT ASKS THE EVENT STREAM INSTEAD: the aura is applied and removed in
+     * pairs, and the only permitted imbalance is ONE application still banked
+     * when the clock runs out. That is the real claim -- charges do not
+     * ACCUMULATE unspent -- and no seed or cadence can move it.
+     * ==========================================================================
+     */
+    const applied = events.filter(
+      (event) =>
+        (event.type === 'aura_applied' || event.type === 'aura_refreshed') &&
+        (event as { auraId?: string }).auraId === RECKONING_CHARGES.id,
+    ).length;
+    const removed = events.filter(
+      (event) =>
+        event.type === 'aura_removed' &&
+        (event as { auraId?: string }).auraId === RECKONING_CHARGES.id,
+    ).length;
+
+    expect(applied, 'the boss landed something that banked a charge').toBeGreaterThan(0);
+    expect(removed, 'and a swing released it').toBeGreaterThan(0);
+    expect(
+      applied - removed,
+      'at most one window is still banked when the fight ends',
+    ).toBeLessThanOrEqual(1);
   });
 });
 

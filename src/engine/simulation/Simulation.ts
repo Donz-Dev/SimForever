@@ -554,11 +554,19 @@ export class Simulation implements SimulationContext {
         }
 
         const decision = actor.rotation.selectAction(ctx, actor);
+        /*
+         * WHAT WAS CAST IS PASSED ON, because "act again at once" is a question
+         * about the ability that just went out and not about the actor's state:
+         * a free off-GCD cast and an idle poll leave an actor looking
+         * identical. See `nextDecisionTime`.
+         */
+        let cast: Ability | undefined;
         if (decision) {
-          ctx.cast(actor, decision.ability, decision.target);
+          const result = ctx.cast(actor, decision.ability, decision.target);
+          if (result.ok) cast = decision.ability;
         }
 
-        this.scheduleDecision(actor, this.nextDecisionTime(actor));
+        this.scheduleDecision(actor, this.nextDecisionTime(actor, cast));
       }),
     );
   }
@@ -569,7 +577,7 @@ export class Simulation implements SimulationContext {
    * If it is busy, that is the moment it stops being busy. If it is free and
    * simply had nothing to do, it polls; see ROTATION_POLL_MS.
    */
-  private nextDecisionTime(actor: Combatant): Milliseconds {
+  private nextDecisionTime(actor: Combatant, justCast?: Ability): Milliseconds {
     const now = this.clock.now();
     /*
      * AN INTERRUPTIBLE CHANNEL POLLS INSTEAD OF SLEEPING TO ITS END. Sleeping
@@ -596,7 +604,52 @@ export class Simulation implements SimulationContext {
       return Math.min(now + ROTATION_POLL_MS, Math.max(actor.gcdReadyAt, actor.castEndsAt));
     }
     const busyUntil = Math.max(actor.gcdReadyAt, actor.castEndsAt);
-    return busyUntil > now ? busyUntil : now + ROTATION_POLL_MS;
+    if (busyUntil > now) return busyUntil;
+
+    /*
+     * ==========================================================================
+     * A CAST THAT LEFT THE ACTOR FREE GETS TO ACT AGAIN AT ONCE, AND THE 100ms
+     * IT USED TO WAIT WAS A SIMULATION ARTEFACT RATHER THAN A COST.
+     *
+     * THE RULESET OWNER'S RULING: "Vanish into Ambush should not be interrupted
+     * by a swing." Vanish is off the global cooldown, so it leaves the actor
+     * free -- and a free actor was given `now + ROTATION_POLL_MS`, a tenth of a
+     * second in which an auto-attack could land and take the stealth window the
+     * Vanish had just opened. A player presses the two keys together; nothing
+     * in the ruleset says a swing comes between them.
+     *
+     * THIS IS THE CHARGE PROBLEM, AND IT IS THE SECOND THING IT HAS COST.
+     * CLAUDE.md already records the first: Charge's `canCast` is true for one
+     * instant, "an off-GCD cast leaves the actor FREE, so `nextDecisionTime`
+     * returns `now + ROTATION_POLL_MS` and the window is gone" -- one cast a
+     * fight to ZERO. That was worked around by MOVING THE ENTRY; this is the
+     * same defect met from the other side, and no position can fix it, because
+     * the thing that intervenes is a swing rather than another entry.
+     *
+     * --------------------------------------------------------------------------
+     * IT TERMINATES, AND THAT IS THE ONLY THING THAT MAKES IT SAFE: a decision
+     * at the same timestamp could otherwise recur forever.
+     *
+     *   it is reached ONLY after a cast that SUCCEEDED, so an actor with
+     *   nothing to do still polls -- an idle actor is the unbounded case
+     *
+     *   EVERY off-GCD ability in the project declares a `cooldownMs`, so each
+     *   one can win at most once per instant and the chain is bounded by the
+     *   length of the list. `tests/engine/freeCastChain.test.ts` asserts that
+     *   invariant across all nine classes, the racials and the consumables,
+     *   because it is load-bearing here and is otherwise nobody's rule
+     *
+     *   AN ON-NEXT-SWING ABILITY IS EXCLUDED OUTRIGHT. It is off the global
+     *   cooldown by derivation and is the one family with NO cooldown: Heroic
+     *   Strike is refused while already armed, but Heroic Strike and Cleave
+     *   share a slot and would overwrite each other's queue forever, draining
+     *   a warrior's whole rage bar in one instant. Arming a swing is the end of
+     *   an action, not the middle of one.
+     * --------------------------------------------------------------------------
+     */
+    if (justCast && justCast.onNextSwing === undefined) return now;
+
+    return now + ROTATION_POLL_MS;
   }
 
   private buildRun(): SimulationRun {

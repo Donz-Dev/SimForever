@@ -30,6 +30,25 @@ const ALWAYS_HITS = { ...NO_CHANCES, crit: -1_000_000, critMultiplier: 1 };
 
 function fight(chances: typeof NO_CHANCES, build: () => Combatant) {
   const player = build();
+  /*
+   * ==========================================================================
+   * NO ROTATION, because this test ADVANCES THE CLOCK and then hand-casts.
+   *
+   * `createPlayer` hands back a combatant carrying its priority list, so the
+   * tick below is a real decision -- and the day a free off-GCD cast started
+   * letting the actor act AGAIN in the same instant, that one tick began
+   * casting a chain ending on the global cooldown. The hand-driven Hamstring
+   * was then refused for `on_gcd`, cost nothing, and **a refund test read a
+   * cost of zero as "the full cost"** -- which is the failure mode this fixture
+   * is least able to notice, because zero is what a perfect refund looks like.
+   *
+   * THE DOCUMENTED REPAIR, from `warlockTalents.test.ts`' own `soloPlayerFor`:
+   * "any test that advances the clock on a built character wants this." The
+   * opening auras still land -- a Warrior's stance comes from `openingAuras`
+   * rather than from its list -- which is the only thing the tick is for.
+   * ==========================================================================
+   */
+  (player as { rotation?: unknown }).rotation = undefined;
   const target = createTrainingDummy({ name: 'Dummy', health: 1e9, armor: 0, level: 63 });
   const simulation = new Simulation({
     durationMs: seconds(60),

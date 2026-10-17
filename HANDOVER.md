@@ -46,6 +46,7 @@ the tooling to be a bit more sophisticated as well."
 | 17 | **A PATCH: nine racials and forty-odd class notes**, fed in as official notes. The client is TWO BUILDS AHEAD and carries NONE of them, so every figure here comes from a note | **not re-baselined**, on the owner's standing instruction. Four commits, and **thirteen notes are blocked on tree data** | see below |
 | 18 | **TWO OWNER RULINGS, both answering questions round 17 raised and refused to decide** -- the five Tauren templates gain 10 hit rating each, and the two Druid auras stop excluding each other | **not re-baselined**, on the owner's standing instruction. Every caster gains 3% spell crit and the five Tauren rows go back on their hit caps | see below |
 | 18b | **A THIRD RULING, arriving straight after the merge** -- Ice Lance's coefficient is `1.5/3.5/3`, so the divisor tracks the frozen multiplier and the implemented reading was wrong for one release | the frozen coefficient 0.3214 -> **0.4286**, +33% on the spell-power half of a spell that is **8.6% of Frostfire** and is cast by no other profile | see below |
+| 19c | **A FREE OFF-GCD CAST ACTS AGAIN AT ONCE** -- the owner's answer to 19b's question, and the CHARGE PROBLEM fixed at the root rather than worked around by position | all 28 rows moved: mean **795.6 -> 798.9**, 20 up and 8 down, one `REAL` (**LW Melee +14.9**). **Rupture +8.7 and Hemo Dagger +14.2** more than recover what 19b cost them. Four tests broke, every one a fixture pinning a timing it never meant to | see below |
 | 19b | **A COMPLETED CAST OR ATTACK BREAKS STEALTH AND PROWL** -- an ENGINE rule with Premeditation as its one declared exception, replacing Ambush and Ravage each removing the aura by hand | Rupture's Ambushes **4.2 -> 3.4** a fight and Hemo Dagger's **2.7 -> 2.2**, for **-6.6** and **-9.0**; the Cat and Pure Hemo are **bit-identical**. Two ways to half-wire it were written and the full suite passed on both | see below |
 | 19 | **BEFORE THE PULL, FOR ALL 28 PROFILES** -- the owner specified an opener per profile, and three Warrior lists lose the entries it replaces | **not re-baselined**, on the owner's standing instruction. Every line of theirs is implemented after one round of corrections: a positioning RULING, two new Druid abilities, a substitution and a periodic that accrues | see below |
 
@@ -85,18 +86,18 @@ write-up; none is an engine gap.
 | **Judgement of Command is left on the sheet's 0.43** where Righteousness and Fury took the exact `1.5 / 3.5`. The note names two abilities; a ruling covers what it says | round 17 | 0.33% on one seal, and whether all three should be the expression |
 | **Explosive Trap's 5% of attack power is on its BURN and not its initial hit.** One figure for two abilities, and only this one has two damage components | round 17 | which half carries it |
 | **"Touch of the Dead"** is the name the Undead note uses for what is plainly Touch of the Grave -- the same block, and the only part of that racial that has ever scaled with anything | round 17 | a naming question, not an ambiguity about which effect |
-| **Can a Rogue chain Vanish into Ambush without a swing intervening?** Vanish is off the global cooldown, so the actor is left FREE and the next decision is `now + ROTATION_POLL_MS` -- and in that 100ms a swing can take the window the Vanish just opened, which is the documented Charge problem on a different ability | round 19b | about one Ambush a fight on two profiles: **-6.6** and **-9.0**. The 100ms poll is a property of this simulation rather than of the ruleset, so whether it should bite here is theirs |
 
-**SEVEN ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**SIX ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
 the rows**, and count them from the table rather than from the last figure
 somebody wrote down: the first draft of this very sentence said eight, by
 subtracting four from a miscount of eleven, and then seven, then six once Ice
-Lance came off -- and it is seven again now that round 19b has added one. **The
-number goes both ways**, which is the half an "increment" habit gets wrong even
-when the direction is right.
+Lance came off, then seven when round 19b added one, **and six again now that
+round 19c has answered it in a single message**. **The number goes both ways**,
+which is the half an "increment" habit gets wrong even when the direction is
+right -- and this row lasted exactly one round, which is the shortest yet.
 
 **AND FIVE CAME OFF IN TWO ROUNDS, WHICH IS WHAT THE TABLE IS FOR.** Three were
 ruled on by the owner -- the five Tauren hit caps and the Druid aura exclusivity
@@ -553,6 +554,106 @@ with exactly 20 rage generated from Bloodrage after 10 seconds." So the fix was
 the engine's after all -- see **A periodic that accrues before the pull** above.
 **Flagging it was what produced the figure that settled it**, and the figure
 ruled out the option the note had offered.
+
+## Round NINETEEN c: a free cast acts again at once
+
+**THE OWNER, ANSWERING 19b'S ONE QUESTION IN ELEVEN WORDS**: "Vanish into Ambush
+should not be interrupted by a swing."
+
+### What was wrong, and why no list could fix it
+
+Vanish is off the global cooldown, so it leaves the actor FREE -- and
+`nextDecisionTime` gave a free actor `now + ROTATION_POLL_MS`. A tenth of a
+second in which an auto-attack could land and take the stealth window the Vanish
+had just opened.
+
+**IT IS THE CHARGE PROBLEM AND THIS IS THE SECOND THING IT HAS COST.** CLAUDE.md
+already recorded the first: Charge's `canCast` is true for one instant, the
+off-GCD cast left the actor free, and "the window is gone" -- one cast a fight to
+ZERO. **That one was worked around by MOVING THE ENTRY to second**, which works
+when the thing stealing the gap is another entry. Here it is a SWING, and no
+ordering outranks a swing.
+
+### Two designs that could not express it, both tried first
+
+| | why not |
+| --- | --- |
+| `AplEntry.sequence` | it steps ONE cast per decision, so the poll still sits between the steps -- and `resumeSequence` then ABANDONS the pointer, because the refusal is the stealth gate rather than `on_gcd` |
+| the same, as Vanish then Ambush | `sequenceIsAffordable` checks Ambush BEFORE the Vanish is cast, so the window it needs is not up and the whole sequence is refused. **The feature cannot hold "step one ENABLES step two"** |
+
+**AND A FLAG ON VANISH ALONE WOULD HAVE BEEN A HOLE.** Premeditation is also off
+the global cooldown and sits ABOVE Ambush in both lists -- so Vanish would chain
+into Premeditation and then wait out a poll anyway, which is the owner's own
+three-step cycle broken at the second step. The opt-out list would have had to
+grow to cover every off-GCD entry above an Ambush, and would reopen the moment
+anybody added one.
+
+### What it is
+
+One line in `nextDecisionTime`: a cast that SUCCEEDED and left the actor free
+returns `now` rather than `now + ROTATION_POLL_MS`.
+
+**TERMINATION IS THE WHOLE OF THE SAFETY ARGUMENT**, because a decision
+scheduled at its own timestamp can recur forever:
+
+| | |
+| --- | --- |
+| only after a cast that SUCCEEDED | an IDLE actor is the unbounded case, and it still polls |
+| every off-GCD ability declares a `cooldownMs` | each wins at most once per instant, so the chain is bounded by the list's length |
+
+**THE SECOND WAS NOBODY'S RULE AND IS NOW A TEST.** `freeCastChain.test.ts`
+asserts it across all nine classes, the four racials and the consumables,
+because an ability added later with no cooldown and no global cooldown would
+**hang** a fight rather than fail one -- the worst failure available here.
+
+**AN ON-NEXT-SWING ABILITY IS EXCLUDED OUTRIGHT**, and that is not merely
+defensive. It is off the global cooldown by DERIVATION and is the one family
+with no cooldown: Heroic Strike is refused while already armed, but **Heroic
+Strike and Cleave share a slot** and would overwrite each other's queue forever,
+draining a warrior's whole rage bar in one instant.
+
+### What it moved
+
+| | before | after | |
+| --- | --- | --- | --- |
+| **LW Melee** | 806.9 | **821.8** | **+14.9 REAL** -- the only one |
+| **Hemo Dagger** | 775.9 | **790.1** | +14.2 |
+| **Frostfire** | 944.0 | **954.0** | +9.9 |
+| **Rupture** | 700.8 | **709.5** | +8.7 |
+| Shockadin 2H | 817.6 | 814.4 | -3.2, the largest loss |
+
+**ALL 28 ROWS MOVED, mean 795.6 -> 798.9, TWENTY UP AND EIGHT DOWN**, every loss
+inside its own interval. That shape is what says it is right rather than merely
+different: removing a wasted idle can only help a build that had something to do
+in it, and the one `REAL` verdict is **LW Melee**, which CLAUDE.md already
+describes as global-cooldown-bound rather than resource-bound. A recovered 100ms
+belongs to exactly that build.
+
+**AND THE OWNER'S TWO PROFILES MORE THAN RECOVER WHAT 19b COST THEM**: across
+both rounds Rupture is 707.4 -> 709.5 and Hemo Dagger 784.9 -> 790.1, so the
+stealth rule is now free on the builds it was taken from.
+
+**EVERY VANISH WINDOW IS SPENT ON AN AMBUSH**, asserted over three seeds on both
+lists -- which is the ruling itself rather than a figure, and the thing to check
+if either profile moves again.
+
+### Four tests broke, and not one of them was about this
+
+**THE LESSON IS WORTH MORE THAN THE RULE**, because all four were fixtures
+pinning a timing they never meant to:
+
+| | what it was really asserting |
+| --- | --- |
+| `costRefund` x2 | a built character CARRIES ITS ROTATION, so one `advanceTo(1)` tick now cast a chain ending on the global cooldown. The hand-driven Hamstring was refused for `on_gcd`, cost nothing, and **a refund test read a cost of zero as "the full cost"** -- the one reading that fixture is least able to notice, because zero is what a perfect refund looks like |
+| `mageAbilities` | it `find`-ed "any row whose attempts equal its casts" as its comparison spell, so WHICH spell decided the result was whatever the fight produced first. It names **Scorch** now, which the sibling test directly beside it already did |
+| `paladinTalents` | "nothing is left banked at the end of a fight that swung" is a claim about WHERE THE FIGHT STOPPED. It asks the event stream for applied-against-removed pairs now, allowing the one window still in flight |
+
+**AND THE FIRST REPAIR OF THE MAGE TEST WAS WRONG IN AN INSTRUCTIVE WAY.** It
+anchored on the owner's 1% spell miss FLOOR -- no spell can report a rate below
+it -- which is true of the CHANCE and false of a measured frequency: Frostfire
+Bolt reads **0.8%** across sixty fights. **A floor bounds the roll, not the
+sample.** Reaching for a ruleset constant felt like the stable choice and was
+still a wrong one.
 
 ## Round NINETEEN b: stealth breaks, and the answer was wider than the question
 
