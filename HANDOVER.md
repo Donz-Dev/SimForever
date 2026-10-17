@@ -56,6 +56,7 @@ the tooling to be a bit more sophisticated as well."
 | 24 | **THE OWNER'S AUDIT OF THE ARCANE PROFILE -- three items, and the second was worth all of it** -- Mage Armor out of the list, Presence of Mind and Arcane Power OFF the global cooldown, and the cooldown stack written as a real `sequence` | **1090.3 -> 1123.4 (+33.1)**, and Fire and Frostfire **0.0 to the decimal** | see below |
 | 25 | **THE AUDIT FOLDED BACK INTO THE PROCEDURE, and a figure RETRACTED in the documents people read** -- all four audit findings share one cause, so the procedure gains a section naming what a paired probe structurally cannot see | **no figure moved**; documentation only, suite green at 3731 | see below |
 | 26 | **A RULING REVERSED: AUTO SHOT IS NOT SUSPENDED BY A HUNTER'S THREE CAST SHOTS** -- a THIRD `Ability.swingTimer` mode, because the suspension had two halves and `hold` only removes one | **LW Ranged 977.4 -> 1021.0 (+43.7 REAL)** and BM Hunter 963.4 -> 968.2 (+4.8); **25 of 28 rows 0.0 to the decimal**. Dropping the now-pointless weave gate on top is **+27.6 REAL on BM Hunter** and is the owner's call | see below |
+| 27 | **THE SAME RULING ON IMPROVED SLAM, where it is CORRECT AND WORTH 0.0** -- `continue` not `hold`, and the client's tooltip said "interrupts **or delays**" all along while this project quoted half of it | **28 of 28 rows 0.0 to the decimal**, and the bound is the finding: 2H Arms takes rank 2, whose 1.0s cast never reaches the next swing because rage arrives per SWING. **At rank 1 the branch fires 12 times in 40 fights** | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -256,6 +257,99 @@ ruled on, and Arcane Wrath is closed by measurement under both readings.
    The old justification's REASONING had expired; its CONCLUSION had not.
 5. **Then the four profiles that were never done** -- Enh Shaman, Frostfire
    Mage, Fire Mage, Shadow Priest -- one at a time, through the procedure.
+
+## Round TWENTY-SEVEN: Improved Slam, where the fix is correct and worth 0.0
+
+**THE OWNER REPORTED IT AS "a very similar bug" TO THE HUNTER'S**, and it is:
+"the warrior is able to auto-attack during a slam cast without it being
+suspended or paused but only if rank 1 or rank 2 improved slam talent is
+taken." The same ruling, reached through a TALENT rather than through an
+ability -- so without the talent Slam still interrupts the swing and resets the
+timer, which is unchanged.
+
+**ALL 28 ROWS MOVED 0.0 TO THE DECIMAL, INCLUDING 2H ARMS**, which is this
+project's own tell for a patch that did not apply. It applied. What follows is
+why it is worth nothing, because an unexplained 0.0 is indistinguishable from a
+broken change.
+
+### The client's tooltip had said it in two verbs
+
+> Slam no longer interrupts **or delays** your melee swing
+
+`hold` is the FIRST VERB ONLY -- it stops the cast throwing the swing away and
+then makes a swing that comes due during the cast wait for it. **And
+`Ability.swingTimer`'s own documentation quoted the clause as "Slam no longer
+interrupts your melee swing time"**, missing the verb that decides between the
+two modes, and used that quote to justify the mode it implements. A tooltip with
+two verbs in it is a tooltip that distinguishes two mechanisms.
+
+### Why it is worth 0.0, with the bound that makes it 0.0
+
+2H Arms is the only build that takes the talent, at **2/2**, where the cast is
+**1.0s against a 3.6s swing**.
+
+| | |
+| --- | --- |
+| the mid-cast branch in `scheduleSwing` | reached **0 times in 40 fights** |
+| Slam casts measured | **158**, over those 40 fights |
+| ms since the previous main-hand attack | min 0, median 1,500, **max 2,500** |
+| what a swing inside the window would need | a cast starting **after 2,600ms** |
+
+**RAGE IS WHY.** It arrives per SWING -- `rage = R x S`, flat, on a landed
+swing -- so the instant a spender becomes affordable is a swing instant and the
+list acts on it. A warrior with this much income cannot go 2.6 seconds with
+nothing castable, so the Slam cast is always in the first 2.5 seconds of a
+3.6-second cycle and a 1.0-second cast cannot reach the end of it.
+
+**IT IS THE RECKONING SHAPE**, which CLAUDE.md already records: a correctly
+implemented change that is arithmetically unable to do anything, where the
+cause is a CADENCE rather than the code. There it was the encounter's swing
+timer; here it is the build's rage income.
+
+### And the margin is 100ms, so RANK 1 does reach it
+
+At **1/2** the cast is 1.25s, the threshold falls to 2,350ms, and the branch
+fires **12 times in 40 fights** -- all 12 allowed. So the mechanism is live and
+the rank-2 zero is a property of the cast time, **which is the same talent's
+other clause**.
+
+**A CHANGE WORTH NOTHING AT ONE RANK OF A TALENT CAN BE WORTH SOMETHING AT
+ANOTHER**, and the owner's "rank 1 or rank 2" wording turns out to matter in a
+way the ruling did not intend: rank 2's shorter cast is exactly what makes the
+ruling moot for it.
+
+**"RANK 1 OR RANK 2" IS THE WHOLE TALENT ONLY BECAUSE IT HAS TWO RANKS**, which
+is a fact about the tree rather than about the ruling -- so the effect stays
+value-free and `slamSwingTimer.test.ts` pins `ranks: 2`. A third rank would make
+the wording mean something narrower, and nobody would be asked.
+
+### What nearly went wrong: an enum member and a `===`
+
+`ability_holds_swing_timer` asked `=== 'hold'`, while its own name and its panel
+description say **"does not cost a swing"** -- the same question only while one
+swing-keeping mode existed. The Arms list gates Slam on it, so the moment the
+talent granted `continue` the entry went FALSE for the one build that takes the
+talent, and **an 8.1% damage source would have vanished** with nothing on the
+results page to explain it. That is CLAUDE.md's fifth cause of a never-fired
+entry, and it arrives as a DPS loss that reads like a tuning problem.
+
+**ADDING A MEMBER TO AN ENUM IS A CHANGE TO EVERY `===` AGAINST IT.** It asks
+for anything but `reset` now, so a third mode is covered when it lands.
+
+### The shape of the data changed with it
+
+`abilityHoldsSwing` is `abilitySwingTimer` with a required `mode`: a boolean
+kind would have had to be read as granting the mode it is not named after.
+`TalentBuild` carries a MAP for the same reason, and `abilitiesForClass` takes
+the **stronger** of what the ability declares and what a talent grants --
+`reset` < `hold` < `continue`. A maximum rather than an override, because either
+direction of override is wrong in one case, and nothing hits either today.
+
+**`hold` NOW HAS NO DECLARATION ANYWHERE.** It is kept as a mode -- it is a
+coherent thing for a ruleset to say, `castSwingTimer.test.ts` pins its
+behaviour, and a talent granting it would be one line -- and its documentation
+says outright that nothing uses it, so the next reader does not take the
+Improved Slam reference for a live caller.
 
 ## Round TWENTY-SIX: auto shot is not suspended, and the suspension had two halves
 

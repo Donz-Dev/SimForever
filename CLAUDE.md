@@ -1682,6 +1682,52 @@ something that comes and goes.
   kept -- their list outranks a measurement of ours, and that cuts both ways, so
   a ruling about the ENGINE is not authority to rewrite a list. It is a question
   for them, recorded where the condition is declared.
+- **AND THE SAME RULING REACHED A TALENT, WHERE IT IS CORRECTLY WORTH NOTHING
+  AT THE RANK EVERY PROFILE TAKES.** Improved Slam grants `continue` now, not
+  `hold`, on the owner's ruling -- "the warrior is able to auto-attack during a
+  slam cast without it being suspended or paused but only if rank 1 or rank 2
+  improved slam talent is taken."
+  **THE CLIENT'S TOOLTIP HAD SAID IT IN TWO VERBS ALL ALONG**: "Slam no longer
+  interrupts **or delays** your melee swing". `hold` is the first verb only, and
+  `Ability.swingTimer`'s own documentation quoted the clause as "Slam no longer
+  interrupts your melee swing time" -- **a misquote, missing the verb that
+  decides between the two modes**, used as the justification for the mode it
+  implements. A tooltip with two verbs in it is a tooltip that distinguishes two
+  mechanisms.
+  **MEASURED AT 0.0 TO THE DECIMAL ON ALL 28 ROWS, AND THAT IS THE BUILD'S OWN
+  CADENCE RATHER THAN A PATCH THAT DID NOT APPLY** -- which is what 28 identical
+  rows otherwise means here. 2H Arms is the only build that takes the talent, at
+  2/2, where the cast is **1.0s against a 3.6s swing**; the mid-cast branch in
+  `scheduleSwing` is reached **0 times in 40 fights**, because every one of 158
+  Slam casts starts within **2,500ms** of the previous main-hand attack and a
+  swing could only fall inside the window if one started after 2,600ms. **Rage
+  is why**: it arrives per SWING, so the instant a spender becomes affordable is
+  a swing instant and the list acts on it -- a warrior cannot go 2.6 seconds
+  without something to cast.
+  **AND THE MARGIN IS 100ms, SO RANK 1 DOES REACH IT.** At 1/2 the cast is
+  1.25s, the threshold falls to 2,350ms, and the branch fires **12 times in 40
+  fights** -- all 12 allowed. So the mechanism is live and the rank-2 zero is a
+  property of the cast time, which is the same talent's other clause. **A change
+  worth nothing at one rank of a talent can be worth something at another**, and
+  the owner's "rank 1 or rank 2" wording turns out to matter in a way the ruling
+  did not intend.
+  **"RANK 1 OR RANK 2" IS THE WHOLE TALENT ONLY BECAUSE IT HAS EXACTLY TWO
+  RANKS**, which is a fact about the TREE rather than about the ruling -- so the
+  effect stays value-free and `slamSwingTimer.test.ts` pins `ranks: 2`. A third
+  rank would make the wording mean something narrower and nobody would be asked.
+- **AND THE APL BUILTIN WOULD HAVE SILENTLY STOPPED 2H ARMS CASTING SLAM, which
+  is the cost of a predicate that tests a VALUE where its name states a
+  CONCEPT.** `ability_holds_swing_timer` asked `=== 'hold'` while its own name
+  and its panel description say "does not cost a swing" -- the same question
+  only while one swing-keeping mode existed. The Arms list gates Slam on it, so
+  the moment the talent granted `continue` the entry went false for the one
+  build that takes the talent, and an 8.1% damage source would have vanished
+  with nothing on the results page to explain it. It asks for anything but
+  `reset` now, so a third mode is covered the day it lands -- the `isBleed`
+  argument, which reads the TAG rather than a list of the values it can take.
+  **ADDING A MEMBER TO AN ENUM IS A CHANGE TO EVERY `===` AGAINST IT**, and a
+  rotation condition is the worst place for one to be left behind: it fails by
+  casting less, which looks like a tuning problem.
 - **AN EFFECT THAT HAS TO LAST THE CAST GOES IN `onCastStart`, NOT `onCast`.**
   `onCast` runs at the END of a cast and once per tick of a channel, so
   anything that must be in place FOR the cast had nowhere to go. Evocation is
