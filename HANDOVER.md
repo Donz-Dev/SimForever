@@ -297,7 +297,8 @@ Measured over 1,000 paired iterations:
 **PRESENCE OF MIND ERASES A CAST TIME, SO THE PAYLOAD WANTS TO BE THE LONGEST
 CAST** -- Pyroblast is six seconds against Arcane Wrath's 3.5, and Arcane Wrath
 costs a talent point as well. **And Arcane Power cannot join the stack**: it is
-pre-cast at a 0s lead for **+24.2**, and a sequence resolves in full before any
+pre-cast at a 0s lead for what was then measured at **+24.2** (**since RETRACTED** --
+see below), and a sequence resolves in full before any
 of it is cast, so a step on cooldown would refuse the lot and the stack would
 silently never fire.
 
@@ -327,6 +328,51 @@ heading in that report meaning "nobody asked for this damage". Pyroblast
 reported exactly that way the moment the stack shipped. Steps now print indented
 under their entry with their own cast counts and **no verdict column**, because
 a step has no condition of its own and cannot be "never fired" independently.
+
+### And the +24.2 for pre-casting Arcane Power is RETRACTED
+
+**THE OWNER'S QUESTION IS WHAT UNDID IT:** *"is pre-casting arcane power +24.2
+over a normal rotational use, or is it +24.2 over the sandwiched in cooldown
+overlap? I just find it hard to believe that arcane power would want to be used
+prior to reaching 4 stacks of arcane blast buff."*
+
+**IT WAS OVER A NORMAL ROTATIONAL USE, AND IT WAS STALE.** The measurement was
+`removePrecombat('arcane_power')` with the LIST ENTRY LEFT IN PLACE -- and that
+entry is gated on a **Missile Barrage proc**, which has nothing to do with the
+Arcane Blast ramp. So it priced "pre-cast" against "cast on the first barrage",
+never against the cap and never against the stack. **And it predates item 2**:
+part of what pre-casting bought was a global cooldown the in-fight cast no
+longer pays.
+
+Re-measured as a four-way matrix, 600 paired iterations a cell, as a delta from
+the shipped pre-cast:
+
+| | 60s | 180s | 300s |
+| --- | --- | --- | --- |
+| no pre-cast, barrage entry | +4.19 | +0.52 | **+8.07** |
+| no pre-cast, gated at the 4-stack cap | -2.76 | -4.16 | +4.00 |
+| no pre-cast, sandwiched into the stack | -2.76 | -4.19 | +3.00 |
+| pre-cast AND entry gated at the cap | 0.00 | -0.88 | -0.31 |
+
+**IT DOES NOT REPRODUCE AT ANY LENGTH.** Pre-casting is worth nothing
+measurable at 60s and is slightly NEGATIVE by 300s, so the owner's instinct is
+right in direction. The reason it is small either way is that the ramp reaches
+four stacks in about five seconds against a fifteen second window, so a
+pre-cast window already covers most of the four-stack period. **No placement
+change is shipped** -- every cell is within a few DPS and the shipped one is
+theirs.
+
+**THE GENERAL RULE IS THAT PRE-CASTING IS ONLY WORTH THE GLOBAL COOLDOWN IT
+SAVES.** On an ability correctly off the GCD it is worth nothing, and on a
+cooldown short enough to return inside the fight it COSTS something, because
+the window is burned before the build is at full strength.
+
+**AND THREE EARLIER PLACES IN THIS FILE QUOTED +24.2 AND NOW SAY RETRACTED.** A
+correction that lands in one paragraph and leaves the other copies standing is
+this file's own drift failure, and this one had landed only in
+`tools/arcaneVariants.ts` and a commit message -- neither of which is the
+document anybody reads. **Grep for a figure before believing it was updated
+with its source.**
 
 ### And one I got wrong: the `arcane_power` entry is NOT dead
 
@@ -398,7 +444,7 @@ and Gate B is what made this round mostly a demolition.
 | **2 gear** | E65, untouched | nothing to do. `buildVariants.ts` cannot express an item change |
 | **3 enchants** | the whole armour set settled by ARITHMETIC off the stat weights; the weapon measured | **no change.** +65 Spell Power beats Revelation by **24.5** and +25 Agility by **41.8** |
 | **4 talents** | the shipped spread, Heating Up, Fire out, Fire hit out, **Arcane Wrath** | **no change.** All Fire out is **-52.4**; Arcane Wrath is **-76.7** and **-118.2** |
-| **5 pre-combat** | the whole remaining design space under Gate B -- seven rows | **the four illegal casts REMOVED, -96.5 +/- 9.4.** Arcane Power at t=0 confirmed at **+24.2** |
+| **5 pre-combat** | the whole remaining design space under Gate B -- seven rows | **the four illegal casts REMOVED, -96.5 +/- 9.4.** Arcane Power at t=0 read **+24.2**, **since RETRACTED** |
 | **6 combat APL** | the stack gate re-swept, Fire Blast in four places, the PoM/Pyroblast pair, two cooldown re-gates, and **the channel floor** | **+13.2 +/- 3.2 SHIPPED.** Everything else loses |
 | **7 consumables** | Spellblasting vs Major Mana, Rune vs Healthstone, Blasted Lands | **no change.** Major Mana is **-12.7** |
 
@@ -435,7 +481,7 @@ different iteration counts.
 NOBODY RE-DERIVES IT.** One damaging cast, so it is Arcane Blast OR Pyroblast;
 a channel is refused outright, so Missiles and Evocation cannot go there at all;
 everything else must be a non-damaging instant. Of the four this build owns:
-**Arcane Power +24.2**, the potion **+1.4**, Eureka **-2.0**, Presence of Mind
+**Arcane Power +24.2** (**RETRACTED**, see round 24), the potion **+1.4**, Eureka **-2.0**, Presence of Mind
 **-17.7** (its charge is spent on the filler).
 
 **PYROBLAST AS THE PULL INSTEAD OF THE ARCANE BLAST IS +13.8 +/- 9.3 AND IS NOT
