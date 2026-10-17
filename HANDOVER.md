@@ -227,7 +227,7 @@ Priest.** What they got:
 | Ele Shaman | tree repair, pre-combat, some APL -- **and its Searing Totem opener is in the "does a tick before the pull count" bucket** |
 | Arcane Mage | all five dimensions, and the result is void per item 1 |
 | Enh Shaman | tree repair and a pre-combat line. **No APL, enchant or consumable pass** |
-| Frostfire Mage | tree repair and a Scorch pre-cast. **No APL pass** |
+| Frostfire Mage | ~~tree repair and a Scorch pre-cast, no APL pass~~ -- **DONE in round 27**, all five dimensions. The Scorch pre-cast was ILLEGAL and is reverted |
 | Fire Mage | tree repair and a Scorch pre-cast. **No APL pass** |
 | Shadow Priest | tree repair, two DoTs pre-combat, one entry removed. **No systematic APL pass** |
 
@@ -246,17 +246,25 @@ ruled on, and Arcane Wrath is closed by measurement under both readings.
    is worth about nothing either way, so it no longer blocks anything; it is a
    correctness question about intent and is back in the questions table.
 2. ~~Revert the Arcane Mage opener~~ -- **done**, at a cost of **-96.5 +/- 9.4**.
-3. **Audit the other openers against the ruling** -- **done as arithmetic, not
-   as edits.** `docs/profile-optimisation.md` Appendix A has all 28; three still
-   fail: **`mage_fire`** and **`mage_frostfire`** (each two damaging casts, the
-   second being a `scorch` this project added) and **`shaman_elemental`** (two,
-   and BOTH are the owner's own lines -- a question for them rather than an
-   edit).
+3. **Audit the other openers against the ruling** -- **done as arithmetic, and
+   now partly as edits.** `docs/profile-optimisation.md` Appendix A has all 28.
+   **`mage_frostfire` was fixed in round 27** for **-25.90 +/- 9.70**, so TWO
+   still fail: **`mage_fire`** (two damaging casts, the second a `scorch` this
+   project added, worth +15.2) and **`shaman_elemental`** (two, and BOTH are the
+   owner's own lines -- a question for them rather than an edit).
+   **A KNOWN-FAILING ROW IS WORK, NOT DOCUMENTATION**: `mage_frostfire` sat on
+   that list through a release, and the fix was the first thing its round did.
 4. ~~Re-ask Arcane Wrath~~ -- **closed by measurement.** It loses by **-52.2**
    and **-85.9** under `reset` and by **-76.7** and **-118.2** under `ignore`.
    The old justification's REASONING had expired; its CONCLUSION had not.
-5. **Then the four profiles that were never done** -- Enh Shaman, Frostfire
-   Mage, Fire Mage, Shadow Priest -- one at a time, through the procedure.
+5. **Then the profiles that were never done** -- **Frostfire Mage is DONE in
+   round 27**, leaving **Enh Shaman, Fire Mage and Shadow Priest**, one at a
+   time, through the procedure. Count them off the table above rather than from
+   this sentence, which said four.
+   **AND THE FROSTFIRE ROUND SUGGESTS WHAT THE OTHER THREE WILL FIND**: its two
+   largest measured gains were 60-second artefacts that inverted by 180s, so
+   **price every candidate at a second fight length before shipping it.** That
+   is the one read a paired probe structurally cannot do for you.
 
 ## Round TWENTY-SEVEN: the Frostfire Mage, and the two biggest gains were withheld
 
