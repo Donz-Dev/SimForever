@@ -78,6 +78,9 @@ function live(classData) {
 
 const FIELDS = ['row', 'col', 'ranks', 'tier', 'requires', 'requiresRanks'];
 
+/** A description as ONE line, so `was:` and `now:` stay next to each other. */
+const oneLine = (text) => String(text ?? '').replace(/\s+/g, ' ').trim();
+
 function diffTree(before, after, treeName, out) {
   const was = new Map(before.map((t) => [t.name, t]));
   const now = new Map(after.map((t) => [t.name, t]));
@@ -99,9 +102,21 @@ function diffTree(before, after, treeName, out) {
       }
     }
     if (before1.description !== after1.description) {
+      /*
+       * ONE LINE EACH, WITH NEWLINES ESCAPED, AND THAT IS NOT COSMETIC.
+       *
+       * A dozen of these descriptions carry a blank line and a second
+       * paragraph -- Moonkin Form, Devouring Contagion, Water Shield. Printed
+       * raw, the `was:` and `now:` labels end up several lines apart and a
+       * reader pairs the wrong halves: the first pass over this output
+       * concluded that Moonkin Form and Furor had LOST their descriptions
+       * entirely, which would have meant their generated values coming back
+       * null and the Moonkin's 360% armor silently switching off. Both were
+       * fine. **The tool invented a critical finding by wrapping a line.**
+       */
       out.push(`    ~ ${name}: DESCRIPTION`);
-      out.push(`        was: ${before1.description}`);
-      out.push(`        now: ${after1.description}`);
+      out.push(`        was: ${oneLine(before1.description)}`);
+      out.push(`        now: ${oneLine(after1.description)}`);
     }
   }
 
