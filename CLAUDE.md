@@ -61,6 +61,7 @@ npx vite-node tools/probe_shared_cd.ts            # does a shared cooldown actua
 PRESET=bm_hunter npx vite-node tools/probe_jow.ts   # which ACTIONS roll for Judgement of Wisdom, by instant
 ABILITIES=mark npx vite-node tools/probe_precombat_abilities.ts   # map an owner's ability NAME to an id, per profile
 npx vite-node tools/probe_precombat_pools.ts     # what each profile ARRIVES with, and its lockout remainder
+npx vite-node tools/probe_party_crit.ts          # does any profile hold a party crit aura TWICE
 ```
 
 The three audits in the middle are AUDITS rather than measurements and none of
@@ -1964,6 +1965,52 @@ See [docs/resources.md](docs/resources.md).
   profile loaded from JSON with both ids does the same, because nothing re-runs
   `withRaidBuff` on load. **When a rule is enforced at a chooser, ask what else
   can reach the thing being chosen.**
+- **EVERY PROFILE NOW TAKES EVERY RAID BUFF BUT ONE, AND THE EXCEPTIONS ARE
+  GONE.** The owner's instruction: "For all profiles ensure that all raid buffs
+  are checked on except for Curse of Recklessness." So `PRESET_RAID_BUFFS` is the
+  catalogue minus one entry, all 28 profiles share it byte for byte, and
+  `windfuryImbue.test.ts` derives the single absence FROM `RAID_BUFFS` rather
+  than listing the others -- which is the stronger test: a buff added to the
+  catalogue used to pass silently, and now either joins every preset or fails.
+  **A TICKED BOX IS ALLOWED TO BE WORTH NOTHING**, which is what both old
+  exceptions were really about. Windfury Totem reaches no bow, so the two ranged
+  Hunters' swap for Grace of Air bought a real 89 agility and cost a box that
+  did nothing -- and with both selected there is nothing to substitute.
+  **AND THE SECOND EXCEPTION MOVED INTO THE ENGINE, WHICH IS WHERE IT BELONGED.**
+  The Enhancement Shaman dropped Windfury Totem because its own imbue says
+  "when applied to main hand, disables any benefit you personally receive from
+  Windfury Totem" -- a rule about a CHARACTER expressed as an unticked checkbox,
+  which is the Moonkin's +6% crit mistake exactly: a selection cannot enforce
+  something a user can re-tick. `windfuryTotemReaction`'s `canTrigger` refuses
+  while the imbue is up, so the box is ticked and the carrier is paid once.
+  **ASKED AT PROC TIME, because the imbue is a pre-combat CAST** and
+  `onPrecombat` runs after `openingAuras` -- a build-time check would have found
+  no aura at all. It also makes it true for a mid-fight re-imbue, which the
+  Enhancement list does when the hour runs out.
+  **AND THE DOUBLE-DIP THE OWNER ASKED ABOUT IS NOT HAPPENING**, verified rather
+  than assumed: removing both party buffs changes the Cat's melee crit by
+  **0.000** and the Moonkin's spell crit by **0.000**, because each Druid's own
+  talent supplies its half and the raid supplies only the half it lacks. Every
+  profile holds each aura at exactly one stack. `tools/probe_party_crit.ts`.
+  **IT MOVED EVERY ROW AND THE ARCHETYPE SPLIT IS THE FINDING**, mean 798.8 ->
+  843.5 with 28 of 28 up and none down:
+
+  | | n | mean | what reaches them |
+  | --- | --- | --- | --- |
+  | **the three Paladins** | 3 | **+114.1** | Judgement of the Crusader's 161 HOLY spell power |
+  | physical, non-tank | 14 | +50.5 | Grace of Air's agility, and Gift of Arthas' +8 a hit |
+  | tanks | 3 | +43.6 | the Prot Paladin is +82.3 of it, for the Holy reason above |
+  | casters | 8 | **+9.1** | Gift of Arthas alone -- they read no agility and deal no Holy |
+
+  **JUDGEMENT OF THE CRUSADER IS ISOLATED AND IT IS MOST OF THE PALADIN MOVE**:
+  +79.5, +74.9, +63.0 and +49.4 on the four, and **exactly 0.0 on DW Fury and the
+  Fire Mage**, which is the control -- it is Holy spell power and reaches nothing
+  that deals no Holy damage.
+  **AND TWO JUDGEMENTS ARE NOW SELECTED AT ONCE**, Wisdom and the Crusader, which
+  one target cannot carry in the game being modelled. `exclusiveWith` has no
+  declaration anywhere, so nothing refuses it. **Implemented as instructed and
+  recorded as a question**, because it is worth 63 to 80 DPS on three profiles
+  and is a RAID COMPOSITION ruling rather than a bug.
 - **TWO PRESETS SUBSTITUTE ONE RAID BUFF AND ONE DROPS ONE, and a SWAP is the
   commoner shape.** The two ranged Hunters take Grace of Air for Windfury, and
   only the Enhancement Shaman drops one outright, because Windfury Weapon

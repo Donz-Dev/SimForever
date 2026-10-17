@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { RAID_BUFFS } from '../../src/game/buffs/raidBuffs';
 import {
   PRESETS_BY_ID,
   PROFILE_PRESETS,
@@ -222,103 +223,79 @@ describe('the preset catalogue', () => {
      *
      * Every other difference here would be a bug; these three are the ruleset.
      */
-    const SELF_PROVIDED: Readonly<Record<string, readonly string[]>> = {
-      shaman_enhancement: ['windfury_totem'],
-    };
-    const SWAPPED: Readonly<Record<string, readonly [string, string]>> = {
-      bm_hunter: ['windfury_totem', 'grace_of_air_totem'],
-      lw_ranged: ['windfury_totem', 'grace_of_air_totem'],
-    };
-    const expected = (id: string, buffs: readonly string[]) => {
-      const swap = SWAPPED[id];
-      const swapped = swap ? buffs.map((b) => (b === swap[0] ? swap[1] : b)) : buffs;
-      return swapped.filter((buff) => !(SELF_PROVIDED[id] ?? []).includes(buff));
-    };
+    /*
+     * ========================================================================
+     * ONE LIST FOR EVERY PROFILE NOW, AND THE EXCEPTION MACHINERY IS GONE.
+     *
+     * This held a `SELF_PROVIDED` map (the Enhancement Shaman dropping Windfury
+     * Totem) and a `SWAPPED` map (the two ranged Hunters taking Grace of Air
+     * instead), each asserted EXHAUSTIVE so nobody else could differ. The owner
+     * has since filled the raid in: "For all profiles ensure that all raid
+     * buffs are checked on except for Curse of Recklessness."
+     *
+     * SO THE ASSERTION GETS STRONGER RATHER THAN WEAKER -- every profile must
+     * now be IDENTICAL, where before three were allowed to differ in two
+     * specific ways. The exhaustive-keys checks were what made those exceptions
+     * safe, and what replaces them is their absence being provable.
+     *
+     * AND THE TWO REASONS BEHIND THE EXCEPTIONS DID NOT GO AWAY. Windfury
+     * reaches no bow, and the imbue disables the totem for its carrier -- the
+     * first is a ticked box worth nothing, which is allowed, and the second is
+     * enforced in the ENGINE now. `windfuryImbue.test.ts` is both.
+     * ========================================================================
+     */
+    const lists = PROFILE_PRESETS.map((preset) => [preset.id, preset.build().raidBuffs] as const);
+    const [, first] = lists[0];
+    expect(first.length).toBeGreaterThan(0);
+    for (const [id, buffs] of lists) expect(buffs, id).toEqual(first);
 
-    const [first, ...rest] = PROFILE_PRESETS.map((preset) => [
-      preset.id,
-      preset.build().raidBuffs,
-    ] as const);
-    expect(first[1].length).toBeGreaterThan(0);
-    for (const [id, buffs] of rest) expect(buffs, id).toEqual(expected(id, first[1]));
-    expect(expected('shaman_enhancement', first[1])).toHaveLength(first[1].length - 1);
-    // And both exception lists are EXHAUSTIVE: nobody else may differ.
-    expect(Object.keys(SELF_PROVIDED).sort()).toEqual(['shaman_enhancement']);
-    expect(Object.keys(SWAPPED).sort()).toEqual(['bm_hunter', 'lw_ranged']);
-    // A swap keeps the COUNT, which is what tells it from a drop.
-    expect(PRESETS_BY_ID.get('bm_hunter')!.build().raidBuffs).toHaveLength(first[1].length);
-    expect(PRESETS_BY_ID.get('bm_hunter')!.build().raidBuffs).toContain('grace_of_air_totem');
-    expect(PRESETS_BY_ID.get('bm_hunter')!.build().raidBuffs).not.toContain('windfury_totem');
-    // And the melee Hunter keeps Windfury, because it has a main hand.
-    expect(PRESETS_BY_ID.get('lw_melee')!.build().raidBuffs).toContain('windfury_totem');
     /*
      * AND BOTH DRUID AURAS ARE ON EVERY PRESET, which is the owner's ruling and
      * the inverse of what this asserted: it checked that the Moonkin was the
      * only profile of the twenty-four selecting Moonkin Aura.
      */
-    for (const preset of PROFILE_PRESETS) {
-      const buffs = preset.build().raidBuffs;
-      expect(buffs, `${preset.id} moonkin_form`).toContain('moonkin_form');
-      expect(buffs, `${preset.id} leader_of_the_pack`).toContain('leader_of_the_pack');
+    for (const [id, buffs] of lists) {
+      expect(buffs, `${id} moonkin_form`).toContain('moonkin_form');
+      expect(buffs, `${id} leader_of_the_pack`).toContain('leader_of_the_pack');
     }
     expect(createDefaultProfile().raidBuffs).toEqual([]);
   });
 
-  it('takes the eighteen the ruleset owner ticked, plus Moonkin Aura', () => {
+  it('takes every raid buff but Curse of Recklessness, derived from the catalogue', () => {
     /*
-     * ------------------------------------------------------------------------
-     * Written out by hand from the owner's own screen, in catalogue order.
+     * ========================================================================
+     * IT WAS NINETEEN IDS WRITTEN OUT BY HAND, "the eighteen the ruleset owner
+     * ticked, plus Moonkin Aura", in catalogue order.
      *
-     * IT WAS TWELVE AND THE FIVE THAT JOINED ARE WORTH NOTHING TO THIS PROFILE,
-     * which is the point of the change rather than an oversight in it. Arcane
-     * Intellect, Blessing of Wisdom and Mana Spring Totem give a warrior with no
-     * mana bar exactly nothing; Trueshot Aura's ranged attack power reaches a bow
-     * that never swings; Curse of the Elements raises magic damage and this
-     * profile deals none. **The list is one RAID, not one character's needs** --
-     * the other twenty-two include six casters and three Hunters, and a shared
-     * default that only served the warrior would understate every one of them.
+     * THE OWNER HAS REPLACED THE SELECTION WITH A RULE: "all raid buffs checked
+     * on except for Curse of Recklessness." A rule is checkable against the
+     * CATALOGUE, and a hand-written list is not -- so this reads `RAID_BUFFS`
+     * and asserts the single absence.
      *
-     * AND THE EIGHTEENTH IS JUDGEMENT OF WISDOM, added by the owner after the
-     * other seventeen. It is worth nothing to THIS profile for the same reason
-     * three of the others are -- a warrior has no mana bar, so its roll is
-     * refused before any randomness is consumed and a Fury fight is identical
-     * with it on and off.
+     * WHICH IS THE STRONGER TEST AND NOT MERELY THE SHORTER ONE. A buff added
+     * to the catalogue used to pass this silently: the list would simply not
+     * contain it, and nothing anywhere asked why. Now a new buff either joins
+     * every preset or fails here, which is the `EFFECT_RULES` guard applied to
+     * a selection -- make something ask whether the two sides still agree.
      *
-     * AND THE NINETEENTH IS MOONKIN AURA, which was absent because it could not
-     * sit beside Leader of the Pack. The owner has ruled the two not exclusive
-     * with "all profiles should have both enabled by default", so it joins --
-     * and it is the third entry on this list worth nothing to a Warrior, since
-     * Moonkin Aura grants SPELL crit only since the patch that split the pair.
-     * The list is one RAID rather than one character's needs, which is the same
-     * argument the five above make.
-     *
-     * WHAT IS STILL ABSENT IS ABSENT ON PURPOSE: Grace of Air Totem, which only
-     * the two ranged Hunters take and which they take INSTEAD of Windfury; and
-     * Curse of Recklessness, which the owner left unticked beside the curse they
-     * did pick.
-     * ------------------------------------------------------------------------
+     * AND THE THREE THAT JOINED ARE WORTH LITTLE TO THIS PROFILE, which is the
+     * point of a RAID rather than an oversight: Judgement of the Crusader is
+     * Holy spell power, Gift of Arthas is +8 on direct damage, and Grace of Air
+     * is agility this warrior does read. The list has never been one
+     * character's needs -- half of what a Fury warrior carries is worth
+     * nothing to it.
+     * ========================================================================
      */
-    expect(PRESETS_BY_ID.get('dw_fury')!.build().raidBuffs).toEqual([
-      'battle_shout',
-      'thunder_clap',
-      'sunder_armor',
-      'arcane_intellect',
-      'power_word_fortitude',
-      'divine_spirit',
-      'curse_of_the_elements',
-      'judgement_of_wisdom',
-      'blessing_of_wisdom',
-      'blessing_of_kings',
-      'blessing_of_might',
-      'faerie_fire',
-      'mark_of_the_wild',
-      'strength_of_earth_totem',
-      'mana_spring_totem',
-      'windfury_totem',
-      'trueshot_aura',
-      'leader_of_the_pack',
-      'moonkin_form',
+    const selected = PRESETS_BY_ID.get('dw_fury')!.build().raidBuffs;
+    const catalogue = RAID_BUFFS.map((buff) => buff.id);
+
+    expect(catalogue.filter((id) => !selected.includes(id))).toEqual([
+      'curse_of_recklessness',
     ]);
+    // Every id selected is a real buff, which a hand-written list could get
+    // wrong in the other direction.
+    for (const id of selected) expect(catalogue, id).toContain(id);
+    expect(selected).toHaveLength(catalogue.length - 1);
   });
 
   it('starts the target at five Sunders, so the list only refreshes', () => {

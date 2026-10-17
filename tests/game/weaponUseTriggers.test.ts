@@ -44,13 +44,27 @@ const alwaysRolls = {
   clock: { now: () => 10_000 },
 } as unknown as SimulationContext;
 
-/** Sword in each hand and a bow, so no gate refuses on weapon TYPE. */
+/**
+ * Sword in each hand and a bow, so no gate refuses on weapon TYPE.
+ *
+ * AND AN EMPTY AURA COLLECTION, which Windfury's gate now reads: the imbue
+ * "disables any benefit you personally receive from Windfury Totem", so the
+ * totem's `canTrigger` asks whether the actor carries it. A stub without
+ * `auras` threw `Cannot read properties of undefined` on seven of these cases
+ * -- **which is the right failure**, because the alternative was making the
+ * engine defensive about an actor that always has one in the live path.
+ *
+ * A WARRIOR CANNOT CARRY THE IMBUE ANYWAY, so `has` is always false here and
+ * every expectation below is unchanged. The Shaman case -- imbue up, totem
+ * refused -- is driven on a real character in `windfuryImbue.test.ts`.
+ */
 const warrior = {
   weapons: {
     mainHand: { weaponType: 'sword', swingTimerMs: 2600 },
     offHand: { weaponType: 'sword', swingTimerMs: 2600 },
     ranged: { weaponType: 'bow', swingTimerMs: 3000 },
   },
+  auras: { has: () => false },
 } as unknown as Combatant;
 
 const use = (weaponSlot: WeaponSlot | undefined, abilityId?: string): AttackEvent =>

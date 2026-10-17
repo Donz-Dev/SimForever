@@ -1,5 +1,8 @@
 import type { AuraDefinition, Reaction } from '../../engine';
 import { flat, isWeaponUseOf, seconds } from '../../engine';
+// The imbue's own aura, read to enforce its "disables any benefit you
+// personally receive from Windfury Totem" clause. See `canTrigger`.
+import { WINDFURY_WEAPON_IMBUE } from '../auras/shaman';
 
 /**
  * Windfury Totem.
@@ -73,7 +76,35 @@ export function windfuryTotemReaction(): Reaction {
     // Landed main-hand swings. An avoided attack is not a swing that
     // connected, and the slot check below is what keeps it off the off hand.
     outcomes: ['hit', 'crit', 'glance', 'crush'],
-    canTrigger: (context, _actor, attack) => {
+    canTrigger: (context, actor, attack) => {
+      /*
+       * ======================================================================
+       * THE IMBUE DISABLES THE TOTEM FOR ITS OWN CARRIER, which is the imbue's
+       * own tooltip: "when applied to main hand, disables any benefit you
+       * personally receive from Windfury Totem."
+       *
+       * IT USED TO BE AN UNTICKED CHECKBOX. The Enhancement Shaman was the one
+       * preset that dropped this buff, with the reason written on the preset --
+       * and the owner has since asked for every raid buff ticked on every
+       * profile, which makes the selection the wrong place for it twice over:
+       * the rule is about a CHARACTER rather than about a raid, and a user can
+       * tick the box back.
+       *
+       * ASKED AT PROC TIME AND NOT AT BUILD TIME, because the imbue arrives as
+       * a pre-combat CAST -- `onPrecombat` runs after `openingAuras`, so the
+       * aura does not exist when the character is assembled. Reading it here is
+       * also what makes it true for a character that imbues mid-fight, which
+       * the Enhancement list does when the hour runs out.
+       *
+       * THIS IS THE ONLY INTERACTION OF ITS KIND, and it is checked rather than
+       * declared because the two effects are in different layers: a raid buff
+       * is `game/buffs` and the imbue is the Shaman's own aura. An
+       * `exclusiveWith` on the raid buff could not see it at all -- that field
+       * governs two raid-buff ENTRIES, and this is a buff against an ability.
+       * ======================================================================
+       */
+      if (actor.auras.has(WINDFURY_WEAPON_IMBUE.id)) return false;
+
       /*
        * MAIN HAND ONLY, and "swing" means USE -- an auto-attack or any
        * ability that needs the main-hand weapon. Bloodthirst, Mortal Strike,

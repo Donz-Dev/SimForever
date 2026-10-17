@@ -132,9 +132,12 @@ const PRESET_RAID_BUFFS: readonly string[] = [
   'blessing_of_wisdom',
   'blessing_of_kings',
   'blessing_of_might',
+  'judgement_of_the_crusader',
+  'gift_of_arthas',
   'faerie_fire',
   'mark_of_the_wild',
   'strength_of_earth_totem',
+  'grace_of_air_totem',
   'mana_spring_totem',
   'windfury_totem',
   'trueshot_aura',
@@ -142,30 +145,36 @@ const PRESET_RAID_BUFFS: readonly string[] = [
   'moonkin_form',
 ];
 
-/**
- * The same raid, for the two profiles whose main hand never swings.
+/*
+ * ==============================================================================
+ * THE SWAP AND THE DROP ARE BOTH GONE, AND EVERY PROFILE NOW TAKES THE SAME
+ * TWENTY-TWO.
  *
- * ----------------------------------------------------------------------------
- * GRACE OF AIR INSTEAD OF WINDFURY, on the ruleset owner's instruction, and for
- * the two RANGED Hunters only. Windfury Totem is "20% chance on each MAIN-HAND
- * use", which a Hunter shooting a bow never has -- so for those two it is a
- * checked box worth exactly nothing, and 89 agility is worth something.
+ * The owner's instruction: "For all profiles ensure that all raid buffs are
+ * checked on except for Curse of Recklessness." So there is ONE list, it is the
+ * whole catalogue minus one entry, and no profile differs from any other.
  *
- * LW MELEE IS NOT ONE OF THEM, deliberately: it swings a main hand, so Windfury
- * is real for it. The split is by what the profile DOES rather than by class,
- * which is why it is two of the three Hunters and not all three.
+ * WHAT WENT WITH IT:
  *
- * DERIVED BY SUBSTITUTION rather than written out, so a buff added above reaches
- * these two as well -- a second hand-kept copy is exactly how they would quietly
- * stop receiving something every other profile got. The substitution keeps
- * Windfury's POSITION rather than re-sorting into catalogue order, which costs a
- * one-line diff against a hand-edited profile and buys the guarantee that the
- * two lists cannot drift apart.
- * ----------------------------------------------------------------------------
+ *   `RANGED_HUNTER_RAID_BUFFS`  Grace of Air INSTEAD of Windfury on the two
+ *                               ranged Hunters. Both are on now, so there is
+ *                               nothing to substitute -- Windfury is simply
+ *                               worth nothing to a bow, which a ticked box is
+ *                               allowed to be
+ *   the Enhancement DROP        Windfury Totem, which that build's own imbue
+ *                               disables. **The box is ticked and the ENGINE
+ *                               enforces the disabling now**, which is the
+ *                               honest version of the same answer: see
+ *                               `windfuryTotemReaction`
+ *
+ * AND A DROPPED BOX WAS NEVER THE RIGHT MECHANISM FOR THE SECOND ONE. "The
+ * imbue disables any benefit you personally receive from Windfury Totem" is a
+ * RULESET rule about a character, and expressing it as an unticked checkbox put
+ * it in the one place a user can undo by accident -- the same mistake as
+ * enforcing the Moonkin exclusivity at the chooser, which let a talent reach
+ * the aura without passing through it and read +6% crit.
+ * ==============================================================================
  */
-const RANGED_HUNTER_RAID_BUFFS: readonly string[] = PRESET_RAID_BUFFS.map((id) =>
-  id === 'windfury_totem' ? 'grace_of_air_totem' : id,
-);
 
 /**
  * ==============================================================================
@@ -2237,13 +2246,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: { ...SHAMAN_ENHANCEMENT_TALENTS },
       /*
-       * WINDFURY TOTEM IS NOT SELECTED, and it is the only preset that drops
-       * it. The imbue this build casts says so itself: "when applied to main
-       * hand, disables any benefit you personally receive from Windfury
-       * Totem." Ticking both would pay a Shaman twice for one effect, and the
-       * bigger of the two is the one it casts.
+       * WINDFURY TOTEM IS SELECTED NOW LIKE EVERYTHING ELSE, and the engine is
+       * what stops it paying twice. The imbue this build casts says so itself:
+       * "when applied to main hand, disables any benefit you personally receive
+       * from Windfury Totem" -- so `windfuryTotemReaction` refuses while the
+       * imbue is up, and the box can be ticked honestly.
        */
-      raidBuffs: PRESET_RAID_BUFFS.filter((id) => id !== 'windfury_totem'),
+      raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: hybridConsumables({
         school: 'school_fire',
         meleeWeaponEffect: true,
@@ -2599,7 +2608,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       talents: { ...HUNTER_BEAST_MASTERY_TALENTS },
       // Grace of Air rather than Windfury: a bow has no main-hand use.
       // See `RANGED_HUNTER_RAID_BUFFS`.
-      raidBuffs: [...RANGED_HUNTER_RAID_BUFFS],
+      raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: RANGED_HUNTER_CONSUMABLES,
       precombat: [
         ...before(5, 'hunters_mark'),
@@ -2627,7 +2636,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       talents: { ...HUNTER_LONE_WOLF_RANGED_TALENTS },
       // Grace of Air rather than Windfury: a bow has no main-hand use.
       // See `RANGED_HUNTER_RAID_BUFFS`.
-      raidBuffs: [...RANGED_HUNTER_RAID_BUFFS],
+      raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: RANGED_HUNTER_CONSUMABLES,
       precombat: [
         ...before(7, 'hunters_mark'),

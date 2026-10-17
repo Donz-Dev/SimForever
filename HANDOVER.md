@@ -46,6 +46,7 @@ the tooling to be a bit more sophisticated as well."
 | 17 | **A PATCH: nine racials and forty-odd class notes**, fed in as official notes. The client is TWO BUILDS AHEAD and carries NONE of them, so every figure here comes from a note | **not re-baselined**, on the owner's standing instruction. Four commits, and **thirteen notes are blocked on tree data** | see below |
 | 18 | **TWO OWNER RULINGS, both answering questions round 17 raised and refused to decide** -- the five Tauren templates gain 10 hit rating each, and the two Druid auras stop excluding each other | **not re-baselined**, on the owner's standing instruction. Every caster gains 3% spell crit and the five Tauren rows go back on their hit caps | see below |
 | 18b | **A THIRD RULING, arriving straight after the merge** -- Ice Lance's coefficient is `1.5/3.5/3`, so the divisor tracks the frozen multiplier and the implemented reading was wrong for one release | the frozen coefficient 0.3214 -> **0.4286**, +33% on the spell-power half of a spell that is **8.6% of Frostfire** and is cast by no other profile | see below |
+| 20 | **EVERY RAID BUFF ON EVERY PROFILE BUT CURSE OF RECKLESSNESS**, and the two per-profile exceptions deleted -- one because both buffs are simply on now, one because the ENGINE enforces it | **28 of 28 rows UP**, mean 798.8 -> **843.5**. The three Paladins **+114.1** on Judgement of the Crusader alone; casters **+9.1**. The Cat/Moonkin double-dip check comes back **0.000** both ways | see below |
 | 19e | **FOUR PRIEST AND MAGE RULINGS, AND TWO OF THEM WERE ALREADY BUILT** -- Shadow Weaving becomes a target debuff, Mind Flay protects its first two ticks against an interrupt, and Arcane Blast and the Improved Mind Flay ramp turned out to be implemented already | **all 28 rows BIT-IDENTICAL**. One test asserted the OPPOSITE of the Shadow Weaving ruling in its own name, and the aura reported on NEITHER table until it declared `isDebuff` | see below |
 | 19d | **REGENERATION IS CREDITED ACROSS A PRE-COMBAT LEAD**, with the five second rule stamped when the spend happened -- the lead's THIRD and FOURTH observable consequence | **23 of 28 rows BIT-IDENTICAL**; only the two Combat Rogues and three Mages move at all, mean 798.91 -> 798.76. The Combat Rogues open on **85 energy rather than 75** | see below |
 | 19c | **A FREE OFF-GCD CAST ACTS AGAIN AT ONCE** -- the owner's answer to 19b's question, and the CHARGE PROBLEM fixed at the root rather than worked around by position | all 28 rows moved: mean **795.6 -> 798.9**, 20 up and 8 down, one `REAL` (**LW Melee +14.9**). **Rupture +8.7 and Hemo Dagger +14.2** more than recover what 19b cost them. Four tests broke, every one a fixture pinning a timing it never meant to | see below |
@@ -87,9 +88,10 @@ write-up; none is an engine gap.
 | **Consecrated Ground** -- wording says "Holy SPELLS" and the implementation reaches the seal and Holy Strike too. **+66** to the Shockadin, the biggest talent on that profile | round 12 | the reading, and the Shockadin's figure |
 | **Judgement of Command is left on the sheet's 0.43** where Righteousness and Fury took the exact `1.5 / 3.5`. The note names two abilities; a ruling covers what it says | round 17 | 0.33% on one seal, and whether all three should be the expression |
 | **Explosive Trap's 5% of attack power is on its BURN and not its initial hit.** One figure for two abilities, and only this one has two damage components | round 17 | which half carries it |
+| **Can one target carry TWO Judgements?** Wisdom and the Crusader are both selected on every profile now, which is what "all raid buffs checked on" asks for and which one target cannot hold in the game being modelled. `exclusiveWith` has no declaration anywhere, so nothing refuses it | round 20 | **63 to 80 DPS on the three Paladins**, isolated. If only one may be up, which -- and the raid presumably keeps Wisdom |
 | **"Touch of the Dead"** is the name the Undead note uses for what is plainly Touch of the Grave -- the same block, and the only part of that racial that has ever scaled with anything | round 17 | a naming question, not an ambiguity about which effect |
 
-**SIX ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**SEVEN ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
@@ -97,9 +99,10 @@ the rows**, and count them from the table rather than from the last figure
 somebody wrote down: the first draft of this very sentence said eight, by
 subtracting four from a miscount of eleven, and then seven, then six once Ice
 Lance came off, then seven when round 19b added one, **and six again now that
-round 19c has answered it in a single message**. **The number goes both ways**,
+round 19c has answered it in a single message** -- and SEVEN again now that
+round 20 has raised the two-Judgements question. **The number goes both ways**,
 which is the half an "increment" habit gets wrong even when the direction is
-right -- and this row lasted exactly one round, which is the shortest yet.
+right, and the Vanish row lasted exactly one round, which is the shortest yet.
 
 **AND FIVE CAME OFF IN TWO ROUNDS, WHICH IS WHAT THE TABLE IS FOR.** Three were
 ruled on by the owner -- the five Tauren hit caps and the Druid aura exclusivity
@@ -556,6 +559,78 @@ with exactly 20 rage generated from Bloodrage after 10 seconds." So the fix was
 the engine's after all -- see **A periodic that accrues before the pull** above.
 **Flagging it was what produced the figure that settled it**, and the figure
 ruled out the option the note had offered.
+
+## Round TWENTY: the raid is full
+
+**THE OWNER'S INSTRUCTION, IN ONE SENTENCE:** "For all profiles ensure that all
+raid buffs are checked on except for Curse of Recklessness." With a second:
+"ensure that Cat Druid and Moonkin are not double-dipping from Leader of the
+Pack and Moonkin Aura."
+
+**NOT THE ROUND 20 THAT WAS SCOPED.** The client refresh is still blocked on the
+six respecified spreads; this is the raid selection, which needed none of them.
+
+### What was missing
+
+Nineteen of the catalogue's twenty-three were selected. The three that joined are
+**Judgement of the Crusader**, **Gift of Arthas** and **Grace of Air Totem**;
+Curse of Recklessness stays off, which is the one the owner named.
+
+### Both per-profile exceptions are gone, for two different reasons
+
+| | why it can go |
+| --- | --- |
+| the two ranged Hunters' **swap** of Grace of Air for Windfury | both are selected now, so there is nothing to substitute. Windfury reaches no bow, and **a ticked box is allowed to be worth nothing** |
+| the Enhancement Shaman's **drop** of Windfury Totem | its own imbue "disables any benefit you personally receive from Windfury Totem" -- which is a rule about a CHARACTER, and is enforced in the ENGINE now |
+
+**THE SECOND WAS IN THE WRONG PLACE ALL ALONG, AND IT IS THE MOONKIN MISTAKE
+AGAIN.** A selection cannot enforce something a user can re-tick -- which is
+exactly how a Moonkin came to read +6% crit when its exclusivity lived in a
+chooser and a talent reached the same aura without passing through it.
+`windfuryTotemReaction`'s `canTrigger` refuses while the imbue is up.
+
+**ASKED AT PROC TIME AND NOT AT BUILD TIME**, because the imbue arrives as a
+pre-combat CAST and `onPrecombat` runs after `openingAuras` -- a build-time check
+would have found no aura. It also covers a mid-fight re-imbue, which the
+Enhancement list does when the hour expires.
+
+### The double-dip check: not happening, and measured
+
+| | removing both party buffs |
+| --- | --- |
+| **Cat Druid** | melee crit **0.000** change -- its own Leader of the Pack talent already supplies it |
+| **Moonkin** | spell crit **0.000** change -- its own Moonkin Form talent already supplies it |
+| Bear | melee **0.000**, same as the Cat |
+
+Each Druid loses only the half it has no talent for -- the Cat gives up 3% SPELL
+crit and the Moonkin 3% MELEE -- which is the aura split working exactly as the
+patch that separated them intended. Every profile holds each aura at **one
+stack**. `tools/probe_party_crit.ts` is the check, kept as a command.
+
+### What it moved: everything, and the split is the finding
+
+| | n | mean | what reaches them |
+| --- | --- | --- | --- |
+| **the three Paladins** | 3 | **+114.1** | Judgement of the Crusader's 161 Holy spell power |
+| physical, non-tank | 14 | +50.5 | Grace of Air's agility, Gift of Arthas' +8 a hit |
+| tanks | 3 | +43.6 | the Prot Paladin is +82.3 of that, for the Holy reason above |
+| casters | 8 | **+9.1** | Gift of Arthas alone: no agility read, no Holy dealt |
+
+**Mean 798.8 -> 843.5, twenty-eight rows up and none down.**
+
+**JUDGEMENT OF THE CRUSADER IS ISOLATED RATHER THAN BLAMED**, which is this
+project's own rule about the obvious suspect: +79.5, +74.9, +63.0 and +49.4 on
+the four Paladins, and **exactly 0.0 on DW Fury and the Fire Mage**. The two
+zeros are the control -- it is Holy spell power and cannot reach a build that
+deals none.
+
+### One question it raises
+
+**TWO JUDGEMENTS ARE NOW SELECTED AT ONCE**, Wisdom and the Crusader, which one
+target cannot carry in the game being modelled. `exclusiveWith` has no
+declaration anywhere, so nothing refuses it. Implemented as instructed and
+**recorded as a question**, because it is worth 63 to 80 DPS on three profiles
+and is a raid COMPOSITION ruling rather than a defect.
 
 ## Round NINETEEN e: four rulings, and two were already done
 
