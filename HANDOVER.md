@@ -121,6 +121,155 @@ asking about the moment a round made it the biggest thing on a profile -- which
 is CLAUDE.md's rule that an interpretation flagged as one is what gets it ruled
 on, and that the label has to survive until the answer arrives.
 
+## Round TWENTY-TWO: the Arcane Mage, all five dimensions
+
+**THE OWNER RE-ASKED FOR ONE PROFILE BECAUSE THE FIRST PASS LEFT ITS APL
+UNTOUCHED** -- "Spotting check Arcane mage profile. Nothing changed in the APL."
+That was correct: the six-profile round moved its talents and its pre-combat and
+asked the list nothing at all.
+
+**THE ANSWER IS +95.9 +/- 8.2, ABOUT +8.9%, AND ALL OF IT IS IN THE OPENER.**
+Everything else was already at a local optimum, which is worth as much as the
+figure: **nineteen variants measured, two shipped.**
+
+| dimension | rows | outcome |
+| --- | --- | --- |
+| 2. enchants | 5 | **every alternative loses.** Head/legs +1% Haste beats +8 Intellect by 2.07 and +8 Spirit by 5.42; gloves +20 Spell Power beats +1% Haste by 6.54 |
+| 3. talents | 5 | **the shipped spread wins.** The Arcane tree has nothing left to buy |
+| 4. APL | 10 | **the shipped list wins on every axis**, and its stack gate is the peak |
+| 5. consumables | 3 | **the shipped row wins.** Spellblasting beats Major Mana by 13.16 |
+| **4. pre-combat** | **9** | **+95.9 +/- 8.2** |
+
+### Why the talents could not be improved
+
+**EVERY ARCANE TALENT THAT TOUCHES DAMAGE IS ALREADY MAXED** -- arcane_focus
+5/5, arcane_impact 3/3, arcane_mind 5/5, arcane_instability 3/3 -- and
+**missile_barrage has TWO ranks, not three**, so the obvious upgrade does not
+exist. What is left in that tree is a wand, a range increase, armour from
+Intellect, mana regeneration the build never needs, and `improved_channeling`,
+which is pure cast pushback and a declared `OutOfScope` member.
+
+**SO THE ELEVEN FIRE POINTS WERE THE REAL QUESTION, AND THEY PAY.** The damage
+table makes them look indefensible -- Pyroblast 4.5% and Ignite 0.3% for eleven
+of fifty-one points -- and taking them out measures **-49.9**, because the
+points they would move to do *literally nothing*. Taking `incineration` with
+them measures **-60.5**, so its "+6% crit to Fire Blast, Ice Lance, **Arcane
+Blast** and Scorch" is worth **+10.5** on its own: one Fire talent paying an
+Arcane bill.
+
+**AND `elemental_precision` IS DEAD AND UNMOVABLE, WHICH IS A DIFFERENT THING
+FROM WORTH KEEPING.** Five points of Frost-and-Fire hit on a build whose only
+Fire is 4.8% of the damage: removing it measures **-3.5 +/- 12.0**, noise, and
+exactly what the arithmetic predicts -- 6% more miss on 4.8% of the damage is
+0.29% of it. It stays because **there is nowhere better for the points to go**,
+and `arcane_wrath`, the only unspent Arcane talent that deals damage, is
+measured at -77 to -119 wherever it is cast.
+
+**AND HEATING UP COSTS FIVE POINTS WHERE ONLY FOUR CAN LEAVE ARCANE.** The
+harness refused the first attempt -- "wanted 51 legal 50 dropped [arcane_power]"
+-- which is the `requiresRanks` lesson in its tier-sum form. Funded properly it
+measures **-1.6**, and **paired with the Fire Blast entry it would need, -13.5**:
+both halves or neither, and here neither.
+
+### Why the APL could not be improved
+
+| the change | |
+| --- | --- |
+| fire_blast at the bottom | **IDENTICAL FIGHTS** -- Arcane Blast above it is ungated and always castable, so it is a floor |
+| fire_blast above arcane_blast | -8.7 +/- 12.0, noise |
+| fire_blast above the gated missiles | **-27.2** |
+| no pyroblast/presence_of_mind pair | **-13.2**, so the pair is worth +13.2 |
+| presence_of_mind spent on arcane_blast | **-50.7** |
+| pyroblast at the cap WITHOUT presence_of_mind | **-206.6** -- a real 6s cast is catastrophic |
+
+**AND THE ARCANE BLAST STACK GATE IS SWEPT RATHER THAN COMPARED**, which is this
+project's own rule after a two-point Eviscerate comparison hid a +10.8 peak
+between its cells. The shipped **4** is the maximum and the fall is monotone on
+both sides -- 5 is **-27.9**, 3 is **-39.4**, 2 is **-87.7**, 1 is **-139.8**.
+
+### The opener, which is the whole round
+
+**ARCANE BLAST IS A RAMP AND THE OLD OPENER CAST ONE.** Each stack is 15% of
+Intellect as spell power -- **+65 a stack, +260 at four** on a base of 850 -- and
+Arcane Missiles is **78% of the damage** with the highest coefficient in the kit.
+So the ramp is really pricing every missile in the fight, and a pre-combat cast
+buys it for no global cooldown. Paired over 400 iterations against the shipped
+one stack:
+
+| stacks at the pull | |
+| --- | --- |
+| 0 | **-21.0** |
+| 1 | the old baseline |
+| 2 | **+31.1** |
+| 3 | **+49.9** |
+| 4 | **+74.7** |
+
+Monotone to the cap, which is what says the boundary is the cap rather than a
+peak inside it. **Pyroblast before the pull adds a further ~25** -- a six-second
+cast made free of its cast time -- for **+95.9 +/- 8.2** together, against
++74.7 and +41.5 apart, which do not sum because both buy opening seconds.
+
+**THE SHIPPED OPENER KEEPS THE OWNER'S OWN TWO LINES, AND A TEST IS WHAT
+INSISTED.** The best arrangement measured had moved `mage_armor` off its stated
+3s lead and replaced the owner's `arcane_blast` at 1.5 with four at other leads;
+`precombatOpeners.test.ts` transcribes their openers a second time and failed on
+exactly that. The two measure **+104.0 +/- 7.9** against **+95.9 +/- 8.2** --
+8.1 apart against a combined interval of **11.4**, so indistinguishable, and
+there was no measurement to trade against keeping the transcription.
+
+### And the best figure in the round is discarded
+
+**AN OPENER THAT MEASURED +105.3 IS NOT A POSSIBLE CAST SEQUENCE.** It held a
+Pyroblast from t-6 to t0 **and** an Arcane Blast from t-1.5 to t0 --
+`runPrecombat` resolves every action at timestamp zero and never asks whether
+one cast was still in progress when the next began, so that list banked five
+casts into four seconds of real time.
+
+**IT WAS FOUND BY ADDING UP THE LEADS AND THE CAST TIMES BY HAND, BECAUSE
+NOTHING ELSE COULD.** The figure sat 1.3 DPS above the best legal row, inside
+its interval, in a table where every other row was honest. **A pre-combat list
+is a claim about what the character did and the engine does not check it** --
+and whether it should REFUSE an overlapping opener is a question for the owner.
+
+**NOR COULD THE REPORTING CONFIRM THE RAMP ARRIVES.** The `USES=1` "before the
+pull" block prints each action beside the ability's **whole-fight** cast count,
+so four `arcane_blast` rows all read 13.2 and its `<-- NEVER HAPPENED` flag can
+never fire for a spell that is also the filler -- and `aura_applied` fires ONCE,
+because the rest are refreshes, so counting it says 1 where the answer is 4.
+`tools/verify_opener.ts` reads the stack count off the combatant at the pull and
+says **4 of 4**.
+
+### And one small thing the uses report found
+
+**EUREKA FIRED ON THE FIRST POLL, UNGATED, and gating it is +1.92 +/- 0.28.**
+The Gnome racial is an 8-second +10% window and Arcane Power's entry beside it
+is gated on a Missile Barrage proc for exactly that reason. **Its spread is
+2.8**, because a gate that only moves WHEN a free off-GCD cooldown fires cannot
+flip a roll -- so a figure that small is resolvable rather than noise. The
+alternatives: on Arcane Power being up it is **bit-identical** (Arcane Power is
+pre-cast, so the gate is never false), on the Arcane Blast cap **-2.92**, and
+removed entirely **-16.35**.
+
+**THE SHARED `RACIAL_COOLDOWNS` BLOCK IS WHY IT HAD NO GATE** rather than an
+oversight: that constant is spread into lists belonging to no race, so a
+condition written there would be a condition on three abilities the character
+cannot cast.
+
+### Two stale things fixed on the way
+
+- The preset's own label read **"47 Arcane / 4 Fire"** against an allocation of
+  35 / 11 / 5. That string is what the preset rail shows a person.
+- `racialCooldowns.ts` described Eureka as **"the next three damaging abilities
+  cost 10% less and hit 10% harder"** -- the charges design that
+  `racials/auras.ts` says in its own words was deleted for an 8-second window.
+  Two files disagreeing about one fact, with the stale one in the list everybody
+  reads first.
+
+**THE BASELINE TABLE IS NOT REBUILT**, per the owner's standing instruction that
+they keep the baseline. The 30-fight harness reads **1088.0 +/- 36.6 before and
+1169.2 +/- 20.7 after**; the paired 800-iteration **+95.9 +/- 8.2** is the
+figure to trust.
+
 ## Round TWENTY-ONE: three rulings, and the one that was a misread field
 
 **ALL THREE ARRIVED IN ONE MESSAGE AND ONLY ONE OF THEM MOVED A FIGURE**, which
