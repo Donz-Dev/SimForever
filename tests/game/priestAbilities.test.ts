@@ -82,8 +82,18 @@ describe('the numbers', () => {
     expect(MIND_FLAY_TOTAL / MIND_FLAY_TICKS).toBe(130);
   });
 
-  it('declares an effect for every one of the 53 talents', () => {
-    expect(Object.keys(PRIEST_TALENT_EFFECTS)).toHaveLength(53);
+  it('declares an effect for every one of the 52 talents', () => {
+    /*
+     * 52: TWO OUT AND ONE IN at client build 1.60.1.70425. Shadow Affinity and
+     * Improved Fade were removed and DARK INSPIRATION took Improved Fade's slot
+     * -- so a net fall of one, where the count alone reads as a single removal.
+     *
+     * AND THE SHADOW TREE TRADED A DEAD TALENT FOR A LIVE ONE. Shadow Affinity
+     * was a `threat` ruling, and Dark Inspiration is a Spirit buff off Mind
+     * Blast and a fully channeled Mind Flay -- mana RETURN, which is explicitly
+     * not out of scope. The Shadow Priest spread moved its three points across.
+     */
+    expect(Object.keys(PRIEST_TALENT_EFFECTS)).toHaveLength(52);
   });
 });
 
@@ -176,11 +186,32 @@ describe('Improved Mind Flay, which now compounds across the channel', () => {
    * that replaced it.
    * ==========================================================================
    */
-  it('still reads the DAMAGE out of the row and not the range or the slow', () => {
-    // The row is unchanged by the patch, and the index is still the first.
+  it('reads a row that is now ONE number, where it used to be three', () => {
+    /*
+     * ========================================================================
+     * THE RANGE AND THE SLOW LEFT THE ROW AT CLIENT BUILD 1.60.1.70425, and
+     * this assertion is kept rather than deleted because of what it used to
+     * catch.
+     *
+     * The row was `[damage%, yards, slow%]` -- `[[10,10,20],[20,10,20]]` -- and
+     * this talent is the one CLAUDE.md names for having declared `valueIndex:
+     * 1` against it, applying the RANGE as a damage multiplier for its whole
+     * life: 10 where the talent grants 20, on the biggest damage source in the
+     * build, worth +18.2 DPS when corrected. **The plausible wrong value was
+     * another rank's right one**, which is why nothing looked odd.
+     *
+     * IT IS `[10, 20]` NOW, a bare per-rank number, so that whole class of
+     * mistake is unreachable on this talent: index 1 is `undefined` and an
+     * effect that reads no value is DROPPED rather than applied. Asserting the
+     * absence is the point -- **a row getting shorter turns a wrong-index bug
+     * from a wrong number into no number**, which fails loudly where the old
+     * shape failed silently, and the declaration's `valueIndex: 0` is right in
+     * both shapes.
+     * ========================================================================
+     */
     expect(talentNumber('priest', 'improved_mind_flay', 2, 0)).toBe(20);
-    expect(talentNumber('priest', 'improved_mind_flay', 2, 1)).toBe(10);
-    expect(talentNumber('priest', 'improved_mind_flay', 2, 2)).toBe(20);
+    expect(talentNumber('priest', 'improved_mind_flay', 2, 1)).toBeUndefined();
+    expect(talentNumber('priest', 'improved_mind_flay', 2, 2)).toBeUndefined();
 
     const build = talentBuild('priest', legalise({ improved_mind_flay: 2 }, 'priest'));
     expect(build.abilityBonuses.get('mind_flay')?.[MIND_FLAY_ESCALATION_BONUS]).toBe(20);

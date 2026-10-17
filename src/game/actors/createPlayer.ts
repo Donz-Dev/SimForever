@@ -865,6 +865,13 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // The same again, counted only while the TARGET bleeds. Rend and Tear is
     // the only caller, and the one modifier here that is about the victim.
     bleedingTargetModifiers: build.bleedingTargetModifiers,
+    /*
+     * FIRE POWER, and the SECOND modifier conditioned on the defender. It is
+     * a count of the caster's own effects on the target where the line above
+     * is a boolean, and it is handed over the same way -- see
+     * `Combatant.schoolDamagePerTargetEffect`.
+     */
+    schoolDamagePerTargetEffect: build.schoolDamagePerTargetEffect,
     // Genesis: every tick and nothing else. It is neither a school, a table
     // nor an ability, and `DamageRequest.periodic` is what separates it.
     periodicDamageMultiplier: build.periodicDamageMultiplier,

@@ -69,17 +69,14 @@
     ]
    ]
   },
-  "malediction": {
-   "name": "Malediction",
+  "grim_reach": {
+   "name": "Grim Reach",
    "tree": "affliction",
-   "ranks": 5,
-   "text": "Increases all periodic damage done by your Warlock spells by {0}%.",
+   "ranks": 2,
+   "text": "Increases the range of your Affliction spells by {0}%.",
    "values": [
-    1,
-    2,
-    3,
-    4,
-    5
+    10,
+    20
    ]
   },
   "soul_harvest": {
@@ -136,7 +133,7 @@
    "name": "Amplify Curse",
    "tree": "affliction",
    "ranks": 1,
-   "text": "Increases the effect of your next Curse of Weakness or Bane of Agony by 50%, or your next Curse of Exhaustion by 20%. Lasts 30 sec.",
+   "text": "Increases the effect of your next Curse of Weakness or Bane of Agony by 50%, or your next Curse of Exhaustion by 50%. Lasts 30 sec.",
    "values": null,
    "note": "single rank"
   },
@@ -222,11 +219,11 @@
    "ranks": 5,
    "text": "Increases the damage dealt or life drained by your Shadow spells by {0}%.",
    "values": [
-    1,
     2,
-    3,
     4,
-    5
+    6,
+    8,
+    10
    ]
   },
   "wrack": {
@@ -550,7 +547,7 @@
    "name": "Destructive Reach",
    "tree": "destruction",
    "ranks": 2,
-   "text": "Increases the range of your damaging spells by {0}%.",
+   "text": "Increases the range of your Destruction spells by {0}%.",
    "values": [
     10,
     20

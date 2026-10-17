@@ -375,27 +375,76 @@ function combine(a: SchoolModifier, b: SchoolModifier): SchoolModifier {
 }
 
 /**
+ * A DAMAGE MULTIPLIER AT N STACKS, AND THE ONE PLACE THAT RULE LIVES.
+ *
+ * ==============================================================================
+ * THE DEFAULT IS THE POWER OF THE STACK COUNT, which is what every reader of
+ * `modifiersScaleWithStacks` has always done: a damage multiplier MULTIPLIES, so
+ * stacking it compounds. Improved Scorch's 3% at five stacks is 1.159 and not
+ * 1.150, and the difference is a percent nobody would notice -- which is why one
+ * convention for the flag was worth more than two.
+ *
+ * ------------------------------------------------------------------------------
+ * AND THE OWNER HAS NOW RULED ONE AURA THE OTHER WAY, WHICH IS WHY THIS IS A
+ * FUNCTION RATHER THAN FIVE COPIES OF AN OPERATOR.
+ *
+ * "Winter's Chill at 5 stacks is a 3x multiplier for Cone of Cold" -- 40% a
+ * stack, so `1 + 0.4 x 5` ADDITIVELY and not `1.4^5 = 5.378`. At 3% a stack the
+ * two readings are 1.159 against 1.150 and indistinguishable; at 40% they are a
+ * factor of 1.8 apart, so the existing callers were never evidence about this
+ * one.
+ *
+ * `AuraDefinition.additiveDamageStacks` IS THE OPT-IN, and it defaults to the
+ * compounding rule so nothing that existed moves. **A ruling covers what it says
+ * and is not extended by analogy** -- Improved Scorch keeps its 1.159, because
+ * the owner ruled about Winter's Chill.
+ *
+ * ------------------------------------------------------------------------------
+ * IT IS WIRED INTO EVERY DAMAGE READER OF THAT FLAG, NOT ONLY THE ONE THAT
+ * NEEDED IT -- five sites, each of which used to write `** stacks` for itself:
+ * the per-ability fold here, `damageDoneBySchool`, `damageTakenBySchool` and its
+ * periodic sibling, `damageDoneByTable`, and `auraMultiplier`'s three keys.
+ *
+ * **A GENERAL FIELD READ BY ONLY SOME OF ITS RULES IS SILENT IN THE REST**, which
+ * this project has paid for twice -- `resourceRegenMultiplier` wired into one of
+ * three regeneration rules, and `modifiersScaleWithStacks` itself honoured by two
+ * of three collections. An aura declaring `additiveDamageStacks` with a
+ * `damageTakenBySchool` would otherwise have compounded in silence.
+ *
+ * THE FLAT FIELDS ARE LEFT ALONE and are already linear: `flatDamageTaken` and
+ * `spellPowerTakenBySchool` multiply by the count, because adding N copies of a
+ * flat amount IS N times it. There is no second reading of those to choose.
+ * ==============================================================================
+ */
+export function stackedMultiplier(value: number, stacks: number, additive = false): number {
+  if (stacks === 1) return value;
+  return additive ? 1 + (value - 1) * stacks : value ** stacks;
+}
+
+/**
  * One modifier at N stacks, for an aura whose `modifiersScaleWithStacks` is set.
  *
  * ------------------------------------------------------------------------------
  * IT IS `combine` APPLIED TO ITSELF N TIMES, and it has to be, or a stacking
  * aura's crit and its damage would follow two different conventions. Chances
- * ADD, so they multiply by the count; damage MULTIPLIES, so it goes to the
- * POWER of the count -- which is exactly what `damageTakenMultiplierFor`
- * already does for `damageTakenBySchool` and what `bindModifiers` does for
- * `statModifiers`. Writing "x stacks" for both would give a five-stack 1.03
- * a 1.15 where every other reader of that flag gives 1.159.
+ * ADD, so they multiply by the count; damage goes through `stackedMultiplier`,
+ * which compounds by default and adds for the one aura the owner has ruled
+ * additive.
  *
  * `spellPower` is left out on purpose: it is a SCHOOL field, and no aura
  * carries a school modifier. The day one does, it adds like the chances.
  * ------------------------------------------------------------------------------
  */
-export function scaleByStacks(modifier: AbilityModifier, stacks: number): AbilityModifier {
+export function scaleByStacks(
+  modifier: AbilityModifier,
+  stacks: number,
+  additiveDamage = false,
+): AbilityModifier {
   if (stacks === 1) return modifier;
   return {
     critBonus: (modifier.critBonus ?? 0) * stacks,
     critMultiplierBonus: (modifier.critMultiplierBonus ?? 0) * stacks,
-    damageMultiplier: (modifier.damageMultiplier ?? 1) ** stacks,
+    damageMultiplier: stackedMultiplier(modifier.damageMultiplier ?? 1, stacks, additiveDamage),
   };
 }
 
@@ -430,6 +479,64 @@ export function scaleByStacks(modifier: AbilityModifier, stacks: number): Abilit
  * this one, and `createPlayer` folds the equipped set's into the build's.
  * ------------------------------------------------------------------------------
  */
+/**
+ * A per-school damage bonus scaled by how many of the ATTACKER'S OWN effects
+ * are on the target, with a ceiling.
+ *
+ * ==============================================================================
+ * THE SIXTH MODIFIER SHAPE, AND THE SECOND THAT ASKS A QUESTION ABOUT SOMEBODY
+ * ELSE. `bleedingTargetModifiers` reads one BOOLEAN off the target -- is it
+ * bleeding -- and this reads a COUNT. Everything else about it is a
+ * `SchoolModifiers` entry: built once with the character, keyed by school.
+ *
+ * Fire Power is why: "Increases the damage done by your Fire spells by 3% per
+ * your Fire effects on the target, up to a maximum increase of 12%." Four
+ * separate things in that sentence have no home in the five scopes above --
+ * a SCHOOL, a COUNT, a CAP, and a count of auras on the DEFENDER.
+ *
+ * ------------------------------------------------------------------------------
+ * `effectIds` IS A NAMED LIST AND NOT A DERIVATION, which is Soul Siphon's
+ * arrangement and is deliberate. "A Fire effect" cannot be read off an aura: an
+ * `AuraDefinition` carries no school, because the school of a periodic effect is
+ * decided inside its own `onTick`, and a derivation that has to RUN the effect
+ * to answer is not a derivation -- the same argument `isBleed` already makes
+ * about "physical, periodic and ignoring armor".
+ *
+ * SO THE LIST CAN BE NARROWER THAN THE RULESET'S, AND SAYS SO WHERE IT IS
+ * DECLARED. Soul Siphon's does, for exactly this reason. **The failure mode is
+ * an effect the ruleset counts and the list does not**, which is a smaller
+ * number and no error -- so the content's own `unmodelled` entry names it
+ * rather than this field implying completeness.
+ *
+ * ------------------------------------------------------------------------------
+ * KEPT APART FROM `SchoolModifier.damageMultiplier` rather than folded into it,
+ * which is the rule `addWhileAura` states and this project has paid for twice:
+ * combining a conditional modifier into the unconditional bucket loses the
+ * condition, and a talent that pays a flat 12% all fight instead of 3% per
+ * effect is a bigger number and no error.
+ *
+ * AND THE CAP IS A PERCENTAGE RATHER THAN A COUNT, because the tooltip states
+ * one. `Math.min(count * percentPerEffect, maxPercent)` and not
+ * `Math.min(count, 4) * percentPerEffect`: the two agree at 3 and 12 and come
+ * apart the moment a rank makes the cap an inexact multiple -- rank 1 is 1%
+ * with a cap of 4, which is FOUR effects, where rank 2's 2% and 8 is also four.
+ * They agree at every current rank, which is precisely when writing the wrong
+ * one is free.
+ * ==============================================================================
+ */
+export interface PerTargetEffectDamage {
+  /** Percentage points per qualifying effect on the target. 3 is "+3% each". */
+  readonly percentPerEffect: number;
+  /** The most it can reach, in percentage points, however many are up. */
+  readonly maxPercent: number;
+  /**
+   * The aura ids that COUNT, on the target. Named rather than derived -- see
+   * the class note -- and the content that declares them owns whether the list
+   * is complete.
+   */
+  readonly effectIds: readonly string[];
+}
+
 export class SchoolModifiers {
   private readonly bySchool = new Map<DamageSchool, SchoolModifier>();
 

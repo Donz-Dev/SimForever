@@ -198,7 +198,7 @@ than code.
 | Profile | Talents | DPS | Was | List |
 | --- | --- | --- | --- | --- |
 | Firelock | 5/11/35 | **544.3** | 544.7, −0.4 noise (Corruption out) | `WARLOCK_DESTRUCTION` |
-| SM/DS | 40/11/0 | **479.7** | 441.5, **+38.1 REAL** (the eight rulings) | `WARLOCK_AFFLICTION` |
+| SM/DS | 35/11/5 | **479.7** | 441.5, **+38.1 REAL** (the eight rulings) | `WARLOCK_AFFLICTION` |
 
 **FIRELOCK IS NO LONGER THE THIRD-HIGHEST PROFILE IN THE PROJECT.** It sits
 between Prot Warr's 454.6 and Cat's 488.0 now. The drop is a CORRECTION and not a

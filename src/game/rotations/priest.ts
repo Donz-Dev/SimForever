@@ -127,7 +127,35 @@ export const PRIEST_SHADOW: AplList = {
   ...CONSUMABLE_HEALS,
     { abilityId: 'shadow_word_pain', condition: expired('shadow_word_pain') },
     { abilityId: 'devouring_plague', condition: expired('devouring_plague') },
-    { abilityId: 'vampiric_embrace', condition: expired('vampiric_embrace') },
+  /*
+   * ==========================================================================
+   * VAMPIRIC EMBRACE LEAVES THIS LIST, AND IT IS WORTH **+39.5**.
+   *
+   * It fired twice a fight for **0.0% of the damage**, which is the whole
+   * finding: the debuff returns a share of the Priest's Shadow damage to the
+   * party as HEALTH, and this profile sets `targetAttacks: false` -- so nothing
+   * needs healing, the clause pays out to nobody, and the two global cooldowns
+   * are a straight loss.
+   *
+   * THE TALENT POINT STAYS AND HAS TO. Shadowform requires Vampiric Embrace
+   * 1/1, so the point is the capstone's prerequisite whatever the list does
+   * with it -- which is the `requiresRanks` rule: a talent whose own effect is
+   * worth nothing can still be mandatory. What is removed is the CAST, not the
+   * choice.
+   *
+   * SO THIS IS AN ENTRY THAT WAS ALWAYS GOING TO READ 0.0% AND NEVER READ ZERO
+   * USES, which is why no audit found it: `ability_audit.ts` looks for an
+   * ability in the book and never cast, and `USES=1` flags an entry that never
+   * fires. This one fired, every fight, and dealt nothing. **A healing debuff
+   * on a profile nothing attacks is the one shape both those checks are blind
+   * to**, and what caught it was asking what each entry was FOR.
+   *
+   * IT IS THE OWNER'S OWN LIST, so this is a measured answer to the
+   * optimisation brief rather than a correction -- their instruction was to
+   * "evaluate pre-combat, and APL decisions to maximize throughput", and this
+   * is the largest single thing that evaluation found on this profile.
+   * ==========================================================================
+   */
     { abilityId: 'mind_blast' },
   /*
    * ON COOLDOWN, EXCEPT THROUGH THE HOLD BAND. The condition is the only thing

@@ -993,6 +993,75 @@ function bleedingTargetModifier(
   return modifiers.for(table);
 }
 
+/**
+ * Fire Power: a per-school bonus scaled by the attacker's effects on the target.
+ *
+ * ==============================================================================
+ * "Increases the damage done by your Fire spells by 3% per your Fire effects on
+ * the target, up to a maximum increase of 12%. Effects which mix multiple
+ * schools of magic do not qualify."
+ *
+ * THE EMPTY CHECK IS NOT AN OPTIMISATION, IT IS THE COMMON CASE, which is the
+ * argument `bleedingTargetModifier` next door already makes: one talent in the
+ * project declares this, so walking a named list against the target's auras on
+ * every tick of every fight for everybody else would be work done for nobody.
+ *
+ * ------------------------------------------------------------------------------
+ * IT READS `countsAsSchools`, AND THE TWO HALVES OF THAT SENTENCE POINT OPPOSITE
+ * WAYS -- which is the one thing here a reader is likely to get backwards.
+ *
+ *   WHAT BENEFITS   Frostfire Bolt "counts as both Frost and Fire damage", so it
+ *                   IS a Fire spell and Fire Power raises it. `countsAsSchools`
+ *                   reaches the caster's school talents, and this is one.
+ *   WHAT COUNTS     Frostfire Bolt's DoT is an effect that MIXES two schools, so
+ *                   it does not qualify as one of the Fire effects on the
+ *                   target. The tooltip's last sentence is about this half only.
+ *
+ * So a Frostfire Mage's Frostfire Bolt collects the bonus and does not
+ * contribute to it, and both of those are the tooltip read literally. **The
+ * mixed-school exclusion is enforced by the list simply not naming that aura**
+ * -- see `MAGE_FIRE_POWER_EFFECTS`, which says so where it is declared.
+ *
+ * ------------------------------------------------------------------------------
+ * THE SCHOOLS MULTIPLY RATHER THAN TAKING THE LARGER, which is
+ * `casterSchoolModifier`'s rule for a DAMAGE multiplier and the opposite of its
+ * rule for crit: two schools' damage talents are two independent sources, where
+ * an additive crit bonus naming both schools is one. No ruleset entry declares
+ * this for two schools at once today, so the loop runs once in practice.
+ *
+ * AND IT DOES NOT ASK WHO APPLIED THE AURA. "Your Fire effects" is whose they
+ * are, and `AuraCollection` records a source -- but every encounter here has
+ * exactly one friendly caster, so the two readings cannot differ, and Soul
+ * Siphon's identical count has always read it this way. Said out loud because
+ * it would stop being true the day a second caster existed.
+ * ==============================================================================
+ */
+function perTargetEffectMultiplier(request: DamageRequest): number {
+  const scalings = request.source.schoolDamagePerTargetEffect;
+  if (scalings.size === 0) return 1;
+
+  let multiplier = 1;
+  const schools: readonly DamageSchool[] = request.countsAsSchools?.length
+    ? [request.school, ...request.countsAsSchools.filter((s) => s !== request.school)]
+    : [request.school];
+
+  for (const school of schools) {
+    const scaling = scalings.get(school);
+    if (!scaling) continue;
+    const active = scaling.effectIds.filter((id) => request.target.auras.has(id)).length;
+    if (active === 0) continue;
+    /*
+     * THE CAP IS ON THE PERCENTAGE AND NOT ON THE COUNT, because the tooltip
+     * states a "maximum increase of 12%". The two agree at every current rank
+     * and come apart the moment a rank's cap is not a whole multiple of its
+     * per-effect figure -- which is precisely when writing the wrong one is free.
+     */
+    const percent = Math.min(active * scaling.percentPerEffect, scaling.maxPercent);
+    multiplier *= 1 + percent / 100;
+  }
+  return multiplier;
+}
+
 const NO_MODIFIER: AbilityModifier = {};
 
 function withModifier(chances: AttackChances, modifier: AbilityModifier): AttackChances {
@@ -1197,6 +1266,15 @@ export function resolveDamage(
    * damage rather than on who deals it, what school it is or which table it
    * rolled. Genesis is the only caller; a character without it carries 1.
    */
+  /*
+   * PER SCHOOL, SCALED BY A COUNT OF THE ATTACKER'S OWN EFFECTS ON THE TARGET.
+   *
+   * Fire Power's "3% per your Fire effects on the target, up to a maximum
+   * increase of 12%", and the second multiplier here conditioned on the
+   * DEFENDER after `bleedingMultiplier` -- a count where that one is a boolean.
+   * See `perTargetEffectMultiplier`.
+   */
+  const perTargetEffectMultiplierValue = perTargetEffectMultiplier(request);
   const periodicMultiplier = request.periodic ? source.periodicDamageMultiplier : 1;
   /*
    * AND THE SAME AXIS POINTING THE OTHER WAY, which is Eureka!.
@@ -1214,6 +1292,7 @@ export function resolveDamage(
     attackerMultiplier *
     abilityMultiplier *
     schoolMultiplier *
+    perTargetEffectMultiplierValue *
     tableMultiplier *
     bleedingMultiplier *
     periodicMultiplier *

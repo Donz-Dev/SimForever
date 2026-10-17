@@ -169,31 +169,37 @@ describe('Ruin and Agonizing Flames, which select a TREE and not a school', () =
 describe('Improved Drains and Soul Siphon, which reach Wrack and nothing else', () => {
   const smds = playerFor('warlock_smds');
 
-  it('Improved Drains and Malediction BOTH reach Wrack, and they multiply', () => {
+  it('Improved Drains reaches Wrack ALONE now, because Malediction is gone', () => {
     /*
      * ------------------------------------------------------------------------
-     * 1.2 x 1.05 = 1.26, AND THE SECOND FACTOR IS A RULING.
+     * 1.2, AND IT WAS 1.2 x 1.05 FOR EXACTLY ONE RELEASE.
      *
      * Improved Drains names "Drain Life, Drain Soul, and Wrack" and is the only
-     * one of those three this project declares. Malediction names "all periodic
-     * damage done by your Warlock spells" -- and whether a CHANNEL's ticks are
-     * periodic damage is a question the data could not answer, because Wrack's
-     * ticks are cast ticks and carry no `periodic` flag. The ruleset owner has
-     * ruled that for Malediction they are.
+     * one of those three this project declares. MALEDICTION was the other
+     * factor -- "all periodic damage done by your Warlock spells", with the
+     * owner's ruling that a channel's ticks count for it -- and client build
+     * 1.60.1.70425 DELETED THE TALENT, putting GRIM REACH in its slot at two
+     * ranks.
      *
-     * THIS ASSERTED 1.2 AND WAS RIGHT UNTIL THAT RULING. It is the product now,
-     * written out with both factors named, so the next reader can see which
-     * talent contributes what rather than meeting a bare 1.26.
+     * SO THIS ASSERTION HAS NOW BEEN 1.2, THEN THE PRODUCT, THEN 1.2 AGAIN, and
+     * the middle state is the one worth keeping a record of: the factor was a
+     * RULING rather than a reading, so losing it is the ruleset changing its
+     * mind about the talent rather than this project changing its mind about
+     * the ruling. The owner's answer still stands for any future talent that
+     * says "periodic".
      *
-     * THEY MULTIPLY RATHER THAN ADD, which is `combineAbilityModifiers`' rule
-     * for damage and the same one `SchoolModifiers` uses: two independent +10%
-     * effects are +21%.
+     * THEY MULTIPLIED RATHER THAN ADDING, which is `combineAbilityModifiers`'
+     * rule for damage and the same one `SchoolModifiers` uses: two independent
+     * +10% effects are +21%. Nothing exercises that on Wrack any more, which is
+     * why the negative assertion below is here -- a product collapsing to one
+     * factor reads exactly like a second factor that stopped being wired up.
      * ------------------------------------------------------------------------
      */
     const improvedDrains = 1.2;
-    const malediction = 1.05;
-    expect(smds.abilityModifiers.for('wrack').damageMultiplier).toBeCloseTo(
-      improvedDrains * malediction,
+    expect(smds.abilityModifiers.for('wrack').damageMultiplier).toBeCloseTo(improvedDrains, 6);
+    // And NOT the old product, which is what a half-reverted removal would give.
+    expect(smds.abilityModifiers.for('wrack').damageMultiplier).not.toBeCloseTo(
+      improvedDrains * 1.05,
       6,
     );
   });
@@ -365,16 +371,53 @@ describe('Two lists, and conflating them would have been the bug', () => {
     expect(perEffect * 3).toBe(cap);
   });
 
-  it('Malediction reaches Wrack, which is the owner calling a channel periodic', () => {
-    const malediction = WARLOCK_TALENT_EFFECTS.malediction;
-    const ids = malediction
-      .filter((e: TalentEffect) => e.kind === 'abilityDamage')
-      .map((e: TalentEffect) => (e as { abilityId: string }).abilityId);
-    expect(ids).toContain('wrack');
-    // The four aura ids it already had, so the ruling ADDED rather than moved.
-    expect(ids).toEqual(
-      expect.arrayContaining(['corruption', 'bane_of_agony', 'siphon_life', 'immolate']),
-    );
+  it('Malediction is GONE, and Grim Reach is what took its slot', () => {
+    /*
+     * ========================================================================
+     * THE TALENT THIS PAIR OF TESTS WAS WRITTEN FOR NO LONGER EXISTS.
+     *
+     * Malediction was five ranks of +% to every periodic effect a Warlock
+     * owns -- the single largest talent on this project's most DoT-heavy
+     * profile -- and client build 1.60.1.70425 removed it, putting GRIM REACH
+     * in Affliction row 1 at two ranks. Grim Reach is range, so it is
+     * `positioning` and worth nothing here.
+     *
+     * WHAT REPLACED IT REPLACES NOTHING, and that is the ruleset's decision
+     * rather than a hole for this repository to fill. Recorded as an assertion
+     * instead of as prose because **a deleted talent leaves no zero anywhere**:
+     * `WARLOCK_TALENT_EFFECTS.malediction` being absent is not an error, a
+     * spread naming it is stripped in silence, and the profile simply does less
+     * damage. The one thing that notices is a test that says so.
+     *
+     * THE SPREAD MOVED ITS FIVE POINTS TO BANE, and `presets.ts` carries the
+     * argument: the owner's own 2.5 second Shadow Bolt lead is a 3.0 second
+     * cast with Bane 5/5 on it.
+     * ========================================================================
+     */
+    expect(WARLOCK_TALENT_EFFECTS.malediction).toBeUndefined();
+    expect(WARLOCK_TALENT_EFFECTS.grim_reach).toBeDefined();
+
+    // Grim Reach is ruled out rather than unfinished, so it carries a scope.
+    const scopes = WARLOCK_TALENT_EFFECTS.grim_reach
+      .filter((e: TalentEffect) => e.kind === 'unmodelled')
+      .map((e: TalentEffect) => (e as { scope?: string }).scope);
+    expect(scopes).toEqual(['positioning']);
+
+    /*
+     * AND NOTHING ELSE INHERITED ITS FOUR AURA IDS. Malediction reached
+     * Corruption, Bane of Agony, Siphon Life, Immolate and Wrack by naming each
+     * one -- the route a tick takes, because a tick carries its AURA's id -- so
+     * a reader meeting that pattern in some other talent should know it is not
+     * this one come back under a new name.
+     */
+    for (const effects of Object.values(WARLOCK_TALENT_EFFECTS)) {
+      const ids = effects
+        .filter((e: TalentEffect) => e.kind === 'abilityDamage')
+        .map((e: TalentEffect) => (e as { abilityId: string }).abilityId);
+      expect(ids).not.toEqual(
+        expect.arrayContaining(['corruption', 'bane_of_agony', 'siphon_life', 'immolate']),
+      );
+    }
   });
 
   it('Amplify Curse grants its ability and reports only the curses it cannot reach', () => {

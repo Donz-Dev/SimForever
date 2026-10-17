@@ -1,7 +1,7 @@
 {
  "class": "priest",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70291",
+ "build": "1.60.1.70425",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -117,7 +117,7 @@
    "cost": "985 Mana",
    "range": "30 yd range",
    "cast": "Instant",
-   "cooldown": "1 min cooldown",
+   "cooldown": "24 sec cooldown",
    "description": "Afflicts the target with a disease that causes 848 Shadow damage over 24 sec. Damage caused by the Devouring Plague heals the caster.",
    "versusClassic": "changed"
   },
@@ -626,7 +626,7 @@
    "cost": "340 Mana",
    "range": "30 yd range",
    "cast": "Instant",
-   "cooldown": "15 sec cooldown",
+   "cooldown": "18 sec cooldown",
    "description": "A word of dark binding that inflicts 444 to 472 Shadow damage to the target. If your target is not killed by Shadow Word: Death, you take backlash damage equal to 10% of your maximum health.",
    "versusClassic": "new"
   },
@@ -731,7 +731,7 @@
    "cost": "40 Mana",
    "range": "30 yd range",
    "cast": "Instant",
-   "cooldown": "1 min cooldown",
+   "cooldown": "30 sec cooldown",
    "description": "Afflicts your target with Shadow energy that causes all party members to be healed for 20% of any Shadow spell damage you deal for 30 sec.",
    "versusClassic": "changed"
   }

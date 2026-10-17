@@ -405,12 +405,36 @@ export const MAGE_FROSTFIRE: AplList = {
     ),
   },
   /*
-   * ICE LANCE ENTERS A LIST FOR THE FIRST TIME. Its 300% clause was inert for
-   * as long as nothing could make the target count as Frozen; Fingers of Frost
-   * does not freeze anything, it makes the caster's next spells behave as
-   * though it were. With a charge in hand it is a times-four instant.
+   * ==========================================================================
+   * ICE LANCE LEAVES THIS LIST, AND IT IS WORTH **+74.1** TO TAKE IT OUT.
+   *
+   * It entered when Fingers of Frost made the 300% clause reachable -- the
+   * talent does not freeze anything, it makes the caster's next spells behave
+   * as though the target were -- and the entry was correctly gated on a charge
+   * being in hand. It was still 15.2% of the profile's damage and still a loss.
+   *
+   * BECAUSE THE CHARGE IS WORTH MORE TO SOMETHING ELSE. Shatter is
+   * `critWhileAura('fingers_of_frost', ALL_ABILITIES)`, so the window raises
+   * the crit of EVERY spell -- and Fingers of Frost holds two charges that any
+   * cast spends. An Ice Lance inside the window is a charge Frostfire Bolt or
+   * Pyroblast does not get, which is this project's own "a charge spent on the
+   * wrong ability" failure: the proc fires, the aura reports its uptime, and
+   * the saving lands somewhere it should not.
+   *
+   * THE USES COLUMN IS WHAT SAYS SO RATHER THAN THE DPS. Removing the entry
+   * takes Frostfire Bolt from **12.8 casts a fight to 16.3** and Pyroblast from
+   * 3.7 to 4.2, and Ignite's share from 11.3% to 15.6% -- so 5.6 Ice Lances
+   * become three and a half casts of the biggest spell in the build plus the
+   * Fire crits that ride on them. **A DPS figure alone could not have told a
+   * displaced cast from a worse one.**
+   *
+   * THE ABILITY IS STILL DECLARED, STILL GATED AND STILL CORRECT. What is
+   * measured here is that a 1.5/3.5/3 coefficient tripled is worth less than
+   * the 2.5-second cast it displaces -- which is a fact about this build's
+   * spell power rather than about Ice Lance, and would flip on a build whose
+   * Frostfire Bolt were weaker. One line puts it back.
+   * ==========================================================================
    */
-  { abilityId: 'ice_lance', condition: selfHasStack('fingers_of_frost') },
   /*
    * FIRE BLAST ONLY ABOVE 10% MANA, which is the MIRROR of the Evocation entry
    * at the top of this list and shares its constant deliberately. Below that

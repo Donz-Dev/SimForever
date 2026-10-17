@@ -1,4 +1,5 @@
 import type { TalentEffects } from './TalentEffect';
+import { FLAME_SHOCK_EXTRA_DURATION_BONUS } from '../abilities/shaman';
 
 /**
  * What each Shaman talent does, as data.
@@ -159,9 +160,37 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * Magma Totem is left.
      */
     { kind: 'abilityDamage', abilityId: 'fire_nova' },
+    /*
+     * ==========================================================================
+     * AND ITS DURATION CLAUSE, WHICH REACHED NOTHING AND SAID NOTHING.
+     *
+     * "as well as increases the duration of your Flame Shock spell by {1} sec"
+     * -- NINE seconds at 3/3, which both Shaman profiles take. It was absent
+     * entirely, and the `unmodelled` entry below named only the Magma Totem
+     * half: **a reason that describes the clauses that DO work is a claim about
+     * the code, and this one was silent about a clause worth 75% of a DoT.**
+     *
+     * EXTRA TICKS OF THE SAME SIZE. 12 seconds is four ticks of 44 and 21 is
+     * seven, so this is a bigger burn rather than the same burn stretched -- see
+     * `flameShockDot` and `FLAME_SHOCK_BASE_TICKS`, which is named precisely so
+     * the per-tick figure cannot be divided by the extended count.
+     *
+     * `valueIndex: 1`, which is the seconds. Index 0 is the 15% damage the four
+     * `abilityDamage` entries above already read, and reading it here would add
+     * FIFTEEN seconds to the burn instead of nine -- a plausible number, in the
+     * generous direction, on a row this project has already been caught by four
+     * times.
+     * ==========================================================================
+     */
+    {
+      kind: 'abilityBonus',
+      abilityId: 'flame_shock',
+      key: FLAME_SHOCK_EXTRA_DURATION_BONUS,
+      valueIndex: 1,
+    },
     {
       kind: 'unmodelled',
-      reason: `Its Magma Totem clause does nothing; every other clause is modelled. ${MAGMA_TOTEM_UNDECLARED}`,
+      reason: `Its Magma Totem clause does nothing; every other clause is modelled, including the Flame Shock duration. ${MAGMA_TOTEM_UNDECLARED}`,
     },
   ],
 
@@ -232,9 +261,32 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * index 1. Reading index 0 for the cooldown would take 20 SECONDS off a
    * 10-second cooldown and make Fire Nova free to cast.
    */
-  improved_fire_nova: [
+  /*
+   * ==========================================================================
+   * TRIAL BY FIRE REPLACES IMPROVED FIRE NOVA, and it is the same two clauses
+   * with a third that reaches nothing.
+   *
+   * "Increases the damage done by your Fire Nova spell by {0}% and reduces its
+   * cooldown by {1} sec, and increases the duration of your Magma Totem by
+   * {2} sec."
+   *
+   * SO THE FIRST TWO ARE LIFTED STRAIGHT OFF THE TALENT IT REPLACED -- same
+   * ability, same kinds, same indices -- and only the figures and the rider are
+   * new. Said out loud because a new talent that is an old one renamed with an
+   * extra clause is exactly what a reader re-derives from scratch.
+   * ==========================================================================
+   */
+  trial_by_fire: [
     { kind: 'abilityDamage', abilityId: 'fire_nova' },
     { kind: 'abilityCooldown', abilityId: 'fire_nova', unit: 'seconds', valueIndex: 1 },
+    {
+      kind: 'unmodelled',
+      scope: 'totemEntities',
+      reason:
+        'Its Magma Totem duration clause reaches nothing -- Magma Totem is a ' +
+        'totem that damages what stands around it and is not declared. Its ' +
+        'Fire Nova damage and cooldown clauses both APPLY.',
+    },
   ],
 
   /*
@@ -266,9 +318,40 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  call_of_thunder: [
-    { kind: 'abilityCrit', abilityId: 'lightning_bolt' },
-    { kind: 'abilityCrit', abilityId: 'chain_lightning' },
+  /*
+   * ==========================================================================
+   * ELEMENTAL MASTERY REPLACES CALL OF THUNDER, AND IT IS THE NEW ELEMENTAL
+   * CAPSTONE -- the structural half of this patch for the Shaman. Lava Burst
+   * dropped from row 6 to row 4 and lost its Lightning Overload prerequisite,
+   * so the 31-point talent an Elemental build is shaped around is now a
+   * different ability entirely.
+   *
+   * "Gain mastery over Fire and Lightning, reducing the cast time of Lightning
+   * Bolt and Lava Burst by 0.5 sec, and removing the cooldown from Chain
+   * Lightning. Lasts 15 sec." Three minute cooldown.
+   *
+   * TWO CLAUSES OF THREE APPLY. The cast time is a `castModifier` on the aura
+   * naming both abilities, with NO `consumedByCast`: it is a duration effect,
+   * so every cast inside the fifteen seconds is shortened rather than only the
+   * next one -- the distinction Arcane Power already rests on.
+   *
+   * THE COOLDOWN REMOVAL DOES NOT, and is declared rather than dropped:
+   * nothing suspends an ability's cooldown for the life of an aura.
+   * `abilityCooldown` is fixed when the character is built, and a
+   * `CastModifier` carries cast time and cost and not cooldown.
+   * ==========================================================================
+   */
+  elemental_mastery: [
+    { kind: 'grantAbility', abilityId: 'elemental_mastery' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'Its "removing the cooldown from Chain Lightning" clause needs an aura ' +
+        'that SUSPENDS a cooldown while up, which nothing expresses: ' +
+        '`abilityCooldown` is resolved when the character is built and a ' +
+        '`CastModifier` carries cast time and cost. The cast-time clause on ' +
+        'Lightning Bolt and Lava Burst applies.',
+    },
   ],
 
   elemental_reach: [{ kind: 'unmodelled', scope: 'positioning', reason: 'Range, and nothing here has a position.' }],

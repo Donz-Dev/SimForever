@@ -1,7 +1,7 @@
 {
  "class": "hunter",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70291",
+ "build": "1.60.1.70425",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -326,11 +326,11 @@
    "cost": "35 Focus",
    "range": "Melee Range",
    "cast": "Instant",
-   "cooldown": "6 sec cooldown",
+   "cooldown": "15 sec cooldown",
    "extraLines": [
     "Pet: Crocilisk"
    ],
-   "description": "Viciously bites enemy appendages for 50 to 58 damage and reduces the effectiveness of any healing by 50% for 10 sec.",
+   "description": "Viciously bites enemy appendages for 50 to 58 damage and reduces the effectiveness of any healing by 25% for 6 sec.",
    "versusClassic": "new"
   },
   {
@@ -543,7 +543,7 @@
    "extraLines": [
     "Pet: Wolf"
    ],
-   "description": "The wolf howls, increasing the melee attack power of all party members within 15 yards by 83. Lasts 1 min.",
+   "description": "The wolf howls, increasing the melee attack power of all party or raid members within 15 yards by 83. Lasts 1 min.",
    "versusClassic": "changed"
   },
   {
@@ -662,11 +662,11 @@
    "cost": "20 Focus",
    "range": "Melee Range",
    "cast": "Instant",
-   "cooldown": "1 min cooldown",
+   "cooldown": "1.5 min cooldown",
    "extraLines": [
     "Pet: Bird of Prey"
    ],
-   "description": "Grabs an enemy's weapon with its talons, causing 41 to 47 damage and disarming them for 4 sec.",
+   "description": "Grabs an enemy's weapon with its talons, causing 41 to 47 damage and disarming them for 3 sec.",
    "versusClassic": "new"
   },
   {
@@ -692,7 +692,7 @@
    "school": "Physical",
    "cost": "13.9% of base mana",
    "range": "8-35 yd range",
-   "cast": "0.5 sec cast",
+   "cast": "Instant",
    "cooldown": "6 sec cooldown",
    "description": "Fires several missiles, hitting 3 targets. Multi-Shot shares its cooldown with Aimed Shot.",
    "versusClassic": "changed"
@@ -926,17 +926,17 @@
    "cost": "80 Focus",
    "range": "Melee Range",
    "cast": "Instant",
-   "cooldown": "30 sec cooldown",
+   "cooldown": "1 min cooldown",
    "extraLines": [
     "Pet: Bat"
    ],
-   "description": "Emits a piercing shriek, inflicting 77 to 91 Nature damage and increasing the casting time of all spells by 60% for 30 sec.",
+   "description": "Emits a piercing shriek, inflicting 77 to 91 Nature damage and increasing the casting time of all spells by 30% for 20 sec.",
    "versusClassic": "new"
   },
   {
    "id": 1317257,
    "name": "Strider Kick",
-   "rank": 1,
+   "rank": null,
    "tab": "Survival",
    "level": "Learned at level 30",
    "school": "Physical",
@@ -1151,7 +1151,7 @@
    "school": "Arcane",
    "cost": "525 Mana",
    "cast": "Instant",
-   "description": "Increases the Ranged Attack Power of party members within 45 yards by 50. Lasts 30 min.",
+   "description": "Increases the Ranged Attack Power of party or raid members within 45 yards by 50. Lasts 30 min.",
    "versusClassic": "changed"
   },
   {

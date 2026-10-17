@@ -67,37 +67,94 @@ export const FLAME_SHOCK_COEFFICIENTS = {
   perTick: FLAME_SHOCK_TICK_SP_COEFFICIENT,
 };
 
-export const FLAME_SHOCK_DOT: AuraDefinition = {
-  id: 'flame_shock',
-  name: 'Flame Shock',
-  durationMs: FLAME_SHOCK_DOT_DURATION_MS,
-  isDebuff: true,
-  refreshBehaviour: 'reset',
-  periodic: {
-    intervalMs: FLAME_SHOCK_TICK_INTERVAL_MS,
-    onTick: (context, aura) => {
-      const source = context.combatant(aura.sourceId);
-      const target = context.combatant(aura.targetId);
-      if (!source || !target || !target.isAlive) return;
+/**
+ * The number of ticks the SOURCE's own 176-over-12-seconds describes.
+ *
+ * ==============================================================================
+ * NAMED BECAUSE CALL OF FLAME EXTENDS THE DURATION AND THE PER-TICK FIGURE MUST
+ * NOT MOVE WITH IT.
+ *
+ * `FLAME_SHOCK_DOT_TOTAL / FLAME_SHOCK_BASE_TICKS` is 44, and that is a tick of
+ * Flame Shock whatever the duration is. Dividing the total by the EXTENDED tick
+ * count instead would spread the same 176 more thinly -- a talent that adds nine
+ * seconds and no damage, which is a smaller number and no error, and the exact
+ * inverse of the mistake Rip made by multiplying a duration total per tick.
+ *
+ * **WHEN A DoT'S DURATION BECOMES VARIABLE, ITS PER-TICK FIGURE HAS TO BE
+ * COMPUTED FROM A CONSTANT**, and the cheap way to say so is to name that
+ * constant rather than to write an expression that happens to use the base.
+ * ==============================================================================
+ */
+export const FLAME_SHOCK_BASE_TICKS =
+  FLAME_SHOCK_DOT_DURATION_MS / FLAME_SHOCK_TICK_INTERVAL_MS;
+export const FLAME_SHOCK_TICK_DAMAGE = FLAME_SHOCK_DOT_TOTAL / FLAME_SHOCK_BASE_TICKS;
 
-      dealDamage(context, {
-        source,
-        target,
-        abilityId: aura.id,
-        abilityName: aura.name,
-        school: FIRE,
-        baseAmount:
-          FLAME_SHOCK_DOT_TOTAL / (FLAME_SHOCK_DOT_DURATION_MS / FLAME_SHOCK_TICK_INTERVAL_MS),
-        // No coefficient is stated, so none is invented -- the decision every
-        // periodic effect in this project carries.
-        powerCoefficient: FLAME_SHOCK_COEFFICIENTS.perTick,
-        periodic: true,
-        critFrom: 'spell',
-        appliesArmor: false,
-      });
+/**
+ * Flame Shock's burn, with whatever Call of Flame adds to its duration.
+ *
+ * ==============================================================================
+ * A FACTORY BECAUSE A TALENT MOVES THE DURATION. "Increases the duration of your
+ * Flame Shock spell by 9 sec" at 3/3, which both Shaman profiles take -- and the
+ * clause reached nothing at all before this: Call of Flame's `unmodelled` entry
+ * named only its Magma Totem half, which is the "a reason that describes a
+ * working half" failure with the dead half unmentioned.
+ *
+ * EXTRA TICKS OF THE SAME SIZE, which is what extending a DoT means and what
+ * `FLAME_SHOCK_BASE_TICKS` is for: 12 seconds is four ticks of 44 and 21 seconds
+ * is SEVEN, so 3/3 is a 75% larger burn rather than the same burn stretched.
+ *
+ * AND THE EXTENSION IS A WHOLE NUMBER OF TICKS AT EVERY RANK, which is worth
+ * checking rather than assuming: the clause is 3, 6 and 9 seconds on a
+ * three-second interval, so one, two and three extra ticks. A rank that added
+ * an odd number of seconds would leave a partial tick, and `Periodic` sorts
+ * before `AuraExpiration` -- so a tick due at the moment the aura falls off
+ * still lands, and the honest reading would then be a ragged final tick. It
+ * does not arise; said here because it would be silent.
+ * ==============================================================================
+ */
+export function flameShockDot(extraSeconds = 0): AuraDefinition {
+  return {
+    id: 'flame_shock',
+    name: 'Flame Shock',
+    /*
+     * SECONDS IN AND MILLISECONDS INSIDE, which is `shadowWordPainAura`'s
+     * signature exactly -- the Priest's Improved Shadow Word: Pain is the same
+     * clause on another class, and two factories that do the same job should
+     * take the same unit. The talent states seconds; everything below the UI is
+     * integer milliseconds; `seconds()` is the one conversion.
+     */
+    durationMs: FLAME_SHOCK_DOT_DURATION_MS + seconds(extraSeconds),
+    isDebuff: true,
+    refreshBehaviour: 'reset',
+    periodic: {
+      intervalMs: FLAME_SHOCK_TICK_INTERVAL_MS,
+      onTick: (context, aura) => {
+        const source = context.combatant(aura.sourceId);
+        const target = context.combatant(aura.targetId);
+        if (!source || !target || !target.isAlive) return;
+
+        dealDamage(context, {
+          source,
+          target,
+          abilityId: aura.id,
+          abilityName: aura.name,
+          school: FIRE,
+          // PER TICK FROM THE BASE COUNT, never from the extended one.
+          baseAmount: FLAME_SHOCK_TICK_DAMAGE,
+          // No coefficient is stated, so none is invented -- the decision every
+          // periodic effect in this project carries.
+          powerCoefficient: FLAME_SHOCK_COEFFICIENTS.perTick,
+          periodic: true,
+          critFrom: 'spell',
+          appliesArmor: false,
+        });
+      },
     },
-  },
-};
+  };
+}
+
+/** The untalented burn, for anything that only needs the id and the shape. */
+export const FLAME_SHOCK_DOT: AuraDefinition = flameShockDot();
 
 
 /*
@@ -530,6 +587,51 @@ export function maelstromWeaponAura(reductionPercentPerStack: number): AuraDefin
  * break it from a distance.
  * ----------------------------------------------------------------------------
  */
+/**
+ * Elemental Mastery, the new Elemental capstone's window.
+ *
+ * ==============================================================================
+ * "Gain mastery over Fire and Lightning, reducing the cast time of Lightning
+ * Bolt and Lava Burst by 0.5 sec, and removing the cooldown from Chain
+ * Lightning. Lasts 15 sec." Three minute cooldown.
+ *
+ * A `castModifier` NAMING TWO ABILITIES, WITH NO `consumedByCast`. That absence
+ * is the whole shape: this is a DURATION effect, so every Lightning Bolt and
+ * Lava Burst inside the fifteen seconds is shortened rather than only the next
+ * one. Arcane Power already rests on the same distinction, and Heating Up is
+ * the counter-example -- "your NEXT Pyroblast" spends `all`.
+ *
+ * `castTimeReductionMs` AND NOT `castTimeFraction`, because the clause states a
+ * flat half second rather than a percentage. The two differ on a hasted caster:
+ * half a second off a 2.0s Lightning Bolt is 25%, and off a 1.5s one it is 33%.
+ *
+ * ------------------------------------------------------------------------------
+ * THE THIRD CLAUSE IS NOT HERE AND THE TALENT SAYS SO. "Removing the cooldown
+ * from Chain Lightning" needs an aura that SUSPENDS a cooldown while it is up,
+ * and nothing expresses that: `abilityCooldown` is resolved when the character
+ * is built, and a `CastModifier` carries cast time and cost. Declared as an
+ * `unmodelled` reason on the talent rather than silently absent.
+ *
+ * WHICH COSTS LESS THAN IT READS, on a single-target encounter: Chain Lightning
+ * is a multi-target spell and sits in no priority list here, so a cooldown it
+ * never reaches is a cooldown worth removing to nobody. That is a LIST cause
+ * rather than an engine one, and it is named on the talent so the day a
+ * multi-target encounter exists somebody re-reads it.
+ * ==============================================================================
+ */
+export const ELEMENTAL_MASTERY_DURATION_MS = seconds(15);
+export const ELEMENTAL_MASTERY_CAST_REDUCTION_MS = 500;
+
+export const ELEMENTAL_MASTERY_AURA: AuraDefinition = {
+  id: 'elemental_mastery',
+  name: 'Elemental Mastery',
+  durationMs: ELEMENTAL_MASTERY_DURATION_MS,
+  castModifier: {
+    abilityIds: ['lightning_bolt', 'lava_burst'],
+    castTimeReductionMs: ELEMENTAL_MASTERY_CAST_REDUCTION_MS,
+  },
+};
+
 export const CATALOG_AURAS: readonly AuraDefinition[] = [
   /*
    * ADDED BY THE AURA-CATALOGUE AUDIT, which found these reachable ONLY through

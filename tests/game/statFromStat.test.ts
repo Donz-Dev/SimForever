@@ -231,15 +231,16 @@ describe('where it lands, and where it correctly does not', () => {
      * Shockadin is three quarters Holy, so this is one of the biggest single
      * figures in the Paladin half of the patch.
      *
-     * THE FIGURE IS AHEAD OF THE CLIENT. It comes from the note and lives in
-     * `PATCH_NOTE_TALENT_VALUES`, because the client still says 20/40/60 at
-     * build 1.60.1.70291 and a multi-rank row has nowhere safe to go in the
-     * generated values file.
+     * THE FIGURE WAS AHEAD OF THE CLIENT AND NO LONGER IS. It came from the
+     * note and lived in `PATCH_NOTE_TALENT_VALUES` while the client said
+     * 20/40/60; build 1.60.1.70425 ships 10/20/30, so the override layer has
+     * been deleted and the generated values file is the source again.
      *
-     * THE FRACTION IS WRITTEN OUT HERE rather than read from the values file,
-     * which is what makes this a check on the ratio and not a tautology -- and
-     * it is also what makes it a check on the OVERRIDE arriving at all: read
-     * off the file this would assert 0.6 and pass against the client's number.
+     * THE FRACTION IS STILL WRITTEN OUT HERE rather than read from the values
+     * file, which is what makes this a check on the ratio and not a tautology.
+     * What it no longer checks is an override ARRIVING -- that claim went with
+     * the layer, and this assertion would now pass whether the client's row or
+     * a note supplied the 30.
      * ========================================================================
      */
     expect(shockadin.stats.get('spellPower')).toBeCloseTo(

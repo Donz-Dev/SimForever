@@ -310,7 +310,21 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  shadow_affinity: [{ kind: 'unmodelled', scope: 'threat', reason: NO_THREAT }],
+  /*
+   * ==========================================================================
+   * DARK INSPIRATION REPLACES SHADOW AFFINITY, and it is a live talent where
+   * that one was a `threat` ruling -- so the Shadow tree lost a dead row and
+   * gained a working one.
+   *
+   * "Your Mind Blast and fully channeled Mind Flay causes Dark Inspiration,
+   * increasing yours and your party's Spirit by {0}% for 10 sec."
+   *
+   * A CAST REACTION, because the trigger is the cast rather than its damage,
+   * and because "fully channeled" is `AbilityCastEvent.final` exactly. See
+   * `darkInspiration` in `reactions/priestTalents.ts`.
+   * ==========================================================================
+   */
+  dark_inspiration: [{ kind: 'castReaction', reactionId: 'dark_inspiration' }],
 
   improved_shadow_word_pain: [
     /*
@@ -359,8 +373,9 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * "Improved Mind Flay changes to: Each instance of damage of Mind Flay deals
    * 10/20% more damage than its previous instance of damage." The figures are
    * the same 10 and 20 at index 0 -- the client's row is untouched -- so this
-   * is NOT a `PATCH_NOTE_TALENT_VALUES` entry and reading it as one would have
-   * been a no-op claiming to be a change.
+   * was NOT a `PATCH_NOTE_TALENT_VALUES` entry and reading it as one would
+   * have been a no-op claiming to be a change. (That layer is deleted now: the
+   * client shipped all three of its figures at build 1.60.1.70425.)
    *
    * WHAT MOVED IS WHERE THE NUMBER GOES. `abilityDamage` is a per-ability
    * multiplier on the COMBATANT, which raises every tick by the same amount
@@ -380,7 +395,6 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  improved_fade: [{ kind: 'unmodelled', scope: 'threat', reason: `Fade is a threat drop. ${NO_THREAT}` }],
 
   vampiric_embrace: [{ kind: 'grantAbility', abilityId: 'vampiric_embrace' }],
 

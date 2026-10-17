@@ -1,6 +1,11 @@
 import type { CastReaction } from '../../engine';
 import type { TalentReactionBuilder } from './warriorTalents';
-import { INNER_FOCUS, SHADOW_WEAVING_MAX_STACKS, shadowWeavingAura } from '../auras/priest';
+import {
+  INNER_FOCUS,
+  SHADOW_WEAVING_MAX_STACKS,
+  darkInspirationAura,
+  shadowWeavingAura,
+} from '../auras/priest';
 
 /**
  * Priest talent procs. One, and it is the Shadow build's engine.
@@ -69,9 +74,38 @@ export const shadowWeaving: TalentReactionBuilder = (chancePercent) => ({
 
 export const SHADOW_WEAVING_CAP = SHADOW_WEAVING_MAX_STACKS;
 
+/**
+ * Dark Inspiration: a Mind Blast, or a Mind Flay that finished.
+ *
+ * ==============================================================================
+ * A CAST REACTION AND NOT A `dealt` ONE, because the trigger is the CAST: Mind
+ * Blast grants it whether or not the bolt landed, and a channel's completion is
+ * not a damage event at all.
+ *
+ * `event.final` IS "FULLY CHANNELED". `runCast` fires a cast reaction once per
+ * tick, so without it a three-tick Mind Flay would grant this three times --
+ * three times the uptime and a refresh on every tick, which is a bigger number
+ * and no error. With it, an interrupted channel grants nothing, which is what
+ * the word says.
+ * ==============================================================================
+ */
+const DARK_INSPIRATION_ABILITIES = new Set(['mind_blast', 'mind_flay']);
+
+const darkInspiration = (percentIncrease: number): CastReaction => ({
+  id: 'dark_inspiration',
+  onTrigger: (context, actor, cast) => {
+    if (!DARK_INSPIRATION_ABILITIES.has(cast.ability.id)) return;
+    // A channel grants it only when it RAN OUT: see `final` above.
+    if (!cast.final) return;
+    context.applyAura(actor, darkInspirationAura(percentIncrease), actor.id);
+  },
+});
+
 export const PRIEST_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
   shadow_weaving: shadowWeaving,
 };
+
+
 
 /**
  * What spends Inner Focus: the next cast, AFTER it has happened.
@@ -102,4 +136,13 @@ export const innerFocusSpender = (): CastReaction => ({
 
 export const PRIEST_CAST_REACTIONS: Readonly<Record<string, (value: number) => CastReaction>> = {
   inner_focus: innerFocusSpender,
+  /*
+   * IN *THIS* MAP AND NOT A SECOND ONE, which the first draft got wrong: a
+   * `PRIEST_TALENT_CAST_REACTIONS` was added beside it, and `talentBuild`
+   * imports only this one -- so Dark Inspiration would have compiled, reported
+   * itself fully modelled and never fired. That is the silent-drop this
+   * project documents for `TALENT_AURAS` and for the EFFECTS table, met in the
+   * registry next door.
+   */
+  dark_inspiration: darkInspiration,
 };

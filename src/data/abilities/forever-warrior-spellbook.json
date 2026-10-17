@@ -1,7 +1,7 @@
 {
  "class": "warrior",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70291",
+ "build": "1.60.1.70425",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -13,7 +13,7 @@
    "school": "Physical",
    "cost": "10 Rage",
    "cast": "Instant",
-   "description": "The warrior shouts, increasing the melee attack power of all party members within 20 yards by 139. Lasts 3 min.",
+   "description": "The warrior shouts, increasing the melee attack power of all party or raid members within 20 yards by 139. Lasts 3 min.",
    "versusClassic": "changed"
   },
   {

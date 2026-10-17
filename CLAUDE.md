@@ -189,8 +189,14 @@ that keeps its name, row, ranks and prerequisite and changes only its NUMBERS
 has no structural tell at all -- and in that one refresh those included Mental
 Strength 15% to 10%, Critical Mass 6% to 10% over five ranks instead of three,
 Lava Burst's damage cut by a quarter, and **Ice Lance's frozen bonus from 300%
-to 200%**, which is the constant this file has already recorded three separate
-owner rulings about.
+to 200%** -- which is the client CATCHING UP to a patch note already applied,
+and not a change to make. "N% increased" is `1 + N/100`, so 200% is times
+THREE: the multiplier was already 3 and the coefficient already `1.5/3.5/3`.
+**Reading it as "the multiplier is the percentage" cost two unnecessary
+questions on a spell the owner has now ruled on FIVE times**, because that wrong
+reading got written into a comment that contradicted a correct one in the same
+file. The correct note is in `abilities/mage.ts`; do not re-derive this from the
+tooltip.
 
 **THE UI HAS HAD FOUR PASSES NOW, AND THIS LINE HAS ALREADY BEEN WRONG ONCE
 BY THE SAME ARITHMETIC.** It once read "THE UI HAS NOT HAD A PASS OF ITS OWN
@@ -1163,7 +1169,18 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   **A test that reconstructs the thing under test will reproduce its mistakes**
   -- drive the real reaction and read the event stream.
 
-### The modifier scopes — three keyed, two conditional
+### The modifier scopes — three keyed in the table, and three more in the prose
+
+**COUNT THEM FROM THE ENTRIES RATHER THAN FROM THIS HEADER, WHICH HAS BEEN WRONG
+TWICE.** It read "three keyed, two conditional", which described the table when
+it was written and then stopped describing the section: the prose below adds
+`nonPeriodicDamageMultiplier` as "a FIFTH", `attackerAbilityModifiers` as "a
+FOURTH that belongs to the other side of the attack" and
+`schoolDamagePerTargetEffect` as "a SIXTH" -- **three ordinals that are not a
+sequence**, because each was numbered against whatever the section looked like
+on the day. This is the same arithmetic failure this file records for the scope
+table, the talent census and the never-fired-entry list, and the fix is the same
+one: **re-count the entries, never increment the number in the header.**
 
 Per-ability crit and damage go through modifiers **on the combatant**, never
 through an ability's own `onCast`: `dealDamage` consults them, so an ability
@@ -1222,6 +1239,41 @@ them, including `ALL_ABILITIES`.
   that is written down. **It is also what stops Rip amplifying Rip** — a bleed's
   own ticks being raised by the bleed being up is self-referential, and the looser
   reading measured the Cat Druid a third higher.
+
+**AND A SIXTH, WHICH IS THE SECOND ONE CONDITIONED ON THE DEFENDER AND THE
+FIRST THAT READS A *COUNT*.** `Combatant.schoolDamagePerTargetEffect` is Fire
+Power's "3% per your Fire effects on the target, up to a maximum increase of
+12%" -- a SCHOOL, a COUNT, a CAP and a question about the defender, none of
+which the five scopes above can hold. `bleedingTargetModifiers` reads one
+BOOLEAN off the target and this reads how MANY, and everything else about it is
+a `SchoolModifiers` entry: built once with the character, keyed by school.
+
+**ITS EFFECT LIST IS NAMED AND NOT DERIVED**, which is `WARLOCK_SOUL_SIPHON_EFFECTS`'
+arrangement for the identical reason: an `AuraDefinition` carries no school,
+because the school of a periodic effect is decided inside its own `onTick`, and
+**a derivation that has to RUN the effect to answer is not a derivation** -- the
+argument `isBleed` already makes about "physical, periodic and ignoring armor".
+So the list can be narrower than the ruleset's and says so where it is declared.
+
+**THE CAP IS ON THE PERCENTAGE AND NOT ON THE COUNT**, because the tooltip
+states a maximum increase. `Math.min(count * perEffect, maxPercent)` and not
+`Math.min(count, 4) * perEffect`: the two agree at every current rank, which is
+precisely when writing the wrong one is free.
+
+**AND IT READS `countsAsSchools`, WITH THE TWO HALVES OF ONE SENTENCE POINTING
+OPPOSITE WAYS.** Frostfire Bolt "counts as both Frost and Fire damage", so it IS
+a Fire spell and Fire Power raises it -- and its DoT is an effect that MIXES two
+schools, so it does not qualify as one of the Fire effects on the target. The
+same spell collects the bonus and does not contribute to it, and both halves are
+the tooltip read literally. **The mixed-school exclusion is enforced by the list
+simply not naming that aura**, so a reader adding the next Fire DoT has to
+decide the same question with nothing in the code to remind them.
+
+**THE OLD DECLARATION WAS `schoolDamage` READING INDEX 0, A FLAT 3%** -- the
+per-effect figure used as though it were the whole talent, between a quarter and
+a third of its value. **The wrong number was the RIGHT number for the wrong
+operation**, which is why no figure looked odd and why this needed a new effect
+kind rather than a different index.
 
 **AND A FOURTH THAT BELONGS TO THE OTHER SIDE OF THE ATTACK.**
 `AuraDefinition.attackerAbilityModifiers` is keyed by ability id like the first
@@ -2006,11 +2058,15 @@ See [docs/resources.md](docs/resources.md).
   +79.5, +74.9, +63.0 and +49.4 on the four, and **exactly 0.0 on DW Fury and the
   Fire Mage**, which is the control -- it is Holy spell power and reaches nothing
   that deals no Holy damage.
-  **AND TWO JUDGEMENTS ARE NOW SELECTED AT ONCE**, Wisdom and the Crusader, which
-  one target cannot carry in the game being modelled. `exclusiveWith` has no
-  declaration anywhere, so nothing refuses it. **Implemented as instructed and
-  recorded as a question**, because it is worth 63 to 80 DPS on three profiles
-  and is a RAID COMPOSITION ruling rather than a bug.
+  **AND TWO JUDGEMENTS ARE SELECTED AT ONCE, WHICH THE OWNER HAS RULED
+  INTENDED**: "Two Judgements is absolutely fine and intended for the raid buff
+  contribution." One target cannot carry both in the game being modelled and
+  `exclusiveWith` has no declaration anywhere, so it was implemented as
+  instructed and recorded as a question -- worth 63 to 80 DPS on three
+  profiles, and a RAID COMPOSITION decision rather than a bug. **The answer is
+  that the box is a raid CONTRIBUTION rather than a claim about one debuff
+  slot**, and `raidBuffs.test.ts` pins both ids on every preset, because **a
+  ruling that is only prose gets re-raised** and this one had begun to be.
 - **TWO PRESETS SUBSTITUTE ONE RAID BUFF AND ONE DROPS ONE, and a SWAP is the
   commoner shape.** The two ranged Hunters take Grace of Air for Windfury, and
   only the Enhancement Shaman drops one outright, because Windfury Weapon
@@ -4048,22 +4104,39 @@ one piece of scraped data that IS hand-editable, and the importer disagrees:
 `null` -- which is to say only for a SINGLE-RANK talent with no `{0}` to match.
 **A hand edit to a MULTI-rank row survives exactly until the next `--write`.**
 
-`PATCH_NOTE_TALENT_VALUES` in `game/talents/patchNoteValues.ts` is that layer,
-and it is consulted in **`talentValue`, the ROOT** -- which is the second place
-it went. Wired into `talentBuild` first, which would have left the Talent panel
-printing the client's 1/2/3/4/5 for a Shadow Mastery the engine ran at
-2/4/6/8/10: **the character sheet's crit bug exactly**, a panel disagreeing with
-the fight about a number, invisible because every neighbour is right.
-`talentNumber`, `talentNumbers` and `talentDescription` all come through the root.
+**THAT LAYER EXISTED, DID ITS JOB AND IS DELETED, WHICH IS THE OUTCOME IT WAS
+BUILT FOR.** `PATCH_NOTE_TALENT_VALUES` in `game/talents/patchNoteValues.ts`
+carried three figures -- Shadow Mastery's 2/4/6/8/10, Champion of the Light's
+10/20/30 and Mental Strength's 2/4/6/8/10 -- and client build **1.60.1.70425**
+ships every one of them verbatim. An override on top of a row that now agrees
+with it is a silent no-op, so the file, its test and its call site all went.
 
-**EVERY ENTRY RECORDS WHAT THE CLIENT SAYS, WHICH IS WHAT MAKES THE LAYER EXPIRE
-RATHER THAN ACCUMULATE.** `patchNoteValues.test.ts` fails when a refresh moves
-the generated row, naming the talent; fails separately if an entry ever AGREES
-with the file, because an override that is a silent no-op is worse than none;
-and fails on a stale talent id, which is the failure a RENAME already cost this
-project once. **ONLY A VALUE MAY GO IN IT, never a tree SHAPE** -- a rank count,
-a row and a prerequisite are read by the decoder and the legality rules, so
-inventing one is inventing game data with a build URL that will not decode.
+**IT ANNOUNCED ITS OWN REDUNDANCY RATHER THAN WAITING TO BE REMEMBERED.** Every
+entry recorded what the CLIENT said beside what the note said, and
+`patchNoteValues.test.ts` failed the moment a refresh moved a generated row --
+naming the talent. That failure is what triggered the deletion. **A layer that
+cannot tell you it is finished becomes permanent**, and this one could.
+
+**AND THE RISK IT WAS WRITTEN AGAINST DID NOT MATERIALISE.** The Dual Wield
+Specialization case had a note and a client tooltip disagree with the owner
+ruling for the CLIENT; here a note-derived figure held on all three entries, two
+builds later. So the shape is worth rebuilding the next time a note runs ahead
+of the client, and `git log` has it -- **but it must not be kept standing
+empty**, because a table with no rows reads exactly like a mechanism that is
+doing something.
+
+THE TWO THINGS TO REBUILD IT WITH, if that day comes:
+
+- **CONSULT IT IN `talentValue`, THE ROOT** -- which is the second place it went
+  the first time. Wired into `talentBuild` it would have left the Talent panel
+  printing the client's 1/2/3/4/5 for a Shadow Mastery the engine ran at
+  2/4/6/8/10: **the character sheet's crit bug exactly**, a panel disagreeing
+  with the fight about a number, invisible because every neighbour is right.
+  `talentNumber`, `talentNumbers` and `talentDescription` all come through the
+  root.
+- **ONLY A VALUE MAY GO IN IT, never a tree SHAPE** -- a rank count, a row and a
+  prerequisite are read by the decoder and the legality rules, so inventing one
+  is inventing game data with a build URL that will not decode.
 
 **AND A NOTE'S PARENTHETICAL HISTORY CAN DISAGREE WITH EVERY SOURCE WHILE ITS
 PRESCRIPTION STANDS.** "Shadow Word: Death cooldown increased to 18 seconds (was
@@ -4555,6 +4628,28 @@ five two-handed weapon types. So the reading was right, the clause was real, and
 it then expired on its own. **A requirement line is DATA and it moves like any
 other number** -- which is the second reason to re-read the captures on a patch
 rather than only the damage.
+
+**AND A FIELD READ BY THE WRONG NAME REPORTS AS A SOURCE THAT IS SILENT, WHICH
+TURNS EVERY RULE IN THIS SECTION INTO A LICENCE.** Arcane Wrath shipped as an
+INSTANT because a probe asked the spellbook entry for `castTime`, got
+`undefined`, and that became the written claim "the capture states no cast
+time". The capture says `"cast": "3.5 sec cast"` **in its own field**.
+**EVERY RULE ABOVE IS GENEROUS TO A QUIET SOURCE** -- a tie-break does not
+apply, an omission has not denied anything, a neighbour's coefficient becomes
+borrowable with a `PLACEHOLDER_` name -- and all three were then applied to a
+source that had spoken. So Fire Blast's 0.429 was borrowed on the argument that
+"the sheet gives every Mage INSTANT the same `1.5 / 3.5`": **sound reasoning
+resting on a fact that was not true**, where `3.5 / 3.5` is 1.0 and is the
+owner's own figure. Reading the field would have landed on the right number
+with nobody asked.
+**THE TWO ERRORS PULLED OPPOSITE WAYS, WHICH IS WHAT MADE IT LOOK ORDINARY**:
+an instant cast is generous and a coefficient at 43% of the real one is stingy,
+so the spell's damage per second read fine. **AND HANDOVER ALREADY HAD THE
+RIGHT NUMBER** in the row about that spell -- "395 mana, 3.5 sec cast, 6 sec
+cooldown". **A fact that gets documented still needs somebody to READ it**,
+which is the mirror of this file's own rule about a difference that gets
+documented and nobody calls wrong. **Before concluding a source is silent,
+print the whole entry** rather than the field you reached for.
 
 **A REFRESH AND A CROSS-CHECK FIND DIFFERENT THINGS AND NEITHER SUBSTITUTES FOR
 THE OTHER.** Slam's cooldown went 15 to 18 in ELEVEN DAYS, on the class with the

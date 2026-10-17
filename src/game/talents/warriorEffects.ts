@@ -373,8 +373,23 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    */
   furious_precision: [{ kind: 'offHandHit' }],
 
+  /*
+   * ==========================================================================
+   * ITS `grantAbility` IS GONE, AND THE EFFECT BESIDE IT SAYS WHY.
+   *
+   * This declared `grantAbility: 'piercing_howl'` next to an `unmodelled` entry
+   * reading "NOT TO BE IMPLEMENTED: the project owner classes snares as
+   * non-combat" -- **two effects on one talent contradicting each other**, one
+   * claiming to hand over an ability and the other recording that the ability
+   * will never exist. `abilitiesForBuild` drops an id no class declares, so the
+   * claim was silent.
+   *
+   * FOUND BY THE `grantAbility` GUARD, which was written for Arcane Wrath and
+   * reported this and Concussion Blow on the way past -- the sibling of the
+   * check that caught `lone_wolf`. See `hunterFiveFixes.test.ts`.
+   * ==========================================================================
+   */
   piercing_howl: [
-    { kind: 'grantAbility', abilityId: 'piercing_howl' },
     {
       kind: 'unmodelled',
       scope: 'crowdControl',
@@ -868,6 +883,30 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    *
    * The ability grant stays so the talent gates its tier correctly, and no
    * priority list casts it.
+   */
+  /*
+   * ==========================================================================
+   * DELIBERATELY SILENT, ON THE OWNER'S RULING, AND IT GRANTS AN ABILITY NO
+   * CLASS DECLARES. Both halves are intentional and the pair looks wrong.
+   *
+   * "Concussion Blow is still not to be implemented. No note about this needs
+   * to be made on the GUI." So it carries no `unmodelled` entry -- an exception
+   * to the rule that an inert choice says so where it is made -- and
+   * `chargeAndShieldTalents.test.ts` pins the exact shape so it reads as a
+   * decision rather than an oversight.
+   *
+   * THE NEW `grantAbility` GUARD FLAGGED IT AND IT IS EXEMPTED THERE RATHER
+   * THAN CHANGED HERE. That check fails on an id no class declares -- which is
+   * how Arcane Wrath was caught -- and this is the second kind of entry it
+   * finds: not a missing declaration but a ruling that the ability will never
+   * exist. **The owner's instruction outranks the guard**, and the exemption
+   * carries the quote, the way the `grantAura` guard exempts Demonic Sacrifice.
+   *
+   * IT WAS BRIEFLY REWRITTEN AS A `crowdControl` RULING IN THIS ROUND, which
+   * would have put a note on the GUI the owner said not to put there. The test
+   * caught it in one run. **A ruling that is only prose gets re-raised**; this
+   * one is prose AND a test, and the test is what held.
+   * ==========================================================================
    */
   concussion_blow: [{ kind: 'grantAbility', abilityId: 'concussion_blow' }],
 

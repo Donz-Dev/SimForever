@@ -193,6 +193,34 @@ export const SHAMAN_ELEMENTAL: AplList = {
    * it. That held only while nothing could come between them -- and the racial
    * block now does. Written as a clause it holds whatever is in between.
    */
+  /*
+   * ==========================================================================
+   * ELEMENTAL MASTERY, WHICH WAS IN NO LIST AT ALL.
+   *
+   * It arrived with client build 1.60.1.70425 as the tree's new 31-point
+   * capstone -- half a second off Lightning Bolt and Lava Burst for fifteen
+   * seconds, on a three minute cooldown -- and nothing cast it. **A new
+   * capstone in the book and in no list is the quietest place in this project
+   * for damage to go missing**, and this build lands 56% of its damage with
+   * the first of the two spells it shortens.
+   *
+   * MEASURED AT **+24.4** here, paired over 400 iterations: Lightning Bolt goes
+   * 24.2 casts a fight to 25.0 and Lava Burst 5.9 to 6.0.
+   *
+   * AND IT IS ALSO PRE-CAST NOW, WHICH MAKES THIS ENTRY READ 0.00 USES. The
+   * opener claims the cooldown at a 0s lead for no global cooldown, worth a
+   * further **+13.9** -- and a three minute cooldown cannot come back inside a
+   * hundred second fight, so the list never reaches it. The entry is KEPT
+   * deliberately: it is a safety net that costs nothing and pays out in a fight
+   * longer than the cooldown, which is the same argument the owner accepted for
+   * Evocation's permanent zero. **A zero here is intended.**
+   *
+   * BELOW THE TWO MAINTENANCE ENTRIES AND ABOVE THE TWO NUKES, which is where
+   * the window is worth most: it shortens Lightning Bolt and Lava Burst and
+   * does nothing for a totem or a shock.
+   * ==========================================================================
+   */
+  { abilityId: 'elemental_mastery' },
   { abilityId: 'lava_burst', condition: hasDebuff('flame_shock') },
   { abilityId: 'lightning_bolt' },
   ],

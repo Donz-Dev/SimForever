@@ -447,8 +447,23 @@ describe('Bloodthrill is MAIN HAND only now, at twice the chance', () => {
   });
 
   it('states 4/8/12/16/20, and the "for 1 attack" number is gone from the row', () => {
-    expect(talentValue('warrior', 'bloodthrill', 1)).toEqual([4, 6]);
-    expect(talentValue('warrior', 'bloodthrill', 5)).toEqual([20, 6]);
+    /*
+     * ------------------------------------------------------------------------
+     * AND THE 6 IS GONE NOW, WHICH IS WHAT THIS TEST'S NAME ALREADY ASKED FOR.
+     *
+     * The row was `[[4,6],...,[20,6]]` -- the chance and a "for 1 attack"
+     * figure that the tooltip had stopped stating -- and at client build
+     * 1.60.1.70425 it is a bare `[4,8,12,16,20]`. So the row caught up with the
+     * wording, and the assertion that was written to pin the discrepancy is now
+     * the assertion that records it closing.
+     *
+     * A BARE ROW MEANS INDEX 1 IS `undefined`, which is strictly safer: any
+     * effect here reading the wrong index now reads nothing and is dropped,
+     * where before it would have read a plausible 6.
+     * ------------------------------------------------------------------------
+     */
+    expect(talentValue('warrior', 'bloodthrill', 1)).toBe(4);
+    expect(talentValue('warrior', 'bloodthrill', 5)).toBe(20);
   });
 
   it('accepts a main-hand use and refuses the off hand', () => {

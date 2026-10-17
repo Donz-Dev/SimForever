@@ -51,7 +51,11 @@ export {
   spellCritChanceFrom,
   versatilityMultiplierFrom,
 } from './ratings';
-export type { AbilityModifier, SchoolModifier } from './abilityModifiers';
+export type {
+  AbilityModifier,
+  PerTargetEffectDamage,
+  SchoolModifier,
+} from './abilityModifiers';
 export {
   ALL_ABILITIES,
   AbilityModifiers,

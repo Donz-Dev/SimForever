@@ -69,7 +69,7 @@ were in a build; one is left, and it works.
 | Profile | Talents | DPS | was | List | Entries |
 | --- | --- | --- | --- | --- | --- |
 | Enh Shaman | 17/34/0 | **625.8** ±8.0 | 604.0 | `SHAMAN_ENHANCEMENT` | 8 |
-| Ele Shaman | 32/6/13 | **375.0** ±3.8 | 295.4 | `SHAMAN_ELEMENTAL` | 4 |
+| Ele Shaman | 32/10/9 | **375.0** ±3.8 | 295.4 | `SHAMAN_ELEMENTAL` | 4 |
 
 **ELE SHAMAN +79.6, REAL. ENH SHAMAN +10.9, AND THAT ONE IS A LIE BY NET.** The
 Enhancement figure is inside its interval and hides four separate real changes

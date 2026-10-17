@@ -828,26 +828,49 @@ const DRUID_BEAR_TALENTS: TalentAllocation = {
  * ----------------------------------------------------------------------------
  */
 const SHAMAN_ELEMENTAL_TALENTS: TalentAllocation = {
+  /*
+   * ==========================================================================
+   * FOUR POINTS OUT OF RESTORATION FILLER AND INTO ANCESTRAL KNOWLEDGE, worth
+   * **+2.95 +/- 0.63** paired over 400 iterations -- small, real, and the only
+   * talent move on this profile that measured as anything at all.
+   *
+   * `totemic_focus` is 25% off a totem cast twice a fight and `mindfulness` is
+   * threat; Ancestral Knowledge is +2% Intellect a rank at Enhancement tier 0,
+   * so the move disturbs no tier gate in either tree.
+   *
+   * ------------------------------------------------------------------------------
+   * AND TEN POINTS IN THIS SPREAD ARE PROVABLY DEAD WITH NOWHERE LIVE TO GO,
+   * which is a statement about the TREE rather than a gap in the search:
+   * `elemental_warding` 3 is damage taken on a profile nothing attacks,
+   * `eye_of_the_storm` 3 is cast pushback, `elemental_reach` 2 is range, and
+   * `trial_by_fire` 2 is Fire Nova, which this list never casts.
+   *
+   * MOVING ALL TEN TO CONVECTION AND REVERBERATION MEASURED **-0.18, NOISE** --
+   * and the cast counts came back identical to the decimal: 25.0 Lightning
+   * Bolts, 6.0 Lava Bursts, 3.0 Flame Shocks before and after. Convection is
+   * 10% off this build's main spell and it bought nothing, **because the build
+   * is CAST-bound and not MANA-bound**: the Demonic Rune fires 0.8 times a
+   * fight and Evocation never. So every remaining mana talent in the Elemental
+   * tree is worth nothing here, and the ten points stay where the owner put
+   * them rather than being shuffled for a figure inside the interval.
+   *
+   * ------------------------------------------------------------------------------
+   * TIDAL FOCUS IS NOT FILLER AND MUST NOT BE MOVED. This build sits at exactly
+   * **16.00** points of hit against a usable spell cap of 16 -- 17% miss floored
+   * at 1% -- and five of those sixteen are this talent. It is the only one of
+   * the six profiles whose hit is school-BLIND; the three Mages and the Priest
+   * sit at 11 and make it up with a school-scoped talent.
+   * ==========================================================================
+   */
   // Elemental, 32
-  concussion: 5,
-  elemental_warding: 3,
-  call_of_flame: 3,
-  elemental_focus: 1,
-  elemental_alacrity: 3,
-  improved_fire_nova: 2,
-  eye_of_the_storm: 3,
-  call_of_thunder: 1,
-  elemental_reach: 2,
-  lightning_overload: 3,
-  elemental_fury: 5,
-  lava_burst: 1,
-  // Enhancement, 6
-  thundering_strikes: 5,
-  ancestral_knowledge: 1,
-  // Restoration, 13
-  totemic_focus: 5,
-  mindfulness: 3,
-  tidal_focus: 5,
+  concussion: 5, elemental_warding: 3, call_of_flame: 3, elemental_focus: 1,
+  elemental_alacrity: 3, trial_by_fire: 2, eye_of_the_storm: 3,
+  elemental_mastery: 1, elemental_reach: 2, lightning_overload: 3,
+  elemental_fury: 5, lava_burst: 1,
+  // Enhancement, 10
+  thundering_strikes: 5, ancestral_knowledge: 5,
+  // Restoration, 9
+  tidal_focus: 5, totemic_focus: 4,
 };
 
 const SHAMAN_ENHANCEMENT_TALENTS: TalentAllocation = {
@@ -856,7 +879,8 @@ const SHAMAN_ENHANCEMENT_TALENTS: TalentAllocation = {
   call_of_flame: 3,
   elemental_devastation: 3,
   elemental_focus: 1,
-  improved_fire_nova: 2,
+  // Trial by Fire is Improved Fire Nova renamed, same row and same two clauses.
+  trial_by_fire: 2,
   thundering_strikes: 5,
   ancestral_knowledge: 4,
   mental_dexterity: 3,
@@ -881,23 +905,43 @@ const SHAMAN_ENHANCEMENT_TALENTS: TalentAllocation = {
  * is.
  */
 const MAGE_FROSTFIRE_TALENTS: TalentAllocation = {
-  improved_fireball: 5,
-  ignite: 5,
-  flame_throwing: 1,
-  burning_soul: 3,
-  pyroblast: 1,
-  improved_scorch: 3,
-  heating_up: 1,
-  master_of_elements: 3,
-  critical_mass: 3,
-  fire_power: 4,
-  elemental_precision: 5,
-  ice_shards: 5,
-  piercing_ice: 3,
-  frost_channeling: 3,
-  ice_lance: 1,
-  shatter: 3,
-  fingers_of_frost: 2,
+  /*
+   * ==========================================================================
+   * FOUR DEAD POINTS TRADED FOR FOUR LIVE ONES, worth **+28.5 +/- 9.5** paired
+   * over 400 iterations.
+   *
+   * `burning_soul` was three points of cast pushback and threat and
+   * `flame_throwing` one of range -- all four permanent rulings, so they could
+   * never do anything. What replaces them:
+   *
+   *   INCINERATION 3        +6% crit on Fire Blast, Ice Lance, Arcane Blast and
+   *                         Scorch. This build casts three of the four.
+   *   IMPROVED FIRE BLAST 1 a second off a cooldown it presses six times a
+   *                         fight, which is Wake of Fire renamed.
+   *
+   * THEY WERE ALSO TIER TAX, WHICH IS WHY THE REPLACEMENTS ARE IN ROWS 0-2.
+   * The Fire tree needs fifteen points above row three to reach Improved
+   * Scorch, Heating Up and Master of Elements, and those four were part of the
+   * fifteen -- so deleting them would have cost three talents. **A dead point
+   * can be load-bearing**, and the only question is what else can hold the tier
+   * up.
+   *
+   * CRITICAL MASS IS 4/5 AND NOT 5/5 for the same reason the Fire Mage's is
+   * 5/5: the client took it from three ranks to five and took Fire Power from
+   * five to three in the same patch, so this build's lost Fire Power rank paid
+   * for one Critical Mass rank and the Fire Mage's two paid for Combustion's
+   * new 5/5 prerequisite.
+   * ==========================================================================
+   */
+  // Fire, 29
+  improved_fire_blast: 1, incineration: 3, improved_fireball: 5,
+  ignite: 5, pyroblast: 1,
+  improved_scorch: 3, heating_up: 1, master_of_elements: 3,
+  critical_mass: 4, fire_power: 3,
+  // Frost, 22
+  elemental_precision: 5, ice_shards: 5,
+  piercing_ice: 3, frost_channeling: 3, ice_lance: 1,
+  shatter: 3, fingers_of_frost: 2,
 };
 
 /**
@@ -919,21 +963,102 @@ const MAGE_FROSTFIRE_TALENTS: TalentAllocation = {
  * ----------------------------------------------------------------------------
  */
 const MAGE_ARCANE_TALENTS: TalentAllocation = {
+  /*
+   * ==========================================================================
+   * ONE POINT OUT OF IMPROVED CHANNELING AND INTO MISSILE BARRAGE'S NEW SECOND
+   * RANK, AND IT IS WORTH **+144.4 +/- 9.3** -- the largest single figure in the
+   * whole six-profile pass, and 16% of the profile.
+   *
+   * Client build 1.60.1.70425 took Missile Barrage from one rank to two and
+   * added two triggers. At 2/2 every one of its three chances doubles: Arcane
+   * Blast 20% -> 40%, an ARCANE MISSILE HIT 5% -> 10%, and Arcane Wrath,
+   * Fireball, Frostbolt and Frostfire Bolt 10% -> 20%.
+   *
+   * WHY IT IS WORTH SO MUCH HERE AND NOT ELSEWHERE: Arcane Missiles is **67% of
+   * this profile** and Arcane Blast 25.5%, so the talent's trigger and its
+   * payout are the build's two spells. The new missile-hit trigger makes it
+   * self-feeding -- five rolls a channel at 10% is a ~41% chance that one
+   * Arcane Missiles sets up the next -- and what it pays is a channel at HALF
+   * duration for NO mana.
+   *
+   * THE POINT COMES FROM A PERMANENT RULING. `improved_channeling` is cast
+   * pushback and threat, five points that can never do anything, and this
+   * spends one of them. The other four stay: nothing else in the tree is both
+   * live and unmaxed, hit is at its cap, and the build is not mana-bound.
+   *
+   * ARCANE WRATH WAS NOT TAKEN FOR THE WRONG REASON FIRST, WHICH IS WORTH
+   * SEPARATING FROM THE RIGHT ONE. It was skipped because its coefficient was a
+   * flagged `PLACEHOLDER_` and its cast time had been read as INSTANT -- and the
+   * cast time was a misread field rather than a silent source. The owner has
+   * since given all of it: a 3.5 second cast, 439 to 529 Arcane, and 100% of
+   * spell power.
+   * ------------------------------------------------------------------------------
+   * **ARCANE WRATH IS NOT TAKEN, AND THIS IS THE JUSTIFICATION THE OWNER ASKED
+   * FOR.** Five placements measured, paired over 400 iterations:
+   *
+   *   entry above the gated Arcane Missiles        **-118.5 +/- 11.6**
+   *   entry above Arcane Blast (the filler slot)    **-77.2 +/- 12.0**
+   *   entry at the BOTTOM of the list                0.00, never cast
+   *   talent taken, no entry                         0.00, never cast
+   *   entry gated on max Arcane Blast stacks         0.00, never cast
+   *
+   * AND THE SPELL IS NOT THE PROBLEM -- IT CARRIES ITS WEIGHT. In the filler
+   * slot it is **25.5% of the profile's damage on 6.6 casts**, which is more
+   * than Arcane Blast's own 15.4% in the same run. A 3.5 second cast for 484
+   * plus 100% of spell power plus 5% of maximum mana is a real spell.
+   *
+   * WHAT IT DISPLACES IS NOT DAMAGE, IT IS SPELL POWER. Arcane Blast goes
+   * **13.8 casts a fight to 9.8**, and Arcane Blast is this build's RAMP: each
+   * stack grants 15% of Intellect as spell power, so at 342 Intellect a stack is
+   * +51 and five stacks are **+257 on a base of 785**. Four fewer Arcane Blasts
+   * is a ramp that spends the fight lower.
+   *
+   * **AND THE PROOF IS IN THE COLUMN THE DPS CANNOT SHOW.** Arcane Missiles'
+   * cast count falls by 0.2 and its SHARE falls from 67.0% to 56.6% -- so every
+   * missile is hitting for about 15% less. It carries the highest coefficient in
+   * the kit at 1.4729, which makes it the spell that loses most per point of
+   * spell power removed, and it is 67% of the profile. **Arcane Blast is not
+   * competing with Arcane Wrath on damage per second; it is buying spell power
+   * for the two thirds of the build that is Arcane Missiles.**
+   *
+   * SO THE PER-SECOND ARITHMETIC THAT MADE THIS LOOK CLOSE WAS COMPUTED AT BASE
+   * SPELL POWER, AND THAT IS THE WHOLE ERROR. 434/sec for Arcane Wrath against
+   * 381/sec for Arcane Blast -- true at 785 spell power, and at five stacks
+   * Arcane Blast is `236 + (785 + 257) x 0.4286 = 683` over 1.5 seconds, which
+   * is **455/sec and already ahead** before a point of what the ramp does for
+   * anything else. **A per-second comparison on a build with a ramp has to be
+   * taken at the ramped figure**, or it prices the spell that breaks the ramp as
+   * though the ramp were free.
+   *
+   * AND PROTECTING THE RAMP MAKES THE SPELL UNREACHABLE, which is why the gated
+   * row is a 0.00 rather than a smaller loss: at max stacks the two Arcane
+   * Missiles entries above it win, and below max stacks the gate refuses.
+   * **There is no state in which Arcane Wrath is the top castable entry** -- the
+   * "entry above never yields" cause of a never-fired entry, arrived at
+   * deliberately.
+   *
+   * WHICH BUILD WOULD WANT IT: one whose core spell does not depend on a ramp a
+   * 3.5 second cast interrupts. Nothing here is that build, and the day a Mage
+   * profile exists without Arcane Blast this is one line to re-measure --
+   * `PRESET=mage_arcane VARIANTS=arcaneWrath npx vite-node tools/probe_build.ts`.
+   * ------------------------------------------------------------------------------
+   * ==========================================================================
+   */
   // Arcane, 35
   arcane_focus: 5,
-  improved_channeling: 5,
+  improved_channeling: 4,
   arcane_subtlety: 2,
   arcane_concentration: 5,
   arcane_impact: 3,
   arcane_blast: 1,
   arcane_meditation: 3,
-  missile_barrage: 1,
+  missile_barrage: 2,
   presence_of_mind: 1,
   arcane_mind: 5,
   arcane_instability: 3,
   arcane_power: 1,
   // Fire, 11
-  wake_of_fire: 2,
+  improved_fire_blast: 2,
   incineration: 3,
   ignite: 5,
   pyroblast: 1,
@@ -958,14 +1083,40 @@ const MAGE_ARCANE_TALENTS: TalentAllocation = {
  * ----------------------------------------------------------------------------
  */
 const MAGE_FIRE_TALENTS: TalentAllocation = {
-  // Arcane, 16
+  /*
+   * ==========================================================================
+   * ARCANE SUBTLETY'S TWO DEAD POINTS BUY THE LAST POINT OF HIT AND MISSILE
+   * BARRAGE'S SECOND RANK, worth **+28.8 +/- 8.2** together.
+   *
+   * `arcane_subtlety` is threat plus target spell resistance, which the owner
+   * has ruled has no effect on an enemy target -- so both points were permanent
+   * rulings. The two halves measure separately:
+   *
+   *   MISSILE BARRAGE 1 -> 2        **+19.8**  every chance doubles, and the
+   *                                 Fireball trigger goes 10% -> 20% on a spell
+   *                                 cast eleven times a fight
+   *   ELEMENTAL PRECISION 4 -> 5    **+10.8**  the only hit gap in the three
+   *                                 Mages
+   *
+   * THE HIT POINT IS THE ONE WORTH EXPLAINING. All three Mages sit at 11 points
+   * of school-BLIND hit where the usable spell cap is 16, and the missing five
+   * arrive as SCHOOL-scoped hit from a talent. Frostfire's Elemental Precision
+   * 5/5 and the Arcane build's Arcane Focus 5/5 close it for everything those
+   * builds cast; this one was at 4/5, so its Fire spells missed 2% where the
+   * floor is 1%. **One point, on 90% of the profile's damage.**
+   *
+   * AND THE TWO DO NOT SUM: 19.8 + 10.8 is 30.6 against a measured 28.8,
+   * because both buy casts and the casts come out of the same global cooldowns.
+   * Marginal values, not addends.
+   * ==========================================================================
+   */
+  // Arcane, 15
   arcane_focus: 5,
-  arcane_subtlety: 2,
   arcane_concentration: 5,
   arcane_impact: 3,
-  missile_barrage: 1,
+  missile_barrage: 2,
   // Fire, 31
-  wake_of_fire: 1,
+  improved_fire_blast: 1,
   incineration: 3,
   improved_fireball: 5,
   ignite: 5,
@@ -973,11 +1124,11 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
   improved_scorch: 3,
   heating_up: 1,
   master_of_elements: 3,
-  critical_mass: 3,
-  fire_power: 5,
+  critical_mass: 5,
+  fire_power: 3,
   combustion: 1,
-  // Frost, 4
-  elemental_precision: 4,
+  // Frost, 5
+  elemental_precision: 5,
 };
 
 /**
@@ -1399,7 +1550,6 @@ const WARLOCK_AFFLICTION_TALENTS: TalentAllocation = {
   suppression: 4,
   amplify_curse: 1,
   improved_corruption: 5,
-  malediction: 5,
   improved_drains: 3,
   improved_bane_of_agony: 2,
   pandemic: 3,
@@ -1409,6 +1559,45 @@ const WARLOCK_AFFLICTION_TALENTS: TalentAllocation = {
   soul_siphon: 3,
   shadow_mastery: 5,
   wrack: 1,
+  /*
+   * ==========================================================================
+   * MALEDICTION'S FIVE POINTS BECOME BANE, AND THE PROFILE'S OWN OPENER IS WHAT
+   * CHOSE THAT -- not a measurement and not a preference.
+   *
+   * Malediction was deleted at client build 1.60.1.70425 and GRIM REACH took
+   * its slot at two ranks, so five points needed a home. Nothing live was left
+   * in Affliction: Grim Reach is `positioning`, Soul Harvest needs a kill, Fel
+   * Concentration is `castPushback`, and the fifth point of Suppression is one
+   * the OWNER moved out deliberately. Malediction was +% to every periodic
+   * effect on the project's most DoT-heavy build, so what replaced it replaces
+   * nothing -- that is the ruleset's change and not a hole to fill.
+   *
+   * WHAT POINTS AT BANE IS THIS PRESET'S `precombat`: the owner specified "2.5s
+   * before start casting Shadow Bolt", and Shadow Bolt DECLARES three seconds.
+   * `secondsBefore` is the cast time on the BUILD, so a 2.5 second lead says
+   * this character casts Shadow Bolt in 2.5 seconds -- and Bane at 5/5 is
+   * exactly 0.5 seconds off it. Nothing else in the Warlock's three trees
+   * touches that cast.
+   *
+   * SO THE BUILD HAD BEEN MISSING A TALENT THE OWNER'S OPENER ASSUMED, AND THE
+   * COMMENT BESIDE THAT OPENER SAID SO WITHOUT ANYBODY CHECKING. It reads "the
+   * declaration says 3.0 and BANE takes half a second off it" and is cited in
+   * CLAUDE.md as the sharpest evidence for how a lead is read -- on a build
+   * that spent no points in Destruction at all. **A comment explaining a number
+   * can be true of the ruleset and false of the profile it sits on**, and this
+   * one was describing the Firelock, which does take Bane 5/5.
+   *
+   * IT COST NOTHING AT THE PULL AND THE REPAIR IS STILL REAL. `runPrecombat`
+   * ages by the lead MINUS the cast time clamped at zero, so a 2.5 second lead
+   * on a 3.0 second cast already finished at t=0; what was wrong was the fight
+   * that followed, where every Shadow Bolt took three seconds instead of 2.5.
+   *
+   * UNMEASURED, AND SAID SO. This profile is not one of the six the owner asked
+   * to have optimised, so the five points went where the evidence pointed
+   * rather than where a measurement would put them.
+   * ==========================================================================
+   */
+  bane: 5,
   demonic_embrace: 5,
   demonic_aegis: 2,
   fel_vitality: 3,
@@ -1489,13 +1678,42 @@ const WARLOCK_DESTRUCTION_TALENTS: TalentAllocation = {
  * ----------------------------------------------------------------------------
  */
 const PRIEST_SHADOW_TALENTS: TalentAllocation = {
+  /*
+   * ==========================================================================
+   * THE DISCIPLINE THIRTEEN WERE REBUILT, because IMPROVED POWER WORD: SHIELD
+   * MOVED DOWN A ROW -- tier 5 to tier 10 at client build 1.60.1.70425 -- and
+   * this tree spends only seven points above it. So the talent became illegal
+   * and took Meditation, at the same tier, with it.
+   *
+   * MENTAL STRENGTH MOVED THE OTHER WAY in the same patch, tier 15 up to tier
+   * 5, which is what makes the repair a straight swap rather than a choice: the
+   * ten points row two now demands are exactly Twin Disciplines and Mental
+   * Strength, and Mental Strength is +% Intellect where the two talents it
+   * replaces are a SHIELD nothing attacks and a THREAT ruling.
+   *
+   * SO THE REFRESH HANDED THIS BUILD FIVE LIVE POINTS FOR FIVE DEAD ONES and
+   * the only thing it had to be told was which rows they sit in now. Meditation
+   * keeps its three -- `manaRegenBypass` is a real stat, and mana RETURN is
+   * explicitly not out of scope.
+   * ==========================================================================
+   */
   twin_disciplines: 5,
-  silent_resolve: 2,
-  improved_power_word_shield: 3,
+  mental_strength: 5,
   meditation: 3,
   twilight_focus: 3,
   shadow_focus: 5,
-  shadow_affinity: 3,
+  /*
+   * DARK INSPIRATION TAKES SHADOW AFFINITY'S THREE POINTS, and it is a live
+   * talent where that one was a `threat` ruling -- so this is the second trade
+   * of dead points for working ones in the same spread.
+   *
+   * IT IS TWO ROWS LOWER, tier 15 against tier 5, which the tier arithmetic
+   * absorbs: the Shadow tree spends 17 points above row three where it needs
+   * 15. Shadow Affinity's removal is what dropped Early Demise, Darkness and
+   * Shadowform in the first place, because three points vanishing from row one
+   * took the tree under three later gates at once.
+   */
+  dark_inspiration: 3,
   improved_shadow_word_pain: 2,
   shadow_reach: 2,
   improved_mind_blast: 5,
@@ -2221,9 +2439,39 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * seconds before the pull and LANDS at it; Flame Shock is then taken at
        * the pull itself. Both resolve at t=0 and the order here is the order
        * the owner wrote them in.
+       *
+       * ----------------------------------------------------------------------
+       * TWO ACTIONS ADDED, WORTH **+27.5 +/- 5.0** TOGETHER, and both for the
+       * same reason: a pre-combat action costs NO GLOBAL COOLDOWN, and this
+       * build's global cooldowns are the thing it is short of -- the Convection
+       * probe proved it is cast-bound rather than mana-bound.
+       *
+       *   ELEMENTAL MASTERY  **+13.9** on its own. A three minute cooldown
+       *                      opening a fifteen second window, claimed at a 0s
+       *                      lead for free. The lead is REAL, so 0s is what
+       *                      gives the full fifteen seconds from the pull --
+       *                      a longer lead would spend the window before the
+       *                      fight and buy back a cooldown that cannot return
+       *                      inside a hundred seconds. It keeps its list entry
+       *                      as a safety net, which therefore reads 0.00 uses.
+       *   SEARING TOTEM      **+11.0** on its own, and it is the ENHANCEMENT
+       *                      opener's own line applied here. That profile has
+       *                      pre-cast the totem at 1.5s all along and this one
+       *                      spent two global cooldowns on a 55 second totem in
+       *                      the fight; why the two differed was recorded
+       *                      nowhere, and the answer is that it should not.
+       *
+       * AND THE PAIR IS LESS THAN THE SUM -- 13.9 + 11.0 = 24.9 against a
+       * measured 27.5, which is slightly MORE, so they do not compete. Said
+       * either way because marginal values normally overlap when both buy the
+       * same scarce thing, and here the extra Lightning Bolts the window pays
+       * for are what the totem's freed cooldown spends.
+       * ----------------------------------------------------------------------
        */
       precombat: [
         ...before(2, 'lightning_bolt'),
+        ...before(1.5, 'searing_totem'),
+        ...before(0, 'elemental_mastery'),
         ...before(0, 'flame_shock'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
@@ -2284,9 +2532,26 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       talents: { ...MAGE_FROSTFIRE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_fire'),
+      /*
+       * ONE SCORCH ADDED BEFORE THE PULL, WORTH **+25.1 +/- 8.1**.
+       *
+       * Improved Scorch stacks a Fire vulnerability five times at 3% each, and
+       * this build spends six to seven casts a fight building and holding it --
+       * so a stack moved before the pull is a stack the fight OPENS with, on a
+       * debuff that raises every point of Fire damage the build deals.
+       *
+       * AT A 1.5 SECOND LEAD, WHICH IS SCORCH'S CAST TIME, so it lands at t=0
+       * exactly as the owner's own openers do -- every one of their ten "start
+       * casting" leads is that spell's cast time on that build.
+       *
+       * THE MAGE ARMOR LEAD IS LEFT ALONE. Moving it to 0s measured +0.37,
+       * noise, and REMOVING it is -26.2 -- so the buff is load-bearing and its
+       * lead is not.
+       */
       precombat: [
         ...before(4, 'mage_armor'),
         ...before(2.5, 'frostfire_bolt'),
+        ...before(1.5, 'scorch'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -2309,9 +2574,23 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       talents: { ...MAGE_ARCANE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_arcane'),
+      /*
+       * ARCANE POWER BEFORE THE PULL, WORTH **+24.9 +/- 7.4**.
+       *
+       * "For the next 15 sec, your spells deal 30% more damage while costing
+       * 30% more mana" -- and this build is not mana-bound, so the penalty half
+       * is free. Claiming it at a 0s lead costs no global cooldown and opens the
+       * window on the fight's first cast rather than one cast later.
+       *
+       * SCORCH IS NOT ADDED HERE, though it is on the other two Mages: this
+       * build has no Improved Scorch and no Scorch entry, so the pre-cast
+       * measured +9.4 against an interval of 9.7 -- noise, and a cast of a
+       * 181-damage spell for nothing.
+       */
       precombat: [
         ...before(3, 'mage_armor'),
         ...before(1.5, 'arcane_blast'),
+        ...before(0, 'arcane_power'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -2334,9 +2613,27 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       talents: { ...MAGE_FIRE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_fire'),
+      /*
+       * ONE SCORCH ADDED BEFORE THE PULL, WORTH **+15.2 +/- 10.2**, and it is
+       * the Frostfire build's line for the same reason: Improved Scorch stacks
+       * a Fire vulnerability five times at 3% each and this build spends eight
+       * casts a fight on it, so a stack moved before the pull is a stack the
+       * fight opens with on 90% of its damage.
+       *
+       * SMALLER HERE THAN ON FROSTFIRE (+25.1) BECAUSE FIREBALL IS SLOWER. A
+       * three second cast reaches the Scorch entry less often, so the ramp is
+       * already further along by the time it matters -- the pre-cast is worth
+       * more to the build that spends more of its early fight on short casts.
+       *
+       * COMBUSTION IS NOT ADDED. Pre-casting it measured -4.9 against an
+       * interval of 11.6, which is noise -- and its window is spent by four
+       * Fire crits rather than by a clock, so the global cooldown it saves is
+       * paid back by opening the window before the crits exist.
+       */
       precombat: [
         ...before(4.5, 'mage_armor'),
         ...before(3, 'fireball'),
+        ...before(1.5, 'scorch'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -2862,9 +3159,40 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       talents: { ...PRIEST_SHADOW_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_shadow'),
+      /*
+       * ==================================================================
+       * BOTH DoTs MOVED BEFORE THE PULL, WORTH **+35.5 +/- 4.1** TOGETHER --
+       * and **+77.4 +/- 4.7** with the Vampiric Embrace entry removed, which
+       * is 9% of the profile and the largest change in the six-profile pass
+       * after the Arcane Mage's Missile Barrage rank.
+       *
+       * Shadow Word: Pain is 20% of this build's damage and Devouring Plague
+       * 12.4%, both pure DoTs with nothing to roll at the pull -- so applying
+       * them before it costs NO GLOBAL COOLDOWN, where in the fight they cost
+       * two. It is the Enhancement Shaman's own Flame Shock line applied to a
+       * caster.
+       *
+       * THE PAIR IS WORTH LESS THAN THE SUM OF ITS HALVES: 26.8 + 26.7 = 53.5
+       * against a measured 35.5, because both buy the same scarce thing. The
+       * fight only has so many global cooldowns at the pull, and the second
+       * DoT moved there is competing with the first for what fills the gap.
+       * **Marginal values, not addends** -- which is why the pair was measured
+       * as a pair rather than added.
+       *
+       * AND WITH VAMPIRIC EMBRACE OUT IT GOES SLIGHTLY SUPER-ADDITIVE, 39.5 +
+       * 35.5 = 75.0 against 77.4: the freed cooldowns at the pull and the freed
+       * cooldowns in the fight are not the same cooldowns.
+       *
+       * AT A 0s LEAD, so each aura is at full duration when the fight starts.
+       * A longer lead would hand the fight a DoT already partly expired, which
+       * is the one thing a real lead costs.
+       * ==================================================================
+       */
       precombat: [
         ...before(3, 'shadowform'),
         ...before(1.5, 'mind_blast'),
+        ...before(0, 'shadow_word_pain'),
+        ...before(0, 'devouring_plague'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),

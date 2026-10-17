@@ -61,9 +61,21 @@ function fight(
 
 describe('the ability book never contains an unearned talent ability', () => {
   it('finds the granted abilities, so this test is not vacuous', () => {
-    // Nine talents grant an ability. If this drops, the loops below stop
-    // checking anything and would pass in silence.
-    expect(GRANTED.length).toBeGreaterThanOrEqual(9);
+    /*
+     * EIGHT talents grant an ability. If this drops, the loops below stop
+     * checking anything and would pass in silence.
+     *
+     * IT WAS NINE, AND PIERCING HOWL'S WAS A GRANT OF AN ABILITY NO CLASS
+     * DECLARES -- next to an `unmodelled` entry on the same talent saying the
+     * ability will never exist. The `grantAbility` guard in
+     * `hunterFiveFixes.test.ts` found it, so the declaration went and this
+     * floor follows it down.
+     *
+     * A FLOOR RATHER THAN AN EQUALITY, deliberately: this assertion exists to
+     * stop the loops below going vacuous, not to count the Warrior's tree. The
+     * exact list is `talentGating.test.ts`'s job and it asserts it exhaustively.
+     */
+    expect(GRANTED.length).toBeGreaterThanOrEqual(8);
   });
 
   for (const style of STYLES) {

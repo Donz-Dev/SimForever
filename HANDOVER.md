@@ -88,10 +88,9 @@ write-up; none is an engine gap.
 | **Consecrated Ground** -- wording says "Holy SPELLS" and the implementation reaches the seal and Holy Strike too. **+66** to the Shockadin, the biggest talent on that profile | round 12 | the reading, and the Shockadin's figure |
 | **Judgement of Command is left on the sheet's 0.43** where Righteousness and Fury took the exact `1.5 / 3.5`. The note names two abilities; a ruling covers what it says | round 17 | 0.33% on one seal, and whether all three should be the expression |
 | **Explosive Trap's 5% of attack power is on its BURN and not its initial hit.** One figure for two abilities, and only this one has two damage components | round 17 | which half carries it |
-| **Can one target carry TWO Judgements?** Wisdom and the Crusader are both selected on every profile now, which is what "all raid buffs checked on" asks for and which one target cannot hold in the game being modelled. `exclusiveWith` has no declaration anywhere, so nothing refuses it | round 20 | **63 to 80 DPS on the three Paladins**, isolated. If only one may be up, which -- and the raid presumably keeps Wisdom |
 | **"Touch of the Dead"** is the name the Undead note uses for what is plainly Touch of the Grave -- the same block, and the only part of that racial that has ever scaled with anything | round 17 | a naming question, not an ambiguity about which effect |
 
-**SEVEN ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**SIX ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
@@ -99,14 +98,17 @@ the rows**, and count them from the table rather than from the last figure
 somebody wrote down: the first draft of this very sentence said eight, by
 subtracting four from a miscount of eleven, and then seven, then six once Ice
 Lance came off, then seven when round 19b added one, **and six again now that
-round 19c has answered it in a single message** -- and SEVEN again now that
-round 20 has raised the two-Judgements question. **The number goes both ways**,
-which is the half an "increment" habit gets wrong even when the direction is
-right, and the Vanish row lasted exactly one round, which is the shortest yet.
+round 19c has answered it in a single message**, SEVEN when round 20 raised the
+two-Judgements question, and **SIX again now that it is answered**. **The number
+goes both ways**, which is the half an "increment" habit gets wrong even when
+the direction is right, and the two-Judgements row lasted exactly one round --
+tying the Vanish row for the shortest yet.
 
-**AND FIVE CAME OFF IN TWO ROUNDS, WHICH IS WHAT THE TABLE IS FOR.** Three were
-ruled on by the owner -- the five Tauren hit caps and the Druid aura exclusivity
-in round 18, and **Ice Lance's divisor in round 18b** -- and two were answered
+**AND SIX HAVE COME OFF IN THREE ROUNDS, WHICH IS WHAT THE TABLE IS FOR.** Four
+were ruled on by the owner -- the five Tauren hit caps and the Druid aura
+exclusivity in round 18, **Ice Lance's divisor in round 18b**, and now **the two
+Judgements**, which are "absolutely fine and intended for the raid buff
+contribution" -- and two were answered
 by the client catching up at build 1.60.1.70425: Shadow Word: Death's 18 seconds
 is confirmed, and Fire Nova's two missing figures exist (375 mana, 232-258
 damage). **A question can be answered by somebody OTHER than the person it was
@@ -118,6 +120,110 @@ IS NOW LOAD-BEARING.** Each was fine while it was worth little and became worth
 asking about the moment a round made it the biggest thing on a profile -- which
 is CLAUDE.md's rule that an interpretation flagged as one is what gets it ruled
 on, and that the label has to survive until the answer arrives.
+
+## Round TWENTY-ONE: three rulings, and the one that was a misread field
+
+**ALL THREE ARRIVED IN ONE MESSAGE AND ONLY ONE OF THEM MOVED A FIGURE**, which
+is the usual shape: two confirmed a reading and one overturned an
+implementation.
+
+| | the ruling | what it cost |
+| --- | --- | --- |
+| **Arcane Wrath** | "a 3.5 second cast with a 6 second cooldown ... 439 to 529 Arcane Damage, +5% of Maximum Mana, +100% of Spell Power" | the spell was shipped **INSTANT at 406-496 with a borrowed 0.429** -- all three corrected |
+| **Winter's Chill** | "at 5 stacks is a 3x multiplier for Cone of Cold" | the compounding default gives `1.4^5 = 5.378`; **ADDITIVE**, and the flag is what got it ruled on |
+| **Two Judgements** | "absolutely fine and intended for the raid buff contribution" | nothing. The question comes off the table above |
+
+### The Arcane Wrath failure is the one worth reading
+
+**EVERY RULE THIS PROJECT HAS FOR A SILENT SOURCE WAS APPLIED TO A SOURCE THAT
+HAD SPOKEN.** The capture states `"cast": "3.5 sec cast"` **in its own field**.
+The probe that read the entry asked for `castTime`, got `undefined`, and that
+reading error became the claim "the capture states no cast time" -- written into
+a test, with a negative assertion pinning the instant.
+
+**AND FROM THERE EVERY STEP WAS CORRECT.** A tie-break does not apply to a
+source that cannot express a field; an omission has not denied anything; a
+neighbouring spell's coefficient is borrowable with a `PLACEHOLDER_` name and a
+structural argument. So Fire Blast's 0.429 was borrowed on the argument that
+"the sheet gives every Mage INSTANT the same `1.5 / 3.5`" -- **sound reasoning
+resting on a fact that was not true.** `3.5 / 3.5` is 1.0, which is the owner's
+own figure: reading the field would have landed on it without being told.
+
+**THE TWO ERRORS PULLED OPPOSITE WAYS, WHICH IS WHAT MADE IT LOOK ORDINARY.** An
+instant cast is generous and a coefficient at 43% of the real one is stingy, so
+nothing about the spell's damage per second read wrong.
+
+**AND THIS FILE ALREADY HAD THE RIGHT NUMBER.** The round-twenty scoping table
+above says "395 mana, **3.5 sec cast**, 6 sec cooldown" in the row about this
+very spell. **A fact that gets documented still needs somebody to read it** --
+which is the mirror of this project's own rule that a difference that gets
+documented still needs somebody to call it wrong, and is cheaper to avoid:
+the source was right, the handover was right, and one field name was not.
+
+### And the justification the owner asked for: it is not worth taking
+
+"This seems like a spell worth taking, or at least providing very solid
+justification for not taking." Five placements, paired over 400 iterations
+against a 1077.6 baseline:
+
+| the placement | |
+| --- | --- |
+| entry above the gated Arcane Missiles | **-118.53 +/- 11.59** |
+| entry above Arcane Blast (the filler slot) | **-77.15 +/- 12.00** |
+| entry at the BOTTOM of the list | 0.00, **IDENTICAL FIGHTS** -- never cast |
+| talent taken, no entry -- the control | 0.00, **IDENTICAL FIGHTS** |
+| gated on Arcane Blast at max stacks | 0.00, **IDENTICAL FIGHTS** -- never cast |
+
+**AND THE SPELL IS NOT THE PROBLEM. IT CARRIES ITS WEIGHT.** In the filler slot
+it is **25.5% of the profile's damage on 6.6 casts**, which is more than Arcane
+Blast's own 15.4% in the same run.
+
+**WHAT IT DISPLACES IS NOT DAMAGE, IT IS SPELL POWER.** Arcane Blast falls
+**13.8 casts a fight to 9.8**, and Arcane Blast is this build's RAMP: each stack
+grants 15% of Intellect as spell power, so at 342 Intellect five stacks are
+**+257 on a base of 785**. The proof is in the column a DPS figure cannot show
+-- Arcane Missiles' cast count falls by 0.2 and its SHARE falls **67.0% to
+56.6%**, so every missile is hitting for about 15% less. It carries the highest
+coefficient in the kit at 1.4729 and it is two thirds of the profile.
+**Arcane Blast is not competing with Arcane Wrath on damage per second; it is
+buying spell power for the 67% of the build that is Arcane Missiles.**
+
+**SO THE PER-SECOND ARITHMETIC THAT MADE THIS LOOK CLOSE WAS COMPUTED AT BASE
+SPELL POWER**, and that is the whole error. 434/sec for the Wrath against
+381/sec for the Blast -- true at 785, and at five stacks Arcane Blast is
+`236 + (785 + 257) x 0.4286 = 683` over 1.5 seconds, **455/sec and already
+ahead** before a point of what the ramp does for anything else. **A per-second
+comparison on a build with a ramp has to be taken at the RAMPED figure**, or it
+prices the spell that breaks the ramp as though the ramp were free. That
+arithmetic was sitting in `tools/mageVariants.ts` predicting the opposite of
+what the measurement found, which is this project's own rule about a prediction
+in a comment -- specific, mechanical, and reading exactly like a finding.
+
+**AND PROTECTING THE RAMP MAKES THE SPELL UNREACHABLE**, which is why the gated
+row is a 0.00 rather than a smaller loss: at max stacks the two Arcane Missiles
+entries above it win, and below max stacks the gate refuses. There is no state
+in which Arcane Wrath is the top castable entry -- the "entry above never
+yields" cause of a never-fired entry, arrived at deliberately.
+
+**WHICH BUILD WOULD WANT IT**: one whose core spell does not depend on a ramp a
+3.5 second cast interrupts. Nothing here is that build, and the day a Mage
+profile exists without Arcane Blast it is one line to re-measure --
+`PRESET=mage_arcane VARIANTS=arcaneWrath npx vite-node tools/probe_build.ts`.
+
+### Winter's Chill: the flag is what got it answered
+
+`AuraDefinition.additiveDamageStacks` is new and this aura is its only caller.
+The engine's default raises a damage multiplier to the POWER of the stack count
+-- which is right for Improved Scorch's Fire Vulnerability, where 3% a stack
+makes the two readings 1.159 against 1.150 and nobody would notice. At **40% a
+stack they are a factor of 1.8 apart**, so the convention's existing callers
+were no evidence about this one, and the assertion carried both figures with the
+alternative pinned as a negative. The answer came back in one line.
+
+**IMPROVED SCORCH KEEPS ITS 1.159**, because a ruling covers what it says and is
+not extended by analogy -- `additiveDamageStacks` defaults to false for exactly
+that reason. Both are worth nothing today: Cone of Cold is not declared and no
+Mage profile takes the talent.
 
 ## Round EIGHTEEN: two owner rulings, and the questions that earned them
 
@@ -624,13 +730,19 @@ the four Paladins, and **exactly 0.0 on DW Fury and the Fire Mage**. The two
 zeros are the control -- it is Holy spell power and cannot reach a build that
 deals none.
 
-### One question it raises
+### The one question it raised, now answered
 
-**TWO JUDGEMENTS ARE NOW SELECTED AT ONCE**, Wisdom and the Crusader, which one
-target cannot carry in the game being modelled. `exclusiveWith` has no
-declaration anywhere, so nothing refuses it. Implemented as instructed and
-**recorded as a question**, because it is worth 63 to 80 DPS on three profiles
-and is a raid COMPOSITION ruling rather than a defect.
+**TWO JUDGEMENTS ARE SELECTED AT ONCE, AND IT IS INTENDED.** Wisdom and the
+Crusader, which one target cannot carry in the game being modelled;
+`exclusiveWith` has no declaration anywhere, so nothing refuses it. Implemented
+as instructed and recorded as a question, because it is worth 63 to 80 DPS on
+three profiles and is a raid COMPOSITION ruling rather than a defect.
+
+**THE OWNER'S ANSWER: "Two Judgements is absolutely fine and intended for the
+raid buff contribution."** So the box is a raid CONTRIBUTION rather than a claim
+about one debuff slot, and `raidBuffs.test.ts` asserts both ids on all 28 presets
+-- the question is closed and pinned, because a ruling left as prose gets
+re-raised.
 
 ## Round NINETEEN e: four rulings, and two were already done
 
@@ -1052,10 +1164,23 @@ put the client at **1.60.1.70425**, where round seventeen captured 70291 -- and
 **every tree change the notes described is in it**, plus eleven that are in no
 note at all.
 
-**THE REFRESH IS NOT ON THE BRANCH.** It was run, read, and reverted, because
-its blocker is six profile build URLs that only the owner can respecify -- see
-below. The data on disk is still 70291 and round seventeen is coherent against
-it.
+**THE REFRESH IS ON THE BRANCH NOW.** This paragraph read "it was run, read, and
+reverted, because its blocker is six profile build URLs that only the owner can
+respecify" -- and the blocker turned out not to need them. Seven preset
+allocations had stopped being legal, and five of the seven were a point going
+where the client put its replacement: a rename, a lost rank paying for a gained
+one, two tier rows swapping places. **Only the Warlock's needed a judgement**, and
+its own opener decided it -- the owner's "2.5s before start casting Shadow Bolt"
+is a 3.0 second cast with Bane 5/5 on it, so Malediction's five deleted points
+had a stated destination.
+
+**SO "ONLY THE OWNER CAN RESPECIFY THIS" WAS TRUE OF THE 1.60.1.70170 PATCH AND
+NOT OF THIS ONE**, and the difference is what the client did rather than how many
+points moved: that patch DELETED talents every Paladin build spent points on with
+nothing in their place, and this one mostly renamed and reshuffled. **A blocker
+inherited from the last patch of the same kind is a dated claim like any other**
+-- `tools/probe_allocations.ts` prints the `dropped` list per preset, which is
+the cheap way to tell a rename from a deletion before concluding either.
 
 ### The three note-derived values are CONFIRMED, which is the headline
 
@@ -1071,8 +1196,19 @@ expose a wrong one. 70425 ships all three **verbatim**:
 
 **THE DETECTOR SAID SO BY FAILING**, which is what it is for: the importer run
 failed `patchNoteValues.test.ts`'s "the client still says it" on
-`shadow_mastery`, naming the talent and printing both rows. **Delete that whole
-file in the commit that lands the refresh** -- the failing test is the reminder.
+`shadow_mastery`, naming the talent and printing both rows.
+
+**AND THE INSTRUCTION THIS PARAGRAPH GAVE ITSELF WAS FOLLOWED.** It read "delete
+that whole file in the commit that lands the refresh -- the failing test is the
+reminder", and the refresh commit deletes `patchNoteValues.ts`, its test and its
+call site in `talentValue`. **A layer built to expire, which announced its own
+redundancy and was removed on that announcement**, which is the first time
+anything in this project has gone round that whole loop.
+
+The shape is kept in CLAUDE.md with the two things to rebuild it with, because
+the next note that runs ahead of the client will want it -- and the note there
+says what matters more: **it must not be left standing empty**, since a table
+with no rows reads exactly like a mechanism that is doing something.
 
 So the risk the layer was written against -- the Dual Wield Specialization case,
 where a note and a client tooltip disagreed and the owner ruled for the CLIENT --
@@ -7321,32 +7457,48 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 17/34/0 | 989.6 | | Shockadin | Paladin | 23/0/28 | 787.7 |
-| LW Ranged | Hunter | 5/41/5 | 912.5 | | Hemo Dagger | Rogue | 17/3/31 | 787.0 |
-| Cat Druid | Druid | 9/34/8 | 892.7 | | Moonkin | Druid | 41/0/10 | 785.9 |
-| Firelock | Warlock | 5/11/35 | 885.5 | | Shadow Priest | Priest | 13/3/35 | 774.7 |
-| Hawk Melee | Hunter | 16/11/24 | 883.0 | | Enh Shaman | Shaman | 17/34/0 | 750.7 |
-| Seal Twist Ret | Paladin | 15/0/36 | 876.4 | | Pure Hemo | Rogue | 21/8/22 | 723.5 |
-| Arcane Mage | Mage | 35/11/5 | 866.8 | | SM/DS | Warlock | 40/11/0 | 722.4 |
-| Frostfire Mage | Mage | 0/29/22 | 863.3 | | Rupture Rogue | Rogue | 12/8/31 | 719.4 |
-| BM Hunter | Hunter | 31/20/0 | 856.2 | | Venom Rogue | Rogue | 37/12/2 | 718.9 |
-| 2H Arms | Warrior | 39/10/2 | 849.7 | | Ele Shaman | Shaman | 32/6/13 | 671.1 |
-| Fire Mage | Mage | 16/31/4 | 843.7 | | Prot Warr | Warrior | 17/0/34 | 469.7 |
-| LW Melee | Hunter | 5/13/33 | 831.5 | | Prot Pally | Paladin | 8/34/9 | 434.5 |
-| Combat Rogue | Rogue | 18/33/0 | 824.1 | | Bear Druid | Druid | 9/42/0 | 386.1 † |
-| Combat Mut | Rogue | 30/21/0 | 790.6 | | | | | | |
+| **Frostfire Mage** | Mage | 0/29/22 | **1086.4** | | LW Melee | Hunter | 5/13/33 | 878.8 |
+| **Arcane Mage** | Mage | 35/11/5 | **1078.1** | | Shockadin | Paladin | 23/0/28 | 867.8 |
+| DW Fury | Warrior | 17/34/0 | 1068.4 | | Combat Mut | Rogue | 30/21/0 | 847.8 |
+| **Fire Mage** | Mage | 15/31/5 | **1020.7** | | Hemo Dagger | Rogue | 17/3/31 | 840.2 |
+| LW Ranged | Hunter | 5/41/5 | 977.4 | | Moonkin | Druid | 41/0/10 | 820.3 |
+| Cat Druid | Druid | 9/34/8 | 966.9 | | **Ele Shaman** | Shaman | 32/10/9 | **792.7** |
+| BM Hunter | Hunter | 31/20/0 | 963.4 | | Pure Hemo | Rogue | 21/8/22 | 775.9 |
+| Seal Twist Ret | Paladin | 15/0/36 | 948.6 | | Venom Rogue | Rogue | 37/12/2 | 771.6 |
+| Hawk Melee | Hunter | 16/11/24 | 937.6 | | **SM/DS** | Warlock | 35/11/5 | **769.4** |
+| Shockadin 2H | Paladin | 22/0/29 | 935.2 | | **Enh Shaman** | Shaman | 17/34/0 | **761.9** |
+| **Shadow Priest** | Priest | 13/3/35 | **931.0** | | Rupture Rogue | Rogue | 12/8/31 | 754.9 |
+| 2H Arms | Warrior | 39/10/2 | 927.0 | | Prot Pally | Paladin | 8/34/9 | 549.9 |
+| Firelock | Warlock | 5/11/35 | 910.5 | | Prot Warr | Warrior | 17/0/34 | 499.5 |
+| Combat Rogue | Rogue | 18/33/0 | 899.7 | | Bear Druid | Druid | 9/42/0 | 432.8 |
 
-The mean across **27** is **774.0**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **28** is **857.7**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
-**† THE BEAR'S FIGURE IS STALE AND THE MEAN IS THEREFORE A MEAN OVER ONE STALE
-ROW.** Dire Bear Form's armor multiplier and the 75% armor cap both landed after
-this table was last rebuilt, and the Bear measures **~402.9** now. It is flagged
-rather than patched, because patching one row publishes a difference between two
-baselines -- this file's own rule. The TALENT columns above were corrected in
-place, because a build is a fact rather than a measurement: Arcane 35/11/5, Fire
-16/31/4, Ele Shaman 32/6/13, LW Ranged 5/41/5, LW Melee 5/13/33, Moonkin
-41/0/10.
+**EVERY ROW ABOVE IS ONE MEASUREMENT, AND NO ROW IS FLAGGED ANY MORE.** All 28
+come from a single 300-fight-per-profile run at the optimisation commit, with the
+`BASELINE=` comparison taken against `main` -- so the mean is a mean over 28
+current rows and the dagger that used to sit on the Bear is gone with the thing
+it described. The Bear measures **432.8** here, which supersedes the ~402.9 that
+footnote carried: Dire Bear Form's armor multiplier and the 75% armor cap had
+landed after the table was last rebuilt, and this rebuild includes them.
+
+**AND THE TABLE WAS MISSING A WHOLE PROFILE, WHICH THE SCRIPT REFUSED TO RUN
+WITHOUT.** `pally_shockadin_2h` has been a preset for several rounds with no row
+here at all, so the mean was over 27 of 28 and said 27 -- correct about its own
+arithmetic and wrong about the project. `update_baseline_table.py`'s SET
+assertion is what caught it, which is exactly what that assertion is for: "a
+profile added to the presets and not to the table is an error rather than a quiet
+omission". The script's label map and the table both have it now.
+
+**THE TALENT COLUMNS ARE READ FROM THE ROWS AND NEVER RETYPED**, which is why
+the old footnote's list of them is gone rather than updated. It read "Arcane
+35/11/5, Fire 16/31/4, Ele Shaman 32/6/13 ..." and two of those three had moved
+underneath it -- Fire is 15/31/5 and Ele Shaman 32/10/9 after the optimisation
+pass. **A figure written twice is a figure that drifts once**, and this file had
+already written that sentence about this same footnote. `talentSpreads.test.ts`
+reads every doc table and compares it to `PRESETS_BY_ID`, which is what makes the
+rows safe and the prose not -- so the prose is deleted instead of maintained.
 
 **AND THIS SENTENCE CONTRADICTED THE TABLE ABOVE IT FOR ONE COMMIT**, which is
 the failure `update_baseline_table.py` already has a paragraph about: the ROWS

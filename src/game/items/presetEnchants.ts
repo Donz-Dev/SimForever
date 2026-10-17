@@ -62,7 +62,31 @@ export const PRESET_ENCHANTS: Readonly<
   druid_cat: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, twoHand: 20034, wrists: 900019 },
   druid_bear: { chest: 900015, cloak: 900001, feet: 900025, gloves: 900022, head: 900001, legs: 900001, neck: 900011, twoHand: 20034, wrists: 900019 },
   shaman_elemental: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900009, shield: 900030, wrists: 900018 },
-  shaman_enhancement: { chest: 900015, cloak: 900011, feet: 900025, gloves: 900021, head: 900005, legs: 900005, neck: 900008, twoHand: 20034, wrists: 900017 },
+  /*
+   * ==========================================================================
+   * THE BOOTS GO FROM MINOR SPEED TO +7 AGILITY, worth **+1.9 +/- 1.8** paired
+   * over 300 iterations. Small, real, and the ONE free enchant in the six
+   * profiles the owner asked to have optimised.
+   *
+   * Minor Speed is `unmodelled` -- movement, which nothing here has -- so the
+   * slot was worth exactly zero, and the feet table offers +7 Agility, which a
+   * build that is 61% auto-attack and Windfury reads in full.
+   *
+   * THE FIVE CASTERS CANNOT DO THE SAME AND IT IS WORTH SAYING WHY. They carry
+   * Minor Speed too, and the feet slot offers only Defense Skill, Minor Speed,
+   * Agility and Stamina -- **a caster can read none of the four**. Their cloaks
+   * are the same story: Dodge, Agility, Armor and Threat. So those two
+   * `unmodelled` enchants are dead BY TABLE rather than by choice, and
+   * measuring +60 Armor on a Mage at exactly 0.00 is the right answer rather
+   * than a variant that failed to apply.
+   *
+   * EVERYTHING ELSE ON THIS ROW WAS MEASURED AND KEPT. +15 Agility for +15
+   * Strength is -1.7, +8 Agility on the head is -1.0, and haste on the head,
+   * legs or gloves is noise against an interval of 11 -- so Strength holds
+   * every slot that offers it.
+   * ==========================================================================
+   */
+  shaman_enhancement: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900021, head: 900005, legs: 900005, neck: 900008, twoHand: 20034, wrists: 900017 },
   mage_frostfire: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   mage_arcane: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   mage_fire: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },

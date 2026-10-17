@@ -91,7 +91,20 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
   },
   mage: {
     trees: [
-      ['arcane', 18, 'Arcane Power'],
+      /*
+       * 19: ARCANE WRATH was added at client build 1.60.1.70425, behind Arcane
+       * Blast at row 3 -- a spell the talent grants, which is the one shape of
+       * addition this count cannot see any other way.
+       */
+      ['arcane', 19, 'Arcane Power'],
+      /*
+       * 17, UNCHANGED THROUGH A PATCH THAT RENAMED ONE ROW AND MOVED TWO RANK
+       * COUNTS. Wake of Fire became IMPROVED FIRE BLAST, Fire Power went 5
+       * ranks to 3 and Critical Mass went 3 to 5 -- so the tree is the same
+       * length and three of the Mage builds became illegal, which is exactly
+       * the case a size assertion is blind to. `tools/probe_allocations.ts` is
+       * what answers that one.
+       */
       ['fire', 17, 'Combustion'],
       ['frost', 19, 'Ice Barrier'],
     ],
@@ -108,9 +121,21 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
   },
   priest: {
     trees: [
+      /*
+       * 18, AND TWO OF ITS ROWS SWAPPED PLACES at client build 1.60.1.70425:
+       * Improved Power Word: Shield went from tier 5 down to tier 10 and Mental
+       * Strength came from tier 15 up to tier 5. The same eighteen talents in a
+       * different order, which made the Shadow Priest's Discipline thirteen
+       * illegal without changing anything this line can check.
+       */
       ['discipline', 18, 'Power Infusion'],
       ['holy', 17, 'Prayer of Mending'],
-      ['shadow', 18, 'Shadowform'],
+      /*
+       * 17: TWO OUT AND ONE IN. Shadow Affinity and Improved Fade were removed
+       * and DARK INSPIRATION added in Improved Fade's slot -- so a net fall of
+       * one, where a count alone would read as a single removal.
+       */
+      ['shadow', 17, 'Shadowform'],
     ],
   },
   rogue: {
@@ -122,7 +147,20 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
   },
   shaman: {
     trees: [
-      ['elemental', 16, 'Lava Burst'],
+      /*
+       * 16, WITH A NEW CAPSTONE AND THE OLD ONE STILL IN THE TREE -- which is
+       * why this row is worth a comment. At client build 1.60.1.70425 Call of
+       * Thunder was removed, ELEMENTAL MASTERY was added at row 6, and LAVA
+       * BURST moved from row 6 to row 4 and lost its Lightning Overload
+       * prerequisite. One out, one in, and the 31-point talent is a different
+       * spell.
+       *
+       * SO THE SIZE IS THE ONE THING THAT DID NOT MOVE, and the capstone column
+       * is what caught it. A count is the cheapest check that a tree changed
+       * shape and it cannot see a swap; **this is the second time that has been
+       * true in two patches**, and both times the second column was what failed.
+       */
+      ['elemental', 16, 'Elemental Mastery'],
       ['enhancement', 18, 'Rage of the Farseer'],
       ['restoration', 16, 'Riptide'],
     ],

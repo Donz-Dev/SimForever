@@ -137,7 +137,7 @@ export class AuraCollection {
       const found = pick(byAbility, abilityId);
       if (!found) continue;
       const own = instance.definition.modifiersScaleWithStacks
-        ? scaleByStacks(found, instance.stacks)
+        ? scaleByStacks(found, instance.stacks, instance.definition.additiveDamageStacks)
         : found;
       combined = combined ? combineAbilityModifiers(combined, own) : own;
     }

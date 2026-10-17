@@ -10,6 +10,15 @@ import {
   HUNTER_LONE_WOLF_RANGED,
   hunterRotation,
 } from '../../src/game/rotations/hunter';
+import { DRUID_ABILITIES } from '../../src/game/abilities/druid';
+import { HUNTER_ABILITIES } from '../../src/game/abilities/hunter';
+import { MAGE_ABILITIES } from '../../src/game/abilities/mage';
+import { PALADIN_ABILITIES } from '../../src/game/abilities/paladin';
+import { PRIEST_ABILITIES } from '../../src/game/abilities/priest';
+import { ROGUE_ABILITIES } from '../../src/game/abilities/rogue';
+import { SHAMAN_ABILITIES } from '../../src/game/abilities/shaman';
+import { WARLOCK_ABILITIES } from '../../src/game/abilities/warlock';
+import { WARRIOR_ABILITIES } from '../../src/game/abilities/warrior';
 import { TALENT_AURAS } from '../../src/game/auras/talentAuras';
 import { LONE_WOLF, LONE_WOLF_DAMAGE } from '../../src/game/auras/hunter';
 import { HUNTER_TALENT_EFFECTS } from '../../src/game/talents/hunterEffects';
@@ -133,6 +142,90 @@ describe('Lone Wolf grants the 20% it is named for', () => {
       }
     }
     expect(missing).toEqual([]);
+  });
+
+  it('fails if ANY talent grants an ABILITY nothing declares', () => {
+    /*
+     * ==========================================================================
+     * THE SIBLING GUARD, AND IT WAS MISSING UNTIL A TALENT FELL THROUGH IT.
+     *
+     * The check above covers `grantAura`, which was written the day `lone_wolf`
+     * turned out never to have been registered. `grantAbility` has the SAME
+     * shape and the same silent drop -- `abilitiesForBuild` adds the granted id
+     * if the class declares an ability with it and does nothing otherwise -- and
+     * nothing asked.
+     *
+     * ARCANE WRATH IS WHY IT EXISTS NOW. Client build 1.60.1.70425 added the
+     * talent, it was declared here as `grantAbility: 'arcane_wrath'`, and the
+     * ABILITY was not written: the full suite went green with a talent that
+     * grants a spell no Mage can cast. **The same failure as `lone_wolf`, on
+     * the sibling effect kind, caught the same way.**
+     *
+     * IT READS EACH CLASS'S `*_ABILITIES` TABLE AND NOT `abilitiesForClass`,
+     * which is the distinction that makes the check mean anything: that
+     * function STRIPS a talent-granted ability unless the allocation it is
+     * handed earns it, so asking it with no talents reported 56 perfectly
+     * well-declared abilities as missing -- Mortal Strike, Bloodthirst, Shield
+     * Slam and every other capstone in the project. The DECLARATION table is
+     * the thing this test is about.
+     *
+     * AND NOT A BUILT CHARACTER EITHER, which would make this a test about
+     * which talents the presets happen to take -- the dependency
+     * `grantCastModifier`'s own note warns about and five tests have already
+     * been bitten by.
+     * ==========================================================================
+     */
+    const CLASSES = [
+      ['warrior', WARRIOR_TALENT_EFFECTS, WARRIOR_ABILITIES],
+      ['rogue', ROGUE_TALENT_EFFECTS, ROGUE_ABILITIES],
+      ['druid', DRUID_TALENT_EFFECTS, DRUID_ABILITIES],
+      ['shaman', SHAMAN_TALENT_EFFECTS, SHAMAN_ABILITIES],
+      ['mage', MAGE_TALENT_EFFECTS, MAGE_ABILITIES],
+      ['paladin', PALADIN_TALENT_EFFECTS, PALADIN_ABILITIES],
+      ['hunter', HUNTER_TALENT_EFFECTS, HUNTER_ABILITIES],
+      ['warlock', WARLOCK_TALENT_EFFECTS, WARLOCK_ABILITIES],
+      ['priest', PRIEST_TALENT_EFFECTS, PRIEST_ABILITIES],
+    ] as const;
+    expect(CLASSES).toHaveLength(9);
+
+    /*
+     * ONE EXEMPTION, WITH ITS REASON, the way the `grantAura` check above keeps
+     * Demonic Sacrifice -- and this one is an OWNER RULING rather than a
+     * structural quirk, which is the stronger kind.
+     *
+     * "Concussion Blow is still not to be implemented. No note about this needs
+     * to be made on the GUI." So the talent deliberately carries NO
+     * `unmodelled` entry and deliberately grants an ability no class declares:
+     * the stun is out of scope and there is nothing for a reader to act on.
+     * `chargeAndShieldTalents.test.ts` pins that exact shape, so rewriting the
+     * talent to satisfy this check would have put a note on the GUI the owner
+     * said not to put there -- which is what happened, and that test caught it.
+     *
+     * PIERCING HOWL IS NOT EXEMPT AND WAS FIXED INSTEAD, which is the
+     * distinction worth having both entries for: it carried the same dead
+     * `grantAbility` NEXT TO an `unmodelled` entry saying the ability will never
+     * exist, so the two effects contradicted each other and one of them had to
+     * go. Concussion Blow's silence is the ruling; Piercing Howl's grant was
+     * just left behind.
+     */
+    const EXEMPT_ABILITIES: Readonly<Record<string, string>> = {
+      concussion_blow: "The owner's ruling: not to be implemented, and no GUI note.",
+    };
+
+    const undeclared: string[] = [];
+    for (const [classId, effects, abilities] of CLASSES) {
+      const declared = new Set(abilities.map((ability) => ability.id));
+      for (const [talentId, list] of Object.entries(effects)) {
+        for (const effect of list) {
+          if (effect.kind !== 'grantAbility') continue;
+          if (effect.abilityId in EXEMPT_ABILITIES) continue;
+          if (!declared.has(effect.abilityId)) {
+            undeclared.push(`${classId}/${talentId} -> ${effect.abilityId}`);
+          }
+        }
+      }
+    }
+    expect(undeclared).toEqual([]);
   });
 });
 

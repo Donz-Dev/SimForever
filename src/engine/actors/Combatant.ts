@@ -1,9 +1,10 @@
-import type { AbilityModifier } from '../combat/abilityModifiers';
+import type { AbilityModifier, PerTargetEffectDamage } from '../combat/abilityModifiers';
 import {
   AbilityModifiers,
   AttackTableModifiers,
   SchoolModifiers,
   combineAbilityModifiers,
+  stackedMultiplier,
 } from '../combat/abilityModifiers';
 import type { AuraDefinition } from '../effects/Aura';
 import type { Ability } from '../abilities/Ability';
@@ -344,6 +345,19 @@ export interface CombatantOptions {
    */
   readonly bleedingTargetModifiers?: AttackTableModifiers;
   /**
+   * Per-school damage scaled by a COUNT of this combatant's effects on the
+   * target, capped. Fire Power's "3% per your Fire effects on the target, up to
+   * 12%". See `PerTargetEffectDamage`.
+   *
+   * ----------------------------------------------------------------------------
+   * THE SECOND MODIFIER CONDITIONED ON THE DEFENDER, after
+   * `bleedingTargetModifiers` -- and it is a count where that one is a
+   * boolean. Kept apart from `schoolModifiers` for the same reason: folding a
+   * conditional bonus into the unconditional bucket loses the condition.
+   * ----------------------------------------------------------------------------
+   */
+  readonly schoolDamagePerTargetEffect?: ReadonlyMap<DamageSchool, PerTargetEffectDamage>;
+  /**
    * A permanent multiplier on every PERIODIC point of damage, on top of
    * `damageMultiplier`.
    *
@@ -465,6 +479,8 @@ export class Combatant {
   readonly attackTableModifiers: AttackTableModifiers;
   /** The same, counted only while the target bleeds. See the option. */
   readonly bleedingTargetModifiers: AttackTableModifiers;
+  /** Per-school damage scaled by effects on the target. See the option. */
+  readonly schoolDamagePerTargetEffect: ReadonlyMap<DamageSchool, PerTargetEffectDamage>;
   readonly baseDamageMultiplier: number;
   /** Multiplies periodic damage only. See the option. */
   readonly periodicDamageMultiplier: number;
@@ -631,6 +647,7 @@ export class Combatant {
     this.attackTableModifiers = options.attackTableModifiers ?? new AttackTableModifiers();
     this.bleedingTargetModifiers =
       options.bleedingTargetModifiers ?? new AttackTableModifiers();
+    this.schoolDamagePerTargetEffect = options.schoolDamagePerTargetEffect ?? new Map();
     this.baseDamageMultiplier = options.damageMultiplier ?? 1;
     this.periodicDamageMultiplier = options.periodicDamageMultiplier ?? 1;
     this.survivesLethalDamage = options.survivesLethalDamage ?? false;
@@ -705,9 +722,14 @@ export class Combatant {
     for (const aura of this.auras.active) {
       const bySchool = aura.definition.damageDoneBySchool;
       if (bySchool?.[school] === undefined) continue;
-      // Compounds with stacks, matching `auraMultiplier` and the target side.
-      product *=
-        bySchool[school]! ** (aura.definition.modifiersScaleWithStacks ? aura.stacks : 1);
+      // Compounds with stacks by default, matching `auraMultiplier` and the
+      // target side -- and ADDS for an aura the owner has ruled additive. See
+      // `stackedMultiplier`, which is the one place that rule lives.
+      product *= stackedMultiplier(
+        bySchool[school]!,
+        aura.definition.modifiersScaleWithStacks ? aura.stacks : 1,
+        aura.definition.additiveDamageStacks,
+      );
     }
     return product;
   }
@@ -1008,8 +1030,9 @@ export class Combatant {
        * the same flag would be worth far more trouble than it.
        */
       const exponent = aura.definition.modifiersScaleWithStacks ? aura.stacks : 1;
+      const additive = aura.definition.additiveDamageStacks;
       const everyHit = aura.definition.damageTakenBySchool?.[school];
-      if (everyHit !== undefined) product *= everyHit ** exponent;
+      if (everyHit !== undefined) product *= stackedMultiplier(everyHit, exponent, additive);
       /*
        * BOTH FIELDS REACH A TICK, and they are separate rather than one flag.
        * `damageTakenBySchool` is every hit of that school;
@@ -1079,7 +1102,11 @@ export class Combatant {
       const byTable = aura.definition.damageDoneByTable;
       const value = byTable?.[table];
       if (value === undefined) continue;
-      product *= value ** (aura.definition.modifiersScaleWithStacks ? aura.stacks : 1);
+      product *= stackedMultiplier(
+        value,
+        aura.definition.modifiersScaleWithStacks ? aura.stacks : 1,
+        aura.definition.additiveDamageStacks,
+      );
     }
     return product;
   }
@@ -1095,7 +1122,11 @@ export class Combatant {
     for (const aura of this.auras.active) {
       const value = aura.definition[key];
       if (value !== undefined) {
-        product *= value ** (aura.definition.modifiersScaleWithStacks ? aura.stacks : 1);
+        product *= stackedMultiplier(
+          value,
+          aura.definition.modifiersScaleWithStacks ? aura.stacks : 1,
+          aura.definition.additiveDamageStacks,
+        );
       }
     }
     return product;

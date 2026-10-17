@@ -1,8 +1,10 @@
 import type { Ability, Combatant, SimulationContext } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
 import {
+  ELEMENTAL_MASTERY_AURA,
   FLAME_SHOCK_COEFFICIENTS,
   FLAME_SHOCK_DOT,
+  flameShockDot,
   RAGE_OF_THE_FARSEER,
   SEARING_TOTEM_DOT,
   STORMSTRIKE_DAMAGE_BONUS,
@@ -160,6 +162,40 @@ export const LIGHTNING_BOLT: Ability = {
  * a single-target fight and is what makes this spell a poor one here relative
  * to what it is worth in a pull of three.
  */
+/*
+ * ==============================================================================
+ * 116 TO 130 IS `foreverchanges.pro`'s FIGURE AND IT BEATS THE CAPTURE ABOVE,
+ * WHICH IS WHY THIS DOES NOT SAY 119 TO 133.
+ *
+ * The owner's standing rule -- "when in doubt use foreverchanges.pro" -- and
+ * `docs/source-cross-checks.md` records this exact row from the 2026-09-25
+ * Shaman pass, beside Lightning Bolt's 185-207 and Frost Shock's 275-291 which
+ * are resolved the same way. All three constants are the tie-break's figure and
+ * not the capture's.
+ *
+ * ------------------------------------------------------------------------------
+ * AND THIS CONSTANT WAS BRIEFLY SET TO THE CAPTURE'S MIDPOINT DURING THE
+ * 1.60.1.70425 REFRESH, which is the failure this note exists to stop.
+ *
+ * The doc comment above states "119 to 133" because it quotes the CAPTURE, the
+ * constant was 123 because it follows the RULING, and nothing between them said
+ * so -- so a reader refreshing the captures finds a constant that disagrees
+ * with the tooltip printed directly above it and reads 123 as drift. It is the
+ * failure CLAUDE.md names in its own words: **a number that disagrees with the
+ * checked-in capture must carry the ruling beside it, or the next person reads
+ * it as drift.** The note was missing and the next person did.
+ *
+ * WHAT CAUGHT IT IS THAT LIGHTNING BOLT DID NOT MOVE. Its 196 is `midpoint(185,
+ * 207)` against a capture reading 189-211, so the test asserting 196 passed on
+ * the line above the one that failed -- two constants from one source where one
+ * had been quietly switched to the other. **Two sibling figures resolved by the
+ * same ruling, and only one of them moving, is the shape of a mistake.**
+ *
+ * THE COST IS A DIFFERENT QUESTION AND THE CAPTURE DOES WIN THERE: 485 to 315
+ * at this build, which the cross-check pass never disputed -- it found every
+ * cost, cast time and cooldown matching and only these damage ranges apart.
+ * ==============================================================================
+ */
 export const CHAIN_LIGHTNING_DAMAGE = midpoint(116, 130);
 export const CHAIN_LIGHTNING_TARGETS = 3;
 export const CHAIN_LIGHTNING_CAST_MS = seconds(2);
@@ -185,11 +221,15 @@ export const CHAIN_LIGHTNING: Ability = {
    * from Fire Nova's "significantly reduced", which states no operation at all
    * and is therefore left alone.
    *
-   * THE WORD "APPROXIMATELY" IS DOING REAL WORK AND IS FLAGGED: Forever's own
-   * costs are round numbers, so the shipped figure is more likely 315 or 310
-   * than 315.25, and across FOUR ranks a single percentage will not land
-   * exactly on all of them. A QUESTION FOR THE OWNER, and cheap to settle --
-   * one re-read of `foreverchanges.pro` once the build lands.
+   * AND THE BUILD HAS LANDED AND THE CAPTURE SAYS 315. This paragraph used to
+   * end "a QUESTION FOR THE OWNER, and cheap to settle -- one re-read once the
+   * build lands", because "approximately 35%" off 485 is 315.25 and Forever's
+   * costs are round numbers. At 1.60.1.70425 the client's own figure is **315**,
+   * so the derivation was exact and the flag comes off.
+   *
+   * **THE FLAG IS WHAT MADE IT CHECKABLE**, which is the half worth keeping: a
+   * derived number with its derivation written beside it can be confirmed by a
+   * later capture in one read. An undocumented 315 could not have been.
    * ==========================================================================
    */
   cost: { resource: 'mana', amount: CHAIN_LIGHTNING_MANA },
@@ -262,6 +302,27 @@ export const EARTH_SHOCK: Ability = {
 
 export const FLAME_SHOCK_DIRECT = 166;
 
+/**
+ * Call of Flame's added burn duration, in SECONDS, handed to the cast.
+ *
+ * THE PRIEST HAS THE IDENTICAL THING -- `SWP_EXTRA_SECONDS_BONUS`, for Improved
+ * Shadow Word: Pain -- so this is a second instance of a settled pattern rather
+ * than a new shape, and `flameShockDot` takes the same unit its factory does.
+ *
+ * ==============================================================================
+ * AN `abilityBonus` AND NOT AN AURA FIELD, because the number belongs to the
+ * CHARACTER's talents and the aura is built per application. Mind Flay's
+ * escalation and Wrack's Soul Siphon figures arrive the same way, and for the
+ * same reason: `onCast` is the only place that has both the talent's value and
+ * the aura it is about to apply.
+ *
+ * SECONDS, which is the unit the talent states, converted once here. Every
+ * other time in this project below the UI is integer milliseconds, so the
+ * conversion has exactly one site and `seconds()` does it.
+ * ==============================================================================
+ */
+export const FLAME_SHOCK_EXTRA_DURATION_BONUS = 'flameShockExtraDurationSeconds';
+
 export const FLAME_SHOCK: Ability = {
   id: 'flame_shock',
   name: 'Flame Shock',
@@ -283,7 +344,14 @@ export const FLAME_SHOCK: Ability = {
       powerCoefficient: FLAME_SHOCK_COEFFICIENTS.direct,
       attackTable: ability.attackTable,
     });
-    if (!result.avoided) simulation.applyAura(target, FLAME_SHOCK_DOT, caster.id);
+    if (result.avoided) return;
+    /*
+     * CALL OF FLAME'S NINE SECONDS, read off the character rather than baked
+     * into the definition. A build without the talent reads nothing and gets
+     * the base twelve seconds, which is what `flameShockDot()` returns.
+     */
+    const extraSeconds = ability.bonuses?.[FLAME_SHOCK_EXTRA_DURATION_BONUS] ?? 0;
+    simulation.applyAura(target, flameShockDot(extraSeconds), caster.id);
   },
 };
 
@@ -409,7 +477,13 @@ export const LAVA_BURST: Ability = {
  * and that talent is a school effect.
  * ============================================================================
  */
-export const FIRE_NOVA_DAMAGE = midpoint(413, 459);
+/*
+ * 232 to 258 at build 1.60.1.70425, down from 413 to 459 -- a 44% cut, with the
+ * cost falling 520 to 375 beside it. Fire Nova is in no priority list, every
+ * encounter here having one target, so this moves no figure: what changes is
+ * what the number MEANS the day a multi-target encounter exists.
+ */
+export const FIRE_NOVA_DAMAGE = midpoint(232, 258);
 export const FIRE_NOVA_COOLDOWN_MS = seconds(10);
 export const FIRE_NOVA_COEFFICIENT = FIRE_NOVA_SP_COEFFICIENT;
 
@@ -425,7 +499,7 @@ function fireTotemActive(target: Combatant | undefined): boolean {
 export const FIRE_NOVA: Ability = {
   id: 'fire_nova',
   name: 'Fire Nova',
-  cost: { resource: 'mana', amount: 520 },
+  cost: { resource: 'mana', amount: 375 },
   cooldownMs: FIRE_NOVA_COOLDOWN_MS,
   attackTable: 'spell',
   requiresTarget: true,
@@ -575,8 +649,41 @@ export const SEARING_TOTEM: Ability = {
     'Its 20 yard range is dropped with every other distance.',
 };
 
+/**
+ * Elemental Mastery: the Elemental capstone, and a three minute cooldown.
+ *
+ * ==============================================================================
+ * NEW AT CLIENT BUILD 1.60.1.70425, replacing Call of Thunder in the tree and
+ * taking Lava Burst's place as the 31-point talent -- Lava Burst moved to row 4
+ * and lost its Lightning Overload prerequisite in the same patch.
+ *
+ * WHAT IT DOES IS ON THE AURA, which is where the two live clauses are. See
+ * `ELEMENTAL_MASTERY_AURA`.
+ *
+ * IT TAKES A GLOBAL COOLDOWN, which is the DEFAULT rather than a decision: the
+ * capture states no cost and no cast time and says nothing about the global
+ * cooldown, and this project has four other instants in exactly that position.
+ * Rage of the Farseer's own note says the same thing in the same words. **The
+ * owner has ruled several cooldowns off the GCD individually**, so if this is
+ * one of them it is one line -- and guessing it would be worth free uptime
+ * nobody granted.
+ * ==============================================================================
+ */
+export const ELEMENTAL_MASTERY_COOLDOWN_MS = seconds(180);
+
+export const ELEMENTAL_MASTERY: Ability = {
+  id: 'elemental_mastery',
+  name: 'Elemental Mastery',
+  cooldownMs: ELEMENTAL_MASTERY_COOLDOWN_MS,
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, ELEMENTAL_MASTERY_AURA, caster.id);
+  },
+};
+
 export const SHAMAN_ABILITIES: readonly Ability[] = [
   LIGHTNING_BOLT,
+  ELEMENTAL_MASTERY,
   CHAIN_LIGHTNING,
   EARTH_SHOCK,
   FLAME_SHOCK,

@@ -148,3 +148,58 @@ export const chain =
 export const PALADIN_TREE = treeFor('paladin');
 export const HUNTER_TREE = treeFor('hunter');
 export const DRUID_TREE = treeFor('druid');
+export const MAGE_TREE = treeFor('mage');
+export const SHAMAN_TREE = treeFor('shaman');
+export const PRIEST_TREE = treeFor('priest');
+
+/*
+ * ==============================================================================
+ * PRE-COMBAT EDITS, which are a dimension of their own and had no helper.
+ *
+ * `CharacterProfile.precombat` is what the character did before the pull, each
+ * action with how long before -- and the owner's six-profile optimisation brief
+ * names it explicitly beside the APL. The lead time is REAL by their ruling, so
+ * it has these observable consequences: an aura it applied has N seconds less
+ * left at the pull, its own cooldown comes back N seconds sooner, regeneration
+ * is credited across the lead, and the five second rule is stamped where the
+ * spend happened.
+ *
+ * WHICH MAKES A COOLDOWN A CANDIDATE TO MOVE HERE. Pre-combat mode skips the
+ * global cooldown the action would start, the swing reset and the cast time --
+ * so a 15-second window opened at a 0s lead is the same window the fight would
+ * get, bought for no GCD. That is what `addPrecombat` is for, and it is worth
+ * +13.9 on the Elemental Shaman's new capstone and +35.5 on the Shadow Priest's
+ * two DoTs.
+ *
+ * AND IT IS NOT A FREE CAST: the mana is spent and the cooldown runs. A buff
+ * moved here with a LONG lead can therefore expire before it is useful, which
+ * is why the lead is an argument rather than a default.
+ * ==============================================================================
+ */
+export const addPrecombat =
+  (secondsBefore: number, ...abilityIds: readonly string[]): Apply =>
+  (profile) => ({
+    ...profile,
+    precombat: [
+      ...(profile.precombat ?? []),
+      ...abilityIds.map((abilityId) => ({ abilityId, secondsBefore })),
+    ],
+  });
+
+/** Drop a pre-combat action, to price what the opener's own entries are worth. */
+export const removePrecombat =
+  (abilityId: string): Apply =>
+  (profile) => ({
+    ...profile,
+    precombat: (profile.precombat ?? []).filter((a) => a.abilityId !== abilityId),
+  });
+
+/** Move a pre-combat action's lead, keeping everything else about it. */
+export const precombatLead =
+  (abilityId: string, secondsBefore: number): Apply =>
+  (profile) => ({
+    ...profile,
+    precombat: (profile.precombat ?? []).map((a) =>
+      a.abilityId === abilityId ? { ...a, secondsBefore } : a,
+    ),
+  });

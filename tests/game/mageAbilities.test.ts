@@ -6,14 +6,24 @@ import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
 import type { TelemetryEvent } from '../../src/engine';
 import { ALL_ABILITIES, resolveCast, seconds } from '../../src/engine';
 import { manaPerTick } from '../../src/game/combat/resourceRules';
+import { dealDamage } from '../../src/engine';
+import {
+  FIRE_BLAST_SP_COEFFICIENT,
+  ARCANE_WRATH_SP_COEFFICIENT,
+} from '../../src/game/combat/coefficients';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import {
   ARCANE_BLAST_BASE_MANA_FRACTION,
   ARCANE_BLAST_CAST_MS,
   ARCANE_BLAST_DAMAGE,
-  ARCANE_BLAST_DAMAGE_REDUCTION,
   ARCANE_MISSILES_PER_TICK,
+  ARCANE_WRATH,
+  ARCANE_WRATH_COEFFICIENT,
+  ARCANE_WRATH_CAST_MS,
+  ARCANE_WRATH_COOLDOWN_MS,
+  ARCANE_WRATH_DAMAGE,
+  ARCANE_WRATH_MANA_TO_SPELL_POWER,
   ARCANE_MISSILES_TICK_COEFFICIENT,
   ARCANE_MISSILES_TICKS,
   FIREBALL_DAMAGE,
@@ -36,7 +46,10 @@ import {
   ARCANE_POWER,
   ARCANE_POWER_COST_INCREASE,
   MAGE_COSTED_SPELL_IDS,
-  WINTERS_CHILL_CRIT_PER_STACK,
+  FIREBALL_DOT,
+  MAGE_FIRE_POWER_EFFECTS,
+  PYROBLAST_DOT,
+  WINTERS_CHILL_DAMAGE_PER_STACK,
   WINTERS_CHILL_DURATION_MS,
   wintersChillAura,
   COMBUSTION,
@@ -65,7 +78,9 @@ import {
   igniteAura,
   fireVulnerabilityAura,
 } from '../../src/game/auras/mage';
+import { aurasForClass } from '../../src/game/auras/auraCatalog';
 import { MAGE_TALENT_EFFECTS } from '../../src/game/talents/mageEffects';
+import { talentBuild } from '../../src/game/talents/talentBuild';
 import {
   CHILL_ABILITY_IDS,
   MAGE_TALENT_REACTIONS,
@@ -141,13 +156,17 @@ describe('the numbers', () => {
     expect(SCORCH_DAMAGE).toBe(178);
     expect(PYROBLAST_DAMAGE).toBe(583);
     /*
-     * ARCANE BLAST IS THE ONE ROW THAT IS NO LONGER THE CAPTURE'S MIDPOINT.
-     * "Damage done ... reduced 40%" takes the captured 364-424 down, so the
-     * figure is written as the arithmetic rather than as 236.4 -- the source
-     * range stays visible and the note's own operation is what a reader checks.
+     * AND ARCANE BLAST IS THE CAPTURE'S MIDPOINT AGAIN. This read
+     * `394 * (1 - ARCANE_BLAST_DAMAGE_REDUCTION)` -- the old capture's 364-424
+     * with a patch note's 40% applied, because the capture predated the
+     * redesign. At build 1.60.1.70425 the spellbook states **218 to 254**, so
+     * the derivation and its constant are both gone.
+     *
+     * THE DERIVATION WAS RIGHT TO WITHIN A POINT, 236.4 against 236, which is
+     * the best thing that can happen to one -- and it was checkable only
+     * because it was written as arithmetic rather than as a literal.
      */
-    expect(ARCANE_BLAST_DAMAGE).toBeCloseTo(394 * (1 - ARCANE_BLAST_DAMAGE_REDUCTION), 6);
-    expect(ARCANE_BLAST_DAMAGE_REDUCTION).toBe(0.4);
+    expect(ARCANE_BLAST_DAMAGE).toBe(236);
     expect(ICE_LANCE_DAMAGE).toBe(145);
   });
 
@@ -172,8 +191,11 @@ describe('the numbers', () => {
     expect(ARCANE_BLAST_BASE_MANA_FRACTION).toBe(0.15);
   });
 
-  it('declares an effect for every one of the 54 talents', () => {
-    expect(Object.keys(MAGE_TALENT_EFFECTS)).toHaveLength(54);
+  it('declares an effect for every one of the 55 talents', () => {
+    // 55: ARCANE WRATH was added at client build 1.60.1.70425. Wake of Fire
+    // became Improved Fire Blast in the same patch, which is a rename and
+    // changes no count -- so the tree grew by exactly one.
+    expect(Object.keys(MAGE_TALENT_EFFECTS)).toHaveLength(55);
   });
 });
 
@@ -204,13 +226,213 @@ describe('which list a Mage runs', () => {
   });
 });
 
+describe('Arcane Wrath, which no profile casts yet', () => {
+  /*
+   * ==========================================================================
+   * NEW AT CLIENT BUILD 1.60.1.70425, granted by the Arcane tree's new row-3
+   * talent, and in NO priority list and NO preset's allocation -- so
+   * `coefficient_probe.ts` cannot see it at all: that tool casts every ability
+   * every PRESET can reach, and nothing reaches this one.
+   *
+   * WHICH IS THE QUIETEST PLACE IN THIS PROJECT FOR AN ABILITY TO BE WRONG.
+   * An ability declared, learnable, castable and never cast is reported
+   * nowhere -- the shape `ability_audit.ts` was written for -- so the
+   * MECHANISM is asserted here, and that is the whole reason this block
+   * exists rather than a line in a list.
+   *
+   * IT IS DECLARED SO THE TALENT CAN BE MEASURED, which is the opposite of the
+   * usual order: the owner has asked for the Arcane Mage to be optimised, and a
+   * talent whose ability does not exist is a talent nobody can price. The
+   * `grantAbility` guard in `hunterFiveFixes.test.ts` exists because this one
+   * shipped undeclared for a full suite run.
+   * ==========================================================================
+   */
+  const wrathDamage = (maxMana: number): number => {
+    const actor = makeAttacker({
+      autoAttack: 'none',
+      abilities: [ARCANE_WRATH],
+      resources: [{ type: 'mana', maximum: maxMana }],
+      stats: { spellPower: 0 },
+    });
+    const target = makeTarget({ maxHealth: 10_000_000, stats: { armor: 0 } });
+    const simulation = buildSimulation([actor, target], { durationMs: seconds(60) });
+    simulation.begin();
+
+    /*
+     * THE MAXIMUM TAKEN OVER MANY CASTS, which is the un-missed, un-crit figure.
+     * A mean here would be a miss rate and a crit rate wearing a damage number.
+     */
+    let best = 0;
+    for (let i = 0; i < 60; i += 1) {
+      const resolution = dealDamage(simulation, {
+        source: actor,
+        target,
+        abilityId: 'arcane_wrath',
+        abilityName: 'Arcane Wrath',
+        school: 'arcane',
+        baseAmount:
+          ARCANE_WRATH_DAMAGE + maxMana * ARCANE_WRATH_MANA_TO_SPELL_POWER * ARCANE_WRATH_COEFFICIENT,
+        powerCoefficient: ARCANE_WRATH_COEFFICIENT,
+        attackTable: 'spell',
+        cannotCrit: true,
+      });
+      best = Math.max(best, resolution.amount);
+    }
+    return best;
+  };
+
+  it('is a 3.5 SECOND CAST and not an instant, which it shipped as', () => {
+    /*
+     * ========================================================================
+     * THE CAST TIME IS THE ASSERTION THIS BLOCK EXISTS FOR NOW.
+     *
+     * This read `expect(ARCANE_WRATH.castTimeMs ?? 0).toBe(0)` with the comment
+     * "Instant: the capture states no cast time" -- and the capture states
+     * **`"cast": "3.5 sec cast"`** in its own field. The probe that read the
+     * entry asked for `castTime`, got `undefined`, and a reading error became a
+     * claim about the source.
+     *
+     * **A FIELD READ BY THE WRONG NAME REPORTS AS A SOURCE THAT IS SILENT**, and
+     * every rule this project has for a quiet source is generous: a tie-break
+     * does not apply, an omission has not denied anything, and a neighbouring
+     * spell's coefficient becomes borrowable. All three were then applied to a
+     * source that had spoken, and the spell came out instant with Fire Blast's
+     * 0.429 -- which is the one combination that looks ordinary, because the
+     * wrong cast time and the wrong coefficient pulled opposite ways.
+     *
+     * SO THE ASSERTION IS WRITTEN AGAINST THE CAPTURE'S OWN WORDING, and the
+     * negative is kept: an instant Arcane Wrath at 1.0 would be absurd, and
+     * nothing else in the suite would have said so.
+     * ========================================================================
+     */
+    expect(ARCANE_WRATH_CAST_MS).toBe(seconds(3.5));
+    expect(ARCANE_WRATH.castTimeMs).toBe(seconds(3.5));
+    expect(ARCANE_WRATH.castTimeMs ?? 0).not.toBe(0);
+    expect(ARCANE_WRATH.cost).toEqual({ resource: 'mana', amount: 395 });
+    expect(ARCANE_WRATH_COOLDOWN_MS).toBe(seconds(6));
+  });
+
+  it('takes the midpoint of 439 to 529, the OWNER\'s figure over the capture', () => {
+    /*
+     * ========================================================================
+     * 439 TO 529 IS THE OWNER'S AND THE CAPTURE SAYS 406 TO 496, exactly 33
+     * lower at both ends. **A later statement from the owner outranks a
+     * capture** -- the rule Rake's 5.5% tick and Swipe's 3% already follow --
+     * and the EVEN OFFSET is what says this is a build difference rather than a
+     * transcription error, so the capture is one refresh behind rather than
+     * wrong.
+     *
+     * BOTH FIGURES ARE WRITTEN OUT because a reader who knows the checked-in
+     * capture would otherwise read 484 as drift, which is the same reason the
+     * constant carries them.
+     *
+     * AND THE TALENT TOOLTIP SAYS 122 TO 146, WHICH IS RANK 1 -- a quarter of
+     * the real spell. **A talent tooltip shows rank 1 of the ability it
+     * grants**, which has twice cost this project a Hunter ability: Sniper Shot
+     * at 160 against 295, and Summon Hawk at 32 against 108, the second worth
+     * 144 DPS.
+     * ========================================================================
+     */
+    expect(ARCANE_WRATH_DAMAGE).toBe((439 + 529) / 2);
+    expect(ARCANE_WRATH_DAMAGE).not.toBe((406 + 496) / 2);
+    expect(ARCANE_WRATH_DAMAGE).not.toBe((122 + 146) / 2);
+  });
+
+  it('gains spell damage from the MANA POOL, at five percent of the maximum', () => {
+    /*
+     * ========================================================================
+     * "This spell gains additional Spell Damage equal to 5% of your maximum
+     * Mana", and the DIFFERENCE between two pools is what isolates it: every
+     * other term -- the base, the coefficient, the school multiplier, the armor
+     * curve -- is identical on both sides and cancels.
+     *
+     * SO THE PREDICTED STEP IS EXACTLY `delta x 0.05 x coefficient`, and
+     * asserting it that way rather than against a literal is what makes this a
+     * check on the CLAUSE instead of on the arithmetic of one fixture.
+     *
+     * MAXIMUM AND NOT CURRENT, which the tooltip states and which this fixture
+     * cannot distinguish -- both pools start full. Said out loud: the reading is
+     * enforced by `onCast` asking `maximum`, and reading `current` instead would
+     * make the spell weaken through a fight, a smaller number and no error.
+     * ========================================================================
+     */
+    const small = wrathDamage(3_000);
+    const large = wrathDamage(8_000);
+    const predicted =
+      (8_000 - 3_000) * ARCANE_WRATH_MANA_TO_SPELL_POWER * ARCANE_WRATH_COEFFICIENT;
+    expect(large - small).toBeCloseTo(predicted, 6);
+    // And it is a real share of the spell rather than a rounding: ~107 damage.
+    expect(predicted).toBeGreaterThan(100);
+  });
+
+  it('is in the book only for a Mage that spent the point', () => {
+    // `grantsByAbility` gates it, which is what `talentGating` asserts for the
+    // Warrior's nine -- checked here because this is a NEW grant.
+    const without = abilitiesForClass('mage', 'caster', {}).map((a) => a.id);
+    expect(without).not.toContain('arcane_wrath');
+
+    const with_ = abilitiesForClass(
+      'mage',
+      'caster',
+      legalise({ arcane_blast: 1, arcane_wrath: 1 }, 'mage'),
+    ).map((a) => a.id);
+    expect(with_).toContain('arcane_wrath');
+  });
+
+  it('scales at 100% of Spell Power, which the owner stated and is not a borrow', () => {
+    /*
+     * ========================================================================
+     * THE PLACEHOLDER THIS ASSERTED WAS WRONG BY A FACTOR OF 2.3.
+     *
+     * `WoWSimWorksheet.xlsx` predates the spell, so there was no row to
+     * transcribe and the constant was `PLACEHOLDER_ARCANE_WRATH_SP_COEFFICIENT
+     * = 0.429` -- Fire Blast's figure, borrowed on the argument that the sheet
+     * gives every Mage INSTANT the same `1.5 / 3.5`. The owner has given it
+     * directly: **"+100% of Spell Power for its coefficient."**
+     *
+     * THE BORROW FAILED ON ITS PREMISE RATHER THAN ITS METHOD. "The same damage
+     * band, the same cast time and a comparable cooldown" -- and the cast time
+     * was 3.5 seconds, not instant. **The structural argument was sound and
+     * pointed at the wrong neighbour**: `3.5 / 3.5` is 1.0, which is the
+     * owner's own figure, so reading the capture's `cast` field would have
+     * landed on it without being told.
+     *
+     * SO THE FLAG DID ITS JOB AND THE ARGUMENT BESIDE IT IS WHAT FAILED. The
+     * `PLACEHOLDER_` name is what got this asked about at all -- this project's
+     * rule is that a flagged reading is cheap and a wrong unflagged one is not
+     * -- and the lesson underneath is one level down: **a well-argued borrow is
+     * only as good as the facts its argument rests on.**
+     * ========================================================================
+     */
+    expect(ARCANE_WRATH_COEFFICIENT).toBe(ARCANE_WRATH_SP_COEFFICIENT);
+    expect(ARCANE_WRATH_SP_COEFFICIENT).toBe(1);
+    // And NOT the borrowed figure, which was Fire Blast's.
+    expect(ARCANE_WRATH_COEFFICIENT).not.toBeCloseTo(FIRE_BLAST_SP_COEFFICIENT, 6);
+  });
+});
+
 describe('the talents that needed a school', () => {
-  it('raises Fire for a Fire mage and leaves Frost and Arcane alone', () => {
-    // Fire Power 5/5 is +10% Fire damage, and Critical Mass 3/3 is +6% Fire
-    // crit. Neither had any declaration before `SchoolModifiers`.
+  it('raises Fire CRIT for a Fire mage and leaves Frost and Arcane alone', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * FIRE POWER LEFT THIS ASSERTION AT CLIENT BUILD 1.60.1.70425, and the
+     * damage half of the row going to 1 is the finding rather than a loss.
+     *
+     * It used to read `damageMultiplier` 1.1 -- Fire Power 5/5 at a flat 2% a
+     * rank -- and the talent is now "3% per your Fire effects on the target, up
+     * to 12%", which is not a `SchoolModifiers` entry at all. A conditional
+     * bonus folded into the unconditional bucket loses its condition, so it
+     * lives in `schoolDamagePerTargetEffect` and this collection correctly
+     * reports no flat Fire damage multiplier.
+     *
+     * CRITICAL MASS IS WHAT IS LEFT HERE, and it went 3 ranks to 5 in the same
+     * patch -- the Fire build takes 5/5 now, because Combustion's prerequisite
+     * demands it, so +10% Fire crit where it was +6%.
+     * ------------------------------------------------------------------------
+     */
     const fire = presetPlayer('mage_fire');
-    expect(fire.schoolModifiers.for('fire').damageMultiplier).toBeCloseTo(1.1, 6);
-    expect(fire.schoolModifiers.for('fire').critBonus).toBe(6);
+    expect(fire.schoolModifiers.for('fire').critBonus).toBe(10);
+    expect(fire.schoolModifiers.for('fire').damageMultiplier ?? 1).toBe(1);
     expect(fire.schoolModifiers.for('frost').damageMultiplier ?? 1).toBe(1);
     expect(fire.schoolModifiers.for('arcane').damageMultiplier ?? 1).toBe(1);
   });
@@ -220,10 +442,167 @@ describe('the talents that needed a school', () => {
      * 0/29/22 with no capstone in either tree. Fire Power raises Frostfire
      * Bolt because it is dealt as Fire; Ice Shards raises its Frost crits at
      * +100% of a spell crit's 0.5 bonus. The build exists for that overlap.
+     *
+     * AND FIRE POWER'S HALF MOVED OUT OF `schoolModifiers` WITH THE REDESIGN,
+     * so what this reads on the Fire side is CRITICAL MASS -- 4/5 here, the
+     * rank the client's new fifth made affordable. Fire Power's own half of the
+     * overlap is asserted in the ramp test below, where the count lives.
      */
     const frostfire = presetPlayer('mage_frostfire');
-    expect(frostfire.schoolModifiers.for('fire').damageMultiplier).toBeCloseTo(1.08, 6);
+    expect(frostfire.schoolModifiers.for('fire').critBonus).toBe(8);
     expect(frostfire.schoolModifiers.for('frost').critMultiplierBonus).toBeCloseTo(0.5, 6);
+  });
+
+  it('ramps Fire Power by the Fire effects on the target, and caps it', () => {
+    /*
+     * ========================================================================
+     * "Increases the damage done by your Fire spells by 3% per your Fire effects
+     * on the target, up to a maximum increase of 12%. Effects which mix multiple
+     * schools of magic do not qualify."
+     *
+     * THE OLD DECLARATION APPLIED A FLAT 3% -- `schoolDamage` reading index 0 of
+     * `[3, 12]` -- which is the per-effect figure used as though it were the
+     * whole talent, between a quarter and a third of its value. **The wrong
+     * number was the RIGHT number for the wrong operation**, which is why no
+     * figure looked odd and why this is asserted as a RAMP rather than as a
+     * multiplier.
+     *
+     * FOUR EFFECTS IS THE CAP EXACTLY, 4 x 3 = 12, so the fifth step asserted
+     * here is the one that proves the ceiling binds rather than the count
+     * running away. Soul Siphon has the same coincidence and the same risk: a
+     * list that is wrong is invisible while everything is up.
+     * ========================================================================
+     */
+    const fire = presetPlayer('mage_fire');
+    expect(fire.schoolDamagePerTargetEffect.get('fire')).toEqual({
+      percentPerEffect: 3,
+      maxPercent: 12,
+      effectIds: MAGE_FIRE_POWER_EFFECTS,
+    });
+    // Both Fire builds carry 3/3 after the spread repair.
+    expect(presetPlayer('mage_frostfire').schoolDamagePerTargetEffect.get('fire')).toEqual(
+      fire.schoolDamagePerTargetEffect.get('fire'),
+    );
+    // And it is scoped to Fire: no other school carries one.
+    expect(fire.schoolDamagePerTargetEffect.get('frost')).toBeUndefined();
+    expect(fire.schoolDamagePerTargetEffect.get('arcane')).toBeUndefined();
+
+    /*
+     * AND THE RANKS SCALE BOTH NUMBERS TOGETHER, which is what says the cap is
+     * read from its own index rather than defaulted to the per-effect figure.
+     * `[[1,4],[2,8],[3,12]]`: a default would make rank 1 "1% capped at 1%".
+     */
+    for (const [rank, perEffect, cap] of [[1, 1, 4], [2, 2, 8], [3, 3, 12]] as const) {
+      const build = talentBuild('mage', legalise({ fire_power: rank }, 'mage'));
+      expect(build.schoolDamagePerTargetEffect.get('fire'), `rank ${rank}`).toEqual({
+        percentPerEffect: perEffect,
+        maxPercent: cap,
+        effectIds: MAGE_FIRE_POWER_EFFECTS,
+      });
+    }
+  });
+
+  it('RAISES A LIVE FIREBALL, one step per effect, and stops at the cap', () => {
+    /*
+     * ========================================================================
+     * THE END OF THE WIRE, AND NOT THE REGISTRY.
+     *
+     * The two assertions above say the scaling is ON the character and the list
+     * is the right list. Neither says `resolveDamage` reads it -- which is
+     * precisely how `armorPenetration` shipped: declared, granted by three
+     * talents, counted as fully modelled and READ BY NOTHING, with its own test
+     * file green throughout because it asserted the arithmetic and the
+     * registration and never the join between them.
+     *
+     * A RATIO IS THE ASSERTION TO TRUST, because every term between the
+     * coefficient and the damage event appears on both sides and cancels --
+     * spell power, the school multiplier, Critical Mass, the armor curve. So
+     * one, two, three and four effects must come out at exactly 1.03, 1.06,
+     * 1.09 and 1.12 whatever else the build carries.
+     *
+     * AND THE FOURTH AND FIFTH STEPS ARE THE SAME, which is the cap biting
+     * rather than the count running away: 4 x 3 is exactly 12, so a fifth
+     * qualifying effect would be worth nothing. There are only four in the
+     * list, so the fourth step IS the ceiling and this asserts it lands on the
+     * stated maximum rather than one short of it.
+     *
+     * `cannotCrit` AND A HUNDRED POINTS OF HIT, so one cast is decisive. A
+     * sampled figure here would be a crit rate and a miss rate wearing a
+     * damage number, which is the shape `probe_revelation.ts` exists for.
+     * ========================================================================
+     */
+    const ramp = [FIREBALL_DOT, PYROBLAST_DOT, igniteAura(0), fireVulnerabilityAura(0)];
+
+    const fireballAt = (count: number): number => {
+      const built = PRESETS_BY_ID.get('mage_fire')!.build();
+      const actor = createPlayer({
+        race: 'gnome',
+        characterClass: 'mage',
+        combatStyle: 'caster',
+        talents: built.talents,
+        equipment: built.equipment,
+      });
+      const target = makeTarget({ maxHealth: 10_000_000, stats: { armor: 0 } });
+      const simulation = buildSimulation([actor, target], { durationMs: seconds(60) });
+      simulation.begin();
+      for (let i = 0; i < count; i += 1) simulation.applyAura(target, ramp[i], actor.id);
+
+      return dealDamage(simulation, {
+        source: actor,
+        target,
+        abilityId: 'fireball',
+        abilityName: 'Fireball',
+        school: 'fire',
+        baseAmount: 10_000,
+        attackTable: 'spell',
+        cannotCrit: true,
+      }).amount;
+    };
+
+    const base = fireballAt(0);
+    expect(base).toBeGreaterThan(0);
+    for (const [count, ratio] of [[1, 1.03], [2, 1.06], [3, 1.09], [4, 1.12]] as const) {
+      expect(fireballAt(count) / base, `${count} effects`).toBeCloseTo(ratio, 6);
+    }
+  });
+
+  it('counts four Fire effects and excludes the one that mixes schools', () => {
+    /*
+     * ========================================================================
+     * THE TOOLTIP'S LAST SENTENCE, AND THE LIST IS THE WHOLE OF ITS
+     * ENFORCEMENT: "Effects which mix multiple schools of magic do not
+     * qualify." Frostfire Bolt's DoT ticks Fire and `countsAsSchools` says it
+     * is also Frost, so it is excluded -- by not being in
+     * `MAGE_FIRE_POWER_EFFECTS`, because nothing in the code can tell.
+     *
+     * THE ASYMMETRY IS ASSERTED IN BOTH DIRECTIONS BELOW, because it is the one
+     * thing here a reader gets backwards: a Frostfire Bolt COLLECTS the bonus,
+     * being a Fire spell, and does not CONTRIBUTE to it.
+     * ========================================================================
+     */
+    expect(MAGE_FIRE_POWER_EFFECTS).toEqual([
+      'fireball',
+      'pyroblast',
+      'ignite',
+      'fire_vulnerability',
+    ]);
+    expect(MAGE_FIRE_POWER_EFFECTS).not.toContain('frostfire_bolt');
+    /*
+     * EACH NAMED ID IS A REAL MAGE AURA, OR THE COUNT SILENTLY NEVER REACHES
+     * IT -- which is the whole failure mode of a named list. `auras.has()`
+     * against an id nothing applies is permanently false, so a typo here is a
+     * talent worth 3% less per misspelling with nothing anywhere to say so.
+     *
+     * `aurasForClass` RATHER THAN `CATALOG_AURAS`, because that constant holds
+     * only the FACTORY-built auras -- Fireball's and Pyroblast's DoTs are plain
+     * exported constants that the catalogue's export walk finds instead. Asking
+     * the narrower list reported `fireball` as missing, which is the catalogue's
+     * own documented split and not a gap.
+     */
+    const mageAuraIds = new Set(aurasForClass('mage').map((aura) => aura.id));
+    for (const id of MAGE_FIRE_POWER_EFFECTS) {
+      expect(mageAuraIds.has(id), id).toBe(true);
+    }
   });
 
   it('does NOT multiply intellect by eleven', () => {
@@ -1238,11 +1617,14 @@ describe('Arcane Blast, whose damage half is the Arcane rotation', () => {
      */
     expect(ARCANE_BLAST_CAST_MS).toBe(seconds(1.5));
     expect(ARCANE_BLAST_SP_COEFFICIENT).toBeCloseTo(1.5 / 3.5, 12);
-    // The old pair, multiplied out, lands on the new one.
-    expect((2.5 / 3.5) * (1 - ARCANE_BLAST_DAMAGE_REDUCTION)).toBeCloseTo(1.5 / 3.5, 12);
+    // The old pair, multiplied out, lands on the new one -- the 0.4 is written
+    // here rather than read from a constant, because the constant is gone and
+    // this assertion is about the note's HISTORY rather than about a figure.
+    expect((2.5 / 3.5) * (1 - 0.4)).toBeCloseTo(1.5 / 3.5, 12);
 
-    // And the base damage took the same 40%, off the captured 364-424.
-    expect(ARCANE_BLAST_DAMAGE).toBeCloseTo(((364 + 424) / 2) * 0.6, 6);
+    // And the client now states the base damage the same cut produced.
+    expect(ARCANE_BLAST_DAMAGE).toBeCloseTo(((364 + 424) / 2) * 0.6, 0);
+    expect(ARCANE_BLAST_DAMAGE).toBe((218 + 254) / 2);
   });
 
   it('grants spell power from Intellect, per stack, and reaches itself', () => {
@@ -1473,23 +1855,51 @@ describe("Winter's Chill, a crit debuff the TARGET carries", () => {
       talentNumbers('mage', 'winter_s_chill', rank),
     );
 
-  it('keeps its per-stack 2 and its 15 seconds as constants the file still agrees with', () => {
+  it('keeps its per-stack 40 as a constant the file still agrees with', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE ROW IS `[chance, 40, 5]` NOW AND WAS `[chance, 2, 15, maxStacks]`.
+     * One entry shorter, and the DURATION left it -- 15 seconds is no longer
+     * stated by the client at all, so `WINTERS_CHILL_DURATION_MS` is this
+     * repository's figure carried across the redesign rather than something to
+     * check against index 2, which is the stack cap now.
+     *
+     * SO THE ASSERTION THAT USED TO READ THE DURATION HAD TO GO, and that is
+     * the finding: a test comparing a constant to a value the source has
+     * stopped stating cannot fail, it can only read the wrong number. It was
+     * `talentNumber(..., 2)` against the duration and index 2 is now 5.
+     * ------------------------------------------------------------------------
+     */
     for (let rank = 1; rank <= 5; rank += 1) {
-      expect(talentNumber('mage', 'winter_s_chill', rank, 1)).toBe(WINTERS_CHILL_CRIT_PER_STACK);
-      expect(talentNumber('mage', 'winter_s_chill', rank, 2)).toBe(
-        WINTERS_CHILL_DURATION_MS / 1000,
+      expect(talentNumber('mage', 'winter_s_chill', rank, 1)).toBe(
+        WINTERS_CHILL_DAMAGE_PER_STACK,
       );
     }
+    /*
+     * AND THE DURATION IS ASSERTED AGAINST THE AURA INSTEAD OF AGAINST THE ROW,
+     * because the row no longer states it. That makes this constant the one
+     * figure here with no source to check -- 15 seconds carried across the
+     * redesign on this repository's own authority -- so the assertion is that
+     * the aura actually uses it, which is the only claim left to make.
+     */
+    expect(wintersChillAura(5).durationMs).toBe(WINTERS_CHILL_DURATION_MS);
   });
 
-  it('scales its stack cap by rank, which is a SECOND number the rank moves', () => {
+  it('caps at five stacks at EVERY rank, where the rank used to move it', () => {
     /*
-     * NOTHING ELSE IN THIS TREE DOES. `valueIndex` picks one number, so the
-     * builder takes the whole row -- and this is the test that the row is read
-     * at the right index. A cap silently stuck at 1 is a fifth of the talent
-     * and no error.
+     * THE RANK USED TO SCALE TWO NUMBERS -- the chance 20..100 and the cap
+     * 1..5 -- and now scales only the chance, with the cap flat at 5. The
+     * builder still takes the whole row, because a rank that moves one number
+     * today is not a promise about the next patch and this talent has already
+     * changed that answer once.
+     *
+     * AND THE CAP'S INDEX MOVED FROM 3 TO 2 WITH THE SHORTER ROW, which is the
+     * real risk in the redesign: `values?.[3]` is `undefined` on a three-entry
+     * row, the builder's fallback is 1, and the talent would have applied a
+     * one-stack debuff instead of a five-stack one. A fifth of its value, with
+     * the right uptime, and no error. That is why all five ranks are driven.
      */
-    for (const [rank, cap] of [[1, 1], [2, 2], [3, 3], [4, 4], [5, 5]] as const) {
+    for (const [rank, cap] of [[1, 5], [2, 5], [3, 5], [4, 5], [5, 5]] as const) {
       const actor = makeAttacker({ autoAttack: 'none' });
       const target = makeTarget();
       const simulation = buildSimulation([actor, target], { durationMs: seconds(60) });
@@ -1503,12 +1913,13 @@ describe("Winter's Chill, a crit debuff the TARGET carries", () => {
     }
   });
 
-  it('is applied by any Frost spell and benefits only the two it names', () => {
+  it('is applied by any Frost spell and benefits only the one it names', () => {
     /*
      * TWO DIFFERENT SETS, and the tooltip says so. Frostfire Bolt applies it,
-     * because it "counts as both Frost and Fire damage", and does NOT crit
-     * more for it -- the sentence names Ice Lance and Frostbolt and stops.
-     * That asymmetry is the kind a reader assumes away.
+     * because it "counts as both Frost and Fire damage", and gets nothing from
+     * it -- the sentence names CONE OF COLD and stops. That asymmetry survived
+     * the redesign; what changed is that the benefiting set went from two
+     * spells to one, and from crit to damage.
      */
     const actor = makeAttacker({ autoAttack: 'none' });
     const target = makeTarget();
@@ -1526,14 +1937,25 @@ describe("Winter's Chill, a crit debuff the TARGET carries", () => {
     expect(applies('arcane_missiles')).toBe(false);
 
     simulation.applyAura(target, wintersChillAura(5), actor.id);
-    const critAgainst = (abilityId: string) =>
-      target.abilityModifierAgainst(abilityId).critBonus ?? 0;
-    expect(critAgainst('ice_lance')).toBe(WINTERS_CHILL_CRIT_PER_STACK);
-    expect(critAgainst('frostbolt')).toBe(WINTERS_CHILL_CRIT_PER_STACK);
-    expect(critAgainst('frostfire_bolt')).toBe(0);
+    const damageAgainst = (abilityId: string) =>
+      target.abilityModifierAgainst(abilityId).damageMultiplier ?? 1;
+    expect(damageAgainst('cone_of_cold')).toBeCloseTo(
+      1 + WINTERS_CHILL_DAMAGE_PER_STACK / 100,
+      6,
+    );
+    /*
+     * AND THE TWO SPELLS IT USED TO NAME GET NOTHING NOW, asserted rather than
+     * left absent: a debuff that quietly kept amplifying Ice Lance would be the
+     * old talent surviving its own replacement, which is a bigger number and no
+     * error on the one Mage tree that cares about Ice Lance.
+     */
+    expect(damageAgainst('ice_lance')).toBe(1);
+    expect(damageAgainst('frostbolt')).toBe(1);
+    expect(damageAgainst('frostfire_bolt')).toBe(1);
+    expect(target.abilityModifierAgainst('ice_lance').critBonus ?? 0).toBe(0);
   });
 
-  it('stacks its crit bonus, and belongs to the target rather than the caster', () => {
+  it('stacks its damage bonus, and belongs to the target rather than the caster', () => {
     const actor = makeAttacker({ autoAttack: 'none' });
     const target = makeTarget();
     const simulation = buildSimulation([actor, target], { durationMs: seconds(60) });
@@ -1541,35 +1963,47 @@ describe("Winter's Chill, a crit debuff the TARGET carries", () => {
 
     for (let i = 0; i < 5; i += 1) simulation.applyAura(target, wintersChillAura(5), actor.id);
     expect(target.auras.stacksOf('winters_chill')).toBe(5);
-    expect(target.abilityModifierAgainst('ice_lance').critBonus).toBe(
-      5 * WINTERS_CHILL_CRIT_PER_STACK,
+    /*
+     * ========================================================================
+     * **EXACTLY 3x AT FIVE STACKS, BY THE OWNER'S RULING, SO THIS ONE ADDS.**
+     *
+     * "Winter's Chill at 5 stacks is a 3x multiplier for Cone of Cold" --
+     * `1 + 0.4 x 5`, where this engine's default raises a damage multiplier to
+     * the POWER of the stack count and would give `1.4^5 = 5.378`.
+     * `AuraDefinition.additiveDamageStacks` is the opt-in and this aura is its
+     * only caller.
+     *
+     * AND THE FLAG IS WHAT GOT IT RULED ON. This assertion carried the power
+     * reading with the additive one pinned beside it as a negative, both
+     * figures written out -- and the answer came back in one line. **A flagged
+     * reading is cheap and a wrong unflagged one is not**, which is the third
+     * time that has paid on a Mage constant.
+     *
+     * IMPROVED SCORCH KEEPS ITS 1.159. **A ruling covers what it says and is
+     * not extended by analogy** -- at 3% a stack the two readings are 1.159
+     * against 1.150 and indistinguishable, so the owner ruled about the 40% one
+     * and the 3% one is untouched. `additiveDamageStacks` defaults to false for
+     * exactly that reason.
+     *
+     * WORTH NOTHING EITHER WAY TODAY: Cone of Cold is not declared and no Mage
+     * profile takes the talent.
+     * ========================================================================
+     */
+    expect(target.abilityModifierAgainst('cone_of_cold').damageMultiplier).toBeCloseTo(3, 6);
+    expect(target.abilityModifierAgainst('cone_of_cold').damageMultiplier).toBeCloseTo(
+      1 + (5 * WINTERS_CHILL_DAMAGE_PER_STACK) / 100,
+      6,
+    );
+    // And NOT the compounding default, which every other stacking aura takes.
+    expect(target.abilityModifierAgainst('cone_of_cold').damageMultiplier).not.toBeCloseTo(
+      (1 + WINTERS_CHILL_DAMAGE_PER_STACK / 100) ** 5,
+      6,
     );
 
     // ON THE TARGET. The caster's own funnel knows nothing about it, which is
     // the whole reason a new field was needed.
-    expect(actor.abilityModifierFor('ice_lance').critBonus ?? 0).toBe(0);
-    expect(actor.abilityModifierAgainst('ice_lance').critBonus ?? 0).toBe(0);
-  });
-
-  it('raises the crit chance an Ice Lance actually rolls against', () => {
-    /*
-     * THE END OF THE WIRE, not the registry. A modifier that is registered and
-     * never reaches `rollTable` is the failure `AuraCollection.abilityModifierFor`
-     * had for as long as `ALL_ABILITIES` was looked up exactly -- it compiled,
-     * it applied, and nothing it said changed a cast.
-     */
-    const actor = makeAttacker({ autoAttack: 'none', stats: { spellCritChance: 10 } });
-    const target = makeTarget();
-    const simulation = buildSimulation([actor, target], { durationMs: seconds(60) });
-    simulation.begin();
-
-    const critOf = () =>
-      simulation.attackChances('spell', actor, target).crit / 100 +
-      (target.abilityModifierAgainst('ice_lance').critBonus ?? 0);
-
-    const before = critOf();
-    for (let i = 0; i < 5; i += 1) simulation.applyAura(target, wintersChillAura(5), actor.id);
-    expect(critOf() - before).toBeCloseTo(5 * WINTERS_CHILL_CRIT_PER_STACK, 10);
+    expect(actor.abilityModifierFor('cone_of_cold').damageMultiplier ?? 1).toBe(1);
+    expect(actor.abilityModifierAgainst('cone_of_cold').damageMultiplier ?? 1).toBe(1);
   });
 });
 
@@ -1855,7 +2289,33 @@ describe('what the Results panel divides its rates by', () => {
      */
     const scorchRow = batch.abilities.find((row) => row.abilityName === 'Scorch');
     expect(scorchRow, 'no Scorch row to compare against').toBeDefined();
-    expect(scorchRow!.attempts, 'Scorch pools no burn').toBe(scorchRow!.uses);
+    /*
+     * ========================================================================
+     * AT MOST ITS CASTS, NOT EXACTLY ITS CASTS -- and the equality was fragile
+     * from the day it was written rather than broken by anything.
+     *
+     * THE CLAIM IS THAT NOTHING POOLS INTO THIS ROW, which is a statement about
+     * attempts EXCEEDING casts: a hybrid's burn adds damage events to its
+     * caster's row and nothing else can. Frostfire Bolt is asserted that way
+     * below, `toBeGreaterThan`, and this is the same claim pointed the other
+     * direction.
+     *
+     * WHAT MAKES THE *EQUALITY* FAIL IS A CAST STILL IN FLIGHT WHEN THE FIGHT
+     * ENDS. A cast emits its `cast` event when it STARTS and its damage inside
+     * `onCast` when it finishes, so a 1.5-second Scorch begun at 62.7 seconds
+     * of a 62.9-second fight is one use and no attempt. Measured: **three of
+     * forty seeds** do exactly that, with the last Scorch at 62724ms, 62263ms
+     * and 62724ms against fights ending at 62907ms, 62533ms and 62953ms.
+     *
+     * SO THE ROW READS 6.975 USES AGAINST 6.95 ATTEMPTS, and every one of those
+     * 0.025 is a cast the fight cut off. Nothing is pooled, the denominator is
+     * as clean as it ever was, and the equality was only ever true because this
+     * profile's cast timing happened not to land there. **A boundary this test
+     * never meant to assert**, surfaced by the Scorch the optimisation pass
+     * moved before the pull -- which shifted every later cast by 1.5 seconds.
+     * ========================================================================
+     */
+    expect(scorchRow!.attempts, 'Scorch pools no burn').toBeLessThanOrEqual(scorchRow!.uses);
 
     const cleanRate = 100 * scorchRow!.avoidRate;
     const reported = 100 * bolt.avoidRate;

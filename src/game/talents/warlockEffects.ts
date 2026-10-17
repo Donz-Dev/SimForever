@@ -65,34 +65,28 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'abilityDamage', abilityId: 'corruption', valueIndex: 1 },
   ],
 
-  malediction: [
-    /*
-     * "Increases all PERIODIC damage done by your Warlock spells."
-     *
-     * NAMED ONE BY ONE, because a periodic tick carries its AURA's id -- so
-     * `abilityDamage` on the aura id reaches the ticks and nothing else. That
-     * is the same route Improved Rend takes on the Warrior, and it is why
-     * "all periodic damage" is expressible at all.
-     */
-    { kind: 'abilityDamage', abilityId: 'corruption' },
-    { kind: 'abilityDamage', abilityId: 'bane_of_agony' },
-    { kind: 'abilityDamage', abilityId: 'siphon_life' },
-    { kind: 'abilityDamage', abilityId: 'immolate' },
-    /*
-     * WRACK COUNTS AS PERIODIC DAMAGE HERE, by the ruleset owner's ruling, and
-     * it is the one entry in this list that is NOT an aura id.
-     *
-     * IT IS A CHANNEL, so its six ticks are CAST ticks and carry no `periodic`
-     * flag -- which is exactly what stops Wrack's own debuff amplifying its own
-     * ticks, and would equally have stopped a rule keyed on that flag from
-     * reaching them. The owner has ruled on the question the engine could not
-     * answer from the data: for Malediction, a Wrack tick is periodic damage.
-     *
-     * `abilityDamage` ON THE ABILITY ID reaches it regardless, because
-     * `abilityModifiers` is keyed by id and Wrack deals its damage under its
-     * own. So the ruling costs one line and no new rule.
-     */
-    { kind: 'abilityDamage', abilityId: 'wrack' },
+  /*
+   * ==========================================================================
+   * GRIM REACH REPLACES MALEDICTION, AND IT IS A LIVE TALENT REPLACED BY A
+   * RULED-OUT ONE -- which is the opposite of the usual direction here and is
+   * worth saying plainly.
+   *
+   * Malediction raised ALL periodic damage from Warlock spells, named aura by
+   * aura, and was real damage on the one build whose core is DoTs. Grim Reach
+   * is "Increases the range of your Affliction spells by 20%" -- `positioning`,
+   * permanently, with nothing to expire.
+   *
+   * SO THE SM/DS WARLOCK LOSES A DAMAGE TALENT AND ITS POINTS ARE NOW DEAD
+   * WHERE THEY SIT. That is a BUILD question rather than an engine one: five
+   * points want moving, and this file is not where that is decided.
+   * ==========================================================================
+   */
+  grim_reach: [
+    {
+      kind: 'unmodelled',
+      scope: 'positioning',
+      reason: 'Range, and nothing here has a position.',
+    },
   ],
 
   /*

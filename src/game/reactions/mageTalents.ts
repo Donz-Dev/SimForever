@@ -216,35 +216,111 @@ export const arcaneConcentration: TalentReactionBuilder = (chancePercent) => ({
 });
 
 /**
- * Missile Barrage: Arcane Blast at 40%, three others at 20%.
+ * Missile Barrage: THREE rates in one talent, and the rank moves all three.
  *
- * TWO RATES IN ONE TALENT. The 40 comes through the values file, hand-filled
- * because a single-rank talent has no variable the calculator can identify --
- * and the 20 is named here, because a builder takes one number and the text
- * carries two. Both are the source's own.
+ * ==============================================================================
+ * "Gives your Arcane Blast spell a {0}% chance, your Arcane Missile HITS a {1}%
+ * chance, and your Arcane Wrath, Fireball, Frostbolt, and Frostfire Bolt spells
+ * a {2}% chance to reduce the channeled duration of your next Arcane Missiles
+ * spell by 50%, reduce the Mana cost by 100%, and missiles fire every 0.5 sec."
+ *
+ * TWO RANKS AT CLIENT BUILD 1.60.1.70425, WHERE IT WAS ONE -- 20/5/10 and
+ * 40/10/20 -- so every one of its three chances now scales and NONE of them can
+ * be a constant here. The old shape had the 40 arriving through the values file
+ * (hand-filled, because a single-rank talent has no variable the calculator can
+ * identify) and the 20 written out in this file beside it.
+ *
+ * ------------------------------------------------------------------------------
+ * SO THE HAND-FILLED VALUE IS GONE AND THAT IS A THING TO CHECK RATHER THAN
+ * ASSUME. A rank count going 1 -> 2 gives the importer a `{0}` to match, so the
+ * row is GENERATED now and the hand-fill is dead weight. The reverse of the
+ * failure this project documents for a RENAME, where a hand-filled value is
+ * silently lost -- here it is silently superseded, which is harmless only
+ * because the generated row happens to agree at rank 2.
+ *
+ * ------------------------------------------------------------------------------
+ * **AN ARCANE MISSILE HIT NOW PROCS IT, WHICH MAKES THE TALENT SELF-FEEDING.**
+ * That is new and it is the sharpest change in the redesign: each missile of a
+ * five-missile channel rolls at 10%, so one Arcane Missiles cast takes about
+ * five rolls and has a ~41% chance of setting up the next one. The old talent
+ * could only be procced by something ELSE.
+ *
+ * IT IS THE HITS AND NOT THE CAST, which the tooltip says in those words and
+ * which the engine gives for free: a channel's ticks are ordinary non-periodic
+ * damage events, so a `dealt` reaction already sees each missile. Reading it as
+ * one roll per CAST would be a fifth of the clause.
+ *
+ * AND THE AURA IS SPENT BY THE CAST IT SPEEDS UP, `consumedByCast: 'all'` --
+ * so a missile proccing mid-channel arms the NEXT cast rather than the one in
+ * flight. `runCast` runs `onCast` before the cast reactions, so the charge for
+ * the current channel is already resolved.
+ *
+ * ------------------------------------------------------------------------------
+ * ARCANE WRATH JOINS THE 20% SET, which is the other addition -- the new row-3
+ * Arcane talent's spell. Named here rather than derived, because "your Arcane
+ * Wrath, Fireball, Frostbolt, and Frostfire Bolt" is a list and not a school:
+ * two of the four are not Arcane at all.
+ * ==============================================================================
  */
-export const MISSILE_BARRAGE_CHANCE_OTHERS = 20;
-const MISSILE_BARRAGE_OTHERS = new Set(['fireball', 'frostbolt', 'frostfire_bolt']);
+/** Index into the values row for each of the three chances. */
+const MISSILE_BARRAGE_ARCANE_BLAST_INDEX = 0;
+const MISSILE_BARRAGE_MISSILE_HIT_INDEX = 1;
+const MISSILE_BARRAGE_OTHERS_INDEX = 2;
 
-export const missileBarrage: TalentReactionBuilder = (chanceFromArcaneBlast) => ({
-  id: 'missile_barrage',
-  on: 'dealt',
-  outcomes: ['hit', 'crit'],
-  canTrigger: (context, _actor, attack) => {
-    const id = attack.abilityId;
-    if (id === undefined) return false;
-    const chance =
-      id === 'arcane_blast'
-        ? chanceFromArcaneBlast
-        : MISSILE_BARRAGE_OTHERS.has(id)
-          ? MISSILE_BARRAGE_CHANCE_OTHERS
-          : 0;
-    return chance > 0 && context.rng.rollChance(chance / 100);
-  },
-  onTrigger: (context, actor) => {
-    context.applyAura(actor, MISSILE_BARRAGE, actor.id);
-  },
-});
+/**
+ * The four spells on the shared chance. ARCANE WRATH IS NEW HERE.
+ *
+ * Not a school: Fireball is Fire, Frostbolt is Frost, and Frostfire Bolt counts
+ * as both -- so there is nothing to derive and the tooltip's list is the list.
+ */
+export const MISSILE_BARRAGE_OTHER_SPELL_IDS: readonly string[] = [
+  'arcane_wrath',
+  'fireball',
+  'frostbolt',
+  'frostfire_bolt',
+];
+
+const MISSILE_BARRAGE_OTHERS = new Set(MISSILE_BARRAGE_OTHER_SPELL_IDS);
+
+export const missileBarrage: TalentReactionBuilder = (_value, values) => {
+  /*
+   * THE WHOLE ROW, because all three chances scale with the rank -- the shape
+   * Winter's Chill already uses and for the same reason. `_value` is the entry
+   * `valueIndex` selected and is ignored: deriving the other two from it would
+   * work at both current ranks (they are the Arcane Blast figure quartered and
+   * halved) and is exactly the arithmetic that breaks when a rank moves one of
+   * them on its own.
+   *
+   * NO FALLBACK. A missing row means no chance at all rather than a plausible
+   * default, so a talent whose values stopped resolving is visibly inert --
+   * which is what an effect that reads no value already does.
+   */
+  const fromArcaneBlast = values?.[MISSILE_BARRAGE_ARCANE_BLAST_INDEX] ?? 0;
+  const fromMissileHit = values?.[MISSILE_BARRAGE_MISSILE_HIT_INDEX] ?? 0;
+  const fromOthers = values?.[MISSILE_BARRAGE_OTHERS_INDEX] ?? 0;
+
+  return {
+    id: 'missile_barrage',
+    on: 'dealt',
+    outcomes: ['hit', 'crit'],
+    canTrigger: (context, _actor, attack) => {
+      const id = attack.abilityId;
+      if (id === undefined) return false;
+      const chance =
+        id === 'arcane_blast'
+          ? fromArcaneBlast
+          : id === 'arcane_missiles'
+            ? fromMissileHit
+            : MISSILE_BARRAGE_OTHERS.has(id)
+              ? fromOthers
+              : 0;
+      return chance > 0 && context.rng.rollChance(chance / 100);
+    },
+    onTrigger: (context, actor) => {
+      context.applyAura(actor, MISSILE_BARRAGE, actor.id);
+    },
+  };
+};
 
 /**
  * Improved Scorch, properly. Scorch applies a stacking Fire vulnerability.
@@ -273,27 +349,39 @@ export const improvedScorchReaction: TalentReactionBuilder = (chancePercent) => 
 
 /*
  * ============================================================================
- * WINTER'S CHILL: a Frost damage spell may leave a stacking crit debuff.
+ * WINTER'S CHILL: a Frost damage spell may leave a stacking damage debuff.
  *
  * "Gives your Frost damage spells a {0}% chance to apply the Winter's Chill
- * effect, which increases the chance your Ice Lance and Frostbolt spells will
- * critically hit the target by 2% for 15 sec. Stacks up to {3} times."
- *
- * THE FIRST PROC HERE WHOSE RANK MOVES TWO NUMBERS, which is why it takes the
- * whole values row: the chance is index 0 and the stack cap is index 3, and
- * they scale together 20/1 .. 100/5. Deriving one from the other works today
- * and is exactly the arithmetic that goes wrong the day a rank changes.
+ * effect, which increases the damage done by your Cone of Cold spell to the
+ * target by {1}%, stacking up to {2} times."
  *
  * WHAT APPLIES IT AND WHAT BENEFITS ARE DIFFERENT SETS, and the tooltip says
- * so: any Frost damage spell applies it, and only Ice Lance and Frostbolt crit
- * more for it. Frostfire Bolt is in the first and not the second.
+ * so: any Frost damage spell applies it, and only Cone of Cold deals more for
+ * it. Frostfire Bolt is in the first and not the second.
  *
- * `WINTERS_CHILL_MAX_STACKS_INDEX` IS NAMED because an index into a values row
- * read wrong is the failure this project keeps meeting -- Arcane Mind's crit
- * clause at index 0 would have been a tenth of its value.
+ * ----------------------------------------------------------------------------
+ * `WINTERS_CHILL_MAX_STACKS_INDEX` WENT FROM 3 TO 2 AT CLIENT BUILD
+ * 1.60.1.70425, AND THAT IS THE WHOLE RISK IN THIS REDESIGN. The row was
+ * `[chance, critPerStack, duration, maxStacks]` and is `[chance, damagePercent,
+ * maxStacks]` -- one entry shorter -- so the old index reads PAST THE END and
+ * `values?.[3]` is `undefined`.
+ *
+ * WHICH WOULD NOT HAVE THROWN. The fallback below is 1, so the talent would
+ * have applied a debuff capped at ONE stack rather than five: a fifth of its
+ * value, reported with the right uptime, on a mechanism that otherwise works.
+ * **A row getting SHORTER is the one index change that cannot be caught by the
+ * value looking wrong**, because there is no value -- which is this project's
+ * `talentNumber`-returns-nothing failure wearing an array index. Every rank is
+ * pinned by a test.
+ *
+ * AND THE RANK NO LONGER MOVES TWO NUMBERS. It used to scale the chance 20..100
+ * AND the cap 1..5 together, which is why this reaction takes the whole row
+ * instead of one index; the cap is flat at 5 now. The row is still passed whole
+ * -- a rank that moves one number today is not a promise about the next patch,
+ * and this talent has already changed that answer once.
  * ============================================================================
  */
-const WINTERS_CHILL_MAX_STACKS_INDEX = 3;
+const WINTERS_CHILL_MAX_STACKS_INDEX = 2;
 
 export const wintersChill: TalentReactionBuilder = (chancePercent, values) => {
   /*
