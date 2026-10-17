@@ -147,11 +147,23 @@ export interface CastModifier {
    * the three clauses below. That is the same `'*'` convention
    * `AbilityModifiers` already uses, so a reader meets one idea rather than two.
    *
-   * SELECTING BY SCHOOL IS STILL NOT HERE. Presence of Mind is "your next
-   * spell", which would mean a `school` on every `Ability` -- a field that is
-   * silent when forgotten, which is the failure mode this project keeps
-   * meeting. The catch-all does not help it: "every ability" and "every SPELL"
-   * are different sets and only one of them is expressible.
+   * SELECTING BY SCHOOL IS STILL NOT HERE, and "every ability" and "every
+   * SPELL" are still different sets: a `school` on every `Ability` would be a
+   * field that is silent when forgotten, which is the failure mode this project
+   * keeps meeting.
+   *
+   * PRESENCE OF MIND USED TO BE THE EXAMPLE HERE -- "the catch-all does not
+   * help it" -- and it is not any more. What closed the gap for it was not a
+   * school but the NARROWING CLAUSES below: "your next non-channeled,
+   * non-instant spell" is the catch-all plus `requiresCastTime` plus
+   * `excludesChannel`, and for a Mage those select exactly the spells, which
+   * `presenceOfMind.test.ts` measures over every built Mage book rather than
+   * assuming. **The named list it had instead is what went wrong**: Arcane
+   * Wrath arrived and nobody added it.
+   *
+   * SO A NAMED LIST IS THE LAST RESORT AND NOT THE SAFE DEFAULT. A clause that
+   * describes the set covers the ability added next year; a list covers the
+   * abilities somebody remembered.
    */
   readonly abilityIds: readonly string[];
   /**
@@ -257,6 +269,28 @@ export interface CastModifier {
    * moment a priority list reached Moonfire.
    */
   readonly requiresCastTime?: boolean;
+  /**
+   * Do NOT match an ability whose effect occupies its cast.
+   *
+   * ==========================================================================
+   * Presence of Mind is "your next NON-CHANNELED, non-instant spell", on the
+   * ruleset owner's wording -- and a modifier that makes a cast instant is
+   * exactly what must not touch a channel. Zeroing the cast of one delivers a
+   * fraction of its effect, spends its cooldown, and reports a successful cast:
+   * a smaller number and no error.
+   *
+   * `spreadsEffectAcrossCast` IS THE TEST AND IT IS NOT `channelTicks` ALONE.
+   * Evocation declares no ticks and is still a channel -- see that function,
+   * which is shared with `runPrecombat` because both are places a cast time
+   * gets zeroed.
+   *
+   * SEPARATE FROM `requiresCastTime`, which is the near miss: a channel HAS a
+   * cast time, so that clause matches one gladly. The two clauses say "not an
+   * instant" and "not a channel", which are the owner's two words and two
+   * different questions.
+   * ==========================================================================
+   */
+  readonly excludesChannel?: boolean;
 
   /**
    * Does not apply, and is NOT CONSUMED, while the caster carries this aura.
