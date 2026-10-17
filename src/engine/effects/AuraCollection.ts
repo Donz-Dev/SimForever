@@ -404,6 +404,28 @@ export class AuraCollection {
     this.expire(context, instance);
   }
 
+  /**
+   * End every aura a completed cast or attack breaks.
+   *
+   * ==========================================================================
+   * ONE PLACE, CALLED FROM TWO, which is what makes the rule a rule. The owner:
+   * "Almost every completed cast or attack breaks stealth/prowl, and for the
+   * purposes of this simulation the only thing that doesn't is a rogue's
+   * premeditation."
+   *
+   * ITERATED OVER A COPY, because removing inside the loop mutates the map --
+   * the same reason `rewindAuras` copies before ageing. There is never more
+   * than one of these up today and that is not a thing to rely on.
+   * ==========================================================================
+   */
+  breakOnAction(context: SimulationContext): void {
+    for (const aura of [...this.auras.values()]) {
+      if (aura.definition.brokenByAction === true) {
+        this.remove(context, aura.definition.id);
+      }
+    }
+  }
+
   remove(context: SimulationContext, auraId: string): void {
     const instance = this.auras.get(auraId);
     if (!instance) return;

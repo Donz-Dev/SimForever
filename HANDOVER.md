@@ -46,6 +46,7 @@ the tooling to be a bit more sophisticated as well."
 | 17 | **A PATCH: nine racials and forty-odd class notes**, fed in as official notes. The client is TWO BUILDS AHEAD and carries NONE of them, so every figure here comes from a note | **not re-baselined**, on the owner's standing instruction. Four commits, and **thirteen notes are blocked on tree data** | see below |
 | 18 | **TWO OWNER RULINGS, both answering questions round 17 raised and refused to decide** -- the five Tauren templates gain 10 hit rating each, and the two Druid auras stop excluding each other | **not re-baselined**, on the owner's standing instruction. Every caster gains 3% spell crit and the five Tauren rows go back on their hit caps | see below |
 | 18b | **A THIRD RULING, arriving straight after the merge** -- Ice Lance's coefficient is `1.5/3.5/3`, so the divisor tracks the frozen multiplier and the implemented reading was wrong for one release | the frozen coefficient 0.3214 -> **0.4286**, +33% on the spell-power half of a spell that is **8.6% of Frostfire** and is cast by no other profile | see below |
+| 19b | **A COMPLETED CAST OR ATTACK BREAKS STEALTH AND PROWL** -- an ENGINE rule with Premeditation as its one declared exception, replacing Ambush and Ravage each removing the aura by hand | Rupture's Ambushes **4.2 -> 3.4** a fight and Hemo Dagger's **2.7 -> 2.2**, for **-6.6** and **-9.0**; the Cat and Pure Hemo are **bit-identical**. Two ways to half-wire it were written and the full suite passed on both | see below |
 | 19 | **BEFORE THE PULL, FOR ALL 28 PROFILES** -- the owner specified an opener per profile, and three Warrior lists lose the entries it replaces | **not re-baselined**, on the owner's standing instruction. Every line of theirs is implemented after one round of corrections: a positioning RULING, two new Druid abilities, a substitution and a periodic that accrues | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
@@ -84,15 +85,18 @@ write-up; none is an engine gap.
 | **Judgement of Command is left on the sheet's 0.43** where Righteousness and Fury took the exact `1.5 / 3.5`. The note names two abilities; a ruling covers what it says | round 17 | 0.33% on one seal, and whether all three should be the expression |
 | **Explosive Trap's 5% of attack power is on its BURN and not its initial hit.** One figure for two abilities, and only this one has two damage components | round 17 | which half carries it |
 | **"Touch of the Dead"** is the name the Undead note uses for what is plainly Touch of the Grave -- the same block, and the only part of that racial that has ever scaled with anything | round 17 | a naming question, not an ambiguity about which effect |
+| **Can a Rogue chain Vanish into Ambush without a swing intervening?** Vanish is off the global cooldown, so the actor is left FREE and the next decision is `now + ROTATION_POLL_MS` -- and in that 100ms a swing can take the window the Vanish just opened, which is the documented Charge problem on a different ability | round 19b | about one Ambush a fight on two profiles: **-6.6** and **-9.0**. The 100ms poll is a property of this simulation rather than of the ruleset, so whether it should bite here is theirs |
 
-**SIX ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**SEVEN ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
 the rows**, and count them from the table rather than from the last figure
 somebody wrote down: the first draft of this very sentence said eight, by
-subtracting four from a miscount of eleven, and then seven, before Ice Lance
-came off too.
+subtracting four from a miscount of eleven, and then seven, then six once Ice
+Lance came off -- and it is seven again now that round 19b has added one. **The
+number goes both ways**, which is the half an "increment" habit gets wrong even
+when the direction is right.
 
 **AND FIVE CAME OFF IN TWO ROUNDS, WHICH IS WHAT THE TABLE IS FOR.** Three were
 ruled on by the owner -- the five Tauren hit caps and the Druid aura exclusivity
@@ -549,6 +553,155 @@ with exactly 20 rage generated from Bloodrage after 10 seconds." So the fix was
 the engine's after all -- see **A periodic that accrues before the pull** above.
 **Flagging it was what produced the figure that settled it**, and the figure
 ruled out the option the note had offered.
+
+## Round NINETEEN b: stealth breaks, and the answer was wider than the question
+
+**ONE SENTENCE FROM THE OWNER, ARRIVING STRAIGHT AFTER ROUND 19 MERGED**, which
+is the 18b shape again: "Almost every completed cast or attack breaks
+stealth/prowl, and for the purposes of this simulation the only thing that
+doesn't is a rogue's premeditation."
+
+**IT ANSWERS A QUESTION THAT WAS ASKED ABOUT ONE ABILITY.** Round 19 declared
+Ravage and flagged one clause as a reading rather than a fact -- "Ravage spends
+Prowl, following Ambush. Neither your message nor the capture says so, and
+without it the Cat could Ravage repeatedly for 60 energy. One line to flip if
+that's wrong." The answer is not about Ravage at all, and not a flip: **it is
+everything's rule**, so the line comes out and the engine owns it.
+
+**THE FLAG IS WHAT GOT IT RULED ON**, which is this project's recurring finding
+about a labelled interpretation -- and the caveat came off the same day, because
+a caveat outlives the doubt it describes.
+
+### What it is
+
+| | |
+| --- | --- |
+| `AuraDefinition.brokenByAction` | the two STATES declare it: `stealth` and `prowl` |
+| `Ability.breaksActionAuras` | the opt-out. **Exactly one `false` in the project** |
+| `AuraCollection.breakOnAction` | one implementation, called from the two places an action happens |
+
+**DERIVED, NOT DECLARED**, which is `refundsCostOnMiss`' shape and is what the
+word "almost" asks for: a new ability gets the rule for free, and the one that
+forgot would be the exception rather than silently wrong.
+
+**THE TWO CALL SITES ARE `runCast` AND `swing`.** In `runCast` rather than
+`castAbility`, so a cast that is started and interrupted does not count --
+"completed" is the owner's own word -- and so a channel's first tick does. In
+`swing` before the on-next-swing early return, so a queued Heroic Strike counts
+as the attack it is, and **before the hit roll, so a MISS still breaks it**: the
+attack happened, and whether it connected is the combat table's business.
+
+### Premeditation, and why the exception is what makes the opener possible
+
+**NOT DERIVABLE FROM ANYTHING ELSE ABOUT IT.** Premeditation is free, off the
+global cooldown and deals no damage, and none of those is the reason: Vanish is
+free and off the GCD too and APPLIES the window, while a Thistle Tea is free and
+breaks it. The ruleset simply says this one does not.
+
+**AND EVERY STEALTH OPENER THE OWNER SPECIFIED IN ROUND 19 IS STEALTH, THEN
+PREMEDITATION, THEN AMBUSH.** So if this broke the window, the two combo points
+it banks would cost the Ambush they were banked FOR -- the sequence would be
+impossible rather than merely worse. The exception is load-bearing on three
+profiles.
+
+### Cutthroat deliberately does NOT carry it
+
+It gates the same Ambush, and tagging it would have been the obvious tidy-up.
+The owner ruled that its proc IS Ambush's stealth requirement, so it is a
+ten-second **proc window spent by the Ambush** rather than a state an action
+ends -- and a Rogue reaches 60 energy in only **30 of 207 windows** as it is, so
+any swing landing inside one destroying it would quietly delete most of three
+talents' worth of wiring.
+
+**AMBUSH'S `if`/`else` IS GONE WITH IT.** It read "Cutthroat first; see the note
+above on why the order is a decision" -- one window or the other, never both.
+Now one is spent by the ability and the other ended by the engine, so with both
+up both go, which is what the rule says and what the `else` was quietly
+preventing.
+
+### TWO WAYS TO HALF-WIRE IT WERE WRITTEN, AND THE FULL SUITE PASSED ON BOTH
+
+**3,709 tests green on a rule that was inert for most characters and
+self-defeating for the rest.** This is the round's real finding.
+
+| | what it was | what it would have cost |
+| --- | --- | --- |
+| below `runCast`'s early return | a character with no cast reaction leaves that function by another path | the rule applying to Rogues and Druids **with a talent** and to nobody else -- the `resourceRegenMultiplier` failure exactly |
+| after `onCast` instead of before | **Vanish and Prowl do nothing but apply one** | it removed the window each had just opened: the whole of both abilities |
+
+**THE SECOND IS NOT FIXED WITH MORE OPT-OUTS**, which is the tempting repair and
+would have grown the exception list from one to three to cover a mistake in an
+ordering. **The rule is about what was up BEFORE the action**: breaking first
+says that exactly, and whatever the action establishes is newer than the action.
+Neither Ambush nor Ravage reads the aura in `onCast` -- the gate is `canCast`,
+which `checkCast` has already passed by then.
+
+**AND THE TESTS THAT FOUND NEITHER WERE THE WHOLE SUITE.**
+`tests/engine/stealthBreaking.test.ts` is what asks whether the rule FIRES: a
+cast that is not the one spending the window, a SWING, a character with no cast
+reactions, and an aura the action itself opened. Its own first draft failed
+twice on the fixture rather than the rule -- a bare combatant defaults to
+`autoAttack: 'none'`, so nothing swung at all, and `WeaponProfile` has no
+`speed` field, so the swing that did land scheduled its successor at NaN. **A
+fixture that cannot take the action cannot test what the action does.**
+
+### What it cost: the Vanish-Ambush pair, by about one Ambush a fight
+
+| profile | before | after | Ambush uses |
+| --- | --- | --- | --- |
+| **Rupture** | 707.4 +/- 6.3 | **700.8 +/- 5.4** (-6.6) | **4.2 -> 3.4** |
+| **Hemo Dagger** | 784.9 +/- 7.7 | **775.9 +/- 9.1** (-9.0) | **2.7 -> 2.2** |
+| Pure Hemo | 712.5 | **712.5** | no Ambush; **bit-identical** |
+| Cat | 894.1 | **894.1** | Ravage 1.0 -> 1.0; **bit-identical** |
+
+**THE HARNESS CALLS BOTH `noise` AND THE USES COLUMN IS WHAT SAYS THEY ARE
+NOT.** The mechanism is exact and named: Vanish is off the global cooldown, so
+the actor is left FREE and `nextDecisionTime` returns `now + ROTATION_POLL_MS`
+-- **the documented Charge problem on a different ability** -- and in that 100ms
+a swing can take the window the Vanish just opened.
+
+**THE LIST RECOVERS MOST OF IT**, which is why the DPS moves so much less than
+the uses do: 0.8 of 4.2 Ambushes is 3.3% of Rupture's damage, about 23 DPS, and
+the energy goes to Hemorrhage instead. **A DPS figure alone could not have said
+which half moved.**
+
+**THE TWO BIT-IDENTICAL ROWS ARE THE CONTAINMENT CHECK**, 894.1 and 712.5 to the
+decimal: Ravage ends Prowl by a new route to the same outcome, and a Pure Hemo
+Rogue's opening window was never spent by anything. Breaking an aura emits a
+telemetry line and consumes no random number, so an unchanged decision sequence
+is an unchanged fight.
+
+**AND WHETHER THE 100ms SHOULD BITE IS THE OWNER'S**, now in the questions table
+above: the poll is a property of this simulation rather than of the ruleset, and
+a player pressing Vanish then Ambush does not take a swing in between.
+
+### What it closed in the scope table: nothing, and that is the answer
+
+CLAUDE.md's own rule is that **when a ruling widens what is modelled, the
+`scope` tags are the first place to look** -- it cost three Rogue talents a
+whole release once. All six `stealth` entries were re-read and **all six
+survive**, for three different reasons: **detection** is three of them,
+**a stealth opener this project does not declare** is two (Garrote and Cheap
+Shot, named beside clauses that DO apply), and **Camouflage** is the odd one --
+it reduces "your speed penalty from your Stealth ability and its cooldown", and
+there is no Stealth ABILITY here at all, so there is no cooldown to reduce and
+the penalty is positioning.
+
+**SIX NOs FOR ONE READ**, which is the cheap half of that rule.
+
+### Three notes that the ruling made false, and were corrected with it
+
+| where | what it said |
+| --- | --- |
+| `auras/rogue.ts` | "there is no detection, no **break-on-damage**, no movement" -- true on the day, and the ruling is precisely a break |
+| the same note | plain Stealth "lasts until something breaks it, and **nothing here models anything that would**" |
+| `abilities/rogue.ts` | the stealth bullet's "there is STILL no stealth system" needed its third widening recorded |
+
+**THE DURATION ARGUMENT GOT STRONGER RATHER THAN WEAKER**, which is worth
+saying because it reads the other way: `STEALTH_DURATION_MS` was borrowed from
+Vanish's stated ten seconds for a window nothing spent, and the owner's rule
+means the FIRST action takes it -- a cast or a swing, well inside ten seconds on
+every build.
 
 ## Round TWENTY is scoped and not started: the client caught up
 

@@ -54,6 +54,15 @@ import { EVISCERATE_AP_COEFFICIENT_PER_COMBO_POINT } from '../combat/coefficient
  *     and `STEALTH` is an aura Ambush reads rather than a state anything
  *     tracks. Premeditation never had a stealth clause in Forever at all.
  *
+ *     AND A THIRD WIDENING, WHICH IS THE FIRST ONE THAT IS AN ENGINE RULE:
+ *     "almost every completed cast or attack breaks stealth/prowl, and for the
+ *     purposes of this simulation the only thing that doesn't is a rogue's
+ *     premeditation." So losing the window is no longer Ambush's own line --
+ *     `STEALTH` declares `brokenByAction` and PREMEDITATION is the single
+ *     `breaksActionAuras: false` in the project. Which is why Premeditation
+ *     having no stealth clause matters twice over: it neither needs the window
+ *     nor takes it, and that is what makes the owner's opener possible.
+ *
  *     THE PART WORTH CARRYING FORWARD is that three talents stayed dead for a
  *     release after the FIRST half of this ruling landed -- Improved Ambush,
  *     Initiative and Opportunity's Ambush clause all read "Ambush requires
@@ -729,9 +738,26 @@ export const AMBUSH: Ability = {
     (caster.auras.has(CUTTHROAT.id) || caster.auras.has(STEALTH.id)),
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
-    // Cutthroat first; see the note above on why the order is a decision.
+    /*
+     * ======================================================================
+     * CUTTHROAT IS SPENT HERE AND STEALTH IS NOT, WHICH USED TO BE AN
+     * `if`/`else` AND IS NOW TWO DIFFERENT MECHANISMS.
+     *
+     * It read "Cutthroat first; see the note above on why the order is a
+     * decision" -- one window or the other, never both. The owner has since
+     * stated the general rule: "almost every completed cast or attack breaks
+     * stealth/prowl", so STEALTH is ended by the engine for every ability that
+     * does not opt out, and this Ambush is one of them.
+     *
+     * SO THE `else` IS GONE AND THE ORDERING QUESTION WITH IT. Cutthroat is a
+     * PROC WINDOW this ability spends -- it is not broken by a swing that
+     * happens to land first, which is why it carries no `brokenByAction` --
+     * and stealth is a STATE the attack ends. With both up, both now go: the
+     * proc is consumed and the attack breaks the stealth, which is what the
+     * rule says and what the `else` was quietly preventing.
+     * ======================================================================
+     */
     if (caster.auras.has(CUTTHROAT.id)) caster.auras.remove(simulation, CUTTHROAT.id);
-    else caster.auras.remove(simulation, STEALTH.id);
     const result = dealDamage(simulation, {
       source: caster,
       target,
@@ -784,6 +810,26 @@ export const PREMEDITATION: Ability = {
   name: 'Premeditation',
   cooldownMs: seconds(120),
   requiresTarget: true,
+  /*
+   * ==========================================================================
+   * THE ONE THING IN THE PROJECT THAT DOES NOT BREAK STEALTH.
+   *
+   * The owner's rule and its only exception, in one sentence: "Almost every
+   * completed cast or attack breaks stealth/prowl, and for the purposes of this
+   * simulation **the only thing that doesn't is a rogue's premeditation**."
+   *
+   * WHICH IS WHAT MAKES THE OPENER AN OPENER. Every stealth sequence the owner
+   * specified is Stealth, then Premeditation, then Ambush -- so if this broke
+   * the window the two points it banks would cost the Ambush they were banked
+   * FOR, and the sequence would be impossible rather than merely worse.
+   *
+   * NOT DERIVABLE FROM ANYTHING ELSE ABOUT IT. Premeditation is free, off the
+   * global cooldown and deals no damage, and none of those is the reason: Vanish
+   * is free and off the GCD too and APPLIES the window, while a Thistle Tea is
+   * free and breaks it. The ruleset simply says this one does not.
+   * ==========================================================================
+   */
+  breaksActionAuras: false,
   /*
    * OFF THE GLOBAL COOLDOWN, on the owner's ruling and for the same reason
    * Vanish is: this banks two points for the ability beneath it, so a global

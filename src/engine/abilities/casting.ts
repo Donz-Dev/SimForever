@@ -492,6 +492,42 @@ function runCast(
    */
   caster.recordCast();
 
+  /*
+   * ==========================================================================
+   * A COMPLETED CAST BREAKS STEALTH AND PROWL, unless the ability says it does
+   * not -- the ruleset owner's rule, with Premeditation as its only exception.
+   * See `AuraDefinition.brokenByAction` and `Ability.breaksActionAuras`.
+   *
+   * BEFORE `onCast`, AND THE OTHER ORDER WAS WRITTEN FIRST AND WAS WRONG. The
+   * argument for breaking afterwards is that Ambush and Ravage SPEND such a
+   * window, so the attack should end it rather than find it already gone --
+   * true, and neither of them reads the aura in `onCast`: the gate is
+   * `canCast`, which `checkCast` has already passed by the time this runs.
+   *
+   * WHAT THAT ORDER ACTUALLY BREAKS IS THE TWO ABILITIES THAT *APPLY* ONE.
+   * Vanish and Prowl do nothing but `applyAura`, so breaking afterwards
+   * removed the window each had just opened -- a Cat that cannot prowl and a
+   * Rogue whose Vanish does nothing, which is the whole of both abilities.
+   *
+   * SO THE RULE IS ABOUT WHAT WAS UP BEFORE THE ACTION. Breaking first says
+   * exactly that and needs no opt-out: whatever this cast establishes is newer
+   * than the cast, and survives it. The alternative was two more `false`
+   * declarations, which is the opt-out list growing to cover a mistake in the
+   * ordering -- and an opt-out list is the thing that grows quietly.
+   *
+   * IN `runCast` RATHER THAN IN `castAbility`, so a cast that is started and
+   * interrupted does not count -- "completed" is the owner's own word -- and
+   * so a channel's first tick does.
+   *
+   * AND ABOVE THE EARLY RETURN BELOW, which is the half that is easy to miss
+   * and which the first version got wrong too: a character with NO cast
+   * reactions leaves this function by another path, so a rule written under
+   * that return would apply to Rogues and Druids with a talent and to nobody
+   * else. Same shape as `recordCast` directly above, for the same reason.
+   * ==========================================================================
+   */
+  if (ability.breaksActionAuras !== false) caster.auras.breakOnAction(context);
+
   if (caster.castReactions.length === 0) {
     // Nothing is listening, so nothing needs measuring.
     ability.onCast(abilityContext);
