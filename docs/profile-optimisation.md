@@ -326,6 +326,22 @@ Four conventions, each of which has been paid for:
 1. **Every group contains its own control** — `{ label: 'the shipped X -- the
    control', apply: (p) => p }`. A group without one cannot tell "this loses"
    from "this group did not apply".
+
+   **AND THE CONTROL'S LABEL MUST SAY "SHIPPED" AND NOT WHAT THE SHIPPED VALUE
+   CURRENTLY IS.** `(p) => p` means *whatever is on `main` right now*, so a row
+   labelled with the behaviour — "on expiry", "no inner_focus", "13/3/35" — is
+   honest exactly until that group ships something, and then it silently
+   becomes a second copy of the new baseline while still claiming to be the old
+   one. **It cost a wrong ship in the Shadow Priest round and then caught a
+   second group in the same round**: a two-second refresh window was measured
+   at +84.67 against what the label called "on expiry" and was in fact the
+   previously-shipped two-second window, and the real on-expiry reading turned
+   out to be **+33.33 better** than the thing being shipped.
+
+   So a group that ships anything wants **two** rows: the no-op control,
+   labelled *the shipped X*, and the prior behaviour **written out explicitly**
+   so it cannot drift. *A no-op control is a control over the current list,
+   never over the list it was written against.*
 2. **Write the header as the profile's damage table**, off a `USES=1` run, with
    the DPS it was taken at. A figure in a comment expires; one that states the
    build it was taken in merely becomes dated.

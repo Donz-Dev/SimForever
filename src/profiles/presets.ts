@@ -1700,7 +1700,54 @@ const PRIEST_SHADOW_TALENTS: TalentAllocation = {
   twin_disciplines: 5,
   mental_strength: 5,
   meditation: 3,
-  twilight_focus: 3,
+  /*
+   * ==========================================================================
+   * INNER FOCUS TAKES ONE POINT OFF TWILIGHT FOCUS -- **14 / 2 / 35**, worth
+   * **+6.13 +/- 0.50** at 60s over 1200 paired iterations and **+2.40 +/-
+   * 0.26** at 300s over 400.
+   *
+   * BOTH FIGURES ARE THE COST OF REMOVING IT FROM THE SHIPPED BUILD, which is
+   * the direction that needs no trust in a stale baseline. Measured the other
+   * way round before it shipped it read +6.67 +/- 0.90 and +2.29 +/- 0.30, so
+   * the two agree -- and the quoted pair is the tighter one.
+   *
+   * IT IS WORTH LESS IN A LONGER FIGHT AND THAT IS ARITHMETIC, NOT DECAY: a
+   * 180-second cooldown fires once in a 60-second fight and twice in a
+   * 300-second one, so its fixed contribution is spread over five times the
+   * clock. `tools/probe_fight_length.ts` prints the cast count per length.
+   *
+   * **ONLY WITH ITS LIST ENTRY. THE TALENT ALONE IS WORTH EXACTLY NOTHING** --
+   * `probe_build.ts` reports `IDENTICAL FIGHTS` for the spread without the
+   * entry, because `grantAbility` puts Inner Focus in the book and no stock
+   * list cast it. That is the Berserker Rage shape: both halves or neither, and
+   * measured one at a time both halves read as worthless. See
+   * `rotations/priest.ts` for the entry.
+   *
+   * WHY TWILIGHT FOCUS IS THE DONOR. Its three points buy a `castPushback`
+   * effect, which the ruleset owner has ruled permanently out of scope -- so
+   * they can never become live. The two alternatives measured **exactly the
+   * same +6.67**: one point off `meditation`, or all three off Twilight Focus
+   * with two parked in `mental_agility`. Every donor is worth nothing, which
+   * is the result rather than a disappointment -- so the tie is broken on
+   * which donor is SAFEST, and a permanent ruling beats a live talent whose
+   * value is zero only because this build is global-cooldown bound.
+   *
+   * AND IT IS ONE POINT RATHER THAN THREE, so the owner's stated 13/3/35 moves
+   * as little as it can. Discipline still spends exactly 10 below tier 10,
+   * which is what Inner Focus's tier requires; Shadow is untouched at 35 and
+   * stays the majority tree.
+   *
+   * IT IS THE ONLY LIVE DESTINATION IN THE WHOLE SPREAD. Every live Shadow
+   * talent this build can reach is already maxed, and the six soft points are
+   * rulings (`twilight_focus` 3, `shadow_reach` 2, `silence` 1) or worth
+   * nothing (`dark_inspiration`'s Spirit weighs **0.0000** here, and
+   * `meditation`'s regen is mana on a build that leaves 52.5% of its mana
+   * unspent). `shadow_reach 2 -> dark_inspiration 5/5` measured IDENTICAL
+   * FIGHTS.
+   * ==========================================================================
+   */
+  twilight_focus: 2,
+  inner_focus: 1,
   shadow_focus: 5,
   /*
    * DARK INSPIRATION TAKES SHADOW AFFINITY'S THREE POINTS, and it is a live
