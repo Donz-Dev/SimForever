@@ -1306,6 +1306,18 @@ something that comes and goes.
   almost all one school" is a claim about a PROFILE, and it silently becomes false
   for the next build — which is exactly what happened: the same sentence was exact
   for SM/DS and 10% wrong for Firelock, and it said "exact for either profile".
+- **MOVING AN AURA FROM THE CASTER TO THE TARGET IS TWO CHANGES, AND THE SECOND
+  IS REPORTING.** `AuraInstance.isDebuff` reads the DEFINITION rather than asking
+  who holds the aura, so an enemy aura that does not declare it lands on NEITHER
+  table: `buffUptime` reads friendly actors and `debuffUptime` filters on the
+  flag. Shadow Weaving moved sides and applied, stacked and multiplied the damage
+  correctly while reporting nothing at all -- the inert-buff-with-visible-uptime
+  shape with the UPTIME missing instead of the effect.
+  **THE REPORTING SPLIT IS WHAT CAUGHT IT**, which is the one piece of luck: the
+  old test looked for the aura in `buffUptime` and failed, where a single table
+  reading every actor would have passed on the wrong side and said nothing. **So
+  when an aura changes who carries it, `isDebuff` changes with it**, and a test
+  that names the TABLE is what proves which side it is on.
 - **`ALL_ABILITIES` COUNTS ON AN AURA TOO, and did not until Shatter needed it.**
   `AuraCollection.abilityModifierFor` looked the ability id up EXACTLY, so an aura
   declaring `{ '*': ... }` compiled, applied, reported its uptime and changed
@@ -2308,6 +2320,33 @@ interruptible channel -- so it is not offered there.
   COOLDOWN: Mind Blast on the Shadow Priest cancelled Mind Flay on every poll
   for the whole eight seconds it was unavailable, taking the channel from ~30
   ticks a fight to zero.
+- **A CHANNEL CAN PROTECT ITS FIRST N TICKS, AND MIND FLAY PROTECTS TWO OF
+  THREE.** `Ability.protectedChannelTicks`, by the owner's ruling: "make sure it
+  preserves a minimum of the first 2 ticks of Mind Flay and thus only cuts off
+  the last tick when interrupted. **This may no longer be optimal play, but I
+  still want the functionality so the user can choose.**" A THIRD condition on
+  top of the two that already have to agree, and the engine owns it: enough of
+  the channel has to have happened.
+  **ON TICKS DELIVERED AND NOT ON ELAPSED TIME**, because a channel is hasted --
+  the moment its second tick lands moves with the character's gear and only the
+  COUNT is stable. `channelTicksDelivered` already existed, so this is a new
+  READER of an existing fact.
+  **DECLARED RATHER THAN DERIVED, WHICH IS THIS FILE'S USUAL PREFERENCE INVERTED
+  ON PURPOSE.** "The first 2, and thus only the last one" reads as
+  `channelTicks - 1` -- and ARCANE MISSILES is the only other interruptible
+  channel here, at five ticks, which would silently become un-interruptible for
+  its first FOUR on nobody's authority. **A ruling covers what it says and is not
+  extended by analogy**, which already paid when Immolation Trap was ruled in and
+  Explosive Trap waited to be named.
+  **AND THE TWO PRIEST RULINGS PULL AGAINST EACH OTHER**, worth knowing before
+  reading a figure for either: Improved Mind Flay compounds 20% a tick, so the
+  three are 1, 1.2 and 1.44 of the base -- and the tick this now lets an
+  interrupt take is the BIGGEST of them, **39.6% of the channel rather than a
+  third of it.**
+  **NO STOCK LIST REACHES IT**, because only the Warlock's three entries
+  interrupt anything, so all 28 rows are bit-identical. That is the containment
+  check and it is also the owner's framing: the feature is there so a user can
+  tick the box.
 - **AN INTERRUPTIBLE CHANNEL POLLS INSTEAD OF SLEEPING TO ITS END**, because the
   one moment it would otherwise wake is the moment the channel has already
   finished. `Rotation.interruptsChannels` gates that poll, because it is pure
@@ -4261,8 +4300,14 @@ Plus the permanent rulings under **Scope**.
   single-rank talent's number is keyed by TALENT ID, so the importer wrote a new
   key, found no hand-fill under it and left `null`, and an effect that reads no
   value is dropped in silence. A rename is the one case where the importer's merge
-  does not protect a hand-filled value.) Shadow Weaving is on the CASTER in
-  Forever and on the target in Classic. Twin
+  does not protect a hand-filled value.) **Shadow Weaving IS ON THE TARGET AGAIN**, and
+  this read "on the CASTER in Forever and on the target in Classic" for the
+  whole project. The owner has since ruled it back -- "Shadow Weaving is now a
+  debuff, where the target takes more shadow damage from me" -- which the client
+  says in its own words, "the Shadow damage the target takes from you" where it
+  read "the Shadow damage you deal". **A Forever-versus-Classic difference is a
+  dated claim like any other**, and this one expired by Forever moving TOWARD
+  Classic rather than away from it. Twin
   Disciplines selects "instant cast spells", which no declaration expresses, so
   it names them one by one.
 

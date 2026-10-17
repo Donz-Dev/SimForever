@@ -46,6 +46,7 @@ the tooling to be a bit more sophisticated as well."
 | 17 | **A PATCH: nine racials and forty-odd class notes**, fed in as official notes. The client is TWO BUILDS AHEAD and carries NONE of them, so every figure here comes from a note | **not re-baselined**, on the owner's standing instruction. Four commits, and **thirteen notes are blocked on tree data** | see below |
 | 18 | **TWO OWNER RULINGS, both answering questions round 17 raised and refused to decide** -- the five Tauren templates gain 10 hit rating each, and the two Druid auras stop excluding each other | **not re-baselined**, on the owner's standing instruction. Every caster gains 3% spell crit and the five Tauren rows go back on their hit caps | see below |
 | 18b | **A THIRD RULING, arriving straight after the merge** -- Ice Lance's coefficient is `1.5/3.5/3`, so the divisor tracks the frozen multiplier and the implemented reading was wrong for one release | the frozen coefficient 0.3214 -> **0.4286**, +33% on the spell-power half of a spell that is **8.6% of Frostfire** and is cast by no other profile | see below |
+| 19e | **FOUR PRIEST AND MAGE RULINGS, AND TWO OF THEM WERE ALREADY BUILT** -- Shadow Weaving becomes a target debuff, Mind Flay protects its first two ticks against an interrupt, and Arcane Blast and the Improved Mind Flay ramp turned out to be implemented already | **all 28 rows BIT-IDENTICAL**. One test asserted the OPPOSITE of the Shadow Weaving ruling in its own name, and the aura reported on NEITHER table until it declared `isDebuff` | see below |
 | 19d | **REGENERATION IS CREDITED ACROSS A PRE-COMBAT LEAD**, with the five second rule stamped when the spend happened -- the lead's THIRD and FOURTH observable consequence | **23 of 28 rows BIT-IDENTICAL**; only the two Combat Rogues and three Mages move at all, mean 798.91 -> 798.76. The Combat Rogues open on **85 energy rather than 75** | see below |
 | 19c | **A FREE OFF-GCD CAST ACTS AGAIN AT ONCE** -- the owner's answer to 19b's question, and the CHARGE PROBLEM fixed at the root rather than worked around by position | all 28 rows moved: mean **795.6 -> 798.9**, 20 up and 8 down, one `REAL` (**LW Melee +14.9**). **Rupture +8.7 and Hemo Dagger +14.2** more than recover what 19b cost them. Four tests broke, every one a fixture pinning a timing it never meant to | see below |
 | 19b | **A COMPLETED CAST OR ATTACK BREAKS STEALTH AND PROWL** -- an ENGINE rule with Premeditation as its one declared exception, replacing Ambush and Ravage each removing the aura by hand | Rupture's Ambushes **4.2 -> 3.4** a fight and Hemo Dagger's **2.7 -> 2.2**, for **-6.6** and **-9.0**; the Cat and Pure Hemo are **bit-identical**. Two ways to half-wire it were written and the full suite passed on both | see below |
@@ -555,6 +556,83 @@ with exactly 20 rage generated from Bloodrage after 10 seconds." So the fix was
 the engine's after all -- see **A periodic that accrues before the pull** above.
 **Flagging it was what produced the figure that settled it**, and the figure
 ruled out the option the note had offered.
+
+## Round NINETEEN e: four rulings, and two were already done
+
+**ASKED TO CONFIRM THE SHAMAN, MAGE AND PRIEST TREE CHANGES WERE IMPLEMENTED.**
+They are not -- see the tree-diff round -- but four of the semantic changes
+inside them could be settled without the blocked refresh, because they are
+ABILITIES and talent EFFECTS rather than tree shape.
+
+### Two needed nothing, and I should have checked before asking
+
+| | |
+| --- | --- |
+| **Arcane Blast** | fully implemented already: `ARCANE_BLAST_INTELLECT_TO_SPELL_POWER` 0.15, a 15-second window with `refreshBehaviour: 'ignore'`, four stacks, the spender deleted, and the damage already cut 40% -- which is exactly the client's rank-1 57-65 becoming 34-38 |
+| **the Improved Mind Flay ramp** | `MIND_FLAY_ESCALATION_BONUS` compounds 20% a tick, and its own comment records the 1.2133 over three ticks that the new wording describes |
+
+**CLAUDE.md SAID SO AND I RAISED THEM AS QUESTIONS ANYWAY.** Its Arcane Blast
+entry ends "the question was answered by being removed" and names the deleted
+spender. **A file that records an answer is only useful if it is read before the
+question is re-asked**, which is this project's own rule about a reason that
+describes a working half -- pointed at the notes rather than at a declaration.
+
+### Shadow Weaving crosses to the target
+
+The owner: "Shadow Weaving is now a debuff, where the target takes more shadow
+damage from me." It was a whole-character `damageDoneMultiplier` on the CASTER
+with a caveat admitting the reach -- "a Shadow priest deals almost nothing but
+Shadow, so the two readings agree for this build."
+
+**THAT CAVEAT IS THE SHAPE THIS PROJECT HAS BEEN CAUGHT BY TWICE** on Demonic
+Sacrifice and Shadow and Flame: a claim about a PROFILE rather than about the
+effect. It is `damageTakenBySchool` now, which is Fire Vulnerability's
+arrangement one file over.
+
+**AND IT REPORTED ON NEITHER TABLE UNTIL IT DECLARED `isDebuff`.**
+`AuraInstance.isDebuff` reads the DEFINITION rather than asking who holds the
+aura -- so the moved aura applied, stacked and multiplied the damage correctly
+and showed up in no uptime table at all: `buffUptime` reads friendly actors and
+`debuffUptime` filters on the flag. **The reporting split is the only reason it
+was caught**, because the old test looked in `buffUptime` and failed where one
+combined table would have passed on the wrong side.
+
+**AND THE TEST ASSERTED THE OPPOSITE IN ITS OWN NAME** -- "stacks Shadow Weaving
+on the CASTER, which is a Forever change" -- which is `rogueAbilities.test.ts`'
+lesson again: a test named for what the project believes enforces that belief
+until the belief is wrong. CLAUDE.md's "Shadow Weaving is on the CASTER in
+Forever and on the target in Classic" is corrected with it, and **it expired by
+Forever moving TOWARD Classic**, which is not the direction this file usually
+has to worry about.
+
+### Mind Flay keeps two of its three ticks
+
+The owner: "preserves a minimum of the first 2 ticks ... and thus only cuts off
+the last tick when interrupted. **This may no longer be optimal play, but I
+still want the functionality so the user can choose.**"
+
+`Ability.protectedChannelTicks`, read on ticks DELIVERED rather than on elapsed
+time -- a channel is hasted, so only the count is stable.
+
+**DECLARED RATHER THAN DERIVED, WHICH INVERTS THE USUAL PREFERENCE ON PURPOSE.**
+`channelTicks - 1` is the tempting general rule and ARCANE MISSILES is the only
+other interruptible channel here, at five ticks: deriving it would make its first
+FOUR un-interruptible on nobody's authority.
+
+**THE TWO PRIEST RULINGS PULL AGAINST EACH OTHER.** The ramp compounds 20% a
+tick, so the three ticks are 1, 1.2 and 1.44 of the base -- and the tick an
+interrupt may now take is the BIGGEST of them, **39.6% of the channel rather
+than a third**. The owner called the cost in the same sentence they asked for it.
+
+### What it moved: nothing at all
+
+**28 of 28 rows BIT-IDENTICAL.** Shadow Weaving is worth the same to a build that
+deals only Shadow damage whichever side holds it, and `applyAura` draws no random
+number -- so the fights are the same fights. The interrupt floor is unreachable
+on every stock list, because only the Warlock's three entries interrupt anything.
+
+**THAT IS THE CONTAINMENT CHECK AND IT IS ALSO THE POINT**: the rulings are now
+right, and the published table does not move.
 
 ## Round NINETEEN d: the lead time buys regeneration
 

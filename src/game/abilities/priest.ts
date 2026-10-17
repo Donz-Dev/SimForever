@@ -158,6 +158,14 @@ export const SHADOW_WORD_PAIN: Ability = {
  */
 export const MIND_FLAY_TOTAL = 390;
 export const MIND_FLAY_TICKS = 3;
+/**
+ * Ticks an interrupt may not cut. The owner's "a minimum of the first 2".
+ *
+ * NOT `MIND_FLAY_TICKS - 1`, though it equals it today: the owner stated a
+ * COUNT, and deriving "all but the last" would extend the ruling to Arcane
+ * Missiles by analogy. See `Ability.protectedChannelTicks`.
+ */
+export const MIND_FLAY_PROTECTED_TICKS = 2;
 export const MIND_FLAY_CHANNEL_MS = seconds(MIND_FLAY_TICKS);
 
 /*
@@ -181,6 +189,27 @@ export const MIND_FLAY: Ability = {
    * falls off. See `Ability.interruptibleChannel`.
    */
   interruptibleChannel: true,
+  /*
+   * ==========================================================================
+   * AND AN INTERRUPT MAY ONLY TAKE THE LAST TICK, by the owner's ruling:
+   * "preserves a minimum of the first 2 ticks of Mind Flay and thus only cuts
+   * off the last tick when interrupted. This may no longer be optimal play, but
+   * I still want the functionality so the user can choose."
+   *
+   * TWO OF THE THREE, so the channel always delivers the bulk of itself. That
+   * is a REDUCTION in what the interrupt is worth, which the owner called in
+   * the same sentence -- the value of cutting a channel is largest when it can
+   * be cut early, and this makes the earliest cut the third tick.
+   *
+   * AND IMPROVED MIND FLAY MAKES THE PROTECTED TICKS THE CHEAP ONES. The talent
+   * compounds 20% a tick, so the three ticks are 1, 1.2 and 1.44 of the base --
+   * the tick this now allows an interrupt to take is the BIGGEST of the three,
+   * 39.6% of the channel's damage rather than a third of it. The two rulings
+   * arrived together and pull against each other, which is worth knowing before
+   * reading a measurement of either.
+   * ==========================================================================
+   */
+  protectedChannelTicks: MIND_FLAY_PROTECTED_TICKS,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;

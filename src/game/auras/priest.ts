@@ -140,13 +140,53 @@ export function shadowWeavingAura(percentPerStack: number): AuraDefinition {
     name: 'Shadow Weaving',
     durationMs: SHADOW_WEAVING_DURATION_MS,
     maxStacks: SHADOW_WEAVING_MAX_STACKS,
+    /*
+     * DECLARED, BECAUSE THE ENGINE CANNOT INFER IT FROM WHO HOLDS THE AURA.
+     * `AuraInstance.isDebuff` reads the DEFINITION, so moving this onto the
+     * target without saying so left it off both reporting tables -- the buff
+     * table reads friendly actors and the debuff table filters on this flag, so
+     * an unflagged enemy aura is in neither. It applied, it multiplied the
+     * damage, and it reported NOTHING: the inert-buff-with-visible-uptime shape
+     * with the uptime missing instead.
+     */
+    isDebuff: true,
     refreshBehaviour: 'reset',
     modifiersScaleWithStacks: true,
-    // A whole-character multiplier, for the reason every stacking damage buff
-    // in this project uses one: `SchoolModifiers` is built once when the
-    // character is and cannot come and go. A Shadow priest deals almost
-    // nothing but Shadow, so the two readings agree for this build.
-    damageDoneMultiplier: 1 + percentPerStack / 100,
+    /*
+     * ========================================================================
+     * A DEBUFF ON THE TARGET NOW, BY THE OWNER'S RULING: "Shadow Weaving is now
+     * a debuff, where the target takes more shadow damage from me."
+     *
+     * IT WAS A WHOLE-CHARACTER `damageDoneMultiplier` ON THE CASTER, with a
+     * caveat admitting the reach -- "a Shadow priest deals almost nothing but
+     * Shadow, so the two readings agree for this build." **That caveat is
+     * exactly the shape this project has been caught by twice**, on Demonic
+     * Sacrifice and Shadow and Flame: a claim about a PROFILE rather than about
+     * the effect, which silently becomes false for the next build. The client
+     * has since restated the talent -- "the Shadow damage the target takes from
+     * you" where it said "the Shadow damage you deal" -- and the owner ruled it.
+     *
+     * `damageTakenBySchool` IS THE FIELD, which is Fire Vulnerability's
+     * arrangement one file over: the same stacking, the same `1 + pct / 100`,
+     * read on the DEFENDER through `damageTakenFor`. So the whole change is
+     * which side of the attack holds it.
+     *
+     * ------------------------------------------------------------------------
+     * "FROM ME" IS NOT EXPRESSIBLE AND IS INERT, which is worth saying rather
+     * than leaving as a silent approximation. A debuff here is carried by the
+     * target and raises that school for EVERY attacker; scoping it to one
+     * caster would need a per-source debuff the engine does not have. With a
+     * single player in every encounter the two readings cannot differ, and the
+     * day a second Shadow caster exists they would.
+     *
+     * AND THE STACKING COMPOUNDS, WHICH IS UNCHANGED RATHER THAN CHOSEN.
+     * `scaleByStacks` raises a damage multiplier to the POWER of the count, so
+     * five stacks of 2% are 1.02^5 = 1.1041 and not 1.10 -- the same arithmetic
+     * the caster-side version already produced, so moving sides moves no
+     * figure by itself.
+     * ========================================================================
+     */
+    damageTakenBySchool: { shadow: 1 + percentPerStack / 100 },
   };
 }
 
