@@ -27,12 +27,15 @@ import { VARIANT_GROUPS as SHOCKADIN } from './shockadinVariants';
 import { VARIANT_GROUPS as HUNTER } from './hunterVariants';
 import { VARIANT_GROUPS as DRUID } from './druidVariants';
 import { VARIANT_GROUPS as WARRIOR } from './warriorVariants';
+import { VARIANT_GROUPS as MAGE } from './mageVariants';
+import { VARIANT_GROUPS as SHAMAN } from './shamanVariants';
+import { VARIANT_GROUPS as PRIEST } from './priestVariants';
 
 /*
  * ONE REGISTRY, SPREAD FROM THE PER-CLASS FILES. A group name is a command-line
  * argument, so they share a namespace -- each file prefixes its own.
  */
-const VARIANT_GROUPS = { ...SHOCKADIN, ...HUNTER, ...DRUID, ...WARRIOR };
+const VARIANT_GROUPS = { ...SHOCKADIN, ...HUNTER, ...DRUID, ...WARRIOR, ...MAGE, ...SHAMAN, ...PRIEST };
 
 const PRESET = process.env.PRESET ?? 'pally_shockadin_2h';
 const ITER = Number(process.env.ITER ?? 400);

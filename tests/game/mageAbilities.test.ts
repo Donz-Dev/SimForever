@@ -9,7 +9,7 @@ import { manaPerTick } from '../../src/game/combat/resourceRules';
 import { dealDamage } from '../../src/engine';
 import {
   FIRE_BLAST_SP_COEFFICIENT,
-  PLACEHOLDER_ARCANE_WRATH_SP_COEFFICIENT,
+  ARCANE_WRATH_SP_COEFFICIENT,
 } from '../../src/game/combat/coefficients';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
@@ -20,6 +20,7 @@ import {
   ARCANE_MISSILES_PER_TICK,
   ARCANE_WRATH,
   ARCANE_WRATH_COEFFICIENT,
+  ARCANE_WRATH_CAST_MS,
   ARCANE_WRATH_COOLDOWN_MS,
   ARCANE_WRATH_DAMAGE,
   ARCANE_WRATH_MANA_TO_SPELL_POWER,
@@ -280,20 +281,61 @@ describe('Arcane Wrath, which no profile casts yet', () => {
     return best;
   };
 
-  it('takes the midpoint of 406 to 496, which is RANK 4 and not the talent text', () => {
+  it('is a 3.5 SECOND CAST and not an instant, which it shipped as', () => {
     /*
-     * THE TALENT TOOLTIP SAYS 122 TO 146, AND THAT IS RANK 1. Written out by
-     * hand here because **a talent tooltip shows rank 1 of the ability it
-     * grants** and this project has twice transcribed the smaller figure --
-     * Sniper Shot at 160 against 295, Summon Hawk at 32 against 108, the second
-     * worth 144 DPS. The spellbook capture's own `rank` field reads 4.
+     * ========================================================================
+     * THE CAST TIME IS THE ASSERTION THIS BLOCK EXISTS FOR NOW.
+     *
+     * This read `expect(ARCANE_WRATH.castTimeMs ?? 0).toBe(0)` with the comment
+     * "Instant: the capture states no cast time" -- and the capture states
+     * **`"cast": "3.5 sec cast"`** in its own field. The probe that read the
+     * entry asked for `castTime`, got `undefined`, and a reading error became a
+     * claim about the source.
+     *
+     * **A FIELD READ BY THE WRONG NAME REPORTS AS A SOURCE THAT IS SILENT**, and
+     * every rule this project has for a quiet source is generous: a tie-break
+     * does not apply, an omission has not denied anything, and a neighbouring
+     * spell's coefficient becomes borrowable. All three were then applied to a
+     * source that had spoken, and the spell came out instant with Fire Blast's
+     * 0.429 -- which is the one combination that looks ordinary, because the
+     * wrong cast time and the wrong coefficient pulled opposite ways.
+     *
+     * SO THE ASSERTION IS WRITTEN AGAINST THE CAPTURE'S OWN WORDING, and the
+     * negative is kept: an instant Arcane Wrath at 1.0 would be absurd, and
+     * nothing else in the suite would have said so.
+     * ========================================================================
      */
-    expect(ARCANE_WRATH_DAMAGE).toBe((406 + 496) / 2);
-    expect(ARCANE_WRATH_DAMAGE).not.toBe((122 + 146) / 2);
+    expect(ARCANE_WRATH_CAST_MS).toBe(seconds(3.5));
+    expect(ARCANE_WRATH.castTimeMs).toBe(seconds(3.5));
+    expect(ARCANE_WRATH.castTimeMs ?? 0).not.toBe(0);
     expect(ARCANE_WRATH.cost).toEqual({ resource: 'mana', amount: 395 });
     expect(ARCANE_WRATH_COOLDOWN_MS).toBe(seconds(6));
-    // Instant: the capture states no cast time.
-    expect(ARCANE_WRATH.castTimeMs ?? 0).toBe(0);
+  });
+
+  it('takes the midpoint of 439 to 529, the OWNER\'s figure over the capture', () => {
+    /*
+     * ========================================================================
+     * 439 TO 529 IS THE OWNER'S AND THE CAPTURE SAYS 406 TO 496, exactly 33
+     * lower at both ends. **A later statement from the owner outranks a
+     * capture** -- the rule Rake's 5.5% tick and Swipe's 3% already follow --
+     * and the EVEN OFFSET is what says this is a build difference rather than a
+     * transcription error, so the capture is one refresh behind rather than
+     * wrong.
+     *
+     * BOTH FIGURES ARE WRITTEN OUT because a reader who knows the checked-in
+     * capture would otherwise read 484 as drift, which is the same reason the
+     * constant carries them.
+     *
+     * AND THE TALENT TOOLTIP SAYS 122 TO 146, WHICH IS RANK 1 -- a quarter of
+     * the real spell. **A talent tooltip shows rank 1 of the ability it
+     * grants**, which has twice cost this project a Hunter ability: Sniper Shot
+     * at 160 against 295, and Summon Hawk at 32 against 108, the second worth
+     * 144 DPS.
+     * ========================================================================
+     */
+    expect(ARCANE_WRATH_DAMAGE).toBe((439 + 529) / 2);
+    expect(ARCANE_WRATH_DAMAGE).not.toBe((406 + 496) / 2);
+    expect(ARCANE_WRATH_DAMAGE).not.toBe((122 + 146) / 2);
   });
 
   it('gains spell damage from the MANA POOL, at five percent of the maximum', () => {
@@ -337,23 +379,35 @@ describe('Arcane Wrath, which no profile casts yet', () => {
     expect(with_).toContain('arcane_wrath');
   });
 
-  it('flags its coefficient as a PLACEHOLDER, because the sheet predates it', () => {
+  it('scales at 100% of Spell Power, which the owner stated and is not a borrow', () => {
     /*
-     * ------------------------------------------------------------------------
-     * THE ASSERTION IS THE NAME, which is the one thing a reader cannot miss.
-     * `WoWSimWorksheet.xlsx` is the owner's authoritative coefficient document
-     * and has no row for this spell, so 0.429 is Fire Blast's figure borrowed
-     * on a structural argument -- same damage band, same instant, comparable
-     * cooldown -- and a borrowed number that looks sourced is the failure this
-     * project exists to avoid.
+     * ========================================================================
+     * THE PLACEHOLDER THIS ASSERTED WAS WRONG BY A FACTOR OF 2.3.
      *
-     * BOTH OF THE SPELL'S CLAUSES REST ON IT, which is why it is worth asking
-     * rather than leaving: the mana share is POWER, so it is multiplied by this
-     * before it reaches the damage. A wrong figure here is wrong twice.
-     * ------------------------------------------------------------------------
+     * `WoWSimWorksheet.xlsx` predates the spell, so there was no row to
+     * transcribe and the constant was `PLACEHOLDER_ARCANE_WRATH_SP_COEFFICIENT
+     * = 0.429` -- Fire Blast's figure, borrowed on the argument that the sheet
+     * gives every Mage INSTANT the same `1.5 / 3.5`. The owner has given it
+     * directly: **"+100% of Spell Power for its coefficient."**
+     *
+     * THE BORROW FAILED ON ITS PREMISE RATHER THAN ITS METHOD. "The same damage
+     * band, the same cast time and a comparable cooldown" -- and the cast time
+     * was 3.5 seconds, not instant. **The structural argument was sound and
+     * pointed at the wrong neighbour**: `3.5 / 3.5` is 1.0, which is the
+     * owner's own figure, so reading the capture's `cast` field would have
+     * landed on it without being told.
+     *
+     * SO THE FLAG DID ITS JOB AND THE ARGUMENT BESIDE IT IS WHAT FAILED. The
+     * `PLACEHOLDER_` name is what got this asked about at all -- this project's
+     * rule is that a flagged reading is cheap and a wrong unflagged one is not
+     * -- and the lesson underneath is one level down: **a well-argued borrow is
+     * only as good as the facts its argument rests on.**
+     * ========================================================================
      */
-    expect(ARCANE_WRATH_COEFFICIENT).toBe(PLACEHOLDER_ARCANE_WRATH_SP_COEFFICIENT);
-    expect(PLACEHOLDER_ARCANE_WRATH_SP_COEFFICIENT).toBeCloseTo(FIRE_BLAST_SP_COEFFICIENT, 6);
+    expect(ARCANE_WRATH_COEFFICIENT).toBe(ARCANE_WRATH_SP_COEFFICIENT);
+    expect(ARCANE_WRATH_SP_COEFFICIENT).toBe(1);
+    // And NOT the borrowed figure, which was Fire Blast's.
+    expect(ARCANE_WRATH_COEFFICIENT).not.toBeCloseTo(FIRE_BLAST_SP_COEFFICIENT, 6);
   });
 });
 
@@ -1911,32 +1965,38 @@ describe("Winter's Chill, a crit debuff the TARGET carries", () => {
     expect(target.auras.stacksOf('winters_chill')).toBe(5);
     /*
      * ========================================================================
-     * **TO THE POWER OF THE STACK COUNT, AND THAT IS A FLAGGED READING.**
+     * **EXACTLY 3x AT FIVE STACKS, BY THE OWNER'S RULING, SO THIS ONE ADDS.**
      *
-     * `modifiersScaleWithStacks` takes damage to the power of the count -- this
-     * project's documented convention, and what Improved Scorch's Fire
-     * Vulnerability already does with its 3%. So five stacks of 40% are
-     * `1.4^5 = 5.378`, where "40%, stacking up to 5 times" read ADDITIVELY is
-     * `1 + 5 x 0.4 = 3.0`.
+     * "Winter's Chill at 5 stacks is a 3x multiplier for Cone of Cold" --
+     * `1 + 0.4 x 5`, where this engine's default raises a damage multiplier to
+     * the POWER of the stack count and would give `1.4^5 = 5.378`.
+     * `AuraDefinition.additiveDamageStacks` is the opt-in and this aura is its
+     * only caller.
      *
-     * A QUESTION FOR THE OWNER, pinned here with both figures so the
-     * alternative is a line to argue with rather than a coincidence -- which is
-     * what got Ice Lance's coefficient ruled on. **At 3% a stack the two
-     * readings are 1.159 against 1.150 and nobody would notice; at 40% they are
-     * a factor of 1.8 apart**, so the convention's existing callers are not
-     * evidence about this one.
+     * AND THE FLAG IS WHAT GOT IT RULED ON. This assertion carried the power
+     * reading with the additive one pinned beside it as a negative, both
+     * figures written out -- and the answer came back in one line. **A flagged
+     * reading is cheap and a wrong unflagged one is not**, which is the third
+     * time that has paid on a Mage constant.
+     *
+     * IMPROVED SCORCH KEEPS ITS 1.159. **A ruling covers what it says and is
+     * not extended by analogy** -- at 3% a stack the two readings are 1.159
+     * against 1.150 and indistinguishable, so the owner ruled about the 40% one
+     * and the 3% one is untouched. `additiveDamageStacks` defaults to false for
+     * exactly that reason.
      *
      * WORTH NOTHING EITHER WAY TODAY: Cone of Cold is not declared and no Mage
      * profile takes the talent.
      * ========================================================================
      */
+    expect(target.abilityModifierAgainst('cone_of_cold').damageMultiplier).toBeCloseTo(3, 6);
     expect(target.abilityModifierAgainst('cone_of_cold').damageMultiplier).toBeCloseTo(
-      (1 + WINTERS_CHILL_DAMAGE_PER_STACK / 100) ** 5,
+      1 + (5 * WINTERS_CHILL_DAMAGE_PER_STACK) / 100,
       6,
     );
-    // And NOT the additive reading, which is the other half of the flag.
+    // And NOT the compounding default, which every other stacking aura takes.
     expect(target.abilityModifierAgainst('cone_of_cold').damageMultiplier).not.toBeCloseTo(
-      1 + (5 * WINTERS_CHILL_DAMAGE_PER_STACK) / 100,
+      (1 + WINTERS_CHILL_DAMAGE_PER_STACK / 100) ** 5,
       6,
     );
 

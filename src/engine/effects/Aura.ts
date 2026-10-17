@@ -308,6 +308,28 @@ export interface AuraDefinition {
   readonly statModifiers?: readonly StatModifierSpec[];
   /** When true, stat modifiers are multiplied by the current stack count. */
   readonly modifiersScaleWithStacks?: boolean;
+  /**
+   * Whether this aura's DAMAGE multipliers add per stack instead of compounding.
+   *
+   * ----------------------------------------------------------------------------
+   * THE OWNER'S RULING ON WINTER'S CHILL, and it is the only caller: "Winter's
+   * Chill at 5 stacks is a 3x multiplier for Cone of Cold" -- 40% a stack read
+   * ADDITIVELY, `1 + 0.4 x 5`, where this engine's default raises a damage
+   * multiplier to the POWER of the count and would give 5.378.
+   *
+   * IT DEFAULTS TO COMPOUNDING, so nothing that existed moves. **A ruling covers
+   * what it says and is not extended by analogy**: Improved Scorch's 3% a stack
+   * keeps its 1.159, because at that size the two readings are a percent apart
+   * and the owner ruled about a 40% one.
+   *
+   * IT ONLY MEANS ANYTHING ALONGSIDE `modifiersScaleWithStacks`, which is what
+   * makes a modifier read the stack count at all, and it reaches every damage
+   * reader of that flag through `stackedMultiplier`. The flat fields --
+   * `flatDamageTaken`, `spellPowerTakenBySchool` -- are already linear and are
+   * untouched.
+   * ----------------------------------------------------------------------------
+   */
+  readonly additiveDamageStacks?: boolean;
   /** Multiplies damage the carrier deals. 1.1 is +10%. */
   readonly damageDoneMultiplier?: number;
   /**

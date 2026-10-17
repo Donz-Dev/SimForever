@@ -366,42 +366,47 @@ export const ARCANE_MISSILES_TICK_SP_COEFFICIENT = 0.286;
 export const ARCANE_BLAST_SP_COEFFICIENT = 1.5 / 3.5;
 /*
  * ==============================================================================
- * ARCANE WRATH IS NOT IN THE OWNER'S SHEET, SO THIS IS A FLAGGED PLACEHOLDER
- * AND A QUESTION FOR THEM.
+ * ARCANE WRATH IS 100% OF SPELL POWER, STATED BY THE OWNER, AND THE PLACEHOLDER
+ * THAT STOOD HERE WAS WRONG BY A FACTOR OF 2.3.
  *
- * The spell was added at client build 1.60.1.70425 and `WoWSimWorksheet.xlsx`
- * predates it, so there is no row to transcribe -- and the old `castTime / 3.5`
- * rule that would have derived one is DELETED, because three of its four cases
- * were Classic's and the owner has since stated the numbers.
- *
- * ------------------------------------------------------------------------------
- * 0.429 IS FIRE BLAST'S, AND THE ARGUMENT FOR BORROWING IT IS STRUCTURAL RATHER
- * THAN A GUESS AT THE MAGNITUDE.
- *
- *   Fire Blast     417 to 489 damage, INSTANT, 8 second cooldown   -> 0.429
- *   Arcane Wrath   406 to 496 damage, INSTANT, 6 second cooldown   -> ?
- *
- * The same damage band, the same cast time and a comparable cooldown, and 0.429
- * is `1.5 / 3.5` -- the figure the sheet gives EVERY Mage instant it contains
- * (Fire Blast and Scorch both). **So the sheet's own pattern for this shape of
- * spell is one number, and this spell is that shape.**
- *
- * IT KEEPS THE `PLACEHOLDER_` NAME ANYWAY, which is the whole rule: a borrowed
- * number that looks sourced is the failure this project exists to avoid, and a
- * well-argued borrow is still a borrow. Nothing can read it without seeing that.
+ * `WoWSimWorksheet.xlsx` predates the spell, so there was no row to transcribe
+ * and this was `PLACEHOLDER_ARCANE_WRATH_SP_COEFFICIENT = 0.429` -- Fire Blast's
+ * figure, borrowed on the argument that the sheet gives every Mage INSTANT the
+ * same `1.5 / 3.5`. The owner has now given it directly: **"+100% of Spell Power
+ * for its coefficient."**
  *
  * ------------------------------------------------------------------------------
- * AND THE SECOND CLAUSE IS BLOCKED ON THE SAME NUMBER, which is why this is
- * worth asking rather than leaving. "This spell gains additional Spell Damage
- * equal to 5% of your maximum Mana" is a POWER addition, so it is multiplied by
- * the coefficient before it reaches the damage -- on a Mage with roughly 5,000
- * mana that is 250 spell power, worth about 107 damage at 0.429 and nothing at
- * all at 0. **Both halves of the spell rest on one figure the owner has not
- * stated**, and a wrong coefficient is wrong twice here where it is wrong once
- * everywhere else.
+ * THE BORROW WAS WRONG BECAUSE ITS PREMISE WAS, AND THE PREMISE WAS MY OWN
+ * READING ERROR RATHER THAN THE SOURCE'S SILENCE.
+ *
+ * The argument was "the same damage band, the same cast time and a comparable
+ * cooldown" -- and the cast time was not the same at all. Arcane Wrath is a
+ * **3.5 second cast**, which the capture states in its own `cast` field; the
+ * probe that read it asked for `castTime`, got `undefined`, and the note here
+ * then said "the capture states no cast time" and treated the spell as an
+ * instant. **A field read by the wrong name reports as a source that is silent**,
+ * and silence is exactly what this project's rules let you reason around.
+ *
+ * SO THE STRUCTURAL ARGUMENT WAS SOUND AND POINTED AT THE WRONG NEIGHBOUR. A
+ * 3.5 second cast at 1.0 is the sheet's own pattern too -- `3.5 / 3.5` -- and
+ * reading it that way would have landed on the owner's figure without being
+ * told. **Check the field name before concluding a source says nothing.**
+ *
+ * ------------------------------------------------------------------------------
+ * AND BOTH OF THE SPELL'S CLAUSES REST ON THIS NUMBER, which is why the error
+ * was worth 2.3x rather than its face value. "This spell gains additional Spell
+ * Damage equal to 5% of your maximum Mana" is a POWER addition multiplied by the
+ * coefficient, so at 1.0 a Mage with roughly 5,000 mana gains the full 250 where
+ * 0.429 would have given 107.
+ *
+ * **AT A COEFFICIENT OF EXACTLY 1.0 THE TWO READINGS OF THAT CLAUSE COINCIDE**,
+ * and that is luck rather than a resolution: "5% of max mana as spell POWER"
+ * and "as flat DAMAGE" differ by the coefficient, which is 1. Said here because
+ * the day a patch moves the coefficient they come apart, and nothing in the
+ * implementation would flag it.
  * ==============================================================================
  */
-export const PLACEHOLDER_ARCANE_WRATH_SP_COEFFICIENT = 0.429;
+export const ARCANE_WRATH_SP_COEFFICIENT = 1.0;
 export const FIRE_BLAST_SP_COEFFICIENT = 0.429;
 export const SCORCH_SP_COEFFICIENT = 0.429;
 /**

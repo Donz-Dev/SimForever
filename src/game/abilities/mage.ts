@@ -24,7 +24,7 @@ import {
   PYROBLAST_DOT,
 } from '../auras/mage';
 import {
-  PLACEHOLDER_ARCANE_WRATH_SP_COEFFICIENT,
+  ARCANE_WRATH_SP_COEFFICIENT,
   ARCANE_BLAST_SP_COEFFICIENT,
   ARCANE_MISSILES_TICK_SP_COEFFICIENT,
   BLAST_WAVE_SP_COEFFICIENT,
@@ -772,23 +772,54 @@ export const EVOCATION: Ability = {
 };
 
 /**
- * Arcane Wrath: an instant Arcane nuke that scales with the Mage's mana POOL.
+ * Arcane Wrath: a 3.5 second Arcane nuke that scales with the Mage's mana POOL.
  *
  * ==============================================================================
- * "Launches a projectile of pure Arcane energy at the enemy target, causing 406
- * to 496 Arcane damage. This spell gains additional Spell Damage equal to 5% of
- * your maximum Mana." 395 mana, instant, 6 second cooldown.
+ * "Launches a projectile of pure Arcane energy at the enemy target, causing 439
+ * to 529 Arcane damage. This spell gains additional Spell Damage equal to 5% of
+ * your maximum Mana." 395 mana, **3.5 second cast**, 6 second cooldown, and
+ * **100% of Spell Power** for its coefficient.
  *
  * NEW AT CLIENT BUILD 1.60.1.70425, granted by the Arcane tree's new row-3
  * talent of the same name, which requires Arcane Blast.
  *
  * ------------------------------------------------------------------------------
- * 406 TO 496 IS RANK 4 AND THE TALENT TOOLTIP SAYS 122 TO 146, WHICH IS RANK 1.
- * The talent's own text is the figure a reader meets first and it is a quarter of
- * the real spell -- **a talent tooltip shows rank 1 of the ability it grants**,
- * which has cost this project two Hunter abilities (Sniper Shot at 160 against
- * 295, Summon Hawk at 32 against 108, the second worth 144 DPS). The spellbook
- * capture's own `rank` field is what settles it, and it reads 4.
+ * THREE OF THOSE FOUR NUMBERS ARE THE OWNER'S CORRECTION, AND THE CAST TIME IS
+ * THE ONE WORTH READING TWICE.
+ *
+ * This shipped as an INSTANT with 406-496 damage and a borrowed 0.429, and the
+ * note here said "the capture states no cost and no cast time". **The capture
+ * states `"cast": "3.5 sec cast"` in its own field.** The probe that read the
+ * entry asked for `castTime`, got `undefined`, and a reading error became a
+ * claim about the source -- after which every rule this project has for
+ * reasoning around a silent source was applied to a source that had spoken.
+ *
+ * **A FIELD READ BY THE WRONG NAME REPORTS AS A SOURCE THAT IS SILENT**, and
+ * silence is the one state those rules are generous about: a tie-break does not
+ * apply, an omission has not denied anything, and a neighbouring spell's figure
+ * becomes borrowable. Every one of those is right about a quiet source and
+ * none is right about a misread field. The spell came out instant, which with
+ * 0.429 made it look weak and with a correct 1.0 would have made it absurd.
+ *
+ * SO THE CHEAP CHECK IS THE ENTRY ITSELF RATHER THAN A PROBE OVER IT. `cost`,
+ * `range`, `cast` and `cooldown` are the capture's four field names and
+ * `import_forever_spells.mjs` writes them; printing the whole object once would
+ * have shown all four.
+ *
+ * ------------------------------------------------------------------------------
+ * 439 TO 529 IS THE OWNER'S FIGURE AND THE CAPTURE SAYS 406 TO 496, exactly 33
+ * lower at both ends. **A later statement from the owner outranks a capture**,
+ * which is the rule Rake's 5.5% tick and Swipe's 3% already follow -- and the
+ * even offset says this is a BUILD difference rather than a transcription
+ * error, so the capture is probably one refresh behind rather than wrong. Both
+ * figures are recorded here because a reader who knows the checked-in capture
+ * would otherwise read 484 as drift.
+ *
+ * AND THE TALENT TOOLTIP SAYS 122 TO 146, WHICH IS RANK 1. That is the figure a
+ * reader meets first and it is a quarter of the real spell -- **a talent tooltip
+ * shows rank 1 of the ability it grants**, which has cost this project two
+ * Hunter abilities (Sniper Shot at 160 against 295, Summon Hawk at 32 against
+ * 108, the second worth 144 DPS). The capture's own `rank` field reads 4.
  *
  * ------------------------------------------------------------------------------
  * THE MANA CLAUSE IS A SPELL POWER ADDITION AND IS DEALT AS ONE. It is folded
@@ -797,6 +828,11 @@ export const EVOCATION: Ability = {
  * "gains additional Spell Damage" says, and is the arithmetic a second
  * `powerCoefficient` could not express.
  *
+ * **AT A COEFFICIENT OF EXACTLY 1.0 THAT READING AND "5% AS FLAT DAMAGE"
+ * COINCIDE**, which is luck rather than a resolution: the two differ by the
+ * coefficient and the coefficient is one. The day a patch moves it they come
+ * apart and nothing here would flag it.
+ *
  * MAXIMUM AND NOT CURRENT, which the tooltip states and which matters: a Mage's
  * mana falls through a fight, so reading the current pool would make the spell
  * get weaker the longer it is cast -- a smaller number, no error, and exactly
@@ -804,32 +840,21 @@ export const EVOCATION: Ability = {
  *
  * THE POOL IS SIZED ONCE from a stats snapshot, so this is stable across the
  * fight for free; it is not re-read per cast because it cannot move.
- *
- * ------------------------------------------------------------------------------
- * **ITS COEFFICIENT IS A FLAGGED PLACEHOLDER AND A QUESTION FOR THE OWNER.**
- * The sheet predates the spell. See
- * `PLACEHOLDER_ARCANE_WRATH_SP_COEFFICIENT`, which carries the argument for
- * the borrowed figure and the reason both of this spell's clauses rest on it.
- *
- * AND NO PROFILE TAKES THE TALENT YET. The Arcane build spends its 35 points
- * elsewhere, so this is declared so the talent can be MEASURED rather than
- * because something casts it -- which is the opposite of the usual order here
- * and is deliberate: an undeclared ability makes its talent unevaluable, and
- * `hunterFiveFixes.test.ts` now fails on a `grantAbility` that resolves to
- * nothing for exactly that reason.
  * ==============================================================================
  */
-export const ARCANE_WRATH_DAMAGE = midpoint(406, 496);
+export const ARCANE_WRATH_DAMAGE = midpoint(439, 529);
 export const ARCANE_WRATH_MANA = 395;
+export const ARCANE_WRATH_CAST_MS = seconds(3.5);
 export const ARCANE_WRATH_COOLDOWN_MS = seconds(6);
 /** "Additional Spell Damage equal to 5% of your maximum Mana." */
 export const ARCANE_WRATH_MANA_TO_SPELL_POWER = 0.05;
-export const ARCANE_WRATH_COEFFICIENT = PLACEHOLDER_ARCANE_WRATH_SP_COEFFICIENT;
+export const ARCANE_WRATH_COEFFICIENT = ARCANE_WRATH_SP_COEFFICIENT;
 
 export const ARCANE_WRATH: Ability = {
   id: 'arcane_wrath',
   name: 'Arcane Wrath',
   cost: { resource: 'mana', amount: ARCANE_WRATH_MANA },
+  castTimeMs: ARCANE_WRATH_CAST_MS,
   cooldownMs: ARCANE_WRATH_COOLDOWN_MS,
   attackTable: 'spell',
   requiresTarget: true,

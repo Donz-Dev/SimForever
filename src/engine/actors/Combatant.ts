@@ -4,6 +4,7 @@ import {
   AttackTableModifiers,
   SchoolModifiers,
   combineAbilityModifiers,
+  stackedMultiplier,
 } from '../combat/abilityModifiers';
 import type { AuraDefinition } from '../effects/Aura';
 import type { Ability } from '../abilities/Ability';
@@ -721,9 +722,14 @@ export class Combatant {
     for (const aura of this.auras.active) {
       const bySchool = aura.definition.damageDoneBySchool;
       if (bySchool?.[school] === undefined) continue;
-      // Compounds with stacks, matching `auraMultiplier` and the target side.
-      product *=
-        bySchool[school]! ** (aura.definition.modifiersScaleWithStacks ? aura.stacks : 1);
+      // Compounds with stacks by default, matching `auraMultiplier` and the
+      // target side -- and ADDS for an aura the owner has ruled additive. See
+      // `stackedMultiplier`, which is the one place that rule lives.
+      product *= stackedMultiplier(
+        bySchool[school]!,
+        aura.definition.modifiersScaleWithStacks ? aura.stacks : 1,
+        aura.definition.additiveDamageStacks,
+      );
     }
     return product;
   }
@@ -1024,8 +1030,9 @@ export class Combatant {
        * the same flag would be worth far more trouble than it.
        */
       const exponent = aura.definition.modifiersScaleWithStacks ? aura.stacks : 1;
+      const additive = aura.definition.additiveDamageStacks;
       const everyHit = aura.definition.damageTakenBySchool?.[school];
-      if (everyHit !== undefined) product *= everyHit ** exponent;
+      if (everyHit !== undefined) product *= stackedMultiplier(everyHit, exponent, additive);
       /*
        * BOTH FIELDS REACH A TICK, and they are separate rather than one flag.
        * `damageTakenBySchool` is every hit of that school;
@@ -1095,7 +1102,11 @@ export class Combatant {
       const byTable = aura.definition.damageDoneByTable;
       const value = byTable?.[table];
       if (value === undefined) continue;
-      product *= value ** (aura.definition.modifiersScaleWithStacks ? aura.stacks : 1);
+      product *= stackedMultiplier(
+        value,
+        aura.definition.modifiersScaleWithStacks ? aura.stacks : 1,
+        aura.definition.additiveDamageStacks,
+      );
     }
     return product;
   }
@@ -1111,7 +1122,11 @@ export class Combatant {
     for (const aura of this.auras.active) {
       const value = aura.definition[key];
       if (value !== undefined) {
-        product *= value ** (aura.definition.modifiersScaleWithStacks ? aura.stacks : 1);
+        product *= stackedMultiplier(
+          value,
+          aura.definition.modifiersScaleWithStacks ? aura.stacks : 1,
+          aura.definition.additiveDamageStacks,
+        );
       }
     }
     return product;

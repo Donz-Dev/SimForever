@@ -467,6 +467,47 @@ describe('the Warrior keeps Thunder Clap up', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Both Judgements at once, which the owner has ruled intended
+// ---------------------------------------------------------------------------
+
+describe('Judgement of Wisdom and Judgement of the Crusader', () => {
+  it('are BOTH selected on every preset, and that is the ruling rather than a gap', () => {
+    /*
+     * ========================================================================
+     * **"Two Judgements is absolutely fine and intended for the raid buff
+     * contribution."** The owner's ruling, and this test is here so the
+     * question is not raised a second time.
+     *
+     * IT WAS WORTH RAISING. One target cannot carry two judgements in the game
+     * being modelled, `exclusiveWith` has no declaration anywhere so nothing
+     * refuses the pair, and the Crusader alone is worth **+79.5, +74.9, +63.0
+     * and +49.4** on the four Paladins -- so a reader finding both ticked would
+     * reasonably read it as the Moonkin's +6% crit mistake repeating. It is not:
+     * the box is a RAID CONTRIBUTION rather than a claim about one debuff slot.
+     *
+     * AND IT IS PINNED AS A FACT RATHER THAN LEFT AS PROSE, because **a ruling
+     * that is only prose gets re-raised** -- which this file's own neighbour
+     * records about the crushing-blow table, and which this pair had already
+     * started to do. The assertion is that both ids are in every preset's
+     * selection, so the day somebody makes them exclusive this fails and the
+     * ruling is what they have to argue with.
+     * ========================================================================
+     */
+    const wisdom = RAID_BUFFS_BY_ID.get('judgement_of_wisdom');
+    const crusader = RAID_BUFFS_BY_ID.get('judgement_of_the_crusader');
+    expect(wisdom).toBeDefined();
+    expect(crusader).toBeDefined();
+    expect(areExclusive(wisdom!, crusader!)).toBe(false);
+
+    for (const preset of PRESETS_BY_ID.values()) {
+      const ids = preset.build().raidBuffs;
+      expect(ids, `${preset.id} / wisdom`).toContain('judgement_of_wisdom');
+      expect(ids, `${preset.id} / crusader`).toContain('judgement_of_the_crusader');
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Entries that cannot sit beside each other, of which there are none
 // ---------------------------------------------------------------------------
 

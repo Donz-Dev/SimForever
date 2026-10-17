@@ -2058,11 +2058,15 @@ See [docs/resources.md](docs/resources.md).
   +79.5, +74.9, +63.0 and +49.4 on the four, and **exactly 0.0 on DW Fury and the
   Fire Mage**, which is the control -- it is Holy spell power and reaches nothing
   that deals no Holy damage.
-  **AND TWO JUDGEMENTS ARE NOW SELECTED AT ONCE**, Wisdom and the Crusader, which
-  one target cannot carry in the game being modelled. `exclusiveWith` has no
-  declaration anywhere, so nothing refuses it. **Implemented as instructed and
-  recorded as a question**, because it is worth 63 to 80 DPS on three profiles
-  and is a RAID COMPOSITION ruling rather than a bug.
+  **AND TWO JUDGEMENTS ARE SELECTED AT ONCE, WHICH THE OWNER HAS RULED
+  INTENDED**: "Two Judgements is absolutely fine and intended for the raid buff
+  contribution." One target cannot carry both in the game being modelled and
+  `exclusiveWith` has no declaration anywhere, so it was implemented as
+  instructed and recorded as a question -- worth 63 to 80 DPS on three
+  profiles, and a RAID COMPOSITION decision rather than a bug. **The answer is
+  that the box is a raid CONTRIBUTION rather than a claim about one debuff
+  slot**, and `raidBuffs.test.ts` pins both ids on every preset, because **a
+  ruling that is only prose gets re-raised** and this one had begun to be.
 - **TWO PRESETS SUBSTITUTE ONE RAID BUFF AND ONE DROPS ONE, and a SWAP is the
   commoner shape.** The two ranged Hunters take Grace of Air for Windfury, and
   only the Enhancement Shaman drops one outright, because Windfury Weapon
@@ -4624,6 +4628,28 @@ five two-handed weapon types. So the reading was right, the clause was real, and
 it then expired on its own. **A requirement line is DATA and it moves like any
 other number** -- which is the second reason to re-read the captures on a patch
 rather than only the damage.
+
+**AND A FIELD READ BY THE WRONG NAME REPORTS AS A SOURCE THAT IS SILENT, WHICH
+TURNS EVERY RULE IN THIS SECTION INTO A LICENCE.** Arcane Wrath shipped as an
+INSTANT because a probe asked the spellbook entry for `castTime`, got
+`undefined`, and that became the written claim "the capture states no cast
+time". The capture says `"cast": "3.5 sec cast"` **in its own field**.
+**EVERY RULE ABOVE IS GENEROUS TO A QUIET SOURCE** -- a tie-break does not
+apply, an omission has not denied anything, a neighbour's coefficient becomes
+borrowable with a `PLACEHOLDER_` name -- and all three were then applied to a
+source that had spoken. So Fire Blast's 0.429 was borrowed on the argument that
+"the sheet gives every Mage INSTANT the same `1.5 / 3.5`": **sound reasoning
+resting on a fact that was not true**, where `3.5 / 3.5` is 1.0 and is the
+owner's own figure. Reading the field would have landed on the right number
+with nobody asked.
+**THE TWO ERRORS PULLED OPPOSITE WAYS, WHICH IS WHAT MADE IT LOOK ORDINARY**:
+an instant cast is generous and a coefficient at 43% of the real one is stingy,
+so the spell's damage per second read fine. **AND HANDOVER ALREADY HAD THE
+RIGHT NUMBER** in the row about that spell -- "395 mana, 3.5 sec cast, 6 sec
+cooldown". **A fact that gets documented still needs somebody to READ it**,
+which is the mirror of this file's own rule about a difference that gets
+documented and nobody calls wrong. **Before concluding a source is silent,
+print the whole entry** rather than the field you reached for.
 
 **A REFRESH AND A CROSS-CHECK FIND DIFFERENT THINGS AND NEITHER SUBSTITUTES FOR
 THE OTHER.** Slam's cooldown went 15 to 18 in ELEVEN DAYS, on the class with the

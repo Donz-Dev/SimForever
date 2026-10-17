@@ -986,10 +986,62 @@ const MAGE_ARCANE_TALENTS: TalentAllocation = {
    * spends one of them. The other four stay: nothing else in the tree is both
    * live and unmaxed, hit is at its cap, and the build is not mana-bound.
    *
-   * ARCANE WRATH IS DELIBERATELY NOT TAKEN. The new row-3 talent's spell is
-   * declared and its coefficient is a flagged `PLACEHOLDER_` -- the owner's
-   * sheet predates the spell -- so spending a point on it would be optimising
-   * against a borrowed number. **It is the one open question on this profile.**
+   * ARCANE WRATH WAS NOT TAKEN FOR THE WRONG REASON FIRST, WHICH IS WORTH
+   * SEPARATING FROM THE RIGHT ONE. It was skipped because its coefficient was a
+   * flagged `PLACEHOLDER_` and its cast time had been read as INSTANT -- and the
+   * cast time was a misread field rather than a silent source. The owner has
+   * since given all of it: a 3.5 second cast, 439 to 529 Arcane, and 100% of
+   * spell power.
+   * ------------------------------------------------------------------------------
+   * **ARCANE WRATH IS NOT TAKEN, AND THIS IS THE JUSTIFICATION THE OWNER ASKED
+   * FOR.** Five placements measured, paired over 400 iterations:
+   *
+   *   entry above the gated Arcane Missiles        **-118.5 +/- 11.6**
+   *   entry above Arcane Blast (the filler slot)    **-77.2 +/- 12.0**
+   *   entry at the BOTTOM of the list                0.00, never cast
+   *   talent taken, no entry                         0.00, never cast
+   *   entry gated on max Arcane Blast stacks         0.00, never cast
+   *
+   * AND THE SPELL IS NOT THE PROBLEM -- IT CARRIES ITS WEIGHT. In the filler
+   * slot it is **25.5% of the profile's damage on 6.6 casts**, which is more
+   * than Arcane Blast's own 15.4% in the same run. A 3.5 second cast for 484
+   * plus 100% of spell power plus 5% of maximum mana is a real spell.
+   *
+   * WHAT IT DISPLACES IS NOT DAMAGE, IT IS SPELL POWER. Arcane Blast goes
+   * **13.8 casts a fight to 9.8**, and Arcane Blast is this build's RAMP: each
+   * stack grants 15% of Intellect as spell power, so at 342 Intellect a stack is
+   * +51 and five stacks are **+257 on a base of 785**. Four fewer Arcane Blasts
+   * is a ramp that spends the fight lower.
+   *
+   * **AND THE PROOF IS IN THE COLUMN THE DPS CANNOT SHOW.** Arcane Missiles'
+   * cast count falls by 0.2 and its SHARE falls from 67.0% to 56.6% -- so every
+   * missile is hitting for about 15% less. It carries the highest coefficient in
+   * the kit at 1.4729, which makes it the spell that loses most per point of
+   * spell power removed, and it is 67% of the profile. **Arcane Blast is not
+   * competing with Arcane Wrath on damage per second; it is buying spell power
+   * for the two thirds of the build that is Arcane Missiles.**
+   *
+   * SO THE PER-SECOND ARITHMETIC THAT MADE THIS LOOK CLOSE WAS COMPUTED AT BASE
+   * SPELL POWER, AND THAT IS THE WHOLE ERROR. 434/sec for Arcane Wrath against
+   * 381/sec for Arcane Blast -- true at 785 spell power, and at five stacks
+   * Arcane Blast is `236 + (785 + 257) x 0.4286 = 683` over 1.5 seconds, which
+   * is **455/sec and already ahead** before a point of what the ramp does for
+   * anything else. **A per-second comparison on a build with a ramp has to be
+   * taken at the ramped figure**, or it prices the spell that breaks the ramp as
+   * though the ramp were free.
+   *
+   * AND PROTECTING THE RAMP MAKES THE SPELL UNREACHABLE, which is why the gated
+   * row is a 0.00 rather than a smaller loss: at max stacks the two Arcane
+   * Missiles entries above it win, and below max stacks the gate refuses.
+   * **There is no state in which Arcane Wrath is the top castable entry** -- the
+   * "entry above never yields" cause of a never-fired entry, arrived at
+   * deliberately.
+   *
+   * WHICH BUILD WOULD WANT IT: one whose core spell does not depend on a ramp a
+   * 3.5 second cast interrupts. Nothing here is that build, and the day a Mage
+   * profile exists without Arcane Blast this is one line to re-measure --
+   * `PRESET=mage_arcane VARIANTS=arcaneWrath npx vite-node tools/probe_build.ts`.
+   * ------------------------------------------------------------------------------
    * ==========================================================================
    */
   // Arcane, 35

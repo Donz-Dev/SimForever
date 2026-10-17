@@ -1000,20 +1000,24 @@ export const FINGERS_OF_FROST: AuraDefinition = fingersOfFrostAura(2);
  * and every rank is pinned.
  *
  * ----------------------------------------------------------------------------
- * **A QUESTION FOR THE OWNER: FIVE STACKS OF 40% IS EITHER 3x OR 5.38x.**
+ * **FIVE STACKS IS 3x, BY THE OWNER'S RULING, SO THIS ONE ADDS RATHER THAN
+ * COMPOUNDING.** "Winter's Chill at 5 stacks is a 3x multiplier for Cone of
+ * Cold" -- which is `1 + 0.4 x 5` ADDITIVELY, where this engine's default raises
+ * a damage multiplier to the POWER of the stack count and would give
+ * `1.4^5 = 5.378`. `additiveDamageStacks` is the opt-in and this is its only
+ * caller; see `stackedMultiplier`, which is the one place the rule lives.
  *
- * `modifiersScaleWithStacks` takes damage to the POWER of the stack count --
- * this project's documented convention, and what Improved Scorch's Fire
- * Vulnerability already does with its 3% -- so five stacks here are
- * `1.4^5 = 5.378`. Read ADDITIVELY, "40% stacking up to 5 times" is
- * `1 + 5 x 0.4 = 3.0`.
+ * AND THE FLAG WAS WHAT GOT IT RULED ON. The convention was implemented with the
+ * alternative pinned beside it -- both figures, and a negative assertion on the
+ * one not chosen -- and the answer came back in one line. At 3% a stack the two
+ * readings are 1.159 against 1.150 and nobody would notice; at 40% they are a
+ * factor of 1.8 apart, so **a house rule that is invisible at every existing
+ * caller was never evidence about a caller eight times larger.**
  *
- * THE CONVENTION IS IMPLEMENTED AND THE ALTERNATIVE IS FLAGGED, which is this
- * project's rule for an ambiguous wording: at 3% a stack the two readings are
- * 1.159 against 1.150 and nobody would notice, and at 40% they are a factor of
- * 1.8 apart. **A house rule that is invisible at every existing caller is not
- * evidence about a caller eight times larger.** Worth nothing today either
- * way, for the reason below.
+ * IMPROVED SCORCH KEEPS ITS 1.159, because **a ruling covers what it says and is
+ * not extended by analogy** -- the same reason Explosive Trap waited to be named
+ * after Immolation Trap was ruled in. Worth nothing today either way, for the
+ * reason below.
  *
  * ----------------------------------------------------------------------------
  * AND IT IS UNREACHABLE TWICE OVER, both named on the talent rather than here.
@@ -1046,6 +1050,8 @@ export function wintersChillAura(maxStacks: number): AuraDefinition {
     isDebuff: true,
     refreshBehaviour: 'reset',
     modifiersScaleWithStacks: true,
+    // THE OWNER'S 3x AT FIVE STACKS: 1 + 0.4 x 5, not 1.4^5. See the note above.
+    additiveDamageStacks: true,
     attackerAbilityModifiers: Object.fromEntries(
       WINTERS_CHILL_SPELL_IDS.map((id) => [
         id,

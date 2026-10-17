@@ -88,10 +88,9 @@ write-up; none is an engine gap.
 | **Consecrated Ground** -- wording says "Holy SPELLS" and the implementation reaches the seal and Holy Strike too. **+66** to the Shockadin, the biggest talent on that profile | round 12 | the reading, and the Shockadin's figure |
 | **Judgement of Command is left on the sheet's 0.43** where Righteousness and Fury took the exact `1.5 / 3.5`. The note names two abilities; a ruling covers what it says | round 17 | 0.33% on one seal, and whether all three should be the expression |
 | **Explosive Trap's 5% of attack power is on its BURN and not its initial hit.** One figure for two abilities, and only this one has two damage components | round 17 | which half carries it |
-| **Can one target carry TWO Judgements?** Wisdom and the Crusader are both selected on every profile now, which is what "all raid buffs checked on" asks for and which one target cannot hold in the game being modelled. `exclusiveWith` has no declaration anywhere, so nothing refuses it | round 20 | **63 to 80 DPS on the three Paladins**, isolated. If only one may be up, which -- and the raid presumably keeps Wisdom |
 | **"Touch of the Dead"** is the name the Undead note uses for what is plainly Touch of the Grave -- the same block, and the only part of that racial that has ever scaled with anything | round 17 | a naming question, not an ambiguity about which effect |
 
-**SEVEN ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**SIX ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
@@ -99,14 +98,17 @@ the rows**, and count them from the table rather than from the last figure
 somebody wrote down: the first draft of this very sentence said eight, by
 subtracting four from a miscount of eleven, and then seven, then six once Ice
 Lance came off, then seven when round 19b added one, **and six again now that
-round 19c has answered it in a single message** -- and SEVEN again now that
-round 20 has raised the two-Judgements question. **The number goes both ways**,
-which is the half an "increment" habit gets wrong even when the direction is
-right, and the Vanish row lasted exactly one round, which is the shortest yet.
+round 19c has answered it in a single message**, SEVEN when round 20 raised the
+two-Judgements question, and **SIX again now that it is answered**. **The number
+goes both ways**, which is the half an "increment" habit gets wrong even when
+the direction is right, and the two-Judgements row lasted exactly one round --
+tying the Vanish row for the shortest yet.
 
-**AND FIVE CAME OFF IN TWO ROUNDS, WHICH IS WHAT THE TABLE IS FOR.** Three were
-ruled on by the owner -- the five Tauren hit caps and the Druid aura exclusivity
-in round 18, and **Ice Lance's divisor in round 18b** -- and two were answered
+**AND SIX HAVE COME OFF IN THREE ROUNDS, WHICH IS WHAT THE TABLE IS FOR.** Four
+were ruled on by the owner -- the five Tauren hit caps and the Druid aura
+exclusivity in round 18, **Ice Lance's divisor in round 18b**, and now **the two
+Judgements**, which are "absolutely fine and intended for the raid buff
+contribution" -- and two were answered
 by the client catching up at build 1.60.1.70425: Shadow Word: Death's 18 seconds
 is confirmed, and Fire Nova's two missing figures exist (375 mana, 232-258
 damage). **A question can be answered by somebody OTHER than the person it was
@@ -118,6 +120,110 @@ IS NOW LOAD-BEARING.** Each was fine while it was worth little and became worth
 asking about the moment a round made it the biggest thing on a profile -- which
 is CLAUDE.md's rule that an interpretation flagged as one is what gets it ruled
 on, and that the label has to survive until the answer arrives.
+
+## Round TWENTY-ONE: three rulings, and the one that was a misread field
+
+**ALL THREE ARRIVED IN ONE MESSAGE AND ONLY ONE OF THEM MOVED A FIGURE**, which
+is the usual shape: two confirmed a reading and one overturned an
+implementation.
+
+| | the ruling | what it cost |
+| --- | --- | --- |
+| **Arcane Wrath** | "a 3.5 second cast with a 6 second cooldown ... 439 to 529 Arcane Damage, +5% of Maximum Mana, +100% of Spell Power" | the spell was shipped **INSTANT at 406-496 with a borrowed 0.429** -- all three corrected |
+| **Winter's Chill** | "at 5 stacks is a 3x multiplier for Cone of Cold" | the compounding default gives `1.4^5 = 5.378`; **ADDITIVE**, and the flag is what got it ruled on |
+| **Two Judgements** | "absolutely fine and intended for the raid buff contribution" | nothing. The question comes off the table above |
+
+### The Arcane Wrath failure is the one worth reading
+
+**EVERY RULE THIS PROJECT HAS FOR A SILENT SOURCE WAS APPLIED TO A SOURCE THAT
+HAD SPOKEN.** The capture states `"cast": "3.5 sec cast"` **in its own field**.
+The probe that read the entry asked for `castTime`, got `undefined`, and that
+reading error became the claim "the capture states no cast time" -- written into
+a test, with a negative assertion pinning the instant.
+
+**AND FROM THERE EVERY STEP WAS CORRECT.** A tie-break does not apply to a
+source that cannot express a field; an omission has not denied anything; a
+neighbouring spell's coefficient is borrowable with a `PLACEHOLDER_` name and a
+structural argument. So Fire Blast's 0.429 was borrowed on the argument that
+"the sheet gives every Mage INSTANT the same `1.5 / 3.5`" -- **sound reasoning
+resting on a fact that was not true.** `3.5 / 3.5` is 1.0, which is the owner's
+own figure: reading the field would have landed on it without being told.
+
+**THE TWO ERRORS PULLED OPPOSITE WAYS, WHICH IS WHAT MADE IT LOOK ORDINARY.** An
+instant cast is generous and a coefficient at 43% of the real one is stingy, so
+nothing about the spell's damage per second read wrong.
+
+**AND THIS FILE ALREADY HAD THE RIGHT NUMBER.** The round-twenty scoping table
+above says "395 mana, **3.5 sec cast**, 6 sec cooldown" in the row about this
+very spell. **A fact that gets documented still needs somebody to read it** --
+which is the mirror of this project's own rule that a difference that gets
+documented still needs somebody to call it wrong, and is cheaper to avoid:
+the source was right, the handover was right, and one field name was not.
+
+### And the justification the owner asked for: it is not worth taking
+
+"This seems like a spell worth taking, or at least providing very solid
+justification for not taking." Five placements, paired over 400 iterations
+against a 1077.6 baseline:
+
+| the placement | |
+| --- | --- |
+| entry above the gated Arcane Missiles | **-118.53 +/- 11.59** |
+| entry above Arcane Blast (the filler slot) | **-77.15 +/- 12.00** |
+| entry at the BOTTOM of the list | 0.00, **IDENTICAL FIGHTS** -- never cast |
+| talent taken, no entry -- the control | 0.00, **IDENTICAL FIGHTS** |
+| gated on Arcane Blast at max stacks | 0.00, **IDENTICAL FIGHTS** -- never cast |
+
+**AND THE SPELL IS NOT THE PROBLEM. IT CARRIES ITS WEIGHT.** In the filler slot
+it is **25.5% of the profile's damage on 6.6 casts**, which is more than Arcane
+Blast's own 15.4% in the same run.
+
+**WHAT IT DISPLACES IS NOT DAMAGE, IT IS SPELL POWER.** Arcane Blast falls
+**13.8 casts a fight to 9.8**, and Arcane Blast is this build's RAMP: each stack
+grants 15% of Intellect as spell power, so at 342 Intellect five stacks are
+**+257 on a base of 785**. The proof is in the column a DPS figure cannot show
+-- Arcane Missiles' cast count falls by 0.2 and its SHARE falls **67.0% to
+56.6%**, so every missile is hitting for about 15% less. It carries the highest
+coefficient in the kit at 1.4729 and it is two thirds of the profile.
+**Arcane Blast is not competing with Arcane Wrath on damage per second; it is
+buying spell power for the 67% of the build that is Arcane Missiles.**
+
+**SO THE PER-SECOND ARITHMETIC THAT MADE THIS LOOK CLOSE WAS COMPUTED AT BASE
+SPELL POWER**, and that is the whole error. 434/sec for the Wrath against
+381/sec for the Blast -- true at 785, and at five stacks Arcane Blast is
+`236 + (785 + 257) x 0.4286 = 683` over 1.5 seconds, **455/sec and already
+ahead** before a point of what the ramp does for anything else. **A per-second
+comparison on a build with a ramp has to be taken at the RAMPED figure**, or it
+prices the spell that breaks the ramp as though the ramp were free. That
+arithmetic was sitting in `tools/mageVariants.ts` predicting the opposite of
+what the measurement found, which is this project's own rule about a prediction
+in a comment -- specific, mechanical, and reading exactly like a finding.
+
+**AND PROTECTING THE RAMP MAKES THE SPELL UNREACHABLE**, which is why the gated
+row is a 0.00 rather than a smaller loss: at max stacks the two Arcane Missiles
+entries above it win, and below max stacks the gate refuses. There is no state
+in which Arcane Wrath is the top castable entry -- the "entry above never
+yields" cause of a never-fired entry, arrived at deliberately.
+
+**WHICH BUILD WOULD WANT IT**: one whose core spell does not depend on a ramp a
+3.5 second cast interrupts. Nothing here is that build, and the day a Mage
+profile exists without Arcane Blast it is one line to re-measure --
+`PRESET=mage_arcane VARIANTS=arcaneWrath npx vite-node tools/probe_build.ts`.
+
+### Winter's Chill: the flag is what got it answered
+
+`AuraDefinition.additiveDamageStacks` is new and this aura is its only caller.
+The engine's default raises a damage multiplier to the POWER of the stack count
+-- which is right for Improved Scorch's Fire Vulnerability, where 3% a stack
+makes the two readings 1.159 against 1.150 and nobody would notice. At **40% a
+stack they are a factor of 1.8 apart**, so the convention's existing callers
+were no evidence about this one, and the assertion carried both figures with the
+alternative pinned as a negative. The answer came back in one line.
+
+**IMPROVED SCORCH KEEPS ITS 1.159**, because a ruling covers what it says and is
+not extended by analogy -- `additiveDamageStacks` defaults to false for exactly
+that reason. Both are worth nothing today: Cone of Cold is not declared and no
+Mage profile takes the talent.
 
 ## Round EIGHTEEN: two owner rulings, and the questions that earned them
 
@@ -624,13 +730,19 @@ the four Paladins, and **exactly 0.0 on DW Fury and the Fire Mage**. The two
 zeros are the control -- it is Holy spell power and cannot reach a build that
 deals none.
 
-### One question it raises
+### The one question it raised, now answered
 
-**TWO JUDGEMENTS ARE NOW SELECTED AT ONCE**, Wisdom and the Crusader, which one
-target cannot carry in the game being modelled. `exclusiveWith` has no
-declaration anywhere, so nothing refuses it. Implemented as instructed and
-**recorded as a question**, because it is worth 63 to 80 DPS on three profiles
-and is a raid COMPOSITION ruling rather than a defect.
+**TWO JUDGEMENTS ARE SELECTED AT ONCE, AND IT IS INTENDED.** Wisdom and the
+Crusader, which one target cannot carry in the game being modelled;
+`exclusiveWith` has no declaration anywhere, so nothing refuses it. Implemented
+as instructed and recorded as a question, because it is worth 63 to 80 DPS on
+three profiles and is a raid COMPOSITION ruling rather than a defect.
+
+**THE OWNER'S ANSWER: "Two Judgements is absolutely fine and intended for the
+raid buff contribution."** So the box is a raid CONTRIBUTION rather than a claim
+about one debuff slot, and `raidBuffs.test.ts` asserts both ids on all 28 presets
+-- the question is closed and pinned, because a ruling left as prose gets
+re-raised.
 
 ## Round NINETEEN e: four rulings, and two were already done
 

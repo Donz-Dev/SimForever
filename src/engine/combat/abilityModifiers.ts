@@ -375,27 +375,76 @@ function combine(a: SchoolModifier, b: SchoolModifier): SchoolModifier {
 }
 
 /**
+ * A DAMAGE MULTIPLIER AT N STACKS, AND THE ONE PLACE THAT RULE LIVES.
+ *
+ * ==============================================================================
+ * THE DEFAULT IS THE POWER OF THE STACK COUNT, which is what every reader of
+ * `modifiersScaleWithStacks` has always done: a damage multiplier MULTIPLIES, so
+ * stacking it compounds. Improved Scorch's 3% at five stacks is 1.159 and not
+ * 1.150, and the difference is a percent nobody would notice -- which is why one
+ * convention for the flag was worth more than two.
+ *
+ * ------------------------------------------------------------------------------
+ * AND THE OWNER HAS NOW RULED ONE AURA THE OTHER WAY, WHICH IS WHY THIS IS A
+ * FUNCTION RATHER THAN FIVE COPIES OF AN OPERATOR.
+ *
+ * "Winter's Chill at 5 stacks is a 3x multiplier for Cone of Cold" -- 40% a
+ * stack, so `1 + 0.4 x 5` ADDITIVELY and not `1.4^5 = 5.378`. At 3% a stack the
+ * two readings are 1.159 against 1.150 and indistinguishable; at 40% they are a
+ * factor of 1.8 apart, so the existing callers were never evidence about this
+ * one.
+ *
+ * `AuraDefinition.additiveDamageStacks` IS THE OPT-IN, and it defaults to the
+ * compounding rule so nothing that existed moves. **A ruling covers what it says
+ * and is not extended by analogy** -- Improved Scorch keeps its 1.159, because
+ * the owner ruled about Winter's Chill.
+ *
+ * ------------------------------------------------------------------------------
+ * IT IS WIRED INTO EVERY DAMAGE READER OF THAT FLAG, NOT ONLY THE ONE THAT
+ * NEEDED IT -- five sites, each of which used to write `** stacks` for itself:
+ * the per-ability fold here, `damageDoneBySchool`, `damageTakenBySchool` and its
+ * periodic sibling, `damageDoneByTable`, and `auraMultiplier`'s three keys.
+ *
+ * **A GENERAL FIELD READ BY ONLY SOME OF ITS RULES IS SILENT IN THE REST**, which
+ * this project has paid for twice -- `resourceRegenMultiplier` wired into one of
+ * three regeneration rules, and `modifiersScaleWithStacks` itself honoured by two
+ * of three collections. An aura declaring `additiveDamageStacks` with a
+ * `damageTakenBySchool` would otherwise have compounded in silence.
+ *
+ * THE FLAT FIELDS ARE LEFT ALONE and are already linear: `flatDamageTaken` and
+ * `spellPowerTakenBySchool` multiply by the count, because adding N copies of a
+ * flat amount IS N times it. There is no second reading of those to choose.
+ * ==============================================================================
+ */
+export function stackedMultiplier(value: number, stacks: number, additive = false): number {
+  if (stacks === 1) return value;
+  return additive ? 1 + (value - 1) * stacks : value ** stacks;
+}
+
+/**
  * One modifier at N stacks, for an aura whose `modifiersScaleWithStacks` is set.
  *
  * ------------------------------------------------------------------------------
  * IT IS `combine` APPLIED TO ITSELF N TIMES, and it has to be, or a stacking
  * aura's crit and its damage would follow two different conventions. Chances
- * ADD, so they multiply by the count; damage MULTIPLIES, so it goes to the
- * POWER of the count -- which is exactly what `damageTakenMultiplierFor`
- * already does for `damageTakenBySchool` and what `bindModifiers` does for
- * `statModifiers`. Writing "x stacks" for both would give a five-stack 1.03
- * a 1.15 where every other reader of that flag gives 1.159.
+ * ADD, so they multiply by the count; damage goes through `stackedMultiplier`,
+ * which compounds by default and adds for the one aura the owner has ruled
+ * additive.
  *
  * `spellPower` is left out on purpose: it is a SCHOOL field, and no aura
  * carries a school modifier. The day one does, it adds like the chances.
  * ------------------------------------------------------------------------------
  */
-export function scaleByStacks(modifier: AbilityModifier, stacks: number): AbilityModifier {
+export function scaleByStacks(
+  modifier: AbilityModifier,
+  stacks: number,
+  additiveDamage = false,
+): AbilityModifier {
   if (stacks === 1) return modifier;
   return {
     critBonus: (modifier.critBonus ?? 0) * stacks,
     critMultiplierBonus: (modifier.critMultiplierBonus ?? 0) * stacks,
-    damageMultiplier: (modifier.damageMultiplier ?? 1) ** stacks,
+    damageMultiplier: stackedMultiplier(modifier.damageMultiplier ?? 1, stacks, additiveDamage),
   };
 }
 
