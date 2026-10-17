@@ -106,6 +106,37 @@ export interface Ability {
    * ----------------------------------------------------------------------
    */
   readonly interruptibleChannel?: boolean;
+  /**
+   * Ticks an interrupt may NOT cancel. Defaults to 0 -- anything may be cut.
+   *
+   * ==========================================================================
+   * THE RULESET OWNER'S RULING, about Mind Flay: "make sure it preserves a
+   * minimum of the first 2 ticks of Mind Flay and thus only cuts off the last
+   * tick when interrupted. **This may no longer be optimal play, but I still
+   * want the functionality so the user can choose.**"
+   *
+   * SO IT IS A FLOOR UNDER THE CHANNEL AND NOT A BAN ON INTERRUPTING. The two
+   * halves that already have to agree still do -- the ability declares
+   * `interruptibleChannel` and an entry declares `interruptsChannel` -- and
+   * this adds a third condition the ENGINE owns: enough of the channel has to
+   * have happened.
+   *
+   * --------------------------------------------------------------------------
+   * DECLARED AND NOT DERIVED, WHICH IS THE OPPOSITE OF THIS FILE'S USUAL
+   * PREFERENCE AND IS DELIBERATE. "The first 2 ticks, and thus only the last
+   * one is cut" reads as a general rule -- `channelTicks - 1` -- and the only
+   * other interruptible channel in the project is ARCANE MISSILES at five
+   * ticks, which would silently become un-interruptible for its first four on
+   * nobody's authority. **A ruling covers what it says and is not extended by
+   * analogy**, which has already paid once here: Immolation Trap was ruled in
+   * and Explosive Trap was left alone until the owner named it too.
+   *
+   * SO THERE IS EXACTLY ONE CALLER AND A TEST ASSERTS THAT, for the same
+   * reason `breaksActionAuras` carries that guard: an opt-in that grows
+   * quietly is an opt-in nobody re-reads.
+   * ==========================================================================
+   */
+  readonly protectedChannelTicks?: number;
   /** Time before it can be used again. 0 (the default) means no cooldown. */
   readonly cooldownMs?: Milliseconds;
   /** Number of independent charges. Defaults to 1. */

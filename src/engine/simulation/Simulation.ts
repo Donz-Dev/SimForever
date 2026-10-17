@@ -43,6 +43,25 @@ import type { CastRejection } from '../abilities/casting';
 const ROTATION_POLL_MS = 100;
 
 /**
+ * Whether enough of a channel has happened for an interrupt to be allowed.
+ *
+ * ==============================================================================
+ * `Ability.protectedChannelTicks` IS THE OWNER'S "preserves a minimum of the
+ * first 2 ticks of Mind Flay", and the comparison is on ticks DELIVERED rather
+ * than on elapsed time: a channel is hasted, so the moment its second tick
+ * lands moves with the character's gear and only the COUNT is stable.
+ *
+ * DEFAULTS TO ZERO, so a channel that does not ask keeps exactly the behaviour
+ * it had -- Arcane Missiles included, which is the one other interruptible
+ * channel here and which the ruling does not mention.
+ * ==============================================================================
+ */
+function interruptAllowed(actor: Combatant): boolean {
+  const protectedTicks = actor.channelling?.protectedChannelTicks ?? 0;
+  return actor.channelTicksDelivered >= protectedTicks;
+}
+
+/**
  * A safety valve. A correct simulation of a 10-minute fight processes tens of
  * thousands of events; a million means something is scheduling itself in a
  * loop, and hanging the browser is a worse failure than throwing.
@@ -530,7 +549,11 @@ export class Simulation implements SimulationContext {
          * only returns an ability whose sole obstacle is the cast lock, so the
          * channel is never thrown away for a cast that then does not happen.
          */
-        if (actor.channelling?.interruptibleChannel && actor.isCasting(ctx.clock.now())) {
+        if (
+          actor.channelling?.interruptibleChannel &&
+          actor.isCasting(ctx.clock.now()) &&
+          interruptAllowed(actor)
+        ) {
           const urgent = actor.rotation.selectInterrupt?.(ctx, actor) ?? null;
           if (urgent) {
             const delivered = actor.channelTicksDelivered;
@@ -601,6 +624,14 @@ export class Simulation implements SimulationContext {
       actor.rotation?.interruptsChannels !== false &&
       actor.isCasting(now)
     ) {
+      /*
+       * THE POLL IS KEPT WHILE THE CHANNEL IS STILL PROTECTED, rather than
+       * sleeping to the end of it. The protection expires PART WAY THROUGH --
+       * Mind Flay's third tick is cuttable and its first two are not -- so an
+       * actor that slept past the second tick would wake to find the channel
+       * already finished, which is the exact failure this poll exists to
+       * avoid. See `interruptAllowed`.
+       */
       return Math.min(now + ROTATION_POLL_MS, Math.max(actor.gcdReadyAt, actor.castEndsAt));
     }
     const busyUntil = Math.max(actor.gcdReadyAt, actor.castEndsAt);

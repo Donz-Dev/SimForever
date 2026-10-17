@@ -349,6 +349,33 @@ export const FROSTFIRE_BOLT: Ability = {
  * ============================================================================
  */
 export const ICE_LANCE_DAMAGE = midpoint(133, 157);
+/*
+ * ============================================================================
+ * THREE, AND THE CLIENT NOW SAYS TWO. RECORDED RATHER THAN ACTED ON.
+ *
+ * `talentsforever.com` has moved Ice Lance's tooltip from "Deals 300% increased
+ * damage to Frozen targets" to **200%**, and this project reads that phrasing as
+ * the multiplier itself -- which is how this constant came to be 3 when the
+ * tooltip said 300%, having been 4 before.
+ *
+ * SO THE CLIENT IMPLIES 2 AND THE OWNER HAS JUST SAID 1.5/3.5/3, FOR THE FOURTH
+ * TIME ON THIS ONE SPELL: "Ice lance is 1.5/3.5/3, like I've stated many times
+ * in a row." That names the COEFFICIENT, which is unchanged and is not this
+ * constant -- the two are deliberately separate facts, pinned by identity,
+ * because a patch has already moved one without the other.
+ *
+ * NOTHING IS CHANGED HERE, on two grounds. The owner's own files are the highest
+ * authority in this project and they have just spoken about this spell; and the
+ * last ruling on it established that the divisor TRACKS this multiplier so the
+ * product stays `1.5 / 3.5`, which a lone move to 2 would break in the direction
+ * nobody asked for.
+ *
+ * WHAT WOULD SETTLE IT is one sentence from the owner about the MULTIPLIER
+ * rather than the coefficient. **This is a dated disagreement between two
+ * sources and not a decision**, which is why it is written where the number is
+ * rather than left for the tree refresh to apply silently.
+ * ============================================================================
+ */
 export const ICE_LANCE_FROZEN_MULTIPLIER = 3;
 export const ICE_LANCE_COEFFICIENT = ICE_LANCE_SP_COEFFICIENT;
 

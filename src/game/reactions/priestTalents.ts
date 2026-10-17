@@ -44,10 +44,26 @@ export const shadowWeaving: TalentReactionBuilder = (chancePercent) => ({
     attack.abilityId !== undefined &&
     SHADOW_DAMAGE_SPELLS.has(attack.abilityId) &&
     context.rng.rollChance(chancePercent / 100),
-  onTrigger: (context, actor) => {
+  onTrigger: (context, actor, attack) => {
+    /*
+     * ON THE DEFENDER, NOT THE ACTOR, which is the owner's ruling that Shadow
+     * Weaving "is now a debuff, where the target takes more shadow damage from
+     * me". The `sourceId` stays the Priest's, so the buff-uptime table still
+     * attributes it to whoever applied it.
+     *
+     * `attack.defender` RATHER THAN THE ROTATION'S TARGET, because a reaction
+     * fires on an attack that has already landed and the thing it landed on is
+     * the thing to debuff -- asking the context for a default target would be
+     * right today and wrong the moment anything hits something else.
+     */
+    if (!attack.defender) return;
     // `applyAura` adds a stack itself, up to `maxStacks`, and resets the
     // fifteen seconds. Setting stacks here as well would double every proc.
-    context.applyAura(actor, shadowWeavingAura(SHADOW_WEAVING_PERCENT_PER_STACK), actor.id);
+    context.applyAura(
+      attack.defender,
+      shadowWeavingAura(SHADOW_WEAVING_PERCENT_PER_STACK),
+      actor.id,
+    );
   },
 });
 

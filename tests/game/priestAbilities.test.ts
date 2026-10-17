@@ -352,14 +352,36 @@ describe('the fight', () => {
     expect(used('Mind Flay')).toBeGreaterThan(used('Mind Blast'));
   });
 
-  it('stacks Shadow Weaving on the CASTER, which is a Forever change', () => {
+  it('stacks Shadow Weaving on the TARGET, which the owner has now ruled', () => {
     /*
-     * Classic's Shadow Weaving is a debuff every shadow priest in a raid
-     * shares and fights over. Forever's is a personal buff -- so it is worth
-     * the same in a raid of one as in a raid of five, and there is nobody to
-     * collide with.
+     * ========================================================================
+     * THIS TEST USED TO ASSERT THE OPPOSITE, AND ITS NAME SAID SO: "stacks
+     * Shadow Weaving on the CASTER, which is a Forever change". Its reasoning
+     * was that Classic's is a shared debuff and Forever's "is a personal buff
+     * -- so it is worth the same in a raid of one as in a raid of five".
+     *
+     * TRUE WHEN WRITTEN AND NOW REVERSED BY THE OWNER: "Shadow Weaving is now
+     * a debuff, where the target takes more shadow damage from me." The client
+     * says the same in its own words -- "the Shadow damage the target takes
+     * from you" where it read "the Shadow damage you deal".
+     *
+     * SO IT IS `debuffUptime` AND NOT `buffUptime`, which is the whole
+     * observable difference and is why the old assertion FAILED rather than
+     * quietly passing: the buff table reads friendly actors and the debuff
+     * table reads the enemy, so an aura that changes sides vanishes from one
+     * and appears in the other. **A reporting split is doing the work of a
+     * test here** -- had both tables read every actor, this would have passed
+     * on the wrong side.
+     *
+     * AND IT IS WORTH THE SAME TO THIS BUILD EITHER WAY, which is why no
+     * figure moves: one Priest, one target, and `damageTakenBySchool`
+     * compounds across stacks exactly as the caster-side multiplier did. What
+     * changed is who holds it, which matters the day a second Shadow caster
+     * exists -- and the "from me" half of the ruling is not expressible, since
+     * a debuff here raises that school for every attacker.
+     * ========================================================================
      */
-    const uptime = batchOf('shadow_priest', 30, 5).buffUptime.find(
+    const uptime = batchOf('shadow_priest', 30, 5).debuffUptime.find(
       (b) => b.auraName === 'Shadow Weaving',
     );
     expect(uptime?.uptime ?? 0).toBeGreaterThan(0.5);
