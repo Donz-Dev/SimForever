@@ -11,7 +11,8 @@ import { dealDamage, seconds } from '../../engine';
  *   the ruleset owner     Firebolt's 2 second cast and 45 to 50 Fire damage;
  *                         Lash of Pain's 12 second cooldown.
  *   mythicsim-forever-    everything the owner did not give -- the two spell
- *   engine                power coefficients and Lash of Pain's base damage --
+ *   engine                power coefficients, Lash of Pain's base damage and
+ *                         the Imp's 0.4 second pause between Firebolts --
  *                         from `src/classes/warlock/prepare/pets.rs` and
  *                         `prepare/export.rs`. The owner pointed at that
  *                         repository for warlock pet scaling; it is a
@@ -39,10 +40,25 @@ export const IMP_FIREBOLT_CAST_MS = seconds(2);
 /** `bonus_coefficient: 0.571` -- mythicsim-forever-engine, rank 7. */
 export const IMP_FIREBOLT_SP_COEFFICIENT = 0.571;
 
+/*
+ * THE IMP WAITS 0.4 SECONDS BETWEEN FIREBOLTS. mythicsim-forever-engine adds
+ * it from beta logs -- "281 Firebolts 2.435 sec apart" -- and the owner has
+ * since called it "likely correct". So a Firebolt goes out every 2.4 seconds
+ * rather than back to back.
+ *
+ * EXPRESSED AS A COOLDOWN THAT RUNS FROM THE START OF THE CAST, because that
+ * is when `castAbility` spends the charge: cast time plus pause is the whole
+ * cycle. The two are the same thing only while the cast is unhasted, which an
+ * Imp always is -- nothing here gives a demon haste. The day something does,
+ * the pause should follow the CAST'S END and this sum stops being it.
+ */
+export const IMP_FIREBOLT_PAUSE_MS = 400;
+
 export const IMP_FIREBOLT: Ability = {
   id: 'imp_firebolt',
   name: 'Firebolt (Imp)',
   castTimeMs: IMP_FIREBOLT_CAST_MS,
+  cooldownMs: IMP_FIREBOLT_CAST_MS + IMP_FIREBOLT_PAUSE_MS,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;

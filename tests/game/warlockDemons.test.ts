@@ -6,7 +6,11 @@ import { createPlayer } from '../../src/game/actors/createPlayer';
 import { talentBuild } from '../../src/game/talents/talentBuild';
 import { sacrificedDemon } from '../../src/game/rotations/warlock';
 import { bringsPet } from '../../src/game/character/petFamilies';
-import { IMP_FIREBOLT_CAST_MS, LASH_OF_PAIN_COOLDOWN_MS } from '../../src/game/abilities/demon';
+import {
+  IMP_FIREBOLT_CAST_MS,
+  IMP_FIREBOLT_PAUSE_MS,
+  LASH_OF_PAIN_COOLDOWN_MS,
+} from '../../src/game/abilities/demon';
 import { DEMONIC_BRAND_DAMAGE_MAX, DEMONIC_BRAND_DAMAGE_MIN } from '../../src/game/auras/warlock';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { parseProfile, serializeProfile } from '../../src/profiles';
@@ -354,11 +358,15 @@ describe('the demons in a fight', () => {
     }
   });
 
-  it('has the Imp cast Firebolt back to back, every 2 seconds', () => {
+  it('has the Imp cast Firebolt every 2.4 seconds: a 2 second cast and a 0.4 second pause', () => {
+    // Written out by hand as well as from the constants, so a constant that
+    // drifts fails here rather than moving the expectation with it.
+    expect(IMP_FIREBOLT_CAST_MS + IMP_FIREBOLT_PAUSE_MS).toBe(2400);
     const casts = castsOf(run('warlock_firelock', 'imp'), 'imp_firebolt');
-    expect(casts.length).toBeGreaterThan(25);
+    expect(casts.length).toBeGreaterThan(20);
     const gaps = casts.slice(1).map((c, i) => c.timestamp - casts[i].timestamp);
-    expect(Math.min(...gaps)).toBe(IMP_FIREBOLT_CAST_MS);
+    expect(Math.min(...gaps)).toBe(2400);
+    expect(Math.max(...gaps)).toBe(2400);
   });
 
   it('has the Succubus swing and Lash of Pain on its 12 second cooldown', () => {
