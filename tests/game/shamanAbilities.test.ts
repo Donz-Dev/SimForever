@@ -1229,8 +1229,14 @@ describe('what is left, which is the claim this deep dive makes', () => {
        * nothing and the census reports correctly.
        * ========================================================================
        */
+      /*
+       * ELEMENTAL WEAPONS LEFT THE ENHANCEMENT ROW when Rockbiter and Flametongue
+       * Weapon were declared: it carries two `abilityBonus` rows now, so the
+       * census can see it working and files it as PARTLY modelled -- the
+       * Frostbrand clause is the part left.
+       */
       expect(gaps, preset).toEqual(
-        preset === 'shaman_enhancement' ? ['elemental_weapons'] : ['elemental_warding'],
+        preset === 'shaman_enhancement' ? [] : ['elemental_warding'],
       );
     }
   });
@@ -1310,7 +1316,7 @@ describe('what is left, which is the claim this deep dive makes', () => {
        */
       expect(partly, preset).toEqual(
         preset === 'shaman_enhancement'
-          ? ['call_of_flame', 'improved_stormstrike', 'trial_by_fire']
+          ? ['call_of_flame', 'elemental_weapons', 'improved_stormstrike', 'trial_by_fire']
           : [
               'call_of_flame',
               'elemental_fury',

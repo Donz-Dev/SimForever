@@ -1047,7 +1047,11 @@ describe('Moonkin Aura and Leader of the Pack, which the patch split in two', ()
      */
     expect(RAID_BUFFS_BY_ID.get('leader_of_the_pack')?.exclusiveWith).toBeUndefined();
     expect(RAID_BUFFS_BY_ID.get('moonkin_form')?.exclusiveWith).toBeUndefined();
-    expect(RAID_BUFFS.filter((buff) => buff.exclusiveWith !== undefined)).toEqual([]);
+    // Flametongue Totem against Windfury Totem is the one pair now, and it is a
+    // Shaman pair -- nothing a Druid aura is part of.
+    expect(RAID_BUFFS.filter((buff) => buff.exclusiveWith !== undefined).map((buff) => buff.id)).toEqual([
+      'flametongue_totem',
+    ]);
   });
 
   it('gives Moonkin Form its 360% of item armor', () => {

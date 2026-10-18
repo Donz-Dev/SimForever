@@ -449,14 +449,31 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * behaviour change at all. Recorded in docs/handoff/shaman.md so it is not
      * found again from scratch.
      */
+    /*
+     * ROCKBITER AND FLAMETONGUE WEAPON ARE MODELLED NOW, with the owner's
+     * figures, so two of the three clauses this reason called dead apply: each
+     * imbue reads its own bonus off its ability. INDEX 0 is Rockbiter's attack
+     * power and INDEX 2 Flametongue's damage -- index 1 is Windfury's, read by
+     * `reactionsForClass`.
+     */
+    {
+      kind: 'abilityBonus',
+      abilityId: 'rockbiter_weapon',
+      key: 'elementalWeaponsPercent',
+      valueIndex: 0,
+    },
+    {
+      kind: 'abilityBonus',
+      abilityId: 'flametongue_weapon',
+      key: 'elementalWeaponsPercent',
+      valueIndex: 2,
+    },
     {
       kind: 'unmodelled',
       reason:
-        'Its Windfury Weapon clause APPLIES -- the attack power of the proc is ' +
-        'raised by it. Its Rockbiter, Flametongue and Frostbrand clauses do ' +
-        'nothing, because those three imbues are not modelled: the first is a ' +
-        'threat imbue and the other two scale with weapon speed off a ' +
-        'coefficient the source does not state.',
+        'Its Windfury, Rockbiter and Flametongue Weapon clauses APPLY. Its ' +
+        'Frostbrand Weapon clause does nothing, because Frostbrand Weapon is not ' +
+        'declared.',
     },
   ],
 

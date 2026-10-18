@@ -94,9 +94,10 @@ describe('the catalogue', () => {
      * Demoralizing Shout is deliberately absent -- "make it a comment, keep it
      * inert for now" -- so twenty of the twenty-one originally named, plus
      * Judgement of Wisdom, which the owner added later, plus the two they
-     * added later again: Judgement of the CRUSADER and Gift of Arthas.
+     * added later again: Judgement of the CRUSADER and Gift of Arthas -- and
+     * FLAMETONGUE TOTEM, an option the owner asked for default OFF.
      */
-    expect(RAID_BUFFS).toHaveLength(23);
+    expect(RAID_BUFFS).toHaveLength(24);
     expect(RAID_BUFFS_BY_ID.has('demoralizing_shout')).toBe(false);
     expect(RAID_BUFFS_BY_ID.has('judgement_of_wisdom')).toBe(true);
     expect(RAID_BUFFS_BY_ID.has('judgement_of_the_crusader')).toBe(true);
@@ -554,13 +555,22 @@ describe('Leader of the Pack and Moonkin Form', () => {
     expect(areExclusive(pack, moonkin)).toBe(false);
     expect(areExclusive(moonkin, pack)).toBe(false);
 
-    expect(RAID_BUFFS.filter((buff) => buff.exclusiveWith !== undefined)).toEqual([]);
+    /*
+     * ONE PAIR NOW, AND IT IS NOT THIS ONE: Flametongue Totem against Windfury
+     * Totem, the owner's "mutually exclusive". Asserted as the WHOLE set of
+     * exclusive pairs, so a declaration that quietly reaches something else
+     * still fails here.
+     */
+    expect(RAID_BUFFS.filter((buff) => buff.exclusiveWith !== undefined).map((buff) => buff.id)).toEqual([
+      'flametongue_totem',
+    ]);
+    const exclusivePairs: string[] = [];
     for (const a of RAID_BUFFS) {
       for (const b of RAID_BUFFS) {
-        if (a.id === b.id) continue;
-        expect(areExclusive(a, b), `${a.id} / ${b.id}`).toBe(false);
+        if (a.id < b.id && areExclusive(a, b)) exclusivePairs.push(`${a.id}/${b.id}`);
       }
     }
+    expect(exclusivePairs).toEqual(['flametongue_totem/windfury_totem']);
   });
 
   it('sit beside each other when selected, where one used to replace the other', () => {

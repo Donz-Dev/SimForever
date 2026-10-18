@@ -4,6 +4,7 @@ import type { TalentAllocation } from '../talents/Talent';
 import { talentNumber } from '../talents/talentValues';
 import { WARRIOR_REACTIONS } from './warrior';
 import { windfuryWeaponReaction } from './shaman';
+import { flametongueWeaponReaction } from '../buffs/flametongue';
 import { PALADIN_REACTIONS, PALADIN_SHIELD_REACTIONS } from './paladin';
 import { omenOfClarityChanceFor, omenOfClarityReaction } from './druid';
 
@@ -86,7 +87,10 @@ export function reactionsForClass(
      */
     const rank = talents?.elemental_weapons ?? 0;
     const bonus = rank > 0 ? (talentNumber('shaman', 'elemental_weapons', rank, 1) ?? 0) : 0;
-    return [windfuryWeaponReaction(bonus)];
+    // Flametongue Weapon's proc is carried by every Shaman and gated on its
+    // imbue, the same arrangement; Elemental Weapons reaches it through the
+    // ability's own bonus, so it needs nothing from the allocation here.
+    return [windfuryWeaponReaction(bonus), flametongueWeaponReaction()];
   }
 
   return [];

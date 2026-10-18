@@ -432,6 +432,59 @@ export const WINDFURY_WEAPON_IMBUE: AuraDefinition = {
   durationMs: WINDFURY_WEAPON_DURATION_MS,
 };
 
+/**
+ * Flametongue Weapon, the imbue. Sixty minutes, and it grants nothing on its
+ * own: `flametongueWeaponReaction` reads it and deals the Fire damage.
+ */
+export const FLAMETONGUE_WEAPON_IMBUE: AuraDefinition = {
+  id: 'flametongue_weapon',
+  name: 'Flametongue Weapon',
+  durationMs: WINDFURY_WEAPON_DURATION_MS,
+};
+
+/**
+ * Rockbiter Weapon: "increasing melee attack power by 653 ... Lasts for 60
+ * minutes."
+ *
+ * ----------------------------------------------------------------------------
+ * A STAT ON THE CARRIER, not a proc. `attackPower` is the shared pool, which
+ * the owner's general ruling says reaches ranged as well -- and the tooltip
+ * says MELEE. No Shaman swings a bow, so the two readings cannot differ for any
+ * character that can cast this; said so the choice is visible.
+ *
+ * ITS THREAT CLAUSE IS OUT OF SCOPE (`threat`), and has no effect to declare.
+ *
+ * A FACTORY, because Elemental Weapons raises "the melee attack power bonus of
+ * your Rockbiter Weapon by {0}%" and the ability hands the rank's figure down.
+ * The id is the same at every bonus, so a re-cast refreshes rather than stacks.
+ * ----------------------------------------------------------------------------
+ */
+export const ROCKBITER_WEAPON_ATTACK_POWER = 653;
+
+export function rockbiterWeaponImbue(elementalWeaponsPercent = 0): AuraDefinition {
+  return {
+    id: 'rockbiter_weapon',
+    name: 'Rockbiter Weapon',
+    durationMs: WINDFURY_WEAPON_DURATION_MS,
+    refreshBehaviour: 'reset',
+    statModifiers: [
+      flat('attackPower', ROCKBITER_WEAPON_ATTACK_POWER * (1 + elementalWeaponsPercent / 100)),
+    ],
+  };
+}
+
+/**
+ * THE THREE MAIN-HAND IMBUES, of which a weapon holds one. Casting any of them
+ * removes the other two -- an imbue is ON the weapon, and the owner's three
+ * combinations ("Windfury weapon + Flametongue totem OR Flametongue weapon +
+ * Windfury totem OR Windfury weapon + Windfury totem") all assume exactly one.
+ */
+export const MAIN_HAND_IMBUE_IDS: readonly string[] = [
+  'windfury_weapon',
+  'flametongue_weapon',
+  'rockbiter_weapon',
+];
+
 /*
  * ============================================================================
  * THE ATTACK POWER WINDOW IS GONE, AND THAT IS THE WHOLE DIFFERENCE BETWEEN THE
@@ -643,4 +696,5 @@ export const CATALOG_AURAS: readonly AuraDefinition[] = [
    */
   maelstromWeaponAura(0),
   elementalDevastationAura(0),
+  rockbiterWeaponImbue(0),
 ];

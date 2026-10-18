@@ -10,6 +10,9 @@ import {
   STORMSTRIKE_DAMAGE_BONUS,
   STORMSTRIKE_DEBUFF,
   WINDFURY_WEAPON_IMBUE,
+  FLAMETONGUE_WEAPON_IMBUE,
+  MAIN_HAND_IMBUE_IDS,
+  rockbiterWeaponImbue,
 } from '../auras/shaman';
 import {
   CHAIN_LIGHTNING_SP_COEFFICIENT,
@@ -597,12 +600,75 @@ export const WINDFURY_WEAPON: Ability = {
   cost: { resource: 'mana', amount: 165 },
   canCast: ({ caster }) => !caster.auras.has(WINDFURY_WEAPON_IMBUE.id),
   onCast: ({ simulation, caster }) => {
+    replaceImbue(simulation, caster, WINDFURY_WEAPON_IMBUE.id);
     simulation.applyAura(caster, WINDFURY_WEAPON_IMBUE, caster.id);
   },
-  unmodelled:
-    'It disables any benefit the caster personally receives from Windfury ' +
-    'Totem. Selecting both is the raid buff plus the imbue, which overstates ' +
-    'a Shaman who has imbued the main hand.',
+  /*
+   * NO `unmodelled` ANY MORE. It read "disables any benefit the caster
+   * personally receives from Windfury Totem ... selecting both overstates" --
+   * and `windfuryTotemReaction` has refused while the imbue is up since every
+   * raid buff was ticked on every profile. A caveat about a rule the engine
+   * enforces is a caveat that is false.
+   */
+};
+
+/**
+ * One weapon holds one imbue, so a new one takes the old one's place.
+ *
+ * Removed here rather than by `canCast` refusing, because the owner's three
+ * combinations are a CHOICE between imbues and a character re-imbuing with a
+ * different one is the choice being made.
+ */
+function replaceImbue(
+  simulation: Parameters<NonNullable<Ability['onCast']>>[0]['simulation'],
+  caster: Parameters<NonNullable<Ability['onCast']>>[0]['caster'],
+  keep: string,
+): void {
+  for (const id of MAIN_HAND_IMBUE_IDS) {
+    if (id !== keep && caster.auras.has(id)) caster.auras.remove(simulation, id);
+  }
+}
+
+/** The key Elemental Weapons writes its figure under, on both imbues it raises. */
+export const ELEMENTAL_WEAPONS_BONUS = 'elementalWeaponsPercent';
+
+/**
+ * Flametongue Weapon, the imbue: "Each hit causes 35 to 112 additional Fire
+ * damage, based on the speed of the weapon ... When applied to main hand,
+ * disables any benefit you personally receive from Flametongue Totem. Lasts
+ * for 60 minutes." 155 mana.
+ *
+ * The damage is `flametongueWeaponReaction`'s. One of three main-hand imbues;
+ * casting it takes the place of whichever was up.
+ */
+export const FLAMETONGUE_WEAPON: Ability = {
+  id: 'flametongue_weapon',
+  name: 'Flametongue Weapon',
+  cost: { resource: 'mana', amount: 155 },
+  canCast: ({ caster }) => !caster.auras.has(FLAMETONGUE_WEAPON_IMBUE.id),
+  onCast: ({ simulation, caster }) => {
+    replaceImbue(simulation, caster, FLAMETONGUE_WEAPON_IMBUE.id);
+    simulation.applyAura(caster, FLAMETONGUE_WEAPON_IMBUE, caster.id);
+  },
+};
+
+/**
+ * Rockbiter Weapon, the imbue: +653 melee attack power for 60 minutes, 150
+ * mana. Its threat clause is out of scope.
+ */
+export const ROCKBITER_WEAPON: Ability = {
+  id: 'rockbiter_weapon',
+  name: 'Rockbiter Weapon',
+  cost: { resource: 'mana', amount: 150 },
+  canCast: ({ caster }) => !caster.auras.has('rockbiter_weapon'),
+  onCast: ({ simulation, caster, ability }) => {
+    replaceImbue(simulation, caster, 'rockbiter_weapon');
+    simulation.applyAura(
+      caster,
+      rockbiterWeaponImbue(ability.bonuses?.[ELEMENTAL_WEAPONS_BONUS] ?? 0),
+      caster.id,
+    );
+  },
 };
 
 /**
@@ -692,6 +758,8 @@ export const SHAMAN_ABILITIES: readonly Ability[] = [
   FIRE_NOVA,
   STORMSTRIKE,
   WINDFURY_WEAPON,
+  FLAMETONGUE_WEAPON,
+  ROCKBITER_WEAPON,
   RAGE_OF_THE_FARSEER_ABILITY,
   SEARING_TOTEM,
 ];
