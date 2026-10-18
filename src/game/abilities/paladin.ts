@@ -240,7 +240,15 @@ export const JUDGEMENT: Ability = {
   name: 'Judgement',
   cost: { resource: 'mana', amount: shareOfBase(0.06) },
   cooldownMs: seconds(10),
-  attackTable: 'spell',
+  /*
+   * THE MELEE TABLE, by the Judgement balance pass: "42.9% Spell Power
+   * Coefficient. 2x Crit Multiplier. Melee Combat Table." It was `spell`, so it
+   * missed on the 17% spell miss, crit at spell crit for 1.5x, and procced
+   * Revelation as a spell. `melee-special` -- a special, so no glancing blow --
+   * gives it the melee miss, dodge and crit and the table's 2x multiplier.
+   * The Crusader judgement deals no damage and rolls nothing either way.
+   */
+  attackTable: 'melee-special',
   canCast: ({ caster }) => activeSeal(caster) !== undefined,
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;

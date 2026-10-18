@@ -11,10 +11,10 @@ import {
   JUDGEMENT_OF_THE_CRUSADER,
   SEAL_OF_COMMAND_WEAPON_FRACTION,
   SEAL_OF_FURY_DAMAGE,
-  SEAL_OF_RIGHTEOUSNESS_BASE,
   improvedSealOfFuryMana,
   sealDamage,
   sealOfFuryShield,
+  sealOfRighteousnessBase,
   sealOfRighteousnessCoefficient,
 } from '../auras/paladin';
 
@@ -75,6 +75,39 @@ function baseSpeedSeconds(actor: Combatant, attack: AttackEvent): number {
   return (weapon?.swingTimerMs ?? 0) / 1000;
 }
 
+/**
+ * Whether a landed attack can carry a seal: a melee weapon use that is NOT Holy
+ * Strike.
+ *
+ * THE SEAL BALANCE PASS EXCLUDES HOLY STRIKE BY NAME, for all three damage
+ * seals: "Does not proc from Holy Strike." Holy Strike is still a weapon use --
+ * it procs Crusader, Windfury and Hand of Justice exactly as before -- so this
+ * is a rule about seals and not about the strike, and it lives here rather than
+ * on the ability. The Echo reads it too, because Twist of Light applies "the
+ * replaced Seal's effects" and those effects do not ride on a Holy Strike.
+ */
+export function carriesSeal(attack: AttackEvent): boolean {
+  return isWeaponUse(attack) && attack.abilityId !== 'holy_strike';
+}
+
+/** Seal of Righteousness's damage for the weapon this attack came from. */
+function sealOfRighteousnessHit(actor: Combatant, attack: AttackEvent): number {
+  const twoHanded = actor.weapons.mainHand?.twoHanded === true;
+  return sealDamage(
+    sealOfRighteousnessBase(baseSpeedSeconds(actor, attack), twoHanded),
+    /*
+     * HOLY SPELL POWER, not the school-blind pool alone. Eight pieces of
+     * Lawbringer say "Increases damage done by Holy spells and effects by up
+     * to N" and the seal is Holy, so `spellPowerAgainst` adds them -- and the
+     * TARGET'S side of the same pool, Judgement of the Crusader's "+ up to 161
+     * Holy damage taken". A seal computes its own damage and hands it over as
+     * a `baseAmount`, so it has to ASK.
+     */
+    spellPowerAgainst(actor, attack.defender, HOLY),
+    sealOfRighteousnessCoefficient(twoHanded),
+  );
+}
+
 /** Deal a seal's Holy damage, with no weapon slot so nothing procs off it. */
 function sealHit(
   context: SimulationContext,
@@ -93,6 +126,12 @@ function sealHit(
     readonly fraction: number;
     readonly normalized: true;
   },
+  /*
+   * SEAL OF COMMAND ROLLS THE MELEE TABLE, by the balance pass -- "Is on the
+   * melee combat table" where Righteousness and Fury "cannot miss". So it can
+   * be missed or dodged on its own, and its crit comes from the table it rolls.
+   */
+  rollsMeleeTable = false,
 ): void {
   dealDamage(context, {
     source: actor,
@@ -102,6 +141,7 @@ function sealHit(
     school: HOLY,
     baseAmount: amount,
     ...(weaponScaling ? { weaponScaling } : {}),
+    ...(rollsMeleeTable ? { attackTable: 'melee-special' as const } : {}),
     /*
      * NO `weaponSlot` AND NO `attackTable`. The swing already rolled the
      * table; this is the damage that rides on it having landed, so rolling
@@ -154,11 +194,10 @@ const LANDED = ['hit', 'crit', 'glance', 'crush'] as const;
 /**
  * Seal of Righteousness: Holy damage on every melee attack.
  *
- * THE OWNER'S FORMULA, and the first spell power coefficient in the project:
- * `base + baseWeaponSpeed x (0.022 x AP + 0.044 x SP)`. A slow weapon really
- * does hit harder with it, which is what the tooltip's "slower weapons cause
- * more Holy damage per swing" means, and it falls out of the formula rather
- * than needing a rule of its own.
+ * The balance pass's formula -- a speed-scaled base times the base speed times
+ * a hand multiplier, plus 10% or 12% spell power. See `sealOfRighteousnessBase`
+ * in `auras/paladin.ts`. 100% proc chance, cannot miss, crits for 2x at the
+ * melee crit chance, and does not ride on Holy Strike.
  */
 export function sealOfRighteousnessProc(): Reaction {
   return {
@@ -166,7 +205,7 @@ export function sealOfRighteousnessProc(): Reaction {
     on: 'dealt',
     outcomes: [...LANDED],
     canTrigger: (_context, actor, attack) =>
-      isWeaponUse(attack) && actor.auras.has('seal_of_righteousness'),
+      carriesSeal(attack) && actor.auras.has('seal_of_righteousness'),
     onTrigger: (context, actor, attack) => {
       sealHit(
         context,
@@ -174,27 +213,7 @@ export function sealOfRighteousnessProc(): Reaction {
         attack,
         'seal_of_righteousness',
         'Seal of Righteousness',
-        sealDamage(
-          SEAL_OF_RIGHTEOUSNESS_BASE,
-          /*
-           * HOLY SPELL POWER, not the school-blind pool alone. Eight pieces
-           * of Lawbringer say "Increases damage done by Holy spells and
-           * effects by up to N" and the seal is Holy, so `spellPowerAgainst`
-           * adds them -- the same function `scaleByPower` uses, so a seal
-           * cannot disagree with the pipeline about what a Holy point is
-           * worth.
-           *
-           * AND THE TARGET'S SIDE OF THE SAME POOL, which is Judgement of the
-           * Crusader's "+ up to 161 Holy damage taken". A seal computes its own
-           * damage here and hands it over as a `baseAmount` with no
-           * coefficient, so it has to ASK for that -- `scaleByPower` would
-           * never see a coefficient to apply it to. This is the half of the
-           * class the debuff is worth the most to: it lands on every swing.
-           */
-          spellPowerAgainst(actor, attack.defender, HOLY),
-          // By weapon TYPE, which is what the sheet keys it on.
-          sealOfRighteousnessCoefficient(actor.weapons.mainHand?.twoHanded === true),
-        ),
+        sealOfRighteousnessHit(actor, attack),
       );
     },
   };
@@ -225,17 +244,26 @@ export function sealOfRighteousnessProc(): Reaction {
  */
 export const SEAL_OF_COMMAND_PPM = 7;
 
+/** Seal of Command's 7 PPM roll, off the BASE speed of the weapon that landed. */
+function rollSealOfCommand(
+  context: SimulationContext,
+  actor: Combatant,
+  attack: AttackEvent,
+): boolean {
+  const speed = baseSpeedSeconds(actor, attack);
+  if (speed <= 0) return false;
+  return context.rng.nextFloat(0, 1) < ppmChance(speed, SEAL_OF_COMMAND_PPM);
+}
+
 export function sealOfCommandProc(): Reaction {
   return {
     id: 'seal_of_command',
     on: 'dealt',
     outcomes: [...LANDED],
     canTrigger: (context, actor, attack) => {
-      if (!isWeaponUse(attack)) return false;
+      if (!carriesSeal(attack)) return false;
       if (!actor.auras.has('seal_of_command')) return false;
-      const speed = baseSpeedSeconds(actor, attack);
-      if (speed <= 0) return false;
-      return context.rng.nextFloat(0, 1) < ppmChance(speed, SEAL_OF_COMMAND_PPM);
+      return rollSealOfCommand(context, actor, attack);
     },
     onTrigger: (context, actor, attack) => {
       /*
@@ -266,6 +294,7 @@ export function sealOfCommandProc(): Reaction {
         // plus whatever the target's own Judgement debuff contributes.
         SEAL_OF_COMMAND_SP_COEFFICIENT * spellPowerAgainst(actor, attack.defender, HOLY),
         { slot: 'mainHand', fraction: SEAL_OF_COMMAND_WEAPON_FRACTION, normalized: true },
+        true,
       );
     },
   };
@@ -290,7 +319,7 @@ export function sealOfFuryProc(): Reaction {
     on: 'dealt',
     outcomes: [...LANDED],
     canTrigger: (_context, actor, attack) =>
-      isWeaponUse(attack) && actor.auras.has('seal_of_fury'),
+      carriesSeal(attack) && actor.auras.has('seal_of_fury'),
     onTrigger: (context, actor, attack) => {
       sealHit(
         context,
@@ -333,7 +362,7 @@ export function sealOfFuryShieldProc(): Reaction {
     on: 'dealt',
     outcomes: [...LANDED],
     canTrigger: (_context, actor, attack) =>
-      isWeaponUse(attack) && actor.auras.has('seal_of_fury'),
+      carriesSeal(attack) && actor.auras.has('seal_of_fury'),
     onTrigger: (context, actor, attack) => {
       /*
        * IMPROVED SEAL OF FURY ARRIVES AS A NUMBER, NOT AS A LOOKUP INSIDE THE
@@ -414,7 +443,7 @@ export function echoProc(): Reaction {
     on: 'dealt',
     outcomes: [...LANDED],
     canTrigger: (_context, actor, attack) =>
-      isWeaponUse(attack) && ECHO_AURA_IDS.some((id) => actor.auras.has(id)),
+      carriesSeal(attack) && ECHO_AURA_IDS.some((id) => actor.auras.has(id)),
     onTrigger: (context, actor, attack) => {
       const echoId = ECHO_AURA_IDS.find((id) => actor.auras.has(id));
       if (!echoId) return;
@@ -429,12 +458,7 @@ export function echoProc(): Reaction {
           attack,
           'twist_of_light',
           'Echo (Seal of Righteousness)',
-          sealDamage(
-            SEAL_OF_RIGHTEOUSNESS_BASE,
-            // Holy-scoped gear included, exactly as the seal itself reads it.
-            spellPowerAgainst(actor, attack.defender, HOLY),
-            sealOfRighteousnessCoefficient(actor.weapons.mainHand?.twoHanded === true),
-          ),
+          sealOfRighteousnessHit(actor, attack),
         );
         return;
       }
@@ -453,12 +477,21 @@ export function echoProc(): Reaction {
 
       if (sealId === 'seal_of_command') {
         /*
-         * AN ECHO OF SEAL OF COMMAND IS GUARANTEED, not rolled. The talent
-         * says the next melee attack APPLIES the replaced seal's effects --
-         * it does not say "gives it another chance to proc". Rolling PPM here
-         * would make the capstone worth a fraction of what it reads as, and
-         * would be invisible.
+         * ====================================================================
+         * AN ECHO OF SEAL OF COMMAND ROLLS ITS PPM, AND IT USED TO BE
+         * GUARANTEED. The old reading was that "applies the replaced Seal's
+         * effects" means the seal's HIT -- but Seal of Command's effect IS a
+         * chance to hit, so applying it is rolling it. The owner: it "could
+         * always be triggering a Seal of Command hit, rather than having a
+         * chance to trigger Seal of Command when the echo is active."
+         *
+         * THE CHARGE IS SPENT EITHER WAY, by the next attack that can carry a
+         * seal -- it was removed above, before the dispatch -- so a failed
+         * roll is an echo used up on nothing, exactly as the seal itself
+         * spends a swing that does not proc.
+         * ====================================================================
          */
+        if (!rollSealOfCommand(context, actor, attack)) return;
         sealHit(
           context,
           actor,
@@ -468,6 +501,7 @@ export function echoProc(): Reaction {
           // The same normalised weapon share as the seal itself. See above.
           SEAL_OF_COMMAND_SP_COEFFICIENT * spellPowerAgainst(actor, attack.defender, HOLY),
           { slot: 'mainHand', fraction: SEAL_OF_COMMAND_WEAPON_FRACTION, normalized: true },
+          true,
         );
       }
       // Seal of the Crusader has no per-swing damage to echo: it is attack

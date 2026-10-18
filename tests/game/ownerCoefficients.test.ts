@@ -418,28 +418,18 @@ describe("the instant-cast coefficient, and the two Judgements that did not use 
     }
   });
 
-  it('leaves Judgement of Command on the sheet’s rounding, which is a question', () => {
+  it('puts all three Judgements on one coefficient, which answered the Command question', () => {
     /*
      * ==========================================================================
-     * IT IS THE SAME FIGURE ROUNDED -- 0.43 against 0.4285714, a 0.33%
-     * difference -- so all three Judgements are now "the instant coefficient"
-     * while two are exact and one is not.
-     *
-     * NOT ALIGNED, BECAUSE THE NOTE NAMES TWO ABILITIES. A ruling covers what
-     * it says and is not extended by analogy, which has paid here before:
-     * Explosive Trap waited for its own naming rather than inheriting Immolation
-     * Trap's "assume it triggers instantly", and when the ruling came it carried
-     * a second fact an analogy would have had to guess.
-     *
-     * PINNED SO THE QUESTION IS FINDABLE. The alternative reading -- that the
-     * note means all three and listed the two that were visibly off -- is
-     * perfectly defensible, and this test is what somebody has to change to act
-     * on it.
+     * JUDGEMENT OF COMMAND SAT ON THE SHEET'S 0.43 AS AN OPEN QUESTION, because
+     * the note that moved the other two named only those two. The Judgement
+     * balance pass answered it: "Judgement with all Seals: 42.9% Spell Power
+     * Coefficient." So all three are the instant convention, `1.5 / 3.5`, of
+     * which 42.9% is the rounding.
      * ==========================================================================
      */
-    expect(JUDGEMENT_OF_COMMAND_SP_COEFFICIENT).toBe(0.43);
-    // Close to, and deliberately not equal to, the figure the other two now use.
-    expect(JUDGEMENT_OF_COMMAND_SP_COEFFICIENT).toBeCloseTo(1.5 / 3.5, 2);
-    expect(JUDGEMENT_OF_COMMAND_SP_COEFFICIENT).not.toBe(1.5 / 3.5);
+    expect(JUDGEMENT_OF_COMMAND_SP_COEFFICIENT).toBe(1.5 / 3.5);
+    expect(JUDGEMENT_OF_COMMAND_SP_COEFFICIENT).not.toBe(0.43);
+    expect(JUDGEMENT_OF_COMMAND_SP_COEFFICIENT).toBeCloseTo(0.429, 3);
   });
 });

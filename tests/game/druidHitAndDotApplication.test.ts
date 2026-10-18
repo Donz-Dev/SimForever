@@ -30,8 +30,9 @@ import { buildSimulation } from '../helpers/buildSimulation';
 
 /** By hand, from the owner's statement. */
 const SPELL_MISS_PERCENT = 17;
-const SPELL_MISS_FLOOR_PERCENT = 1;
-const SPELL_HIT_CAP_PERCENT = 16;
+/** The owner removed the 1% floor: "spells need 17% chance to hit in order to cap". */
+const SPELL_MISS_FLOOR_PERCENT = 0;
+const SPELL_HIT_CAP_PERCENT = 17;
 
 /** Nature's Reach at rank 2, by hand from the tooltip. */
 const NATURES_REACH_HIT = 4;
@@ -55,7 +56,7 @@ const spellMiss = (hitChance: number): number => {
 };
 
 describe("the owner's spell hit numbers", () => {
-  it('is 17% base, 1% floor, and therefore a 16% cap', () => {
+  it('is 17% base, no floor, and therefore a 17% cap', () => {
     expect(COMBAT_CONSTANTS.spellMiss).toBe(toRollUnits(SPELL_MISS_PERCENT));
     expect(COMBAT_CONSTANTS.spellMissFloor).toBe(toRollUnits(SPELL_MISS_FLOOR_PERCENT));
     expect(SPELL_MISS_PERCENT - SPELL_MISS_FLOOR_PERCENT).toBe(SPELL_HIT_CAP_PERCENT);
@@ -64,9 +65,10 @@ describe("the owner's spell hit numbers", () => {
   it('spends every point up to the cap and nothing after it', () => {
     expect(spellMiss(0)).toBe(toRollUnits(17));
     expect(spellMiss(1)).toBe(toRollUnits(16));
+    expect(spellMiss(16)).toBe(toRollUnits(1));
     expect(spellMiss(SPELL_HIT_CAP_PERCENT)).toBe(toRollUnits(SPELL_MISS_FLOOR_PERCENT));
-    // The seventeenth point is the first wasted one.
-    expect(spellMiss(17)).toBe(toRollUnits(SPELL_MISS_FLOOR_PERCENT));
+    // The eighteenth point is the first wasted one.
+    expect(spellMiss(18)).toBe(toRollUnits(SPELL_MISS_FLOOR_PERCENT));
     expect(spellMiss(99)).toBe(toRollUnits(SPELL_MISS_FLOOR_PERCENT));
   });
 

@@ -104,8 +104,16 @@ export const SEAL_OF_COMMAND_SP_COEFFICIENT = 0.203;
  * find out what happened to it.
  * ----------------------------------------------------------------------------
  */
-export const SEAL_OF_RIGHTEOUSNESS_SP_COEFFICIENT_ONE_HAND = 0.2;
-export const SEAL_OF_RIGHTEOUSNESS_SP_COEFFICIENT_TWO_HAND = 0.22;
+/*
+ * ----------------------------------------------------------------------------
+ * AND THE SEAL BALANCE PASS SUPERSEDES BOTH: 10% one-handed and 12% two-handed,
+ * beside a base that scales with weapon speed again -- see
+ * `sealOfRighteousnessBase` in `auras/paladin.ts`. The owner's later statement
+ * outranks the sheet, the same reading that gives Swipe 3% against 10%.
+ * ----------------------------------------------------------------------------
+ */
+export const SEAL_OF_RIGHTEOUSNESS_SP_COEFFICIENT_ONE_HAND = 0.1;
+export const SEAL_OF_RIGHTEOUSNESS_SP_COEFFICIENT_TWO_HAND = 0.12;
 
 /** Seal of Fury: 10% spell power per strike. Was flat. */
 export const SEAL_OF_FURY_SP_COEFFICIENT = 0.1;
@@ -188,9 +196,19 @@ export const HOLY_STRIKE_SP_COEFFICIENT = 0.2145;
  * off -- is perfectly defensible and worth 0.33% on one seal.
  * ---------------------------------------------------------------------------
  */
-export const JUDGEMENT_OF_COMMAND_SP_COEFFICIENT = 0.43;
-export const JUDGEMENT_OF_FURY_SP_COEFFICIENT = 1.5 / 3.5;
-export const JUDGEMENT_OF_RIGHTEOUSNESS_SP_COEFFICIENT = 1.5 / 3.5;
+/*
+ * ---------------------------------------------------------------------------
+ * ANSWERED BY THE JUDGEMENT BALANCE PASS: "Judgement with all Seals: 42.9%
+ * Spell Power Coefficient." So all three are one figure, and Judgement of
+ * Command's 0.43 joins the other two. Written as `1.5 / 3.5` rather than 0.429
+ * because that is the instant convention the nine rows above carry and 42.9%
+ * is its rounding; the two differ by 0.1%.
+ * ---------------------------------------------------------------------------
+ */
+export const JUDGEMENT_SP_COEFFICIENT = 1.5 / 3.5;
+export const JUDGEMENT_OF_COMMAND_SP_COEFFICIENT = JUDGEMENT_SP_COEFFICIENT;
+export const JUDGEMENT_OF_FURY_SP_COEFFICIENT = JUDGEMENT_SP_COEFFICIENT;
+export const JUDGEMENT_OF_RIGHTEOUSNESS_SP_COEFFICIENT = JUDGEMENT_SP_COEFFICIENT;
 
 /**
  * Hammer of Wrath: 42.857% spell power.
@@ -228,8 +246,23 @@ export const ARCANE_SHOT_RAP_COEFFICIENT = 0.1;
  */
 export const EVISCERATE_AP_COEFFICIENT_PER_COMBO_POINT = 0.04;
 
-/** Rupture: 3% of attack power PER TICK, whatever it was cast at. */
-export const RUPTURE_TICK_AP_COEFFICIENT = 0.03;
+/**
+ * Rupture: 1% of attack power PER TICK per combo point spent, CAPPED at 3%.
+ *
+ * The owner's figure: "1/2/3% attack power coefficient when used with 1/2/3
+ * combo points. It caps at 3% AP when used with 3+ combo points." It was a
+ * flat 3% whatever the finisher spent, which over-paid a one- and two-point
+ * Rupture by three and one and a half times.
+ */
+export const RUPTURE_TICK_AP_COEFFICIENT_PER_COMBO_POINT = 0.01;
+export const RUPTURE_TICK_AP_COEFFICIENT_CAP = 0.03;
+
+export function ruptureTickApCoefficient(comboPoints: number): number {
+  return Math.min(
+    Math.max(0, comboPoints) * RUPTURE_TICK_AP_COEFFICIENT_PER_COMBO_POINT,
+    RUPTURE_TICK_AP_COEFFICIENT_CAP,
+  );
+}
 
 /**
  * Instant Poison (0.5%) and Deadly Poison (0.45% per tick).

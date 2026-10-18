@@ -2,7 +2,7 @@ import type { AuraDefinition } from '../../engine';
 import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
 import {
   DEADLY_POISON_TICK_AP_COEFFICIENT,
-  RUPTURE_TICK_AP_COEFFICIENT,
+  ruptureTickApCoefficient,
 } from '../combat/coefficients';
 
 /**
@@ -225,6 +225,7 @@ export function ruptureAura(comboPoints: number, thousandCutsEnergy = 0): AuraDe
   const entry = RUPTURE_BY_COMBO_POINT[clampIndex(comboPoints)];
   const ticks = entry.durationMs / RUPTURE_TICK_INTERVAL_MS;
   const perTick = entry.damage / ticks;
+  const tickCoefficient = ruptureTickApCoefficient(clamp(comboPoints));
 
   return {
     id: 'rupture',
@@ -254,14 +255,13 @@ export function ruptureAura(comboPoints: number, thousandCutsEnergy = 0): AuraDe
            * modelled; `RUPTURE_UNMODELLED` says so where it is cast.
            */
           /*
-           * 3% OF ATTACK POWER PER TICK, flat across combo points.
-           *
-           * NOT PER COMBO POINT, unlike Eviscerate and Rip -- the sheet states
-           * Rupture as a plain "3% per tick" where the other two read
-           * "%*combo point spent". More points still buy more, by buying more
-           * TICKS: the duration steps from eight seconds to sixteen.
+           * 1% OF ATTACK POWER PER TICK PER COMBO POINT, CAPPED AT 3%, by the
+           * owner's ruling. It replaced a flat 3% read off the sheet, which
+           * paid a one-point Rupture three times its figure. Past three
+           * points more points buy only more TICKS: the duration steps from
+           * eight seconds to sixteen.
            */
-          powerCoefficient: RUPTURE_TICK_AP_COEFFICIENT,
+          powerCoefficient: tickCoefficient,
           periodic: true,
           critFrom: 'melee-special',
           appliesArmor: false,
@@ -284,7 +284,7 @@ export function ruptureAura(comboPoints: number, thousandCutsEnergy = 0): AuraDe
  * It read: "Its 'increased by your Attack Power' clause does NOT [land]: the
  * source gives no coefficient, so none is invented." That was true the day it
  * was written and stopped being true when `WoWSimWorksheet.xlsx` arrived --
- * the coefficient is `RUPTURE_TICK_AP_COEFFICIENT`, it is applied four lines
+ * the coefficient is `ruptureTickApCoefficient`, it is applied four lines
  * above in this same file, and the comment beside it explains the 3% a tick at
  * length. So the ability was fully scaling while printing a caveat on the
  * results page saying it could not.

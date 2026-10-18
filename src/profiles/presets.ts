@@ -880,8 +880,10 @@ const SHAMAN_ELEMENTAL_TALENTS: TalentAllocation = {
    *
    * ------------------------------------------------------------------------------
    * TIDAL FOCUS IS NOT FILLER AND MUST NOT BE MOVED. This build sits at exactly
-   * **16.00** points of hit against a usable spell cap of 16 -- 17% miss floored
-   * at 1% -- and five of those sixteen are this talent. It is the only one of
+   * **16.00** points of hit, which WAS the usable spell cap of 16 -- 17% miss
+   * floored at 1% -- and five of those sixteen are this talent. THE OWNER HAS
+   * SINCE REMOVED THE FLOOR, so the cap is 17 and this build misses 1%; the
+   * point is on the benchmark template's hit row, which is the owner's. It is the only one of
    * the six profiles whose hit is school-BLIND; the three Mages and the Priest
    * sit at 11 and make it up with a school-scoped talent.
    * ==========================================================================
@@ -1278,7 +1280,8 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
    *
    * `elemental_precision` IS NOT A CANDIDATE. Its fifth point is the Fire hit
    * cap and measured +10.8 when it was bought: all three Mages sit at 11 points
-   * of school-blind hit against a usable spell cap of 16, and the missing five
+   * of school-blind hit against what was a usable spell cap of 16 (17 since the
+   * owner removed the 1% floor), and the missing five
    * arrive as school-scoped hit from a talent.
    *
    * BLAST WAVE IS THE OTHER SLOT AND IS WORTH EXACTLY NOTHING, which took two
