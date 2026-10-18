@@ -1,5 +1,5 @@
 import type { Ability } from '../../engine';
-import { dealDamage, seconds } from '../../engine';
+import { dealDamage, rollApplication, seconds } from '../../engine';
 import {
   ADRENALINE_RUSH,
   BLADE_FLURRY,
@@ -7,6 +7,7 @@ import {
   COLD_BLOOD,
   COLD_BLOOD_ABILITIES,
   CUTTHROAT,
+  GARROTE,
   STEALTH,
   GHOSTLY_STRIKE_DODGE_AURA,
   HEMORRHAGE_DEBUFF,
@@ -722,6 +723,60 @@ export const VANISH: Ability = {
  * ----------------------------------------------------------------------------
  */
 /** Named because the Rupture list gates Vanish on being able to afford it. */
+/**
+ * Garrote: "Garrote the enemy, causing 552 damage over 18 sec, increased by
+ * your Attack Power. Must be stealthed and behind the target. Awards 1 combo
+ * point." 50 energy.
+ *
+ * ----------------------------------------------------------------------------
+ * DECLARED ON THE OWNER'S RULING: "Only usable from Stealth/Vanish (like
+ * Ambush). Positional requirement is out of scope." So the gate is the STEALTH
+ * aura -- the opening window or a Vanish -- and NOT Cutthroat, which the owner
+ * ruled is Ambush's stealth requirement and said nothing about here. No weapon
+ * requirement: Garrote needs no dagger.
+ *
+ * A PURE DoT, SO IT ASKS FOR ITS ROLL. The application rolls the melee special
+ * table through `rollApplication`, the same roll a hit would make; avoided, it
+ * applies nothing and awards nothing. The energy is refunded on a miss by the
+ * engine's ordinary rule.
+ *
+ * INITIATIVE NAMES IT, and a `dealt` reaction cannot see a Garrote -- the
+ * application deals nothing -- so the talent's chance arrives as an ability
+ * bonus and is rolled here.
+ * ----------------------------------------------------------------------------
+ */
+export const GARROTE_ENERGY_COST = 50;
+export const GARROTE_INITIATIVE_CHANCE = 'initiativeChance';
+
+export const GARROTE_ABILITY: Ability = {
+  id: 'garrote',
+  name: 'Garrote',
+  comboPointsAwarded: 1,
+  cost: { resource: 'energy', amount: GARROTE_ENERGY_COST },
+  attackTable: 'melee-special',
+  canCast: ({ caster }) => caster.auras.has(STEALTH.id),
+  // Vanish opens the stealth gate, so a Vanish-led sequence may name Garrote.
+  enabledBy: ['vanish'],
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    const roll = rollApplication(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: PHYSICAL,
+      attackTable: 'melee-special',
+    });
+    if (roll.avoided) return;
+    simulation.applyAura(target, GARROTE, caster.id);
+    awardComboPoint(simulation, caster, target, ability.id, ability.name);
+    const initiative = ability.bonuses?.[GARROTE_INITIATIVE_CHANCE] ?? 0;
+    if (initiative > 0 && simulation.rng.rollChance(initiative / 100)) {
+      awardComboPoint(simulation, caster, target, 'initiative', 'Initiative');
+    }
+  },
+};
+
 export const AMBUSH_ENERGY_COST = 60;
 export const AMBUSH_BASE_DAMAGE = 290;
 export const AMBUSH_WEAPON_FRACTION = 2.5;
@@ -736,6 +791,8 @@ export const AMBUSH: Ability = {
   canCast: ({ caster }) =>
     caster.weapons.mainHand?.weaponType === 'dagger' &&
     (caster.auras.has(CUTTHROAT.id) || caster.auras.has(STEALTH.id)),
+  // Vanish opens the stealth gate, so a Vanish-led sequence may name Ambush.
+  enabledBy: ['vanish'],
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
     /*
@@ -810,6 +867,8 @@ export const PREMEDITATION: Ability = {
   name: 'Premeditation',
   cooldownMs: seconds(120),
   requiresTarget: true,
+  // Vanish opens the stealth gate, so a Vanish-led sequence may name it.
+  enabledBy: ['vanish'],
   /*
    * ==========================================================================
    * THE ONE THING IN THE PROJECT THAT DOES NOT BREAK STEALTH.
@@ -877,6 +936,7 @@ export const ROGUE_ABILITIES: readonly Ability[] = [
    * every Rogue has Ambush.
    */
   VANISH,
+  GARROTE_ABILITY,
   /*
    * AMBUSH IS A TRAINER ABILITY, not a talent, so every Rogue has it -- and
    * only a Rogue with Cutthroat can ever cast one, which `canCast` enforces.

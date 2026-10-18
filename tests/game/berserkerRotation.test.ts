@@ -323,7 +323,7 @@ const OWNER_ORDER = [
   'heroic_strike',
   'bloodthirst',
   'whirlwind',
-  'spearing_strike',
+  // Spearing Strike is OUT of this list, by the owner's round 37.
   /*
    * BERSERKER RAGE LAST, which closes the Warrior's last live gap -- a LIST
    * cause, not an engine one. Worth +6.02 WITH Improved Berserker Rage and
@@ -345,7 +345,6 @@ const ORC_FURY_ORDER = [
   'heroic_strike',
   'bloodthirst',
   'whirlwind',
-  'spearing_strike',
   'berserker_rage_cast',
 ];
 
@@ -356,7 +355,7 @@ describe('the Berserker list order', () => {
     );
   });
 
-  it('narrows to thirteen entries for the preset that runs it', () => {
+  it('narrows to twelve entries for the preset that runs it', () => {
     /*
      * THE PANEL IS WHAT THE OWNER READ, and it shows the NARROWED list: every
      * stock list names all four racial cooldowns and all nine consumables, and

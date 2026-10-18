@@ -1,8 +1,8 @@
 import type { Rotation } from '../../engine';
 import type { AplCondition, AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
-import { CONSUMABLE_COOLDOWNS, CONSUMABLE_HEALS } from './consumableCooldowns';
-import { builtin, compileRotation, petHas, selfTime, swungWithin, targetMissing } from './apl';
+import { CONSUMABLE_HEALS, consumableCooldowns } from './consumableCooldowns';
+import { builtin, compileRotation, selfTime, targetMissing } from './apl';
 import type { TalentAllocation } from '../talents/Talent';
 
 /**
@@ -116,8 +116,33 @@ import type { TalentAllocation } from '../talents/Talent';
  * `sniper_shot` on Lone Wolf Ranged.
  * ----------------------------------------------------------------------------
  */
-const RANGED_WEAVE_WINDOW_MS = 500;
-const shotLandedRecently = (windowMs: number) => swungWithin('ranged', windowMs);
+// The 500ms weave window this block describes is RETIRED: the owner removed
+// the gate from every Hunter cast shot once Auto Shot stopped being suspended.
+
+/*
+ * ============================================================================
+ * THE COOLDOWN STACK IN ONE SHOT, the owner's ask on all four Hunter profiles:
+ * "Major Frenzy Potion paired with (Bestial Wrath and) Rapid Fire and Berserking
+ * (racial) / Blood Fury (racial) so they all fire in sequence / in one shot."
+ *
+ * BOTH RACIALS ARE STEPS, so one list serves a Troll and an Orc: a sequence
+ * step the character does not know is skipped, the rule an ordinary entry has.
+ *
+ * AND THEIR STANDALONE ENTRIES ARE GONE, which is what makes it a stack: a
+ * standalone Rapid Fire or racial would fire first, and the sequence -- which
+ * checks every step's cooldown before starting -- would then be refused until
+ * that cooldown came back.
+ * ============================================================================
+ */
+const STACKED = new Set(['berserking', 'blood_fury']);
+const HUNTER_RACIALS = RACIAL_COOLDOWNS.filter((entry) => !STACKED.has(entry.abilityId));
+const HUNTER_CONSUMABLES = consumableCooldowns({ exclude: ['major_frenzy_potion'] });
+
+const potionStack = (steps: readonly string[]) => ({
+  abilityId: 'major_frenzy_potion',
+  sequence: [...steps, 'berserking', 'blood_fury'],
+  note: 'Cooldown stack: Major Frenzy Potion with the cooldowns and the racial, in one shot.',
+});
 
 /**
  * "BESTIAL WRATH IF PET FRENZY IS ACTIVE", which reads across two combatants.
@@ -128,7 +153,6 @@ const shotLandedRecently = (windowMs: number) => swungWithin('ranged', windowMs)
  * cooldown: the entry spends one on the other, which is the only condition in
  * any list here that crosses actors.
  */
-const petHasAura = petHas;
 
 /** "<buff> is not active", on the Hunter -- the owner's "if not active". */
 const selfExpired = (auraId: string) => selfTime('atMost', 0, auraId);
@@ -211,15 +235,19 @@ export const HUNTER_BEAST_MASTERY: AplList = {
    * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
-  ...RACIAL_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
+  ...HUNTER_RACIALS,
+  ...HUNTER_CONSUMABLES,
+  potionStack(['bestial_wrath', 'rapid_fire']),
   ...CONSUMABLE_HEALS,
   { abilityId: 'hunters_mark', condition: selfExpired('hunters_mark') },
   { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
-  { abilityId: 'bestial_wrath', condition: petHasAura('frenzy') },
-  { abilityId: 'rapid_fire' },
   { abilityId: 'summon_hawk', condition: hawksBelowCap },
-  { abilityId: 'aimed_shot', condition: shotLandedRecently(RANGED_WEAVE_WINDOW_MS) },
+  /*
+   * UNGATED, by the owner: "Remove the condition ... that fixed it to be used
+   * only if you've swung in the last 500 ms." Auto Shot is no longer suspended
+   * by a cast, so the weave window protected nothing.
+   */
+  { abilityId: 'aimed_shot' },
   /*
    * ==========================================================================
    * ARCANE SHOT, WHICH THIS LIST DID NOT HAVE AND IS WORTH **+31**.
@@ -294,12 +322,12 @@ export const HUNTER_LONE_WOLF_RANGED: AplList = {
    * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
-  ...RACIAL_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
+  ...HUNTER_RACIALS,
+  ...HUNTER_CONSUMABLES,
+  potionStack(['rapid_fire']),
   ...CONSUMABLE_HEALS,
   { abilityId: 'hunters_mark', condition: selfExpired('hunters_mark') },
   { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
-  { abilityId: 'rapid_fire' },
   /*
    * BOTH CASTS GATED ON THE SHOT WINDOW. Sniper Shot is a FOUR-second cast --
    * it was transcribed as an instant for months and the correction cost this
@@ -359,7 +387,12 @@ export const HUNTER_LONE_WOLF_RANGED: AplList = {
    * Nothing measurable rests on that -- no profile reaches it.
    * --------------------------------------------------------------------------
    */
-  { abilityId: 'aimed_shot', condition: shotLandedRecently(RANGED_WEAVE_WINDOW_MS) },
+  /*
+   * UNGATED, by the owner: "Remove the condition ... that fixed it to be used
+   * only if you've swung in the last 500 ms." Auto Shot is no longer suspended
+   * by a cast, so the weave window protected nothing.
+   */
+  { abilityId: 'aimed_shot' },
   /*
    * ==========================================================================
    * ARCANE SHOT ABOVE SNIPER SHOT, WHICH IS WORTH **+1.4** AND TOOK 3,000
@@ -377,8 +410,11 @@ export const HUNTER_LONE_WOLF_RANGED: AplList = {
    * ==========================================================================
    */
   { abilityId: 'arcane_shot' },
-  { abilityId: 'sniper_shot', condition: shotLandedRecently(RANGED_WEAVE_WINDOW_MS) },
-  { abilityId: 'summon_hawk', condition: hawksBelowCap },
+  { abilityId: 'sniper_shot' },
+  /*
+   * SUMMON HAWK IS OUT OF THIS LIST, by the owner: "Remove Summon Hawk from the
+   * combat APL."
+   */
   ],
 };
 
@@ -440,8 +476,9 @@ export const HUNTER_LONE_WOLF_MELEE: AplList = {
    * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
-  ...RACIAL_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
+  ...HUNTER_RACIALS,
+  ...HUNTER_CONSUMABLES,
+  potionStack(['rapid_fire']),
   ...CONSUMABLE_HEALS,
   { abilityId: 'hunters_mark', condition: selfExpired('hunters_mark') },
   /*
@@ -464,7 +501,6 @@ export const HUNTER_LONE_WOLF_MELEE: AplList = {
    * 2/2, which this build takes -- both longer than the encounter, so its
    * position decides WHEN the window opens and not how often.
    */
-  { abilityId: 'rapid_fire' },
   /*
    * "QUEUE RAPTOR STRIKE", and it is on-next-swing now, so `queue` is exactly
    * what the list does with it: arming costs no global cooldown and the swing

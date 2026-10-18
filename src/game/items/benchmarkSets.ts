@@ -138,6 +138,12 @@ export interface BenchmarkTemplate {
    * fires one -- so it is stats and nothing else. See `StatStick`.
    */
   readonly statStick?: StatStick;
+  /**
+   * Wear ANOTHER template's weapon, at the same set tier, instead of this
+   * template's own. The owner's Enhancement Shaman ask: "Have it use the same
+   * weapon as the Seal Twist Ret profile." The armour is still this template's.
+   */
+  readonly weaponsFrom?: string;
 }
 
 /** What the character holds. `caster` trades damage for stats. */
@@ -248,7 +254,16 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
   { presetId: 'druid_cat', characterClass: 'druid', label: 'Cat', hit: 40, expertise: 10, preferred: ['Strength', 'Agility', 'Crit', 'Stamina', 'Attack Power'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' } },
   { presetId: 'druid_bear', characterClass: 'druid', label: 'Bear', hit: 40, expertise: 20, preferred: ['Stamina', 'Bonus Armor', 'Agility', 'Strength', 'Dodge', 'Defense'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' }, trinkets: TANK_TRINKETS },
   { presetId: 'shaman_elemental', characterClass: 'shaman', label: 'Ele Shaman', hit: 110, expertise: 0, preferred: CASTER, armour: 'Mail', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true } },
-  { presetId: 'shaman_enhancement', characterClass: 'shaman', label: 'Enh Shaman', hit: 80, expertise: 10, preferred: ['Crit', 'Strength', 'Intellect', 'Agility', 'Stamina', 'Attack Power'], armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Mace' } },
+  /*
+   * RESPECIFIED IN ROUND 37 TO RESEMBLE SHOCKADIN 2H, by the owner: "itemized
+   * for Stamina, Strength, Intellect, Spell Power, Hit Rating/Crit Rating. Have
+   * it use the same weapon as the Seal Twist Ret profile." So Shockadin 2H's
+   * preference order without Attack Power, no expertise (none is named), the
+   * Shaman's own Mail -- and Seal Twist Ret's two-handed mace through
+   * `weaponsFrom`. It was a melee row: Crit, Strength, Intellect, Agility,
+   * Stamina, Attack Power, with 10 expertise.
+   */
+  { presetId: 'shaman_enhancement', characterClass: 'shaman', label: 'Enh Shaman', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina'], armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Mace' }, weaponsFrom: 'pally_ret' },
   { presetId: 'mage_frostfire', characterClass: 'mage', label: 'Frostfire', characterName: 'Frostfire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   { presetId: 'mage_arcane', characterClass: 'mage', label: 'Arcane', characterName: 'Arcane Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   { presetId: 'mage_fire', characterClass: 'mage', label: 'Fire', characterName: 'Fire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
@@ -1131,6 +1146,23 @@ export function benchmarkItemsFor(
     );
   }
 
+  /*
+   * A WEAPON ANOTHER TEMPLATE BORROWS IS WEARABLE BY THAT CLASS TOO. Every
+   * generated item is class-locked by the line it writes, so Seal Twist Ret's
+   * mace read "Classes: Paladin" and the Enhancement Shaman -- which wears it
+   * through `weaponsFrom` -- was wearing an item its class may not equip.
+   */
+  const borrowers = BENCHMARK_TEMPLATES.filter(
+    (other) => other.weaponsFrom === template.presetId && other.characterClass !== template.characterClass,
+  ).map((other) => other.characterClass);
+  if (borrowers.length > 0) {
+    const classes = [template.characterClass, ...new Set(borrowers)].map(className).join(', ');
+    return items.map((item) =>
+      item.weapon === null
+        ? item
+        : { ...item, tooltip: item.tooltip.replace(/^Classes: .*$/m, `Classes: ${classes}`) },
+    );
+  }
   return items;
 }
 
@@ -1144,6 +1176,43 @@ for (const template of BENCHMARK_TEMPLATES) {
   for (const set of BENCHMARK_SETS) {
     BY_KEY.set(`${template.presetId}|${set.id}`, benchmarkItemsFor(template, set));
   }
+}
+
+/** Which template each generated item belongs to. */
+const TEMPLATE_OF_ITEM = new Map<number, string>();
+for (const template of BENCHMARK_TEMPLATES) {
+  for (const set of BENCHMARK_SETS) {
+    for (const item of BY_KEY.get(`${template.presetId}|${set.id}`) ?? []) {
+      TEMPLATE_OF_ITEM.set(item.id, template.presetId);
+    }
+  }
+}
+
+/**
+ * The templates whose items are WORN, for a profile that names no template --
+ * a hand-built character starts in its class's E65 set and has no preset id to
+ * look the set up by, so the picker reads it off the gear instead.
+ */
+export function benchmarkTemplatesWorn(itemIds: Iterable<number>): readonly string[] {
+  const found = new Set<string>();
+  for (const id of itemIds) {
+    const template = TEMPLATE_OF_ITEM.get(id);
+    if (template !== undefined) found.add(template);
+  }
+  return [...found];
+}
+
+/**
+ * Every generated item of ONE template, across its four sets -- what the Gear
+ * panel's picker offers beside the captured items. Empty for an unknown id.
+ */
+export function benchmarkItemIdsFor(presetId: string | undefined): ReadonlySet<number> {
+  const ids = new Set<number>();
+  if (presetId === undefined) return ids;
+  for (const set of BENCHMARK_SETS) {
+    for (const item of BY_KEY.get(`${presetId}|${set.id}`) ?? []) ids.add(item.id);
+  }
+  return ids;
 }
 
 /**
@@ -1215,6 +1284,17 @@ export function benchmarkEquipmentFor(
     else if (item.subclass === 'Shield') put('shield', item.id);
     else if (!equipment.mainHand) put('mainHand', item.id);
     else if (w.kind === 'dualWield') put('offHand', item.id);
+  }
+
+  // ANOTHER TEMPLATE'S WEAPON, where one is named -- its weapon slots replace
+  // this template's own at the same set tier. See `BenchmarkTemplate.weaponsFrom`.
+  if (template.weaponsFrom) {
+    const donor = benchmarkEquipmentFor(template.weaponsFrom, setId);
+    for (const slot of ['twoHand', 'mainHand', 'offHand', 'shield'] as const) {
+      delete equipment[slot];
+      const worn = donor?.[slot];
+      if (worn) put(slot, worn.itemId);
+    }
   }
   return equipment as Equipment;
 }

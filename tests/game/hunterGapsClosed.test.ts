@@ -287,7 +287,7 @@ describe('Explosive Trap, the second trap the owner put in scope', () => {
     expect(burn!.total).toBeCloseTo(EXPLOSIVE_TRAP_BURN_TOTAL, 6);
   });
 
-  it('takes 5% of ATTACK power and no spell power, on the BURN half', () => {
+  it('takes its ATTACK power share (5%, 13% since round 37) and no spell power, on the BURN half', () => {
     /*
      * ========================================================================
      * THE PATCH REVERSED HALF OF THE OWNER'S RULING. It went in with "there
@@ -405,7 +405,7 @@ describe('Immolation Trap', () => {
     expect(burn!.total).toBeCloseTo(IMMOLATION_TRAP_TOTAL, 6);
   });
 
-  it('takes 5% of ATTACK power over its duration, and no spell power', () => {
+  it('takes 13% of the larger ATTACK power pool over its duration, and no spell power', () => {
     /*
      * ========================================================================
      * IT WENT IN WITH NO SCALER AT ALL -- "Immolation trap doesn't scale with
@@ -438,15 +438,23 @@ describe('Immolation Trap', () => {
     };
 
     expect(totalWith({})).toBeCloseTo(IMMOLATION_TRAP_TOTAL, 6);
-    // Attack power adds exactly 5% of itself, spread over the duration.
+    // Attack power adds exactly 13% of itself (the owner's round 37, was 5%).
     expect(totalWith({ attackPower: 2000 })).toBeCloseTo(
       IMMOLATION_TRAP_TOTAL + 2000 * TRAP_ATTACK_POWER_COEFFICIENT,
       6,
     );
     // Spell power does nothing, which the owner's surviving ruling requires.
     expect(totalWith({ spellPower: 2000 })).toBeCloseTo(IMMOLATION_TRAP_TOTAL, 6);
-    // And the RANGED pool is not the one this field reads.
-    expect(totalWith({ rangedAttackPower: 2000 })).toBeCloseTo(IMMOLATION_TRAP_TOTAL, 6);
+    /*
+     * AND THE RANGED POOL COUNTS NOW, AS THE LARGER OF THE TWO -- the owner's
+     * round 37: "using the maximum of either the Hunter's melee or ranged
+     * Attack Power". So 2000 ranged alone pays in full, and 500 melee beside it
+     * changes nothing: the pools are not added.
+     */
+    const fromRanged = IMMOLATION_TRAP_TOTAL + 2000 * TRAP_ATTACK_POWER_COEFFICIENT;
+    expect(totalWith({ rangedAttackPower: 2000 })).toBeCloseTo(fromRanged, 6);
+    expect(totalWith({ rangedAttackPower: 2000, attackPower: 500 })).toBeCloseTo(fromRanged, 6);
+    expect(TRAP_ATTACK_POWER_COEFFICIENT).toBe(0.13);
   });
 
   it('is last in the Lone Wolf melee list, where the owner put it', () => {

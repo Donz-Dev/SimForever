@@ -95,18 +95,20 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
   rogue_combat: [[1, 'blade_flurry']],
   rogue_rupture: [
     [2, 'stealth'],
-    [1, 'premeditation'],
     [0, 'ambush'],
+    [0, 'major_frenzy_potion'],
   ],
   rogue_hemo: [
     [2, 'stealth'],
-    [1, 'premeditation'],
     [0, 'ambush'],
+    [0, 'major_frenzy_potion'],
   ],
   // No Ambush: this build's main hand is a SWORD and Ambush asks for a dagger.
+  // Round 37: Premeditation off, and the potion with a Garrote at 0s.
   rogue_pure_hemo: [
     [2, 'stealth'],
-    [1, 'premeditation'],
+    [0, 'garrote'],
+    [0, 'major_frenzy_potion'],
   ],
   druid_moonkin: [
     [3, 'moonkin_form'],
@@ -126,12 +128,10 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
     [0, 'maul'],
     [0, 'mangle'],
   ],
-  shaman_elemental: [
-    [2, 'lightning_bolt'],
-    [0, 'flame_shock'],
-  ],
+  // Round 37: the Lightning Bolt is off the opener.
+  shaman_elemental: [[0, 'flame_shock']],
   shaman_enhancement: [
-    [3, 'windfury_weapon'],
+    [3, 'flametongue_weapon'],
     [1.5, 'searing_totem'],
     [0, 'flame_shock'],
   ],
@@ -174,7 +174,7 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
   lw_ranged: [
     [7, 'hunters_mark'],
     [5.5, 'aspect_of_the_hawk'],
-    [4, 'sniper_shot'],
+    [2, 'aimed_shot'],
   ],
   /*
    * STRIDER KICK WHERE THE OWNER FIRST WROTE MONGOOSE BITE, AND THIS TEST IS
@@ -327,9 +327,9 @@ describe("the owner's openers are transcribed exactly", () => {
      * skips the global cooldown it would start, and a 15 second window opened
      * at a 0s lead is the same window the fight would get.
      */
-    mage_arcane: [
-      [0, 'arcane_power', '+24.9 -- a 15s window, claimed for no GCD'],
-    ],
+    // Round 37: the owner took Arcane Power off the opener; it is a step of
+    // the in-fight cooldown stack now.
+    mage_arcane: [],
     /*
      * THE FIRE MAGE HAS NO ADDITION ANY MORE, AND THE EMPTY ARRAY SAYS SO.
      *
@@ -350,7 +350,7 @@ describe("the owner's openers are transcribed exactly", () => {
      */
     mage_fire: [],
     shadow_priest: [
-      [0, 'shadow_word_pain', '+26.8 alone, +35.5 with the plague'],
+      // Shadow Word: Pain is off the opener, by the owner (round 37).
       [0, 'devouring_plague', '+26.7 alone'],
     ],
   };

@@ -1,5 +1,5 @@
 import type { Rotation } from '../../engine';
-import type { AplCondition, AplList } from './apl';
+import type { AplList } from './apl';
 import { RACIAL_COOLDOWNS, RACIAL_DEFENSIVE_COOLDOWNS } from './racialCooldowns';
 import { CONSUMABLE_COOLDOWNS, CONSUMABLE_HEALS } from './consumableCooldowns';
 import {
@@ -7,7 +7,6 @@ import {
   any,
   castsInstantly,
   compileRotation,
-  fightElapsed,
   not,
   ready,
   selfHas,
@@ -46,23 +45,6 @@ import type { TalentAllocation } from '../talents/Talent';
  * ============================================================================
  */
 
-/**
- * "FIRST EVENT ONLY", which all three of the owner's lists open with.
- *
- * ----------------------------------------------------------------------------
- * THE SAME RULE CHARGE ALREADY RUNS ON, and reached the same way: the opening
- * instant is the one moment nothing else has taken yet, and an ability gated on
- * it fires once and never again. Charge states it as
- * `now() === CHARGE_OPENING_TIMESTAMP_MS` in its own `canCast`.
- *
- * Here it is a LIST condition rather than an ability one, because Seal of the
- * Crusader is a perfectly ordinary seal that these lists happen to want exactly
- * once -- to put its Judgement debuff up -- and gating the ability itself would
- * be wrong for anything else that ever wants to cast it.
- * ----------------------------------------------------------------------------
- */
-const OPENING_TIMESTAMP_MS = 0;
-const firstEventOnly: AplCondition = fightElapsed('exactly', OPENING_TIMESTAMP_MS / 1000);
 
 /** "<buff> is not active", on the Paladin. */
 const selfExpired = (auraId: string) => selfTime('atMost', 0, auraId);
@@ -180,7 +162,12 @@ const either = any;
 export const PALADIN_RETRIBUTION: AplList = {
   name: 'Paladin (Seal Twist Ret)',
   entries: [
-  { abilityId: 'seal_of_the_crusader', condition: firstEventOnly },
+  /*
+   * SEAL OF THE CRUSADER IS OUT OF THIS LIST, by the owner: "Remove Seal of the
+   * Crusader from the APL." It opened the fight to judge the Crusader debuff,
+   * which the raid buff `judgement_of_the_crusader` now supplies on every
+   * preset for the whole fight.
+   */
   /*
    * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
    *
@@ -267,7 +254,12 @@ export const PALADIN_RETRIBUTION: AplList = {
 export const PALADIN_SHOCKADIN: AplList = {
   name: 'Paladin (Shockadin)',
   entries: [
-  { abilityId: 'seal_of_the_crusader', condition: firstEventOnly },
+  /*
+   * SEAL OF THE CRUSADER IS OUT OF THIS LIST, by the owner: "Remove Seal of the
+   * Crusader from the APL." It opened the fight to judge the Crusader debuff,
+   * which the raid buff `judgement_of_the_crusader` now supplies on every
+   * preset for the whole fight.
+   */
   /*
    * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
    *

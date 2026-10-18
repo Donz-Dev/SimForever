@@ -1502,8 +1502,12 @@ describe('the racials are in the priority lists, or they never fire', () => {
       // The pet's list is the one exception: a pet gets no racials.
       if (list.name.toLowerCase().includes('pet')) continue;
       for (const abilityId of ids) {
+        // AS AN ENTRY OR A SEQUENCE STEP: the four Hunter lists carry Berserking
+        // and Blood Fury as steps of the owner's cooldown stack (round 37).
         expect(
-          list.entries.some((entry) => entry.abilityId === abilityId),
+          list.entries.some(
+            (entry) => entry.abilityId === abilityId || (entry.sequence ?? []).includes(abilityId),
+          ),
           `${list.name} / ${abilityId}`,
         ).toBe(true);
       }
@@ -2111,7 +2115,7 @@ describe('every damaging ability an Undead can cast takes a roll', () => {
 
   it('pins what the harness cannot reach, so a silent drop is visible', () => {
     /*
-     * EIGHT ABILITIES NEED FIGHT STATE THIS HARNESS CANNOT FABRICATE -- a seal
+     * NINE ABILITIES NEED FIGHT STATE THIS HARNESS CANNOT FABRICATE -- a seal
      * up, the execute phase, a dodge to answer, a block to answer, stealth, or
      * the one instant at the pull. Every one of them deals DIRECT damage and
      * goes through the damage half, which is the route that was never broken.
@@ -2130,6 +2134,8 @@ describe('every damaging ability an Undead can cast takes a roll', () => {
       'paladin/judgement',
       'rogue/ambush',
       'rogue/backstab',
+      // Garrote, declared at round 37, needs Stealth like Ambush.
+      'rogue/garrote',
       'warrior/charge',
       'warrior/execute',
       'warrior/overpower',

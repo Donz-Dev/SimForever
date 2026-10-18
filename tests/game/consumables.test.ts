@@ -914,6 +914,16 @@ describe('who eats what, on the plate-and-fur row', () => {
       const selection = PRESETS_BY_ID.get(id)!.build().consumables;
       for (const [category, chosen] of Object.entries(STRENGTH_CONSUMABLES)) {
         if (category === 'food') continue;
+        /*
+         * THE OFF-HAND WEAPON EFFECT IS DROPPED WHERE NOTHING SWINGS IN THE OFF
+         * HAND -- the owner's round 37, "OH weapon effect should be empty", done
+         * once for every preset by `withoutUnusedOffHandEffect` rather than as a
+         * per-profile override. A two-hander and a shield get none.
+         */
+        if (category === 'weapon_effect_off_hand' && id !== 'dw_fury') {
+          expect(selection[category as keyof typeof selection], `${id}.${category}`).toBeUndefined();
+          continue;
+        }
         expect(selection[category as keyof typeof selection], `${id}.${category}`).toBe(chosen);
       }
     }

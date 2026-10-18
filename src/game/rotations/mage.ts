@@ -139,6 +139,17 @@ const selfResourceAbovePercent = (resource: 'mana', percent: number) =>
 
 const either = any;
 
+/**
+ * "Fire blast should be used at <= 1 stacks of Heating Up only" -- the owner,
+ * for both Fire and Frostfire. A Fire Blast at two stacks would push Heating Up
+ * to three and spend the Pyroblast window on a cast that is already instant;
+ * at none or one it builds toward the window instead. ABSENT COUNTS AS NONE.
+ */
+const heatingUpAtMostOne = either(
+  selfLacks('heating_up'),
+  selfStacks('atMost', 1, 'heating_up'),
+);
+
 /*
  * ----------------------------------------------------------------------------
  * "SCORCH IF SCORCH DEBUFF < 5", CONFIRMED BY THE RULESET OWNER.
@@ -522,7 +533,7 @@ export const MAGE_FIRE: AplList = {
    * taken by the filler below.
    * ==========================================================================
    */
-  { abilityId: 'fire_blast', condition: selfLacks('clearcasting') },
+  { abilityId: 'fire_blast', condition: all(selfLacks('clearcasting'), heatingUpAtMostOne) },
   /*
    * ARCANE MISSILES ON A BARRAGE PROC, WHICH IS NEW TO THIS LIST AND IS PAID
    * FOR IN TALENTS. The respecification moves six points into Arcane for
@@ -720,7 +731,10 @@ export const MAGE_FROSTFIRE: AplList = {
    * Fire build takes Arcane Concentration 5/5 and has a proc to protect, and
    * nothing says the Frostfire build's answer should be the same one.
    */
-  { abilityId: 'fire_blast', condition: selfResourceAbovePercent('mana', EVOCATION_MANA_PERCENT) },
+  {
+    abilityId: 'fire_blast',
+    condition: all(selfResourceAbovePercent('mana', EVOCATION_MANA_PERCENT), heatingUpAtMostOne),
+  },
   { abilityId: 'frostfire_bolt' },
   ],
 };
@@ -844,7 +858,11 @@ export const MAGE_ARCANE: AplList = {
    * one is the owner's reading of "worth having at all", and in a fight this
    * short the second is the better trade.
    */
-  { abilityId: 'arcane_power', condition: selfHasStack('missile_barrage') },
+  /*
+   * ARCANE POWER HAS NO ENTRY OF ITS OWN NOW: it is a step of the cooldown stack
+   * below, and a standalone entry would fire it first and leave the stack
+   * refused for its cooldown.
+   */
   /*
    * ==========================================================================
    * THE COOLDOWN STACK, AS ONE ACTION. The owner: "Take a look at setting up a
@@ -890,11 +908,20 @@ export const MAGE_ARCANE: AplList = {
    * under.
    * ==========================================================================
    */
+  /*
+   * ==========================================================================
+   * THE OWNER'S COOLDOWN STACK, IN ONE SHOT: "Major Spellblasting Potion paired
+   * with Arcane Power and Presence of Mind and Arcane Wrath so they cast in
+   * sequence/all in one shot when you have 4 stacks of Arcane Blast." It was the
+   * potion, Presence of Mind and an instant PYROBLAST; Arcane Wrath is the
+   * 3.5-second cast Presence of Mind makes instant now, inside Arcane Power.
+   * ==========================================================================
+   */
   {
     abilityId: 'major_spellblasting_potion',
-    sequence: ['presence_of_mind', 'pyroblast'],
+    sequence: ['arcane_power', 'presence_of_mind', 'arcane_wrath'],
     condition: selfStacksExactly('arcane_blast', ARCANE_BLAST_MAX_STACKS),
-    note: 'Cooldown stack: the potion, Presence of Mind and an instant Pyroblast, at the Arcane Blast cap.',
+    note: 'Cooldown stack: the potion, Arcane Power, Presence of Mind and an instant Arcane Wrath, at the Arcane Blast cap.',
   },
   { abilityId: 'arcane_missiles', condition: selfHasStack('missile_barrage') },
   /*
@@ -936,6 +963,15 @@ export const MAGE_ARCANE: AplList = {
    * A repeated ability id is legal; what is not is a copy below an
    * UNCONDITIONAL one. Both entries are gated and Arcane Blast is the filler.
    */
+  /*
+   * ARCANE WRATH ABOVE THE NON-BARRAGE MISSILES, the owner's placement, under
+   * the same four-stack gate as the entry it sits above -- below four stacks
+   * the list is still building, which is Arcane Blast's job.
+   */
+  {
+    abilityId: 'arcane_wrath',
+    condition: selfStacksExactly('arcane_blast', ARCANE_BLAST_MAX_STACKS),
+  },
   {
     abilityId: 'arcane_missiles',
     condition: all(
@@ -943,7 +979,17 @@ export const MAGE_ARCANE: AplList = {
       selfTime('atLeast', ARCANE_BLAST_CHANNEL_FLOOR_SECONDS, 'arcane_blast'),
     ),
   },
-  { abilityId: 'arcane_blast' },
+  /*
+   * "IF LESS THAN 4 STACKS OF ARCANE BLAST, AND MISSILE BARRAGE NOT ACTIVE" --
+   * the owner. It was ungated, the floor under the whole list.
+   */
+  {
+    abilityId: 'arcane_blast',
+    condition: all(
+      selfStacks('below', ARCANE_BLAST_MAX_STACKS, 'arcane_blast'),
+      selfLacks('missile_barrage'),
+    ),
+  },
   ],
 };
 

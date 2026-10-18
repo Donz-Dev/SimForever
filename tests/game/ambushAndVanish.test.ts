@@ -232,21 +232,20 @@ describe('the three talents that pointed at Ambush and did nothing', () => {
     expect((crits[0] as { abilityId: string }).abilityId).toBe('ambush');
   });
 
-  it('gives Opportunity its third ability, and keeps Garrote out of scope', () => {
+  it('gives Opportunity all four of its abilities, Garrote included now it is declared', () => {
     const damaged = effectsFor('opportunity')
       .filter((e) => e.kind === 'abilityDamage')
       .map((e) => (e as { abilityId: string }).abilityId);
-    expect(damaged).toEqual(['backstab', 'mutilate', 'ambush']);
-    // The clause that genuinely cannot be reached still says so.
-    expect(reasonsFor('opportunity').join(' ')).toMatch(/Garrote/);
+    expect(damaged).toEqual(['backstab', 'mutilate', 'ambush', 'garrote']);
   });
 
-  it('wires Initiative as a reaction, and keeps its other two abilities scoped', () => {
+  it('wires Initiative as a reaction, and keeps Cheap Shot scoped', () => {
     const reactions = effectsFor('initiative').filter((e) => e.kind === 'reaction');
     expect(reactions).toHaveLength(1);
     expect((reactions[0] as { reactionId: string }).reactionId).toBe('initiative');
     expect(ROGUE_TALENT_REACTIONS.initiative).toBeDefined();
-    expect(reasonsFor('initiative').join(' ')).toMatch(/Garrote and Cheap Shot/);
+    // Garrote is declared at round 37 and takes the roll too; Cheap Shot is not.
+    expect(reasonsFor('initiative').join(' ')).toMatch(/Cheap Shot/);
   });
 
   it('awards Initiative’s point only on an Ambush that connected', () => {
@@ -370,9 +369,14 @@ describe('the Rupture list carries the owner’s stealth cycle', () => {
   const ids = ROGUE_RUPTURE.entries.map((entry) => entry.abilityId);
 
   it('has every ability the four sequences name', () => {
-    for (const id of ['premeditation', 'ambush', 'vanish', 'preparation']) {
+    for (const id of ['ambush', 'vanish', 'preparation']) {
       expect(ids).toContain(id);
     }
+    // PREMEDITATION IS A STEP NOW, not an entry: Vanish -> Premeditation ->
+    // Ambush is one sequence, by the owner's round 37.
+    const vanish = ROGUE_RUPTURE.entries.find((entry) => entry.abilityId === 'vanish');
+    expect(vanish?.sequence).toEqual(['premeditation', 'ambush']);
+    expect(ids).not.toContain('premeditation');
   });
 
   it('puts Ambush and Vanish above the damage finishers', () => {

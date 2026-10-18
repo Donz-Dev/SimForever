@@ -2591,12 +2591,13 @@ describe('Evocation, which pays out during its own channel', () => {
     expect(casts('mage_fire')).toBe(0);
     expect(casts('mage_frostfire')).toBe(0);
     /*
-     * TWO, WHERE IT WAS ONE, AND SOMEBODY LOOKED: Missile Barrage stopped
-     * proccing off Arcane Missiles (the owner, ahead of the client), so fewer
-     * channels are free and the build reaches 10% mana one more time in twenty
-     * fights. A knock-on of a mana change, not a list change.
+     * ZERO AGAIN AT ROUND 37, WHERE IT WAS TWO. The owner's new Arcane tree and
+     * list -- Arcane Blast held below four stacks only while no Missile Barrage
+     * is up, and Arcane Wrath taking the four-stack casts -- leave the build
+     * clear of 10% mana in all twenty fights. A knock-on of a list and tree
+     * change, which is what this tripwire is for: somebody looked.
      */
-    expect(casts('mage_arcane')).toBe(2);
+    expect(casts('mage_arcane')).toBe(0);
   }, 20_000);
 });
 
@@ -2872,19 +2873,19 @@ describe('the three lists, after the owner tuned them', () => {
 
     /*
      * ORDER IS THE MECHANISM: Presence of Mind has to be cast BEFORE the
-     * Pyroblast it makes instant. A sequence holding the two in the other order
-     * would read as a working stack and buy nothing.
+     * Arcane Wrath it makes instant, and Arcane Power before both so the Wrath
+     * lands inside its window. The owner's round 37 stack: "Major Spellblasting
+     * Potion paired with Arcane Power and Presence of Mind and Arcane Wrath".
+     * It was the potion, Presence of Mind and an instant PYROBLAST.
      */
     expect([stack.abilityId, ...(stack.sequence ?? [])]).toEqual([
       'major_spellblasting_potion',
+      'arcane_power',
       'presence_of_mind',
-      'pyroblast',
+      'arcane_wrath',
     ]);
 
-    /*
-     * AND PYROBLAST IS IN NO OTHER ENTRY, which is what stops the list casting
-     * a six-second Pyroblast at full cast time outside the stack.
-     */
+    // Pyroblast is in no entry at all now, and the new tree does not take it.
     expect(MAGE_ARCANE.entries.filter((row) => row.abilityId === 'pyroblast')).toHaveLength(0);
 
     const fires = () =>
@@ -2908,7 +2909,7 @@ describe('the three lists, after the owner tuned them', () => {
     expect(fires()).toBe(true);
   });
 
-  it('makes that Pyroblast actually instant, which is the whole point of the pair', () => {
+  it('makes that Arcane Wrath actually instant, which is the whole point of the pair', () => {
     /*
      * ASSERT THE MECHANISM AND NOT ONLY THE CONDITIONS. Two entries can be
      * correctly gated and still buy nothing if the charge does not reach the
@@ -2928,10 +2929,11 @@ describe('the three lists, after the owner tuned them', () => {
     });
     const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
     simulation.begin();
-    const pyroblast = mage.abilities.get('pyroblast')!;
-    expect(resolveCast(mage, pyroblast).baseCastTimeMs).toBeGreaterThan(0);
+    const wrath = mage.abilities.get('arcane_wrath')!;
+    expect(wrath).toBeDefined();
+    expect(resolveCast(mage, wrath).baseCastTimeMs).toBeGreaterThan(0);
 
     simulation.applyAura(mage, PRESENCE_OF_MIND, mage.id);
-    expect(resolveCast(mage, pyroblast).baseCastTimeMs).toBe(0);
+    expect(resolveCast(mage, wrath).baseCastTimeMs).toBe(0);
   });
 });

@@ -67,8 +67,9 @@ const BLANKET = ['conditionalDamage', 'conditionalCrit'];
  * opening the data file. A test that read the index back off the effect would
  * pass whatever the effect said.
  *
- * TEN SINCE CLIENT BUILD 1.60.1.70170, down from eleven: the Paladin's Crusade
- * was removed from the tree. The count is in the test name on purpose -- an
+ * NINE SINCE ROUND 37: ten after client build 1.60.1.70170 removed the
+ * Paladin's Crusade from the tree, and Murder left when the owner ruled its
+ * target condition unmet. The count is in the test name on purpose -- an
  * unrecorded effect and a stale row are both worth failing on, and the second is
  * what this patch produced.
  */
@@ -160,13 +161,8 @@ const BLANKET_MULTIPLIERS: readonly {
     atRankOne: 2,
     wants: 'damage with two-handed melee weapons',
   },
-  {
-    cls: 'rogue',
-    talentId: 'murder',
-    index: 0,
-    atRankOne: 2,
-    wants: 'damage against Humanoid and Giant targets',
-  },
+  // Rogue's MURDER left this table at round 37: the owner ruled the target is
+  // not a Humanoid or Giant, so it declares no multiplier at all now.
   {
     cls: 'warrior',
     talentId: 'two_handed_weapon_specialization',
@@ -184,7 +180,7 @@ const BLANKET_MULTIPLIERS: readonly {
 ];
 
 describe('every blanket damage or crit multiplier reads a number somebody checked', () => {
-  it('has exactly these ten, so an eleventh has to be recorded', () => {
+  it('has exactly these nine, so a tenth has to be recorded', () => {
     /*
      * EQUAL SETS, not "every one found is recorded". A stale row and an
      * unrecorded effect are both worth failing on, and the second is the

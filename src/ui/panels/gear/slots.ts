@@ -2,7 +2,7 @@ import type { CombatStyleId } from '../../../game/character';
 import type { ClassId } from '../../../game/character';
 import type { EquipmentSlot, Item } from '../../../game/items/Item';
 import { canEquip } from '../../../game/items/equipRules';
-import { itemsForSlot } from '../../../game/items/itemData';
+import { benchmarkItemsForSlot, itemsForSlot } from '../../../game/items/itemData';
 import { scoreItem, type StatValuation } from '../../../game/items/itemValue';
 
 /** A gear slot, as the panel lists it. */
@@ -142,6 +142,12 @@ export interface PickerOptions {
    * current contents nowhere at all, which is worse than showing it greyed.
    */
   readonly equippedId?: number;
+  /**
+   * The profile's own benchmark template items, offered beside the captured
+   * ones and FIRST -- they are the gear a build is evaluated in. See
+   * `benchmarkItemsForSlot`.
+   */
+  readonly benchmarkIds?: ReadonlySet<number>;
 }
 
 /**
@@ -164,12 +170,14 @@ export interface PickerOptions {
  * ==============================================================================
  */
 export function pickerItems(options: PickerOptions): readonly ScoredItem[] {
-  const { slot, characterClass, style, valuation, search, showUnusable, equippedId } = options;
+  const { slot, characterClass, style, valuation, search, showUnusable, equippedId, benchmarkIds } =
+    options;
   const needle = search.trim().toLowerCase();
   const scoring = Object.keys(valuation).length > 0;
 
   const rows: ScoredItem[] = [];
-  for (const item of itemsForSlot(slot)) {
+  const templates = benchmarkIds ? benchmarkItemsForSlot(slot, benchmarkIds) : [];
+  for (const item of [...templates, ...itemsForSlot(slot)]) {
     const legal = canEquip(characterClass, item, slot);
     const kept = legal || showUnusable || item.id === equippedId;
     if (!kept) continue;
@@ -177,8 +185,12 @@ export function pickerItems(options: PickerOptions): readonly ScoredItem[] {
     rows.push({ item, score: scoreItem(item, style, valuation), ...(legal ? {} : { illegal: true }) });
   }
 
+  const isTemplate = (row: ScoredItem) => benchmarkIds?.has(row.item.id) === true;
   return rows.sort((a, b) => {
     if (a.illegal !== b.illegal) return a.illegal ? 1 : -1;
+    // THE TEMPLATES FIRST, highest set first: they are what a build is judged
+    // in, and buried among four hundred real items they would be unfindable.
+    if (isTemplate(a) !== isTemplate(b)) return isTemplate(a) ? -1 : 1;
     if (scoring && a.score !== b.score) return b.score - a.score;
     if (a.item.itemLevel !== b.item.itemLevel) return b.item.itemLevel - a.item.itemLevel;
     return a.item.name.localeCompare(b.item.name);

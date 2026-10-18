@@ -147,16 +147,17 @@ describe('the Hemo list', () => {
 
   it('shares its SHAPE with the Rupture list, which is still the point', () => {
     /*
-     * The numbers diverged and the skeleton did not: both open with
-     * Premeditation, both put Ambush above Vanish so the sequence emerges from
-     * the priorities, and both end with Preparation over a filler. Asserted
+     * The numbers diverged and the skeleton did not: both carry Vanish ->
+     * Premeditation -> Ambush as ONE sequence (round 37; Premeditation was an
+     * entry of its own at the top), both put Ambush above Vanish, and both end with Preparation over a filler. Asserted
      * because "it is its own list now" is the kind of change that invites
      * someone to reorder it freely.
      */
     const order = (list: typeof ROGUE_HEMO, abilityId: string) =>
       list.entries.findIndex((e) => e.abilityId === abilityId);
     for (const list of [ROGUE_HEMO, ROGUE_RUPTURE]) {
-      expect(order(list, 'premeditation')).toBe(0);
+      expect(order(list, 'premeditation')).toBe(-1);
+      expect(list.entries[order(list, 'vanish')].sequence).toEqual(['premeditation', 'ambush']);
       expect(order(list, 'ambush')).toBeLessThan(order(list, 'vanish'));
       expect(order(list, 'slice_and_dice')).toBeLessThan(order(list, 'rupture'));
       expect(order(list, 'rupture')).toBeLessThan(order(list, 'eviscerate'));

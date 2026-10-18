@@ -125,7 +125,14 @@ export const PRIEST_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuil
  */
 export const innerFocusSpender = (): CastReaction => ({
   id: 'inner_focus_spend',
-  canTrigger: (context, actor) => {
+  canTrigger: (context, actor, cast) => {
+    /*
+     * ON THE CHANNEL'S LAST TICK, by the owner's ruling: "Mind Flay inherits the
+     * 25% chance to crit from the Inner Focus skill proc for the entire
+     * channel." A cast reaction runs once per tick, so the first tick of three
+     * used to take the aura away from the other two.
+     */
+    if (!cast.final) return false;
     const aura = actor.auras.get(INNER_FOCUS.id);
     return aura !== undefined && aura.appliedAt < context.clock.now();
   },

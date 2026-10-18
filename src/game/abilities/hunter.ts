@@ -502,6 +502,9 @@ export const RAPID_FIRE_ABILITY: Ability = {
   cost: { resource: 'mana', amount: 100 },
   cooldownMs: seconds(300),
   requiresTarget: false,
+  // OFF THE GLOBAL COOLDOWN, by the owner: "Ensure Rapid Fire and Bestial Wrath
+  // have no global cooldown." It was on one by default.
+  triggersGcd: false,
   onCast: ({ simulation, caster }) => {
     simulation.applyAura(caster, RAPID_FIRE, caster.id);
   },
@@ -514,6 +517,8 @@ export const BESTIAL_WRATH_ABILITY: Ability = {
   cost: { resource: 'mana', amount: shareOfBase(0.12) },
   cooldownMs: seconds(120),
   requiresTarget: false,
+  // Off the global cooldown, by the same ruling as Rapid Fire above.
+  triggersGcd: false,
   /*
    * IT BUFFS THE PET, NOT THE HUNTER. "Send your PET into a rage causing 50%
    * additional damage" -- so the aura goes on whichever combatant names this

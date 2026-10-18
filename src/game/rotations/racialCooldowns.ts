@@ -1,4 +1,5 @@
-import type { RaceId } from '../character';
+import type { ClassId, RaceId } from '../character';
+import { racesForClass } from '../character';
 import { RACIALS } from '../racials';
 import type { AplEntry, AplList } from './apl';
 
@@ -196,10 +197,33 @@ export function withoutOtherRacials(list: AplList, race: RaceId): AplList {
 export function racialsForRace<L extends { readonly entries: readonly AplEntry[] }>(
   list: L,
   race: RaceId,
+  /*
+   * ==========================================================================
+   * AND A RACIAL NO RACE OF THIS CLASS CAN LEARN IS REMOVED, NOT SWITCHED OFF.
+   * The owner: "Ensure that a non-visible racial is actually a viable racial;
+   * as in that race + class combination can actually exist." A switched-off
+   * entry is a promise that a race swap can light it, and a Paladin's Blood
+   * Fury cannot be lit by any race a Paladin may be. The audit,
+   * `tools/audit_racial_entries.ts`, found 40 such entries across 19 presets.
+   *
+   * OPTIONAL so a caller with no class keeps the old behaviour; every caller
+   * that builds a profile's list passes one.
+   * ==========================================================================
+   */
+  characterClass?: ClassId,
 ): L {
   const mine = abilitiesOf(race);
+  const viable = characterClass === undefined ? undefined : viableRacialsFor(characterClass);
   let changed = false;
-  const entries = list.entries.map((entry) => {
+  const kept = list.entries.filter((entry) => {
+    const drop =
+      viable !== undefined &&
+      ALL_RACIAL_ABILITY_IDS.has(entry.abilityId) &&
+      !viable.has(entry.abilityId);
+    if (drop) changed = true;
+    return !drop;
+  });
+  const entries = kept.map((entry) => {
     if (!ALL_RACIAL_ABILITY_IDS.has(entry.abilityId)) return entry;
     const off = !mine.has(entry.abilityId);
     if ((entry.disabled === true) === off) return entry;
@@ -211,4 +235,13 @@ export function racialsForRace<L extends { readonly entries: readonly AplEntry[]
     return on;
   });
   return changed ? { ...list, entries } : list;
+}
+
+/** Every racial ability some race that may play this class can learn. */
+export function viableRacialsFor(characterClass: ClassId): ReadonlySet<string> {
+  const viable = new Set<string>();
+  for (const race of racesForClass(characterClass)) {
+    for (const id of abilitiesOf(race.id)) viable.add(id);
+  }
+  return viable;
 }

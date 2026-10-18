@@ -8,9 +8,7 @@ import {
   CONSUMABLE_HEALS,
 } from './consumableCooldowns';
 import {
-  all,
   compileRotation,
-  selfMissing,
   selfStacks,
   targetExpired,
   targetHas,
@@ -65,14 +63,7 @@ const expired = targetExpired;
 const targetAuraAtLeast = (auraId: string, secondsLeft: number) =>
   targetTime('atLeast', secondsLeft, auraId);
 
-const withoutAura = selfMissing;
 
-/** None of the three main-hand imbues is up. See `MAIN_HAND_IMBUE_IDS`. */
-const NO_MAIN_HAND_IMBUE = all(
-  withoutAura('windfury_weapon'),
-  withoutAura('flametongue_weapon'),
-  withoutAura('rockbiter_weapon'),
-);
 
 const atStacks = (auraId: string, stacks: number) => selfStacks('atLeast', stacks, auraId);
 
@@ -319,20 +310,11 @@ export const SHAMAN_ENHANCEMENT: AplList = {
   name: 'Shaman (Enhancement)',
   entries: [
   /*
-   * ONE MAIN-HAND IMBUE OF THREE, and the list holds all three. Each is gated on
-   * NO imbue being up rather than on its own being missing, so whichever one a
-   * user puts in the pre-combat list is the one that stays: the old
-   * `withoutAura('windfury_weapon')` would have cast Windfury over a Flametongue
-   * at the pull and silently undone the choice.
-   *
-   * WINDFURY IS THE DEFAULT, and the owner's: "windfury weapon + windfury totem
-   * (default behavior, no personal benefit from the totem)". Flametongue and
-   * Rockbiter are SWITCHED OFF rather than absent, so the option is one eye
-   * button away -- the arrangement Recklessness has in the Warrior lists.
+   * NO IMBUE ENTRY IN THE COMBAT LIST, by the owner: "Remove Windfury Weapon,
+   * Flametongue Weapon, and Rockbiter Weapon from the combat APL." The imbue
+   * is the pre-combat list's job -- Flametongue at 3s -- and an hour outlasts
+   * any fight here, so a combat entry could only ever be skipped.
    */
-  { abilityId: 'windfury_weapon', condition: NO_MAIN_HAND_IMBUE },
-  { abilityId: 'flametongue_weapon', condition: NO_MAIN_HAND_IMBUE, disabled: true },
-  { abilityId: 'rockbiter_weapon', condition: NO_MAIN_HAND_IMBUE, disabled: true },
   /*
    * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
    *

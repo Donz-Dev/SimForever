@@ -136,7 +136,16 @@ describe('a template piece names its build, its set and its class', () => {
       const equipment = benchmarkEquipmentFor(template.presetId, 'E65')!;
       for (const equipped of Object.values(equipment)) {
         const item = ITEMS_BY_ID.get(equipped!.itemId)!;
-        expect(item.classRestrictions).toEqual([template.characterClass]);
+        /*
+         * EVERY PIECE IS LOCKED TO A CLASS THAT INCLUDES THE WEARER, and to the
+         * wearer alone unless it is a weapon another template borrows: the Enh
+         * Shaman wears Seal Twist Ret's mace (`weaponsFrom`), which therefore
+         * reads "Classes: Paladin, Shaman".
+         */
+        expect(item.classRestrictions).toContain(template.characterClass);
+        if (item.weapon === undefined) {
+          expect(item.classRestrictions).toEqual([template.characterClass]);
+        }
       }
     }
   });

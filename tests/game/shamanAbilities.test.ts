@@ -87,6 +87,30 @@ const batchOf = (preset: string, iterations: number, seed: number) => {
   } as never);
 };
 
+/*
+ * THE ENHANCEMENT PRESET IMBUES FLAMETONGUE SINCE ROUND 37 ("pre-combat
+ * Windfury -> Flametongue Weapon", the owner), so the Windfury Weapon tests
+ * below run the same build with the one opener line swapped back. They test
+ * the IMBUE's mechanism, which no longer has a preset carrying it.
+ */
+const windfuryBatchOf = (iterations: number, seed: number) => {
+  const built = withWindfuryOpener(PRESETS_BY_ID.get('shaman_enhancement')!.build());
+  return runProfileBatch({
+    ...built,
+    simulation: { ...built.simulation, iterations, seed },
+  } as never);
+};
+
+function withWindfuryOpener<T extends { precombat?: readonly { abilityId: string }[] }>(built: T): T {
+  const precombat = (built.precombat ?? []).map((action) =>
+    action.abilityId === 'flametongue_weapon' ? { ...action, abilityId: 'windfury_weapon' } : action,
+  );
+  if (!precombat.some((action) => action.abilityId === 'windfury_weapon')) {
+    throw new Error('the Enhancement opener no longer imbues Flametongue to swap');
+  }
+  return { ...built, precombat };
+}
+
 const presetPlayer = (preset: string) => {
   const built = PRESETS_BY_ID.get(preset)!.build();
   return createPlayer({
@@ -273,15 +297,16 @@ describe('the fights', () => {
     expect(LAVA_BURST_FLAME_SHOCK_BONUS).toBe(1.2);
   });
 
-  it('casts Windfury Weapon exactly once and then never again', () => {
+  it('imbues Flametongue once, before the pull, and never Windfury', () => {
     /*
-     * Its `canCast` refuses while the imbue is up, and the imbue lasts an
-     * hour. One cast, one global cooldown, 165 mana -- paid rather than
-     * assumed, which is the whole reason it is in the list.
+     * The owner's round 37: Flametongue in the opener where Windfury was, and
+     * no imbue entries left in the combat list. The imbue lasts an hour, so the
+     * pre-combat cast is the only one.
      */
     const batch = batchOf('shaman_enhancement', 40, 5);
-    const uses = batch.abilities.find((a) => a.abilityName === 'Windfury Weapon')?.uses ?? 0;
-    expect(uses).toBeCloseTo(1, 1);
+    const used = (name: string) => batch.abilities.find((a) => a.abilityName === name)?.uses ?? 0;
+    expect(used('Flametongue Weapon')).toBeCloseTo(1, 1);
+    expect(used('Windfury Weapon')).toBe(0);
   });
 
   it('uses Stormstrike and Earth Shock, which is the pairing the debuff makes', () => {
@@ -1406,7 +1431,7 @@ describe('Windfury Weapon, as a self-contained special attack', () => {
 
   /** Run one fight of the real profile and return its damage events. */
   const fightEvents = (seed: number) => {
-    const built = PRESETS_BY_ID.get('shaman_enhancement')!.build();
+    const built = withWindfuryOpener(PRESETS_BY_ID.get('shaman_enhancement')!.build());
     const result = runProfile({
       ...built,
       simulation: { ...built.simulation, seed },
@@ -1457,7 +1482,7 @@ describe('Windfury Weapon, as a self-contained special attack', () => {
      */
     expect(WINDFURY_WEAPON_ATTACK_NAME).not.toBe(WINDFURY_WEAPON.name);
 
-    const batch = batchOf('shaman_enhancement', 30, 3);
+    const batch = windfuryBatchOf(30, 3);
     const imbue = batch.abilities.find((row) => row.abilityName === WINDFURY_WEAPON.name);
     const attack = batch.abilities.find(
       (row) => row.abilityName === WINDFURY_WEAPON_ATTACK_NAME,
@@ -1485,7 +1510,7 @@ describe('Windfury Weapon, as a self-contained special attack', () => {
      * 20 times in a 58 second fight even fully hasted, so an auto-attack row
      * carrying 33 attempts is carrying something else.
      */
-    const batch = batchOf('shaman_enhancement', 30, 4);
+    const batch = windfuryBatchOf(30, 4);
     const autos = batch.abilities.find((row) => row.abilityName === 'Main Hand Auto-Attack');
     const weapon = enhancementPlayer().weapons.mainHand!;
     const swingsIfUnhasted =

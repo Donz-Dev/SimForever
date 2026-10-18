@@ -5,6 +5,7 @@ import {
   casterConsumables,
   hybridConsumables,
 } from '../game/buffs/consumables';
+import { getCombatStyle } from '../game/character';
 import { RAID_BUFFS } from '../game/buffs/raidBuffs';
 import type { ClassId } from '../game/character';
 import type { Equipment, EquippedSlot } from '../game/items/Item';
@@ -439,33 +440,37 @@ const PROT_WARR_TALENTS: TalentAllocation = {
 
 /** Venom -- Assassination 37 / Combat 12 / Subtlety 2. Mutilate and poisons. */
 const ROGUE_VENOM_TALENTS: TalentAllocation = {
+  // The owner's respecification, decoded from https://talentsforever.com/rogue/60/00530210541501051-30230320201-002-CFD2I2GDIJ3KLNPQRTWUZXbkJ-7
   malice: 5,
   ruthlessness: 3,
-  murder: 2,
-  improved_slice_and_dice: 3,
+  improved_slice_and_dice: 2,
   relentless_strikes: 1,
   lethality: 5,
-  vile_poisons: 5,
+  vile_poisons: 4,
   cold_blood: 1,
   improved_poisons: 5,
   mutilate: 1,
   seal_fate: 5,
   venom: 1,
   improved_eviscerate: 3,
-  lightning_reflexes: 3,
+  lightning_reflexes: 2,
   puncturing_wounds: 3,
   precision: 3,
+  endurance: 2,
+  improved_sprint: 2,
+  flawless_execution: 1,
   opportunity: 2,
 };
 
 /** Combat -- Assassination 18 / Combat 33. Sinister Strike and the cooldowns. */
 const ROGUE_COMBAT_TALENTS: TalentAllocation = {
+  // The owner's respecification, decoded from https://talentsforever.com/rogue/60/00530310501-32003311201515231--CFDGIKRSWVYZXbcdefgh-7
   malice: 5,
   ruthlessness: 3,
-  murder: 2,
   improved_slice_and_dice: 3,
   relentless_strikes: 1,
-  lethality: 4,
+  lethality: 5,
+  cold_blood: 1,
   improved_eviscerate: 3,
   improved_sinister_strike: 2,
   deflection: 3,
@@ -508,18 +513,17 @@ const ROGUE_COMBAT_TALENTS: TalentAllocation = {
  * ============================================================================
  */
 const ROGUE_COMBAT_MUT_TALENTS: TalentAllocation = {
-  // Assassination, 30
+  // The owner's respecification, decoded from https://talentsforever.com/rogue/60/0053031051150105-3023032020141--CF2D2I2GDIJKLNP4RTWUZXbcdFP-7
   malice: 5,
   ruthlessness: 3,
-  murder: 2,
   improved_slice_and_dice: 3,
   relentless_strikes: 1,
   lethality: 5,
+  vile_poisons: 1,
   cold_blood: 1,
-  improved_poisons: 4,
+  improved_poisons: 5,
   mutilate: 1,
   seal_fate: 5,
-  // Combat, 21
   improved_eviscerate: 3,
   lightning_reflexes: 2,
   puncturing_wounds: 3,
@@ -552,27 +556,26 @@ const ROGUE_COMBAT_MUT_TALENTS: TalentAllocation = {
  * ============================================================================
  */
 const ROGUE_PURE_HEMO_TALENTS: TalentAllocation = {
-  // Assassination, 21
+  // The owner's respecification, decoded from https://talentsforever.com/rogue/60/005303105011-302003-5320200310013211-RTWi4kjm1pmituqwxCFDGIKvL-7
   malice: 5,
   ruthlessness: 3,
-  murder: 2,
   improved_slice_and_dice: 3,
   relentless_strikes: 1,
   lethality: 5,
   cold_blood: 1,
-  vigor: 1,
-  // Combat, 8
+  improved_poisons: 1,
   improved_eviscerate: 3,
   lightning_reflexes: 2,
   precision: 3,
-  // Subtlety, 22
   camouflage: 5,
   master_of_deception: 3,
   opportunity: 2,
-  improved_ambush: 3,
+  elusiveness: 2,
   initiative: 3,
+  ghostly_strike: 1,
   premeditation: 1,
   serrated_blades: 3,
+  dirty_deeds: 2,
   preparation: 1,
   hemorrhage: 1,
 };
@@ -912,7 +915,8 @@ const SHAMAN_ELEMENTAL_TALENTS: TalentAllocation = {
   // Enhancement, 10
   thundering_strikes: 5, ancestral_knowledge: 5,
   // Restoration, 9
-  tidal_focus: 5, totemic_focus: 1, mindfulness: 3,
+  // Totemic Focus's point moved to Shamanistic Focus, by the owner (round 37).
+  tidal_focus: 5, mindfulness: 3, shamanistic_focus: 1,
 };
 
 /*
@@ -1071,107 +1075,27 @@ const MAGE_FROSTFIRE_TALENTS: TalentAllocation = {
  * ----------------------------------------------------------------------------
  */
 const MAGE_ARCANE_TALENTS: TalentAllocation = {
-  /*
-   * ==========================================================================
-   * ONE POINT OUT OF IMPROVED CHANNELING AND INTO MISSILE BARRAGE'S NEW SECOND
-   * RANK, AND IT IS WORTH **+144.4 +/- 9.3** -- the largest single figure in the
-   * whole six-profile pass, and 16% of the profile.
-   *
-   * Client build 1.60.1.70425 took Missile Barrage from one rank to two and
-   * added two triggers. At 2/2 every one of its three chances doubles: Arcane
-   * Blast 20% -> 40%, an ARCANE MISSILE HIT 5% -> 10%, and Arcane Wrath,
-   * Fireball, Frostbolt and Frostfire Bolt 10% -> 20%.
-   *
-   * WHY IT IS WORTH SO MUCH HERE AND NOT ELSEWHERE: Arcane Missiles is **67% of
-   * this profile** and Arcane Blast 25.5%, so the talent's trigger and its
-   * payout are the build's two spells. The new missile-hit trigger makes it
-   * self-feeding -- five rolls a channel at 10% is a ~41% chance that one
-   * Arcane Missiles sets up the next -- and what it pays is a channel at HALF
-   * duration for NO mana.
-   *
-   * THE POINT COMES FROM A PERMANENT RULING. `improved_channeling` is cast
-   * pushback and threat, five points that can never do anything, and this
-   * spends one of them. The other four stay: nothing else in the tree is both
-   * live and unmaxed, hit is at its cap, and the build is not mana-bound.
-   *
-   * ARCANE WRATH WAS NOT TAKEN FOR THE WRONG REASON FIRST, WHICH IS WORTH
-   * SEPARATING FROM THE RIGHT ONE. It was skipped because its coefficient was a
-   * flagged `PLACEHOLDER_` and its cast time had been read as INSTANT -- and the
-   * cast time was a misread field rather than a silent source. The owner has
-   * since given all of it: a 3.5 second cast, 439 to 529 Arcane, and 100% of
-   * spell power.
-   * ------------------------------------------------------------------------------
-   * **ARCANE WRATH IS NOT TAKEN, AND THIS IS THE JUSTIFICATION THE OWNER ASKED
-   * FOR.** Five placements measured, paired over 400 iterations:
-   *
-   *   entry above the gated Arcane Missiles        **-118.5 +/- 11.6**
-   *   entry above Arcane Blast (the filler slot)    **-77.2 +/- 12.0**
-   *   entry at the BOTTOM of the list                0.00, never cast
-   *   talent taken, no entry                         0.00, never cast
-   *   entry gated on max Arcane Blast stacks         0.00, never cast
-   *
-   * AND THE SPELL IS NOT THE PROBLEM -- IT CARRIES ITS WEIGHT. In the filler
-   * slot it is **25.5% of the profile's damage on 6.6 casts**, which is more
-   * than Arcane Blast's own 15.4% in the same run. A 3.5 second cast for 484
-   * plus 100% of spell power plus 5% of maximum mana is a real spell.
-   *
-   * WHAT IT DISPLACES IS NOT DAMAGE, IT IS SPELL POWER. Arcane Blast goes
-   * **13.8 casts a fight to 9.8**, and Arcane Blast is this build's RAMP: each
-   * stack grants 15% of Intellect as spell power, so at 342 Intellect a stack is
-   * +51 and five stacks are **+257 on a base of 785**. Four fewer Arcane Blasts
-   * is a ramp that spends the fight lower.
-   *
-   * **AND THE PROOF IS IN THE COLUMN THE DPS CANNOT SHOW.** Arcane Missiles'
-   * cast count falls by 0.2 and its SHARE falls from 67.0% to 56.6% -- so every
-   * missile is hitting for about 15% less. It carries the highest coefficient in
-   * the kit at 1.4729, which makes it the spell that loses most per point of
-   * spell power removed, and it is 67% of the profile. **Arcane Blast is not
-   * competing with Arcane Wrath on damage per second; it is buying spell power
-   * for the two thirds of the build that is Arcane Missiles.**
-   *
-   * SO THE PER-SECOND ARITHMETIC THAT MADE THIS LOOK CLOSE WAS COMPUTED AT BASE
-   * SPELL POWER, AND THAT IS THE WHOLE ERROR. 434/sec for Arcane Wrath against
-   * 381/sec for Arcane Blast -- true at 785 spell power, and at five stacks
-   * Arcane Blast is `236 + (785 + 257) x 0.4286 = 683` over 1.5 seconds, which
-   * is **455/sec and already ahead** before a point of what the ramp does for
-   * anything else. **A per-second comparison on a build with a ramp has to be
-   * taken at the ramped figure**, or it prices the spell that breaks the ramp as
-   * though the ramp were free.
-   *
-   * AND PROTECTING THE RAMP MAKES THE SPELL UNREACHABLE, which is why the gated
-   * row is a 0.00 rather than a smaller loss: at max stacks the two Arcane
-   * Missiles entries above it win, and below max stacks the gate refuses.
-   * **There is no state in which Arcane Wrath is the top castable entry** -- the
-   * "entry above never yields" cause of a never-fired entry, arrived at
-   * deliberately.
-   *
-   * WHICH BUILD WOULD WANT IT: one whose core spell does not depend on a ramp a
-   * 3.5 second cast interrupts. Nothing here is that build, and the day a Mage
-   * profile exists without Arcane Blast this is one line to re-measure --
-   * `PRESET=mage_arcane VARIANTS=arcaneWrath npx vite-node tools/probe_build.ts`.
-   * ------------------------------------------------------------------------------
-   * ==========================================================================
-   */
-  // Arcane, 35
+  // The owner's respecification, decoded from https://talentsforever.com/mage/60/1552225223122311531-03--UDCBEFGHKONMJILPQRSA-7
+  wand_specialization: 1,
   arcane_focus: 5,
-  improved_channeling: 4,
+  improved_channeling: 5,
+  missile_barrage: 2,
   arcane_subtlety: 2,
+  magic_absorption: 2,
   arcane_concentration: 5,
+  arcane_resilience: 2,
+  arcane_geometry: 2,
   arcane_impact: 3,
   arcane_blast: 1,
+  arcane_shielding: 2,
+  improved_counterspell: 2,
   arcane_meditation: 3,
-  missile_barrage: 2,
+  arcane_wrath: 1,
   presence_of_mind: 1,
   arcane_mind: 5,
   arcane_instability: 3,
   arcane_power: 1,
-  // Fire, 11
-  improved_fire_blast: 2,
   incineration: 3,
-  ignite: 5,
-  pyroblast: 1,
-  // Frost, 5
-  elemental_precision: 5,
 };
 
 /**
@@ -1363,7 +1287,8 @@ const PALADIN_RETRIBUTION_TALENTS: TalentAllocation = {
   divine_strength: 5,
   divine_intellect: 5,
   improved_seals: 3,
-  unyielding_faith: 2,
+  // Unyielding Faith's two points moved to Reverence, by the owner (round 37).
+  reverence: 2,
   benediction: 5,
   improved_judgement: 2,
   holy_conduit: 2,
@@ -1489,10 +1414,11 @@ const PALADIN_SHOCKADIN_TALENTS: TalentAllocation = {
 const PALADIN_SHOCKADIN_2H_TALENTS: TalentAllocation = {
   ...SHOCKADIN_HOLY_BELOW_20,
   holy_shock: 1,
-  consecrated_ground: 1,
+  // One point from Two-Handed Weapon Specialization, by the owner (round 37).
+  consecrated_ground: 2,
   ...SHOCKADIN_RET_BELOW_20,
   vengeance: 3,
-  two_handed_weapon_specialization: 3,
+  two_handed_weapon_specialization: 2,
   champion_of_the_light: 3,
 };
 
@@ -2332,7 +2258,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * are named too, overriding is the only reading that does not move a
        * published figure on somebody else's behalf.
        */
-      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea', food: 'food_agility' },
+      consumables: {
+        ...AGILITY_CONSUMABLES,
+        other: 'thistle_tea',
+        food: 'food_agility',
+        // +8 weapon damage on the main hand, by the owner.
+        weapon_effect_main_hand: 'dense_sharpening_stone_main_hand',
+      },
       precombat: [
         ...before(1, 'blade_flurry'),
       ],
@@ -2361,7 +2293,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * five members of `AGILITY_CONSUMABLES` are named now; the Hemo Rogue
        * and the melee Hunter are what is left.
        */
-      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea', food: 'food_agility' },
+      consumables: {
+        ...AGILITY_CONSUMABLES,
+        other: 'thistle_tea',
+        food: 'food_agility',
+        // +8 weapon damage on the main hand, by the owner.
+        weapon_effect_main_hand: 'dense_sharpening_stone_main_hand',
+      },
       /*
        * STEALTH IS A STATE RATHER THAN A CAST, AND IS LISTED ANYWAY. A Rogue's
        * `openingAuras` carry the `stealth` aura -- the one thing about stealth
@@ -2376,8 +2314,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        */
       precombat: [
         ...before(2, 'stealth'),
-        ...before(1, 'premeditation'),
-        ...before(0, 'ambush'),
+        // Premeditation is off the opener and the Major Frenzy Potion is on it
+        // at 0s, so it is drunk with the first Ambush -- the owner's round 37.
+        // AMBUSH FIRST, THEN THE POTION, in the same instant: a potion is a
+        // completed action and the owner's stealth rule ("almost every completed
+        // cast or attack breaks stealth ... the only thing that doesn't is a
+        // rogue's premeditation") would end Stealth before the Ambush. So the first
+        // Ambush does not carry the potion's attack power -- a question for the owner.
+        ...before(0, 'ambush', 'major_frenzy_potion'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -2418,11 +2362,22 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: { ...ROGUE_HEMO_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
+      consumables: {
+        ...AGILITY_CONSUMABLES,
+        other: 'thistle_tea',
+        // +8 weapon damage on the main hand, by the owner.
+        weapon_effect_main_hand: 'dense_sharpening_stone_main_hand',
+      },
       precombat: [
         ...before(2, 'stealth'),
-        ...before(1, 'premeditation'),
-        ...before(0, 'ambush'),
+        // Premeditation is off the opener and the Major Frenzy Potion is on it
+        // at 0s, so it is drunk with the first Ambush -- the owner's round 37.
+        // AMBUSH FIRST, THEN THE POTION, in the same instant: a potion is a
+        // completed action and the owner's stealth rule ("almost every completed
+        // cast or attack breaks stealth ... the only thing that doesn't is a
+        // rogue's premeditation") would end Stealth before the Ambush. So the first
+        // Ambush does not carry the potion's attack power -- a question for the owner.
+        ...before(0, 'ambush', 'major_frenzy_potion'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -2466,7 +2421,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
          */
         precombat: [
           ...before(2, 'stealth'),
-          ...before(1, 'premeditation'),
+          // Premeditation off; the potion and a GARROTE at 0s, the owner's
+          // opener for this build now Garrote is declared.
+            // AMBUSH FIRST, THEN THE POTION, in the same instant: a potion is a
+          // completed action and the owner's stealth rule ("almost every completed
+          // cast or attack breaks stealth ... the only thing that doesn't is a
+          // rogue's premeditation") would end Stealth before the Garrote. So the first
+          // Garrote does not carry the potion's attack power -- a question for the owner.
+          ...before(0, 'garrote', 'major_frenzy_potion'),
         ],
       };
     },
@@ -2581,6 +2543,10 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         ...STRENGTH_CONSUMABLES,
         other: 'thistle_tea',
         food: 'food_strength',
+        // Major Frenzy Potion where Mighty Rage was, by the owner.
+        potion: 'major_frenzy_potion',
+        // +8 weapon damage on the main hand, by the owner.
+        weapon_effect_main_hand: 'dense_sharpening_stone_main_hand',
       },
       /*
        * ======================================================================
@@ -2727,7 +2693,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * ----------------------------------------------------------------------
        */
       precombat: [
-        ...before(2, 'lightning_bolt'),
+        // Lightning Bolt is off the opener, by the owner -- which also clears
+        // this profile's Gate B failure: Flame Shock at 0s is the one cast.
         ...before(1.5, 'searing_totem'),
         ...before(0, 'elemental_mastery'),
         ...before(0, 'flame_shock'),
@@ -2809,6 +2776,9 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         }),
         flask: 'flask_spell_power',
         food: 'food_strength',
+        // +1% spell crit and +36 spell power on the main hand, by the owner
+        // (round 37) -- the caster half of the row, where it was melee crit.
+        weapon_effect_main_hand: 'weapon_spell_crit_main_hand',
       },
       /*
        * ========================================================================
@@ -2843,7 +2813,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * ========================================================================
        */
       precombat: [
-        ...before(3, 'windfury_weapon'),
+        // FLAMETONGUE, not Windfury, by the owner's round 37.
+        ...before(3, 'flametongue_weapon'),
         ...before(1.5, 'searing_totem'),
         ...before(0, 'flame_shock'),
         ...before(0, 'rage_of_the_farseer'),
@@ -2995,7 +2966,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       precombat: [
         ...before(3, 'mage_armor'),
         ...before(1.5, 'arcane_blast'),
-        ...before(0, 'arcane_power'),
+        // Arcane Power is off the opener: it is a step of the cooldown stack.
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -3197,6 +3168,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         }),
         flask: 'flask_spell_power',
         food: 'food_spell_power',
+        // Frost Oil on the main hand, by the owner.
+        weapon_effect_main_hand: 'frost_oil_main_hand',
       },
       precombat: [
         ...before(1.5, 'seal_of_righteousness'),
@@ -3263,6 +3236,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         }),
         flask: 'flask_spell_power',
         food: 'food_spell_power',
+        // Frost Oil on the main hand, by the owner.
+        weapon_effect_main_hand: 'frost_oil_main_hand',
       },
       precombat: [
         ...before(1.5, 'seal_of_righteousness'),
@@ -3379,7 +3354,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       precombat: [
         ...before(7, 'hunters_mark'),
         ...before(5.5, 'aspect_of_the_hawk'),
-        ...before(4, 'sniper_shot'),
+        // AIMED SHOT AT 2s, where Sniper Shot was at 4s -- the owner's round 37.
+        ...before(2, 'aimed_shot'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -3632,7 +3608,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       precombat: [
         ...before(3, 'shadowform'),
         ...before(1.5, 'mind_blast'),
-        ...before(0, 'shadow_word_pain'),
+        // Shadow Word: Pain is off the opener, by the owner (round 37).
         ...before(0, 'devouring_plague'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
@@ -3644,8 +3620,30 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
 function withStockRotations(presets: readonly ProfilePreset[]): readonly ProfilePreset[] {
   return presets.map((preset) => ({
     ...preset,
-    build: () => syncDefaultRotation(preset.build()),
+    build: () => syncDefaultRotation(withoutUnusedOffHandEffect(preset.build())),
   }));
+}
+
+/**
+ * The Off Hand weapon effect is EMPTY on every preset that swings no off-hand
+ * weapon.
+ *
+ * ----------------------------------------------------------------------------
+ * THE OWNER LISTED SEVENTEEN PROFILES BY NAME and every one of them is exactly
+ * a build whose style has no second weapon -- the row already contributed
+ * nothing there (`consumableReachesCharacter`), and the panel showed a stone on
+ * a shield or a staff. So it is written as the rule the list describes rather
+ * than as seventeen edits, and a new single-weapon preset gets it for free.
+ * The dual-wielders -- DW Fury, the six Rogues, LW and Hawk Melee -- keep theirs.
+ * ----------------------------------------------------------------------------
+ */
+function withoutUnusedOffHandEffect(profile: CharacterProfile): CharacterProfile {
+  const style = profile.character.combatStyle ? getCombatStyle(profile.character.combatStyle) : undefined;
+  if (style?.offHand === 'weapon') return profile;
+  if (!('weapon_effect_off_hand' in profile.consumables)) return profile;
+  const { weapon_effect_off_hand: _dropped, ...consumables } = profile.consumables;
+  void _dropped;
+  return { ...profile, consumables };
 }
 
 /**

@@ -1,9 +1,9 @@
 import type { Rotation } from '../../engine';
 import type { TalentAllocation } from '../talents/Talent';
-import type { AplCondition, AplList } from './apl';
+import type { AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
 import { CONSUMABLE_COOLDOWNS, CONSUMABLE_HEALS } from './consumableCooldowns';
-import { any, compileRotation, fightRemainingFraction, not, selfMissing, targetExpired } from './apl';
+import { compileRotation, selfMissing, targetExpired } from './apl';
 
 /**
  * "IF NOT ACTIVE", which is the ruleset owner's wording and is NOT the same as
@@ -132,10 +132,11 @@ export const SHADOW_WORD_DEATH_HOLD_FRACTION = 0.35;
  * it compares the same two numbers the same way -- so the band converts to data
  * with no helper and no approximation.
  */
-const outsideTheHoldBand: AplCondition = any(
-  not(fightRemainingFraction('atMost', SHADOW_WORD_DEATH_HOLD_FRACTION)),
-  fightRemainingFraction('atMost', EARLY_DEMISE_FRACTION),
-);
+/*
+ * THE HOLD BAND IS RETIRED, by the owner: Shadow Word: Death is cast on
+ * cooldown. The two fractions above stay exported because they still describe
+ * Early Demise's own window; nothing in the list reads them now.
+ */
 
 /**
  * SHADOW — the form first, then the two bleeds, then Mind Flay as the filler.
@@ -217,7 +218,18 @@ export const PRIEST_SHADOW: AplList = {
    * to improve.
    * ==========================================================================
    */
-  { abilityId: 'inner_focus', note: 'Free and off the GCD. Worth +6.13 with this entry, 0.00 without it.' },
+  /*
+   * INNER FOCUS PAIRED WITH MIND FLAY, by the owner, as one SEQUENCE: "Inner
+   * Focus paired with Mind Flay to force this connection in sequence." Mind
+   * Flay now keeps the 25% crit for its whole channel -- the spender waits for
+   * the channel's last tick -- so the free crit lands on three ticks instead of
+   * on whichever spell happened to be next.
+   */
+  {
+    abilityId: 'inner_focus',
+    sequence: ['mind_flay'],
+    note: 'Free and off the GCD, and always followed by Mind Flay, which keeps the crit for the whole channel.',
+  },
     { abilityId: 'shadow_word_pain', condition: expired('shadow_word_pain') },
     { abilityId: 'devouring_plague', condition: expired('devouring_plague') },
   /*
@@ -256,11 +268,12 @@ export const PRIEST_SHADOW: AplList = {
    * so between 35% and 20% remaining the list simply falls past it to Mind
    * Flay, which is what "held" costs and is less than the cooldown would.
    */
-  {
-    abilityId: 'shadow_word_death',
-    condition: outsideTheHoldBand,
-    note: 'Held out of the band Early Demise wants it in. Worth +37.7; the gate costs -4.9.',
-  },
+  /*
+   * ON COOLDOWN, by the owner: "Remove any combat duration gating from Shadow
+   * Word: Death, just cast it on cooldown." It was held out of a band near the
+   * end of the fight for Early Demise.
+   */
+  { abilityId: 'shadow_word_death' },
   { abilityId: 'mind_flay' },
   ],
 };

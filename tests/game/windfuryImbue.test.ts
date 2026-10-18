@@ -32,9 +32,28 @@ import { characterAtCombatStart } from '../../src/simulator';
  * ==============================================================================
  */
 
+/*
+ * THE PRESET IMBUES FLAMETONGUE SINCE ROUND 37 -- the owner's "pre-combat
+ * Windfury -> Flametongue Weapon" -- so the clause is tested on the same build
+ * with that one opener line swapped back.
+ */
+function windfuryEnhancement() {
+  const built = PRESETS_BY_ID.get('shaman_enhancement')!.build();
+  return {
+    ...built,
+    precombat: (built.precombat ?? []).map((action) =>
+      action.abilityId === 'flametongue_weapon' ? { ...action, abilityId: 'windfury_weapon' } : action,
+    ),
+  };
+}
+
 /** Every aura application of `auraId` on the player, over one fight. */
-function applications(presetId: string, auraId: string, seed = 4242): number {
-  const profile = PRESETS_BY_ID.get(presetId)!.build();
+function applications(
+  preset: string | ReturnType<typeof windfuryEnhancement>,
+  auraId: string,
+  seed = 4242,
+): number {
+  const profile = typeof preset === 'string' ? PRESETS_BY_ID.get(preset)!.build() : preset;
   const events: TelemetryEvent[] = [];
   const simulation = new Simulation(trainingDummyEncounter(profile, seed), {
     emit: (event) => events.push(event),
@@ -52,7 +71,7 @@ function applications(presetId: string, auraId: string, seed = 4242): number {
 }
 
 describe('Windfury Weapon against Windfury Totem', () => {
-  it('leaves the Enhancement Shaman no totem procs at all', () => {
+  it('leaves a Windfury-imbued Enhancement Shaman no totem procs at all', () => {
     /*
      * ========================================================================
      * THE TOTEM IS SELECTED AND PAYS NOTHING, which is the whole point of
@@ -64,14 +83,27 @@ describe('Windfury Weapon against Windfury Totem', () => {
      * so an application IS the benefit, and zero of them is the clause.
      * ========================================================================
      */
-    const profile = PRESETS_BY_ID.get('shaman_enhancement')!.build();
+    const profile = windfuryEnhancement();
     expect(profile.raidBuffs, 'the box is ticked').toContain('windfury_totem');
 
     // And the imbue really is up, or the refusal would be for the wrong reason.
     const built = characterAtCombatStart(profile)!;
     expect(built.auras.has(WINDFURY_WEAPON_IMBUE.id), 'the imbue is on').toBe(true);
 
-    expect(applications('shaman_enhancement', 'windfury_totem')).toBe(0);
+    expect(applications(profile, 'windfury_totem')).toBe(0);
+  });
+
+  it('pays the shipped Enhancement Shaman, which imbues Flametongue instead', () => {
+    /*
+     * THE OTHER HALF OF ROUND 37'S SWAP: with no Windfury imbue the clause does
+     * not apply, so the ticked totem now reaches the preset. Summed over seeds
+     * because the proc is a rate.
+     */
+    const procs = [4242, 99, 1234].reduce(
+      (total, seed) => total + applications('shaman_enhancement', 'windfury_totem', seed),
+      0,
+    );
+    expect(procs).toBeGreaterThan(0);
   });
 
   it('still procs for somebody who carries no imbue, over several seeds', () => {

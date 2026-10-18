@@ -681,6 +681,15 @@ export function revelationSpender(): CastReaction {
   return {
     id: 'revelation_spend',
     canTrigger: (_context, actor, event) => {
+      /*
+       * A CHANNEL SPENDS IT ON ITS LAST TICK, NOT ITS FIRST, by the owner's
+       * ruling: "Wrack, Mind Flay, and Arcane Missiles inherit the 100% chance
+       * to crit from the Revelation proc for the entire channel." A cast
+       * reaction fires once per channel TICK, so without this the first
+       * missile spent the charge and the other four rolled at ordinary crit.
+       * A plain cast is `final` on its one and only run.
+       */
+      if (!event.final) return false;
       const aura = actor.auras.get(REVELATION.id);
       if (!aura) {
         procCastSequence = null;

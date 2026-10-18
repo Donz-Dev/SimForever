@@ -585,19 +585,23 @@ describe('Quietus is a clock, not a health bar', () => {
 // Murder
 // ---------------------------------------------------------------------------
 
-describe('Murder applies on the owner’s ruling about the target', () => {
-  it('is +4% to ALL damage, auto attacks included', () => {
+describe('Murder, on the owner’s ruling that the target is neither type', () => {
+  /*
+   * ROUND 37 REVERSED THE EARLIER RULING. It applied to every target as +4% to
+   * all damage; the owner: "it is unrealistic to think you will always be
+   * fighting a humanoid or giant". So it is a TARGET cause now -- inert, and it
+   * expires only if an encounter declares a creature type.
+   */
+  it('grants nothing, auto attacks included', () => {
     expect(talentNumber('rogue', 'murder', 2)).toBe(4);
     const build = talentBuild('rogue', { murder: 2 });
-    expect(build.damageMultiplier).toBeCloseTo(1.04, 10);
+    expect(build.damageMultiplier).toBeCloseTo(1, 10);
   });
 
-  it('keeps the assumption visible rather than silently met', () => {
+  it('says why, as a target cause rather than a scope', () => {
     const stated = ROGUE_TALENT_EFFECTS.murder.find((e) => e.kind === 'unmodelled');
-    expect(stated && stated.kind === 'unmodelled' && stated.reason).toMatch(
-      /Humanoid or a Giant/,
-    );
-    // A ruling, not a scope: the encounter could change and this would too.
+    expect(stated && stated.kind === 'unmodelled' && stated.reason).toMatch(/humanoid or giant/);
+    // A target cause, not a scope: the encounter could change and this would too.
     expect(stated && stated.kind === 'unmodelled' && stated.scope).toBeUndefined();
   });
 });

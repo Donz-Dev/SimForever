@@ -3,6 +3,7 @@ import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
 import {
   DEADLY_POISON_TICK_AP_COEFFICIENT,
   ruptureTickApCoefficient,
+  GARROTE_TICK_AP_COEFFICIENT,
 } from '../combat/coefficients';
 
 /**
@@ -212,6 +213,45 @@ export function thousandCutsAura(energyPerStack: number): AuraDefinition {
     },
   };
 }
+
+/**
+ * Garrote's bleed: "552 damage over 18 sec, increased by your Attack Power" --
+ * 92 every 3 seconds, six ticks, plus 7% of attack power a tick (the owner's
+ * figure). A bleed like Rupture: physical, ignores armor, and every tick can
+ * crit at the melee special crit chance, a Forever rule for every DoT.
+ */
+export const GARROTE_TICK_DAMAGE = 92;
+export const GARROTE_TICK_INTERVAL_MS = seconds(3);
+export const GARROTE_DURATION_MS = seconds(18);
+
+export const GARROTE: AuraDefinition = {
+  id: 'garrote',
+  name: 'Garrote',
+  durationMs: GARROTE_DURATION_MS,
+  isDebuff: true,
+  isBleed: true,
+  refreshBehaviour: 'reset',
+  periodic: {
+    intervalMs: GARROTE_TICK_INTERVAL_MS,
+    onTick: (context, aura) => {
+      const source = context.combatant(aura.sourceId);
+      const target = context.combatant(aura.targetId);
+      if (!source || !target || !target.isAlive) return;
+      dealDamage(context, {
+        source,
+        target,
+        abilityId: aura.id,
+        abilityName: aura.name,
+        school: 'physical',
+        baseAmount: GARROTE_TICK_DAMAGE,
+        powerCoefficient: GARROTE_TICK_AP_COEFFICIENT,
+        periodic: true,
+        critFrom: 'melee-special',
+        appliesArmor: false,
+      });
+    },
+  },
+};
 
 /**
  * Rupture's bleed.

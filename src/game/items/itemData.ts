@@ -1279,6 +1279,25 @@ export function itemsForSlot(slot: EquipmentSlot): readonly Item[] {
   return ITEMS.filter((item) => !BENCHMARK_IDS.has(item.id) && item.slots.includes(slot));
 }
 
+/**
+ * The BENCHMARK items, among the given ids, that fit a slot.
+ *
+ * ----------------------------------------------------------------------------
+ * THE OWNER ASKED FOR THEM IN THE PICKER: "The B55, E65, E75, and E85 template
+ * gear should be available in the gear listing when you attempt to change /
+ * evaluate gear." `itemsForSlot` still leaves them out, so nothing that lists
+ * REAL loot changes; the picker asks for the ones belonging to the profile's
+ * own template and labels them as templates. Every item is named for its set
+ * ("E65 Chest"), which is what stops one passing for Forever data.
+ * ----------------------------------------------------------------------------
+ */
+export function benchmarkItemsForSlot(
+  slot: EquipmentSlot,
+  ids: ReadonlySet<number>,
+): readonly Item[] {
+  return BENCHMARK.filter((item) => ids.has(item.id) && item.slots.includes(slot));
+}
+
 /** Enchants that can go on a slot. */
 export function enchantsForSlot(slot: EquipmentSlot): readonly Enchant[] {
   return ENCHANTS.filter((enchant) => enchant.slots.includes(slot));

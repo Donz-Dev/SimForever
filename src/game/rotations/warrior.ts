@@ -14,7 +14,6 @@ import {
   resource,
   selfHealth,
   selfTime,
-  swingIn,
   targetStacks,
   targetTime,
 } from './apl';
@@ -725,37 +724,10 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: AplList = {
   { abilityId: 'bloodthirst' },
   { abilityId: 'whirlwind' },
   /*
-   * ----------------------------------------------------------------------------
-   * THIS ENTRY STILL CANNOT FIRE, AND THE REASON HAS CHANGED TWICE. IT IS LEFT
-   * AS THE OWNER WROTE IT.
-   *
-   * It was added on the ruleset owner's instruction, because Spearing Strike was
-   * in the DW Fury preset's talents and in no list that build could reach, so
-   * one point looked like it was doing nothing. The audit that found it was right
-   * that the point does nothing and wrong about why: SPEARING STRIKE REQUIRED A
-   * TWO-HANDED WEAPON -- stated by the spellbook capture and by
-   * `foreverchanges.pro`, and absent only from the older Wowhead tooltip we were
-   * reading.
-   *
-   * THE OWNER HAS NOW ANSWERED BOTH OF THE DECISIONS THIS NOTE USED TO NAME, and
-   * the answers point opposite ways. Client build 1.60.1.70170 took the
-   * two-handed requirement off the ability and put a BATTLE STANCE one on, which
-   * this list -- chosen by dual-wield AND Berserker Stance -- can no more satisfy
-   * than it could hold a two-hander. And the owner's new DW Fury build moves the
-   * talent point OUT, to Improved Execute. So the entry is dead for a third
-   * reason, which is now the first one the engine reaches: the build does not
-   * know the ability, `PriorityRotation` skips an entry whose ability the actor
-   * does not know, and the entry costs the list nothing.
-   *
-   * WHICH MAKES IT WORTH KEEPING AS A MARKER rather than a mistake: the owner put
-   * it here, and if a future build takes the talent again the question of whether
-   * a Berserker warrior should dance to Battle for it is theirs.
-   *
-   * Not `pooled`: the two strikes above it already take priority, so rationing
-   * it behind a rage floor as well would keep it in the same place it was.
-   * ----------------------------------------------------------------------------
+   * SPEARING STRIKE IS OUT OF THIS LIST, by the owner: "Spearing Strike taken
+   * out of APL". It was a marker for a talent the build does not take, behind a
+   * Battle Stance requirement a Berserker list cannot meet.
    */
-  { abilityId: 'spearing_strike' },
   /*
    * ==========================================================================
    * BERSERKER RAGE, WHICH CLOSES THE WARRIOR'S LAST LIVE GAP -- and it is a
@@ -1157,28 +1129,6 @@ export const BATTLE_HAMSTRING_RAGE = 20;
  */
 export const BATTLE_SUNDER_REFRESH_WINDOW_MS = seconds(3);
 
-/**
- * How much of a swing must be left for the Arms list to cast Slam.
- *
- * ----------------------------------------------------------------------------
- * THE RULESET OWNER'S RULE, and their reason in their own words: "this
- * attempts to squeeze a Slam cast in without it affecting your auto-attack
- * flow."
- *
- * Slam is the one ability in this list with a cast time, and Improved Slam
- * takes it to half a second and makes it HOLD the swing rather than reset it.
- * So a Slam started with more than a second of swing timer left finishes well
- * before the swing is due and costs that swing nothing.
- *
- * Read off the pending swing's own scheduled timestamp, which is the only
- * thing that actually knows -- haste, an extra attack and a cast that reset
- * the timer all move it, and a rotation computing it from the weapon's speed
- * would be guessing at all three.
- * ----------------------------------------------------------------------------
- */
-export const SLAM_SWING_WINDOW_MS = seconds(1);
-
-/** Milliseconds until this actor's main hand swings again, or 0 if it is idle. */
 
 /**
  * Two-hander, Battle Stance. Specified by the ruleset owner, in this order.
@@ -1196,8 +1146,9 @@ export const SLAM_SWING_WINDOW_MS = seconds(1);
  *     Arms warrior has Mortal Strike, Slam, Rend and Execute to spend on, so
  *     the surplus that goes into a swing is a much bigger surplus -- and the
  *     entry sits ABOVE all four of them, which only works because of that.
- *   - SLAM IS ABOVE MORTAL STRIKE and gated on the swing timer, which is the
- *     only entry in any list that reads it. See `SLAM_SWING_WINDOW_MS`.
+ *   - SLAM IS ABOVE MORTAL STRIKE and UNGATED. It was held to more than a
+ *     second of swing left; the owner removed that gate at round 37, because
+ *     Improved Slam 2/2 lets the swing continue through the cast.
  *   - OVERPOWER IS BELOW SUNDER ARMOR. It needs no condition here: it is
  *     gated on the window a target's dodge opens, and `checkCast` refuses it
  *     until then.
@@ -1298,18 +1249,13 @@ export const WARRIOR_TWO_HAND_BATTLE: AplList = {
     condition: targetTime('atMost', 0, REND.id),
   },
   /*
-   * SLAM ABOVE MORTAL STRIKE, and it was LAST in the list until the owner
-   * respecified it.
-   *
-   * The gate is unchanged and is what makes the position affordable: the entry
-   * only fires with more than a second of swing timer left, so it is refused
-   * outright in the window where it would cost a swing. It is the one entry in
-   * any list that reads the swing timer; see `SLAM_SWING_WINDOW_MS`.
+   * SLAM ABOVE MORTAL STRIKE, and UNGATED by the owner: "Slam no longer needs a
+   * fixed 'Main hand swing is over 1000 ms away'". The gate existed to keep a
+   * cast from costing a swing, and Improved Slam 2/2 makes the cast `continue`
+   * -- the swing timer runs straight through it -- so there is no swing left
+   * for the gate to protect.
    */
-  {
-    abilityId: 'slam',
-    condition: swingIn('above', SLAM_SWING_WINDOW_MS),
-  },
+  { abilityId: 'slam' },
   // Talent-gated: a warrior without the capstone does not know it.
   { abilityId: 'mortal_strike' },
   /*

@@ -81,10 +81,12 @@ describe('the two fractions', () => {
   });
 
 
-  it('is in the list, ungated except for the hold', () => {
+  it('is in the list, UNGATED -- the hold is retired', () => {
+    // The owner's round 37: "Shadow Word: Death should be cast on cooldown, no
+    // more gating conditions."
     const entry = PRIEST_SHADOW.entries.find((e) => e.abilityId === 'shadow_word_death');
     expect(entry).toBeDefined();
-    expect(entry!.condition).toBeDefined();
+    expect(entry!.condition).toBeUndefined();
   });
 });
 
@@ -101,12 +103,15 @@ describe('where the casts actually land', () => {
     expect(all.length).toBeGreaterThan(SEEDS * 2);
   });
 
-  it('NEVER casts it inside the hold band', () => {
-    const inBand = all.filter(
-      (remaining) =>
-        remaining <= SHADOW_WORD_DEATH_HOLD_FRACTION && remaining > EARLY_DEMISE_FRACTION,
-    );
-    expect(inBand).toEqual([]);
+  /*
+   * UNGATED, IT STILL LANDS NOTHING IN THE OLD BAND -- AND THAT IS CADENCE, NOT
+   * A GATE. Casts fall at about 4s, 29s and 51s of a 60s fight: the 18s
+   * cooldown plus whatever Mind Flay channel is running when it comes back puts
+   * the third cast past the band. So "the band is empty" cannot tell the ruling
+   * from the old hold; the condition being GONE (above) is what does.
+   */
+  it('casts three times a fight, which is as often as its cooldown allows', () => {
+    expect(all.length / SEEDS).toBeCloseTo(3, 0);
   });
 
   /*
@@ -120,12 +125,10 @@ describe('where the casts actually land', () => {
   });
 
   /*
-   * THE MEASURED CONSEQUENCE, pinned so it cannot drift silently: the hold
-   * changes HOW MANY casts there are and not where the important one lands.
-   * Exactly one a fight is inside the window, held or unheld -- which is why
-   * the hold measures at -4.9 rather than paying for itself. If this ever
-   * reads two, the window has grown past the cooldown and the argument in
-   * `rotations/priest.ts` is stale.
+   * THE MEASURED CONSEQUENCE, and why retiring the hold cost the window
+   * nothing: exactly one cast a fight is inside Early Demise's window, held or
+   * unheld -- which is why the hold measured -4.9 rather than paying for itself.
+   * If this ever reads two, the window has grown past the cooldown.
    */
   it('lands exactly one cast in the window, which is all the window holds', () => {
     const perFight = all.length / SEEDS;

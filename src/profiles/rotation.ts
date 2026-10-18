@@ -102,7 +102,7 @@ export function stockListFor(profile: CharacterProfile): AplList | undefined {
   );
   if (!list) return undefined;
   return withoutUnselectedConsumables(
-    racialsForRace(list, profile.character.race),
+    racialsForRace(list, profile.character.race, profile.character.characterClass),
     profile.character.characterClass,
     profile.consumables,
   );
@@ -128,7 +128,11 @@ export function syncDefaultRotation(profile: CharacterProfile): CharacterProfile
    * would look.
    */
   if (profile.rotation.source === 'custom') {
-    const rotation = racialsForRace(profile.rotation, profile.character.race);
+    const rotation = racialsForRace(
+      profile.rotation,
+      profile.character.race,
+      profile.character.characterClass,
+    );
     return rotation === profile.rotation ? profile : { ...profile, rotation };
   }
   const stock = defaultRotationFor(profile);

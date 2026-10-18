@@ -10,8 +10,26 @@ import {
   BENCHMARK_SETS,
   BENCHMARK_TEMPLATES_BY_PRESET,
   benchmarkEquipmentFor,
+  benchmarkItemIdsFor,
+  benchmarkTemplatesWorn,
 } from '../../game/items/benchmarkSets';
 import { defaultValuationForPreset, templateIdFor } from '../../game/items/defaultValuation';
+
+/*
+ * THE TEMPLATE ITEMS THE PICKER OFFERS: the profile's own template, or -- for a
+ * hand-built character that names none -- the templates of whatever template
+ * items it is wearing, which is how a new character starts.
+ */
+function pickerTemplateIds(profile: CharacterProfile): ReadonlySet<number> {
+  const named = templateIdFor(profile.benchmarkTemplateId, profile.character.name);
+  if (named !== undefined) return benchmarkItemIdsFor(named);
+  const worn = Object.values(profile.equipment).flatMap((slot) => (slot ? [slot.itemId] : []));
+  const ids = new Set<number>();
+  for (const template of benchmarkTemplatesWorn(worn)) {
+    for (const id of benchmarkItemIdsFor(template)) ids.add(id);
+  }
+  return ids;
+}
 import { scoreEnchant, scoreItem, type StatValuation } from '../../game/items/itemValue';
 import { Panel } from '../components/Panel';
 import { HoverCard } from '../components/HoverCard';
@@ -375,6 +393,7 @@ function GearSlot({
           style={style}
           valuation={valuation}
           {...(worn ? { equippedId: worn.itemId } : {})}
+          benchmarkIds={pickerTemplateIds(profile)}
           onClose={() => setOpen(undefined)}
           onPick={(itemId) => {
             setOpen(undefined);

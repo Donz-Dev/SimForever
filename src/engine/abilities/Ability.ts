@@ -222,6 +222,22 @@ export interface Ability {
   readonly breaksActionAuras?: boolean;
 
   /**
+   * Abilities whose cast can OPEN this one's own `canCast` gate.
+   *
+   * --------------------------------------------------------------------------
+   * FOR A SEQUENCE, AND ONLY THAT. A sequence is checked for affordability
+   * before its first step, so a later step whose gate the first step opens --
+   * Ambush after Vanish, which needs the stealth Vanish creates -- would be
+   * refused and the sequence would never start. Naming the enabler here lets
+   * `PriorityRotation` forgive that one refusal when the enabler comes earlier
+   * in the same sequence. Declared rather than assumed for every gate, because
+   * forgiving a gate nothing opens -- Eviscerate's combo points after Cold
+   * Blood -- would spend the first step on a sequence that then abandons.
+   * --------------------------------------------------------------------------
+   */
+  readonly enabledBy?: readonly string[];
+
+  /**
    * The stance aura id this ability PUTS the caster in, if it is a stance
    * change.
    *
