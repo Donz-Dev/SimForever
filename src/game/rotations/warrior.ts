@@ -1120,6 +1120,9 @@ export const WARRIOR_SHIELD_DEFENSIVE_ROTATION: Rotation = compileRotation(WARRI
  *   SHIELD SLAM -> BLOODTHIRST, in place, keeping the Execute gate. This build
  *   takes Bloodthirst and no Shield Slam, so the old entry was skipped anyway.
  *
+ *   HEROIC STRIKE AT 65 RAGE, where the Prot list's is 26 -- the one change
+ *   the optimisation pass shipped, see `FURY_PROT_HEROIC_STRIKE_RAGE`.
+ *
  *   DEATH WISH above Heroic Strike, UNGATED. The opener pre-casts it at 1.5s,
  *   so in a 60 second fight this entry is never reached -- it is the second
  *   cast in a fight past three minutes, which is the "the fight is shorter than
@@ -1128,11 +1131,38 @@ export const WARRIOR_SHIELD_DEFENSIVE_ROTATION: Rotation = compileRotation(WARRI
  *   is for, and Death Wish costs 10 rage where Execute takes the rest.
  * ============================================================================
  */
+/**
+ * Heroic Strike's rage floor on the Fury Prot list, where the Prot list's is 26.
+ *
+ * ----------------------------------------------------------------------------
+ * THE OPTIMISATION PASS'S ONE SHIPPED CHANGE. At 26 Heroic Strike takes the
+ * pool every time it passes 26, so Bloodthirst -- 30 rage, below it -- was
+ * cast 2.2 times in a 60 second fight, ONE of them the opener. Shield Slam on
+ * Prot Warr costs less and does not have the problem, which is why that list
+ * keeps its floor.
+ *
+ * SWEPT, NOT PICKED, and it is a plateau: paired against 26 over 400
+ * iterations at 60s, every floor from 45 to 90 measures +41 to +50 (interval
+ * about 11), and at 180s every floor from 35 to 70 measures +18 to +20
+ * (interval about 10). 65 is inside both plateaus and had the flattest DEATH
+ * deltas of the sweep, +0.05 and -0.03 -- deaths are a tank's first figure.
+ * ----------------------------------------------------------------------------
+ */
+export const FURY_PROT_HEROIC_STRIKE_RAGE = 65;
+
 export const WARRIOR_FURY_PROT: AplList = {
   name: 'Warrior (Fury Prot)',
   entries: WARRIOR_SHIELD_DEFENSIVE.entries.flatMap((entry): AplEntry[] => {
     if (entry.abilityId === 'shield_slam') return [{ ...entry, abilityId: 'bloodthirst' }];
-    if (entry.abilityId === 'heroic_strike') return [{ abilityId: 'death_wish' }, entry];
+    if (entry.abilityId === 'heroic_strike') {
+      return [
+        { abilityId: 'death_wish' },
+        {
+          ...entry,
+          condition: outsideExecute(resource('atLeast', FURY_PROT_HEROIC_STRIKE_RAGE, 'rage')),
+        },
+      ];
+    }
     return [entry];
   }),
 };

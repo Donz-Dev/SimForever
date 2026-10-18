@@ -67,6 +67,7 @@ the tooling to be a bit more sophisticated as well."
 | 35 | **A MISCELLANEOUS CLEANUP, TEN OWNER ITEMS IN ONE PR** -- Rupture by combo point, the spell miss floor removed, the Paladin seal and Judgement balance pass, the Seal Twist Echo bug, three Shaman options (Flametongue Weapon, Rockbiter Weapon, Flametongue Totem), Frost Oil, and Bane of Doom, Cone of Cold and Soul Fire declared | **not re-baselined**, on the owner's standing instruction. `USES=1` on the five touched profiles: the new imbue entries read `(switched off in the list)` and nothing new never-fires. Five new questions, one old one answered | see below |
 | 36 | **RACIALS, PALADINS, THREE RAID BUFFS AND THE ARCANE MAGE** -- crit damage racials multiply the whole base, Holy Strike's flat damage halved, Consecration 4.125%, One-Handed Weapon Specialization with three exceptions, Devotion Aura everywhere and Thorns/Retribution Aura on the tanks, Missile Barrage off Arcane Missiles, a race swap in the GUI and an Arcane Blast stack chart | **not re-baselined**. Arcane's missiles fall **15.7 -> 10.5 casts a fight** and the profile with them; the tanks gain ~11% of their damage from the two retaliation auras | see below |
 | 37 | **THE OWNER'S LIST ACROSS 25 PROFILES, AND THREE MECHANISMS IT NEEDED** -- five new talent trees, ~30 list and opener edits, Garrote declared, a sequence that VANISH opens (`Ability.enabledBy`), channels spending Revelation and Inner Focus on their last tick, 40 unviable racial entries removed, empty off-hand weapon effects, and the four template sets in the gear picker | **not re-baselined**. `USES=1` on 22 touched profiles: every new entry and sequence fires; two found by it and fixed -- the potion breaking Stealth, and Pure Hemo's Rupture at 0.0 | see below |
+| 38 | **FURY PROT, A 29TH PROFILE, AND THE TANK EXECUTE CLAUSE** -- the owner's 5/31/15 Prot Warr copy with Bloodthirst for Shield Slam, Death Wish and their opener; both shield tanks go to Battle Stance for Execute in the last 20%, with every other rage spender switched off so they stay there. Then a two-pass optimisation, read on deaths first | **not re-baselined**. One change shipped: Fury Prot's Heroic Strike floor 26 -> 65, **+47.4 DPS at 60s, deaths flat**. Two more priced and left as questions | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -152,6 +153,60 @@ Rupture Rogue's pre-combat `stealth` line as `<-- NEVER HAPPENED`. It does on
 `main` too: stealth is a `PRECOMBAT_STATES` entry with no ability, and the tool
 does not read that table the way the APL panel and the opener guard do. A
 reporting gap, not a rotation one.
+
+## Round 38: Fury Prot, the tank Execute clause, and its optimisation pass
+
+**A 29TH PROFILE AND A SECOND WARRIOR TANK.** Fury Prot is the owner's 5/31/15
+(decoded from their URL, matches it), and copies Prot Warr in everything else
+by their word -- so it DERIVES from that preset and its list derives from the
+Prot list. Bloodthirst replaces Shield Slam in place, Death Wish sits above
+Heroic Strike, and the opener is theirs: Bloodrage and Battle Shout at 10s,
+Defensive Stance at 3s, Death Wish at 1.5s, Mighty Rage Potion, a queued Heroic
+Strike and Bloodthirst at 0s. No Charge: Charge reaches Defensive only through
+Vanguard, and this tree does not take it. `warriorRotation` now takes talents --
+a Defensive shield warrior with Bloodthirst runs `WARRIOR_FURY_PROT`.
+
+**THE EXECUTE CLAUSE, ON BOTH SHIELD TANKS.** In the last 20% of the fight the
+list casts Battle Stance to reach Execute -- the engine's own stance-reaching
+rule, no stance entry needed. **STAYING THERE IS THE HALF THAT NEEDED WORK**:
+Shield Block and Revenge require Defensive, so left alone the list would reach
+for one the moment Execute was unaffordable and dance back every global
+cooldown. Every rage spender other than Execute is switched off inside the
+window (`outsideExecute`). Survival, Bloodrage, consumables and racials stay
+live; Shield Wall is deliberately not gated, so a dying tank does go back to
+Defensive for it. Execute fires 5.9 times a fight on Prot Warr and 7.1 on Fury
+Prot at 60s.
+
+**THREE STANCE TESTS SAID "NEVER LEAVES DEFENSIVE" AND NOW SAY "NEVER BEFORE THE
+WINDOW"**, read off the event stream by `tests/helpers/stanceCasts.ts`. A count
+of `stance_change` rows was the old check and cannot see WHEN a swap happened.
+
+**THE TEMPLATE ROW IS APPENDED, NOT PLACED BESIDE PROT WARR**, and the first
+draft placed it there. Benchmark item ids are allocated by template POSITION,
+so the insert renumbered every later set's items -- which a saved profile
+stores. A test comparing the two presets' equipment is what showed the ids
+moving; the file already said this in its own words beside the Shockadin 2H.
+
+### The optimisation pass -- deaths first, then DPS
+
+`probe_build.ts` now prints a paired DEATHS delta beside the DPS one whenever
+the baseline dies, because the procedure says a tank is read on deaths and the
+tool could not show them. 400 paired iterations at 60s unless stated.
+
+| dimension | what was tried | result |
+| --- | --- | --- |
+| theme | Warrior, Fury majority, shield, Defensive, target swings back | fixed, nothing moved |
+| gear | E65 template, untouched | verified only |
+| talents | Imp. Berserker Rage (dead) and Booming Voice into Unbridled Wrath; Defiance (threat) into Anticipation + Imp. Bloodrage or Imp. Thunder Clap | **every variant noise** at 60s and 180s, on DPS and deaths -- the owner's tree stands |
+| pre-combat | the owner's opener | nothing to add: Sunder and Battle Shout are raid-supplied, Demoralizing Shout reduces nothing on this target |
+| APL | Bloodthirst above Heroic Strike / Shield Block / Revenge; Heroic Strike's floor swept 26 to 90 | **SHIPPED: Heroic Strike at 65.** At 26 it took the pool every time it passed 26 and Bloodthirst (30) was cast 2.2 times a fight, one of them the opener. A plateau: every floor from 45 to 90 is +41 to +50 at 60s, 35 to 70 is +18 to +20 at 180s; 65 is inside both with the flattest death deltas (+0.05, -0.03). **660.6 -> 708.0 DPS, deaths 5.21 -> 5.25 (noise)**. Second pass: every list change noise |
+| enchants | the two dead slots Prot Warr's table gives it | **priced, not shipped -- see the questions**. Gloves +2% Threat -> +15 Strength is **+7.33 +/- 0.30** at 60s and +7.22 +/- 0.07 at 180s, deaths 0.00 |
+| consumables | strength food, sharpening stone | stone loses (-8.4, -9.5). **Strength food priced, not shipped**: +17.0 +/- 8.4 at 60s, +12.8 +/- 8.8 at 180s, deaths +0.12 and +0.21, both noise |
+
+**TWO PASSES**: the first shipped the Heroic Strike floor, the second shipped
+nothing. **WHAT WAS NOT DONE**: no profile re-baselined, on the standing
+instruction; Prot Warr's figure moves with the Execute clause and was not
+measured.
 
 ## Round 37: the owner's list across 25 profiles
 
@@ -282,13 +337,17 @@ write-up; none is an engine gap.
 | **Thorns and Retribution Aura fire on EVERY attack, including a miss, a dodge or a parry** -- your "every time a target attacks you" read literally. Classic's say "when hit". They also cannot crit and roll no table, and they are the CARRIER'S damage, so its multipliers reach them -- which is why your One-Handed Weapon Specialization ruling names them | round 36 | about a third of the two auras' damage on the tanks, who avoid that much |
 | **"Invisible" racial entries are switched OFF and still listed**, greyed and struck through with the eye glyph, rather than hidden. Hiding would also hide the toggle that lights them again | round 36 | how the APL panel reads |
 | **Missile Barrage's missile chance is still in the client's talent row** and is read and ignored in code, ahead of the client. The line to delete when the client ships it is marked | round 36 | nothing until the client changes |
+| **Fury Prot's gloves carry +2% Threat because Prot Warr's do**, and threat is out of scope -- so the slot is worth nothing. +15 Strength is **+7.33 +/- 0.30** at 60s, deaths unchanged. Not shipped, because the copy was your instruction; the same slot on Prot Warr is the same question | round 38 | +7 DPS on one tank, possibly two |
+| **Fury Prot eats Prot Warr's stamina food.** Strength food is +17.0 +/- 8.4 at 60s and +12.8 +/- 8.8 at 180s, with deaths +0.12 and +0.21 -- both inside their intervals. Your tank food ruling is why it is not shipped | round 38 | the tank food ruling, for a tank that has Bloodthirst to feed |
+| **Death Wish is ON the global cooldown** -- `abilities/warrior.ts` gives it no `triggersGcd: false`, the default. Worth nothing at 60s, where it is pre-cast; in a fight past three minutes its second cast takes one | round 38 | one global cooldown per three minutes on Fury Prot and DW Fury |
+| **"Spam Execute" switches off every other rage spender in the window**, Sunder Armor, Demoralizing Shout, Heroic Strike, Thunder Clap and Rend included, not only the two Defensive-only abilities that would drag the tank back. Shield Wall is left live, so a tank about to die does return to Defensive for it | round 38 | what the tanks do in the last 20% |
 | **A potion breaks Stealth, so the three stealth openers drink it AFTER the Ambush or Garrote**, in the same instant. Your stealth ruling names Premeditation as the only exception, and a potion is a completed action -- drunk first, it ended Stealth and the Ambush was refused. So the FIRST Ambush (or Garrote) does not carry the Frenzy Potion's attack power | round 37 | whether potions should join Premeditation as a stealth exception |
 | **Arcane Wrath has its own entry above the non-Barrage Missiles, gated at FOUR Arcane Blast stacks** -- the gate of the entry it sits above. "Above the non-Barrage Missiles" gave a position and no condition; ungated, it would cast a 3.5s spell below four stacks where Arcane Blast is meant to be building | round 37 | how often the Wrath is cast outside the stack (4.3 a fight now, counting the stack's) |
 | **Pure Hemo pools energy for its Vanish -> Garrote sequence, and its Rupture and Preparation wait on VANISH**, both ours. Without the pool the sequence fired **0.6** times a fight (Hemorrhage took the energy first); with it, **2.0**. And Premeditation is only ever a sequence step now, so the old "Premeditation on cooldown" gate left Rupture at **0.0** casts | round 37 | three gates on the list, one line each to revert |
 | **The Enh Shaman holds the Seal Twist Ret's two-hander**, as you asked, and that mace's `Classes:` line is rewritten to "Paladin, Shaman" for the borrower -- otherwise the proficiency filter refuses a weapon you specified | round 37 | which classes a template weapon is offered to |
 | **The Hunter cooldown stacks have no standalone Bestial Wrath, Rapid Fire or racial entries any more**, so all of them fire only when every step of the stack is ready together -- once in a 60s fight. In a longer one the stack waits for the slowest cooldown in it | round 37 | casts per fight past three minutes |
 
-**THIRTY ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, and round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**THIRTY-FOUR ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five, and round 38 added four -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
