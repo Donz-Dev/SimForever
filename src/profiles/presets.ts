@@ -873,23 +873,89 @@ const SHAMAN_ELEMENTAL_TALENTS: TalentAllocation = {
   tidal_focus: 5, totemic_focus: 4,
 };
 
+/*
+ * ============================================================================
+ * FIVE DEAD POINTS BECAME REVERBERATION 5/5, worth **+16.19 +/- 3.61** paired
+ * over 3000 iterations. 17/34/0 -> **19/32/0**, and Enhancement is still the
+ * majority tree.
+ *
+ * WHAT CAME OUT, AND ALL THREE WERE RULED OUT RATHER THAN MERELY SMALL:
+ *
+ *   elemental_warding 3    reduces Fire, Frost and Nature damage TAKEN, and
+ *                          this profile sets `targetAttacks: false`
+ *   improved_ghost_wolf 1  `scope: 'positioning'` -- a travel form
+ *   spirit_weapons 1       `scope: 'threat'` -- an unquantified parry chance
+ *                          plus two threat clauses
+ *
+ * WHAT IT BUYS IS A SHOCK CHARGE. All three shocks share one `cooldownGroup`,
+ * so 1.0 second off takes the group from 6.0s to 5.0s -- 12 charges in a 60
+ * second fight where there were 10 -- and the build was already spending 9.1 of
+ * the 10 (5.90 Earth Shocks plus 3.22 Flame Shocks). Flame Shock is
+ * duration-bound at 21 seconds, so the extra charges all go to Earth Shock.
+ *
+ * ----------------------------------------------------------------------------
+ * THE TIER ARITHMETIC IS WHY THESE THREE DESTINATIONS AND NOT OTHERS, and it
+ * bounds the search in both trees at once.
+ *
+ * ELEMENTAL's seventeen sat exactly on `trial_by_fire`'s tier-15 gate -- 5 + 6 +
+ * 4 below it is 15 -- so Elemental Warding's three could not LEAVE the tree
+ * without stranding Fire Nova's cooldown reduction. They could move DOWN a row,
+ * which is what makes Reverberation reachable and Restoration's Tidal Focus not.
+ *
+ * ENHANCEMENT held every gate with slack -- 17 below tier 15 where 15 is wanted,
+ * 33 below tier 30 where 30 is wanted -- so at most THREE points could leave it
+ * and at most TWO of those from rows 0-2. `mental_dexterity` 3 and
+ * `mental_quickness` 2 are locked by `requiresRanks` on Flurry and on the
+ * capstone.
+ *
+ * ----------------------------------------------------------------------------
+ * EVERY OTHER DESTINATION WAS MEASURED AND THREE OF THEM ARE WORTH EXACTLY
+ * NOTHING, which is a statement about the tree rather than a gap in the search:
+ *
+ *   convection 3           **IDENTICAL FIGHTS.** 10% off the shocks and the
+ *                          bolt, on a build ending the fight with 1,984 mana of
+ *                          headroom. The containment check that this build is
+ *                          NOT mana-bound, which `docs/handoff/shaman.md` still
+ *                          says it is
+ *   elemental_alacrity 3   **IDENTICAL FIGHTS.** Cast time on Lightning Bolt,
+ *                          which this list only ever casts at five Maelstrom
+ *                          stacks, where it is already instant
+ *   improved_stormstrike 1 +0.50 +/- 3.89, noise. Its live clause is 50% mana
+ *                          regeneration while casting, which is the same
+ *                          nothing Convection buys
+ *
+ * And two are real and smaller: `tidal_focus` 2 is **+3.46 +/- 1.51** (spell
+ * miss 9% -> 7%; melee and specials are already capped) and the fifth rank of
+ * `ancestral_knowledge` is **+1.47 +/- 0.15**. Reverberation 5 plus either of
+ * them is inside Reverberation 5's own interval -- +17.28 and +16.48 against
+ * +16.19 -- so the smallest edit wins and both live clauses stay whole.
+ *
+ * ----------------------------------------------------------------------------
+ * AND THE OWNER'S OWN URL DISAGREED WITH THIS PRESET ABOUT EXACTLY THESE THREE
+ * POINTS BEFORE ANY OF IT: `decode_talent_build.mjs --presets` reports
+ * `elemental_alacrity 0->3, elemental_warding 3->0`, so the stored link spends
+ * them on Alacrity where the preset spends them on Warding. **Both measure
+ * zero**, which is why the drift cost nothing and why it is worth recording
+ * rather than quietly resolving -- which of the two is stale is the owner's.
+ * ============================================================================
+ */
 const SHAMAN_ENHANCEMENT_TALENTS: TalentAllocation = {
+  // Elemental, 19
   concussion: 5,
-  elemental_warding: 3,
   call_of_flame: 3,
   elemental_devastation: 3,
+  reverberation: 5,
   elemental_focus: 1,
   // Trial by Fire is Improved Fire Nova renamed, same row and same two clauses.
   trial_by_fire: 2,
+  // Enhancement, 32
   thundering_strikes: 5,
   ancestral_knowledge: 4,
   mental_dexterity: 3,
-  improved_ghost_wolf: 1,
   elemental_weapons: 3,
   shamanistic_focus: 1,
   flurry: 5,
   stormstrike: 1,
-  spirit_weapons: 1,
   mental_quickness: 2,
   improved_stormstrike: 2,
   maelstrom_weapon: 5,
@@ -1108,6 +1174,101 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
    * AND THE TWO DO NOT SUM: 19.8 + 10.8 is 30.6 against a measured 28.8,
    * because both buy casts and the casts come out of the same global cooldowns.
    * Marginal values, not addends.
+   * ==========================================================================
+   */
+  /*
+   * ==========================================================================
+   * ONE POINT OF CLEARCASTING WOULD BUY FIRE BLAST'S SECOND COOLDOWN RANK --
+   * 7 seconds to 6 -- AND IT IS **NOT TAKEN**, because it is worth +2.92 at a
+   * one-minute fight and **-33.76 +/- 7.52 at a five-minute one.**
+   *
+   * ==========================================================================
+   * THE CLOCK IS WHAT DECIDES IT, AND A 60-SECOND MEASUREMENT SAID THE
+   * OPPOSITE. Against the pre-round build the swap measured **+8.00 +/- 3.10**
+   * at 1500 paired iterations, and on the finished list it is +2.92 +/- 2.81 --
+   * both real, both positive, and both answers about a one-minute clock.
+   *
+   * AT 300s IT IS THE LARGEST SINGLE LOSS THIS ROUND MEASURED. Reverting it on
+   * the shipped build is +33.76 +/- 7.52, and reverting the whole package is
+   * +34.12 -- so essentially all of the long-fight loss is this one point.
+   *
+   * AND THE MECHANISM WAS PREDICTED BEFORE IT WAS MEASURED, which is the only
+   * reason it was looked for. This build is GLOBAL-COOLDOWN bound at 60s with
+   * 2,615 mana spare and MANA bound by 300s with 196 -- and Fire Blast costs
+   * 340 mana for about 1,347, where the filler costs 410 for about 1,781. More
+   * Fire Blasts is more damage per global cooldown and LESS damage per mana, so
+   * the change is worth something exactly as long as the global cooldown is
+   * what binds.
+   *
+   * THE OWNER'S STANDING INSTRUCTION IS WHY THIS IS A REVERT RATHER THAN A
+   * FOOTNOTE: "rotations need to be built for longer than 1 minute ... ensure
+   * that variable combat time is taken into account." A change that buys 2.9
+   * DPS at one minute and gives back 33.8 at five is not a change.
+   *
+   * THE SCORCH WINDOW THAT SHIPPED ALONGSIDE IT HOLDS AT BOTH LENGTHS, which
+   * is what makes this a statement about the talent rather than about the
+   * round: +5.03 +/- 3.20 at 60s and -1.57 +/- 7.59 at 300s, which is noise.
+   * ==========================================================================
+   *
+   * WHAT IS BELOW IS STILL TRUE AND IS KEPT, because it is the map of this
+   * tree's whole design space and the next round should not re-derive it.
+   *
+   * THE FIRE TREE IS FORCED AND THE ARCANE ONE IS NOT, which is the whole of
+   * why the donor is the question. Combustion sits at tier 30 and
+   * `pointsBelowTier` counts STRICTLY below it, so all 30 Fire points under the
+   * capstone are load-bearing -- take one out anywhere and the capstone is
+   * refunded. What is not forced is WHICH of them, and the Fire tree has
+   * exactly TWO unspent slots that are not a declared `OutOfScope` member:
+   * this one, and Blast Wave.
+   *
+   * FIRE BLAST IS THE DESTINATION TO WANT FOR TWO REASONS RATHER THAN ONE. It
+   * is 898 damage a second of global cooldown against the filler's 712, AND it
+   * is the Heating Up engine -- "Fire Blast grants an additional stack every
+   * time it deals damage", so a crit gives two and a miss still gives one.
+   * More Fire Blasts is more Pyroblasts.
+   *
+   * CLEARCASTING IS THE DONOR BECAUSE IT IS WORTH NOTHING HERE, and that was
+   * measured rather than argued: `arcane_concentration 0/5` with all five
+   * points parked in `improved_channeling` -- pure cast pushback, a declared
+   * `OutOfScope` member -- is **+10.02 +/- 5.68**. Five points of Clearcasting
+   * are worth NEGATIVE ten DPS.
+   *
+   * AND THE REASON IS NOT THE MANA, IT IS THE FIRE BLAST GATE. `fire_blast` is
+   * gated on `selfLacks('clearcasting')` by the owner's own instruction, so
+   * every proc HOLDS the instant above -- and `fire_blast ungated` measures
+   * **+7.68 +/- 3.22** by itself, which accounts for nearly all of the 10.02.
+   * With the gate removed as well, dropping the talent entirely is still
+   * +10.02 and the two builds run bit-identical fights, because a 0/5 talent
+   * makes `selfLacks('clearcasting')` permanently true.
+   *
+   * SO THE DONOR CHOICE SURVIVES WHATEVER THE OWNER RULES ABOUT THAT GATE,
+   * which is why this ships and the gate does not: with the gate gone,
+   * Clearcasting's own contribution is 10.02 - 7.68 = about 2.3 on an interval
+   * of 6.5, which is nothing. This build ends a 60 second fight with 2,782 mana
+   * unspent and `manaPer5` weighs 0.0000, so a mana saving has nothing to buy.
+   *
+   * THE TWO ALTERNATIVE DONORS BOTH MEASURE WORSE AND NEITHER IS SEPARABLE
+   * FROM THIS ONE: `master_of_elements` 3 -> 2 is +4.63 +/- 2.69 and
+   * `arcane_impact` 3 -> 2 is +3.54 +/- 2.69, against +8.00 +/- 3.10 here. The
+   * gaps are inside the combined intervals, so what chose this one is the
+   * mechanism above rather than the ranking.
+   *
+   * `elemental_precision` IS NOT A CANDIDATE. Its fifth point is the Fire hit
+   * cap and measured +10.8 when it was bought: all three Mages sit at 11 points
+   * of school-blind hit against a usable spell cap of 16, and the missing five
+   * arrive as school-scoped hit from a talent.
+   *
+   * BLAST WAVE IS THE OTHER SLOT AND IS WORTH EXACTLY NOTHING, which took two
+   * measurements that agreed to the decimal to establish. Taking it measured
+   * +2.59 +/- 1.70 -- and so did taking it AND giving it a list entry, the same
+   * figure with the same spread, which is this project's own tell for a patch
+   * that did not apply. It applied: an ungated `fireball` sits at the bottom of
+   * the list and an unconditional entry is a FLOOR under everything below it,
+   * so a new entry there can never be reached. Every point of that +2.59 was
+   * the OTHER half of the variant -- one fewer rank of Clearcasting. The
+   * arithmetic agrees: 493 base plus a 0.129 coefficient is about 594 before
+   * multipliers, which is 582 damage a second of global cooldown against the
+   * filler's 712.
    * ==========================================================================
    */
   // Arcane, 15
@@ -1700,7 +1861,54 @@ const PRIEST_SHADOW_TALENTS: TalentAllocation = {
   twin_disciplines: 5,
   mental_strength: 5,
   meditation: 3,
-  twilight_focus: 3,
+  /*
+   * ==========================================================================
+   * INNER FOCUS TAKES ONE POINT OFF TWILIGHT FOCUS -- **14 / 2 / 35**, worth
+   * **+6.13 +/- 0.50** at 60s over 1200 paired iterations and **+2.40 +/-
+   * 0.26** at 300s over 400.
+   *
+   * BOTH FIGURES ARE THE COST OF REMOVING IT FROM THE SHIPPED BUILD, which is
+   * the direction that needs no trust in a stale baseline. Measured the other
+   * way round before it shipped it read +6.67 +/- 0.90 and +2.29 +/- 0.30, so
+   * the two agree -- and the quoted pair is the tighter one.
+   *
+   * IT IS WORTH LESS IN A LONGER FIGHT AND THAT IS ARITHMETIC, NOT DECAY: a
+   * 180-second cooldown fires once in a 60-second fight and twice in a
+   * 300-second one, so its fixed contribution is spread over five times the
+   * clock. `tools/probe_fight_length.ts` prints the cast count per length.
+   *
+   * **ONLY WITH ITS LIST ENTRY. THE TALENT ALONE IS WORTH EXACTLY NOTHING** --
+   * `probe_build.ts` reports `IDENTICAL FIGHTS` for the spread without the
+   * entry, because `grantAbility` puts Inner Focus in the book and no stock
+   * list cast it. That is the Berserker Rage shape: both halves or neither, and
+   * measured one at a time both halves read as worthless. See
+   * `rotations/priest.ts` for the entry.
+   *
+   * WHY TWILIGHT FOCUS IS THE DONOR. Its three points buy a `castPushback`
+   * effect, which the ruleset owner has ruled permanently out of scope -- so
+   * they can never become live. The two alternatives measured **exactly the
+   * same +6.67**: one point off `meditation`, or all three off Twilight Focus
+   * with two parked in `mental_agility`. Every donor is worth nothing, which
+   * is the result rather than a disappointment -- so the tie is broken on
+   * which donor is SAFEST, and a permanent ruling beats a live talent whose
+   * value is zero only because this build is global-cooldown bound.
+   *
+   * AND IT IS ONE POINT RATHER THAN THREE, so the owner's stated 13/3/35 moves
+   * as little as it can. Discipline still spends exactly 10 below tier 10,
+   * which is what Inner Focus's tier requires; Shadow is untouched at 35 and
+   * stays the majority tree.
+   *
+   * IT IS THE ONLY LIVE DESTINATION IN THE WHOLE SPREAD. Every live Shadow
+   * talent this build can reach is already maxed, and the six soft points are
+   * rulings (`twilight_focus` 3, `shadow_reach` 2, `silence` 1) or worth
+   * nothing (`dark_inspiration`'s Spirit weighs **0.0000** here, and
+   * `meditation`'s regen is mana on a build that leaves 52.5% of its mana
+   * unspent). `shadow_reach 2 -> dark_inspiration 5/5` measured IDENTICAL
+   * FIGHTS.
+   * ==========================================================================
+   */
+  twilight_focus: 2,
+  inner_focus: 1,
   shadow_focus: 5,
   /*
    * DARK INSPIRATION TAKES SHADOW AFFINITY'S THREE POINTS, and it is a live
@@ -2480,6 +2688,21 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'shaman_enhancement',
     label: 'Enh Shaman',
+    /*
+     * THIS LINE WAS WRONG FOR SEVERAL ROUNDS AND IS RIGHT AGAIN BY ACCIDENT,
+     * which is worth a sentence rather than a silent edit.
+     *
+     * It read 19/32 while the tree was **17/34**: the client swap that moved
+     * Elemental Fury to tier 25 cost this build five Elemental points, the owner
+     * chose where they went, and the split moved with them while the description
+     * did not. The Reverberation round has now taken the tree to 19/32, so the
+     * stale sentence became true -- and a reader who checks it against the
+     * allocation today learns nothing about how long it was wrong.
+     *
+     * SO DERIVE THE THEME, DO NOT RECALL IT. `encode_talent_build.mjs --all`
+     * prints the split and a URL the owner can audit, which is Step 0 of
+     * `docs/profile-optimisation.md` and is the only reading that cannot drift.
+     */
     detail: 'Tauren, two-hander, standing target. 19 Elemental / 32 Enhancement',
     characterClass: 'shaman',
     build: () => ({
@@ -2501,15 +2724,79 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * imbue is up, and the box can be ticked honestly.
        */
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: hybridConsumables({
-        school: 'school_fire',
-        meleeWeaponEffect: true,
-        blastedLands: 'blasted_strength',
-      }),
+      /*
+       * ========================================================================
+       * TWO ROWS OVERRIDE THE SHARED HYBRID SELECTION, which is the arrangement
+       * the three Paladins already use -- `hybridConsumables` hands all four of
+       * its callers `flask_hit_points` and `food_attack_power`, and a preset that
+       * wants otherwise says so here rather than moving the shared row under
+       * three profiles nobody measured.
+       *
+       * THE FLASK IS +33.45 +/- 0.24 PAIRED OVER 400 ITERATIONS, which is the
+       * largest single thing found on this profile and was never asked before:
+       * +1200 Hit Points reaches NOTHING here (`targetAttacks` is false, so
+       * health never leaves maximum, and a Shaman has no `D x 10 / H` rage rule
+       * for a bigger pool to feed) and +150 Spell Power reaches 26.4% of the
+       * damage table. The stat weight predicted 150 x 0.2227 = 33.4.
+       *
+       * AND SPELL POWER BEATS ATTACK POWER PER POINT ON A 73.5% PHYSICAL BUILD,
+       * which reads like a contradiction and is not: attack power sits at 1,965
+       * and spell power at 124, so a point of the second is a far larger share
+       * of the smaller thing it reaches. It is also why the potion row does not
+       * divide -- Spellblasting's +40 Spell Power beats Frenzy's +40 Attack
+       * Power by 0.85, measured.
+       *
+       * THE FOOD IS +0.72 +/- 0.01, the same arithmetic that moved 2H Arms, DW
+       * Fury, Venom and the Cat: +20 Strength is 7.91 against +40 Attack Power's
+       * 7.19, because a Shaman makes 2 attack power from a point of strength.
+       * ========================================================================
+       */
+      consumables: {
+        ...hybridConsumables({
+          school: 'school_fire',
+          meleeWeaponEffect: true,
+          blastedLands: 'blasted_strength',
+        }),
+        flask: 'flask_spell_power',
+        food: 'food_strength',
+      },
+      /*
+       * ========================================================================
+       * THE OWNER'S THREE LINES, PLUS ONE ADDITION WORTH **+12.71 +/- 3.00**
+       * paired over 5000 iterations -- declared separately in
+       * `tests/profiles/precombatOpeners.test.ts` so a reader can tell whose
+       * decision each line is.
+       *
+       * RAGE OF THE FARSEER PASSES GATE B TRIVIALLY: its `onCast` applies an
+       * aura and calls `dealDamage` never, so it is not a damaging action and the
+       * at-most-one rule does not reach it. A 0s lead on an instant is the
+       * safest edit available -- it cannot fail B2 either.
+       *
+       * WHAT IT BUYS IS THE GLOBAL COOLDOWN, which `abilities/shaman.ts`
+       * deliberately leaves it paying: the capture says "Instant" and says
+       * nothing about the GCD, and guessing it off would be free uptime nobody
+       * granted. Pre-combat mode skips the GCD the action would start, so the
+       * whole 25 second window arrives for nothing -- and the cooldown is 180
+       * seconds, three times the fight, so nothing is lost at the other end.
+       *
+       * ------------------------------------------------------------------------
+       * AND IT MEASURED **-4.79, NOISE** EARLIER IN THIS SAME ROUND, which is
+       * the knock-on the loop exists for rather than a contradiction.
+       *
+       * Before the talent and flask changes this list made about 33 casts in a
+       * 60 second fight and had global cooldowns to spare, so a saved one bought
+       * nothing -- which is the retraction `docs/profile-optimisation.md`
+       * records in the other direction. Reverberation's two extra shock charges
+       * took Earth Shock from 5.90 casts to 7.60 and Fire Nova to 9.40, and a
+       * GCD that was free became worth something. **A figure can go stale inside
+       * the round that produced it.**
+       * ========================================================================
+       */
       precombat: [
         ...before(3, 'windfury_weapon'),
         ...before(1.5, 'searing_totem'),
         ...before(0, 'flame_shock'),
+        ...before(0, 'rage_of_the_farseer'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -2666,7 +2953,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'mage_fire',
     label: 'Fire',
-    detail: 'Gnome, caster, standing target. 39 Fire / 10 Arcane',
+    detail: 'Gnome, caster, standing target. 15 Arcane / 31 Fire / 5 Frost',
     characterClass: 'mage',
     build: () => ({
       ...createDefaultProfile(),
@@ -2682,27 +2969,63 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_fire'),
       /*
-       * ONE SCORCH ADDED BEFORE THE PULL, WORTH **+15.2 +/- 10.2**, and it is
-       * the Frostfire build's line for the same reason: Improved Scorch stacks
-       * a Fire vulnerability five times at 3% each and this build spends eight
-       * casts a fight on it, so a stack moved before the pull is a stack the
-       * fight opens with on 90% of its damage.
+       * ========================================================================
+       * THE PRE-PULL SCORCH IS GONE, AT A COST OF **-24.23 +/- 4.29**, AND IT
+       * WAS NOT A CHOICE.
        *
-       * SMALLER HERE THAN ON FROSTFIRE (+25.1) BECAUSE FIREBALL IS SLOWER. A
-       * three second cast reaches the Scorch entry less often, so the ramp is
-       * already further along by the time it matters -- the pre-cast is worth
-       * more to the build that spends more of its early fight on short casts.
+       * THE OWNER'S RULING: "Once you deal damage or finish casting a damaging
+       * ability combat has started." So a pre-combat list may finish AT MOST
+       * ONE damaging ability and it must finish at exactly t=0 -- that cast is
+       * the pull. This opener finished TWO: their own `fireball` at a 3s lead,
+       * and a `scorch` at 1.5s that this project added and recorded here at
+       * +15.2 +/- 10.2.
        *
-       * COMBUSTION IS NOT ADDED. Pre-casting it measured -4.9 against an
-       * interval of 11.6, which is noise -- and its window is spent by four
-       * Fire crits rather than by a clock, so the global cooldown it saves is
-       * paid back by opening the window before the crits exist.
+       * NOTHING IN THE ENGINE ENFORCES IT AND NO FIGHT REVEALS IT.
+       * `runPrecombat` resolves every action at timestamp zero, so the damage,
+       * the procs and the auras all arrive free; there is no zero anywhere to
+       * notice, the suite stays green, and `USES=1` printed it as cheerfully as
+       * a legal opener. `docs/profile-optimisation.md` Appendix A had it as one
+       * of three profiles still failing Gate B.
+       *
+       * WHAT THE REVERT ACTUALLY COST IS LESS THAN THAT FIGURE, because the
+       * round recovered most of it legally: the whole package measures **-3.57
+       * +/- 4.83 against the illegal build**, which is noise. See HANDOVER.md.
+       *
+       * THE OWNER'S TWO LINES ARE UNTOUCHED, which is what
+       * `tests/profiles/precombatOpeners.test.ts` asserts: an optimisation may
+       * ADD to their opener and may not reorder or replace it. This round
+       * removed only the addition.
+       *
+       * AND THE OPENER HAS NOTHING LEFT TO ADD, WHICH THE COMBUSTION RULING
+       * MADE MUCH MORE TRUE RATHER THAN LESS.
+       *
+       * A pre-cast is worth only the global cooldown it saves, so anything
+       * already off the GCD is not a candidate -- which ruled out the potion,
+       * the Demonic Rune and Eureka, and now rules out **Combustion**, the one
+       * candidate that was left. The owner has ruled it off the global
+       * cooldown, so a pre-cast of it saves nothing and only pays the cost.
+       *
+       * AND THE COST IS LARGE. It measured **-4.69 +/- 10.91** (noise) while
+       * Combustion paid a GCD and **-36.38 +/- 5.52 (real)** once it stopped.
+       * The window is spent by four Fire crits rather than by a clock, and a
+       * three-minute cooldown pre-cast at t=0 can never be reached again inside
+       * a one-minute fight -- so the whole window is burned on a target with
+       * ZERO Fire Vulnerability stacks instead of at the five-stack cap about
+       * eight seconds in.
+       *
+       * THIS IS THE RETRACTED ARCANE POWER FIGURE POINTING THE OTHER WAY.
+       * There, +24.9 for a pre-cast turned out to be mostly a global cooldown
+       * the ability should never have paid, and once the flag was fixed the
+       * pre-cast was worth nothing. Here the same fix took a pre-cast from
+       * "noise" to a clear loss. **Check the GCD flag before pricing a
+       * pre-cast**, in both directions.
+       *
+       * REMOVING THE OWNER'S OWN `fireball` IS **-42.68 +/- 10.93**, which is
+       * what that line is worth and is here so nobody prices the opener by
+       * removing it.
+       * ========================================================================
        */
-      precombat: [
-        ...before(4.5, 'mage_armor'),
-        ...before(3, 'fireball'),
-        ...before(1.5, 'scorch'),
-      ],
+      precombat: [...before(4.5, 'mage_armor'), ...before(3, 'fireball')],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },

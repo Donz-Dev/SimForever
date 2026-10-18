@@ -286,6 +286,32 @@ describe("the owner's openers are transcribed exactly", () => {
      * whole opener again. Nothing legal replaces it: see the preset.
      */
     /*
+     * THE ENHANCEMENT SHAMAN'S ONE ADDITION, AND IT MEASURED AS A LOSS EARLIER
+     * IN THE SAME ROUND THAT SHIPPED IT.
+     *
+     * Rage of the Farseer is +30% attack speed for 25 seconds on a 180 second
+     * cooldown, it applies an aura and deals no damage, and it is deliberately
+     * ON the global cooldown -- so a 0s lead claims the whole window for free
+     * and cannot fail either half of Gate B.
+     *
+     * At the start of the round it was **-4.79, noise**: the list made about 33
+     * casts in a 60 second fight and had global cooldowns to spare, so a saved
+     * one bought nothing. Reverberation 5/5 then added two shock charges a
+     * fight and the spare GCDs went -- and the same edit is **+12.71 +/- 3.00**
+     * over 5000 paired iterations. The figure belongs to the list it was taken
+     * in, which here means the list this round ended with.
+     */
+    shaman_enhancement: [
+      [0, 'rage_of_the_farseer', '+12.71 -- a 25s haste window, claimed for no GCD'],
+    ],
+    /*
+     * EMPTY FOR THE SAME REASON `mage_fire` IS, one round later. Round 32
+     * reverted this profile's Scorch at a 1.5s lead for **-25.90 +/- 9.70**:
+     * it was a SECOND damaging cast finishing before the pull, which Gate B
+     * forbids outright. The key stays so the profile reads as AUDITED.
+     */
+    mage_frostfire: [],
+    /*
      * THE ARCANE MAGE'S RAMP IS GONE, AND THIS IS WHAT IS LEFT OF IT.
      *
      * A Pyroblast finishing at t-7.5 and three Arcane Blasts finishing at t-6,
@@ -304,7 +330,25 @@ describe("the owner's openers are transcribed exactly", () => {
     mage_arcane: [
       [0, 'arcane_power', '+24.9 -- a 15s window, claimed for no GCD'],
     ],
-    mage_fire: [[1.5, 'scorch', '+15.2 -- the same stack, worth less behind a 3s Fireball']],
+    /*
+     * THE FIRE MAGE HAS NO ADDITION ANY MORE, AND THE EMPTY ARRAY SAYS SO.
+     *
+     * It was `[1.5, 'scorch', '+15.2 -- the same stack, worth less behind a 3s
+     * Fireball']`, and it was the SECOND damaging cast in that opener: the
+     * owner's own `fireball` at a 3s lead already finishes at the pull, so the
+     * Scorch broke Gate B's at-most-one clause the way the Arcane ramp did.
+     * Reverting it measures **-24.23 +/- 4.29** paired, and the round that
+     * reverted it recovered **+20.7** of that from the list and the tree, for a
+     * net of -3.57 +/- 4.83 against the illegal build -- which is noise.
+     *
+     * LEFT AS AN EMPTY ENTRY RATHER THAN DELETED, because the key is what says
+     * this profile was AUDITED and has nothing added, where an absent key reads
+     * the same as a profile nobody has looked at. `mage_frostfire` carried the
+     * same addition when this was written and round 32 has since reverted it,
+     * so `shaman_elemental` is the one Gate B failure left -- and both of its
+     * damaging pre-combat casts are the owner's own lines.
+     */
+    mage_fire: [],
     shadow_priest: [
       [0, 'shadow_word_pain', '+26.8 alone, +35.5 with the plague'],
       [0, 'devouring_plague', '+26.7 alone'],

@@ -536,7 +536,8 @@ describe('Improved Slam gained a cooldown clause', () => {
 
   it('names an index on every effect, including the three that want zero', () => {
     for (const effect of WARRIOR_TALENT_EFFECTS.improved_slam) {
-      if (effect.kind === 'abilityHoldsSwing') continue;
+      // The swing-timer effect is value-free: it carries a MODE, not a number.
+      if (effect.kind === 'abilitySwingTimer') continue;
       expect('valueIndex' in effect, effect.kind).toBe(true);
     }
   });
@@ -557,12 +558,15 @@ describe('Improved Slam gained a cooldown clause', () => {
     }).abilities.get('slam')!;
 
     // Written out from the tooltip: 1.5s cast and an 18s cooldown become 1.0 and
-    // 15, and the swing runs on behind the cast.
+    // 15, and the swing is not interrupted OR DELAYED -- `continue`, on the
+    // owner's ruling. It was `hold` here, which is the first verb only; see
+    // `slamSwingTimer.test.ts`, which owns that half.
     expect(base.castTimeMs).toBe(1_500);
     expect(base.cooldownMs).toBe(18_000);
+    expect(base.swingTimer).toBeUndefined();
     expect(talented.castTimeMs).toBe(1_000);
     expect(talented.cooldownMs).toBe(15_000);
-    expect(talented.swingTimer).toBe('hold');
+    expect(talented.swingTimer).toBe('continue');
   });
 
   it('scales the cast time per rank and does NOT scale the cooldown', () => {

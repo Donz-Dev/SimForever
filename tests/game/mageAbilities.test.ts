@@ -31,6 +31,9 @@ import {
   ICE_LANCE,
   ICE_LANCE_DAMAGE,
   MAGE_ARMOR_ABILITY,
+  COMBUSTION_ABILITY,
+  ARCANE_POWER_ABILITY,
+  PRESENCE_OF_MIND_ABILITY,
   ICE_LANCE_FROZEN_MULTIPLIER,
   EVOCATION,
   MAGE_ABILITIES,
@@ -1490,8 +1493,11 @@ describe('Combustion, whose end condition is four crits rather than a clock', ()
     /*
      * THE SCHOOL IS WRITTEN OUT AS IDS, so a new Fire spell has to be added to
      * `FIRE_SPELL_IDS` by hand. This is the test that says so the day one is
-     * not -- the same argument `PRESENCE_OF_MIND_SPELLS` rests on, which is
-     * also a list standing in for a property of the ability.
+     * not -- which Presence of Mind's own list did NOT have, and is how that
+     * list came to be missing Arcane Wrath. A list standing in for a property
+     * of the ability needs either a clause that describes the set or a test
+     * that derives it; Presence of Mind has the clause now, and this has the
+     * test.
      */
     const fire = MAGE_ABILITIES.filter((ability) =>
       // Every Mage ability that deals Fire damage, found from its own source.
@@ -2586,6 +2592,167 @@ describe('Evocation, which pays out during its own channel', () => {
   }, 20_000);
 });
 
+describe('what round 28 did to the Fire list', () => {
+  /*
+   * ==========================================================================
+   * THE FILTER-AND-RESTATE IS THE THING THAT CAN BREAK FROM A DISTANCE.
+   *
+   * The Fire list spreads `RACIAL_COOLDOWNS` with Eureka FILTERED OUT and
+   * restates it gated on three Heating Up stacks. If that shared block ever
+   * renames its Eureka entry, the filter silently stops matching and the list
+   * gets TWO entries for one ability -- the UNGATED one from the block, above
+   * the gated one. The gate would then be dead and nothing would error: the
+   * cooldown still fires once a fight, the uses column still reads 1.0, and the
+   * only thing that moved is WHEN.
+   *
+   * A DUPLICATE ABILITY ID IS LEGAL IN THIS PROJECT AND IS WHY THIS NEEDS A
+   * TEST. Arcane Missiles is in the Arcane list twice on purpose and the
+   * Frostfire list has two Pyroblasts, so "no ability twice" is not an
+   * invariant anything else checks.
+   * ==========================================================================
+   */
+  it('gates Eureka exactly once, with nothing ungated above it', () => {
+    const eurekas = MAGE_FIRE.entries.filter((row) => row.abilityId === 'eureka');
+    expect(eurekas).toHaveLength(1);
+    expect(eurekas[0]!.condition).toBeDefined();
+  });
+
+  /*
+   * ==========================================================================
+   * THE POTION IS A SEQUENCE STEP AND NOT AN ENTRY, AND BOTH HALVES MATTER.
+   *
+   * It was an entry above Combustion gated on Combustion's own AURA, which
+   * worked and depended on the list ORDER plus a second decision happening.
+   * With Combustion off the global cooldown on the owner's ruling the two
+   * resolve in one instant, so the pairing is written as a guarantee instead.
+   *
+   * `abilityId` IS STEP ONE AND `sequence` HOLDS WHAT FOLLOWS, which is the
+   * convention `MAGE_ARCANE`'s own stack uses -- and naming Combustion in BOTH
+   * places is the mistake that reads as a finding: `selectAction` casts
+   * `entry.abilityId` and sets `pendingSequence.index = 0`, so the resume finds
+   * Combustion on cooldown, clears the pointer, and the potion never fires at
+   * all. **-14.81 with a spread of 0.08**, which is a deterministic loss rather
+   * than any decision moving.
+   *
+   * SO THIS ASSERTS THE SHAPE: one Combustion entry, the potion as its step and
+   * NOT as an entry of its own, and Combustion's id not repeated inside its own
+   * sequence.
+   * ==========================================================================
+   */
+  it('casts the potion and Combustion as one two-step sequence', () => {
+    const stacks = MAGE_FIRE.entries.filter(
+      (row) => row.abilityId === 'major_spellblasting_potion',
+    );
+    expect(stacks).toHaveLength(1);
+
+    const entry = stacks[0]!;
+    expect(entry.sequence).toEqual(['combustion']);
+    // The first step is `abilityId`, so repeating it inside the sequence casts
+    // it twice and abandons the pointer -- see the note above.
+    expect(entry.sequence).not.toContain('major_spellblasting_potion');
+    expect(entry.condition).toBeDefined();
+
+    // And Combustion has no entry of its own: it is the step.
+    expect(MAGE_FIRE.entries.some((row) => row.abilityId === 'combustion')).toBe(false);
+    // The arrangement MAGE_ARCANE already uses -- the potion names the stack.
+    const arcane = MAGE_ARCANE.entries.find(
+      (row) => row.abilityId === 'major_spellblasting_potion',
+    )!;
+    expect(arcane.sequence?.length).toBeGreaterThan(0);
+  });
+
+  /*
+   * ==========================================================================
+   * COMBUSTION IS OFF THE GLOBAL COOLDOWN AND DECLARES A COOLDOWN, which is
+   * what makes the sequence above resolve in one instant -- and the second half
+   * is not optional: `freeCastChain.test.ts` asserts across all nine classes
+   * that every off-GCD ability has a `cooldownMs`, because one without would
+   * win the list forever and HANG a fight rather than fail one.
+   *
+   * THE OWNER'S RULING, and it is the THIRD Mage ability of one shape: the
+   * spellbook capture gives Presence of Mind, Arcane Power and Combustion the
+   * same row, and the earlier ruling named only the two Arcane ones.
+   * ==========================================================================
+   */
+  it('has Combustion off the global cooldown, with a cooldown declared', () => {
+    expect(COMBUSTION_ABILITY.triggersGcd).toBe(false);
+    expect(COMBUSTION_ABILITY.cooldownMs).toBeGreaterThan(0);
+    // The two the owner ruled on first, so all three are pinned together.
+    expect(ARCANE_POWER_ABILITY.triggersGcd).toBe(false);
+    expect(PRESENCE_OF_MIND_ABILITY.triggersGcd).toBe(false);
+  });
+
+  /*
+   * ==========================================================================
+   * MAGE ARMOR IS OUT OF THE FIRE LIST AND STILL IN THE FROSTFIRE ONE, and
+   * both halves are the assertion.
+   *
+   * The owner's ruling -- "Mage Armor doesn't need to be captured in the main
+   * APL section" -- arrived as an audit of the ARCANE profile, and a list is
+   * changed for the profile that was named. Round 26 did the Fire one. The
+   * Frostfire list keeps its copy until somebody optimises that profile, so a
+   * test that asserted "no Mage list has one" would be extending a ruling by
+   * analogy, which is what this project does not do.
+   * ==========================================================================
+   */
+  /*
+   * ==========================================================================
+   * NO MAGE LIST CARRIES A MAGE ARMOR ENTRY, AND THREE ROUNDS GOT THERE APART.
+   *
+   * This read "has no Mage Armor entry, WHERE FROSTFIRE STILL DOES" and pinned
+   * Frostfire's as a deliberate contrast -- true when round 28 wrote it, false
+   * by the time round 32 merged, because the Frostfire round removed its entry
+   * on the same evidence. The two were measured concurrently and neither could
+   * see the other.
+   *
+   * SO THE CONTRAST WAS A FACT ABOUT A MOMENT RATHER THAN A DESIGN. The durable
+   * claim is the one all three agree on: Mage Armor lasts thirty minutes, so a
+   * `selfExpired('mage_armor')` gate is false from the first poll and the entry
+   * can never fire. Arcane dropped it in round 24, Fire in 28, Frostfire in 32.
+   * ==========================================================================
+   */
+  it('has no Mage Armor entry in any of the three lists', () => {
+    for (const [name, list] of [
+      ['arcane', MAGE_ARCANE],
+      ['fire', MAGE_FIRE],
+      ['frostfire', MAGE_FROSTFIRE],
+    ] as const) {
+      expect(list.entries.some((row) => row.abilityId === 'mage_armor'), name).toBe(false);
+    }
+  });
+
+  /*
+   * ==========================================================================
+   * THE TWO SCORCH WINDOWS ARE SEPARATE FACTS AND THIS PINS THAT THEY STILL
+   * DISAGREE.
+   *
+   * They were ONE shared constant at 3 seconds. Round 26 swept the Fire list
+   * and landed on 5 (2s -13.70, 3s 0, 4s +6.56, 5s +9.74, 6s +9.84, 8s +8.63)
+   * and left Frostfire at 3, because nothing about that sweep transfers to a
+   * build with a faster filler.
+   *
+   * PINNED BY WHAT EACH LIST ASKS RATHER THAN BY THE CONSTANTS, because the
+   * constants are not exported -- and because what would actually go wrong is
+   * somebody re-merging them, which this catches whichever value survived. It
+   * is `critRageMultiplierFor`'s rule pointed at a rotation: pin each by
+   * identity, never assert the two are equal.
+   * ==========================================================================
+   */
+  it('asks for a WIDER Scorch window on Fire than on Frostfire', () => {
+    const windowOf = (list: typeof MAGE_FIRE) => {
+      const entry = list.entries.find((row) => row.abilityId === 'scorch')!;
+      const json = JSON.stringify(entry.condition);
+      const match = /"auraId":"fire_vulnerability","compare":"atMost","seconds":([0-9.]+)/.exec(
+        json,
+      );
+      expect(match, `no fire_vulnerability duration clause in ${list.name}: ${json}`).not.toBeNull();
+      return Number(match![1]);
+    };
+    expect(windowOf(MAGE_FIRE)).toBe(5);
+    expect(windowOf(MAGE_FROSTFIRE)).toBe(3);
+  });
+});
+
 describe('the three lists, after the owner tuned them', () => {
   it('casts Scorch only if Improved Scorch is actually taken', () => {
     /*
@@ -2737,8 +2904,15 @@ describe('the three lists, after the owner tuned them', () => {
     /*
      * ASSERT THE MECHANISM AND NOT ONLY THE CONDITIONS. Two entries can be
      * correctly gated and still buy nothing if the charge does not reach the
-     * ability -- `PRESENCE_OF_MIND_SPELLS` is a NAMED LIST, so a spell absent
-     * from it takes the full cast with every condition reading true.
+     * ability.
+     *
+     * THIS COMMENT NAMED THE BUG AND THIS TEST DID NOT COVER IT. It read
+     * "`PRESENCE_OF_MIND_SPELLS` is a NAMED LIST, so a spell absent from it
+     * takes the full cast with every condition reading true" -- and a spell WAS
+     * absent from it: Arcane Wrath, which the owner found. The hazard was
+     * identified, written down, and checked for exactly one spell. Presence of
+     * Mind is a rule rather than a list now, and `presenceOfMind.test.ts`
+     * asserts it over the whole book.
      */
     const mage = createPlayer({
       race: 'gnome', characterClass: 'mage', combatStyle: 'caster',

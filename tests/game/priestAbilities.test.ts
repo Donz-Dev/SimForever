@@ -553,9 +553,43 @@ describe('Inner Focus, whose two halves are spent at different moments', () => {
       resources: [{ type: 'mana', maximum: 100_000 }],
     });
 
+  /*
+   * ==========================================================================
+   * THE NO-TALENT SIDE IS BUILT BY HAND AND NOT READ OFF THE PRESET, which is
+   * the whole point of this assertion: "by nothing else" is a claim about the
+   * TRAINER SPELLS, so the honest control is a Priest with no talents at all.
+   *
+   * IT USED `barePriest()`, WHICH READS `shadow_priest`'S OWN ALLOCATION, and
+   * it broke the moment that profile spent a point on Inner Focus -- a test
+   * pinning a MECHANISM failing because a BUILD moved underneath it. CLAUDE.md
+   * records five tests doing this in one session and the correction had already
+   * been written down a revision earlier, in the file next door. A comment
+   * recording a lesson is not a mechanism.
+   * ==========================================================================
+   */
+  const priestWithNoTalents = () =>
+    makeAttacker({
+      autoAttack: 'none',
+      abilities: abilitiesForClass('priest', 'caster', {}),
+      resources: [{ type: 'mana', maximum: 100_000 }],
+    });
+
   it('is granted by the talent and by nothing else', () => {
-    expect(barePriest().abilities.get('inner_focus')).toBeUndefined();
+    expect(priestWithNoTalents().abilities.get('inner_focus')).toBeUndefined();
     expect(withInnerFocus().abilities.get('inner_focus')).toBeDefined();
+  });
+
+  /*
+   * AND THE BUILD FACT, PINNED SEPARATELY so that it moving cannot break the
+   * rule above. The Shadow preset spends one point here, taken off
+   * `twilight_focus`, and it is worth **+6.67 +/- 0.90** at 60s -- but only
+   * with its list entry, which `rotations/priest.ts` carries.
+   */
+  it('is taken by the Shadow preset, and its list casts it', () => {
+    expect(shadowBuild().talents.inner_focus).toBe(1);
+    expect(shadowBuild().rotation.entries.map((entry) => entry.abilityId)).toContain(
+      'inner_focus',
+    );
   });
 
   it('makes the next spell free', () => {

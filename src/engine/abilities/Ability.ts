@@ -338,10 +338,17 @@ export interface Ability {
    *
    * `hold` is the exception some effects grant: the swing timer keeps running
    * behind the cast, and a swing that comes due DURING it is held until the
-   * cast finishes. Both then resolve and the timer restarts. The Warrior's
-   * Improved Slam is exactly this -- "Slam no longer interrupts your melee
-   * swing time" -- and it is worth far more than the quarter second of cast
-   * time the same talent removes.
+   * cast finishes. Both then resolve and the timer restarts.
+   *
+   * **NOTHING DECLARES IT.** The Warrior's Improved Slam did, and this comment
+   * read "Improved Slam is exactly this" beside a MISQUOTE of the clause --
+   * "Slam no longer interrupts your melee swing time" against a client that
+   * says "no longer interrupts **or delays** your melee swing". `hold` is the
+   * first verb and the talent states both, so the quote that justified the
+   * mode was the half of the tooltip the mode implements. It is `continue` now,
+   * on the owner's ruling. Kept as a mode because it is a coherent thing for a
+   * ruleset to say and `castSwingTimer.test.ts` pins its behaviour; a talent
+   * granting it would be one line.
    *
    * ----------------------------------------------------------------------------
    * `continue` IS A THIRD MODE AND IT IS NOT A STRONGER `hold`. The auto attack

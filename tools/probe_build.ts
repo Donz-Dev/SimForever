@@ -31,6 +31,7 @@ import { VARIANT_GROUPS as MAGE } from './mageVariants';
 import { VARIANT_GROUPS as SHAMAN } from './shamanVariants';
 import { VARIANT_GROUPS as PRIEST } from './priestVariants';
 import { VARIANT_GROUPS as ARCANE } from './arcaneVariants';
+import { VARIANT_GROUPS as FIRE } from './fireVariants';
 import { VARIANT_GROUPS as FROSTFIRE } from './frostfireVariants';
 
 /*
@@ -46,6 +47,7 @@ const VARIANT_GROUPS = {
   ...SHAMAN,
   ...PRIEST,
   ...ARCANE,
+  ...FIRE,
   ...FROSTFIRE,
 };
 

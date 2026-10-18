@@ -117,7 +117,7 @@ PROFILE=<id> PLAN=1 npx vite-node tools/stat_weights.ts        # which stats thi
 | `encode_talent_build` | is the tree legal, and is it still on theme | — |
 | `USES=1` | which entries fire, which never fire, and what is dealing damage from **outside** the list | the **"before the pull"** block prints each action beside the ability's **whole-fight** cast count, so four `arcane_blast` rows all read 13.2 and `<-- NEVER HAPPENED` can never fire for a spell that is also the filler |
 | `probe_resources` | `headroom` at the end of the fight: large means **GCD-bound**, zero with `wasted` means **capping** | one batch, so it is a diagnostic and not a measurement |
-| `probe_profile_report` | the damage table, buff/debuff uptime, and the `avoid` column | a row is pooled by ability **name**, so a proc sharing a name merges into it |
+| `probe_profile_report` | the damage table, buff/debuff uptime, and the `avoid` column | a row is pooled by ability **name**, so a proc sharing a name merges into it. **Its crit columns printed the RAW stat and ignored `critRating` until round 28** — the Fire Mage read 3.00% melee and 10.82% spell where the engine rolls 14.00% and 21.82%, which is the bug the owner caught in `CharacterSheetPanel` surviving in the tool this step tells you to run |
 | `stat_weights PLAN=1` | the hit ladder and the list of stats reported **not measured** — no fights are run | **the hit ladder undercounts school-scoped hit.** See Appendix B |
 
 ### And a sixth, which is a READ rather than a run
@@ -134,6 +134,20 @@ had no `triggersGcd: false` anywhere in them.
 **THIS WAS WORTH +33 DPS ON ONE PROFILE AND IT IS NOT A MEASUREMENT.** The owner
 found it by reading the list, not by running anything: *"Ensure Presence of Mind
 and Arcane Power don't trigger a global cooldown."* Both did.
+
+**AND THE SAME READ FOUND A THIRD, ON THE NEXT PROFILE, IN THE SAME FILE.**
+Combustion is the Fire capstone and the spellbook capture gives it the identical
+row to those two -- no cost, "Instant", "3 min cooldown", no rank, granted by a
+capstone -- and it was on the global cooldown. **It was PRICED and not shipped**
+(+24.93 +/- 4.21 at 60s), because a ruling covers what it says and is not
+extended by analogy; the owner then ruled it off, which is worth +23.9 on that
+profile.
+
+**SO THE SIXTH READ IS NOT DONE WHEN THE FILE HAS SOME `triggersGcd: false` IN
+IT.** Two of the three were already there. Check every cooldown-shaped ability
+against what the spell is, and where the answer is a ruling rather than a fact,
+**price it, flag it, and leave the default alone** -- the figure is what makes
+the question answerable in one sentence.
 
 **AND IT IS INVISIBLE IN EVERYTHING EXCEPT THE DPS** — an ability wrongly taking
 a global cooldown still applies the right aura, for the right duration, on the
@@ -326,6 +340,22 @@ Four conventions, each of which has been paid for:
 1. **Every group contains its own control** — `{ label: 'the shipped X -- the
    control', apply: (p) => p }`. A group without one cannot tell "this loses"
    from "this group did not apply".
+
+   **AND THE CONTROL'S LABEL MUST SAY "SHIPPED" AND NOT WHAT THE SHIPPED VALUE
+   CURRENTLY IS.** `(p) => p` means *whatever is on `main` right now*, so a row
+   labelled with the behaviour — "on expiry", "no inner_focus", "13/3/35" — is
+   honest exactly until that group ships something, and then it silently
+   becomes a second copy of the new baseline while still claiming to be the old
+   one. **It cost a wrong ship in the Shadow Priest round and then caught a
+   second group in the same round**: a two-second refresh window was measured
+   at +84.67 against what the label called "on expiry" and was in fact the
+   previously-shipped two-second window, and the real on-expiry reading turned
+   out to be **+33.33 better** than the thing being shipped.
+
+   So a group that ships anything wants **two** rows: the no-op control,
+   labelled *the shipped X*, and the prior behaviour **written out explicitly**
+   so it cannot drift. *A no-op control is a control over the current list,
+   never over the list it was written against.*
 2. **Write the header as the profile's damage table**, off a `USES=1` run, with
    the DPS it was taken at. A figure in a comment expires; one that states the
    build it was taken in merely becomes dated.
@@ -366,6 +396,30 @@ It is not a small effect. The Arcane Mage over twenty seeds:
 minute with 2,638 mana spare, mana bound at five. So three "settled" answers on
 that profile are answers about a one-minute clock: the Major Mana Potion losing
 by 12.7, `manaPer5` and `spirit` weighing zero, and Evocation never firing.
+
+**AND IT HAS NOW REVERSED A `real` WINNER AND NOT ONLY A `noise` ROW.** The Fire
+Mage's `improved_fire_blast` 2/2 measures **+8.00 +/- 3.10 against the pre-round
+build, +2.92 +/- 2.81 on the finished list, and -33.76 +/- 7.52 at 300s** — so
+three paired measurements, two of them `real` and positive, and the change is a
+loss. It was not shipped.
+
+**THAT IS A STEP UP FROM THE ARCANE CASE ABOVE.** Pre-casting Arcane Power went
++4.19 +/- 6.81 to -8.07, which is a sign change on a row that was inside its
+own interval at 60s -- the long run upgraded a `noise` row to a loss. This one
+had a `real` positive verdict at 60s, measured twice against two different
+baselines, and is eleven times worse at 300s. **A round can pass every gate,
+measure a real gain twice, and still be shipping a loss.**
+
+**THE MECHANISM IS THE REGIME CHANGE AND IT IS PREDICTABLE FROM STEP 1.** Fire
+Blast costs 340 mana for about 1,347 where the filler costs 410 for 1,781, so
+more Fire Blasts is more damage per global cooldown and LESS damage per mana —
+worth something exactly as long as the global cooldown is what binds, which for
+that profile is true at 60s (2,615 mana spare) and false by 300s (196).
+
+**SO WHEN `probe_resources` SAYS A BUILD IS GCD-BOUND, ASK AT WHAT LENGTH IT
+STOPS BEING SO, AND RE-RUN ANY CANDIDATE THAT SPENDS MORE MANA PER GLOBAL
+COOLDOWN AT THAT LENGTH.** It is one command, and it is the difference between
+shipping a 60-second optimum and shipping a rotation.
 
 **SO: BEFORE CALLING A COOLDOWN'S PLACEMENT SETTLED, RE-RUN IT AT A LENGTH
 LONGER THAN THAT COOLDOWN.** And before writing "this entry never fires", check
@@ -559,6 +613,15 @@ Pre-combat mode skips **three** things the fight would charge for: the global
 cooldown the action would start, the swing reset, and the cast time. The mana is
 still spent and the cooldown still runs.
 
+**AND A PRE-CAST CAN GO FROM "NOISE" TO A CLEAR LOSS WHEN THE GCD FLAG IS
+FIXED, WHICH IS THE RETRACTION POINTING THE OTHER WAY.** Pre-casting the Fire
+Mage's Combustion measured **-4.69 +/- 10.91 (noise)** while the ability paid a
+global cooldown and **-36.38 +/- 5.52 (`real`)** once the owner ruled it off --
+because the saved GCD was the only thing offsetting a three-minute window burned
+at t=0 on a target with no debuff stacks. Same lesson as Arcane Power's +24.9,
+same direction of error, opposite sign: **the GCD flag is part of what a
+pre-cast is worth, so price the pre-cast AFTER the flag is right.**
+
 **SO A COOLDOWN IS A CANDIDATE TO MOVE HERE** — a 15-second window opened at a
 **0s** lead is the same window the fight would get, bought for no global
 cooldown. `elemental_mastery` is **+13.9** on exactly that argument. A **0s lead
@@ -625,6 +688,16 @@ Ten structural facts, each of which has produced a wrong list here:
   the Moonkin 14.9 DPS doing nothing but speeding it up. The owner's lists say
   *"if not active"* instead, and that one word was the Elemental Shaman's entire
   +16.4.
+- **AND THE CLIP IS NOT ALWAYS THE EXPENSIVE MISTAKE, SO SWEEP THE WINDOW RATHER
+  THAN SHRINKING IT.** The Fire Mage's Scorch window swept 2s **-13.70**, 3s 0,
+  4s +6.56, 5s **+9.74**, 6s **+9.84**, 8s +8.63 — the peak is on the side the
+  clip argument says to avoid, and a two-point comparison at 3s and 1s would have
+  concluded "keep 3". What decides it is what a LAPSE costs: Fire Vulnerability is
+  five stacks on 84% of that build's damage and losing it costs five Scorches to
+  rebuild, so a wide margin is insurance and a tight one is a gamble against a
+  2.5-second filler being in flight. **Ask what the aura costs to REBUILD before
+  assuming the clip is what matters**, and expect the curve to turn over on both
+  sides.
 - **A HOLD POINT NEEDS THE FINISHER'S TABLE CHECKED FIRST.** `EVISCERATE_BY_COMBO_POINT`
   is 278/448/618/788/958 — 278 for the first point and 170 for each after — so
   damage per point **falls**. "Hold for the maximum" is a rule about a
@@ -850,16 +923,18 @@ yet, leave the sentence unfinished.**
 Audited at commit `c147ec0`. **Arithmetic only, by the recipe in Gate B** — no
 fight reveals any of this.
 
-**TWO PROFILES STILL FAIL. `mage_arcane` AND `mage_frostfire` HAVE SINCE BEEN
-FIXED**, each in the round that took that profile through this procedure, and
-each at a real cost — **-96.5 +/- 9.4** and **-25.90 +/- 9.70**, which is the
-honest price of the ruling:
+**ALL THREE OF THOSE PROFILES ARE NOW FIXED -- `mage_arcane`, `mage_fire` AND
+`mage_frostfire`** -- each in its own run of this procedure, and each at a real
+cost: **-96.5 +/- 9.4**, **-24.23 +/- 4.29** and **-25.90 +/- 9.70**, which is
+the honest price of the ruling. (Two branches fixed the last two concurrently,
+and each one's text said the other still failed; the merge is what made all
+three true at once.)
 
 | profile | damaging actions | verdict |
 | --- | --- | --- |
 | `mage_arcane` | ~~`pyroblast` -7.618s, `arcane_blast` -6.029s, -4.529s, -3.029s~~, `arcane_blast` -0.029s | **FIXED.** Now one damaging cast, the owner's own, at the haste-rounding boundary |
-| `mage_fire` | `fireball` -0.059s, `scorch` -0.029s | **FAIL — two.** `scorch` is a project addition (+15.2) |
-| `mage_frostfire` | `frostfire_bolt` -0.049s, ~~`scorch` -0.029s~~ | **FIXED in round 27.** The project's `scorch` addition is reverted for **-25.90 +/- 9.70**, and nothing legal replaces it |
+| `mage_fire` | `fireball` -0.059s, ~~`scorch` -0.029s~~ | **FIXED** in round 28. One damaging cast, the owner's own, at the haste-rounding boundary; the revert cost **-24.23** and the loop recovered **+17.74** of it |
+| `mage_frostfire` | `frostfire_bolt` -0.049s, ~~`scorch` -0.029s~~ | **FIXED in round 32.** The project's `scorch` addition is reverted for **-25.90 +/- 9.70**, and nothing legal replaces it |
 | `shaman_elemental` | `lightning_bolt` -0.039s, `flame_shock` 0.000s | **FAIL — two, and BOTH ARE THE OWNER'S OWN LINES.** A question for them, not an edit |
 
 **AND A FIXED OPENER'S REMAINING DESIGN SPACE CAN BE EMPTY, WHICH IS A ROW

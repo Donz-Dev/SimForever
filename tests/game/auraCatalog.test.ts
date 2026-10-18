@@ -290,7 +290,31 @@ describe('the catalog covers what the stock lists ask about', () => {
       onlyViaTheNet,
       'reachable only through the stock-list safety net -- a factory-built aura needs a representative call in its module CATALOG_AURAS',
     ).toEqual([]);
-  }, READS_THE_SOURCE_TREE_MS);
+    /*
+     * ========================================================================
+     * 30 SECONDS, AND THE CAUSE IS TRANSFORM CONTENTION RATHER THAN THIS TEST.
+     *
+     * It timed out against the 5000ms default under the full suite and passes
+     * standalone -- and the numbers say where the time goes. Run alone, this
+     * file reports **test body 629ms against transform 16.76s and collect
+     * 20.35s**: it imports eleven aura modules, which pull in the abilities,
+     * talents and rotations behind them, and vitest attributes that work to
+     * the first test that runs after collection.
+     *
+     * SO IT IS NOT THE `readdirSync` WALK, which is thirteen files, and it is
+     * not a slow assertion. That distinguishes it from
+     * `protectedChannelTicks.test.ts` and `stealthBreaking.test.ts`, whose
+     * limits carry the same number for a DIFFERENT and separately counted
+     * reason -- those really do read 215 files. **Two tests can need the same
+     * limit for two causes**, and writing one cause onto the other is how a
+     * note stops being worth reading.
+     *
+     * PER-TEST, because `vite.config.ts` sets no global `testTimeout` on
+     * purpose: widening it everywhere would hide the next test that genuinely
+     * gets slower.
+     * ========================================================================
+     */
+  }, 30_000);
 
   it('names an aura from an id, for one that came out of a saved file', () => {
     expect(auraName('rend')).toBe('Rend');

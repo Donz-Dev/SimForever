@@ -75,6 +75,53 @@ const withoutAura = selfMissing;
  * hold in the wrong place.
  * ----------------------------------------------------------------------------
  */
+/*
+ * ==============================================================================
+ * THERE IS NO REFRESH WINDOW ON SHADOW WORD: PAIN, AND THAT IS A MEASURED
+ * ANSWER RATHER THAN THE ABSENCE OF ONE.
+ *
+ * A two-second window WAS shipped here for part of one round and is reverted.
+ * `tools/priestVariants.ts`'s `priestSwpWindow` is the whole sweep, against an
+ * EXPLICIT on-expiry control at two fight lengths:
+ *
+ *   window        60s fight      300s fight
+ *   on expiry      control         control
+ *   0.5s           +2.78           -33.33
+ *   1.0s           +2.78           -33.33
+ *   1.5s           +2.78           -46.27
+ *   2.0s         **+5.47**        -118.00
+ *   2.5s           +5.47          -128.84
+ *   3.0s          -11.23          -143.86
+ *
+ * Every cell is a PAIRED delta from the explicit on-expiry row -- 1200
+ * iterations at 60s, 400 at 300s -- and not one row subtracted from another,
+ * which is a different and much wider interval.
+ *
+ * **THE OWNER'S PLAIN "IF NOT ACTIVE" WORDING WINS AT EVERY LENGTH BUT THE
+ * DEFAULT ONE**, and at 300s it wins monotonically -- the narrower the window,
+ * the better, with zero best. The 60-second column is small, non-monotone and
+ * the only place any window pays.
+ *
+ * WHY: a window is paid once per CAST and the uptime it buys is paid once per
+ * FIGHT. A 60-second fight casts this three times and a 300-second fight twelve,
+ * so the clipping compounds while the closed gap does not.
+ *
+ * AND THE MECHANISM SAYS THE SAME THING FROM THE OTHER SIDE. At a THREE second
+ * window -- exactly this DoT's tick period -- the debuff reaches **100.00%
+ * uptime and loses 2.08 ticks a fight**: casts hold at 3.00, ticks fall 18.96
+ * to 17.27. **A DoT at perfect uptime can be worth less than one at 97.4%**,
+ * so the uptime table is the wrong measure for a periodic effect and a reader
+ * optimising that column would ship the worst cell in the sweep.
+ *
+ * **THIS WAS GOT WRONG TWICE IN ONE ROUND BEFORE IT WAS GOT RIGHT**, both times
+ * by reading a 60-second sweep as an answer: once shipping 2.0s (the 300s
+ * build's worst live cell), once shipping 1.0s. What found it was an EXPLICIT
+ * on-expiry row -- the control had been `(p) => p`, which silently means
+ * "whatever is shipped" and stopped meaning "on expiry" the moment anything was.
+ * ==============================================================================
+ */
+
+
 export const EARLY_DEMISE_FRACTION = 0.2;
 export const SHADOW_WORD_DEATH_HOLD_FRACTION = 0.35;
 
@@ -125,6 +172,52 @@ export const PRIEST_SHADOW: AplList = {
   ...RACIAL_COOLDOWNS,
   ...CONSUMABLE_COOLDOWNS,
   ...CONSUMABLE_HEALS,
+  /*
+   * ==========================================================================
+   * INNER FOCUS, WITH THE FREE OFF-GLOBAL-COOLDOWN ABILITIES, worth
+   * **+6.13 +/- 0.50** at 60s over 1200 paired iterations and **+2.40 +/-
+   * 0.26** at 300s -- both measured as the cost of REMOVING it from the
+   * shipped build, which needs no trust in a stale baseline.
+   *
+   * **BOTH HALVES OR NEITHER.** The talent without this entry measures
+   * `IDENTICAL FIGHTS` -- an ability in the book that no list casts -- and this
+   * entry without the talent is skipped in silence, because
+   * `PriorityRotation` passes over an ability the character does not know. The
+   * pair is the change; neither half is.
+   *
+   * UNGATED, AND THAT IS SAFE BECAUSE IT HAS A COOLDOWN. An ungated,
+   * always-castable entry is a floor under everything below it -- but Inner
+   * Focus is a 180-second cooldown, so after it fires the list falls straight
+   * past it for the rest of the fight. It is the same reason Sniper Shot can
+   * sit below an ungated Arcane Shot.
+   *
+   * POSITION IS A CHOICE BETWEEN EQUALS AND THE BOTTOM IS NOT ONE OF THEM.
+   * Above `shadow_word_pain`, above `mind_blast`, above `shadow_word_death`,
+   * and gated on Shadow Word: Death being ready all measured the identical
+   * **+6.67**: the ability is free and off the global cooldown, so wherever it
+   * sits above the filler it fires in the same instant and the same spell
+   * collects the crit. Two positions are NOT equal:
+   *
+   *   above `mind_flay`   **+1.65** -- the entries above it get first refusal,
+   *                       so the +25% lands on a 568-damage Mind Flay tick
+   *                       instead of a 1,456 Mind Blast
+   *   the bottom         **IDENTICAL FIGHTS** -- never reached at all, because
+   *                       Mind Flay is an ungated filler above it
+   *
+   * **SO THE BOTTOM IS THE WRONG PLACE FOR THIS ONE ENTRY**, which is the
+   * documented exception to "a new entry goes at the bottom": a free off-GCD
+   * cooldown goes near the top, and five of seven profiles once never cast
+   * their racial for exactly this reason.
+   *
+   * WHAT IT IS WORTH IS THE CRIT AND NOT THE MANA. The 100% cost reduction is
+   * worth nothing on a build that leaves 52.5% of its mana unspent at 60s; the
+   * +25% critical strike chance lands on one of
+   * `INNER_FOCUS_CRITTABLE` -- Mind Blast, Mind Flay or Shadow Word: Death --
+   * because the two DoTs apply an aura and roll no table, so they have no crit
+   * to improve.
+   * ==========================================================================
+   */
+  { abilityId: 'inner_focus', note: 'Free and off the GCD. Worth +6.13 with this entry, 0.00 without it.' },
     { abilityId: 'shadow_word_pain', condition: expired('shadow_word_pain') },
     { abilityId: 'devouring_plague', condition: expired('devouring_plague') },
   /*
