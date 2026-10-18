@@ -31,6 +31,7 @@ export {
   penetratedArmor,
   handMultiplier,
   resolveDamage,
+  rollApplication,
   scaleByPower,
   spellPowerFor,
   spellPowerAgainst,

@@ -1,5 +1,5 @@
 import type { Ability } from '../../engine';
-import { dealDamage, seconds } from '../../engine';
+import { dealDamage, rollApplication, seconds } from '../../engine';
 import {
   AMPLIFY_CURSE_AURA,
   AMPLIFY_CURSE_MULTIPLIER,
@@ -90,8 +90,23 @@ export const CORRUPTION_ABILITY: Ability = {
   name: 'Corruption',
   cost: { resource: 'mana', amount: 340 },
   castTimeMs: CORRUPTION_CAST_MS,
-  onCast: ({ simulation, caster, target }) => {
+  attackTable: 'spell',
+  onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
+    /*
+     * A PURE DoT ROLLS TO HIT ON APPLICATION -- the owner's rule -- and has no
+     * damage event to carry the roll, so it asks. `rollApplication` folds in
+     * school-scoped hit the way a damaging spell's roll does.
+     */
+    const landed = !rollApplication(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: 'shadow',
+      attackTable: 'spell',
+    }).avoided;
+    if (!landed) return;
     /*
      * A PURE DoT: the cast itself deals nothing, so the whole coefficient is
      * on the aura's ticks and there is no direct half to weight against.
@@ -126,8 +141,23 @@ export const BANE_OF_AGONY_ABILITY: Ability = {
   id: 'bane_of_agony',
   name: 'Bane of Agony',
   cost: { resource: 'mana', amount: 215 },
-  onCast: ({ simulation, caster, target }) => {
+  attackTable: 'spell',
+  onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
+    /*
+     * A PURE DoT ROLLS TO HIT ON APPLICATION -- the owner's rule -- and has no
+     * damage event to carry the roll, so it asks. `rollApplication` folds in
+     * school-scoped hit the way a damaging spell's roll does.
+     */
+    const landed = !rollApplication(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: 'shadow',
+      attackTable: 'spell',
+    }).avoided;
+    if (!landed) return;
     const amplified = caster.auras.has(AMPLIFY_CURSE_AURA.id);
     // One Bane per Warlock on a target: this one replaces a Bane of Doom.
     target.auras.remove(simulation, BANE_OF_DOOM.id);
@@ -146,10 +176,9 @@ export const BANE_OF_AGONY_ABILITY: Ability = {
  * needs the target to DIE, which no target here does.
  *
  * IT ROLLS TO HIT ON APPLICATION, because a pure DoT has no damage event to
- * carry the roll and the owner's rule is that the application rolls. That is
- * NOT what the other three Warlock DoTs do -- Corruption, Bane of Agony and
- * Siphon Life apply without asking -- which is a separate question recorded
- * where the PR says so, rather than a reason to copy the gap here.
+ * carry the roll and the owner's rule is that the application rolls -- as
+ * Corruption, Bane of Agony and Siphon Life now do too. They applied without
+ * asking until this round, which is how the gap was found.
  * ----------------------------------------------------------------------------
  */
 export const BANE_OF_DOOM_ABILITY: Ability = {
@@ -159,9 +188,21 @@ export const BANE_OF_DOOM_ABILITY: Ability = {
   cooldownMs: seconds(60),
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
-    if (!target || !ability.attackTable) return;
-    const roll = simulation.rollAttack(ability.attackTable, caster, target);
-    if (roll.avoided) return;
+    if (!target) return;
+    /*
+     * A PURE DoT ROLLS TO HIT ON APPLICATION -- the owner's rule -- and has no
+     * damage event to carry the roll, so it asks. `rollApplication` folds in
+     * school-scoped hit the way a damaging spell's roll does.
+     */
+    const landed = !rollApplication(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: 'shadow',
+      attackTable: 'spell',
+    }).avoided;
+    if (!landed) return;
     target.auras.remove(simulation, 'bane_of_agony');
     simulation.applyAura(target, BANE_OF_DOOM, caster.id);
   },
@@ -218,8 +259,23 @@ export const SIPHON_LIFE_ABILITY: Ability = {
   id: 'siphon_life',
   name: 'Siphon Life',
   cost: { resource: 'mana', amount: 365 },
-  onCast: ({ simulation, caster, target }) => {
+  attackTable: 'spell',
+  onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
+    /*
+     * A PURE DoT ROLLS TO HIT ON APPLICATION -- the owner's rule -- and has no
+     * damage event to carry the roll, so it asks. `rollApplication` folds in
+     * school-scoped hit the way a damaging spell's roll does.
+     */
+    const landed = !rollApplication(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: 'shadow',
+      attackTable: 'spell',
+    }).avoided;
+    if (!landed) return;
     simulation.applyAura(target, SIPHON_LIFE, caster.id);
   },
   unmodelled:

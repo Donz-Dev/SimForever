@@ -33,6 +33,12 @@ import {
   WARLOCK_DESTRUCTION_SPELLS,
 } from '../../src/game/abilities/warlock';
 import { WARLOCK_TALENT_EFFECTS } from '../../src/game/talents/warlockEffects';
+import { WARLOCK_ABILITIES } from '../../src/game/abilities/warlock';
+import { createForeverAttackChances } from '../../src/game/combat/attackChances';
+import { PRIEST_ABILITIES } from '../../src/game/abilities/priest';
+
+const WARLOCK_BY_ID = (id: string) => WARLOCK_ABILITIES.find((ability) => ability.id === id)!;
+const PRIEST_BY_ID = (id: string) => PRIEST_ABILITIES.find((ability) => ability.id === id)!;
 
 /*
  * ============================================================================
@@ -331,5 +337,82 @@ describe('Soul Fire', () => {
       abilityId: 'soul_fire',
       valueIndex: 1,
     });
+  });
+});
+
+describe('a pure DoT rolls to hit when it is applied', () => {
+  /*
+   * ==========================================================================
+   * THE OWNER'S RULE, AND FIVE ABILITIES THAT SKIPPED IT. Corruption, Bane of
+   * Agony, Siphon Life, Shadow Word: Pain and Devouring Plague deal nothing on
+   * the cast, so no damage event carried a roll and all five landed every time.
+   * The whole suite passed with that in -- a missing miss is not an error --
+   * which is why these drive the REAL `onCast` and count what landed.
+   *
+   * 17% spell miss with no hit, by hand. 3000 casts is a standard error of
+   * about 0.7 points, so the bands below are four of them wide.
+   * ==========================================================================
+   */
+  const POOR_DOTS = [
+    { ability: () => WARLOCK_BY_ID('corruption'), aura: 'corruption' },
+    { ability: () => WARLOCK_BY_ID('bane_of_agony'), aura: 'bane_of_agony' },
+    { ability: () => WARLOCK_BY_ID('siphon_life'), aura: 'siphon_life' },
+    { ability: () => BANE_OF_DOOM_ABILITY, aura: 'bane_of_doom' },
+    { ability: () => PRIEST_BY_ID('shadow_word_pain'), aura: 'shadow_word_pain' },
+    { ability: () => PRIEST_BY_ID('devouring_plague'), aura: 'devouring_plague' },
+  ];
+
+  const landRate = (
+    abilityId: () => import('../../src/engine').Ability,
+    auraId: string,
+    caster: Combatant,
+  ): number => {
+    const boss = makeTarget({ maxHealth: 1e9 });
+    // THE RULESET'S table: the engine default has no 17% spell miss in it.
+    const simulation = buildSimulation([caster, boss], {
+      attackChances: createForeverAttackChances(),
+    });
+    simulation.begin();
+    const ability = abilityId();
+    const trials = 3000;
+    let landed = 0;
+    for (let i = 0; i < trials; i += 1) {
+      ability.onCast!({ simulation, caster, target: boss, ability });
+      if (boss.auras.has(auraId)) landed += 1;
+      boss.auras.remove(simulation, auraId);
+    }
+    return landed / trials;
+  };
+
+  for (const { ability, aura } of POOR_DOTS) {
+    it(`${aura} misses on the 17% spell miss with no hit`, () => {
+      const rate = landRate(ability, aura, makeAttacker({ stats: { hitChance: 0 } }));
+      expect(rate).toBeGreaterThan(0.83 - 0.03);
+      expect(rate).toBeLessThan(0.83 + 0.03);
+    });
+  }
+
+  it('lands every time at the 17-point cap', () => {
+    for (const { ability, aura } of POOR_DOTS) {
+      expect(landRate(ability, aura, makeAttacker({ stats: { hitChance: 17 } })), aura).toBe(1);
+    }
+  });
+
+  it('counts SCHOOL-scoped hit, which a bare `rollAttack` never saw', () => {
+    /*
+     * The Shadow Priest reaches its cap through Shadow Focus -- school-scoped
+     * Shadow hit -- so this is the case that decides whether the roll is the
+     * same one `dealDamage` makes. 12 points on the stat and 5 on the school is
+     * the cap; 12 alone leaves 5% to miss.
+     */
+    const statOnly = makeAttacker({ stats: { hitChance: 12 } });
+    const withSchool = makeAttacker({ stats: { hitChance: 12 } });
+    withSchool.schoolModifiers.add('shadow', { hitBonus: 5 });
+
+    const swp = () => PRIEST_BY_ID('shadow_word_pain');
+    expect(landRate(swp, 'shadow_word_pain', withSchool)).toBe(1);
+    const rate = landRate(swp, 'shadow_word_pain', statOnly);
+    expect(rate).toBeGreaterThan(0.95 - 0.02);
+    expect(rate).toBeLessThan(0.95 + 0.02);
   });
 });

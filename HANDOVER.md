@@ -64,7 +64,7 @@ the tooling to be a bit more sophisticated as well."
 | 32 | **THE FROSTFIRE MAGE, AND THE TWO BIGGEST GAINS WERE WITHHELD AS 60-SECOND ARTEFACTS** -- a second illegal opener reverted, Eureka held for a Fingers of Frost window, and a dead Mage Armor entry the owner had already ruled on | legal **1051.7 -> 1057.7 (+5.99 +/- 0.95 REAL)**. The revert is **-25.90 +/- 9.70**; `critical_mass` 5/5 is **+21.80 at 60s and -10.29 at 180s**, so it is NOT shipped | see below |
 | 33 | **THE ELE SHAMAN THROUGH THE LOOP, and the round found the FRAME rather than the rotation** -- the profile collapses **802 -> 546 -> 465 DPS from 60s to 300s**, so every figure ever taken on it was taken in the one regime where its mana is free. A talent declared as a ruled-out THREAT effect turned out to be a live mana talent carrying the tooltip of the talent next door | shipped **+84.08 +/- 2.84 at 180s** and **+1.01 +/- 2.09 noise at 60s**; four other answers INVERT with the clock and are not shipped. **27 of 28 profiles bit-identical** | see below |
 | 34 | **SIX PRs INTEGRATED, AND WHAT THE MERGES THEMSELVES GOT WRONG** -- #287 to #292, strictly sequential because every squash re-conflicted the rest. Rounds renumbered 28-33 in MERGE order; the question count re-derived five times; two SEMANTIC conflicts git could not see | **no figure re-measured**, on the standing instruction. Three resolutions introduced a defect the markers did not show -- one reached `main` and is repaired | see below |
-| 35 | **A MISCELLANEOUS CLEANUP, TEN OWNER ITEMS IN ONE PR** -- Rupture by combo point, the spell miss floor removed, the Paladin seal and Judgement balance pass, the Seal Twist Echo bug, three Shaman options (Flametongue Weapon, Rockbiter Weapon, Flametongue Totem), Frost Oil, and Bane of Doom, Cone of Cold and Soul Fire declared | **not re-baselined**, on the owner's standing instruction. `USES=1` on the five touched profiles: the new imbue entries read `(switched off in the list)` and nothing new never-fires. Six new questions, one answered | see below |
+| 35 | **A MISCELLANEOUS CLEANUP, TEN OWNER ITEMS IN ONE PR** -- Rupture by combo point, the spell miss floor removed, the Paladin seal and Judgement balance pass, the Seal Twist Echo bug, three Shaman options (Flametongue Weapon, Rockbiter Weapon, Flametongue Totem), Frost Oil, and Bane of Doom, Cone of Cold and Soul Fire declared | **not re-baselined**, on the owner's standing instruction. `USES=1` on the five touched profiles: the new imbue entries read `(switched off in the list)` and nothing new never-fires. Five new questions, one old one answered | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -108,6 +108,7 @@ way. A 3.5-second weapon is 40.8% where it was 100%.
 | raid buffs | Flametongue Totem, exclusive with Windfury Totem, selected by no preset |
 | consumables | Frost Oil, a third weapon effect per hand: 10% for 30 Frost + 27% SP |
 | new spells | Cone of Cold, Bane of Doom and Soul Fire, each wired to the talents that name it |
+| DoT application | Corruption, Bane of Agony, Siphon Life, Shadow Word: Pain and Devouring Plague now ROLL TO HIT when applied, through a new `rollApplication` that folds in school-scoped hit |
 
 **THE HAND-KEPT LISTS ARE WHERE A NEW SPELL GOES MISSING, AND A TEST CAUGHT ONE.**
 Cone of Cold had to join `CHILL_ABILITY_IDS`, `FROST_SPELL_IDS`,
@@ -119,6 +120,17 @@ failed until it was added -- the other three would have been silent.
 ALL.** It read `withoutAura('windfury_weapon')`, so a Flametongue put in the
 pre-combat list would have been overwritten by a Windfury at the pull. All
 three imbue entries are gated on NO imbue being up; Windfury is the enabled one.
+
+**FIVE PURE DoTs NEVER ROLLED TO HIT, AND THE WHOLE SUITE PASSED WITH IT.** The
+owner's rule is that a DoT application rolls; an ability that deals damage gets
+the roll from `dealDamage`, and these five deal nothing on the cast, so nothing
+asked. Found while declaring Bane of Doom. **`simulation.rollAttack`, which
+Insect Swarm and Serpent Sting use, was the near miss**: it reads the table
+alone, so Shadow Focus -- the school-scoped hit the Shadow Priest reaches its cap
+through -- would never have reached Shadow Word: Pain. `rollApplication` in
+`engine/combat/damage.ts` is `rollTable` itself with no damage in it. The new
+tests fail 6 of 26 with the fix reverted. SM/DS's Corruption goes 4.0 to 4.2
+casts a fight, which is the misses being recast.
 
 ## Questions outstanding for the owner
 
@@ -152,10 +164,9 @@ write-up; none is an engine gap.
 | **Soul Fire's coefficient is Classic's 100%**, under `PLACEHOLDER_SOUL_FIRE_SP_COEFFICIENT` -- you gave its damage, cost, cast and cooldown and no coefficient, and the sheet has no row | round 35 | one constant; no profile casts Soul Fire yet |
 | **Flametongue Weapon and Flametongue Totem roll no table and crit at MELEE crit for 2x**, the poison-and-seal precedent for damage riding a weapon hit. They are Fire damage and could equally be spell crit at 1.5x | round 35 | the crit half of both Flametongues |
 | **Frost Oil rolls the SPELL table** -- 17% miss, spell crit -- because it "procs a Frostbolt". The other reading is the Flametongue one above | round 35 | whether the oil can miss |
-| **Corruption, Bane of Agony and Siphon Life never roll to hit on application.** CLAUDE.md's rule is that a DoT application rolls; Serpent Sting, Insect Swarm and now Bane of Doom do, and these three apply without asking -- found while declaring Bane of Doom, and not changed here | round 35 | about 17% minus hit of every Warlock DoT application, on both Warlock profiles |
 | **Seal of Righteousness's base is CLAMPED outside 1.3 to 4.0 seconds**, and so are both Flametongues. You gave two points and a line; extending the line past them is a number nobody stated | round 35 | nothing today -- no weapon on file is outside the range |
 
-**TWENTY-SIX ROWS -- round 35 answered the Judgement of Command row and added six -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**TWENTY-FIVE ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count

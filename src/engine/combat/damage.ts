@@ -869,6 +869,39 @@ function rollTable(
  * it once the outcome can never be `crit`, and a stray 1.5 sitting in the
  * resolution is the kind of thing a later reader uses.
  */
+/**
+ * Roll whether an effect that deals NO damage of its own lands -- a pure DoT's
+ * application.
+ *
+ * ----------------------------------------------------------------------------
+ * THE SAME ROLL `dealDamage` MAKES, NOT A SECOND COPY OF IT. The owner's rule
+ * is that a DoT application rolls to hit; an ability that deals damage AND
+ * applies an aura gets that roll from `dealDamage` for free, and a pure DoT has
+ * no damage event to carry it. `simulation.rollAttack` was the first answer and
+ * is the near miss: it reads the TABLE alone, so a school-scoped `hitBonus` --
+ * Shadow Focus, Elemental Precision, Divine Precision -- never reached it. The
+ * Shadow Priest reaches its cap through Shadow Focus, so its Shadow Word: Pain
+ * would have missed five points more often than its Mind Blast.
+ *
+ * So this is `rollTable` itself, handed a request with no damage in it: the
+ * ability's, the school's, the table's and the target's modifiers all fold in,
+ * exactly as they would for a hit with the same id, school and table.
+ * ----------------------------------------------------------------------------
+ */
+export function rollApplication(
+  context: SimulationContext,
+  request: {
+    readonly source: Combatant;
+    readonly target: Combatant;
+    readonly abilityId: string;
+    readonly abilityName: string;
+    readonly school: DamageSchool;
+    readonly attackTable: AttackTableKind;
+  },
+): AttackResolution {
+  return rollTable({ ...request, baseAmount: 0 }, context);
+}
+
 function withoutCrit(chances: AttackChances, cannotCrit: boolean): AttackChances {
   if (!cannotCrit) return chances;
   return { ...chances, crit: 0, critMultiplier: 1 };
