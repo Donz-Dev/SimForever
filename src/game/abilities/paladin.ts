@@ -393,9 +393,21 @@ export const HOLY_STRIKE: Ability = {
        * read against attack power and silently scale with the wrong stat. The
        * seals resolve the same problem the same way.
        */
+      /*
+       * ======================================================================
+       * AND ALL OF IT IS INSIDE THE 50%, by the owner's formula: "(weapon
+       * damage + flat holy damage based on rank + 42.9% spell power) * 50%".
+       * The spell power half already came out at 21.45%; the FLAT Holy damage
+       * did not, and landed whole beside a halved weapon. This is the owner
+       * ruling the exception to "an ability's flat damage is added outside its
+       * weapon percentage" for this one strike -- so the halving is written
+       * here rather than by changing that rule for everyone.
+       * ======================================================================
+       */
       baseAmount:
-        HOLY_STRIKE_HOLY_DAMAGE +
-        HOLY_STRIKE_SP_COEFFICIENT * spellPowerAgainst(caster, target, HOLY),
+        (HOLY_STRIKE_HOLY_DAMAGE +
+          HOLY_STRIKE_SP_COEFFICIENT * spellPowerAgainst(caster, target, HOLY)) *
+        HOLY_STRIKE_WEAPON_FRACTION,
       weaponScaling: {
         slot: MAIN_HAND,
         fraction: HOLY_STRIKE_WEAPON_FRACTION,

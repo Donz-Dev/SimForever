@@ -285,6 +285,18 @@ export function validateProfile(value: unknown): ValidationResult {
     issues.push({ path: 'raidBuffs', message: 'Must be a list of buff ids.' });
   }
 
+  // OPTIONAL: a map of buff id to a number, for the entries that carry one.
+  const raidBuffValues = value.raidBuffValues;
+  if (
+    raidBuffValues !== undefined &&
+    (typeof raidBuffValues !== 'object' ||
+      raidBuffValues === null ||
+      Array.isArray(raidBuffValues) ||
+      Object.values(raidBuffValues).some((v) => typeof v !== 'number' || !Number.isFinite(v)))
+  ) {
+    issues.push({ path: 'raidBuffValues', message: 'Must map buff ids to numbers.' });
+  }
+
   /*
    * A MAP OF CATEGORY ID TO CONSUMABLE ID, and the shape is checked here while
    * the ids are not.
@@ -481,6 +493,10 @@ export function validateProfile(value: unknown): ValidationResult {
         targetSwingSeconds: validated.encounter.targetSwingSeconds,
       },
       raidBuffs: [...validated.raidBuffs],
+      // NAMED, or the rebuild drops it -- the `stance` and `petFamily` hole.
+      ...(validated.raidBuffValues
+        ? { raidBuffValues: { ...validated.raidBuffValues } }
+        : {}),
       // Rebuilt with a fallback for the same reason `poisons` is: validation
       // runs on anything a person can paste, and a hand-edited file missing the
       // field should load as a character with no consumables rather than

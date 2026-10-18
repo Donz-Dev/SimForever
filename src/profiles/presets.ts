@@ -5,6 +5,7 @@ import {
   casterConsumables,
   hybridConsumables,
 } from '../game/buffs/consumables';
+import { RAID_BUFFS } from '../game/buffs/raidBuffs';
 import type { ClassId } from '../game/character';
 import type { Equipment, EquippedSlot } from '../game/items/Item';
 import { benchmarkEquipmentForName } from '../game/items/benchmarkSets';
@@ -132,6 +133,8 @@ const PRESET_RAID_BUFFS: readonly string[] = [
   'blessing_of_wisdom',
   'blessing_of_kings',
   'blessing_of_might',
+  // On every profile, by the owner's instruction.
+  'devotion_aura',
   'judgement_of_the_crusader',
   'gift_of_arthas',
   'faerie_fire',
@@ -144,6 +147,20 @@ const PRESET_RAID_BUFFS: readonly string[] = [
   'leader_of_the_pack',
   'moonkin_form',
 ];
+
+/**
+ * THE THREE TANKS ADD THORNS AND RETRIBUTION AURA, by the owner's instruction:
+ * "only on by default for Prot Warr, Prot Pally, and Bear". They deal damage to
+ * whatever attacks the character, and nothing attacks any other profile, so
+ * everywhere else they would be a ticked box worth exactly nothing. In
+ * catalogue order, like the list above.
+ */
+const TANK_RAID_BUFFS: readonly string[] = presetRaidBuffsWith(['thorns', 'retribution_aura']);
+
+function presetRaidBuffsWith(extra: readonly string[]): readonly string[] {
+  const chosen = new Set([...PRESET_RAID_BUFFS, ...extra]);
+  return RAID_BUFFS.map((buff) => buff.id).filter((id) => chosen.has(id));
+}
 
 /*
  * ==============================================================================
@@ -2146,7 +2163,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         stance: 'defensive',
       },
       talents: { ...PROT_WARR_TALENTS },
-      raidBuffs: [...PRESET_RAID_BUFFS],
+      raidBuffs: [...TANK_RAID_BUFFS],
       /*
        * STAMINA FOOD, AND IT IS THE THIRD FOOD RULING AND THE FIRST TO GIVE A
        * DIFFERENT ANSWER.
@@ -2613,7 +2630,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         stance: 'battle',
       },
       talents: { ...DRUID_BEAR_TALENTS },
-      raidBuffs: [...PRESET_RAID_BUFFS],
+      raidBuffs: [...TANK_RAID_BUFFS],
       /*
        * STAMINA FOOD, THE OWNER'S, AND THE FIFTH AND LAST MEMBER OF THE ROW TO
        * BE NAMED. The three answers across the five are strength, stamina and
@@ -3270,7 +3287,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         stance: 'battle',
       },
       talents: { ...PALADIN_PROTECTION_TALENTS },
-      raidBuffs: [...PRESET_RAID_BUFFS],
+      raidBuffs: [...TANK_RAID_BUFFS],
       /*
        * THE HEALTHSTONE RATHER THAN THE RUNE, which is the one place a hybrid
        * row is overridden and the reason is the same one that makes this

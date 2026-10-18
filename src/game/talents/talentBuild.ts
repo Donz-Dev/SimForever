@@ -1002,6 +1002,9 @@ export function talentBuild(
         case 'conditionalDamage':
           if (meets(effect.requires, context)) {
             damageMultiplier *= 1 + value / 100;
+            for (const abilityId of effect.exceptAbilityIds ?? []) {
+              abilityModifiers.add(abilityId, { damageMultiplier: 1 / (1 + value / 100) });
+            }
           } else {
             report(talentId, rank, unmetReason(effect.requires));
           }

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ALL_RACIAL_ABILITY_IDS } from '../../src/game/rotations/racialCooldowns';
 import { ROGUE_COMBAT } from '../../src/game/rotations/rogue';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { MAX_COMBO_POINTS } from '../../src/game/combat/comboPoints';
@@ -68,6 +69,15 @@ const combat = () => {
   return cached;
 };
 
+/**
+ * The entries a person sees LIT in the panel: every entry except another race's
+ * racial, which is now kept and switched off rather than dropped -- see
+ * `racialsForRace`. Recklessness stays in, switched off or not, because it is
+ * off by the owner's choice and not by race.
+ */
+const lit = (entries: readonly { abilityId: string; disabled?: boolean }[]) =>
+  entries.filter((e) => !(e.disabled && ALL_RACIAL_ABILITY_IDS.has(e.abilityId)));
+
 describe('the Combat list', () => {
   it('is in the order the ruleset owner gave', () => {
     expect(ROGUE_COMBAT.entries.map((entry) => entry.abilityId)).toEqual(OWNER_ORDER);
@@ -75,7 +85,7 @@ describe('the Combat list', () => {
 
   it('narrows to the eight entries the owner can see', () => {
     expect(
-      PRESETS_BY_ID.get('rogue_combat')!.build().rotation.entries.map((e) => e.abilityId),
+      lit(PRESETS_BY_ID.get('rogue_combat')!.build().rotation.entries).map((e) => e.abilityId),
     ).toEqual(COMBAT_ORDER);
   });
 

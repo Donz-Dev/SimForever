@@ -458,6 +458,16 @@ body {
   flex-shrink: 0;
 }
 
+/* The race swap on the confirmed summary: its own line under the name, so a
+   narrow column does not squeeze the select or push the buttons out. */
+.character-summary-race {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
 /*
  * OFF SCREEN RATHER THAN `display: none`, for the file input behind the Load
  * button.
@@ -1857,6 +1867,20 @@ button:disabled {
 
 .buff-detail {
   font-size: 12px;
+}
+
+/* The supplier's strength beside Thorns and Retribution Aura, indented under
+   the name column so it reads as part of the row above it. */
+.buff-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 0 4px 24px;
+  font-size: 12px;
+}
+
+.buff-value input {
+  width: 80px;
 }
 
 /* --- profile presets --- */

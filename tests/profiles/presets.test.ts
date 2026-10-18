@@ -244,10 +244,27 @@ describe('the preset catalogue', () => {
      * enforced in the ENGINE now. `windfuryImbue.test.ts` is both.
      * ========================================================================
      */
+    /*
+     * THE THREE TANKS ADD THORNS AND RETRIBUTION AURA, and only they do -- the
+     * owner's "only on by default for Prot Warr, Prot Pally, and Bear". Both
+     * deal damage to whatever attacks the character, and nothing attacks any
+     * other profile. Asserted EXHAUSTIVELY: every other preset still runs the
+     * one shared list, and a tank's is that list plus exactly these two.
+     */
+    const TANKS = new Set(['prot_warr', 'prot_pally', 'druid_bear']);
+    const TANK_EXTRAS = ['retribution_aura', 'thorns'];
     const lists = PROFILE_PRESETS.map((preset) => [preset.id, preset.build().raidBuffs] as const);
-    const [, first] = lists[0];
+    const first = lists.find(([id]) => !TANKS.has(id))![1];
     expect(first.length).toBeGreaterThan(0);
-    for (const [id, buffs] of lists) expect(buffs, id).toEqual(first);
+    for (const [id, buffs] of lists) {
+      if (TANKS.has(id)) {
+        expect(buffs.filter((b) => !first.includes(b)).sort(), id).toEqual(TANK_EXTRAS);
+        expect(first.filter((b) => !buffs.includes(b)), id).toEqual([]);
+      } else {
+        expect(buffs, id).toEqual(first);
+      }
+    }
+    expect(lists.filter(([id]) => TANKS.has(id))).toHaveLength(3);
 
     /*
      * AND BOTH DRUID AURAS ARE ON EVERY PRESET, which is the owner's ruling and
@@ -291,13 +308,16 @@ describe('the preset catalogue', () => {
 
     expect(catalogue.filter((id) => !selected.includes(id))).toEqual([
       'curse_of_recklessness',
+      // A tank's, by the owner's instruction -- dw_fury is not a tank.
+      'retribution_aura',
+      'thorns',
       // Default off by the owner's ruling, and exclusive with Windfury Totem.
       'flametongue_totem',
     ]);
     // Every id selected is a real buff, which a hand-written list could get
     // wrong in the other direction.
     for (const id of selected) expect(catalogue, id).toContain(id);
-    expect(selected).toHaveLength(catalogue.length - 2);
+    expect(selected).toHaveLength(catalogue.length - 4);
   });
 
   it('starts the target at five Sunders, so the list only refreshes', () => {

@@ -138,10 +138,20 @@ export const HOLY_SHOCK_SP_COEFFICIENT = 0.4285714285714286;
  * feels this twice. Neither of the two Paladin presets that cast it is Undead.
  * ---------------------------------------------------------------------------
  */
-export const CONSECRATION_TICK_SP_COEFFICIENT = 0.042;
+/*
+ * AND THE OWNER HAS SINCE GIVEN 4.125%, which supersedes the note's 4.2% by the
+ * same rule: a later statement outranks an earlier one.
+ */
+export const CONSECRATION_TICK_SP_COEFFICIENT = 0.04125;
 
-/** Holy Strike: 50% of weapon damage, AND 21.45% spell power. */
-export const HOLY_STRIKE_SP_COEFFICIENT = 0.2145;
+/**
+ * Holy Strike: 42.9% spell power, INSIDE the strike's 50% -- the owner's
+ * "(weapon damage + flat holy damage based on rank + 42.9% spell power) * 50%".
+ * So the effective share is 21.45%, which is the figure this constant used to
+ * hold; what moved is that the FLAT Holy damage is halved too. See
+ * `HOLY_STRIKE` in `abilities/paladin.ts`.
+ */
+export const HOLY_STRIKE_SP_COEFFICIENT = 0.429;
 
 /**
  * Judgement, and its coefficient depends on the SEAL it unleashes.

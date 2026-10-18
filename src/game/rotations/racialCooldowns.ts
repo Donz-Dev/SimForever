@@ -132,7 +132,7 @@ function abilitiesOf(race: RaceId): ReadonlySet<string> {
 }
 
 /** Every racial ability ANY race learns, for telling one entry from another. */
-const ALL_RACIAL_ABILITY_IDS: ReadonlySet<string> = new Set(
+export const ALL_RACIAL_ABILITY_IDS: ReadonlySet<string> = new Set(
   [...RACIAL_COOLDOWNS, ...RACIAL_DEFENSIVE_COOLDOWNS].map((entry) => entry.abilityId),
 );
 
@@ -170,4 +170,45 @@ export function withoutOtherRacials(list: AplList, race: RaceId): AplList {
     (entry) => !ALL_RACIAL_ABILITY_IDS.has(entry.abilityId) || mine.has(entry.abilityId),
   );
   return keep.length === list.entries.length ? list : { ...list, entries: keep };
+}
+
+/**
+ * A list with EVERY racial entry kept, switched on for this race's own and
+ * switched OFF for every other race's.
+ *
+ * ============================================================================
+ * THE OWNER'S REPLACEMENT FOR DROPPING THEM: "make any invalid racial active
+ * skills in the APL be invisible using the glyph feature to ignore it, and any
+ * valid racial actives be visible automatically." The glyph is the eye button,
+ * `AplEntry.disabled` -- so the entries stay where the list put them and a race
+ * swap only flips which are lit. Dropping them meant a swap back had to put an
+ * entry back at a position nothing remembered; flipping a flag cannot lose one.
+ *
+ * NO FIGURE CAN MOVE. `compileRotation` filters a disabled entry, and an entry
+ * for an ability the build does not know was already skipped in silence by
+ * `PriorityRotation` -- the two are the same fight.
+ *
+ * ONLY A RACIAL IS TOUCHED, which is `withoutOtherRacials`' rule kept: a
+ * capstone a list names for a sibling spec is not this function's business.
+ * Returns its argument when nothing changes, for `syncDefaultRotation`.
+ * ============================================================================
+ */
+export function racialsForRace<L extends { readonly entries: readonly AplEntry[] }>(
+  list: L,
+  race: RaceId,
+): L {
+  const mine = abilitiesOf(race);
+  let changed = false;
+  const entries = list.entries.map((entry) => {
+    if (!ALL_RACIAL_ABILITY_IDS.has(entry.abilityId)) return entry;
+    const off = !mine.has(entry.abilityId);
+    if ((entry.disabled === true) === off) return entry;
+    changed = true;
+    if (off) return { ...entry, disabled: true };
+    // Absent rather than `false`: a stored list is compared by value.
+    const { disabled: _drop, ...on } = entry;
+    void _drop;
+    return on;
+  });
+  return changed ? { ...list, entries } : list;
 }

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ALL_RACIAL_ABILITY_IDS } from '../../src/game/rotations/racialCooldowns';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { createTrainingDummy } from '../../src/game/actors/createTrainingDummy';
 import { buildSimulation } from '../helpers/buildSimulation';
@@ -30,6 +31,15 @@ import {
 // ---------------------------------------------------------------------------
 // The shared stance cooldown
 // ---------------------------------------------------------------------------
+
+/**
+ * The entries a person sees LIT in the panel: every entry except another race's
+ * racial, which is now kept and switched off rather than dropped -- see
+ * `racialsForRace`. Recklessness stays in, switched off or not, because it is
+ * off by the owner's choice and not by race.
+ */
+const lit = (entries: readonly { abilityId: string; disabled?: boolean }[]) =>
+  entries.filter((e) => !(e.disabled && ALL_RACIAL_ABILITY_IDS.has(e.abilityId)));
 
 describe('the three stances share one cooldown', () => {
   function fresh() {
@@ -353,7 +363,7 @@ describe('the Berserker list order', () => {
      * a character learns one race's and drinks its own two.
      */
     const profile = PRESETS_BY_ID.get('dw_fury')!.build();
-    expect(profile.rotation.entries.map((entry) => entry.abilityId)).toEqual(ORC_FURY_ORDER);
+    expect(lit(profile.rotation.entries).map((entry) => entry.abilityId)).toEqual(ORC_FURY_ORDER);
   });
 
   it('puts Death Wish above four entries that never fire, and above Execute', () => {

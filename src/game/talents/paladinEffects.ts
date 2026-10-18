@@ -377,7 +377,17 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   swift_judgement: [{ kind: 'grantAbility', abilityId: 'swift_judgement' }],
 
   one_handed_weapon_specialization: [
-    { kind: 'conditionalDamage', requires: { twoHanded: false } },
+    /*
+     * EVERYTHING EXCEPT THREE, by the owner's ruling: "causes everything to
+     * deal 10% more damage except Consecration, Retribution Aura, and Thorns".
+     * The tooltip's "with one-handed melee weapons" is the BUILD gate below;
+     * what it reaches is the whole character, minus the three ids named.
+     */
+    {
+      kind: 'conditionalDamage',
+      requires: { twoHanded: false },
+      exceptAbilityIds: ['consecration', 'retribution_aura', 'thorns'],
+    },
   ],
 
   improved_hammer_of_justice: [

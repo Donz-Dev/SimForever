@@ -139,15 +139,18 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   arcane_impact: [{ kind: 'schoolCrit', schools: ['arcane'] }],
 
   /*
-   * TWO EFFECTS AGAIN. The ability brings its own escalating aura; the cast
-   * reaction is what ends the window, on the last tick of the spell that
-   * collected the bonus. See `arcaneBlastSpender` for why that reading and not
-   * the literal one.
+   * ONE EFFECT: the ability, which brings its own stacking aura.
+   *
+   * THIS ALSO DECLARED A `castReaction` named `arcane_blast`, left over from
+   * `arcaneBlastSpender` -- which took the stacks away on the next damage spell
+   * and was deleted with that clause. Nothing registers the id any more, so the
+   * build DROPPED it in silence: harmless, and exactly the dead declaration that
+   * makes a reader think something still clears the stacks. NOTHING DOES, by
+   * the owner's ruling: "nothing clears Arcane Blast stacks except the duration
+   * expiring" -- not Arcane Missiles, not another Arcane Blast, which adds a
+   * stack and never extends the fifteen seconds (`refreshBehaviour: 'ignore'`).
    */
-  arcane_blast: [
-    { kind: 'grantAbility', abilityId: 'arcane_blast' },
-    { kind: 'castReaction', reactionId: 'arcane_blast' },
-  ],
+  arcane_blast: [{ kind: 'grantAbility', abilityId: 'arcane_blast' }],
 
   arcane_shielding: [
     {

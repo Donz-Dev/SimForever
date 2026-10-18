@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { Ability, Combatant, RNG } from '../../src/engine';
+import { critMultiplierWith } from '../../src/engine';
 import {
   RATING_PER_PERCENT,
   Simulation,
@@ -20,7 +21,6 @@ import {
   getRace,
 } from '../../src/game/character';
 import { createPlayer } from '../../src/game/actors/createPlayer';
-import { COMBAT_CONSTANTS } from '../../src/game/combat/attackChances';
 import { RACIALS, RACIAL_ABILITIES, racialBuild } from '../../src/game/racials';
 import {
   BERSERKING,
@@ -275,95 +275,95 @@ describe('the crit racials, which the racial patch made unconditional', () => {
     expect(withWeaponCondition).toEqual([]);
   });
 
-  it('gives a Dwarf and a Tauren crit DAMAGE, per table, at the right half each', () => {
+  it('gives a Dwarf and a Tauren a crit DAMAGE FACTOR on every offensive table', () => {
     /*
      * ========================================================================
-     * THE BONUS HALF IS A DIFFERENT NUMBER ON EACH TABLE, AND THAT IS WHY THIS
-     * IS NOT A STAT.
-     *
-     * "2% increased critical damage" raises the BONUS half of the multiplier:
-     * a melee or ranged crit multiplies by 2, so the bonus is 1.0 and 2% of it
-     * is 0.02; a spell crit multiplies by 1.5, so the same 2% is 0.01. Both
-     * races carrying this can be casters -- a DWARF can be a Priest and a
-     * TAUREN can be a Moonkin -- so the talent layer's whole-character
-     * `critDamageBonus`, which reads the melee figure for everything, would
-     * have doubled what every spell these races cast collects.
-     *
-     * ASSERTED AS THE ARITHMETIC RATHER THAN AS 0.02 AND 0.01, so a ruleset
-     * that moves a crit multiplier moves this with it.
+     * THE WHOLE BASE, NOT THE BONUS HALF, by the owner's ruling: a 2% critical
+     * damage racial takes a spell crit's 1.5x to 1.53x and an attack's 2x to
+     * 2.04x. So it is ONE factor on every offensive table -- the per-table
+     * difference survives because it is 2% of each table's own multiplier --
+     * and it used to be 2% of the part above 1 (2.02x and 1.51x).
      * ========================================================================
      */
-    const fraction = CRIT_DAMAGE_RACIAL / 100;
+    const factor = 1 + CRIT_DAMAGE_RACIAL / 100;
     for (const race of ['dwarf', 'tauren'] as const) {
       const built = racialBuild(race, {
         characterClass: 'warrior',
         equipment: {},
         style: 'two_hander',
       });
-      for (const table of ['melee-auto', 'melee-special'] as const) {
-        expect(built.attackTableModifiers.for(table).critMultiplierBonus, `${race} ${table}`).toBe(
-          (COMBAT_CONSTANTS.meleeCritMultiplier - 1) * fraction,
-        );
+      for (const table of [
+        'melee-auto',
+        'melee-special',
+        'ranged-auto',
+        'ranged-special',
+        'spell',
+      ] as const) {
+        const modifier = built.attackTableModifiers.for(table);
+        expect(modifier.critMultiplierFactor, `${race} ${table}`).toBeCloseTo(factor, 12);
+        expect(modifier.critMultiplierBonus ?? 0, `${race} ${table}`).toBe(0);
       }
-      for (const table of ['ranged-auto', 'ranged-special'] as const) {
-        expect(built.attackTableModifiers.for(table).critMultiplierBonus, `${race} ${table}`).toBe(
-          (COMBAT_CONSTANTS.rangedCritMultiplier - 1) * fraction,
-        );
-      }
-      expect(built.attackTableModifiers.for('spell').critMultiplierBonus, `${race} spell`).toBe(
-        (COMBAT_CONSTANTS.spellCritMultiplier - 1) * fraction,
-      );
-
-      /*
-       * AND NOT ON THE ATTACKS-RECEIVED TABLE, which is the one entry that
-       * would be actively wrong rather than merely unused: `melee-received`
-       * resolves attacks against the character, so a crit damage bonus there
-       * would raise what the BOSS crits a Tauren Warrior for.
-       */
+      // NOT the attacks-RECEIVED table, which would raise what the boss crits
+      // a Tauren Warrior for.
       expect(
-        built.attackTableModifiers.for('melee-received').critMultiplierBonus,
+        built.attackTableModifiers.for('melee-received').critMultiplierFactor ?? 1,
         `${race} melee-received`,
-      ).toBeUndefined();
+      ).toBe(1);
     }
 
     // AND NO OTHER RACE CARRIES ONE.
     for (const race of ['human', 'orc', 'troll', 'night_elf', 'gnome', 'undead'] as const) {
       expect(
         racialBuild(race, { characterClass: 'warrior', equipment: {}, style: 'two_hander' })
-          .attackTableModifiers.for('melee-auto').critMultiplierBonus ?? 0,
+          .attackTableModifiers.for('melee-auto').critMultiplierFactor ?? 1,
         race,
-      ).toBe(0);
+      ).toBe(1);
     }
+  });
+
+  it("reproduces the owner's four worked cases", () => {
+    /*
+     * BY HAND, from the owner's message:
+     *
+     *   A  a spell, racial                     1.5 x 1.02            = 1.53
+     *   B  a spell, racial, +100% talent       (1.5 x 1.02 - 1) x 2 + 1 = 2.06
+     *   C  an attack, racial                   2 x 1.02              = 2.04
+     *   D  an attack, racial, +20% talent      see below
+     *
+     * A TALENT'S BONUS IS STORED AS AN ABSOLUTE SHARE OF THE BASE'S BONUS HALF
+     * -- Ruin's +100% on a spell is +0.5, Impale-shaped +20% on an attack is
+     * +0.2 -- which is what `talentBuild` writes.
+     *
+     * D WAS WRITTEN `(2 x 1.02 - 1) x 2.2 = 2.288`, AND THE OWNER HAS RULED IT
+     * 2.248. Taken as a rule, D's own formula gives an untalented attack 2.08
+     * where C says 2.04, so no one formula fit all four; the ruling is B's rule
+     * for everything -- scale the bonus half the racial leaves, then add the 1
+     * back: `(2.04 - 1) x 1.2 + 1 = 2.248`. The 2.288 assertion below is kept
+     * as a NEGATIVE so the alternative cannot creep back in.
+     */
+    expect(critMultiplierWith(1.5, 0, 1.02)).toBeCloseTo(1.53, 12);
+    expect(critMultiplierWith(1.5, 0.5, 1.02)).toBeCloseTo(2.06, 12);
+    expect(critMultiplierWith(2, 0, 1.02)).toBeCloseTo(2.04, 12);
+    expect(critMultiplierWith(2, 0.2, 1.02)).toBeCloseTo(2.248, 12);
+    expect(critMultiplierWith(2, 0.2, 1.02)).not.toBeCloseTo(2.288, 3);
+    // And with no racial it is exactly the old sum, which is why nothing moves.
+    expect(critMultiplierWith(1.5, 0.5, 1)).toBe(2);
+    expect(critMultiplierWith(2, 0.2, 1)).toBe(2.2);
   });
 
   it('makes a crit DAMAGE racial bigger on the hit, not more frequent', () => {
     /*
-     * THE MECHANISM, NOT THE DECLARATION -- which is this project's rule about
-     * a talent reporting itself modelled and doing nothing. A crit damage
-     * racial must move the SIZE of a critical hit and must not move the crit
-     * CHANCE, and the two are easy to confuse because both read "crit".
-     *
-     * ASSERTED THROUGH A REAL FIGHT rather than through a hand-built
-     * `DamageRequest`, because a test that reconstructs the thing under test
-     * reproduces its mistakes -- which is exactly how the first `cannotCrit`
-     * test agreed with the bug it was written for. `createPlayer` is what
-     * joins `racialBuild` to the combatant, and that join is the half that
-     * can be missing.
+     * THROUGH `createPlayer`, which is the join that can be missing, and then
+     * through the real crit multiplier the engine rolls with.
      */
-    const critMultiplierFor = (race: 'dwarf' | 'troll'): number => {
+    const factorFor = (race: 'dwarf' | 'troll'): number => {
       const player = createPlayer({ race, characterClass: 'warrior', combatStyle: 'two_hander' });
-      return player.attackTableModifiers.for('melee-special').critMultiplierBonus ?? 0;
+      return player.attackTableModifiers.for('melee-special').critMultiplierFactor ?? 1;
     };
+    expect(factorFor('dwarf')).toBeCloseTo(1 + CRIT_DAMAGE_RACIAL / 100, 12);
+    expect(factorFor('troll')).toBe(1);
 
-    // x2.02 against x2.00: the BONUS half raised by 2%, not the whole multiplier.
-    expect(critMultiplierFor('dwarf')).toBeCloseTo(
-      (COMBAT_CONSTANTS.meleeCritMultiplier - 1) * (CRIT_DAMAGE_RACIAL / 100),
-      9,
-    );
-    expect(critMultiplierFor('troll')).toBe(0);
-
-    // AND THE CHANCE IS UNTOUCHED, which is the half a "crit" racial makes easy
-    // to get wrong: Earth Fury grants no crit chance at all.
+    // AND THE CHANCE IS UNTOUCHED: Earth Fury grants no crit chance at all.
     const dwarfBuild = racialBuild('dwarf', {
       characterClass: 'warrior',
       equipment: {},
@@ -483,11 +483,11 @@ describe('the passive racials', () => {
     const troll = createPlayer({ race: 'troll', characterClass: 'warrior' });
     expect(troll.stats.get('hitChance')).toBe(0);
     expect(tauren.stats.get('hitChance')).toBe(0);
-    expect(tauren.attackTableModifiers.for('melee-special').critMultiplierBonus).toBeCloseTo(
-      (COMBAT_CONSTANTS.meleeCritMultiplier - 1) * (CRIT_DAMAGE_RACIAL / 100),
-      9,
+    expect(tauren.attackTableModifiers.for('melee-special').critMultiplierFactor).toBeCloseTo(
+      1 + CRIT_DAMAGE_RACIAL / 100,
+      12,
     );
-    expect(troll.attackTableModifiers.for('melee-special').critMultiplierBonus ?? 0).toBe(0);
+    expect(troll.attackTableModifiers.for('melee-special').critMultiplierFactor ?? 1).toBe(1);
   });
 
   it('gives a Gnome 5% of the pool its class uses, and nothing else', () => {
@@ -1549,10 +1549,24 @@ describe('the racials are in the priority lists, or they never fire', () => {
       ['shadow_priest', ['berserking']],
     ] as const) {
       const built = PRESETS_BY_ID.get(preset)!.build();
-      const named = built.rotation.entries
-        .map((entry) => entry.abilityId)
-        .filter((id) => RACIAL_ABILITIES[id] !== undefined);
-      expect(named, preset).toEqual([...keeps]);
+      /*
+       * LIT, NOT STORED. Every racial entry is kept now and another race's is
+       * switched off -- the owner's "invisible using the glyph feature" -- so
+       * what this asserts is which are ON, and that every other one is present
+       * and OFF rather than missing.
+       */
+      const racial = built.rotation.entries.filter(
+        (entry) => RACIAL_ABILITIES[entry.abilityId] !== undefined,
+      );
+      expect(
+        racial.filter((entry) => !entry.disabled).map((entry) => entry.abilityId),
+        preset,
+      ).toEqual([...keeps]);
+      for (const entry of racial) {
+        if (!(keeps as readonly string[]).includes(entry.abilityId)) {
+          expect(entry.disabled, `${preset} ${entry.abilityId}`).toBe(true);
+        }
+      }
 
       // And what it stores is exactly what the character actually learned.
       const player = characterAtCombatStart(built)!;
@@ -1615,18 +1629,32 @@ describe('the racials are in the priority lists, or they never fire', () => {
       ...orc,
       character: { ...orc.character, race: 'gnome' },
     });
-    const ids = asGnome.rotation.entries.map((entry) => entry.abilityId);
-    expect(ids).toContain('eureka');
-    expect(ids).not.toContain('blood_fury');
+    const lit = (profile: typeof orc) =>
+      profile.rotation.entries.filter((entry) => !entry.disabled).map((entry) => entry.abilityId);
+    expect(lit(asGnome)).toContain('eureka');
+    expect(lit(asGnome)).not.toContain('blood_fury');
+    // Kept and switched off, so a swap back can light it again in place.
+    expect(asGnome.rotation.entries.find((e) => e.abilityId === 'blood_fury')?.disabled).toBe(true);
 
-    // AND A CUSTOM LIST IS STILL LEFT ALONE, which is the other half of that
-    // function's contract and must not be collateral.
+    /*
+     * A CUSTOM LIST IS NEVER RE-DERIVED -- AND ITS RACIAL EYES STILL FOLLOW THE
+     * RACE, which changed: which racials a character can cast is a fact about
+     * the race, not an edit. Every NON-racial entry must come back identical.
+     */
     const custom = {
       ...orc,
       rotation: { ...orc.rotation, source: 'custom' as const },
       character: { ...orc.character, race: 'gnome' as const },
     };
-    expect(syncDefaultRotation(custom)).toBe(custom);
+    const synced = syncDefaultRotation(custom);
+    expect(synced.rotation.source).toBe('custom');
+    expect(lit(synced)).toContain('eureka');
+    expect(lit(synced)).not.toContain('blood_fury');
+    const nonRacial = (profile: typeof orc) =>
+      profile.rotation.entries.filter((entry) => RACIAL_ABILITIES[entry.abilityId] === undefined);
+    expect(nonRacial(synced)).toEqual(nonRacial(custom));
+    // And a custom list already right for its race is returned untouched.
+    expect(syncDefaultRotation(synced)).toBe(synced);
   });
 });
 

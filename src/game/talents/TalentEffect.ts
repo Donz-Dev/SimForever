@@ -741,6 +741,17 @@ export type TalentEffect =
       readonly kind: 'conditionalDamage';
       readonly requires: BuildRequirement;
       /**
+       * Abilities the whole-character bonus does NOT reach, by id -- an aura
+       * id counts, because a tick carries its aura's id.
+       *
+       * One-Handed Weapon Specialization is the caller: the owner ruled it
+       * raises "everything ... except Consecration, Retribution Aura, and
+       * Thorns". Each id gets a per-ability multiplier of `1 / (1 + value)`,
+       * which divides the bonus back out exactly and leaves every OTHER
+       * multiplier on that ability alone.
+       */
+      readonly exceptAbilityIds?: readonly string[];
+      /**
        * Which of the talent's numbers is the damage percentage.
        *
        * ------------------------------------------------------------------

@@ -56,6 +56,17 @@ export function RaidBuffsPanel({ profile, onChange }: RaidBuffsPanelProps) {
     onChange({ ...profile, raidBuffs });
   };
 
+  /*
+   * A VALUE BESIDE A SWITCH, for the entries somebody else supplies at a
+   * strength of their own -- Thorns and Retribution Aura scale with the
+   * SUPPLIER'S spell power. Stored per entry in `raidBuffValues`; an entry with
+   * nothing stored shows and uses its declared default (700).
+   */
+  const values = profile.raidBuffValues ?? {};
+  const setValue = (id: string, value: number) => {
+    onChange({ ...profile, raidBuffValues: { ...values, [id]: value } });
+  };
+
   const onPlayer = RAID_BUFFS.filter((buff) => buff.appliesTo === 'player');
   const onTarget = RAID_BUFFS.filter((buff) => buff.appliesTo === 'enemy');
   const active = RAID_BUFFS.filter((buff) => chosen.has(buff.id));
@@ -81,8 +92,22 @@ export function RaidBuffsPanel({ profile, onChange }: RaidBuffsPanelProps) {
         ) : undefined
       }
     >
-      <BuffGroup title="On the character" buffs={onPlayer} chosen={chosen} onToggle={toggle} />
-      <BuffGroup title="On the target" buffs={onTarget} chosen={chosen} onToggle={toggle} />
+      <BuffGroup
+        title="On the character"
+        buffs={onPlayer}
+        chosen={chosen}
+        onToggle={toggle}
+        values={values}
+        onValue={setValue}
+      />
+      <BuffGroup
+        title="On the target"
+        buffs={onTarget}
+        chosen={chosen}
+        onToggle={toggle}
+        values={values}
+        onValue={setValue}
+      />
     </Panel>
   );
 }
@@ -92,11 +117,15 @@ function BuffGroup({
   buffs,
   chosen,
   onToggle,
+  values,
+  onValue,
 }: {
   readonly title: string;
   readonly buffs: readonly RaidBuff[];
   readonly chosen: ReadonlySet<string>;
   readonly onToggle: (id: string) => void;
+  readonly values: Readonly<Record<string, number>>;
+  readonly onValue: (id: string, value: number) => void;
 }) {
   // Grouped by provider, in the order they first appear, so the catalogue
   // decides the ordering and this does not have a second opinion.
@@ -128,13 +157,10 @@ function BuffGroup({
                     {/* Named rather than left to be discovered by ticking it
                         and watching another box clear itself.
 
-                        NO ENTRY DECLARES `exclusiveWith` TODAY, so this renders
-                        for nothing -- Leader of the Pack and Moonkin Form were
-                        the one pair and the owner has ruled them not exclusive.
-                        Kept with the field rather than deleted beside it: the
-                        next pair should be a declaration and not a panel
-                        change. `raidBuffs.test.ts` is what says the branch is
-                        currently unreachable. */}
+                        ONE PAIR DECLARES `exclusiveWith` NOW: Flametongue Totem
+                        and Windfury Totem. (Leader of the Pack and Moonkin Form
+                        were the first pair and the owner ruled them not
+                        exclusive.) */}
                     {buff.exclusiveWith ? (
                       <em>
                         {' '}
@@ -143,6 +169,25 @@ function BuffGroup({
                     ) : null}
                   </span>
                 </label>
+                {/* OUTSIDE THE LABEL, so typing a number does not toggle the
+                    switch. Disabled while the buff is off, because a strength
+                    for a buff nobody is supplying means nothing. */}
+                {buff.value ? (
+                  <label className="buff-value">
+                    <span className="muted">{buff.value.label}</span>
+                    <input
+                      type="number"
+                      min={0}
+                      step={10}
+                      disabled={!chosen.has(buff.id)}
+                      value={values[buff.id] ?? buff.value.defaultValue}
+                      onChange={(event) => {
+                        const next = Number(event.target.value);
+                        if (Number.isFinite(next) && next >= 0) onValue(buff.id, next);
+                      }}
+                    />
+                  </label>
+                ) : null}
               </li>
             ))}
           </ul>

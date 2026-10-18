@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ALL_RACIAL_ABILITY_IDS } from '../../src/game/rotations/racialCooldowns';
 import { ROGUE_VENOM } from '../../src/game/rotations/rogue';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { COLD_BLOOD_ABILITY } from '../../src/game/abilities/rogue';
@@ -88,13 +89,22 @@ const venom = () => {
   return batch;
 };
 
+/**
+ * The entries a person sees LIT in the panel: every entry except another race's
+ * racial, which is now kept and switched off rather than dropped -- see
+ * `racialsForRace`. Recklessness stays in, switched off or not, because it is
+ * off by the owner's choice and not by race.
+ */
+const lit = (entries: readonly { abilityId: string; disabled?: boolean }[]) =>
+  entries.filter((e) => !(e.disabled && ALL_RACIAL_ABILITY_IDS.has(e.abilityId)));
+
 describe('the Venom list', () => {
   it('is in the order the ruleset owner gave', () => {
     expect(ROGUE_VENOM.entries.map((entry) => entry.abilityId)).toEqual(OWNER_ORDER);
   });
 
   it('narrows to the seven entries the owner can see', () => {
-    expect(PRESETS_BY_ID.get('rogue_venom')!.build().rotation.entries.map((e) => e.abilityId)).toEqual(
+    expect(lit(PRESETS_BY_ID.get('rogue_venom')!.build().rotation.entries).map((e) => e.abilityId)).toEqual(
       VENOM_ORDER,
     );
   });
