@@ -26,6 +26,7 @@ export {
   appliesArmor,
   armorDamageMultiplier,
   armorReduction,
+  critMultiplierWith,
   dealDamage,
   grantGeneratedResource,
   penetratedArmor,

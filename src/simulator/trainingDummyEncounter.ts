@@ -242,8 +242,13 @@ function createPlayerFor(
   // ONE CALL PER ENTRY. Judgement of Wisdom's two halves share a closure, so
   // building the damage and cast reactions separately would give it two
   // independent rolls per spell -- see `RaidBuffReactions`.
+  // THE PROFILE'S VALUE FOR THE ENTRY, where it carries one -- a supplier's
+  // spell power for Thorns and Retribution Aura -- and the entry's default
+  // otherwise.
   const builtReactions = buffs.flatMap((buff) =>
-    buff.buildReactions ? [buff.buildReactions()] : [],
+    buff.buildReactions
+      ? [buff.buildReactions(profile.raidBuffValues?.[buff.id] ?? buff.value?.defaultValue)]
+      : [],
   );
 
   return createPlayer({

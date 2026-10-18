@@ -550,6 +550,7 @@ function casterSchoolModifier(request: DamageRequest): SchoolModifier {
 
   let critBonus = primary.critBonus ?? 0;
   let critMultiplierBonus = primary.critMultiplierBonus ?? 0;
+  let critMultiplierFactor = primary.critMultiplierFactor ?? 1;
   let hitBonus = primary.hitBonus ?? 0;
   let damageMultiplier = primary.damageMultiplier ?? 1;
 
@@ -558,11 +559,12 @@ function casterSchoolModifier(request: DamageRequest): SchoolModifier {
     const other = request.source.schoolModifiers.for(extra);
     critBonus = Math.max(critBonus, other.critBonus ?? 0);
     critMultiplierBonus = Math.max(critMultiplierBonus, other.critMultiplierBonus ?? 0);
+    critMultiplierFactor = Math.max(critMultiplierFactor, other.critMultiplierFactor ?? 1);
     hitBonus = Math.max(hitBonus, other.hitBonus ?? 0);
     damageMultiplier *= other.damageMultiplier ?? 1;
   }
 
-  return { critBonus, critMultiplierBonus, hitBonus, damageMultiplier };
+  return { critBonus, critMultiplierBonus, critMultiplierFactor, hitBonus, damageMultiplier };
 }
 
 export function spellPowerFor(source: Combatant, school: DamageSchool): number {
@@ -976,6 +978,12 @@ function combineModifiers(
       (school.critMultiplierBonus ?? 0) +
       (table.critMultiplierBonus ?? 0) +
       (onTarget.critMultiplierBonus ?? 0),
+    // Multiplies across all four, like a damage multiplier. See the field.
+    critMultiplierFactor:
+      (ability.critMultiplierFactor ?? 1) *
+      (school.critMultiplierFactor ?? 1) *
+      (table.critMultiplierFactor ?? 1) *
+      (onTarget.critMultiplierFactor ?? 1),
     /*
      * ALL FOUR SOURCES, INCLUDING THE TARGET'S, and the fourth arrived from a
      * different dive than the `hitBonus` line below it. Every field here sums
@@ -1098,7 +1106,14 @@ function perTargetEffectMultiplier(request: DamageRequest): number {
 const NO_MODIFIER: AbilityModifier = {};
 
 function withModifier(chances: AttackChances, modifier: AbilityModifier): AttackChances {
-  if (!modifier.critBonus && !modifier.critMultiplierBonus && !modifier.hitBonus) return chances;
+  if (
+    !modifier.critBonus &&
+    !modifier.critMultiplierBonus &&
+    !modifier.hitBonus &&
+    (modifier.critMultiplierFactor ?? 1) === 1
+  ) {
+    return chances;
+  }
   return {
     ...chances,
     /*
@@ -1119,8 +1134,27 @@ function withModifier(chances: AttackChances, modifier: AbilityModifier): Attack
       chances.miss - toRollUnits(modifier.hitBonus ?? 0),
     ),
     crit: chances.crit + toRollUnits(modifier.critBonus ?? 0),
-    critMultiplier: chances.critMultiplier + (modifier.critMultiplierBonus ?? 0),
+    critMultiplier: critMultiplierWith(
+      chances.critMultiplier,
+      modifier.critMultiplierBonus ?? 0,
+      modifier.critMultiplierFactor ?? 1,
+    ),
   };
+}
+
+/**
+ * The crit multiplier once a FACTOR and a BONUS are both applied.
+ *
+ * `1 + (base x factor - 1) x (1 + bonus / (base - 1))`: the factor reaches the
+ * whole base, and the talent bonus -- stated as an absolute share of the base's
+ * bonus half -- scales whatever bonus half the factor left. With a factor of 1
+ * this is `base + bonus` to the last bit, which is why every existing figure
+ * holds. A base of 1 or less has no bonus half to scale and falls back to the
+ * old sum. See `AbilityModifier.critMultiplierFactor` for the owner's cases.
+ */
+export function critMultiplierWith(base: number, bonus: number, factor: number): number {
+  if (factor === 1 || base <= 1) return base + bonus;
+  return 1 + (base * factor - 1) * (1 + bonus / (base - 1));
 }
 
 /**

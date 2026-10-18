@@ -97,7 +97,8 @@ describe('the catalogue', () => {
      * added later again: Judgement of the CRUSADER and Gift of Arthas -- and
      * FLAMETONGUE TOTEM, an option the owner asked for default OFF.
      */
-    expect(RAID_BUFFS).toHaveLength(24);
+    // And three more from round 36: Devotion Aura, Retribution Aura, Thorns.
+    expect(RAID_BUFFS).toHaveLength(27);
     expect(RAID_BUFFS_BY_ID.has('demoralizing_shout')).toBe(false);
     expect(RAID_BUFFS_BY_ID.has('judgement_of_wisdom')).toBe(true);
     expect(RAID_BUFFS_BY_ID.has('judgement_of_the_crusader')).toBe(true);

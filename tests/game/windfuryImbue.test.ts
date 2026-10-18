@@ -104,12 +104,22 @@ describe('the raid selection after the owner filled it in', () => {
      * exceptions were really about: Windfury reaches no bow, and the imbue
      * disables the totem. Neither is a reason to leave a raid short a buff.
      */
-    const lists = PROFILE_PRESETS.map((preset) => preset.build().raidBuffs);
-    const first = lists[0];
+    /*
+     * EXCEPT THE THREE TANKS, which add Thorns and Retribution Aura on the
+     * owner's instruction -- see `presets.test.ts`, which pins that exhaustively.
+     * Every other profile is still identical, and Windfury is still in all of
+     * them, which is the half this file is about.
+     */
+    const TANKS = new Set(['prot_warr', 'prot_pally', 'druid_bear']);
+    const lists = PROFILE_PRESETS.filter((preset) => !TANKS.has(preset.id)).map(
+      (preset) => [preset.id, preset.build().raidBuffs] as const,
+    );
+    const first = lists[0][1];
 
     expect(first.length).toBeGreaterThan(0);
-    for (const [index, list] of lists.entries()) {
-      expect(list, PROFILE_PRESETS[index].id).toEqual(first);
+    for (const [id, list] of lists) expect(list, id).toEqual(first);
+    for (const preset of PROFILE_PRESETS) {
+      expect(preset.build().raidBuffs, preset.id).toContain('windfury_totem');
     }
   });
 
@@ -133,6 +143,12 @@ describe('the raid selection after the owner filled it in', () => {
 
     // And Flametongue Totem, which the owner asked for DEFAULT OFF: it is
     // exclusive with Windfury Totem, and Windfury is what every profile runs.
-    expect(missing).toEqual(['curse_of_recklessness', 'flametongue_totem']);
+    // And the two tank-only buffs, which dw_fury is not.
+    expect(missing).toEqual([
+      'curse_of_recklessness',
+      'retribution_aura',
+      'thorns',
+      'flametongue_totem',
+    ]);
   });
 });

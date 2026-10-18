@@ -296,7 +296,18 @@ export const missileBarrage: TalentReactionBuilder = (_value, values) => {
    * which is what an effect that reads no value already does.
    */
   const fromArcaneBlast = values?.[MISSILE_BARRAGE_ARCANE_BLAST_INDEX] ?? 0;
-  const fromMissileHit = values?.[MISSILE_BARRAGE_MISSILE_HIT_INDEX] ?? 0;
+  /*
+   * ==========================================================================
+   * AN ARCANE MISSILE NO LONGER PROCS IT, by the owner's ruling ahead of the
+   * client: "Missile Barrage: no longer has a 10% chance for Arcane Missiles to
+   * proc Missile Barrage." The values row still carries the figure, because the
+   * row is captured data and the client has not shipped the change -- so it is
+   * READ AND IGNORED here, and the moment a refresh drops it this line is the
+   * one to delete. It took away the self-feeding loop described above.
+   * ==========================================================================
+   */
+  void values?.[MISSILE_BARRAGE_MISSILE_HIT_INDEX];
+  const fromMissileHit = 0;
   const fromOthers = values?.[MISSILE_BARRAGE_OTHERS_INDEX] ?? 0;
 
   return {

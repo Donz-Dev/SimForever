@@ -208,6 +208,16 @@ export interface CharacterProfile {
    */
   readonly raidBuffs: readonly string[];
   /**
+   * A number per raid buff that needs one, by id -- the SUPPLIER'S spell power
+   * for Thorns and Retribution Aura, whose strength is somebody else's.
+   *
+   * OPTIONAL AND ABSENT MEANS THE BUFF'S OWN DEFAULT, so no profile saved
+   * before it existed changes and no migration is needed: an older file never
+   * selected either buff. Kept beside `raidBuffs` rather than inside it, so the
+   * list keeps answering one question.
+   */
+  readonly raidBuffValues?: Readonly<Record<string, number>>;
+  /**
    * Which poison coats which weapon. A Rogue's, and nobody else's.
    *
    * ----------------------------------------------------------------------------
@@ -505,6 +515,7 @@ export function cloneProfile(profile: CharacterProfile): CharacterProfile {
     simulation: { ...profile.simulation },
     encounter: { ...profile.encounter },
     raidBuffs: [...profile.raidBuffs],
+    ...(profile.raidBuffValues ? { raidBuffValues: { ...profile.raidBuffValues } } : {}),
     /*
      * The entries are copied so two profiles never share a list -- reordering
      * one would otherwise reorder the other. The ENTRIES THEMSELVES are not

@@ -8,7 +8,6 @@ import type {
   WeaponType,
 } from '../../engine';
 import { AttackTableModifiers } from '../../engine';
-import { COMBAT_CONSTANTS } from '../combat/attackChances';
 import type { ClassId, CombatStyleId, RaceId } from '../character';
 import type { Equipment } from '../items/Item';
 import { weaponTypeFor } from '../items/equipment';
@@ -47,25 +46,6 @@ const OFFENSIVE_TABLES: readonly AttackTableKind[] = [
   'ranged-special',
   'spell',
 ];
-
-/**
- * The BONUS half of a crit multiplier for one attack table.
- *
- * A SECOND COPY OF `talentBuild`'S OWN PRIVATE HELPER, and the duplication is
- * the lesser evil: that one is not exported, and exporting it would make a
- * racial depend on the talent layer's internals for no reason beyond six
- * lines. What matters is that BOTH read `COMBAT_CONSTANTS` -- the shared
- * ruleset numbers in `game/combat` -- rather than writing 1.0 and 0.5 out, so
- * the two cannot drift: a ruleset that separates ranged crits from melee
- * changes the constant and both follow.
- */
-function critBonusHalfFor(table: AttackTableKind): number {
-  if (table === 'spell') return COMBAT_CONSTANTS.spellCritMultiplier - 1;
-  if (table === 'ranged-auto' || table === 'ranged-special') {
-    return COMBAT_CONSTANTS.rangedCritMultiplier - 1;
-  }
-  return COMBAT_CONSTANTS.meleeCritMultiplier - 1;
-}
 
 /** The weapon types held, in any hand. */
 function heldWeaponTypes(equipment: Equipment): ReadonlySet<WeaponType> {
@@ -178,9 +158,21 @@ export function racialBuild(race: RaceId, context: RacialBuildContext): RacialBu
            * would raise the damage the BOSS crits the character for. A Tauren
            * Warrior tanking would have paid its own racial.
            */
+          /*
+           * ==================================================================
+           * AND IT MULTIPLIES THE WHOLE BASE NOW, by the owner's ruling, where
+           * the paragraph above has it raising the bonus half. "1.5x becomes
+           * 1.53x with a 2% critical damage racial", and an attack's 2x becomes
+           * 2.04x -- so the per-table difference survives (it is 2% OF the
+           * table's own multiplier) and the reading changed from 2% of the
+           * part above 1 to 2% of all of it. A talent's crit damage bonus then
+           * scales the bonus half that leaves: Ruin takes a racial 1.53 spell
+           * crit to 2.06. `critMultiplierWith` is the arithmetic.
+           * ==================================================================
+           */
           for (const table of OFFENSIVE_TABLES) {
             attackTableModifiers.add(table, {
-              critMultiplierBonus: critBonusHalfFor(table) * (effect.percent / 100),
+              critMultiplierFactor: 1 + effect.percent / 100,
             });
           }
           break;

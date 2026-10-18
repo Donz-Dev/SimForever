@@ -42,6 +42,25 @@ export interface AbilityModifier {
    * crit in the game.
    */
   readonly critMultiplierBonus?: number;
+  /**
+   * Multiplies the table's BASE crit multiplier, BEFORE `critMultiplierBonus`
+   * scales its bonus half. 1.02 is a 2% critical damage racial.
+   *
+   * --------------------------------------------------------------------------
+   * THE OWNER'S ARITHMETIC, given with four worked cases:
+   *
+   *   a spell              1.5 x 1.02                       = 1.53
+   *   a spell, +100% talent (1.5 x 1.02 - 1) x 2 + 1        = 2.06
+   *   an attack            2 x 1.02                         = 2.04
+   *
+   * so `final = 1 + (base x factor - 1) x (1 + bonus / (base - 1))`, which is
+   * EXACTLY `base + bonus` when the factor is 1 -- nothing without one moves.
+   * It is a separate field from `critMultiplierBonus` because the two do not
+   * commute: the factor reaches the whole multiplier and the bonus only the
+   * part above 1.
+   * --------------------------------------------------------------------------
+   */
+  readonly critMultiplierFactor?: number;
   /** Multiplies the ability's final damage. 1.2 is +20%. */
   readonly damageMultiplier?: number;
   /**
@@ -361,6 +380,8 @@ function combine(a: SchoolModifier, b: SchoolModifier): SchoolModifier {
   return {
     critBonus: (a.critBonus ?? 0) + (b.critBonus ?? 0),
     critMultiplierBonus: (a.critMultiplierBonus ?? 0) + (b.critMultiplierBonus ?? 0),
+    // A FACTOR MULTIPLIES, like the damage multiplier beside it.
+    critMultiplierFactor: (a.critMultiplierFactor ?? 1) * (b.critMultiplierFactor ?? 1),
     damageMultiplier: (a.damageMultiplier ?? 1) * (b.damageMultiplier ?? 1),
     spellPower: (a.spellPower ?? 0) + (b.spellPower ?? 0),
     /*
@@ -444,6 +465,7 @@ export function scaleByStacks(
   return {
     critBonus: (modifier.critBonus ?? 0) * stacks,
     critMultiplierBonus: (modifier.critMultiplierBonus ?? 0) * stacks,
+    critMultiplierFactor: (modifier.critMultiplierFactor ?? 1) ** stacks,
     damageMultiplier: stackedMultiplier(modifier.damageMultiplier ?? 1, stacks, additiveDamage),
   };
 }

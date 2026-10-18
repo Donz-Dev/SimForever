@@ -2590,7 +2590,13 @@ describe('Evocation, which pays out during its own channel', () => {
 
     expect(casts('mage_fire')).toBe(0);
     expect(casts('mage_frostfire')).toBe(0);
-    expect(casts('mage_arcane')).toBe(1);
+    /*
+     * TWO, WHERE IT WAS ONE, AND SOMEBODY LOOKED: Missile Barrage stopped
+     * proccing off Arcane Missiles (the owner, ahead of the client), so fewer
+     * channels are free and the build reaches 10% mana one more time in twenty
+     * fights. A knock-on of a mana change, not a list change.
+     */
+    expect(casts('mage_arcane')).toBe(2);
   }, 20_000);
 });
 

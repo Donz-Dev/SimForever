@@ -34,6 +34,12 @@ import {
 } from './judgementOfWisdom';
 import { windfuryTotemReaction } from './windfury';
 import { flametongueTotemReaction } from './flametongue';
+import {
+  DEFAULT_SUPPLIER_SPELL_POWER,
+  RETRIBUTION_AURA_DAMAGE,
+  THORNS_DAMAGE,
+  retaliationReaction,
+} from './retaliation';
 
 /**
  * Raid buffs, debuffs and consumables a character can be assumed to have.
@@ -106,7 +112,18 @@ export interface RaidBuff {
    * next fight -- where the clock had restarted at zero, so the check read
    * negative and the proc never fired again for the life of the process.
    */
-  readonly buildReactions?: () => RaidBuffReactions;
+  readonly buildReactions?: (value?: number) => RaidBuffReactions;
+  /**
+   * A NUMBER THE SELECTION CARRIES, for an entry somebody ELSE supplies at a
+   * strength of their own.
+   *
+   * Thorns and Retribution Aura are the callers: each scales with the
+   * SUPPLIER'S spell power, so "is it up" is not the whole question and the
+   * panel shows a box beside the switch. The figure is stored per entry in
+   * `CharacterProfile.raidBuffValues` and handed to `buildReactions`; absent,
+   * the default here applies.
+   */
+  readonly value?: { readonly label: string; readonly defaultValue: number };
   /**
    * Another entry this one cannot be selected alongside.
    *
@@ -633,6 +650,72 @@ const judgementOfWisdom: RaidBuff = {
  */
 export const GIFT_OF_ARTHAS_DAMAGE = 8;
 
+/**
+ * Devotion Aura: "+735 armor", on every profile by the owner's instruction.
+ *
+ * NOT ARMOR FROM ITEMS, also the owner's, which needs no exclusion: Toughness,
+ * Thick Hide and Dire Bear Form scale `armorFromItems`, and that sums ITEM
+ * stats directly -- an aura's flat armor is outside it by construction, the
+ * same answer the cloak enchant and the armor potion already get.
+ */
+export const DEVOTION_AURA_ARMOR = 735;
+
+const devotionAura: RaidBuff = {
+  id: 'devotion_aura',
+  name: 'Devotion Aura',
+  detail: `+${DEVOTION_AURA_ARMOR} armor (not armor from items)`,
+  source: 'Paladin',
+  appliesTo: 'player',
+  aura: {
+    id: 'devotion_aura',
+    name: 'Devotion Aura',
+    durationMs: 0,
+    statModifiers: [flat('armor', DEVOTION_AURA_ARMOR)],
+  },
+};
+
+/**
+ * Thorns and Retribution Aura: damage back to whatever attacks the character,
+ * at the SUPPLIER'S spell power -- the one value box in this catalogue. On by
+ * default for the three tanks only, by the owner's instruction: nothing
+ * attacks anybody else, so they are worth exactly nothing there.
+ * See `retaliation.ts`.
+ */
+const SUPPLIER_SPELL_POWER = {
+  label: "Supplier's spell power",
+  defaultValue: DEFAULT_SUPPLIER_SPELL_POWER,
+} as const;
+
+const thorns: RaidBuff = {
+  id: 'thorns',
+  name: 'Thorns',
+  detail: `${THORNS_DAMAGE} Nature damage + 6% of the supplier's spell power to each attacker`,
+  source: 'Druid',
+  appliesTo: 'player',
+  value: SUPPLIER_SPELL_POWER,
+  buildReactions: (value = DEFAULT_SUPPLIER_SPELL_POWER) => ({
+    damage: retaliationReaction('thorns', 'Thorns', 'nature', THORNS_DAMAGE, value),
+  }),
+};
+
+const retributionAura: RaidBuff = {
+  id: 'retribution_aura',
+  name: 'Retribution Aura',
+  detail: `${RETRIBUTION_AURA_DAMAGE} Holy damage + 6% of the supplier's spell power to each attacker`,
+  source: 'Paladin',
+  appliesTo: 'player',
+  value: SUPPLIER_SPELL_POWER,
+  buildReactions: (value = DEFAULT_SUPPLIER_SPELL_POWER) => ({
+    damage: retaliationReaction(
+      'retribution_aura',
+      'Retribution Aura',
+      'holy',
+      RETRIBUTION_AURA_DAMAGE,
+      value,
+    ),
+  }),
+};
+
 const giftOfArthas: RaidBuff = {
   id: 'gift_of_arthas',
   name: 'Gift of Arthas',
@@ -717,8 +800,11 @@ export const RAID_BUFFS: readonly RaidBuff[] = [
   blessingOfWisdom,
   blessingOfKings,
   blessingOfMight,
+  devotionAura,
+  retributionAura,
   faerieFire,
   markOfTheWild,
+  thorns,
   strengthOfEarthTotem,
   graceOfAirTotem,
   manaSpringTotem,
