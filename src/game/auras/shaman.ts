@@ -287,16 +287,22 @@ export const ELEMENTAL_FOCUS_CLEARCASTING: AuraDefinition = {
  *                     talent is a school effect. Nothing had to be added; what
  *                     had to change is the reason saying it did nothing.
  *
- * THIRTY-SIX TICKS, NOT THIRTY-SEVEN. 55 seconds at 1.5 is 36.67, so the last
- * tick lands at 54.0 and the totem expires at 55.0 with 1.0 second unspent.
- * That falls out of the engine rather than being chosen -- the duration and the
- * cadence are both stated, so unlike every other DoT here there is no total to
- * divide and no cadence to infer.
+ * TWENTY-TWO TICKS, NOT TWENTY-THREE. The owner moved the attack interval from
+ * 1.5 seconds to 2.43, so 55 seconds is 22.63 intervals: the last tick lands at
+ * 53.46 and the totem expires at 55.0 with 1.54 seconds unspent. (It was 36
+ * ticks at 1.5.) That falls out of the engine rather than being chosen -- the
+ * duration and the cadence are both stated, so unlike every other DoT here
+ * there is no total to divide and no cadence to infer.
+ *
+ * A 1.5-SECOND PRE-COMBAT LEAD NO LONGER REACHES A TICK BEFORE THE PULL: the
+ * first lands 0.93 seconds into the fight. That moves nothing about the
+ * opener's legality question -- it only makes it moot for this line.
  * ============================================================================
  */
 export const SEARING_TOTEM_TICK_DAMAGE = midpoint(40, 54);
 export const SEARING_TOTEM_DURATION_MS = seconds(55);
-export const SEARING_TOTEM_TICK_INTERVAL_MS = seconds(1.5);
+/** The owner's figure: "attack interval to 2.43 seconds". Was 1.5. */
+export const SEARING_TOTEM_TICK_INTERVAL_MS = seconds(2.43);
 /** "+8% of spell damage per tick", the owner's figure. In no capture. */
 export const SEARING_TOTEM_TICK_SP_COEFFICIENT = 0.08;
 

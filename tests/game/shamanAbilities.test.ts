@@ -621,12 +621,13 @@ describe('Searing Totem, a totem modelled without an entity', () => {
     // "40 to 54", written out by hand from the capture.
     expect(SEARING_TOTEM_TICK_DAMAGE).toBe(47);
     expect(SEARING_TOTEM_DURATION_MS).toBe(seconds(55));
-    expect(SEARING_TOTEM_TICK_INTERVAL_MS).toBe(seconds(1.5));
+    // 2.43 seconds, the owner's figure; it was 1.5.
+    expect(SEARING_TOTEM_TICK_INTERVAL_MS).toBe(2430);
     expect(SEARING_TOTEM_TICK_SP_COEFFICIENT).toBe(0.08);
     expect(SEARING_TOTEM.cost).toEqual({ resource: 'mana', amount: 170 });
   });
 
-  it('lands 36 ticks, not 37, and does not divide evenly', () => {
+  it('lands 22 ticks, not 23, and does not divide evenly', () => {
     /*
      * 55 at 1.5 is 36.67. The last tick is at 54.0 and the totem expires at
      * 55.0 with a second unspent. Unlike every other DoT here there is no
@@ -635,7 +636,7 @@ describe('Searing Totem, a totem modelled without an entity', () => {
      */
     const exact = SEARING_TOTEM_DURATION_MS / SEARING_TOTEM_TICK_INTERVAL_MS;
     expect(Number.isInteger(exact)).toBe(false);
-    expect(Math.floor(exact)).toBe(36);
+    expect(Math.floor(exact)).toBe(22);
   });
 
   it('ticks for its stated damage, and the ticks ignore armor', () => {
@@ -656,7 +657,7 @@ describe('Searing Totem, a totem modelled without an entity', () => {
     const ticks = events.filter(
       (e) => e.type === 'damage' && e.abilityId === 'searing_totem',
     );
-    expect(ticks).toHaveLength(36);
+    expect(ticks).toHaveLength(22);
     /*
      * ARMOR DOES NOT APPLY, which is the Forever rule for every magical
      * school. A 3731-armor target is the one this project checks against, so a
