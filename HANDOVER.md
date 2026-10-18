@@ -175,6 +175,15 @@ the aura's events for one Arcane fight showed it applied at 0 and removed at
 declaring the deleted spender's `castReaction`, silently dropped by the build --
 the kind of dead line that makes a reader believe something is happening.
 
+**AND THE OWNER'S FOURTH WORKED CASE CONTRADICTED THE OTHER THREE, AND WAS
+RULED.** Case D was written `(2 x 1.02 - 1) x 2.2 = 2.288`. Taken as a rule it
+gives an UNTALENTED attack 2.08 where case C says 2.04, and a talented spell
+1.06 -- so no single formula produces all four. Shown that, the owner ruled B's
+rule for everything: `1 + (base x racial - 1) x (1 + talent%)`, which makes D
+**2.248**. Asked once, with the arithmetic that separates the readings, and
+answered in one message; `racials.test.ts` pins 2.248 and asserts 2.288 is not
+what the engine gives.
+
 **THE PREVIEW SERVED THE WRONG CHECKOUT FIRST.** `preview_start` reads the
 SHARED checkout's `.claude/launch.json`, so it ran `main` without any of this
 round -- caught by fetching a source file and looking for `devotion_aura`. A
@@ -215,12 +224,11 @@ write-up; none is an engine gap.
 | **Flametongue Weapon and Flametongue Totem roll no table and crit at MELEE crit for 2x**, the poison-and-seal precedent for damage riding a weapon hit. They are Fire damage and could equally be spell crit at 1.5x | round 35 | the crit half of both Flametongues |
 | **Frost Oil rolls the SPELL table** -- 17% miss, spell crit -- because it "procs a Frostbolt". The other reading is the Flametongue one above | round 35 | whether the oil can miss |
 | **Seal of Righteousness's base is CLAMPED outside 1.3 to 4.0 seconds**, and so are both Flametongues. You gave two points and a line; extending the line past them is a number nobody stated | round 35 | nothing today -- no weapon on file is outside the range |
-| **Your crit case D does not follow the rule A to C state.** `(2 x 1.02 - 1) x 2.2 = 2.288`; the rule B gives -- scale the bonus half the racial leaves, then add the 1 back -- makes it `(2.04 - 1) x 1.2 + 1 = 2.248`. Implemented as 2.248 so all four follow one rule; `racials.test.ts` pins both figures | round 36 | Tauren and Dwarf melee crits with a crit damage talent |
 | **Thorns and Retribution Aura fire on EVERY attack, including a miss, a dodge or a parry** -- your "every time a target attacks you" read literally. Classic's say "when hit". They also cannot crit and roll no table, and they are the CARRIER'S damage, so its multipliers reach them -- which is why your One-Handed Weapon Specialization ruling names them | round 36 | about a third of the two auras' damage on the tanks, who avoid that much |
 | **"Invisible" racial entries are switched OFF and still listed**, greyed and struck through with the eye glyph, rather than hidden. Hiding would also hide the toggle that lights them again | round 36 | how the APL panel reads |
 | **Missile Barrage's missile chance is still in the client's talent row** and is read and ignored in code, ahead of the client. The line to delete when the client ships it is marked | round 36 | nothing until the client changes |
 
-**TWENTY-NINE ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, and round 36 added four -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**TWENTY-EIGHT ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, and round 36 added four and had one answered the same day -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count

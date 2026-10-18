@@ -334,10 +334,12 @@ describe('the crit racials, which the racial patch made unconditional', () => {
      * -- Ruin's +100% on a spell is +0.5, Impale-shaped +20% on an attack is
      * +0.2 -- which is what `talentBuild` writes.
      *
-     * D IS THE ONE THAT DOES NOT AGREE WITH THE OTHER THREE. The owner wrote
-     * `(2 x 1.02 - 1) x 2.2 = 2.288`. The rule B states -- scale the bonus half
-     * left by the racial, then add the 1 back -- gives `(2.04 - 1) x 1.2 + 1 =
-     * 2.248`. Implemented as 2.248, so all four follow one rule, and asked.
+     * D WAS WRITTEN `(2 x 1.02 - 1) x 2.2 = 2.288`, AND THE OWNER HAS RULED IT
+     * 2.248. Taken as a rule, D's own formula gives an untalented attack 2.08
+     * where C says 2.04, so no one formula fit all four; the ruling is B's rule
+     * for everything -- scale the bonus half the racial leaves, then add the 1
+     * back: `(2.04 - 1) x 1.2 + 1 = 2.248`. The 2.288 assertion below is kept
+     * as a NEGATIVE so the alternative cannot creep back in.
      */
     expect(critMultiplierWith(1.5, 0, 1.02)).toBeCloseTo(1.53, 12);
     expect(critMultiplierWith(1.5, 0.5, 1.02)).toBeCloseTo(2.06, 12);
