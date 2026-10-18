@@ -857,6 +857,20 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   the school gives a spell's 1.5x, which is half the bonus, entirely plausible
   and no error. The Echo gets it for free and should: Twist of Light applies "the
   replaced Seal's effects", so an echoed seal is the seal.
+- **APPLYING AN EFFECT THAT IS A CHANCE MEANS ROLLING IT.** The Echo of Seal of
+  Command was GUARANTEED for its whole life, on a comment arguing that "applies
+  the replaced Seal's effects" meant the hit -- and Seal of Command's effect is a
+  7 PPM CHANCE of the hit. The owner suspected it from the Seal Twist profile's
+  damage table and was right: 100% where 40.8% belonged on a 3.5-second weapon.
+  The charge is spent whether the roll lands or not, as the seal itself spends a
+  swing that does not proc. **An echo of a proc is the proc's roll, not its
+  payout.**
+- **NO DAMAGE SEAL RIDES ON HOLY STRIKE**, by the seal balance pass -- and Holy
+  Strike is still a weapon use that procs Crusader, Windfury and Hand of Justice.
+  So the rule is about SEALS and lives in `carriesSeal`, which every seal
+  reaction, the Echo and Seal of Fury's shield read; putting it on the strike
+  would have stopped the weapon procs too. Seal of Command alone rolls the
+  `melee-special` table; Righteousness and Fury "cannot miss".
 - **A POISON IS THE SAME SHAPE: NOT A USE, BUT TRIGGERED BY ONE.** Also the
   owner's ruling. `isWeaponUseOf(attack, slot)` is what fires it -- a swing,
   a Windfury extra attack, or an ability needing that weapon -- and the poison
@@ -1245,6 +1259,22 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   the damage table summed to 100%. Three abilities apply an aura without rolling
   ON PURPOSE and all three are non-DoT debuffs: Thunder Clap's slow, Wrack's
   amplification, and the damage-free Seal of the Crusader branch of Judgement.
+- **AND IT WAS NOT THE ONLY ONE: FIVE MORE COULD NOT MISS, AND THE SENTENCE
+  ABOVE SAID IT WAS.** Corruption, Bane of Agony, Siphon Life, Shadow Word: Pain
+  and Devouring Plague all applied without asking, on both Warlock profiles and
+  the Shadow Priest, and 3,800 tests passed with it in. Found while declaring
+  Bane of Doom, by a scan for any ability whose `onCast` applies an aura to the
+  target and neither deals damage nor rolls -- **the scan is the check, and it
+  costs one awk line.**
+  **`simulation.rollAttack` IS THE NEAR MISS**, and it is what Insect Swarm and
+  Serpent Sting use: it reads the TABLE alone, so a SCHOOL-scoped `hitBonus`
+  never reaches it -- and the Shadow Priest reaches its cap through Shadow
+  Focus, so its Shadow Word: Pain would have missed five points more often than
+  its Mind Blast. `rollApplication` in `engine/combat/damage.ts` is `rollTable`
+  itself with no damage in it, so the ability, school, table and target
+  modifiers all fold in. **Use it for a pure DoT, not `rollAttack`**; the two
+  older callers are right only because Nature's Reach and the Hunter's hit are
+  character-wide.
 - **Every DoT can crit, and none is reduced by armor.** A Forever rule, not
   Classic's. A tick does not re-roll the table — whether the effect landed was
   settled on application — but it rolls for a crit at the crit chance of **the
@@ -2033,6 +2063,16 @@ something that comes and goes.
   read "a NAMED LIST, so a spell absent from it takes the full cast with every
   condition reading true", and it asserted on PYROBLAST. A hazard identified,
   written down, and then tested in the one place it was not happening.
+- **A NEW SPELL HAS TO JOIN EVERY HAND-KEPT LIST THAT DESCRIBES IT, AND ONLY
+  ONE OF THEM WILL TELL YOU.** Declaring Cone of Cold meant `CHILL_ABILITY_IDS`
+  (Fingers of Frost), `FROST_SPELL_IDS` (Winter's Chill), `MAGE_DAMAGE_SPELL_IDS`
+  (and through it `MAGE_COSTED_SPELL_IDS`, Arcane Power's cost) and Frost
+  Channeling's own list -- five places. The Arcane Power test derives its
+  expectation from the BOOK and failed until the spell was added; **the other
+  four would have been silent**, and a Cone of Cold that applied no Winter's
+  Chill would have looked like a working spell. So when a spell joins a class,
+  grep that class's files for a sibling's id in a list -- `'ice_lance'` found all
+  five -- rather than trusting the suite to complain.
 - **"IS THIS A CHANNEL" HAS TWO SHAPES AND `channelTicks` ONLY SEES ONE.**
   `spreadsEffectAcrossCast` is the one shared answer, and anything that ZEROES
   a cast time has to ask it -- a cast modifier and `runPrecombat` both do.
@@ -3765,6 +3805,15 @@ again and the list walks them. **Say so where the entry is not**, because an
 absent entry for a clause the owner named reads exactly like an omission -- and a
 second entry per ability would be the duplicate-id shape this project only wants
 deliberately.
+
+**AN ENTRY GATED ON ITS OWN AURA OVERWRITES A CHOICE MADE ANYWHERE ELSE.** The
+Enhancement list cast Windfury Weapon on `withoutAura('windfury_weapon')`, so the
+moment Flametongue and Rockbiter existed, a Flametongue put in the PRE-COMBAT list
+would have been replaced by a Windfury at the pull -- the option offered and
+silently undone. All three imbue entries are gated on NO imbue being up, with the
+two alternatives `disabled`, so whichever one the opener casts is the one that
+stays. **When an ability gains siblings it excludes, its entry's condition is
+about the SET, not about itself.**
 
 **A GATE AN ABILITY'S OWN `canCast` ENFORCES BELONGS THERE AND NOT IN THE LIST.**
 Ambush's entry carried `selfActive('cutthroat')`, which was the list restating the
@@ -6155,6 +6204,19 @@ shape should fail loudly, not render a tree with a broken arrow.
   wrong.** `everySpellScales.test.ts` filtered on `attackTable === 'spell'` and
   skipped every pure DoT, because a spell that only applies an aura declares no
   table. Discover the list from the event stream instead.
+- **`buildSimulation` ROLLS THE ENGINE'S DEFAULT TABLE, NOT FOREVER'S.** A test
+  of a miss rate built with `makeAttacker` and no `attackChances` faces no 17%
+  spell miss at all, so a correct roll lands 100% of the time and reads exactly
+  like the bug being tested for -- which is how the first DoT-roll tests FAILED
+  against the fixed code and looked like a fix that did not apply. Pass `{ attackChances:
+  createForeverAttackChances() }` whenever the assertion is about a RULESET
+  number.
+- **REVERT THE FIX AND WATCH THE NEW TEST FAIL, OR IT HAS NOT BEEN SHOWN TO TEST
+  ANYTHING.** The DoT application roll passed the existing suite unchanged
+  BEFORE the fix as well as after -- nothing pinned "always lands" -- so the new
+  tests were the only evidence of anything. `git diff <files> > patch`, `git checkout`
+  the files, run, `git apply patch`: it failed 6 of 26, which is the number that
+  says the tests reach the mechanism.
 - Use `toBeCloseTo` for anything through a percentage modifier — `100 * 1.1` is
   `110.00000000000001`.
 - **A SEEDED TEST THAT "FAILS UNDER THE FULL SUITE AND PASSES IN ISOLATION ON THE
@@ -6901,6 +6963,21 @@ either**, so pick the one with callers and check it serves the other's.
 OUT**, and the next command in that directory reports "not a git repository".
 Merge from a checkout that holds no branch being merged, or expect to recreate
 the worktree after every merge.
+
+**AND IT DEREGISTERS THE WORKTREE BUT LEAVES THE FOLDER, WITH ITS `node_modules`
+JUNCTION STILL IN IT.** A recursive delete of that folder can follow the junction
+and empty the SHARED `node_modules` every other session uses. Remove the link
+first, from PowerShell -- `cmd /c rmdir "<worktree>\node_modules"` deletes the
+junction and not its target -- check the real one still exists, then delete the
+folder.
+
+**`git stash` IS SHARED BY EVERY WORKTREE OF THE REPOSITORY**, so it is never a
+way to "look at main for a second". It was run by accident in a worktree mid-round
+and took the round's uncommitted work with it; `git stash pop` brought it back,
+and the stash list showed ANOTHER session's entry sitting beneath it -- one
+`pop` too many would have applied somebody else's work here. Read another
+version with `git show origin/main:<path>` instead, and never pop an entry you
+did not push.
 
 **AND `git checkout --merge <file>` RESTORES CONFLICT MARKERS LABELLED `ours`
 AND `theirs`**, not `HEAD` and `origin/main` as the original merge wrote them --
