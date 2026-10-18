@@ -211,6 +211,13 @@ published moves. `tools/probe_demons.ts` prints a demon's built stats and damage
 rows; Firelock with the Imp out reads 861.0 against 906.7, which is the
 sacrifice being cancelled with no Pact, and is correct.
 
+**AND THE IMP NOW PAUSES 0.4 SECONDS BETWEEN FIREBOLTS**, one of this round's
+five questions answered by the owner as "likely correct". It is mythicsim's
+figure from beta logs (281 Firebolts 2.435 seconds apart), built as a 2.4 second
+cooldown running from the start of the cast, which is the same thing while a
+demon has no haste. Firebolts go **30.9 to 25.8 a minute**, and the probe's
+Firelock-with-Imp reads 848.5 against 861.0 -- one probe run, not a baseline.
+
 **AND THE HUNTER PET CAVEAT NO LONGER FOLLOWS A DEMON**: it was attached to any
 `kind: 'pet'`, and is now attached only to a pet that runs on focus.
 
@@ -398,7 +405,6 @@ write-up; none is an engine gap.
 | **"Invisible" racial entries are switched OFF and still listed**, greyed and struck through with the eye glyph, rather than hidden. Hiding would also hide the toggle that lights them again | round 36 | how the APL panel reads |
 | **Missile Barrage's missile chance is still in the client's talent row** and is read and ignored in code, ahead of the client. The line to delete when the client ships it is marked | round 36 | nothing until the client changes |
 | **Demons cost no mana.** The repository charges 115 a Firebolt and 160 a Lash of Pain against pools of 576 and 1066, so an Imp would stop after five casts unless its regeneration is modelled -- and your "repeatedly casts Firebolt" is what is built | round 39 | whether a demon can run dry |
-| **The Imp casts Firebolt every 2.0 seconds**, the cast time you gave. The repository adds a 0.4s pause -- "beta logs time 281 Firebolts 2.435 sec apart" -- which would be about 18% fewer Firebolts | round 39 | Imp damage, by about a sixth |
 | **Demonic Brand is the flat 65-68 you stated.** The repository adds 0.078 of the WARLOCK's spell power to each brand hit. Unholy Power does reach the brand hit, as "all damage done by your pets" | round 39 | a few points a brand hit |
 | **Decimation is built as you described it, as standing effects** -- 6s cooldown, -40% cast, no shards -- where the client tooltip ties the cast-time and shard clauses to a 10 second window after a Shadow Bolt or Searing Pain below 35% | round 39 | Soul Fire, on any build taking Decimation |
 | **A demon takes its Warlock's spell power when it is BUILT**, before the raid buffs and the pull, the same snapshot a Hunter pet takes of attack power. A buff the Warlock gains mid-fight does not reach its demon's 10% | round 39 | small, and only through buffs that move spell power |
@@ -412,7 +418,7 @@ write-up; none is an engine gap.
 | **The Enh Shaman holds the Seal Twist Ret's two-hander**, as you asked, and that mace's `Classes:` line is rewritten to "Paladin, Shaman" for the borrower -- otherwise the proficiency filter refuses a weapon you specified | round 37 | which classes a template weapon is offered to |
 | **The Hunter cooldown stacks have no standalone Bestial Wrath, Rapid Fire or racial entries any more**, so all of them fire only when every step of the stack is ready together -- once in a 60s fight. In a longer one the stack waits for the slowest cooldown in it | round 37 | casts per fight past three minutes |
 
-**THIRTY-NINE ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five, round 38 added four, and round 39 added five -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**THIRTY-EIGHT ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five, round 38 added four, round 39 added five, and the owner answered the Imp's Firebolt pause the same day -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
