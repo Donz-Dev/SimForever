@@ -507,12 +507,30 @@ describe('Aftermath, which read a movement speed as a damage bonus', () => {
      * every one of them.
      * ========================================================================
      */
-    const talents = PRESETS_BY_ID.get('warlock_firelock')!.build().talents;
-    expect(talents.aftermath).toBe(2);
+    /*
+     * AT 2/5 ON PURPOSE, which is no longer the preset's rank: round 42 took
+     * the Firelock to 5/5, where the old wrong index and the right one both
+     * read 50 and this test could not tell them apart. The bug only shows at a
+     * rank below five, so the allocation pins that rank itself.
+     */
+    const talents: Record<string, number> = {
+      ...PRESETS_BY_ID.get('warlock_firelock')!.build().talents,
+      aftermath: 2,
+      // The three Aftermath points the preset spends above 2/5, parked on a
+      // talent nothing here reads so every tier above keeps its count.
+      molten_skin: 3,
+    };
 
-    const without = { ...talents };
-    delete without.aftermath;
-    const multiplierFor = (allocation: typeof talents) =>
+    /*
+     * AND ITS LAST TWO POINTS GO TO MOLTEN SKIN TOO, RATHER THAN NOWHERE, because round 42
+     * also took Destructive Reach out: without a stand-in, the rows under Ruin
+     * hold eight points and Ruin's tier -- and everything above it -- would
+     * leave with Aftermath. Molten Skin is damage taken, which nothing here
+     * reaches, so the ratio is still Aftermath's alone.
+     */
+    const { aftermath: _aftermath, ...rest } = talents;
+    const without: Record<string, number> = { ...rest, molten_skin: 5 };
+    const multiplierFor = (allocation: Record<string, number>) =>
       createPlayer({
         race: 'undead',
         characterClass: 'warlock',
@@ -522,10 +540,10 @@ describe('Aftermath, which read a movement speed as a damage bonus', () => {
 
     /*
      * AND THE CASCADE IS NAMED RATHER THAN ASSUMED -- "an isolation probe has
-     * to print `dropped` beside every figure". Destruction goes 35 -> 33,
-     * which is still above every tier this build reaches, so nothing else
-     * leaves with it.
+     * to print `dropped` beside every figure". Destruction keeps its
+     * total, so nothing else leaves with it.
      */
+    expect(legalAllocation(talentsForClass('warlock')!, talents).dropped).toEqual([]);
     expect(legalAllocation(talentsForClass('warlock')!, without).dropped).toEqual([]);
 
     expect(multiplierFor(talents) / multiplierFor(without)).toBeCloseTo(1.2, 10);

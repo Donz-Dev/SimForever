@@ -35,6 +35,7 @@ import { VARIANT_GROUPS as FIRE } from './fireVariants';
 import { VARIANT_GROUPS as FROSTFIRE } from './frostfireVariants';
 import { VARIANT_GROUPS as FURY_PROT } from './furyProtVariants';
 import { VARIANT_GROUPS as DEMO } from './demoVariants';
+import { VARIANT_GROUPS as FIRELOCK } from './firelockVariants';
 
 /*
  * ONE REGISTRY, SPREAD FROM THE PER-CLASS FILES. A group name is a command-line
@@ -53,6 +54,7 @@ const VARIANT_GROUPS = {
   ...FROSTFIRE,
   ...FURY_PROT,
   ...DEMO,
+  ...FIRELOCK,
 };
 
 const PRESET = process.env.PRESET ?? 'pally_shockadin_2h';

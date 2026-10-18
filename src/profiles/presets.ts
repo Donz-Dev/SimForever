@@ -1799,22 +1799,42 @@ const WARLOCK_AFFLICTION_TALENTS: TalentAllocation = {
  * All three tree totals sum from the icons: 5, 11 and 35 is 51.
  * ============================================================================
  */
+/*
+ * ============================================================================
+ * ROUND 42 MOVED FIVE DEAD POINTS, AND THE BUILD IS 7/11/33 NOW.
+ *
+ *   DESTRUCTIVE REACH 2 -> IMPROVED LIFE TAP 2   range, which nothing here has,
+ *                                                for +20% mana on every tap
+ *   INTENSITY 3 -> AFTERMATH 5/5                 cast pushback, a permanent
+ *                                                ruling, for +30% more on
+ *                                                Immolate's opening hit
+ *
+ * Both were priced after Life Tap stopped costing health (round 41): the build
+ * taps 33 times in five minutes now, so a fifth more mana a tap is worth a
+ * global cooldown every few taps. Together, with a Bane of Agony opener:
+ * +51.90 / +58.13 / +60.90 at 60 / 180 / 300s, paired, 400 iterations.
+ *
+ * AFTERMATH 2/5 WITH INTENSITY 3/3 WAS THE OWNER'S RESPECIFICATION, which the
+ * comment above records; this reverses it on measurement. The owner's spread
+ * is one edit away -- Intensity 3, Aftermath 2 -- if it was meant as a choice.
+ * Destruction stays the majority at 33.
+ * ============================================================================
+ */
 const WARLOCK_DESTRUCTION_TALENTS: TalentAllocation = {
-  // Affliction, 5
+  // Affliction, 7
+  improved_life_tap: 2,
   suppression: 5,
   // Demonology, 11
   demonic_embrace: 5,
   demonic_aegis: 2,
   fel_vitality: 3,
   demonic_sacrifice: 1,
-  // Destruction, 35
-  destructive_reach: 2,
+  // Destruction, 33
   bane: 5,
   cataclysm: 3,
-  aftermath: 2,
+  aftermath: 5,
   ruin: 5,
   shadowburn: 1,
-  intensity: 3,
   agonizing_flames: 3,
   conflagrate: 1,
   bane_of_havoc: 1,
@@ -3655,7 +3675,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'warlock_firelock',
     label: 'Firelock',
-    detail: 'Undead, caster, Succubus sacrificed, standing target. 35 Destruction',
+    detail: 'Undead, caster, Succubus sacrificed, standing target. 33 Destruction',
     characterClass: 'warlock',
     build: () => ({
       ...createDefaultProfile(),
@@ -3683,8 +3703,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       warlockStone: 'firestone',
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_fire'),
+      /*
+       * BANE OF AGONY AT 0s IS THIS ROUND'S ADDITION (round 42): a pure DoT
+       * deals nothing before the pull, so it is free of Gate B and saves the
+       * global cooldown -- +10.30 / +4.46 / +4.71 at 60 / 180 / 300s alone.
+       */
       precombat: [
         ...before(2, 'incinerate'),
+        ...before(0, 'bane_of_agony'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),

@@ -343,18 +343,37 @@ export const LIFE_TAP_AMOUNT = 840;
 export const LIFE_TAP_HEAL_DELAY_MS = seconds(1);
 export const LIFE_TAP_HEAL_NAME = 'Life Tap (healed by the group)';
 
+/*
+ * IMPROVED LIFE TAP'S "+20% MANA AWARDED", the key it writes on this ability.
+ *
+ * IT WAS DECLARED AND READ BY NOTHING. `improved_life_tap` put `bonusPercent`
+ * on the ability and this `onCast` granted a flat 840 whatever it said, so the
+ * talent reported itself fully modelled and did nothing -- the
+ * `armorPenetration` shape, two correct halves with nothing joining them.
+ * Found in round 42, when Life Tap stopped costing health and became worth
+ * pricing at all. No preset took the talent, so no published figure moved.
+ *
+ * THE MANA ONLY: "increases the amount of Mana awarded". The health paid stays
+ * the 840 the owner ruled.
+ */
+export const LIFE_TAP_BONUS_PERCENT_KEY = 'bonusPercent';
+
+/** The mana one Life Tap grants on this build: 840, plus Improved Life Tap's share. */
+export const lifeTapMana = (ability: Ability): number =>
+  LIFE_TAP_AMOUNT * (1 + (ability.bonuses?.[LIFE_TAP_BONUS_PERCENT_KEY] ?? 0) / 100);
+
 export const LIFE_TAP: Ability = {
   id: 'life_tap',
   name: 'Life Tap',
   requiresTarget: false,
-  // Only when there is health to spend AND mana worth gaining.
-  canCast: ({ caster }) =>
+  // Only when there is health to spend AND room in the pool for what it grants.
+  canCast: ({ caster, ability }) =>
     caster.health.current > LIFE_TAP_AMOUNT &&
     (caster.resources.get('mana')?.current ?? 0) <
-      (caster.resources.get('mana')?.maximum ?? 0) - LIFE_TAP_AMOUNT,
-  onCast: ({ simulation, caster }) => {
+      (caster.resources.get('mana')?.maximum ?? 0) - lifeTapMana(ability),
+  onCast: ({ simulation, caster, ability }) => {
     caster.health.spend(LIFE_TAP_AMOUNT);
-    simulation.grantResource(caster, 'mana', LIFE_TAP_AMOUNT, {
+    simulation.grantResource(caster, 'mana', lifeTapMana(ability), {
       id: 'life_tap',
       name: 'Life Tap',
     });
