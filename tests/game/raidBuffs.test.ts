@@ -442,8 +442,13 @@ describe('the Warrior keeps Thunder Clap up', () => {
 
     const batch = runProfileBatch(profile as never);
     const slow = batch.debuffUptime.find((row) => row.auraId === 'thunder_clap');
-    // Renewed on every cast, so applications track casts one for one.
-    expect(slow?.applications ?? 0).toBeGreaterThan(5);
+    /*
+     * Renewed on every cast, so applications track casts one for one -- and
+     * MORE THAN THE RAID'S ONE, which is the claim. It was "more than five"
+     * until the owner's tank Execute clause switched Thunder Clap off for the
+     * last 20% of the fight, which took about a third of the casts with it.
+     */
+    expect(slow?.applications ?? 0).toBeGreaterThan(2);
     /*
      * BETTER THAN THE RAID'S ONE-SHOT 50%, and short of the 100% a list that
      * reached it sooner would give. The band is wide because where it lands

@@ -210,6 +210,10 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
   { presetId: 'two_hand_arms', characterClass: 'warrior', label: '2H Arms', hit: 80, expertise: 10, preferred: MELEE, armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Axe' }, statStick: WARRIOR_STICK },
   { presetId: 'dw_fury', characterClass: 'warrior', label: 'DW Fury', hit: 80, expertise: 10, preferred: MELEE, armour: 'Plate', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe' }, statStick: WARRIOR_STICK },
   { presetId: 'prot_warr', characterClass: 'warrior', label: 'Prot Warr', hit: 80, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Sword' }, trinkets: TANK_TRINKETS, statStick: WARRIOR_STICK },
+  // FURY PROT IS THE PROT WARR ROW under its own label -- the owner's "copy
+  // Prot Warr in almost every other case". Its own row so the four test-set
+  // buttons find it by name, generating the same stats.
+  { presetId: 'fury_prot', characterClass: 'warrior', label: 'Fury Prot', hit: 80, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Sword' }, trinkets: TANK_TRINKETS, statStick: WARRIOR_STICK },
   { presetId: 'rogue_venom', characterClass: 'rogue', label: 'Venom', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
   /*
    * COMBAT MUT IS THE VENOM TEMPLATE WITH TWO FIELDS CHANGED, which is the

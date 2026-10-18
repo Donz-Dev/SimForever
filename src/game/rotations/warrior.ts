@@ -18,6 +18,7 @@ import {
   targetTime,
 } from './apl';
 import type { CombatStyleId, StanceId } from '../character';
+import type { TalentAllocation } from '../talents/Talent';
 import { isTankBuild } from '../character';
 import {
   BATTLE_SHOUT,
@@ -783,6 +784,42 @@ export const WARRIOR_DUAL_WIELD_BERSERKER_ROTATION: Rotation = compileRotation(W
  * ----------------------------------------------------------------------------
  */
 /*
+ * ============================================================================
+ * THE TANK EXECUTE CLAUSE, the owner's ask for both shield tanks: "swap to
+ * Battle Stance and spam Execute over and over if the combat duration is <= 20%
+ * remaining."
+ *
+ * THE ENTRY IS THE EASY HALF. Execute lists Battle Stance first, so
+ * `PriorityRotation` casts Battle Stance to reach it with no stance entry of its
+ * own -- the same mechanism that takes the generic lists into Berserker for
+ * Whirlwind.
+ *
+ * THE OTHER HALF IS STAYING THERE, AND THAT IS WHAT `outsideExecute` IS FOR.
+ * Shield Block and Revenge require DEFENSIVE Stance, so left alone the list
+ * would reach for one of them the moment Execute was unaffordable and dance
+ * straight back out of Battle -- every global cooldown, for the whole window.
+ * So every entry that SPENDS RAGE on something other than Execute is switched
+ * off inside the window: the defensive-only pair, and the strikes, Heroic Strike,
+ * Sunder Armor, Demoralizing Shout, Thunder Clap and Rend, all of which would
+ * take rage Execute wants. "Spam Execute" read literally.
+ *
+ * WHAT STAYS LIVE IS SURVIVAL AND FREE THINGS: Last Stand, Shield Wall, the
+ * heals, Bloodrage, the mid-fight consumables and the racials. SHIELD WALL IS
+ * DEFENSIVE-ONLY AND IS DELIBERATELY NOT GATED, so a tank at low health in the
+ * window does go back to Defensive for it -- and the Execute entry takes it
+ * straight back out on the next decision.
+ * ============================================================================
+ */
+export const TANK_EXECUTE_PHASE: AplCondition = fightRemainingFraction(
+  'atMost',
+  EXECUTE_PHASE_FRACTION,
+);
+
+/** An entry's own condition, refused inside the tank execute window. */
+const outsideExecute = (condition?: AplCondition): AplCondition =>
+  condition ? all(condition, not(TANK_EXECUTE_PHASE)) : not(TANK_EXECUTE_PHASE);
+
+/*
  * Exported as DATA as well as wrapped in a rotation, so a test can assert on
  * the order and the conditions without the rotation having to expose its
  * entries. What order a list is in is the thing being specified.
@@ -918,6 +955,13 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
     condition: resource('below', DEFENSIVE_BLOODRAGE_RAGE, 'rage'),
   },
   /*
+   * EXECUTE IN THE LAST 20% OF THE FIGHT, the owner's tank clause -- see
+   * `TANK_EXECUTE_PHASE`. Below the survival cooldowns and Bloodrage, above
+   * every rage spender, and the spenders below it are switched off inside the
+   * window so the list never reaches back into Defensive Stance for them.
+   */
+  { abilityId: 'execute', condition: TANK_EXECUTE_PHASE },
+  /*
    * To five stacks, and then held there.
    *
    * The owner's wording is "if not 5 stacks", and the refresh window is kept
@@ -926,9 +970,11 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
    */
   {
     abilityId: 'sunder_armor_cast',
-    condition: any(
-      targetStacks('below', SUNDER_ARMOR_MAX_STACKS, SUNDER_ARMOR.id),
-      targetTime('below', SUNDER_REFRESH_WINDOW_MS / 1000, SUNDER_ARMOR.id),
+    condition: outsideExecute(
+      any(
+        targetStacks('below', SUNDER_ARMOR_MAX_STACKS, SUNDER_ARMOR.id),
+        targetTime('below', SUNDER_REFRESH_WINDOW_MS / 1000, SUNDER_ARMOR.id),
+      ),
     ),
   },
   /*
@@ -952,7 +998,7 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
    */
   {
     abilityId: 'demoralizing_shout_cast',
-    condition: targetTime('atMost', 0, DEMORALIZING_SHOUT.id),
+    condition: outsideExecute(targetTime('atMost', 0, DEMORALIZING_SHOUT.id)),
   },
   /*
    * THE MID-FIGHT CONSUMABLE TENTH, AND THE OWNER HAS SPLIT IT FROM THE
@@ -984,7 +1030,7 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
    */
   {
     abilityId: 'heroic_strike',
-    condition: resource('atLeast', DEFENSIVE_HEROIC_STRIKE_RAGE, 'rage'),
+    condition: outsideExecute(resource('atLeast', DEFENSIVE_HEROIC_STRIKE_RAGE, 'rage')),
   },
   /*
    * Above Shield Slam, and it costs nothing to put there: Shield Block does
@@ -996,7 +1042,7 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
    * it is off cooldown" is the whole rule -- and the cooldown check in
    * `checkCast` already enforces the only limit there is.
    */
-  { abilityId: 'shield_block_cast' },
+  { abilityId: 'shield_block_cast', condition: outsideExecute() },
   /*
    * REVENGE ABOVE SHIELD SLAM NOW, where the two were the other way round --
    * the owner's order, and the one swap in this list that both entries can
@@ -1009,11 +1055,11 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
    * thing that closes on its own whether or not it is used. Five rage for a
    * flat 81-99 is also the cheapest damage a warrior has.
    */
-  { abilityId: 'revenge' },
+  { abilityId: 'revenge', condition: outsideExecute() },
   // Talent-gated: a character without Shield Slam does not know the ability,
   // so the entry is simply skipped rather than needing a condition.
-  { abilityId: 'shield_slam' },
-  { abilityId: 'thunder_clap' },
+  { abilityId: 'shield_slam', condition: outsideExecute() },
+  { abilityId: 'thunder_clap', condition: outsideExecute() },
   /*
    * Last: a bleed is worth least when everything else is available.
    *
@@ -1025,7 +1071,7 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
    */
   {
     abilityId: 'rend_cast',
-    condition: targetTime('atMost', 0, REND.id),
+    condition: outsideExecute(targetTime('atMost', 0, REND.id)),
   },
     /*
    * THE RACIAL COOLDOWNS LAST, WHICH IS A TANK LIST'S OWN RULE.
@@ -1058,6 +1104,40 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
 };
 
 export const WARRIOR_SHIELD_DEFENSIVE_ROTATION: Rotation = compileRotation(WARRIOR_SHIELD_DEFENSIVE);
+
+/*
+ * ============================================================================
+ * FURY PROT: THE PROT LIST WITH TWO CHANGES, DERIVED RATHER THAN COPIED.
+ *
+ * The owner: "In almost every other case this profile will copy Prot Warr. The
+ * most apparent difference will be that Bloodthirst is used in place of Shield
+ * Slam. Other APL changes will be Death Wish."
+ *
+ * DERIVED BY MAPPING so the two cannot drift: a change to the Prot list --
+ * the Execute clause landed in the same commit as this -- reaches this one
+ * for free, and the two differences are the only lines that say anything.
+ *
+ *   SHIELD SLAM -> BLOODTHIRST, in place, keeping the Execute gate. This build
+ *   takes Bloodthirst and no Shield Slam, so the old entry was skipped anyway.
+ *
+ *   DEATH WISH above Heroic Strike, UNGATED. The opener pre-casts it at 1.5s,
+ *   so in a 60 second fight this entry is never reached -- it is the second
+ *   cast in a fight past three minutes, which is the "the fight is shorter than
+ *   the cooldown" cause of a zero in CLAUDE.md rather than a dead entry. Kept
+ *   live through the Execute window on purpose: +20% damage is what that window
+ *   is for, and Death Wish costs 10 rage where Execute takes the rest.
+ * ============================================================================
+ */
+export const WARRIOR_FURY_PROT: AplList = {
+  name: 'Warrior (Fury Prot)',
+  entries: WARRIOR_SHIELD_DEFENSIVE.entries.flatMap((entry): AplEntry[] => {
+    if (entry.abilityId === 'shield_slam') return [{ ...entry, abilityId: 'bloodthirst' }];
+    if (entry.abilityId === 'heroic_strike') return [{ abilityId: 'death_wish' }, entry];
+    return [entry];
+  }),
+};
+
+export const WARRIOR_FURY_PROT_ROTATION: Rotation = compileRotation(WARRIOR_FURY_PROT);
 
 /**
  * Rage above which the Arms list spends the surplus on Heroic Strike.
@@ -1371,14 +1451,27 @@ export const WARRIOR_TWO_HAND_BATTLE_ROTATION: Rotation = compileRotation(WARRIO
  * Dual-wield in Berserker has its own; everything else falls back to the two
  * general lists.
  */
-export function warriorRotation(style: CombatStyleId, stance?: StanceId): Rotation {
+export function warriorRotation(
+  style: CombatStyleId,
+  stance?: StanceId,
+  talents?: TalentAllocation,
+): Rotation {
   if (style === 'dual_wield' && stance === 'berserker') {
     return WARRIOR_DUAL_WIELD_BERSERKER_ROTATION;
   }
   // The tank list, by the same rule that picks the Berserker one: style AND
   // stance together, because a shield warrior in Berserker is a different
   // character from one in Defensive.
-  if (isTankBuild(style, stance)) return WARRIOR_SHIELD_DEFENSIVE_ROTATION;
+  /*
+   * AND TALENTS, ONCE, FOR THE TANK: Fury Prot and Prot Warr are both a shield
+   * in Defensive Stance, so style and stance cannot tell them apart -- the
+   * Bloodthirst capstone can, which is the Rogue's and the Paladin's test.
+   */
+  if (isTankBuild(style, stance)) {
+    return (talents?.bloodthirst ?? 0) > 0
+      ? WARRIOR_FURY_PROT_ROTATION
+      : WARRIOR_SHIELD_DEFENSIVE_ROTATION;
+  }
   /*
    * The Arms list, by the same rule again. A DUAL-WIELDER IN BATTLE STANCE
    * does not get it: this is a two-hander's list -- Slam's cast and Heroic

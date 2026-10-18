@@ -89,7 +89,21 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
     [0, 'mighty_rage_potion'],
     [0, 'heroic_strike'],
   ],
-  // "Venom: none" -- the one profile of the 28 with no opener.
+  /*
+   * "T-10 Bloodrage, T-10 Battle Shout, T-3 Defensive Stance, T-1.5 Death Wish,
+   * T-0 Mighty Rage Potion + Heroic Strike Queue + Bloodthirst." No Charge:
+   * this tree takes no Vanguard, so Charge cannot be cast from Defensive.
+   */
+  fury_prot: [
+    [10, 'bloodrage_cast'],
+    [10, 'battle_shout_cast'],
+    [3, 'defensive_stance_cast'],
+    [1.5, 'death_wish'],
+    [0, 'mighty_rage_potion'],
+    [0, 'heroic_strike'],
+    [0, 'bloodthirst'],
+  ],
+  // "Venom: none" -- the one profile of the 29 with no opener.
   rogue_venom: [],
   rogue_combat_mut: [[1, 'blade_flurry']],
   rogue_combat: [[1, 'blade_flurry']],
@@ -223,7 +237,7 @@ function castsIn(presetId: string): readonly { id: string; at: number }[] {
 }
 
 describe("the owner's openers are transcribed exactly", () => {
-  it('declares one for all 28 profiles, and only Venom has none', () => {
+  it('declares one for all 29 profiles, and only Venom has none', () => {
     expect(Object.keys(OWNER_OPENERS).sort()).toEqual(
       PROFILE_PRESETS.map((preset) => preset.id).sort(),
     );

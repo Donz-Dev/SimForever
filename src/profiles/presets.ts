@@ -425,6 +425,45 @@ const PROT_WARR_TALENTS: TalentAllocation = {
   shield_slam: 1,
 };
 
+/**
+ * Fury Prot: 5 in Arms, 31 in Fury, 15 in Protection. Fifty-one exactly.
+ *
+ * ----------------------------------------------------------------------------
+ * DECODED FROM THE OWNER'S URL by `tools/decode_talent_build.mjs`, not
+ * transcribed -- build 70425, and it decodes to 51 with nothing dropped.
+ *
+ * A SHIELD TANK THAT REACHES BLOODTHIRST AND NOT SHIELD SLAM, which is what
+ * picks its list: `warriorRotation` sends a Defensive shield warrior with the
+ * Bloodthirst capstone to `WARRIOR_FURY_PROT` and every other one to the Prot
+ * list. Death Wish, Flurry and Enrage come with the Fury depth; the Protection
+ * fifteen are the survival tier -- Shield Specialization, Anticipation,
+ * Improved Revenge, Last Stand and Defiance -- and nothing past it, so no
+ * Vanguard and therefore NO CHARGE OUT OF DEFENSIVE STANCE, which the owner's
+ * opener agrees with by not having one.
+ * ----------------------------------------------------------------------------
+ */
+const FURY_PROT_TALENTS: TalentAllocation = {
+  // Arms, 5
+  deflection: 5,
+  // Fury, 31
+  booming_voice: 5,
+  cruelty: 5,
+  unbridled_wrath: 2,
+  blood_craze: 3,
+  enrage: 5,
+  improved_execute: 2,
+  improved_berserker_rage: 2,
+  death_wish: 1,
+  flurry: 5,
+  bloodthirst: 1,
+  // Protection, 15
+  shield_specialization: 5,
+  anticipation: 3,
+  improved_revenge: 3,
+  last_stand: 1,
+  defiance: 3,
+};
+
 
 /**
  * ----------------------------------------------------------------------------
@@ -2143,6 +2182,46 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         targetAttacks: true,
       },
     }),
+  },
+  {
+    id: 'fury_prot',
+    label: 'Fury Prot',
+    detail: 'Tauren, shield, Defensive Stance, Bloodthirst, target swings back',
+    characterClass: 'warrior',
+    /*
+     * PROT WARR WITH A FURY TREE, by the owner's word -- "in almost every other
+     * case this profile will copy Prot Warr". So it DERIVES from that preset
+     * and states only what differs: the name, the tree and the opener. Race,
+     * gear, enchants, raid buffs, consumables and the encounter all come from
+     * the Prot Warr build, which is the arrangement Pure Hemo uses with Hemo
+     * Dagger -- a change to Prot Warr's consumables reaches this one too.
+     */
+    build: () => {
+      const prot = PRESETS_BY_ID.get('prot_warr')!.build();
+      return {
+        ...prot,
+        character: { ...prot.character, name: 'Fury Prot' },
+        talents: { ...FURY_PROT_TALENTS },
+        /*
+         * THE OWNER'S OPENER: "T-10 Bloodrage, T-10 Battle Shout, T-3 Defensive
+         * Stance, T-1.5 Death Wish, T-0 Mighty Rage Potion + Heroic Strike
+         * Queue + Bloodthirst."
+         *
+         * NO CHARGE, where Prot Warr's opener has one: Charge reaches Defensive
+         * Stance only through Vanguard, and this tree does not take it.
+         *
+         * BLOODTHIRST IS THE PULL -- the one damaging cast an opener may finish,
+         * at exactly 0s. Death Wish deals nothing, and Heroic Strike is armed
+         * rather than cast, so its blow lands on the first swing after the pull.
+         */
+        precombat: [
+          ...before(10, 'bloodrage_cast', 'battle_shout_cast'),
+          ...before(3, 'defensive_stance_cast'),
+          ...before(1.5, 'death_wish'),
+          ...before(0, 'mighty_rage_potion', 'heroic_strike', 'bloodthirst'),
+        ],
+      };
+    },
   },
   {
     id: 'rogue_venom',

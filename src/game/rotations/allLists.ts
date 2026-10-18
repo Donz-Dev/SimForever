@@ -29,6 +29,7 @@ import {
   WARRIOR_BATTLE,
   WARRIOR_DUAL_WIELD_BERSERKER,
   WARRIOR_SHIELD,
+  WARRIOR_FURY_PROT,
   WARRIOR_SHIELD_DEFENSIVE,
   WARRIOR_TWO_HAND_BATTLE,
 } from './warrior';
@@ -127,6 +128,12 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     owner: 'warrior',
     list: WARRIOR_SHIELD_DEFENSIVE,
     profiles: ['prot_warr'],
+  },
+  {
+    name: 'WARRIOR_FURY_PROT',
+    owner: 'warrior',
+    list: WARRIOR_FURY_PROT,
+    profiles: ['fury_prot'],
   },
   {
     name: 'WARRIOR_BATTLE',

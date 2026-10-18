@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { stanceCastsOutsideExecute } from '../helpers/stanceCasts';
 import { CHARGE, CHARGE_RAGE_GENERATED, SPEARING_STRIKE } from '../../src/game/abilities/warrior';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
 import {
@@ -202,7 +203,7 @@ describe('Vanguard is what lets a tank Charge', () => {
     expect(batch.abilities.find((a) => a.abilityName === 'Charge')?.uses ?? 0).toBe(0);
   }, TWO_BATCHES_MS);
 
-  it('NEVER drags the tank out of Defensive Stance to reach it', () => {
+  it('never drags the tank out of Defensive Stance to reach it', () => {
     /*
      * ----------------------------------------------------------------------
      * THE TRAP. `PriorityRotation` treats a wrong stance as "not yet, and here
@@ -234,8 +235,15 @@ describe('Vanguard is what lets a tank Charge', () => {
      * re-casts DEFENSIVE Stance before the pull, which is a correct row and
      * has to be allowed through. The claim was always about the wrong stance.
      */
+    /*
+     * AND NOT BATTLE STANCE OUTSIDE THE EXECUTE WINDOW, where this asserted no
+     * Battle Stance row at all. The owner's tank Execute clause now takes the
+     * list into Battle Stance on purpose in the last 20% of the fight, so a row
+     * proves nothing; WHEN the swap happens is the claim. Charge's own pull is
+     * at timestamp 0, which the helper leaves out.
+     */
+    expect(stanceCastsOutsideExecute(profile, [4242, 1, 2])).toEqual([]);
     for (const row of batch.abilities) {
-      expect(row.abilityName, 'never swaps to Battle').not.toContain('Battle Stance');
       expect(row.abilityName, 'nor to Berserker').not.toContain('Berserker Stance');
     }
 

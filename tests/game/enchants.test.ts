@@ -476,7 +476,7 @@ describe('the bow’s +2% crit reaches ranged attacks and nothing else', () => {
 });
 
 // ---------------------------------------------------------------------------
-// What each of the 28 profiles opens with
+// What each of the 29 profiles opens with
 // ---------------------------------------------------------------------------
 
 /**
@@ -496,6 +496,11 @@ const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     wrists: '+9 Strength', gloves: '+15 Strength', legs: '+8 Strength', feet: '+7 Agility',
   },
   prot_warr: {
+    head: '+1% Dodge', neck: '+5 Defense Skill', cloak: '+1% Dodge', chest: '+4 Stats',
+    wrists: '+4 Defense Skill', gloves: '+2% Threat', legs: '+1% Dodge', feet: 'Minor Speed',
+  },
+  // Not an owner row: Fury Prot copies Prot Warr's loadout by the owner's word.
+  fury_prot: {
     head: '+1% Dodge', neck: '+5 Defense Skill', cloak: '+1% Dodge', chest: '+4 Stats',
     wrists: '+4 Defense Skill', gloves: '+2% Threat', legs: '+1% Dodge', feet: 'Minor Speed',
   },
@@ -634,7 +639,7 @@ const ARMOUR_SLOTS: readonly EquipmentSlot[] = [
   'ranged',
 ];
 
-describe('what each of the 28 profiles opens with', () => {
+describe('what each of the 29 profiles opens with', () => {
   it('covers every preset, so a new one cannot slip through unenchanted', () => {
     expect(PROFILE_PRESETS.map((preset) => preset.id).sort()).toEqual(
       Object.keys(LOADOUTS).sort(),

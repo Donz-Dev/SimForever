@@ -52,6 +52,7 @@ describe('the preset catalogue', () => {
       'two_hand_arms',
       'dw_fury',
       'prot_warr',
+      'fury_prot',
       'rogue_venom',
       'rogue_combat_mut',
       'rogue_combat',
@@ -82,6 +83,7 @@ describe('the preset catalogue', () => {
       '2H Arms',
       'DW Fury',
       'Prot Warr',
+      'Fury Prot',
       'Venom',
       'Combat Mut',
       'Combat',
@@ -126,6 +128,7 @@ describe('the preset catalogue', () => {
       two_hand_arms: 'warrior',
       dw_fury: 'warrior',
       prot_warr: 'warrior',
+      fury_prot: 'warrior',
       rogue_venom: 'rogue',
       rogue_combat_mut: 'rogue',
       rogue_combat: 'rogue',
@@ -251,7 +254,8 @@ describe('the preset catalogue', () => {
      * other profile. Asserted EXHAUSTIVELY: every other preset still runs the
      * one shared list, and a tank's is that list plus exactly these two.
      */
-    const TANKS = new Set(['prot_warr', 'prot_pally', 'druid_bear']);
+    // FOUR SINCE FURY PROT, which copies Prot Warr's raid as well.
+    const TANKS = new Set(['prot_warr', 'fury_prot', 'prot_pally', 'druid_bear']);
     const TANK_EXTRAS = ['retribution_aura', 'thorns'];
     const lists = PROFILE_PRESETS.map((preset) => [preset.id, preset.build().raidBuffs] as const);
     const first = lists.find(([id]) => !TANKS.has(id))![1];
@@ -264,7 +268,7 @@ describe('the preset catalogue', () => {
         expect(buffs, id).toEqual(first);
       }
     }
-    expect(lists.filter(([id]) => TANKS.has(id))).toHaveLength(3);
+    expect(lists.filter(([id]) => TANKS.has(id))).toHaveLength(4);
 
     /*
      * AND BOTH DRUID AURAS ARE ON EVERY PRESET, which is the owner's ruling and

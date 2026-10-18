@@ -51,7 +51,7 @@ export function rotationFor(
    */
   mainHandWeapon?: WeaponType,
 ): Rotation | undefined {
-  if (characterClass === 'warrior') return warriorRotation(style, stance);
+  if (characterClass === 'warrior') return warriorRotation(style, stance, talents);
   if (characterClass === 'rogue') return rogueRotation(talents ?? {}, mainHandWeapon);
   // A Druid's form IS its combat style, so the style selects the list -- the
   // Warrior's arrangement rather than the Rogue's.

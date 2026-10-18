@@ -81,6 +81,7 @@ export const PROFILES = [
   ['warrior', '2H Arms', 'https://talentsforever.com/warrior/60/30325213132515201-0505-2-CA2FAE2HE2KJIMNOLQSUEGiD-6'],
   ['warrior', 'DW Fury', 'https://talentsforever.com/warrior/60/30305013002-05253005122210501--SUVTYZbdfha1ACE4HEGKa-6'],
   ['warrior', 'Prot Warr', 'https://talentsforever.com/warrior/60/35310003002--050532120301021351-jlportmwvxyzABDCHKn-6'],
+  ['warrior', 'Fury Prot', 'https://talentsforever.com/warrior/60/05-55020030052210501-0503301003-Bjml2orlSRXUadbcfh-7?b=70425&d=261018'],
   /*
    * BOTH RE-ENCODED FROM THEIR PRESETS by `encode_talent_build.mjs`, and both
    * LOADED IN THE CALCULATOR to check: 31/20/0 and 5/41/5, "all 51 spent",
@@ -221,6 +222,7 @@ const PRESET_CONSTANTS = {
   '2H Arms': 'TWO_HAND_ARMS',
   'DW Fury': 'DW_FURY',
   'Prot Warr': 'PROT_WARR',
+  'Fury Prot': 'FURY_PROT',
   Venom: 'ROGUE_VENOM',
   Combat: 'ROGUE_COMBAT',
   Rupture: 'ROGUE_RUPTURE',

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { characterAtCombatStart, runProfileBatch, resourceFlowOf } from '../../src/simulator';
+import { stanceCastsOutsideExecute } from '../helpers/stanceCasts';
+import { characterAtCombatStart, runProfileBatch } from '../../src/simulator';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
 import { createDefaultProfile } from '../../src/profiles';
 import {
@@ -109,6 +110,8 @@ const EXPECTED_ORDER = [
   'major_healing_potion',
   'healthstone',
   'bloodrage_cast',
+  // The owner's tank Execute clause: Battle Stance and Execute in the last 20%.
+  'execute',
   'sunder_armor_cast',
   'demoralizing_shout_cast',
   /*
@@ -565,10 +568,10 @@ describe('the list in a fight', () => {
     }
   });
 
-  it('still never leaves Defensive Stance', () => {
-    // Every entry is castable in Defensive, including the three new ones, so
-    // the only stance change the list makes is the one that puts it right.
-    const batch = runProfileBatch(tank(legalise(PROTECTION_31)));
-    expect(resourceFlowOf(batch, 'rage').spent.some((row) => row.sourceId === 'stance_change')).toBe(false);
+  it('leaves Defensive Stance only inside the Execute window', () => {
+    // Every entry outside the owner's Execute clause is castable in Defensive,
+    // so a stance change before the last 20% of the fight would be a list
+    // reaching for something in the wrong stance.
+    expect(stanceCastsOutsideExecute(tank(legalise(PROTECTION_31)), [1, 2, 3, 4, 5])).toEqual([]);
   });
 });
