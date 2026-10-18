@@ -414,7 +414,7 @@ describe('what selecting one does to the priority list', () => {
     }
   });
 
-  it('gives all 30 presets both a Potion and an Other', () => {
+  it('gives all 31 presets both a Potion and an Other', () => {
     /*
      * THE COUNT, so that a preset losing its row is a failure rather than a
      * quiet omission -- which is the argument `update_baseline_table.py` makes
@@ -433,7 +433,7 @@ describe('what selecting one does to the priority list', () => {
       expect(consumables.potion, `${preset.id} potion`).toBeDefined();
       expect(consumables.other, `${preset.id} other`).toBeDefined();
     }
-    expect(PROFILE_PRESETS).toHaveLength(30);
+    expect(PROFILE_PRESETS).toHaveLength(31);
   });
 
   it("partitions `other` by pool, exactly as the owner's ruling does", () => {
@@ -492,6 +492,7 @@ describe('what selecting one does to the priority list', () => {
       hawk_melee: 'demonic_rune',
       warlock_smds: 'demonic_rune',
       warlock_firelock: 'demonic_rune',
+      warlock_sbolt: 'demonic_rune',
       warlock_demonology: 'demonic_rune',
       shadow_priest: 'demonic_rune',
     };

@@ -1,7 +1,7 @@
 # WARLOCK DEEP DIVE
 
 **Class:** Warlock
-**Profiles:** SM/DS, Firelock, Fire Demo
+**Profiles:** SM/DS, Firelock, Fire Demo, Sbolt Spam
 
 Read [CLAUDE.md](../../CLAUDE.md) first, then [README.md](README.md) in this
 directory for what the census columns mean and how to reprint every figure below.

@@ -74,6 +74,7 @@ the tooling to be a bit more sophisticated as well."
 | 42 | **THE FIRELOCK, RE-OPTIMISED ONCE LIFE TAP WAS HEALED BACK** -- Improved Life Tap found never to have worked and wired in; five dead points moved to Improved Life Tap 2 and Aftermath 5/5; a Bane of Agony opener | **+51.9 at 60s, +58.1 at 180s, +60.9 at 300s**, paired. The build is 7/11/33. Two questions | see below |
 | 43 | **LIFE TAP IS (430 + SPIRIT)**, Wowhead's Forever formula, on the owner's instruction -- replacing the ruled flat 840 and the Spirit clause's `unmodelled` caveat. About 674 on every Warlock preset | Firelock **-7.6 at 60s**; the others unchanged at 60s; -4 to -25 at longer lengths, from more taps | see below |
 | 44 | **FIRE DEMO** -- the Demonology profile renamed, three Suppression points to Agonizing Flames, +40 hit on its four benchmark sets, and Decimation's Soul Fire half made a 10-second buff opened in the last 35% | **1120.8 at 60s**, from 1021.0; Decimation 100% uptime -> ~33%. One question closed | see below |
+| 45 | **SBOLT SPAM, A 31ST PROFILE** -- the owner's 22/11/18 Orc, Imp sacrificed, their seven-entry list with a cooldown-stack sequence; and Fire Demo's benchmark row moved to the end, restoring three profiles' saved gear ids that round 40 had shifted | **913.0 at 60s**; every other profile's hash identical to `main` | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -159,6 +160,40 @@ Rupture Rogue's pre-combat `stealth` line as `<-- NEVER HAPPENED`. It does on
 `main` too: stealth is a `PRECOMBAT_STATES` entry with no ability, and the tool
 does not read that table the way the APL panel and the opener guard do. A
 reporting gap, not a rotation one.
+
+## Round 45: Sbolt Spam, a 31st profile -- and Fire Demo's gear ids put back
+
+**THE OWNER'S PROFILE, AS SPECIFIED**: `warlock_sbolt`, "Sbolt Spam", Orc, the
+Imp sacrificed for +15% Shadow, and the Firelock's gear, enchants, raid buffs
+and consumables. 22/11/18, decoded from their link and legal as written:
+Suppression 5, Improved Corruption 5, Improved Bane of Agony 2, Amplify Curse,
+Pandemic 3, Malevolence 4, Nightfall 2 / Demonic Embrace 5, Demonic Aegis 2,
+Improved Voidwalker 3, Demonic Sacrifice / Improved Shadow Bolt 5, Bane 5,
+Ruin 5, Agonizing Flames 3.
+
+**THE LIST IS THEIRS ENTRY FOR ENTRY**, `WARLOCK_SBOLT`, chosen by Ruin with no
+31-point capstone. Entry 1 -- "Major Spellblasting Potion + Blood Fury + Amplify
+Curse + Bane of Agony (if those cooldowns are available)" -- is ONE SEQUENCE,
+which checks every step's cooldown before it starts and lets nothing in between,
+so its Bane of Agony is the amplified one. The other three free racials sit
+under it so the list serves any race; an Orc's stored list drops them. Opener:
+Shadow Bolt at 2.5s, which is its cast with Bane.
+
+**913.0 DPS at 60s** (`USES=1`, 30 fights). Every entry fires: the stack once,
+Shadow Bolt 20.6 casts, Corruption 3.9, Bane of Agony 3.0, the Rune once and
+Life Tap 2.6. Not optimised -- it is the owner's list as given.
+
+**AND ROUND 40 HAD BROKEN THREE PROFILES' SAVED GEAR, FOUND WHILE ADDING THIS
+ONE.** A benchmark item's id is `BENCHMARK_ID_BASE + templateIndex * 400 + ...`,
+so a template inserted mid-table renumbers every set after it -- which two
+comments in that file already said, beside rows that were appended for exactly
+that reason. Fire Demo's row was inserted beside the Firelock's, and Shadow
+Priest, Shockadin 2H and Fury Prot all moved 400 ids: a profile saved before
+round 40 pointed at items it never wore, and nothing failed. **Both Warlock
+rows are at the end now**, which restores those three; Fire Demo's own ids
+change once, and its saved files are a day old at most.
+`tests/game/benchmarkIdStability.test.ts` writes the table's order out by
+hand, so the next insert fails instead of re-pointing everybody's gear.
 
 ## Round 44: Fire Demo -- a rename, Agonizing Flames, 40 hit, and Decimation as a buff
 

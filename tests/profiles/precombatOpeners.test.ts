@@ -214,6 +214,7 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
   ],
   warlock_smds: [[2.5, 'shadow_bolt']],
   warlock_firelock: [[2, 'incinerate']],
+  warlock_sbolt: [[2.5, 'shadow_bolt']],
   // The owner gave this profile no opener; both lines are additions, below.
   warlock_demonology: [],
   shadow_priest: [
@@ -239,7 +240,7 @@ function castsIn(presetId: string): readonly { id: string; at: number }[] {
 }
 
 describe("the owner's openers are transcribed exactly", () => {
-  it('declares one for all 30 profiles, and only Venom declares none', () => {
+  it('declares one for all 31 profiles, and only Venom declares none', () => {
     expect(Object.keys(OWNER_OPENERS).sort()).toEqual(
       PROFILE_PRESETS.map((preset) => preset.id).sort(),
     );

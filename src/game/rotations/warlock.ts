@@ -495,7 +495,52 @@ export const WARLOCK_DEMONOLOGY: AplList = {
   ],
 };
 
+/**
+ * SBOLT SPAM -- the owner's list, entry for entry. 22/11/18 with the Imp
+ * sacrificed for +15% Shadow: Improved Corruption, Malevolence, Pandemic and
+ * Nightfall in Affliction, Improved Shadow Bolt, Bane, Ruin and Agonizing
+ * Flames in Destruction, and Shadow Bolt as the filler.
+ *
+ * ============================================================================
+ * ENTRY 1 IS ONE SEQUENCE: "Major Spellblasting Potion + Blood Fury + Amplify
+ * Curse + Bane of Agony (if those cooldowns are available)". A sequence checks
+ * EVERY step's cooldown before it starts, which is that parenthesis exactly,
+ * and nothing may be cast between the steps -- so the Bane of Agony it ends on
+ * is the one Amplify Curse empowers. Blood Fury is a step rather than a
+ * standalone racial entry, the Hunter stack's arrangement: a standalone one
+ * would fire first and hold the whole sequence off its cooldown.
+ * ============================================================================
+ */
+/** The owner's two mana gates on Sbolt Spam: the Rune below 15%, Life Tap below 10%. */
+export const SBOLT_DEMONIC_RUNE_MANA = 0.15;
+export const SBOLT_LIFE_TAP_MANA = 0.1;
+
+export const WARLOCK_SBOLT: AplList = {
+  name: 'Warlock (Sbolt Spam)',
+  entries: [
+  {
+    abilityId: 'major_spellblasting_potion',
+    sequence: ['blood_fury', 'amplify_curse', 'bane_of_agony'],
+    note: 'Cooldown stack: the potion, Blood Fury, Amplify Curse and an amplified Bane of Agony, in one shot.',
+  },
+  /*
+   * THE OTHER THREE FREE RACIALS, which every list carries so it serves any
+   * race; a stored list drops the ones its race cannot cast, so an Orc's panel
+   * shows the owner's seven entries and nothing else.
+   */
+  ...RACIAL_COOLDOWNS.filter((entry) => entry.abilityId !== 'blood_fury'),
+  // Nightfall's Shadow Trance: the next Shadow Bolt is instant.
+  { abilityId: 'shadow_bolt', condition: actorHas('shadow_trance') },
+  { abilityId: 'corruption', condition: targetLacks('corruption') },
+  { abilityId: 'bane_of_agony', condition: targetLacks('bane_of_agony') },
+  { abilityId: 'demonic_rune', condition: manaBelowFraction(SBOLT_DEMONIC_RUNE_MANA) },
+  { abilityId: 'life_tap', condition: manaBelowFraction(SBOLT_LIFE_TAP_MANA) },
+  { abilityId: 'shadow_bolt' },
+  ],
+};
+
 export const WARLOCK_AFFLICTION_ROTATION: Rotation = compileRotation(WARLOCK_AFFLICTION);
+export const WARLOCK_SBOLT_ROTATION: Rotation = compileRotation(WARLOCK_SBOLT);
 export const WARLOCK_DESTRUCTION_ROTATION: Rotation = compileRotation(WARLOCK_DESTRUCTION);
 export const WARLOCK_DEMONOLOGY_ROTATION: Rotation = compileRotation(WARLOCK_DEMONOLOGY);
 
@@ -509,6 +554,12 @@ export const WARLOCK_DEMONOLOGY_ROTATION: Rotation = compileRotation(WARLOCK_DEM
 export function warlockRotation(talents: TalentAllocation): Rotation | undefined {
   if ((talents.incinerate ?? 0) > 0) return WARLOCK_DESTRUCTION_ROTATION;
   if ((talents.demonic_pact ?? 0) > 0) return WARLOCK_DEMONOLOGY_ROTATION;
+  /*
+   * RUIN WITHOUT ANY 31-POINT CAPSTONE is Sbolt Spam: Incinerate and Demonic
+   * Pact are caught above and Wrack would be the Affliction list's own. A
+   * Warlock with no talents still gets the Affliction list below.
+   */
+  if ((talents.ruin ?? 0) > 0 && (talents.wrack ?? 0) === 0) return WARLOCK_SBOLT_ROTATION;
   return WARLOCK_AFFLICTION_ROTATION;
 }
 

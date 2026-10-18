@@ -77,6 +77,7 @@ describe('the preset catalogue', () => {
       'hawk_melee',
       'warlock_smds',
       'warlock_firelock',
+      'warlock_sbolt',
       'warlock_demonology',
       'shadow_priest',
     ]);
@@ -109,6 +110,7 @@ describe('the preset catalogue', () => {
       'Hawk Melee',
       'SM/DS',
       'Firelock',
+      'Sbolt Spam',
       'Fire Demo',
       'Shadow',
     ]);
@@ -155,6 +157,7 @@ describe('the preset catalogue', () => {
       hawk_melee: 'hunter',
       warlock_smds: 'warlock',
       warlock_firelock: 'warlock',
+      warlock_sbolt: 'warlock',
       warlock_demonology: 'warlock',
       shadow_priest: 'priest',
     };
