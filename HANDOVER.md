@@ -132,6 +132,25 @@ through -- would never have reached Shadow Word: Pain. `rollApplication` in
 tests fail 6 of 26 with the fix reverted. SM/DS's Corruption goes 4.0 to 4.2
 casts a fight, which is the misses being recast.
 
+**MERGED AS `69d8e1d` ([#294](https://github.com/Donz-Dev/SimForever/pull/294)),
+FOUR COMMITS SQUASHED, CI GREEN ON NODE 20 AND 22, 3,808 TESTS.** The DoT fix was
+the fourth commit, added after the PR was opened, so the round grew while it was
+in review -- which is this file's "a feature arrives in waves" pointed at a
+single PR. Nothing in it was re-baselined.
+
+**WHAT THE ROUND ITSELF GOT WRONG, BOTH CAUGHT BEFORE MERGE:**
+
+| | what happened | what caught it |
+| --- | --- | --- |
+| a `git stash` | run by accident in the round's worktree, taking the uncommitted spell work; popped back intact. The stash list held another session's entry beneath it | reading `git stash list` before popping |
+| the first DoT tests | FAILED against the CORRECT code -- every DoT landed 100% with no hit -- because `buildSimulation` rolls the engine's default table, which has no 17% spell miss. It read exactly like the fix not working | asking which table the harness rolls. Given the Forever table they passed, and failed 6 of 26 with the fix reverted |
+
+**AND ONE THING IT FOUND THAT IS NOT ITS OWN:** `measure_profiles.ts` prints the
+Rupture Rogue's pre-combat `stealth` line as `<-- NEVER HAPPENED`. It does on
+`main` too: stealth is a `PRECOMBAT_STATES` entry with no ability, and the tool
+does not read that table the way the APL panel and the opener guard do. A
+reporting gap, not a rotation one.
+
 ## Questions outstanding for the owner
 
 **GATHERED HERE BECAUSE EACH IS BURIED IN THE ROUND THAT RAISED IT**, and a
