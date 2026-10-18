@@ -214,6 +214,8 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
   ],
   warlock_smds: [[2.5, 'shadow_bolt']],
   warlock_firelock: [[2, 'incinerate']],
+  // The owner gave this profile no opener; both lines are additions, below.
+  warlock_demonology: [],
   shadow_priest: [
     [3, 'shadowform'],
     [1.5, 'mind_blast'],
@@ -237,7 +239,7 @@ function castsIn(presetId: string): readonly { id: string; at: number }[] {
 }
 
 describe("the owner's openers are transcribed exactly", () => {
-  it('declares one for all 29 profiles, and only Venom has none', () => {
+  it('declares one for all 30 profiles, and only Venom declares none', () => {
     expect(Object.keys(OWNER_OPENERS).sort()).toEqual(
       PROFILE_PRESETS.map((preset) => preset.id).sort(),
     );
@@ -254,7 +256,8 @@ describe("the owner's openers are transcribed exactly", () => {
      */
     for (const [id, opener] of Object.entries(OWNER_OPENERS)) {
       const declared = PRESETS_BY_ID.get(id)!.build().precombat;
-      if (opener.length === 0) {
+      // Demonology: the owner wrote nothing and the optimisation added both lines.
+      if (opener.length === 0 && (OPTIMISATION_ADDITIONS[id] ?? []).length === 0) {
         expect(declared, `${id} declares none`).toBeUndefined();
       } else {
         expect(declared, `${id} declares one`).toBeDefined();
@@ -363,6 +366,15 @@ describe("the owner's openers are transcribed exactly", () => {
      * damaging pre-combat casts are the owner's own lines.
      */
     mage_fire: [],
+    /*
+     * THE DEMONOLOGY OPENER IS ALL ADDITIONS, because the owner asked for help
+     * with it rather than giving one. Searing Pain is the pull and brands the
+     * target for the Imp; Bane of Agony at 0s deals nothing before it.
+     */
+    warlock_demonology: [
+      [1.5, 'searing_pain', '+19.43 against no opener, at 60s'],
+      [0, 'bane_of_agony', '+13.88 at 60s; noise at 180s and 300s'],
+    ],
     shadow_priest: [
       // Shadow Word: Pain is off the opener, by the owner (round 37).
       [0, 'devouring_plague', '+26.7 alone'],

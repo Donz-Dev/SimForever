@@ -11,6 +11,7 @@ import {
   all,
   compileRotation,
   fightRemaining,
+  fightRemainingFraction,
   resourceFraction,
   selfHas,
   targetExpired,
@@ -413,18 +414,86 @@ export const WARLOCK_DESTRUCTION: AplList = {
   ],
 };
 
+/**
+ * The share of the fight Decimation's window covers: "below 35% health", which
+ * by the owner's ruling is the last 35% of the planned fight. The talent reads
+ * its own figure off its values row; this is the same number for the LIST, and
+ * `warlockDemonology.test.ts` pins that the two still agree.
+ */
+export const DECIMATION_PHASE_FRACTION = 0.35;
+
+/** "We are inside Decimation's window", the condition every execute entry reads. */
+export const DECIMATION_PHASE = fightRemainingFraction('atMost', DECIMATION_PHASE_FRACTION);
+
+/**
+ * DEMONOLOGY -- the Imp out, the Succubus sacrificed, Fire through Searing Pain.
+ *
+ * ============================================================================
+ * 5/31/15, and the owner's design: Suppression and Ruin at 5/5, Demonic
+ * Sacrifice on the Succubus for +15% Fire, Master Demonologist on the Imp for
+ * another +10% Fire to both of them -- which needs Demonic Pact, or summoning
+ * the Imp would cancel the sacrifice -- and Decimation's Soul Fire in the last
+ * 35% of the fight.
+ *
+ * SEARING PAIN IS THE FILLER AND IT ALSO FEEDS THE IMP. Demonic Brand rides on
+ * it: each Searing Pain brands the target for 10 seconds, and each of the
+ * Imp's next six Firebolts adds 65 to 68 Fire. An Imp casting every 2.4
+ * seconds spends six charges in 14.4 seconds, so the brand's 10-second window
+ * runs out before its charges do, and a filler that is cast every 1.5 seconds
+ * keeps it up for free.
+ *
+ * INCINERATE AND CONFLAGRATE ARE OUT OF REACH -- both sit deeper in
+ * Destruction than 15 points go -- so the only Fire spells are Searing Pain,
+ * Immolate and Soul Fire.
+ * ============================================================================
+ */
+export const WARLOCK_DEMONOLOGY: AplList = {
+  name: 'Warlock (Demonology)',
+  entries: [
+  buffPotionCooldown('major_spellblasting_potion'),
+  ...RACIAL_COOLDOWNS,
+  /*
+   * SOUL FIRE IN DECIMATION'S WINDOW, ON COOLDOWN. Decimation takes it to a
+   * 6-second cooldown and, with Bane 5/5, a 2.4-second cast that costs no
+   * shard. Above everything else in the window, because it is the largest
+   * single hit the build has.
+   */
+  { abilityId: 'soul_fire', condition: DECIMATION_PHASE },
+  {
+    abilityId: 'immolate',
+    condition: all(
+      targetAuraAtMost('immolate', IMMOLATE_REFRESH_SECONDS),
+      fightRemaining('atLeast', IMMOLATE_FIGHT_FLOOR_SECONDS),
+    ),
+  },
+  {
+    abilityId: 'bane_of_agony',
+    condition: all(
+      targetLacks('bane_of_agony'),
+      fightRemaining('atLeast', BANE_OF_AGONY_FIGHT_FLOOR_SECONDS),
+    ),
+  },
+  ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
+  ...CONSUMABLE_HEALS,
+  { abilityId: 'life_tap', condition: manaBelowFraction(FIRELOCK_LIFE_TAP_MANA) },
+  { abilityId: 'searing_pain' },
+  ],
+};
+
 export const WARLOCK_AFFLICTION_ROTATION: Rotation = compileRotation(WARLOCK_AFFLICTION);
 export const WARLOCK_DESTRUCTION_ROTATION: Rotation = compileRotation(WARLOCK_DESTRUCTION);
+export const WARLOCK_DEMONOLOGY_ROTATION: Rotation = compileRotation(WARLOCK_DEMONOLOGY);
 
 /**
  * Which list a Warlock runs, by capstone.
  *
- * Wrack is 31 into Affliction and Incinerate 31 into Destruction; 51 points
- * cannot reach both. A Warlock with neither gets the Affliction list, which is
- * written entirely out of trainer abilities.
+ * Wrack is 31 into Affliction, Incinerate 31 into Destruction and Demonic Pact
+ * 31 into Demonology; 51 points cannot reach two of them. A Warlock with none
+ * gets the Affliction list, which is written entirely out of trainer abilities.
  */
 export function warlockRotation(talents: TalentAllocation): Rotation | undefined {
   if ((talents.incinerate ?? 0) > 0) return WARLOCK_DESTRUCTION_ROTATION;
+  if ((talents.demonic_pact ?? 0) > 0) return WARLOCK_DEMONOLOGY_ROTATION;
   return WARLOCK_AFFLICTION_ROTATION;
 }
 

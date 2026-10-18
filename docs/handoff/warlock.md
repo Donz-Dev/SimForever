@@ -1,10 +1,30 @@
 # WARLOCK DEEP DIVE
 
 **Class:** Warlock
-**Profiles:** SM/DS, Firelock
+**Profiles:** SM/DS, Firelock, Demonology
 
 Read [CLAUDE.md](../../CLAUDE.md) first, then [README.md](README.md) in this
 directory for what the census columns mean and how to reprint every figure below.
+
+---
+
+## Demonology -- the third profile, and the first with a demon out
+
+`warlock_demonology`, 5/31/15: the Imp summoned, the Succubus sacrificed and
+kept through **Demonic Pact**, Fire through Searing Pain and Demonic Brand, and
+Soul Fire under Decimation in the last 35% of the fight. Everything but the
+lists is the Firelock's. HANDOVER's round 40 has the full optimisation pass;
+the three things to know before touching it:
+
+- **IT IS MANA-BOUND PAST A MINUTE**, so a 60s gain is not a gain until it has
+  been priced at 180s. Aftermath 5/5 and Corruption both win at 60s and lose by
+  180s, and neither is shipped.
+- **DECIMATION IS BUILT AS STANDING EFFECTS**, the owner's reading, so Soul
+  Fire is castable on a 6s cooldown from the pull. The list casts it only in
+  the window, which is the profile's design; casting it all fight is +77 at
+  60s and is a question for the owner.
+- **SOUL FIRE'S COEFFICIENT IS A PLACEHOLDER** and Soul Fire is 12.5% of the
+  profile.
 
 ---
 
