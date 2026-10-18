@@ -58,8 +58,13 @@ import {
  * ============================================================================
  */
 
-/** "<buff> is not active", on the Mage. */
-const selfExpired = (auraId: string) => selfTime('atMost', 0, auraId);
+/*
+ * `selfExpired` IS GONE WITH THE LAST MAGE ARMOR ENTRY. It had one caller per
+ * list and all three lists dropped theirs -- Arcane in round 24, Fire in 28,
+ * Frostfire in 32 -- for the same reason: the buff lasts thirty minutes, so
+ * the gate is false from the first poll and the entry can never fire. The two
+ * comments below still describe the entries it used to gate.
+ */
 
 /** "<buff> stacks = N", on the Mage. */
 const selfStacksExactly = (auraId: string, count: number) => selfStacks('exactly', count, auraId);
@@ -153,8 +158,48 @@ const either = any;
  * ----------------------------------------------------------------------------
  */
 const SCORCH_STACK_CAP = IMPROVED_SCORCH_MAX_STACKS;
-/** "or scorch duration <= 3 seconds", which refreshes it before it drops. */
-const SCORCH_REFRESH_SECONDS = 3;
+
+/*
+ * ============================================================================
+ * "OR THE VULNERABILITY IS ABOUT TO DROP", AND IT IS **FIVE SECONDS ON FIRE
+ * AND THREE ON FROSTFIRE** -- two constants, because the two lists were swept
+ * separately and only one of them has been.
+ *
+ * THE SWEEP ON THE FIRE LIST, 1500 paired iterations each against the legal
+ * opener, as a delta from the 3 seconds both lists used to share:
+ *
+ *   2s   -13.70      4s   +6.56      6s   +9.84
+ *   3s     0         5s   +9.74      8s   +8.63
+ *
+ * SO 5s AND 6s ARE TIED AT THE TOP and 4s to 8s is a plateau; 5 is mid-plateau
+ * rather than tuned, which is the reading `ARCANE_BLAST_CHANNEL_FLOOR_SECONDS`
+ * next door already takes of its own flat range.
+ *
+ * AND THE HYPOTHESIS THAT PRODUCED THIS SWEEP WAS WRONG IN BOTH DIRECTIONS.
+ * A refresh window CLIPS -- refreshing a 30 second debuff at 3 seconds left
+ * throws 3 seconds away -- which is the Moonkin's Nature's Grace failure and
+ * says the window should be made SMALLER. It measures -13.7 at two seconds.
+ *
+ * WHAT IS ACTUALLY BEING TRADED IS A REBUILD. Fire Vulnerability is five
+ * stacks at 3% each on a build whose damage is 84% Fire, and if it LAPSES all
+ * five go -- so the next five Scorches are spent climbing back rather than
+ * maintaining, at 562 damage a second of global cooldown against the filler's
+ * 712. A three second margin is a gamble against a 2.5 second Fireball being
+ * in flight when the debuff ends, and the clip is the cheaper of the two
+ * mistakes. The curve turning over above 6s is the clip finally costing more
+ * than the gamble.
+ *
+ * A TWO-POINT COMPARISON AT 3s AND 1s WOULD HAVE CONCLUDED "KEEP 3" and been
+ * confident about it, which is why this is a sweep.
+ *
+ * FROSTFIRE IS LEFT AT 3s ON PURPOSE. Its filler is faster and its Scorch
+ * carries Ice Shards' crit damage, so nothing here transfers -- and a shared
+ * constant serving two unswept answers is the Thistle Tea gate's documented
+ * mistake. Whoever sweeps that list owns that number.
+ * ============================================================================
+ */
+const FIRE_SCORCH_REFRESH_SECONDS = 5;
+const FROSTFIRE_SCORCH_REFRESH_SECONDS = 3;
 
 /*
  * ----------------------------------------------------------------------------
@@ -256,13 +301,14 @@ const evocationFor = (secondsLeft: number) =>
 const HEATING_UP_SALVAGE_STACKS = 2;
 const HEATING_UP_SALVAGE_SECONDS = 3.5;
 
-const scorchNeeded = all(
-  hasReaction('improved_scorch'),
-  either(
-    targetStacksBelow('fire_vulnerability', SCORCH_STACK_CAP),
-    targetAuraAtMost('fire_vulnerability', SCORCH_REFRESH_SECONDS),
-  ),
-);
+const scorchNeededWithin = (refreshSeconds: number) =>
+  all(
+    hasReaction('improved_scorch'),
+    either(
+      targetStacksBelow('fire_vulnerability', SCORCH_STACK_CAP),
+      targetAuraAtMost('fire_vulnerability', refreshSeconds),
+    ),
+  );
 
 // ---------------------------------------------------------------------------
 
@@ -285,7 +331,34 @@ const scorchNeeded = all(
 export const MAGE_FIRE: AplList = {
   name: 'Mage (Fire)',
   entries: [
-  { abilityId: 'mage_armor', condition: selfExpired('mage_armor') },
+  /*
+   * ==========================================================================
+   * MAGE ARMOR IS NOT IN THIS LIST, WHICH IS THE ARCANE RULING APPLIED TO THE
+   * PROFILE IT WAS LEFT FOR. The owner: "Mage Armor doesn't need to be captured
+   * in the main APL section. It's being taken care of in the pre-combat
+   * section." That arrived as an audit of the ARCANE profile, so only that list
+   * changed -- and `MAGE_ARCANE` records in its own words that Fire pre-casts
+   * the buff at a 4.5s lead and the entry is equally dead here, "so the next
+   * Mage round starts with it".
+   *
+   * THE ENTRY COULD NEVER FIRE. `selfExpired('mage_armor')` is false from the
+   * pull onward: the opener casts it, the buff lasts THIRTY MINUTES against a
+   * one-minute fight, and nothing in the encounter dispels. `USES=1` reported
+   * **1.0 uses** against it and that use was the PRE-COMBAT cast charged to the
+   * entry, which is why reading the uses column alone could not see this.
+   *
+   * REMOVING IT RUNS BIT-IDENTICAL FIGHTS at 1500 paired iterations, which is
+   * the containment check and the only thing separating "redundant" from
+   * "load-bearing" -- a change worth nothing still shifts the RNG sequence, so
+   * a zero spread here means the entry was never REACHED rather than reached
+   * and worth nothing.
+   *
+   * AND UNLIKE COMBUSTION, NO FIGHT LENGTH BRINGS IT BACK: the test is the
+   * buff's duration against the clock, and thirty minutes beats any fight this
+   * project runs. Frostfire still carries its copy, for the reason the Arcane
+   * ruling gave -- a list is changed for the profile that was named.
+   * ==========================================================================
+   */
   /*
    * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
    *
@@ -293,11 +366,53 @@ export const MAGE_FIRE: AplList = {
    * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
-  ...RACIAL_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
+  ...RACIAL_COOLDOWNS.filter((entry) => entry.abilityId !== 'eureka'),
+  /*
+   * ==========================================================================
+   * EUREKA HELD FOR THE PYROBLAST IT MAKES BIGGER, WORTH **+5.34 +/- 0.55**.
+   *
+   * The Gnome racial is an 8 SECOND WINDOW of +10% NON-PERIODIC damage, free
+   * and off the global cooldown -- and in the shared block it carries no
+   * condition, so it is spent on whatever the first poll of the fight happens
+   * to be. On the legal opener that poll faces a target with ZERO Fire
+   * Vulnerability stacks, which is the worst eight seconds of the fight to
+   * spend a damage window in.
+   *
+   * THREE HEATING UP STACKS IS A PYROBLAST ON THE NEXT CAST, which is the entry
+   * below. At three stacks Pyroblast is a 1.5 second cast for about 2,950 --
+   * the biggest single non-periodic hit this build has -- so the window opens
+   * exactly as it lands. **The four gates measure +5.34 here, +4.69 on a
+   * Combustion window, +2.58 on five Fire Vulnerability stacks and +2.50 on a
+   * Missile Barrage proc**, which last is the ARCANE list's own answer and is
+   * the worst of the four on this build.
+   *
+   * AND `any` OF THE TWO BEST IS WORSE THAN EITHER ALONE, at +3.51: the
+   * Combustion branch spends the window on a poll where no Pyroblast is coming,
+   * so a looser gate is not a safer one here. Removing the entry altogether is
+   * **-8.94**, which is the sign check that says a gate is not merely a tax.
+   *
+   * THE INTERVALS ARE TENTHS BECAUSE A GATE ON A FREE OFF-GCD COOLDOWN CANNOT
+   * FLIP A ROLL -- spread 5.5 against the 90-odd a talent or an opener change
+   * produces. A small figure here is not a small sample.
+   *
+   * GATING THE SHARED BLOCK IS NOT AVAILABLE: `RACIAL_COOLDOWNS` is spread into
+   * lists belonging to no race, so a condition written there would be a
+   * condition on three abilities this character cannot cast. Eureka is last of
+   * the four, so filtering it out and restating it here leaves every other
+   * racial exactly where it was.
+   * ==========================================================================
+   */
+  { abilityId: 'eureka', condition: selfStacksExactly('heating_up', HEATING_UP_MAX_STACKS) },
+  /*
+   * THE SPELLBLASTING POTION IS EXCLUDED HERE AND IS STEP TWO OF THE
+   * COMBUSTION STACK BELOW, where the owner's gate for it actually belongs
+   * now that a sequence can express the pairing. Excluding it keeps every
+   * other row of the shared block exactly where it was.
+   */
+  ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
   ...CONSUMABLE_HEALS,
   { abilityId: 'evocation', condition: evocationFor(FIRE_EVOCATION_FIGHT_SECONDS) },
-  { abilityId: 'scorch', condition: scorchNeeded },
+  { abilityId: 'scorch', condition: scorchNeededWithin(FIRE_SCORCH_REFRESH_SECONDS) },
   /*
    * AT THREE STACKS, WHICH IS THE CAP. Heating Up takes a quarter off
    * Pyroblast's cast per stack, so three turns a six-second cast into a second
@@ -305,17 +420,90 @@ export const MAGE_FIRE: AplList = {
    */
   { abilityId: 'pyroblast', condition: selfStacksExactly('heating_up', HEATING_UP_MAX_STACKS) },
   /*
+   * ==========================================================================
+   * COMBUSTION AND THE SPELLBLASTING POTION AS ONE ACTION, which is the
+   * Arcane list's cooldown stack reached from the other direction.
+   *
    * COMBUSTION ONLY WITH THE DEBUFF CAPPED AND HOLDING. It is a crit cooldown,
    * so it is worth most when every Fire spell under it is already taking the
    * full Fire Vulnerability -- and the ten-second floor is what stops it being
-   * spent on a stack about to fall off.
+   * spent on a stack about to fall off. **Both clauses are inert at a
+   * one-minute fight**: Fire Vulnerability sits at 99.9% uptime on a 30 second
+   * duration, so once five stacks exist there are always more than twenty
+   * seconds left, and moving the floor to 0 or to 20 runs bit-identical
+   * fights. They are kept because they are a claim about when the cooldown is
+   * worth spending rather than a claim about this clock.
+   *
+   * ------------------------------------------------------------------------
+   * THE POTION IS A STEP RATHER THAN AN ENTRY, AND THE OWNER'S COMBUSTION
+   * RULING IS WHAT MADE THAT POSSIBLE. It was a separate entry above this one,
+   * gated on Combustion's own AURA: one poll cast the cooldown and a later poll
+   * drank the potion, which worked and depended on two things no reader of
+   * either entry could see -- the list ORDER, and a second decision happening
+   * before anything took the global cooldown.
+   *
+   * WITH COMBUSTION OFF THE GLOBAL COOLDOWN the two resolve in ONE instant: the
+   * cast leaves the actor free, `nextDecisionTime` returns at once, and the
+   * potion goes out before anything else can act. **That is an emergent stack
+   * held together by both being off the GCD** -- and one of them became so in
+   * the same change, which is the Arcane round's own warning that "your own
+   * change can create or destroy that in the same round."
+   *
+   * SO IT IS WRITTEN AS A GUARANTEE. `AplEntry.sequence` means nothing may be
+   * cast between the steps whatever happens to either ability's GCD flag
+   * later. It measures **bit-identical fights** at 1500 paired iterations,
+   * which is the containment check and is also the Arcane verdict on the same
+   * shape: measure it as neutral and ship it as structure.
+   *
+   * `abilityId` IS STEP ONE AND `sequence` HOLDS WHAT FOLLOWS IT, which is the
+   * convention the Arcane stack uses and is easy to get wrong: `selectAction`
+   * casts `entry.abilityId` and sets `pendingSequence.index = 0`, so naming
+   * Combustion in BOTH places casts it, finds it on cooldown on the resume,
+   * clears the pointer, and the potion never fires -- **-14.81 with a spread of
+   * 0.08**.
+   *
+   * THE SPREAD IS WHAT SAID IT WAS A BUG RATHER THAN A FINDING. 0.08 on a
+   * 1500-iteration paired run means the same loss in every fight, which is 40
+   * spell power for 30 seconds going missing and not a decision changing
+   * anywhere. `USES=1` shows it too -- it prints a sequence step as its own
+   * `then <id>` row under the entry, so the step read 0.00 uses -- and this
+   * round found it by asking the damage table instead, which is the slower
+   * route to the same zero.
+   *
+   * AND THE GATE HAD TO MOVE OFF THE AURA ONTO THE SEQUENCE, which is forced
+   * rather than chosen: `sequenceIsAffordable` resolves every step before any
+   * of it is cast, so a step gated on what an earlier step APPLIES is refused
+   * outright. That is the Vanish-into-Ambush limit, and here it is free --
+   * Combustion's own condition is the right gate for the pair.
+   *
+   * ------------------------------------------------------------------------
+   * THE POTION IS `abilityId` AND COMBUSTION IS THE STEP, WHICH IS THE ARCANE
+   * STACK'S ARRANGEMENT TO THE LETTER and is not arbitrary. The two resolve in
+   * one instant either way, so nothing about the fight depends on it -- what
+   * depends on it is every READER that keys on `abilityId`, and a consumable
+   * has two of them.
+   *
+   * `midFightConsumables.test.ts` ASSERTS THAT EVERY PRESET HAS A LIST ENTRY
+   * FOR EXACTLY WHAT IT SELECTED, and it failed with Combustion as the id: the
+   * potion became invisible, which is a potion that reads as never drunk. The
+   * test has been taught to look inside a sequence as well -- a selection can
+   * legitimately be a STEP -- and this entry is also written the way round the
+   * precedent already is, so the two fixes are independent rather than one
+   * propping up the other.
+   * ==========================================================================
    */
   {
-    abilityId: 'combustion',
+    abilityId: 'major_spellblasting_potion',
+    sequence: ['combustion'],
     condition: all(
       targetStacksAtLeast('fire_vulnerability', IMPROVED_SCORCH_MAX_STACKS),
       targetAuraAtLeast('fire_vulnerability', 10),
     ),
+    note:
+      'Cooldown stack: the Spellblasting potion and Combustion as one action, at five ' +
+      'stacks of Fire Vulnerability with ten seconds left on them. Both are off the ' +
+      'global cooldown, so a player presses them together -- written as a sequence so ' +
+      'nothing can land between them if either ever starts taking one again.',
   },
   /*
    * ==========================================================================
@@ -363,7 +551,38 @@ export const MAGE_FIRE: AplList = {
 export const MAGE_FROSTFIRE: AplList = {
   name: 'Mage (Frostfire)',
   entries: [
-  { abilityId: 'mage_armor', condition: selfExpired('mage_armor') },
+  /*
+   * ==========================================================================
+   * MAGE ARMOR IS NOT IN THIS LIST, BY THE OWNER'S RULING: "Mage Armor doesn't
+   * need to be captured in the main APL section. It's being taken care of in
+   * the pre-combat section."
+   *
+   * THE RULING ARRIVED AS PART OF AN AUDIT OF THE *ARCANE* PROFILE, and the
+   * note on that list recorded the consequence for this one -- "the other two
+   * Mage lists still carry theirs ... recorded here so the next Mage round
+   * starts with it." **This is that round.**
+   *
+   * The entry was `mage_armor` gated on `selfExpired('mage_armor')`, and it
+   * could never fire: this opener casts it at a 4 second lead, the buff lasts
+   * THIRTY MINUTES against a one-minute fight, and nothing in the encounter
+   * dispels. So the gate was false from the pull onward and the entry was a
+   * poll that could only ever be skipped.
+   *
+   * `USES=1` REPORTED IT AS 1.0 USES, WHICH IS THE TRAP. That is the
+   * PRE-COMBAT cast counted against the entry, so the one reading that would
+   * have flagged it showed a working line instead -- the caveat
+   * `docs/profile-optimisation.md`'s Appendix B carries about that block.
+   *
+   * REMOVING IT RUNS BIT-IDENTICAL FIGHTS at 60s, which is the containment
+   * check and is the only thing that distinguishes "redundant" from
+   * "load-bearing".
+   *
+   * **THE FIRE LIST STILL CARRIES ITS COPY**, at a 4.5s lead and equally dead.
+   * A list is changed for the profile that was named rather than by analogy, so
+   * that one waits for a Fire round -- and this note is now the place that says
+   * so, the way the Arcane one did for this list.
+   * ==========================================================================
+   */
   /*
    * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
    *
@@ -371,11 +590,59 @@ export const MAGE_FROSTFIRE: AplList = {
    * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
-  ...RACIAL_COOLDOWNS,
+  ...RACIAL_COOLDOWNS.filter((entry) => entry.abilityId !== 'eureka'),
+  /*
+   * ==========================================================================
+   * EUREKA IS HELD FOR A FINGERS OF FROST WINDOW, WORTH **+5.99 +/- 0.95 REAL**
+   * over 400 paired iterations at 60s.
+   *
+   * The Gnome racial is an 8 SECOND WINDOW of +10% NON-PERIODIC damage, and in
+   * the shared block it carries no condition -- so it was spent on whatever the
+   * first poll of the fight happened to be. The Arcane list gates its copy on a
+   * Missile Barrage proc for exactly this reason and measured +1.92 for it; this
+   * build has no Missile Barrage, so the candidates were its own two windows.
+   *
+   * THE BLOCK IS WHY IT HAD NO GATE RATHER THAN AN OVERSIGHT: that constant is
+   * spread into lists belonging to no race, so a condition written there would
+   * be a condition on three abilities this character cannot cast. Gating it is
+   * therefore a change to THIS list, which is what the filter above does.
+   *
+   * ITS POSITION IS UNCHANGED. Eureka is last of the four, so taking it out of
+   * the spread and restating it immediately after leaves every other racial
+   * exactly where it was.
+   *
+   * ------------------------------------------------------------------------
+   * **FINGERS OF FROST BEAT A PYROBLAST WINDOW, AND A LOOSER GATE BEAT
+   * NEITHER.** Four readings, 400 paired iterations each:
+   *
+   *   Fingers of Frost            **+5.99 +/- 0.95**
+   *   three Heating Up stacks       +5.83 +/- 2.67
+   *   two Heating Up stacks         +4.80 +/- 2.59
+   *   EITHER window                 +4.53 +/- 0.77
+   *
+   * The first two are indistinguishable -- 0.16 apart against a combined
+   * interval of 2.83 -- and the looser "either" gate is WORSE than Fingers
+   * alone by 1.46 against a combined 1.22, because a window spent on a
+   * Pyroblast moment is a window not spent on a Shatter moment. Fingers is
+   * taken for the tighter interval and because `shatter` 3/3 makes that window
+   * the build's own best one.
+   *
+   * THE INTERVALS ARE SMALL BECAUSE A GATE ON A FREE OFF-GCD COOLDOWN CANNOT
+   * FLIP A ROLL -- it moves WHEN the window opens and nothing else, which is
+   * why the Arcane copy of this change also measured to two decimal places.
+   *
+   * AND IT SURVIVES THE CLOCK, WHICH IS THE PART THAT MADE IT SHIPPABLE. The
+   * talent change this round measured at +22.14 INVERTED to -11.27 at 180s;
+   * this is +5.99 at 60s, -0.34 +/- 4.19 at 180s and +2.80 +/- 4.17 at 300s --
+   * a real gain at the published length and noise at every other, so it is
+   * never a loss.
+   * ==========================================================================
+   */
+  { abilityId: 'eureka', condition: selfHas('fingers_of_frost') },
   ...CONSUMABLE_COOLDOWNS,
   ...CONSUMABLE_HEALS,
   { abilityId: 'evocation', condition: evocationFor(EVOCATION_FIGHT_SECONDS) },
-  { abilityId: 'scorch', condition: scorchNeeded },
+  { abilityId: 'scorch', condition: scorchNeededWithin(FROSTFIRE_SCORCH_REFRESH_SECONDS) },
   { abilityId: 'pyroblast', condition: selfStacksExactly('heating_up', HEATING_UP_MAX_STACKS) },
   /*
    * ==========================================================================

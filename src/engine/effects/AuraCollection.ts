@@ -433,6 +433,44 @@ export class AuraCollection {
   }
 
   /**
+   * AGE AN AURA'S WINDOW BACKWARDS, which the pre-combat rewind needs and which
+   * only this class can do correctly.
+   *
+   * ==========================================================================
+   * `runPrecombat` resolves every action at timestamp zero and then ages
+   * whatever each one applied by the lead, because `SimulationClock` only moves
+   * forward. It used to do that by writing `appliedAt` and `expiresAt`
+   * directly, **and the expiration event stayed scheduled against the OLD
+   * `expiresAt`** -- so the aura outlived its own window by the lead, with
+   * `remainingMs` reading zero while `has` still answered true.
+   *
+   * THAT DISAGREEMENT IS WHAT BROKE A PRE-CAST DAMAGE-OVER-TIME EFFECT, and it
+   * cost the Enhancement Shaman's Searing Totem **a whole application's worth
+   * of ticks** -- 41.15 ticks against 76.36 over a 120 second fight, at an
+   * IDENTICAL 97% uptime and the same number of casts. A tick chains itself and
+   * stops when the next tick would fall past `expiresAt`, and `refresh`
+   * extends the window without restarting a chain that has already stopped --
+   * so a list whose entry is "recast when it has run out" fired inside the
+   * stale window, REFRESHED the still-present aura, and got a silent window.
+   *
+   * SO THE AURA WAS UP, REPORTED ITS UPTIME, AND DEALT NOTHING, which is the
+   * inert-buff-with-visible-uptime shape this project has now hit three times.
+   * The DPS said -15.1 at 240s and only the TICK COUNT said why.
+   * ==========================================================================
+   */
+  rewindWindow(
+    context: SimulationContext,
+    instance: AuraInstance,
+    byMs: Milliseconds,
+  ): void {
+    if (instance.isPermanent) return;
+    instance.appliedAt -= byMs;
+    instance.expiresAt -= byMs;
+    context.events.cancel(instance.expirationHandle);
+    this.scheduleExpiration(context, instance);
+  }
+
+  /**
    * Remove only the auras that a death takes with it.
    *
    * For a combatant who dies and is stood back up: everything else carries on,

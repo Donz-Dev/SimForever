@@ -118,6 +118,24 @@ const OWNER_ABILITIES: Readonly<Record<string, ReadonlySet<string>>> = {
   pet: new Set(PET_ABILITIES.map((a) => a.id)),
 };
 
+/*
+ * ==============================================================================
+ * THIS FILE READS THE SOURCE TREE, SO ITS SCANNING TESTS CARRY THEIR OWN LIMIT.
+ *
+ * A test that walks `src` and reads every `.ts` file is the one kind that gets
+ * SLOWER the more tests run beside it: vitest transforms 167 test files in
+ * parallel and they compete for the same disk. CLAUDE.md's "Testing" section
+ * records SIX instances of the resulting timeout across three files, and two
+ * surfaced in consecutive full-suite runs while this round was being closed --
+ * each in a different file, each passing standalone with a 15x margin.
+ *
+ * SO THE LIMIT IS PER-TEST AND `vite.config.ts` STILL SETS NO `testTimeout`.
+ * Widening the global default would hide the next test that genuinely gets
+ * slower, which is the thing a timeout is actually good at catching.
+ * ==============================================================================
+ */
+const READS_THE_SOURCE_TREE_MS = 30_000;
+
 describe('every priority list names real abilities', () => {
   for (const list of ALL_PRIORITY_LISTS) {
     const known = OWNER_ABILITIES[list.owner];
@@ -290,5 +308,5 @@ describe('the registry covers every list that exists', () => {
     const registered = ALL_PRIORITY_LISTS.map((list) => list.name).sort();
     expect(exported.length).toBeGreaterThan(20);
     expect(registered).toEqual([...exported].sort());
-  });
+  }, READS_THE_SOURCE_TREE_MS);
 });

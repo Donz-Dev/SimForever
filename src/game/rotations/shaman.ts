@@ -321,19 +321,6 @@ export const SHAMAN_ENHANCEMENT: AplList = {
   ...RACIAL_COOLDOWNS,
   ...CONSUMABLE_COOLDOWNS,
   ...CONSUMABLE_HEALS,
-  /*
-   * LIGHTNING BOLT AT FIVE MAELSTROM STACKS, AND ONLY THERE.
-   *
-   * This entry was missing, which made the Enhancement capstone worth exactly
-   * nothing: Maelstrom Weapon shortens the next Lightning Bolt and the list
-   * never cast one. The talent stacked to five and sat there.
-   *
-   * At five stacks the bolt is INSTANT and free -- 20% a stack, five stacks --
-   * so it costs a global cooldown and no swing time. Below five it is a
-   * 2.5-second cast on a character whose damage is its swings, which is why
-   * the threshold is the cap rather than anything lower.
-   */
-  { abilityId: 'lightning_bolt', condition: atStacks('maelstrom_weapon', MAELSTROM_WEAPON_MAX_STACKS) },
   { abilityId: 'stormstrike' },
   { abilityId: 'flame_shock', condition: expired('flame_shock') },
   /*
@@ -352,6 +339,52 @@ export const SHAMAN_ENHANCEMENT: AplList = {
    * the burn as well as the hit.
    */
   { abilityId: 'earth_shock', condition: targetAuraAtLeast('flame_shock', 3) },
+  /*
+   * ==========================================================================
+   * LIGHTNING BOLT AT FIVE MAELSTROM STACKS, AND ONLY THERE.
+   *
+   * This entry was missing once, which made the Enhancement capstone worth
+   * exactly nothing: Maelstrom Weapon shortens the next Lightning Bolt and the
+   * list never cast one. The talent stacked to five and sat there.
+   *
+   * At five stacks the bolt is INSTANT and free -- 20% a stack, five stacks --
+   * so it costs a global cooldown and no swing time. Below five it is a real
+   * cast on a character whose damage is 60.7% its swings, and **a cast with a
+   * cast time RESETS THE SWING TIMER where an instant does not**: `castAbility`
+   * returns before the reset when `castTime <= 0`. Four stacks measured
+   * **-2.27** and three **-6.24**, so the threshold is the cap rather than
+   * anything lower, and that is a swing-time figure rather than a damage one.
+   *
+   * --------------------------------------------------------------------------
+   * AND IT SITS HERE RATHER THAN AT THE TOP, WHICH IS THIS ROUND'S CHANGE TO
+   * THE OWNER'S ORDERING AND IS WORTH **+3.11 +/- 1.39** paired over 3000
+   * iterations.
+   *
+   * IT CONTENDS WITH EARTH SHOCK FOR THE STORMSTRIKE DEBUFF. Stormstrike leaves
+   * "+20% to your next Lightning Bolt, Chain Lightning or Earth Shock", and the
+   * aura is consumed by whichever of the three casts first rather than by the
+   * clock -- so at the top of the list the bolt took that charge the instant
+   * Maelstrom reached five stacks. The shock is the harder hit of the two, 590
+   * against 553, and it is also on a cooldown the bolt is not.
+   *
+   * THE POSITION WAS SWEPT RATHER THAN MOVED ONCE, and the shape of the sweep is
+   * what says the mechanism is the debuff and not merely the global cooldown:
+   *
+   *     below stormstrike     +1.65 +/- 0.98      (Stormstrike applies it)
+   *     below flame_shock     +1.82 +/- 1.14  \
+   *     below searing_totem   +1.71 +/- 1.14   >  a PLATEAU -- all three are
+   *     below the racial      +1.71 +/- 1.14  /   rarely castable, so passing
+   *                                               them changes nothing
+   *     below earth_shock     +3.11 +/- 1.39      (the shock takes it instead)
+   *     the very bottom       +3.40 +/- 1.84      inside the row above's
+   *                                               interval; not distinguishable
+   *
+   * ABOVE FIRE NOVA AND NOT BELOW IT, because the last step is worth +0.29
+   * against a combined interval of 2.31 -- so the two are the same figure and
+   * the bolt keeps its place above the most expensive ability in the list.
+   * ==========================================================================
+   */
+  { abilityId: 'lightning_bolt', condition: atStacks('maelstrom_weapon', MAELSTROM_WEAPON_MAX_STACKS) },
   /*
    * FIRE NOVA AT THE BOTTOM, which is where the ruleset owner put it when asked
    * on 2026-09-30 -- the list was theirs and had seven entries, and this is the

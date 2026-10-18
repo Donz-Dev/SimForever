@@ -73,6 +73,24 @@ const ROW =
  */
 const SUFFIXES = ['', ' Druid', ' Mage', ' Rogue', ' Hunter', ' Priest', ' Shaman'];
 
+/*
+ * ==============================================================================
+ * THIS FILE READS THE SOURCE TREE, SO ITS SCANNING TESTS CARRY THEIR OWN LIMIT.
+ *
+ * A test that walks `src` and reads every `.ts` file is the one kind that gets
+ * SLOWER the more tests run beside it: vitest transforms 167 test files in
+ * parallel and they compete for the same disk. CLAUDE.md's "Testing" section
+ * records SIX instances of the resulting timeout across three files, and two
+ * surfaced in consecutive full-suite runs while this round was being closed --
+ * each in a different file, each passing standalone with a 15x margin.
+ *
+ * SO THE LIMIT IS PER-TEST AND `vite.config.ts` STILL SETS NO `testTimeout`.
+ * Widening the global default would hide the next test that genuinely gets
+ * slower, which is the thing a timeout is actually good at catching.
+ * ==============================================================================
+ */
+const READS_THE_SOURCE_TREE_MS = 30_000;
+
 describe('every talent spread stated in a doc matches its preset', () => {
   const real = new Map(PROFILE_PRESETS.map((preset) => [preset.label, spreadOf(preset.id)]));
   const files = ['HANDOVER.md', ...readdirSync('docs/handoff').map((f) => `docs/handoff/${f}`)];
@@ -102,7 +120,7 @@ describe('every talent spread stated in a doc matches its preset', () => {
 
   it('finds no doc stating a spread the preset disagrees with', () => {
     expect(stale).toEqual([]);
-  });
+  }, READS_THE_SOURCE_TREE_MS);
 
   it('actually examined the tables, rather than matching nothing', () => {
     /*
@@ -116,5 +134,5 @@ describe('every talent spread stated in a doc matches its preset', () => {
      * documents, so twenty is a floor with room for a doc to be rewritten.
      */
     expect(checked).toBeGreaterThan(20);
-  });
+  }, READS_THE_SOURCE_TREE_MS);
 });

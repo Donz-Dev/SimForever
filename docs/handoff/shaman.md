@@ -70,6 +70,299 @@ spellbook's figure for the talent's new one.
 ---
 
 
+## The Enhancement optimisation round — **761.9 → 838.8**
+
+Run from `docs/profile-optimisation.md`. **36 variants measured, five shipped,
+and one engine bug** that the round found by refusing to publish a figure it
+could not explain.
+
+| | |
+| --- | --- |
+| the optimisation | 761.9 → **829.4**, `+67.01 ±3.35` paired over 4000 iterations |
+| the engine fix it turned up | 829.4 → **838.8**, and it moves two other profiles |
+
+Every figure below is what REVERTING that change costs **on the finished
+build** — the only reading publishable beside the others, because this round
+moved its own baseline five times.
+
+| dimension | shipped | marginal worth |
+| --- | --- | --- |
+| **consumables** | flask `+1200 Hit Points` → **`+150 Spell Power`** | **+36.95 ±0.08** |
+| **talents** | five dead points → **Reverberation 5/5**, 17/34/0 → 19/32/0 | **+23.32 ±3.12** |
+| **pre-combat** | **Rage of the Farseer at a 0s lead** | **+12.78 ±3.35** |
+| **APL** | **Lightning Bolt below Earth Shock** instead of above Stormstrike | **+3.63 ±1.59** |
+| **consumables** | food `+40 Attack Power` → **`+20 Strength`** | **+0.73 ±0.00** |
+| **gear** | fixed by the brief. E65, verified, nothing to do | — |
+| **enchants** | nothing. Nine of ten slots settled by arithmetic, the tenth measured | — |
+
+**MARGINAL, NEVER ADDENDS**: those five sum to 77.4 against a measured 67.01.
+And they are RE-PRICED on the fixed engine -- as the round ran they measured
++36.00, +25.24, +13.30, +3.90 and +0.73 for an end-to-end +67.19. Both sets are
+honest and only one describes what ships.
+
+### The flask was the largest single thing and nobody had asked
+
+`hybridConsumables` hands all four of its callers `flask_hit_points`, and the
+three Paladins that want otherwise override it per preset — Retribution and both
+Shockadins carry `flask_spell_power`, priced at +59.9 and +73.3 in round 9.
+**The Enhancement Shaman was simply never asked.**
+
+**+1200 Hit Points reaches NOTHING here.** `targetAttacks` is false, so health
+never leaves maximum, and a Shaman has no `D × 10 / H` rage rule for a bigger
+pool to feed. The stat weight predicted the alternative at `150 × 0.2227 = 33.4`
+and it measured **+33.45 ±0.24** on the build as found.
+
+**AND SPELL POWER BEATS ATTACK POWER PER POINT ON A BUILD THAT IS 73.5%
+PHYSICAL**, which reads like a contradiction and is not: attack power sat at
+1,965 and spell power at 124, so a point of the second is a far larger share of
+the smaller thing it reaches. 0.2227 against 0.1798. It is also why the potion
+row does not divide — Spellblasting's +40 Spell Power beats Frenzy's +40 Attack
+Power by 0.88, measured.
+
+### The tree had five dead points and only three live destinations
+
+Establishing that was the first result, and it is one of the smallest design
+spaces in the project.
+
+| out | why it is dead |
+| --- | --- |
+| `elemental_warding` 3 | Fire, Frost and Nature damage **TAKEN**, on a profile nothing attacks |
+| `improved_ghost_wolf` 1 | `scope: 'positioning'` — a travel form |
+| `spirit_weapons` 1 | `scope: 'threat'` — an unquantified parry chance and two threat clauses |
+
+**EVERYTHING LIVE IN THE ENHANCEMENT TREE WAS ALREADY MAXED**, so no destination
+is in it: what is unbought there is `toughness` (stamina), `anticipation`
+(dodge), the two totem talents, `improved_lightning_shield` (not in the book) and
+the second rank of Improved Ghost Wolf. The three live destinations are
+`reverberation`, `tidal_focus` and the fifth rank of `ancestral_knowledge`.
+
+**THE TIER ARITHMETIC BOUNDED IT IN BOTH TREES AT ONCE.** Elemental's seventeen
+sat **exactly** on `trial_by_fire`'s tier-15 gate — 5 + 6 + 4 below it is 15 — so
+Warding's three could not leave the tree without stranding Fire Nova's cooldown
+reduction, but they could move DOWN a row. That is what makes Reverberation
+reachable and Restoration's Tidal Focus not. Enhancement held every gate with
+slack, so at most **three** points could leave it and at most **two** of those
+from rows 0–2; `mental_dexterity` 3 and `mental_quickness` 2 are locked by
+`requiresRanks` on Flurry and on the capstone.
+
+**WHAT REVERBERATION BUYS IS A SHOCK CHARGE.** All three shocks share one
+`cooldownGroup`, so 1.0 second takes it from 6.0s to 5.0s — twelve charges in a
+sixty second fight where there were ten — and the build was already spending 9.1
+of the ten. Flame Shock is duration-bound at 21 seconds, so the extra charges all
+go to Earth Shock: **5.90 casts a fight → 7.60**.
+
+**AND THREE DESTINATIONS MEASURED EXACTLY NOTHING, WHICH IS A STATEMENT ABOUT
+THE TREE:**
+
+| | |
+| --- | --- |
+| `convection` 3 | **IDENTICAL FIGHTS.** 10% off the shocks and the bolt, on a build ending the fight with 1,984 mana of headroom |
+| `elemental_alacrity` 3 | **IDENTICAL FIGHTS.** Cast time on a Lightning Bolt this list only ever casts instant |
+| `improved_stormstrike` 2 → 1 | +0.50 ±3.89, noise. Its live clause is 50% mana regeneration while casting, which is the same nothing Convection buys |
+
+**SO `docs/handoff/shaman.md` WAS WRONG THAT THIS BUILD IS MANA-BOUND**, and the
+Convection cell is the containment check that proves it rather than an argument.
+The decomposition further down this file reads "The build is MANA-BOUND, so four
+changes compete for one pool" — true when raid buffs were not assumed. Judgement
+of Wisdom now returns **1,790 mana a fight**, which is 22% of everything the
+build spends.
+
+### The owner's shock gate is right, and the sweep that said otherwise expired inside the round
+
+Earth Shock is gated on "Flame Shock has at least 3 seconds left", which exists
+because the shocks share a cooldown. It was swept seven ways, three times:
+
+| gate | on the build as found | after the talents | after everything |
+| --- | --- | --- | --- |
+| ungated | **+4.44 ±3.15 REAL** | +1.64 ±2.98 | +0.35 ±0.54 |
+| ≥ 1s | **+4.25 ±3.13 REAL** | +1.82 ±2.96 | +0.25 ±0.43 |
+| ≥ 2s | **+4.28 ±2.92 REAL** | +2.66 ±2.68 | +0.33 ±0.37 |
+| **≥ 3s — the owner's** | — | — | — |
+| ≥ 5s | −0.56 ±0.71 | −6.37 ±1.63 | **−5.26 ±1.28** |
+| ≥ 8s | −8.69 ±2.13 | −13.67 ±2.42 | **−23.50 ±2.88** |
+
+**LOOSENING IT WAS A REAL +4.44 AT THE START OF THE ROUND AND IS WORTH A THIRD
+OF A DPS AT THE END OF IT**, because Reverberation removed the contention the
+gate was mediating: two more shock charges a fight means Earth Shock rarely has
+to take one Flame Shock wanted. **A gate's value is a fact about how scarce the
+thing it rations is.** The owner's 3s sits at the top of a flat plateau and
+tightening it is now sharply worse.
+
+### Lightning Bolt was contending with Earth Shock for the Stormstrike debuff
+
+Stormstrike leaves "+20% to your next Lightning Bolt, Chain Lightning or Earth
+Shock", consumed by whichever casts first rather than by the clock. The bolt was
+the first damage entry in the list, so it took that charge the instant Maelstrom
+reached five stacks — and the shock is the harder hit, 590 against 553.
+
+**THE POSITION WAS SWEPT RATHER THAN MOVED ONCE, and the shape is what names the
+mechanism:**
+
+| position | worth |
+| --- | --- |
+| below `stormstrike` | +1.65 ±0.98 — Stormstrike *applies* the debuff |
+| below `flame_shock` | +1.82 ±1.14 |
+| below `searing_totem` | +1.71 ±1.14 |
+| below the racial | +1.71 ±1.14 |
+| **below `earth_shock`** | **+3.11 ±1.39** — the shock takes the debuff instead |
+| the very bottom | +3.40 ±1.84 — inside the row above's interval |
+
+The three middle rows are a **plateau**, and correctly so: all three entries are
+rarely castable, so passing them changes nothing. The two steps that pay are the
+two that change who gets the aura.
+
+**AND THE BOLT DID NOT LOSE A CAST: 1.80 a fight → 1.90.** Maelstrom caps at five
+stacks, so a bolt held too long would waste the procs that would have been its
+sixth — the same shape as the Cat's Shifting Power. It does not happen here.
+
+**THE MAELSTROM THRESHOLD IS CONFIRMED AT FIVE AND THE REASON IS SWING TIME, NOT
+DAMAGE.** Four stacks measured **−2.27** and three **−6.24**: at five the bolt is
+instant, and `castAbility` returns before the swing reset when `castTime <= 0`.
+Below five it is a real cast that throws away a swing, on a build that is 60.7%
+swings.
+
+### Rage of the Farseer, and a figure that went stale inside its own round
+
+Pre-casting it at a 0s lead measured **−4.79, noise** at the start of the round
+and **+12.71 ±3.00 over 5000 iterations** at the end. Nothing about the ability
+changed.
+
+**IT IS THE GCD, AND THE GCD BECAME WORTH SOMETHING.** `abilities/shaman.ts`
+deliberately leaves the racial ON the global cooldown — the capture says
+"Instant" and says nothing about the GCD, and guessing it off would be free
+uptime nobody granted — so a 0s lead claims the whole 25 second window for
+nothing. At the start of the round the list made about 33 casts in a 60 second
+fight and had cooldowns to spare, so a saved one bought nothing. Reverberation's
+two extra shock charges took the list to about 36 and the spare went.
+
+**WHICH IS `docs/profile-optimisation.md`'s RETRACTION POINTING THE OTHER WAY**:
+"pre-casting is only worth the GCD it saves" cuts both ways, and whether a GCD is
+worth anything is a property of the list rather than of the ability.
+
+### The enchants were settled by arithmetic, and nine slots needed no fight
+
+Off this build's own stat weights — 1500 paired iterations, baseline 765.9:
+
+```
+strength 0.3956   intellect 0.3296   agility 0.2845   spellPower 0.2227
+attackPower 0.1798   1% crit 6.8802   1% haste 2.8835 ±2.3802
+stamina / spirit / armor / defenseSkill / dodgeChance / manaPer5   ZERO
+```
+
+head `+8 Str` 3.16 beats `+8 Int` 2.64; neck `+5 Str` 1.98 beats `+6 SP` 1.34;
+gloves `+15 Str` 5.93 beats `+20 SP` 4.45; chest, cloak and feet each have one
+live option. **The two-hand slot is the one a weight table cannot settle**, and
+Crusader wins it: at 1.1 procs a minute of +100 strength it reads **44.8% aura
+uptime**, and the alternatives measure `+65 Spell Power` −0.10 ±3.86,
+`Enchant Weapon - Spell Power` −8.50, `+25 Agility` −8.97, `Revelation` −11.65.
+
+**THE WRISTS SLOT IS A GENUINE DEAD HEAT AND IS REPORTED RATHER THAN SHIPPED.**
+`+9 Strength` is 3.560 by arithmetic and `+16 Spell Power` is 3.563, and the
+measurement agrees to a tenth of a DPS: **−0.02 → +0.13 → +0.22** as the round
+added spell power. It is real at the end (±0.02) and it is 0.026% of DPS on a
+knife-edge that **flipped sign twice inside one round**, so it is a property of
+the current spell power rather than of the slot. One line for the owner if they
+want it.
+
+### What every other dimension said, including the rows that did not move
+
+**THE APL's EIGHT ENTRIES ARE ALL LOAD-BEARING** — removing each, on the build as
+found: `stormstrike` **−142.4**, `fire_nova` **−70.8**, `flame_shock` −56.1,
+`earth_shock` −49.5, `rage_of_the_farseer` −38.0, `lightning_bolt` −10.7,
+`searing_totem` −3.9 (it is pre-cast, so its entry only refreshes), and Fire
+Nova's position is noise. **Earth Shock additionally requiring the Stormstrike
+debuff is −15.60**: it blocks the shock far more often than it improves it.
+
+**THE CONSUMABLES: every alternative loses.** `food +28 Spell Power` −1.46,
+`blasted lands +25 Intellect` −1.80, `food +20 Agility` −2.41, `school power
+Nature` −3.16, `blasted lands +25 Agility` −3.18, the Dense Sharpening Stone
+−5.13. The main-hand weapon effect's caster option is −0.63, noise, so the melee
+crit stays.
+
+**THE OWNER'S OPENER: all three lines priced, nothing changed.** Removing
+`windfury_weapon` is −2.93 and `flame_shock` +1.50, both noise. Moving the
+Windfury lead 3s → 0s runs **IDENTICAL FIGHTS**, because an hour-long imbue does
+not care.
+
+**AND `searing_totem` MEASURED +3.09 ±3.02 TO REMOVE, WHICH WAS PRICING AN
+ENGINE BUG AND NOT A CHOICE** — +14.60 at a 240 second fight. See the section
+below: the pre-combat rewind was costing that totem a whole application of
+ticks, and with it fixed the owner's line is a gain to keep. **A figure on one
+of their lines that is large enough to want a mechanism is one to explain before
+reporting**, which is "isolate a loss, do not blame the obvious suspect" applied
+to a gain.
+
+**AND THE DEMONIC RUNE FIRES 0.00 TIMES, WHICH IS THE OWNER'S PARTITION AND NOT
+A DEFECT.** It is gated at 10% mana and this build ends with 1,984 spare.
+Substituting a Healthstone measures **−0.00 with a spread of 0.1** — both are
+worth nothing — so the row stays where the owner's three-way rule puts it: "the
+Demonic Rune at 10% mana for pure mana users."
+
+### The engine bug the round found, and what made it visible
+
+**A PRE-CAST AURA OUTLIVED ITS OWN WINDOW BY THE LEAD**, and the thing it cost
+was a damage-over-time effect at an **identical uptime**:
+
+| 240s fight | casts | uptime | **ticks** | damage |
+| --- | --- | --- | --- | --- |
+| with the owner's 1.5s pre-cast | 4.97 | **97.6%** | **117.08** | 11,872 |
+| no pre-cast, cast in-fight | 4.92 | **97.0%** | **152.02** | 15,377 |
+
+`rewindAuras` aged the window by writing `appliedAt` and `expiresAt` and left
+the **expiration event scheduled against the old time**, so for 1.5 seconds
+`remainingMs` read zero while `has` answered true. A periodic tick chains itself
+and stops when the next would fall past `expiresAt`; `refresh` extends the
+window **without restarting a chain that has already stopped**. So the list's
+"recast when it has run out" fired inside the stale window, REFRESHED the
+still-present aura rather than applying a new one, and got a window that ticked
+**zero times** — one window lost, which is why the deficit is a constant ~36
+ticks from 120s onward.
+
+`AuraCollection.rewindWindow` is the fix: age the window through the class that
+owns the scheduling. Ticks per fight:
+
+| fight | buggy | **fixed** | in-fight control |
+| --- | --- | --- | --- |
+| 60s | 35.04 | **38.48** | 37.76 |
+| 120s | **41.15** | **76.67** | 76.36 |
+| 240s | **117.30** | **152.43** | 152.07 |
+
+**THE GENERAL CASE IS STILL LATENT AND IS OUTSTANDING WORK.** A refresh on any
+aura whose tick chain has already stopped gets a silent window, whatever stopped
+it; the rewind was simply the only route that reached it reliably. The comment at
+the chain asserts the behaviour that is missing — "a refresh that extends the
+duration automatically gets more ticks" — which is true while the chain is alive
+and false once it is not.
+
+**AND IT IS WORTH +9.4 HERE AND +0.1 ON THE ELEMENTAL SHAMAN**, which carries
+the identical opener line at the identical lead. Both lists hold the totem with
+"if not active"; this one places it fourth among its damage entries and the
+Elemental list first, and the totem is 7.2% of this profile against 18% of that
+one. **Reported rather than explained** — isolating it is outside the named
+scope and a guessed mechanism written down as a finding is what this file keeps
+recording.
+
+### What this round could not see
+
+The four blind spots `docs/profile-optimisation.md` names were read by hand:
+
+- **the clock.** Every figure is at `durationSeconds: 60`. The build's longest
+  cooldown is the racial's 180s, so a longer fight reaches that entry a second
+  time and the pre-cast's +13.30 is an opening-only gain that does not repeat.
+  **Not measured at a longer duration** — the open `HANDOVER.md` question about
+  fight length covers it.
+- **the declarations.** `src/game/abilities/shaman.ts` contains no
+  `triggersGcd` at all, and both of its cooldown-shaped abilities say in their
+  own comments that paying a GCD is the DEFAULT rather than a decision. Left
+  alone deliberately: see the question raised below.
+- **the pre-combat/APL overlap.** Nothing is redundant. The Searing Totem entry
+  refreshes a 55s aura once and the racial entry is a safety net for a fight
+  longer than 180s.
+- **the shape.** No two entries fire as a group, so there is no accidental
+  sequence to write as a real one.
+
+---
+
 ## The one thing to understand first
 
 **THE DEEP DIVE IS DONE, AND WHAT IT FOUND WAS NOT A MISSING ENGINE.** The
@@ -96,8 +389,14 @@ were in a build; one is left, and it works.
 
 | Profile | Talents | DPS | was | List | Entries |
 | --- | --- | --- | --- | --- | --- |
-| Enh Shaman | 17/34/0 | **625.8** ±8.0 | 604.0 | `SHAMAN_ENHANCEMENT` | 8 |
+| Enh Shaman | 19/32/0 | **625.8** ±8.0 | 604.0 | `SHAMAN_ENHANCEMENT` | 8 |
 | Ele Shaman | 32/10/9 | **375.0** ±3.8 | 295.4 | `SHAMAN_ELEMENTAL` | 4 |
+
+**THE DPS COLUMN ABOVE IS THE DEEP DIVE'S AND IS LONG DEAD** -- raid buffs were
+selected rather than assumed after it, which moved all 28 rows. The baseline of
+record is `HANDOVER.md`'s table, where these two read **829.4** and **792.7**.
+The SPREADS are current: Enhancement went 17/34/0 to 19/32/0 in the
+optimisation round below.
 
 **ELE SHAMAN +79.6, REAL. ENH SHAMAN +10.9, AND THAT ONE IS A LIE BY NET.** The
 Enhancement figure is inside its interval and hides four separate real changes
