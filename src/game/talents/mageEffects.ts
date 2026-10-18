@@ -101,11 +101,15 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   improved_channeling: [{ kind: 'unmodelled', scope: 'castPushback', reason: NO_PUSHBACK }],
 
   arcane_subtlety: [
-    {
-      kind: 'unmodelled',
-      scope: 'threat',
-      reason: `Target spell resistance, which has no effect here by ruling, and ${NO_THREAT}`,
-    },
+    /*
+     * "Reduces your target's resistance to all your spells by {0}" IS SPELL
+     * PIERCING, live since round 46. It sat under the `threat` scope with a
+     * reason covering both clauses, which kept it out of the census entirely --
+     * the compound-reason failure CLAUDE.md records. The threat clause keeps
+     * its ruling; the piercing is its own effect.
+     */
+    { kind: 'stat', stat: 'spellPiercing', operation: 'flat', valueIndex: 0 },
+    { kind: 'unmodelled', scope: 'threat', reason: NO_THREAT },
   ],
 
   magic_absorption: [

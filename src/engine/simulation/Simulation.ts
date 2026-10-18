@@ -325,6 +325,10 @@ export class Simulation implements SimulationContext {
     });
   }
 
+  spellResistanceConstant(casterLevel: number): number | undefined {
+    return this.config.spellResistanceConstant?.(casterLevel);
+  }
+
   attackChances(
     kind: AttackTableKind,
     source: Combatant,

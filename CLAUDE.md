@@ -5381,9 +5381,23 @@ own; the GUI pass removed all four. The data is untouched and `class_audit.ts`
 still derives the whole census from it — what went is one READER. Keep filling
 the `unmodelled` lists exactly as before.
 
-**Resistance on an enemy target has no effect on damage**, by the owner's ruling.
-So a spell lands for full against a raid boss, and `resistancesFromItems` being
-computed and never read is CORRECT rather than a gap.
+**RESISTANCE WAS RULED TO DO NOTHING, AND THAT RULING IS RETIRED (round 46).**
+Forever's partial-resist rule is modelled now from the owner's adoption of
+wowsims/forever#76: 10% steps rolled around `a = |R| / (|R| + K)`, `K = 9 x
+caster level` (a FIT, 540 at 60), a tenth of R on a DoT tick except Insect
+Swarm, damage shields never resisted, and **a raid boss resists nothing in any
+school** by the owner's ruling. So it is live and does nothing on its own --
+what it carries is **Spell Piercing**: `spellPiercing`, read off "+N Spell
+Penetration" on 25 items and off Arcane Subtlety, which past zero resistance is
+BONUS damage on the same roll. **Curse of the Elements' -75 is FLOORED at
+zero** and never is -- the floor is the target's, and piercing comes off after
+it. **No random number is drawn when the resistance is zero**, which is what
+keeps every fight with no piercing bit-identical to before.
+**THE RULING HID A TALENT, WHICH IS THE COMPOUND-REASON FAILURE AGAIN.** Arcane
+Subtlety's resistance clause sat under the `threat` scope with one reason
+covering both halves, so the census counted it as answered. `resistancesFromItems`
+is the WEARER's resistance and still correctly unread: nothing casts at a
+profile.
 
 **Borrowing a Classic value is allowed, and only when it stays visible.** Where
 Forever has not supplied a number, prefer a Classic one over leaving a system

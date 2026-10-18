@@ -329,8 +329,10 @@ export const FROSTBOLT: Ability = {
  * covers it, while Piercing Ice does not name it at all.
  *
  * The resist clause -- "checked against the lower of the target's Frost and
- * Fire resists" -- does nothing, because resistance has no effect on an enemy
- * target by the ruleset owner's ruling.
+ * Fire resists" -- is the Fire resistance the pipeline already reads, because
+ * a raid boss has none in either school (round 46) and the lower of two zeros
+ * is the Fire one. A target resistant in one school would need the clause
+ * built; nothing reaches that today.
  */
 export const FROSTFIRE_BOLT_DAMAGE = midpoint(270, 314);
 

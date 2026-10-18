@@ -379,17 +379,36 @@ describe('debuffs on the target', () => {
     expect(hasteMultiplierFrom(target.stats.effective)).toBe(1);
   });
 
-  it('raise magic damage taken by 8% and leave physical alone', () => {
+  it('raise magic damage taken by 10% and leave physical alone', () => {
     /*
      * Curse of the Elements. It changes NOTHING a warrior does -- every
      * Warrior ability is physical, Shield Slam included -- so this is the only
      * place it can be seen at all, and the panel says so beside the switch.
      */
     const { target } = opened(['curse_of_the_elements']);
-    expect(target.damageTakenMultiplierFor('fire')).toBeCloseTo(1.08, 10);
-    expect(target.damageTakenMultiplierFor('shadow')).toBeCloseTo(1.08, 10);
-    expect(target.damageTakenMultiplierFor('arcane')).toBeCloseTo(1.08, 10);
+    // Forever's own page: "increasing Magic damage taken by 10%" (round 46).
+    expect(target.damageTakenMultiplierFor('fire')).toBeCloseTo(1.1, 10);
+    expect(target.damageTakenMultiplierFor('shadow')).toBeCloseTo(1.1, 10);
+    expect(target.damageTakenMultiplierFor('arcane')).toBeCloseTo(1.1, 10);
+    expect(target.damageTakenMultiplierFor('holy')).toBeCloseTo(1.1, 10);
     expect(target.damageTakenMultiplierFor('physical')).toBe(1);
+  });
+
+  it('take 75 off every magic resistance, FLOORED AT ZERO', () => {
+    // A boss resists nothing, so the -75 cannot become bonus damage.
+    const { target } = opened(['curse_of_the_elements']);
+    for (const school of ['arcane', 'fire', 'frost', 'holy', 'nature', 'shadow'] as const) {
+      expect(target.resistanceFor(school)).toBe(0);
+    }
+    const aura = target.auras.active.find((a) => a.definition.id === 'curse_of_the_elements');
+    expect(aura?.definition.resistanceBySchool).toEqual({
+      arcane: -75,
+      fire: -75,
+      frost: -75,
+      holy: -75,
+      nature: -75,
+      shadow: -75,
+    });
   });
 });
 

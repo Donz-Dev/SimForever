@@ -438,6 +438,15 @@ export interface AuraDefinition {
    * fire damage" are different effects on the same target.
    */
   readonly damageTakenBySchool?: Partial<Record<DamageSchool, number>>;
+
+  /**
+   * FLAT RESISTANCE THE CARRIER GAINS OR LOSES, by school -- Curse of the
+   * Elements' "-75 to every Magic resistance". Summed with the carrier's own
+   * resistance and FLOORED AT ZERO, by the owner's ruling: a curse cancels
+   * resistance a target has and cannot take it below none. Spell Piercing is
+   * the attacker's and is applied after the floor; see `Combatant.resistanceFor`.
+   */
+  readonly resistanceBySchool?: Partial<Record<DamageSchool, number>>;
   /**
    * The same again, but reaching PERIODIC damage only.
    *

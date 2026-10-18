@@ -58,6 +58,9 @@ export interface SimulationContext {
    */
   readonly plannedDurationMs: Milliseconds;
 
+  /** K for a caster of this level, or undefined when the fight models no resistance. */
+  spellResistanceConstant(casterLevel: number): number | undefined;
+
   combatant(id: string): Combatant | undefined;
 
   /** Living combatants on the opposing faction. */

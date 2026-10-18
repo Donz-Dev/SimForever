@@ -161,6 +161,47 @@ Rupture Rogue's pre-combat `stealth` line as `<-- NEVER HAPPENED`. It does on
 does not read that table the way the APL panel and the opener guard do. A
 reporting gap, not a rotation one.
 
+## Round 46: spell resistance, Spell Piercing, and Curse of the Elements at 10% and -75
+
+**THE OWNER ADOPTED THE PARTIAL-RESIST RULE FROM wowsims/forever#76**, and four
+rulings came with it: a raid boss resists **nothing in any school**; Curse of
+the Elements' -75 is **floored at zero**; `K = 9 x caster level`, **540 at
+60**; and "Magic" means **all six schools, Holy included**.
+
+| | what | where |
+| --- | --- | --- |
+| the roll | 10% steps around `a = abs(R) / (abs(R) + K)`, the issue's two-regime distribution; never 25/50/75 | `engine/combat/spellResistance.ts` |
+| K | `9 x level`, injected the way `attackChances` is; absent means resistance is OFF | `game/combat/spellResistance.ts` |
+| the target | `Combatant.resistanceFor`: its own plus every aura's `resistanceBySchool`, floored at zero | engine |
+| Spell Piercing | a new stat, subtracted AFTER the floor, so past zero it is bonus damage on the same roll | `spellPiercing` |
+| ticks | a tenth of R, except Insect Swarm, whose ticks take the full share (25.6% against 25.0%) | `fullResistanceTicks` |
+| damage shields | Thorns and Retribution Aura are never partially resisted | `noPartialResist` |
+
+**CURSE OF THE ELEMENTS WAS WRONG ON BOTH HALVES.** It was 8% with no
+resistance clause; Forever's own page (spell 1311680) reads "reducing Magic
+resistances by 75 and increasing Magic damage taken by 10%". The -75 does
+nothing against a boss with none, which is the floor working.
+
+**SPELL PIERCING COMES FROM TWO PLACES AND BOTH WERE UNREAD.** "+N Spell
+Penetration" sits on **25 items** and matched no item rule; and **Arcane
+Subtlety's** resistance clause was filed under the `threat` scope with one
+reason covering both halves, so the census counted it as answered -- the
+compound-reason failure CLAUDE.md records. The Arcane Mage takes 2/2, **15
+piercing**.
+
+**NO RANDOM NUMBER IS DRAWN AT ZERO RESISTANCE**, so a build dealing no magic
+damage runs the identical fight: **2H Arms, DW Fury and the Cat are 0.0 to the
+decimal**, which is the containment check.
+
+**MEASURED, 300 FIGHTS, 31 PROFILES: mean 865.0 -> 873.5, 28 up, 3 at 0.0, none
+down.** The casters move by the 1.08 -> 1.10 alone -- Moonkin +15.3, Ele
+Shaman +13.6, Fire +21.0, Frostfire +22.4, Shadow +16.8, the four Warlocks
++14.1 to +20.4. **The Arcane Mage is +34.0**, the largest, because its 15
+piercing adds about 2.7% on every Arcane hit on top. The melee rows move a few
+DPS through poisons, magic procs and seals.
+
+Three questions, in the table below.
+
 ## Round 45: Sbolt Spam, a 31st profile -- and Fire Demo's gear ids put back
 
 **THE OWNER'S PROFILE, AS SPECIFIED**: `warlock_sbolt`, "Sbolt Spam", Orc, the
@@ -657,8 +698,11 @@ write-up; none is an engine gap.
 | **Pure Hemo pools energy for its Vanish -> Garrote sequence, and its Rupture and Preparation wait on VANISH**, both ours. Without the pool the sequence fired **0.6** times a fight (Hemorrhage took the energy first); with it, **2.0**. And Premeditation is only ever a sequence step now, so the old "Premeditation on cooldown" gate left Rupture at **0.0** casts | round 37 | three gates on the list, one line each to revert |
 | **The Enh Shaman holds the Seal Twist Ret's two-hander**, as you asked, and that mace's `Classes:` line is rewritten to "Paladin, Shaman" for the borrower -- otherwise the proficiency filter refuses a weapon you specified | round 37 | which classes a template weapon is offered to |
 | **The Hunter cooldown stacks have no standalone Bestial Wrath, Rapid Fire or racial entries any more**, so all of them fire only when every step of the stack is ready together -- once in a 60s fight. In a longer one the stack waits for the slowest cooldown in it | round 37 | casts per fight past three minutes |
+| **K = 9 x caster level is a FIT, not a stated rule** -- the one form in #76 that fits all four logged caster levels (20 to 30); nobody has logged a level-60 caster, and the issue's candidates give 478 to 823 at 60 | round 46 | the Arcane Mage's piercing gain, and every resisted hit the day a target has resistance |
+| **Spell Piercing past zero resistance is BONUS damage**, our reading of the issue's negative resisted values -- you ruled the floor for Curse of the Elements and not for piercing | round 46 | worth about 2.7% of every Arcane hit to the Arcane Mage; floored, it would be worth nothing against a boss |
+| **Only Insect Swarm's ticks take the full resistance**; every other DoT takes a tenth, and channels take the full share by construction. The logs name no other exception | round 46 | nothing today -- the boss resists nothing and only the Arcane Mage pierces |
 
-**FORTY ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five, round 38 added four, round 39 added five, the owner answered the Imp's Firebolt pause the same day, round 40 added three, round 41 closed two of them by changing Life Tap, round 42 added two, and round 44 closed the Decimation one -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**FORTY-THREE ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five, round 38 added four, round 39 added five, the owner answered the Imp's Firebolt pause the same day, round 40 added three, round 41 closed two of them by changing Life Tap, round 42 added two, round 44 closed the Decimation one, and round 46 added three -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
