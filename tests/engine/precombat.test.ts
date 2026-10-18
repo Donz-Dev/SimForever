@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { SEARING_TOTEM_TICK_INTERVAL_MS } from '../../src/game/auras/shaman';
 import { Simulation, seconds, toSeconds } from '../../src/engine';
 import type { TelemetryEvent } from '../../src/engine';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
@@ -512,7 +513,14 @@ describe('ageing the window reschedules the expiration, which it did not', () =>
     ]);
     const inFight = ticksOf([{ abilityId: 'windfury_weapon', secondsBefore: 3 }]);
 
-    expect(inFight, 'the control delivered a fight of ticks').toBeGreaterThan(50);
+    /*
+     * DERIVED FROM THE CADENCE rather than written as a count: it read "more
+     * than 50" while the totem ticked every 1.5s, and the owner's 2.43s leaves
+     * room for about 49 in 120 seconds. Most of a fight's worth is what makes
+     * the control a control.
+     */
+    const roomFor = seconds(120) / SEARING_TOTEM_TICK_INTERVAL_MS;
+    expect(inFight, 'the control delivered a fight of ticks').toBeGreaterThan(0.8 * roomFor);
     expect(precast, 'the pre-cast is not a window short').toBeGreaterThanOrEqual(inFight);
   });
 });
