@@ -263,13 +263,24 @@ describe('the preset catalogue', () => {
     // FOUR SINCE FURY PROT, which copies Prot Warr's raid as well.
     const TANKS = new Set(['prot_warr', 'fury_prot', 'prot_pally', 'druid_bear']);
     const TANK_EXTRAS = ['retribution_aura', 'thorns'];
+    /*
+     * AND THE TANKS DROP SALVATION, round 47: it is on exactly when the target
+     * does not attack back, and a tank's does. So a tank's list is the shared
+     * one plus two and minus one, and Salvation follows `targetAttacks` on
+     * every preset.
+     */
+    const TANK_DROPS = ['salvation'];
     const lists = PROFILE_PRESETS.map((preset) => [preset.id, preset.build().raidBuffs] as const);
     const first = lists.find(([id]) => !TANKS.has(id))![1];
     expect(first.length).toBeGreaterThan(0);
+    for (const preset of PROFILE_PRESETS) {
+      const built = preset.build();
+      expect(built.raidBuffs.includes('salvation'), preset.id).toBe(!built.encounter.targetAttacks);
+    }
     for (const [id, buffs] of lists) {
       if (TANKS.has(id)) {
         expect(buffs.filter((b) => !first.includes(b)).sort(), id).toEqual(TANK_EXTRAS);
-        expect(first.filter((b) => !buffs.includes(b)), id).toEqual([]);
+        expect(first.filter((b) => !buffs.includes(b)), id).toEqual(TANK_DROPS);
       } else {
         expect(buffs, id).toEqual(first);
       }

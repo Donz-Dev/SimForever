@@ -1,4 +1,5 @@
 import type { Ability } from '../abilities/Ability';
+import { ThreatTracker } from '../combat/threat';
 import { sampleStats } from '../logging/statSample';
 import type { CastCheck, CastCheckOptions } from '../abilities/casting';
 import { castAbility, checkCast } from '../abilities/casting';
@@ -92,6 +93,7 @@ export class Simulation implements SimulationContext {
 
   readonly plannedDurationMs: Milliseconds;
   private readonly chanceProvider: AttackChanceProvider;
+  private readonly threatTracker: ThreatTracker | null;
   private endReason: CombatEndReason | null = null;
   private eventsProcessed = 0;
   private started = false;
@@ -105,13 +107,30 @@ export class Simulation implements SimulationContext {
     this.config = config;
     this.rng = new SeededRNG(config.seed);
 
+    let sink: TelemetrySink;
     if (telemetry) {
-      this.telemetry = telemetry;
+      sink = telemetry;
       this.recorder = telemetry instanceof TelemetryRecorder ? telemetry : null;
     } else {
       this.recorder = new TelemetryRecorder();
-      this.telemetry = this.recorder;
+      sink = this.recorder;
     }
+    /*
+     * THREAT RIDES ON THE STREAM. The tracker passes every event through and
+     * adds a `threat` event after any that carries threat; with no rules it is
+     * not installed at all, so a fight that tracks no threat emits exactly what
+     * it always did.
+     */
+    this.threatTracker = config.threatRules
+      ? new ThreatTracker(
+          sink,
+          config.threatRules,
+          (id) => this.actorsById.get(id),
+          (actor) =>
+            this.actors.filter((other) => other.faction !== actor.faction && other.isAlive),
+        )
+      : null;
+    this.telemetry = this.threatTracker ?? sink;
 
     // Duration variance is rolled before anything else, so that for a given
     // seed the fight length is fixed regardless of what happens during it.
@@ -323,6 +342,16 @@ export class Simulation implements SimulationContext {
       source: source?.id,
       sourceName: source?.name,
     });
+  }
+
+  generateThreat(
+    source: Combatant,
+    target: Combatant,
+    amount: number,
+    abilityId: string | undefined,
+    abilityName: string,
+  ): void {
+    this.threatTracker?.generate(this.clock.now(), source, target, amount, abilityId, abilityName);
   }
 
   spellResistanceConstant(casterLevel: number): number | undefined {

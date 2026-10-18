@@ -1,4 +1,5 @@
 import type { AuraDefinition, CastReaction, Reaction, Stats } from '../../engine';
+import { SALVATION_THREAT_MULTIPLIER } from '../combat/threat';
 import { flat, percentMultiplicative, seconds } from '../../engine';
 import {
   BATTLE_SHOUT,
@@ -273,6 +274,35 @@ const blessingOfKings: RaidBuff = {
     name: 'Blessing of Kings',
     durationMs: HOUR,
     statModifiers: PRIMARIES.map((stat) => percentMultiplicative(stat, 0.1)),
+  },
+};
+
+/**
+ * Blessing of Salvation: "Reduces all threat generated ... by 30%" (round 47).
+ *
+ * ----------------------------------------------------------------------------
+ * ON EXACTLY WHEN THE TARGET DOES NOT SWING BACK, by the owner's instruction:
+ * a DPS profile takes it and a tank never does. The selection follows the
+ * encounter -- `withTargetAttacks` turns it on and off with the switch -- and
+ * the presets carry it the same way, which a test pins.
+ *
+ * ONE FACTOR LIKE EVERY OTHER, so it multiplies a stance, a talent and an
+ * enchant rather than summing with them.
+ * ----------------------------------------------------------------------------
+ */
+export const SALVATION_RAID_BUFF_ID = 'salvation';
+
+const salvation: RaidBuff = {
+  id: SALVATION_RAID_BUFF_ID,
+  name: 'Salvation',
+  detail: '-30% threat from all sources. On when the target does not attack back',
+  source: 'Paladin',
+  appliesTo: 'player',
+  aura: {
+    id: 'salvation',
+    name: 'Salvation',
+    durationMs: HOUR,
+    threatModifiers: [{ multiplier: SALVATION_THREAT_MULTIPLIER }],
   },
 };
 
@@ -826,6 +856,7 @@ export const RAID_BUFFS: readonly RaidBuff[] = [
   blessingOfWisdom,
   blessingOfKings,
   blessingOfMight,
+  salvation,
   devotionAura,
   retributionAura,
   faerieFire,
@@ -860,6 +891,19 @@ export function selectedRaidBuffs(ids: readonly string[]): readonly RaidBuff[] {
 /** Whether two entries are declared mutually exclusive, in either direction. */
 export function areExclusive(a: RaidBuff, b: RaidBuff): boolean {
   return a.exclusiveWith === b.id || b.exclusiveWith === a.id;
+}
+
+/**
+ * The selection with Salvation on exactly when the target does not attack back.
+ *
+ * In catalogue order, like `withRaidBuff`, so flipping the switch twice is the
+ * same file it started as.
+ */
+export function withSalvationFor(ids: readonly string[], targetAttacks: boolean): readonly string[] {
+  const chosen = new Set(ids);
+  if (targetAttacks) chosen.delete(SALVATION_RAID_BUFF_ID);
+  else chosen.add(SALVATION_RAID_BUFF_ID);
+  return RAID_BUFFS.filter((entry) => chosen.has(entry.id)).map((entry) => entry.id);
 }
 
 /**

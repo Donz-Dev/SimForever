@@ -70,7 +70,6 @@ const NOT_ATTACKED =
   'builds use it -- so this is the profile rather than the engine.';
 
 /** Said once; four talents say it. */
-const NO_THREAT = 'Threat, which the engine does not track.';
 
 export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // --- Arcane --------------------------------------------------------------
@@ -105,11 +104,11 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * "Reduces your target's resistance to all your spells by {0}" IS SPELL
      * PIERCING, live since round 46. It sat under the `threat` scope with a
      * reason covering both clauses, which kept it out of the census entirely --
-     * the compound-reason failure CLAUDE.md records. The threat clause keeps
-     * its ruling; the piercing is its own effect.
+     * the compound-reason failure CLAUDE.md records. And its threat clause
+     * is live since round 47, when threat stopped being out of scope.
      */
     { kind: 'stat', stat: 'spellPiercing', operation: 'flat', valueIndex: 0 },
-    { kind: 'unmodelled', scope: 'threat', reason: NO_THREAT },
+    { kind: 'threat', direction: 'decrease', valueIndex: 1, schools: ['arcane'] },
   ],
 
   magic_absorption: [
@@ -255,7 +254,10 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   impact: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'A stun, which is out of scope as every stun is.' }],
 
-  burning_soul: [{ kind: 'unmodelled', scope: 'threat', reason: `${NO_PUSHBACK} ${NO_THREAT}` }],
+  burning_soul: [
+    { kind: 'unmodelled', scope: 'castPushback', reason: NO_PUSHBACK },
+    { kind: 'threat', direction: 'decrease', valueIndex: 1, schools: ['fire'] },
+  ],
 
   improved_flamestrike: [
     {
@@ -424,7 +426,7 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
       abilityIds: ['frostbolt', 'frostfire_bolt', 'ice_lance', 'cone_of_cold'],
       property: 'costFraction',
     },
-    { kind: 'unmodelled', scope: 'threat', reason: `Its mana reduction applies. ${NO_THREAT}` },
+    { kind: 'threat', direction: 'decrease', valueIndex: 1, schools: ['frost'] },
   ],
 
   ice_lance: [{ kind: 'grantAbility', abilityId: 'ice_lance' }],

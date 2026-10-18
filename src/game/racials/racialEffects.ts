@@ -425,8 +425,9 @@ const NIGHT_ELF: RacialDefinition = {
         {
           kind: 'unmodelled',
           text: 'Using this ability in combat discourages enemies from attacking you.',
-          reason: 'Threat, which is not tracked.',
-          scope: 'threat',
+          reason:
+            'A threat drop on use. Threat is tracked since round 47, but no list casts ' +
+            'Shadowmeld in a fight, so there is nothing for it to drop.',
         },
       ],
     },

@@ -1714,8 +1714,13 @@ describe('what is NOT modelled says so, in the owner\'s own words', () => {
      * Endurance was already modelled for its health, Earth Fury replaced a
      * modelled Mace Specialization, and nothing became a live gap.
      */
-    expect(ruledOut).toBe(22);
-    expect(liveGaps).toBe(11);
+    /*
+     * 21 AND 12 SINCE ROUND 47: Shadowmeld's threat drop was ruled out with
+     * `threat`, and that member is repealed -- threat is tracked now -- so it
+     * is a live gap whose reason is that no list casts Shadowmeld in a fight.
+     */
+    expect(ruledOut).toBe(21);
+    expect(liveGaps).toBe(12);
   });
 
   it('names only real OutOfScope members, so a typo cannot invent a ruling', () => {
@@ -1729,7 +1734,6 @@ describe('what is NOT modelled says so, in the owner\'s own words', () => {
     const members = new Set([
       'positioning',
       'crowdControl',
-      'threat',
       'healing',
       'stealth',
       'castPushback',

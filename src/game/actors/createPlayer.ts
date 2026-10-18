@@ -10,6 +10,7 @@ import type {
   WeaponProfile,
   WeaponSlot,
 } from '../../engine';
+import { classThreatModifiers } from '../combat/threat';
 import {
   AttackTableModifiers,
   Combatant,
@@ -62,6 +63,7 @@ import { talentsForClass } from '../talents/talentData';
 import {
   armorFromItems,
   attackTableModifiersForStyle,
+  threatModifiersForStyle,
   liveEquipment,
   schoolPowerForStyle,
   statsForStyle,
@@ -821,6 +823,16 @@ export function createPlayer(options: PlayerOptions): Combatant {
     kind: 'player',
     faction: 'friendly',
     level: MAX_CHARACTER_LEVEL,
+    /*
+     * THREAT FACTORS HELD FOR THE WHOLE FIGHT -- the class and form, the
+     * talents, the enchants. A stance's, Righteous Fury's and Salvation's ride
+     * on their auras. Each one multiplies (round 47).
+     */
+    threatModifiers: [
+      ...classThreatModifiers(characterClass, style),
+      ...build.threatModifiers,
+      ...threatModifiersForStyle(equipment, style),
+    ],
     maxHealth: maximumHealth,
     stats: startingStats,
     /*

@@ -529,14 +529,23 @@ together told someone their build was missing features that were never coming.
 | `scope` | Covers | Entries |
 | --- | --- | --- |
 | `positioning` | positions, range, facing, movement, "nearby", radius, travel forms | 23 |
-| `crowdControl` | stuns, fears, roots, snares, silences, incapacitates, disorients, disarms, **and removing any of them** | 37 |
-| `threat` | threat, which is not tracked. Defensive Stance's +30% and Defiance are dropped, not deferred | 11 |
+| `crowdControl` | stuns, fears, roots, snares, silences, incapacitates, disorients, disarms, **and removing any of them** | 39 |
 | `healing` | healing THROUGHPUT. **Mana RETURN is NOT out of scope** — it changes a damage profile's sustain, so it is a live gap and gets no `scope` | 36 |
-| `stealth` | being stealthed, detecting it, and the openers requiring it — Ambush, Garrote, Cheap Shot. **NOT an in-combat proc that REMOVES a stealth requirement**, which is what Cutthroat is. **NOR an action BREAKING it**, which is now an engine rule | 6 |
-| `castPushback` | avoiding, resisting or reducing the interruption or DELAY of a cast or channel from damage taken. **NOT an interrupt the TARGET suffers** — Earth Shock's school lockout is about the enemy casting and is inert for a different reason | 7 |
+| `stealth` | being stealthed, detecting it, and the openers requiring it — Ambush, Garrote, Cheap Shot. **NOT an in-combat proc that REMOVES a stealth requirement**, which is what Cutthroat is. **NOR an action BREAKING it**, which is now an engine rule | 5 |
+| `castPushback` | avoiding, resisting or reducing the interruption or DELAY of a cast or channel from damage taken. **NOT an interrupt the TARGET suffers** — Earth Shock's school lockout is about the enemy casting and is inert for a different reason | 8 |
 | `totemEntities` | a totem that BUFFS or HEALS on its own. **NOT a totem that deals DAMAGE**, which Searing Totem proved is expressible as a debuff that ticks | 5 |
 | `dispel` | removing a poison, disease, curse or magic effect, **and RESISTING a dispel**, which is the same concept from the other side. **NOT removing crowd control**, which `crowdControl` covers in its own words | 2 |
 | `immunity` | an immunity that **also stops the character attacking** — Blessing of Protection, Divine Protection, Ice Block. **NOT one you can attack through**: Forever's Divine Shield reduces your damage 50% instead of disarming you, so it stays a live gap | 3 |
+
+**AND `threat` WAS A MEMBER AND IS REPEALED, WHICH NO RULING HAD BEEN BEFORE
+(round 47).** The owner made threat a feature, so its eleven entries became
+`threat` effects and the union lost a member. Two of the eleven carried a SECOND
+clause inside the threat reason -- Burning Soul's pushback and Silent Resolve's
+stun and fear -- which surfaced as one more `castPushback` and one more
+`crowdControl` the moment the threat half left. **A ruling's entries can hide
+other rulings' entries**, which is the compound-reason failure pointed at the
+census. Shadowmeld's threat drop is a racial and became a live gap: no list casts
+it in a fight. See **Threat** below.
 
 **THE TWO NEWEST MEMBERS CAME FROM ONE QUESTION AND THE ANSWER SPLIT IN TWO.**
 `guardian_s_favor`'s own reason ended "whether an immunity that disarms you
@@ -1747,6 +1756,46 @@ something that comes and goes.
   buff still moves it. On the school scope and not the shared `AbilityModifier`,
   which is the guard: hung off an ability nothing would read it, and it would do
   nothing without saying so.
+
+### Threat
+
+**ONE POINT OF DAMAGE IS ONE POINT OF THREAT, AND EVERY FACTOR MULTIPLIES** --
+the owner's two rulings, round 47. `engine/combat/threat.ts` is the rule and
+`game/combat/threat.ts` the numbers:
+
+    threat = (damage x ability multiplier + ability flat) x every modifier
+
+- **DERIVED FROM THE STREAM, NOT THREADED THROUGH COMBAT CODE.** `ThreatTracker`
+  sits between the engine and its sink, reads each damage and resource event as
+  it is emitted -- when the carrier's stance and auras are exactly what produced
+  it -- and emits a `threat` event after it. **It draws no random number**, so
+  all 31 profiles' DPS reproduced to the decimal with it on, which is the
+  containment check for any threat change.
+- **THE FLAT SITS INSIDE THE MODIFIERS**: Defensive Stance raises Heroic
+  Strike's 152 as well as its damage. An ability's OWN multiplier does not touch
+  its flat. Both Forever simulators fold it this way.
+- **ONLY A LANDED HIT THREATENS**, and the damage is post-mitigation. A miss adds
+  no flat either. Threat that is NOT damage -- Sunder Armor's 206 + 5% AP, the
+  two Demoralizing debuffs -- is granted by the ability's own `onCast` after it
+  lands, through `generateThreat`. **NOT off the aura application**, because the
+  raid buff's five Sunder stacks are applied with the PLAYER as their source and
+  would have handed every Warrior five free Sunders of threat at the pull.
+- **RAGE GAINED IS 5 A POINT, MANA 0.5 AND UNTOUCHED BY ANY MODIFIER**, energy
+  nothing. Rage from being hit, refunds, the opening pool and Charge threaten
+  nothing; nor do regeneration, Life Tap and Shield Specialization's mana.
+- **A MODIFIER IS SCOPED BY CLAUSES**, school, table, ability, an aura up or not
+  up. "Your spells" is the `spell` table, which a DoT's ticks carry through
+  `critFrom`. A resource gain names no school, so only an unscoped modifier --
+  a stance, Salvation -- reaches it.
+- **SALVATION FOLLOWS THE ENCOUNTER**: on when the target does not attack back,
+  off when it does, by the owner's instruction -- `withSalvationFor`, called by
+  the Encounter panel's switch, and every preset carries it the same way.
+- **THE PLAYER'S TPS ONLY.** A pet holds its own threat on a boss, so it is not
+  summed in, where its damage is. Thorns and Retribution Aura ARE the player's.
+- **WHERE THE TWO FOREVER SIMULATORS DISAGREE, THE OWNER CHOSE**: the Warrior is
+  wowsims/forever's set MEASURED in game, the Bear's four abilities are
+  mythicsim's multipliers under `PLACEHOLDER_` names, and Searing Pain, Mind
+  Blast and Earth Shock carry Classic's x2 under `PLACEHOLDER_` names.
 
 ### Casts, auras and the global cooldown
 
@@ -4458,12 +4507,16 @@ words.
   `racials.test.ts` asserts that it reaches NOTHING: a condition with no caller
   reads exactly like one that is sometimes true, which is `EFFECT_RULES`' lesson
   and `isWeaponUseOf(attack, \'ranged\')`'s.
-- **FOUR ENCHANTS DO NOTHING AND ARE STILL SELECTABLE, which the owner asked
-  for.** Healing power, threat in both directions and Minor Speed each carry an
+- **THREE ENCHANTS DO NOTHING AND ARE STILL SELECTABLE, which the owner asked
+  for.** The two healing power enchants and Minor Speed each carry an
   `unmodelled` entry with the source's own words — an inert effect that SAYS it
   is inert is the honest failure mode, and the mirror assertion is the one that
   expires: `enchants.test.ts` fails if any OTHER enchant claims anything, so one
-  that gains a stat has to lose its caveat in the same commit.
+  that gains a stat has to lose its caveat in the same commit. **It was FIVE
+  until round 47**, when the two threat enchants became factors of 0.98 and
+  1.02 -- and eleven caster presets turned out to wear the -2% cloak, which a
+  test written to say "Arcane Subtlety and Salvation and nothing else" found by
+  coming out 2% low.
 - **EVERY PROFILE'S FIGURE MOVED WHEN THESE LANDED**, +2.4 to +53.7 on a mean of
   +27.0, so no DPS recorded before that commit is comparable. **The two smallest
   are the two tanks and both are correct**: their rows are dodge, defense skill

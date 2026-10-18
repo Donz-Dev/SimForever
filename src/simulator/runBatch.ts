@@ -79,6 +79,15 @@ export interface BatchResult {
    */
   readonly dpsSamples: readonly number[];
   /**
+   * THREAT PER SECOND, the PLAYER's (round 47) -- a pet holds its own threat
+   * on a boss and is not summed in, where its damage is.
+   */
+  readonly tps: DistributionSummary;
+  /** Every iteration's TPS, in the same order as `dpsSamples`. */
+  readonly tpsSamples: readonly number[];
+  /** The player's threat per fight by source, largest first. */
+  readonly threat: readonly { readonly name: string; readonly threat: number }[];
+  /**
    * Every iteration's PLAYER DEATHS, in iteration order.
    *
    * ----------------------------------------------------------------------------
@@ -228,6 +237,8 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
   const startedAt = Date.now();
 
   const dpsSamples: number[] = new Array(iterations);
+  const tpsSamples: number[] = new Array(iterations);
+  let threatSoFar = 0;
   const deathSamples: number[] = new Array(iterations);
   const seeds: number[] = new Array(iterations);
   const durations: number[] = new Array(iterations);
@@ -300,6 +311,11 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     dpsSamples[index] = (cumulative - damageSoFar) / elapsedSeconds;
     damageSoFar = cumulative;
 
+    // THREAT THE SAME WAY, the player's alone.
+    const threatNow = totals.totalThreatFor(playerId);
+    tpsSamples[index] = (threatNow - threatSoFar) / elapsedSeconds;
+    threatSoFar = threatNow;
+
     /*
      * DEATHS THE SAME WAY, and for the same reason: one accumulator runs the
      * whole batch, so this iteration's count is the difference since the last.
@@ -341,6 +357,9 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     baseSeed: options.baseSeed,
     dps,
     dpsSamples,
+    tps: summarize(tpsSamples),
+    tpsSamples,
+    threat: totals.threatBreakdown(playerId),
     deathSamples,
     representative,
     rotationName,

@@ -1,4 +1,5 @@
 import type { Combatant } from '../actors/Combatant';
+import type { ThreatRules } from '../combat/threat';
 import type { AttackChanceProvider } from '../combat/attackTable';
 import type { Milliseconds } from '../time';
 import type { SimulationContext } from './SimulationContext';
@@ -48,6 +49,12 @@ export interface SimulationConfig {
    * hand wants. The ruleset passes its own.
    */
   readonly spellResistanceConstant?: (casterLevel: number) => number;
+
+  /**
+   * The ruleset's threat numbers. ABSENT MEANS THREAT IS NOT TRACKED and no
+   * threat event is emitted; see `engine/combat/threat.ts`.
+   */
+  readonly threatRules?: ThreatRules;
 
   /**
    * Runs once at time 0, after combatants exist and before any event fires.

@@ -1,4 +1,5 @@
 import type { Milliseconds } from '../time';
+import type { AttackTableKind } from '../combat/attackTable';
 import type { AttackOutcome } from '../combat/attackTable';
 import type { DamageSchool } from '../combat/DamageSchool';
 import type { ResourceType } from '../resources';
@@ -76,6 +77,12 @@ export interface DamageTelemetryEvent extends TelemetryBase {
   readonly abilityId?: string;
   readonly abilityName: string;
   readonly school: DamageSchool;
+  /**
+   * The table that resolved it, or for a tick the one that applied it. Read by
+   * threat, where "your spells" includes a DoT's ticks. Absent for damage that
+   * names neither.
+   */
+  readonly attackTable?: AttackTableKind;
   /** Damage actually applied to the target's health. */
   readonly amount: number;
   /**
@@ -266,6 +273,22 @@ export interface DeathTelemetryEvent extends TelemetryBase {
   readonly killerId?: string;
 }
 
+/**
+ * Threat a combatant generated against a target, derived by `ThreatTracker`
+ * from the event that caused it. See `engine/combat/threat.ts`.
+ */
+export interface ThreatTelemetryEvent extends TelemetryBase {
+  readonly type: 'threat';
+  readonly sourceId: string;
+  readonly targetId: string;
+  /** After every modifier. Negative is threat removed. */
+  readonly amount: number;
+  /** Damage, an ability's flat amount without damage, or a resource gained. */
+  readonly cause: 'damage' | 'ability' | 'resource';
+  readonly abilityId?: string;
+  readonly abilityName: string;
+}
+
 export type TelemetryEvent =
   | CombatStartEvent
   | CombatEndEvent
@@ -277,6 +300,7 @@ export type TelemetryEvent =
   | CastChargeEvent
   | ResourceTelemetryEvent
   | StatSampleEvent
-  | DeathTelemetryEvent;
+  | DeathTelemetryEvent
+  | ThreatTelemetryEvent;
 
 export type TelemetryEventType = TelemetryEvent['type'];

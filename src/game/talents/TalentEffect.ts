@@ -37,6 +37,28 @@ import type { CombatStyleId } from '../character/ids';
  */
 export type TalentEffect =
   /**
+   * A FACTOR ON THE CHARACTER'S THREAT (round 47). "Reduces the threat caused
+   * by your Fire spells by 30%" is `decrease` 30 on Fire spells; every clause
+   * narrows it, and an unscoped one is "all threat you generate". Each is ONE
+   * factor and they multiply, by the owner's ruling.
+   *
+   * `percent` IS FOR A SINGLE-RANK TALENT WHOSE VALUES ENTRY IS NULL -- the
+   * importer cannot find a `{0}` in one rank's text -- and states the tooltip's
+   * figure beside the declaration, where `valueIndex` would read nothing.
+   */
+  | {
+      readonly kind: 'threat';
+      readonly direction: 'increase' | 'decrease';
+      readonly valueIndex?: number;
+      readonly percent?: number;
+      readonly schools?: readonly DamageSchool[];
+      readonly tables?: readonly AttackTableKind[];
+      readonly abilityIds?: readonly string[];
+      readonly whileAura?: string;
+      readonly whileNotAura?: string;
+      readonly requires?: BuildRequirement;
+    }
+  /**
    * Adds to a stat, exactly as a buff or an item does.
    *
    * `scale` converts the talent's stated number into what the stat expects.
@@ -1057,8 +1079,11 @@ export type OutOfScope =
   | 'positioning'
   /** Stuns, fears, roots, snares, silences, incapacitates, disorients. */
   | 'crowdControl'
-  /** Threat, which is not tracked anywhere. */
-  | 'threat'
+  /*
+   * THREAT WAS A MEMBER AND IS NOT ANY MORE (round 47): the owner made it a
+   * feature, so every talent that carried the threat scope became a `threat`
+   * effect. A ruling can be REPEALED, which is the first time one has been.
+   */
   /**
    * Healing THROUGHPUT. Mana RETURN is NOT out of scope — it changes a damage
    * profile's sustain, so a talent returning mana is a live gap and gets no

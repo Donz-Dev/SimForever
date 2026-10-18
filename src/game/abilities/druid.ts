@@ -1,4 +1,5 @@
 import type { Ability } from '../../engine';
+import { DEMORALIZING_ROAR_FLAT_THREAT } from '../combat/threat';
 import { dealDamage, seconds } from '../../engine';
 import {
   DEMORALIZING_ROAR,
@@ -733,6 +734,13 @@ export const DEMORALIZING_ROAR_ABILITY: Ability = {
   onCast: ({ simulation, caster, target }) => {
     if (!target) return;
     simulation.applyAura(target, DEMORALIZING_ROAR, caster.id);
+    simulation.generateThreat(
+      caster,
+      target,
+      DEMORALIZING_ROAR_FLAT_THREAT,
+      'demoralizing_roar',
+      'Demoralizing Roar',
+    );
   },
   unmodelled:
     'The -204 attack power lands, but the target has no attack power term: ' +

@@ -43,6 +43,14 @@ export { runReactions, runCastReactions, isWeaponUse, isWeaponUseOf } from './re
 export type { MeleeWeaponSlot } from './reactions';
 export type { HealRequest, HealResolution } from './healing';
 export { applyHealing, resolveHealing } from './healing';
+export { ThreatTracker, threatMultiplierFor } from './threat';
+export type {
+  AbilityThreat,
+  ResourceThreat,
+  ThreatContext,
+  ThreatModifier,
+  ThreatRules,
+} from './threat';
 export {
   RESIST_STEP,
   averageResist,

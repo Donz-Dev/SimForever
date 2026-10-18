@@ -1660,6 +1660,9 @@ export function dealDamage(
     abilityId: request.abilityId,
     abilityName: request.abilityName,
     school: request.school,
+    ...(request.attackTable ?? request.critFrom
+      ? { attackTable: request.attackTable ?? request.critFrom }
+      : {}),
     amount: resolution.amount,
     outcome: resolution.outcome,
     critical: resolution.critical,

@@ -7,6 +7,7 @@ import type {
   StatName,
   WeaponProfile,
 } from '../../engine';
+import type { ThreatModifier } from '../../engine';
 import type {
   AttackTableKind,
   AuraDefinition,
@@ -149,6 +150,8 @@ export const NO_PET_MODIFIERS: PetModifiers = {
 export interface TalentBuild {
   /** Flat additions, applied on top of gear and profile stats. */
   readonly stats: PartialStats;
+  /** Factors on the character's threat; see `engine/combat/threat.ts`. */
+  readonly threatModifiers: readonly ThreatModifier[];
   /**
    * Percentage contributions, as modifiers rather than folded into `stats`.
    *
@@ -336,6 +339,7 @@ export interface TalentBuild {
 
 const EMPTY: TalentBuild = {
   stats: {},
+  threatModifiers: [],
   statModifiers: [],
   statConversions: [],
   formScalableArmor: { flat: 0, perDefensePoint: 0 },
@@ -663,6 +667,7 @@ export function talentBuild(
   let petSpellPower = 0;
   let petDamageFactor = 1;
   const abilityModifiers = new AbilityModifiers();
+  const threatModifiers: ThreatModifier[] = [];
   const schoolModifiers = new SchoolModifiers();
   const attackTableModifiers = new AttackTableModifiers();
   const bleedingTargetModifiers = new AttackTableModifiers();
@@ -804,7 +809,8 @@ export function talentBuild(
       const valueless =
         (effect.kind === 'reaction' || effect.kind === 'castReaction') &&
         effect.valueless === true;
-      const value = recorded ?? (valueless ? 0 : undefined);
+      const stated = effect.kind === 'threat' ? effect.percent : undefined;
+      const value = recorded ?? stated ?? (valueless ? 0 : undefined);
       if (value === undefined) {
         report(
           talentId,
@@ -1329,6 +1335,22 @@ export function talentBuild(
           petReactions.push(buildPetReaction(value));
           break;
         }
+        case 'threat': {
+          if (effect.requires && !meets(effect.requires, context)) {
+            report(talentId, rank, unmetReason(effect.requires));
+            break;
+          }
+          const sign = effect.direction === 'increase' ? 1 : -1;
+          threatModifiers.push({
+            multiplier: 1 + (sign * value) / 100,
+            ...(effect.schools ? { schools: effect.schools } : {}),
+            ...(effect.tables ? { tables: effect.tables } : {}),
+            ...(effect.abilityIds ? { abilityIds: effect.abilityIds } : {}),
+            ...(effect.whileAura ? { whileAura: effect.whileAura } : {}),
+            ...(effect.whileNotAura ? { whileNotAura: effect.whileNotAura } : {}),
+          });
+          break;
+        }
         case 'abilityCritDamage':
           /*
            * THE BONUS HALF, AND THE TABLE DECIDES THE HALF -- the same rule
@@ -1363,6 +1385,7 @@ export function talentBuild(
 
   return {
     stats,
+    threatModifiers,
     statModifiers,
     statConversions,
     formScalableArmor,

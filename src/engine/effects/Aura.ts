@@ -1,4 +1,5 @@
 import type { AbilityModifier } from '../combat/abilityModifiers';
+import type { ThreatModifier } from '../combat/threat';
 import type { AttackTableKind } from '../combat/attackTable';
 import type { Combatant } from '../actors/Combatant';
 import type { DamageSchool } from '../combat/DamageSchool';
@@ -447,6 +448,12 @@ export interface AuraDefinition {
    * the attacker's and is applied after the floor; see `Combatant.resistanceFor`.
    */
   readonly resistanceBySchool?: Partial<Record<DamageSchool, number>>;
+
+  /**
+   * Factors on the carrier's threat while the aura is up -- a stance, Righteous
+   * Fury, Salvation. Each multiplies; see `engine/combat/threat.ts`.
+   */
+  readonly threatModifiers?: readonly ThreatModifier[];
   /**
    * The same again, but reaching PERIODIC damage only.
    *
