@@ -28,8 +28,9 @@ const OWNER_ORDER = [
   'demonic_rune',
   'thistle_tea',
   'mighty_rage_potion',
-  'major_frenzy_potion',
   'major_spellblasting_potion',
+  // Out of the shared row at round 37, gated on Slice and Dice AND Venom.
+  'major_frenzy_potion',
   // Neither of the next two groups is drawn for the preset: a Venom Rogue is
   // Undead and drinks Thistle Tea rather than a Healthstone.
   'blood_fury',
@@ -141,10 +142,16 @@ describe('the Venom list', () => {
         { kind: 'comboPoints', compare: 'atLeast', points: 1 },
       ],
     });
-    for (const id of ['venom', 'cold_blood', 'eviscerate']) {
+    for (const id of ['venom', 'eviscerate']) {
       const condition = JSON.stringify(entryFor(id).condition);
       expect(condition, id).toContain('"comboPoints","compare":"atLeast","points":3');
     }
+    // COLD BLOOD WAITS FOR FOUR, the owner's round 37: "Cold Blood paired with
+    // a 4+ combo point Eviscerate", as one sequence.
+    expect(JSON.stringify(entryFor('cold_blood').condition)).toContain(
+      '"comboPoints","compare":"atLeast","points":4',
+    );
+    expect(entryFor('cold_blood').sequence).toEqual(['eviscerate']);
   });
 
   it('holds both finishers behind a three-second FLOOR on the two buffs', () => {

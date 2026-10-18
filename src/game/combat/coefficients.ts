@@ -274,6 +274,9 @@ export function ruptureTickApCoefficient(comboPoints: number): number {
   );
 }
 
+/** Garrote: 7% of attack power PER TICK, the owner's figure. */
+export const GARROTE_TICK_AP_COEFFICIENT = 0.07;
+
 /**
  * Instant Poison (0.5%) and Deadly Poison (0.45% per tick).
  *

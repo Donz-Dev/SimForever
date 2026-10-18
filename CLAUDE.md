@@ -270,8 +270,9 @@ AND IT IS WHERE THESE FIVE TURN INTO GATES.** The five below are the diagnosis;
 that file is the thing to follow -- the theme written down before anything, the
 three gates every candidate passes BEFORE it is measured, and the loop order
 that follows the knock-on. Its Appendix A audits all 28 openers against the
-pre-combat ruling; **three still fail**, and `shaman_elemental` fails on two of
-the OWNER'S OWN lines, which is a question rather than an edit.
+pre-combat ruling; **all 28 pass since round 37** -- the last, `shaman_elemental`,
+failed on two of the OWNER'S OWN lines, was carried as a question rather than an
+edit, and the owner answered it by taking the Lightning Bolt off the opener.
 
 **IT HAS BEEN RUN ONCE, ON THE ARCANE MAGE, AND THEN AUDITED BY THE OWNER -- AND
 THE AUDIT IS THE MORE USEFUL HALF.** The run reverted an illegal opener

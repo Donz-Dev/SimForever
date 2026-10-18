@@ -144,7 +144,7 @@ owner supplied.
 | --- | --- | --- | --- | --- |
 | Frostfire | 0/29/22 | **661.3** | `MAGE_FROSTFIRE` | **now the top Mage**, on the three Frost talents that reach its filler |
 | Fire | 15/31/5 | **622.0** | `MAGE_FIRE` | Combustion is a real ramp; Ignite rolls over |
-| Arcane | 35/11/5 | **576.1** | `MAGE_ARCANE` | two spells and one aura |
+| Arcane | 48/3/0 | **576.1** | `MAGE_ARCANE` | two spells and one aura |
 
 **EVERY FIGURE HERE IS STALE THE MOMENT ANOTHER CLASS MERGES.** These are from
 `4be5c09`; the Mage figures moved 412–450 to 576–661 between two deep dives

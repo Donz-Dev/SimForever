@@ -14,6 +14,7 @@ import {
   compileRotation,
   not,
   onCooldown,
+  ready,
   resource,
   selfHas,
   selfTime,
@@ -23,7 +24,7 @@ import {
 
 import { MAX_COMBO_POINTS } from '../combat/comboPoints';
 import { RUPTURE_BY_COMBO_POINT, VENOM_AURA_ID } from '../auras/rogue';
-import { AMBUSH_ENERGY_COST } from '../abilities/rogue';
+import { AMBUSH_ENERGY_COST, GARROTE_ENERGY_COST } from '../abilities/rogue';
 
 /**
  * Rogue priority lists.
@@ -185,6 +186,23 @@ const poolingForAmbush: AplCondition = all(
   resource('below', AMBUSH_ENERGY_COST, 'energy'),
 );
 
+/*
+ * ----------------------------------------------------------------------------
+ * POOLING FOR THE VANISH-GARROTE SEQUENCE, Pure Hemo's version of the Ambush
+ * pooling above and for the same reason. The owner's sequence fires "when
+ * Garrote fades", and it needs 50 energy for the Garrote at the end of it --
+ * but Hemorrhage below it is cheaper and ungated, so it took the pool every
+ * time it passed its own cost and the sequence fired 0.6 times a fight. So the
+ * filler waits while Garrote is down and Vanish is ready, until the pool can
+ * pay for the whole sequence.
+ * ----------------------------------------------------------------------------
+ */
+const poolingForGarrote: AplCondition = all(
+  targetAuraDown('garrote'),
+  ready('vanish'),
+  resource('below', GARROTE_ENERGY_COST, 'energy'),
+);
+
 /** "energy >= N". */
 const atLeastEnergy = (minimum: number) => resource('atLeast', minimum, 'energy');
 
@@ -263,6 +281,8 @@ const VENOM_MAINTENANCE_FLOOR_SECONDS = 3;
  * deliberately aimed it and is not where the owner aims it now.
  */
 const VENOM_COLD_BLOOD_ENERGY = 35;
+/** "Cold Blood paired with a 4+ combo point Eviscerate" -- the owner's figure. */
+const VENOM_COLD_BLOOD_COMBO_POINTS = 4;
 
 export const ROGUE_VENOM: AplList = {
   name: 'Rogue (Assassination, Venom)',
@@ -278,7 +298,16 @@ export const ROGUE_VENOM: AplList = {
    * `TIGHT_THISTLE_TEA_ENERGY_THRESHOLD`.
    * ==========================================================================
    */
-  ...consumableCooldowns({ thistleTeaEnergy: TIGHT_THISTLE_TEA_ENERGY_THRESHOLD }),
+  ...consumableCooldowns({
+    thistleTeaEnergy: TIGHT_THISTLE_TEA_ENERGY_THRESHOLD,
+    exclude: ['major_frenzy_potion'],
+  }),
+  /*
+   * MAJOR FRENZY POTION, ON THE OWNER'S CONDITION: "when Slice and Dice + Venom are both active". It replaces the shared
+   * ungated entry, which `consumableCooldowns` is told to leave out.
+   */
+  { abilityId: 'major_frenzy_potion', condition: all(selfHas('slice_and_dice'), selfHas(VENOM_AURA_ID)) },
+
   /*
    * THE RACIAL COOLDOWNS AND THE HEALS, both of which narrow to NOTHING on the
    * preset that runs this list: a Venom Rogue is UNDEAD, which learns no active
@@ -352,10 +381,17 @@ export const ROGUE_VENOM: AplList = {
    * cast later and aim the crit at whatever came next instead.
    * --------------------------------------------------------------------------
    */
+  /*
+   * COLD BLOOD PAIRED WITH A 4+ COMBO POINT EVISCERATE, by the owner, as one SEQUENCE so
+   * nothing can be cast between the two -- Cold Blood is free and off the
+   * global cooldown, and as two entries the list re-read from the top the
+   * instant it went out.
+   */
   {
     abilityId: 'cold_blood',
+    sequence: ['eviscerate'],
     condition: all(
-      atLeastPoints(VENOM_FINISHER_COMBO_POINTS),
+      atLeastPoints(VENOM_COLD_BLOOD_COMBO_POINTS),
       atLeastEnergy(VENOM_COLD_BLOOD_ENERGY),
       selfAuraAtLeast('slice_and_dice', VENOM_MAINTENANCE_FLOOR_SECONDS),
       selfAuraAtLeast(VENOM_AURA_ID, VENOM_MAINTENANCE_FLOOR_SECONDS),
@@ -464,7 +500,13 @@ export const ROGUE_COMBAT_MUT: AplList = {
    */
   thistleTeaCooldown(TIGHT_THISTLE_TEA_ENERGY_THRESHOLD),
   { abilityId: 'blade_flurry' },
-  ...consumableCooldowns({ exclude: ['thistle_tea'] }),
+  ...consumableCooldowns({ exclude: ['thistle_tea', 'major_frenzy_potion'] }),
+  /*
+   * MAJOR FRENZY POTION, ON THE OWNER'S CONDITION: "when Slice and Dice is active". It replaces the shared
+   * ungated entry, which `consumableCooldowns` is told to leave out.
+   */
+  { abilityId: 'major_frenzy_potion', condition: selfHas('slice_and_dice') },
+
   ...RACIAL_COOLDOWNS,
   ...CONSUMABLE_HEALS,
   /*
@@ -484,8 +526,15 @@ export const ROGUE_COMBAT_MUT: AplList = {
    * matched pair would produce and is not something the order alone can do.
    * --------------------------------------------------------------------------
    */
+  /*
+   * COLD BLOOD PAIRED WITH A 4+ COMBO POINT EVISCERATE, by the owner, as one SEQUENCE so
+   * nothing can be cast between the two -- Cold Blood is free and off the
+   * global cooldown, and as two entries the list re-read from the top the
+   * instant it went out.
+   */
   {
     abilityId: 'cold_blood',
+    sequence: ['eviscerate'],
     condition: all(
       atLeastPoints(COMBAT_MUT_COLD_BLOOD_POINTS),
       atLeastEnergy(COMBAT_MUT_COLD_BLOOD_ENERGY),
@@ -532,7 +581,14 @@ export const ROGUE_COMBAT: AplList = {
    * Fury is the one of the four it draws.
    */
   ...RACIAL_COOLDOWNS,
-  ...consumableCooldowns({ exclude: ['thistle_tea'] }),
+  ...consumableCooldowns({ exclude: ['thistle_tea', 'major_frenzy_potion'] }),
+  /*
+   * MAJOR FRENZY POTION, ON THE OWNER'S CONDITION: "when Slice and Dice is active + Adrenaline Rush is active". It sits
+   * ABOVE the Adrenaline Rush entry and waits for the rush to be up. It replaces the shared
+   * ungated entry, which `consumableCooldowns` is told to leave out.
+   */
+  { abilityId: 'major_frenzy_potion', condition: all(selfHas('slice_and_dice'), selfHas('adrenaline_rush')) },
+
   ...CONSUMABLE_HEALS,
   /*
    * THE TWO COOLDOWNS, ABOVE EVERYTHING THAT SPENDS ENERGY -- the owner's
@@ -591,6 +647,13 @@ export const ROGUE_COMBAT: AplList = {
    * price is re-measured on this commit rather than quoted from the old sweep.
    * ==========================================================================
    */
+  /*
+   * COLD BLOOD PAIRED WITH A 5 COMBO POINT EVISCERATE, by the owner, as one SEQUENCE so
+   * nothing can be cast between the two -- Cold Blood is free and off the
+   * global cooldown, and as two entries the list re-read from the top the
+   * instant it went out.
+   */
+  { abilityId: 'cold_blood', sequence: ['eviscerate'], condition: exactlyPoints(MAX_COMBO_POINTS) },
   { abilityId: 'eviscerate', condition: atLeastPoints(EVISCERATE_COMBO_POINTS_COMBAT) },
   { abilityId: 'sinister_strike' },
   ],
@@ -671,7 +734,14 @@ export const ROGUE_RUPTURE: AplList = {
    * points for whatever goes out next, so a global spent here would be a
    * global the thing it was banked FOR does not get.
    */
-  { abilityId: 'premeditation' },
+  /*
+   * NO STANDALONE PREMEDITATION ANY MORE. It sat first and fired at the pull,
+   * while the opening stealth was up -- so Premeditation was on its two-minute
+   * cooldown every time Vanish came round, and the owner's Vanish sequence
+   * (which checks every step's cooldown before it starts) was refused. The
+   * owner took it off the opener and paired it with Vanish; this is the list
+   * half of the same decision.
+   */
   /*
    * THISTLE TEA AT TEN, the same gate the Venom list uses and the second time
    * the owner has given that number. See `TIGHT_THISTLE_TEA_ENERGY_THRESHOLD`.
@@ -708,8 +778,15 @@ export const ROGUE_RUPTURE: AplList = {
    * ruling, so Vanishing while it is up buys nothing and spends a five minute
    * cooldown.
    */
+  /*
+   * VANISH, THEN PREMEDITATION, THEN AMBUSH, as one SEQUENCE by the owner. It
+   * used to emerge from three entries, and an auto-attack could land in the
+   * gap and take the stealth window -- the engine now forgives a later step's
+   * own gate when checking a sequence, because Vanish is what opens it.
+   */
   {
     abilityId: 'vanish',
+    sequence: ['premeditation', 'ambush'],
     condition: all(atMostPoints(3), atLeastEnergy(AMBUSH_ENERGY_COST), not(selfActive('cutthroat'))),
   },
   {
@@ -871,7 +948,14 @@ export const ROGUE_HEMO: AplList = {
    * profile that was moving without a spec has a spec.
    * ==========================================================================
    */
-  { abilityId: 'premeditation' },
+  /*
+   * NO STANDALONE PREMEDITATION ANY MORE. It sat first and fired at the pull,
+   * while the opening stealth was up -- so Premeditation was on its two-minute
+   * cooldown every time Vanish came round, and the owner's Vanish sequence
+   * (which checks every step's cooldown before it starts) was refused. The
+   * owner took it off the opener and paired it with Vanish; this is the list
+   * half of the same decision.
+   */
   thistleTeaCooldown(TIGHT_THISTLE_TEA_ENERGY_THRESHOLD),
   ...consumableCooldowns({ exclude: ['thistle_tea'] }),
   ...RACIAL_COOLDOWNS,
@@ -882,8 +966,15 @@ export const ROGUE_HEMO: AplList = {
    * takes it. A priority list cannot hold a sequence and does not need to.
    */
   { abilityId: 'ambush' },
+  /*
+   * VANISH, THEN PREMEDITATION, THEN AMBUSH, as one SEQUENCE by the owner. It
+   * used to emerge from three entries, and an auto-attack could land in the
+   * gap and take the stealth window -- the engine now forgives a later step's
+   * own gate when checking a sequence, because Vanish is what opens it.
+   */
   {
     abilityId: 'vanish',
+    sequence: ['premeditation', 'ambush'],
     condition: all(atMostPoints(3), atLeastEnergy(AMBUSH_ENERGY_COST), not(selfActive('cutthroat'))),
   },
   {
@@ -926,8 +1017,15 @@ export const ROGUE_HEMO: AplList = {
    * and Dice. The list and the allocation are one change.
    * --------------------------------------------------------------------------
    */
+  /*
+   * COLD BLOOD PAIRED WITH A 5 COMBO POINT EVISCERATE, by the owner, as one SEQUENCE so
+   * nothing can be cast between the two -- Cold Blood is free and off the
+   * global cooldown, and as two entries the list re-read from the top the
+   * instant it went out.
+   */
   {
     abilityId: 'cold_blood',
+    sequence: ['eviscerate'],
     condition: all(
       exactlyPoints(MAX_COMBO_POINTS),
       targetAuraAtLeast('rupture', HEMO_FLOOR_SECONDS),
@@ -986,11 +1084,27 @@ const PURE_HEMO_FLOOR_SECONDS = 1;
 export const ROGUE_PURE_HEMO: AplList = {
   name: 'Rogue (Subtlety, Pure Hemo)',
   entries: [
-  { abilityId: 'premeditation' },
+  /*
+   * NO STANDALONE PREMEDITATION ANY MORE. It sat first and fired at the pull,
+   * while the opening stealth was up -- so Premeditation was on its two-minute
+   * cooldown every time Vanish came round, and the owner's Vanish sequence
+   * (which checks every step's cooldown before it starts) was refused. The
+   * owner took it off the opener and paired it with Vanish; this is the list
+   * half of the same decision.
+   */
   thistleTeaCooldown(TIGHT_THISTLE_TEA_ENERGY_THRESHOLD),
   ...consumableCooldowns({ exclude: ['thistle_tea'] }),
   ...RACIAL_COOLDOWNS,
   ...CONSUMABLE_HEALS,
+  /*
+   * VANISH, THEN PREMEDITATION, THEN GARROTE, as one sequence, "when Garrote
+   * fades" -- the owner's design for this build, with Garrote declared for it.
+   */
+  {
+    abilityId: 'vanish',
+    sequence: ['premeditation', 'garrote'],
+    condition: all(targetAuraDown('garrote'), atLeastEnergy(GARROTE_ENERGY_COST)),
+  },
   /*
    * ==========================================================================
    * RUPTURE BEHIND SIX CLAUSES, WHICH IS THE MOST CONDITIONED ENTRY IN THE
@@ -1019,7 +1133,10 @@ export const ROGUE_PURE_HEMO: AplList = {
       atLeastPoints(PURE_HEMO_RUPTURE_POINTS),
       abilityOnCooldown('preparation'),
       abilityOnCooldown('cold_blood'),
-      abilityOnCooldown('premeditation'),
+      // VANISH, not Premeditation, since round 37: Premeditation is only ever a
+      // step of the Vanish sequence now, so it sat off cooldown most of the
+      // fight and this entry fired 0.0 times.
+      abilityOnCooldown('vanish'),
       selfAuraDown('cold_blood'),
     ),
   },
@@ -1036,8 +1153,15 @@ export const ROGUE_PURE_HEMO: AplList = {
    * finisher it is saved for, so the guaranteed crit lands on a five-point
    * Eviscerate. There is no cheaper finisher here for it to be wasted on.
    */
+  /*
+   * COLD BLOOD PAIRED WITH A 5 COMBO POINT EVISCERATE, by the owner, as one SEQUENCE so
+   * nothing can be cast between the two -- Cold Blood is free and off the
+   * global cooldown, and as two entries the list re-read from the top the
+   * instant it went out.
+   */
   {
     abilityId: 'cold_blood',
+    sequence: ['eviscerate'],
     condition: all(
       exactlyPoints(MAX_COMBO_POINTS),
       selfAuraAtLeast('slice_and_dice', PURE_HEMO_FLOOR_SECONDS),
@@ -1051,17 +1175,17 @@ export const ROGUE_PURE_HEMO: AplList = {
     ),
   },
   /*
-   * PREPARATION WAITS ON PREMEDITATION AND COLD BLOOD, where every other list
-   * that casts it waits on VANISH -- because this list has no Vanish and no
-   * Ambush at all. "Finishes the cooldown on your other Rogue abilities" is
+   * PREPARATION WAITS ON VANISH AND COLD BLOOD, like every other list that casts
+   * it, since round 37 gave this list a Vanish -- Garrote sequence. It waited on
+   * Premeditation while the list had no Vanish. "Finishes the cooldown on your other Rogue abilities" is
    * worth what the abilities it gives back are worth, and here those are the
    * two that feed the five-point Eviscerate.
    */
   {
     abilityId: 'preparation',
-    condition: all(abilityOnCooldown('premeditation'), abilityOnCooldown('cold_blood')),
+    condition: all(abilityOnCooldown('vanish'), abilityOnCooldown('cold_blood')),
   },
-  { abilityId: 'hemorrhage' },
+  { abilityId: 'hemorrhage', condition: not(poolingForGarrote) },
   ],
 };
 

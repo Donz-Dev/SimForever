@@ -102,15 +102,24 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * NOT the same case as the Paladin's Undead-and-Demon clauses, which stay
    * inert -- those were ruled the other way for the same target.
    */
+  /*
+   * ==========================================================================
+   * INERT NOW, BY THE OWNER'S LATER RULING, which reverses the one above: "it's
+   * unrealistic to think you'll always be fighting a humanoid or giant for this
+   * effect." So it is the TARGET cause of inert -- the encounter is not a
+   * Humanoid or a Giant -- and no longer an assumed flat bonus. No preset
+   * spends a point here after the round-37 respecifications, so it moves no
+   * profile; a hand-built Rogue taking it now gets nothing for it.
+   * ==========================================================================
+   */
   murder: [
-    { kind: 'conditionalDamage', requires: {} },
     {
       kind: 'unmodelled',
       reason:
-        'Applied as a flat damage bonus on the ruling of the project owner ' +
-        'that the target is a Humanoid or a Giant. The engine checks no ' +
-        'creature type, so this is an assumption about the encounter rather ' +
-        'than something it verifies.',
+        'Damage against Humanoids and Giants, and by the owner ruling the ' +
+        'target is not assumed to be either -- "it is unrealistic to think ' +
+        'you will always be fighting a humanoid or giant". A target cause: it ' +
+        'expires only if an encounter declares a creature type.',
     },
   ],
 
@@ -414,17 +423,17 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * ... are absent" was half right, and the half that was wrong is the one the
    * Rupture profile casts. Only Garrote is genuinely out of scope.
    */
+  /*
+   * GARROTE IS DECLARED NOW, on the owner's ruling, so the `stealth` tag this
+   * carried for its Garrote clause has expired -- the second time a scope tag
+   * on this talent has been overtaken by a ruling that widened stealth. The
+   * id reaches the bleed's TICKS, because a tick carries its aura's id.
+   */
   opportunity: [
     { kind: 'abilityDamage', abilityId: 'backstab' },
     { kind: 'abilityDamage', abilityId: 'mutilate' },
     { kind: 'abilityDamage', abilityId: 'ambush' },
-    {
-      kind: 'unmodelled',
-      scope: 'stealth',
-      reason:
-        'Its Backstab, Mutilate and Ambush clauses all APPLY. It also covers ' +
-        'Garrote, which is a stealth opener and out of scope for good.',
-    },
+    { kind: 'abilityDamage', abilityId: 'garrote' },
   ],
 
   setup: [
@@ -482,13 +491,15 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    */
   initiative: [
     { kind: 'reaction', reactionId: 'initiative' },
+    // GARROTE, NOW DECLARED: its application deals no damage for a `dealt`
+    // reaction to see, so the chance rides on the ability and is rolled there.
+    { kind: 'abilityBonus', abilityId: 'garrote', key: 'initiativeChance' },
     {
       kind: 'unmodelled',
       scope: 'stealth',
       reason:
-        'Its Ambush clause APPLIES, through the `initiative` reaction in ' +
-        'game/reactions/rogueTalents.ts. It also names Garrote and Cheap ' +
-        'Shot, which are stealth openers and are out of scope for good.',
+        'Its Ambush and Garrote clauses APPLY. It also names Cheap Shot, a ' +
+        'stealth opener this project does not declare.',
     },
   ],
 

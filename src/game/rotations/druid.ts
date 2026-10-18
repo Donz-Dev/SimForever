@@ -13,13 +13,14 @@ import {
   comboPoints,
   compileRotation,
   not,
+  onCooldown,
+  ready,
   resource,
   selfHas,
   selfHealth,
   selfStacks,
   targetExpired,
   targetHas,
-  targetTime,
 } from './apl';
 import type { CombatStyleId } from '../character';
 import { MAX_COMBO_POINTS } from '../combat/comboPoints';
@@ -100,8 +101,29 @@ const energyAtMost = (maximum: number) => resource('atMost', maximum, 'energy');
  * that the window will not spend one of its own global cooldowns re-applying
  * the bleed. Neither is derived; both are stated.
  */
-const BERSERK_ENERGY_FLOOR = 30;
-const BERSERK_RAKE_SECONDS = 2;
+/*
+ * ============================================================================
+ * AND THE OWNER HAS REPLACED BOTH WITH A POOL: "Add ability to pool Energy
+ * prior to using Berserk. The logic should be Shifting Power is on cooldown,
+ * rake is active, rip is active. Pool 74 Energy. Use Berserk then Shred, Shred,
+ * Shifting Power, Shred, etc. The idea is to use as many Shreds / Rakes during
+ * Berserk as possible."
+ *
+ * 74 IS THE OWNER'S FIGURE. Berserk halves costs, so a full bar walked into the
+ * window is three Shreds before Shifting Power's forty arrives. The pool is a
+ * condition on the plain Shred -- the one entry that would spend it -- because
+ * priority does not reserve a resource: Berserk above it is refused for cost
+ * while the cheaper Shred below takes the energy every time it passes 42.
+ * A Clearcasting Shred costs nothing and is left alone.
+ * ============================================================================
+ */
+const BERSERK_POOL_ENERGY = 74;
+const berserkSetUp = all(onCooldown('shifting_power'), targetHas('rake'), targetHas('rip'));
+const poolingForBerserk = all(
+  ready('berserk'),
+  berserkSetUp,
+  resource('below', BERSERK_POOL_ENERGY, 'energy'),
+);
 
 /** "rage >= N". */
 const rageAtLeast = (minimum: number) => resource('atLeast', minimum, 'rage');
@@ -111,10 +133,6 @@ const healthAtMostFraction = (fraction: number) => selfHealth('atMost', fraction
 
 /** "combo points >= N", read THROUGH the target so a stale pool reads zero. */
 const atLeastPoints = (count: number) => comboPoints('atLeast', count);
-
-/** "<debuff> has at least N seconds left", on the target. */
-const targetAuraAtLeast = (auraId: string, secondsLeft: number) =>
-  targetTime('atLeast', secondsLeft, auraId);
 
 /** "energy >= N". */
 const energyAtLeast = (minimum: number) => resource('atLeast', minimum, 'energy');
@@ -373,7 +391,7 @@ export const DRUID_CAT: AplList = {
    */
   {
     abilityId: 'berserk',
-    condition: all(energyAtLeast(BERSERK_ENERGY_FLOOR), targetAuraAtLeast('rake', BERSERK_RAKE_SECONDS)),
+    condition: all(berserkSetUp, energyAtLeast(BERSERK_POOL_ENERGY)),
   },
   /*
    * EVERY CLEARCASTING PROC GOES ON SHRED, REGARDLESS OF COMBO POINTS -- the
@@ -418,7 +436,7 @@ export const DRUID_CAT: AplList = {
     abilityId: 'rip',
     condition: all(atLeastPoints(MAX_COMBO_POINTS), expired('rip')),
   },
-  { abilityId: 'shred' },
+  { abilityId: 'shred', condition: not(poolingForBerserk) },
   ],
 };
 

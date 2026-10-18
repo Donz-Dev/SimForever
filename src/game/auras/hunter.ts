@@ -225,7 +225,12 @@ export const IMMOLATION_TRAP_TOTAL = 690;
  * implemented. `DamageRequest.attackPowerCoefficient` exists for this.
  * ============================================================================
  */
-export const TRAP_ATTACK_POWER_COEFFICIENT = 0.05;
+/*
+ * 13%, BY THE OWNER'S LATER FIGURE: "Immolation Trap, and Explosive Trap have a
+ * 13% attack power coefficient." It was the patch note's 5%. Still divided by
+ * the tick count, as the paragraph above explains.
+ */
+export const TRAP_ATTACK_POWER_COEFFICIENT = 0.13;
 export const IMMOLATION_TRAP_DURATION_MS = seconds(15);
 export const IMMOLATION_TRAP_TICK_INTERVAL_MS = seconds(3);
 

@@ -27,18 +27,22 @@ const OWNER_ORDER = [
   'major_mana_potion',
   'demonic_rune',
   'mighty_rage_potion',
-  'major_frenzy_potion',
   'major_spellblasting_potion',
+  // THE FRENZY POTION LEFT THE SHARED ROW at round 37 and sits below it, gated
+  // on Slice and Dice and Adrenaline Rush both being up -- the owner's words.
+  'major_frenzy_potion',
   'major_healing_potion',
   'healthstone',
   'adrenaline_rush',
   'blade_flurry',
   'slice_and_dice',
+  // Cold Blood paired with a five-point Eviscerate, as one sequence (round 37).
+  'cold_blood',
   'eviscerate',
   'sinister_strike',
 ];
 
-/** The eight an ORC drinking Thistle Tea and a Frenzy Potion actually runs. */
+/** The nine an ORC drinking Thistle Tea and a Frenzy Potion actually runs. */
 const COMBAT_ORDER = [
   'thistle_tea',
   'blood_fury',
@@ -46,6 +50,8 @@ const COMBAT_ORDER = [
   'adrenaline_rush',
   'blade_flurry',
   'slice_and_dice',
+  // Cold Blood paired with a five-point Eviscerate, as one sequence (round 37).
+  'cold_blood',
   'eviscerate',
   'sinister_strike',
 ];
@@ -83,7 +89,7 @@ describe('the Combat list', () => {
     expect(ROGUE_COMBAT.entries.map((entry) => entry.abilityId)).toEqual(OWNER_ORDER);
   });
 
-  it('narrows to the eight entries the owner can see', () => {
+  it('narrows to the nine entries the owner can see', () => {
     expect(
       lit(PRESETS_BY_ID.get('rogue_combat')!.build().rotation.entries).map((e) => e.abilityId),
     ).toEqual(COMBAT_ORDER);

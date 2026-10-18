@@ -709,9 +709,17 @@ export function scaleByPower(request: DamageRequest, weaponDamage = 0): number {
    * neither silently replaces the other -- which is the rule the owner stated
    * about a coefficient and a flat amount, applied one level up.
    */
+  /*
+   * THE HIGHER OF MELEE AND RANGED ATTACK POWER, by the owner's ruling for the
+   * traps: "Using the highest between final calculated Melee attack power and
+   * Ranged attack power." A melee Hunter's melee pool and a ranged Hunter's
+   * ranged pool are each the bigger one, so either build scales on the pool it
+   * actually gears for.
+   */
   const attackPowerCoefficient = request.attackPowerCoefficient ?? 0;
   if (attackPowerCoefficient !== 0) {
-    total += attackPowerCoefficient * request.source.stats.effective.attackPower;
+    const effective = request.source.stats.effective;
+    total += attackPowerCoefficient * Math.max(effective.attackPower, effective.rangedAttackPower);
   }
 
   return total * handMultiplier(request);

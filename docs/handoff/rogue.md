@@ -58,7 +58,7 @@ current figures with `npx vite-node tools/measure_profiles.ts`.
 | --- | --- | --- | --- | --- | --- |
 | Combat | 18/33/0 | **691.1** | 419.8 | **+271.3** | `ROGUE_COMBAT` |
 | Hemo | 17/3/31 | **622.4** | — | *new in this dive* | `ROGUE_HEMO` |
-| Venom | 37/12/2 | **594.5** | 392.7 | **+201.8** | `ROGUE_VENOM` |
+| Venom | 33/16/2 | **594.5** | 392.7 | **+201.8** | `ROGUE_VENOM` |
 | Rupture | 12/8/31 | **584.2** | 377.1 | **+207.1** | `ROGUE_RUPTURE` |
 
 **ALL FOUR RE-READ FROM ONE RUN ON `main`, AND ALL FOUR WERE STALE BY 60 TO 105.**

@@ -298,9 +298,18 @@ describe('where it lands, and where it correctly does not', () => {
       talentBuild('mage', legalise({ arcane_resilience: 2 }, 'mage')).statConversions,
     ).toEqual([{ from: 'intellect', to: 'armor', fraction: 0.5 }]);
 
-    // And NO Mage profile spends a point on it since the respecification, so
-    // the conversion reaches nothing that anybody measures. Both facts, apart.
-    for (const id of ['mage_arcane', 'mage_fire', 'mage_frostfire']) {
+    /*
+     * THE ARCANE MAGE TAKES IT AGAIN, at round 37: the owner's new 48/3/0 tree
+     * spends two points there. Worth nothing all the same -- nothing attacks a
+     * Mage -- which is exactly what this test's title claims.
+     */
+    expect(
+      talentBuild('mage', PRESETS_BY_ID.get('mage_arcane')!.build().talents).statConversions,
+    ).toEqual([{ from: 'intellect', to: 'armor', fraction: 0.5 }]);
+    expect(PRESETS_BY_ID.get('mage_arcane')!.build().encounter.targetAttacks).toBe(false);
+
+    // The other two spend nothing on it. Both facts, apart.
+    for (const id of ['mage_fire', 'mage_frostfire']) {
       expect(
         talentBuild('mage', PRESETS_BY_ID.get(id)!.build().talents).statConversions,
         id,

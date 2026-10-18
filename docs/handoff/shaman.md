@@ -390,7 +390,7 @@ were in a build; one is left, and it works.
 | Profile | Talents | DPS | was | List | Entries |
 | --- | --- | --- | --- | --- | --- |
 | Enh Shaman | 19/32/0 | **625.8** ±8.0 | 604.0 | `SHAMAN_ENHANCEMENT` | 8 |
-| Ele Shaman | 32/10/9 | **375.0** ±3.8 | 295.4 | `SHAMAN_ELEMENTAL` | 4 |
+| Ele Shaman | 32/11/8 | **375.0** ±3.8 | 295.4 | `SHAMAN_ELEMENTAL` | 4 |
 
 **THE DPS COLUMN ABOVE IS THE DEEP DIVE'S AND IS LONG DEAD** -- raid buffs were
 selected rather than assumed after it, which moved all 28 rows. The baseline of

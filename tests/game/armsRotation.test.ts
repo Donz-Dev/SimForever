@@ -11,7 +11,6 @@ import {
   BATTLE_HEROIC_STRIKE_RAGE,
   WARRIOR_DUAL_WIELD_BERSERKER,
   BATTLE_SUNDER_REFRESH_WINDOW_MS,
-  SLAM_SWING_WINDOW_MS,
   WARRIOR_TWO_HAND_BATTLE,
 } from '../../src/game/rotations/warrior';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
@@ -174,21 +173,16 @@ describe('the 2H Arms list', () => {
     }
   });
 
-  it('keeps Slam gated on the swing timer at its new position', () => {
+  it('casts Slam with no swing-timer gate, at its position above Mortal Strike', () => {
     /*
-     * MOVING IT UP CHANGED ITS POSITION AND NOT ITS RULE, and the rule is what
-     * makes a cast time affordable at all: Slam only fires with more than a
-     * second of swing left, so it is refused outright in the window where it
-     * would cost a swing. Above Mortal Strike with that gate removed would be
-     * the Arms warrior trading its hardest hit for a cast.
+     * THE OWNER'S ROUND 37: "Slam should not be fixed to a 1000ms swing gate."
+     * It carried `swingIn above SLAM_SWING_WINDOW_MS`; Improved Slam 2/2 makes
+     * the cast continue the swing rather than reset it, so the gate protected
+     * nothing.
      */
     const slam = WARRIOR_TWO_HAND_BATTLE.entries.find((entry) => entry.abilityId === 'slam');
-    expect(slam?.condition).toEqual({
-      kind: 'swingIn',
-      slot: 'mainHand',
-      compare: 'above',
-      milliseconds: SLAM_SWING_WINDOW_MS,
-    });
+    expect(slam).toBeDefined();
+    expect(slam?.condition).toBeUndefined();
 
     const ids = WARRIOR_TWO_HAND_BATTLE.entries.map((entry) => entry.abilityId);
     expect(ids.indexOf('slam')).toBeLessThan(ids.indexOf('mortal_strike'));

@@ -359,19 +359,11 @@ describe('Spearing Strike needs Battle Stance', () => {
     expect(casts('two_hand_arms', 'Spearing Strike')).toBeGreaterThan(1);
   });
 
-  it('is still in the Berserker list, where it can never fire', () => {
-    /*
-     * The owner's entry, left as written. It cannot fire for TWO reasons now:
-     * the owner's new DW Fury build does not take the talent, so
-     * `PriorityRotation` skips an ability the actor does not know -- and even
-     * with the talent, this list is Berserker Stance and the ability is Battle.
-     *
-     * What must stay true is that it produces no casts rather than an error, and
-     * that the build has not quietly regained the talent.
-     */
+  it('is out of the Berserker list, and the build does not take it', () => {
+    // The owner removed the entry at round 37: "Remove Spearing Strike from APL".
     expect(
       WARRIOR_DUAL_WIELD_BERSERKER.entries.some((entry) => entry.abilityId === 'spearing_strike'),
-    ).toBe(true);
+    ).toBe(false);
     expect(presetTalents('dw_fury').spearing_strike).toBeUndefined();
     expect(casts('dw_fury', 'Spearing Strike')).toBe(0);
   });

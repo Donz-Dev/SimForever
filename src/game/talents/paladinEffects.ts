@@ -386,7 +386,9 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     {
       kind: 'conditionalDamage',
       requires: { twoHanded: false },
-      exceptAbilityIds: ['consecration', 'retribution_aura', 'thorns'],
+      // And HOLY SHOCK, by the owner's later ruling: "One-Handed Weapon
+      // Specialization does not affect Holy Shock."
+      exceptAbilityIds: ['consecration', 'retribution_aura', 'thorns', 'holy_shock'],
     },
   ],
 

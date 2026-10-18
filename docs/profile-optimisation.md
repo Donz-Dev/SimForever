@@ -11,6 +11,12 @@ failures are three different kinds:
 | **an illegal pre-combat list** | the Arcane Mage opener dealt ~1,200-1,400 damage before the clock started; its **+95.9** headline is void | **Gate B** |
 | **not going deep enough** | four of six named profiles got a tree repair and a pre-combat line and **no APL pass at all**; meanwhile six classes nobody named were audited | **Step 1**, **Step 6.6**, and the scope rule in **Step 0** |
 | **measuring inside a fixed frame** | the fight is 60s, two cooldowns were silently on the GCD, and an entry was called dead that fires twice at 240s — none of it visible to a paired probe, because it is true of the baseline too | **Step 1's sixth read**, and *"What the loop cannot find"* |
+| **an edit that disables a DIFFERENT entry** | round 37 took a standalone Premeditation out of Pure Hemo's list, and its Rupture entry -- gated on Premeditation being on cooldown -- fell to **0.0** casts. A potion moved into a stealth opener refused the Ambush beside it. The suite passed both | **Step 7's `USES=1` pass**, on every profile an edit touched, owner edits included |
+
+**AND THE FOURTH ROW IS NOT AN OPTIMISATION FAILURE AT ALL** -- both were the
+owner's own list edits, applied as written. An owner edit is still a CHANGE to a
+list, and a list is a web of gates that name each other: before removing an
+entry, grep the list for every condition that NAMES its ability or its aura.
 
 Every rule here exists because one of those happened. Read
 [CLAUDE.md](../CLAUDE.md)'s section *"An optimisation brief, and five ways this
@@ -579,8 +585,9 @@ directions, and Minor Speed.
 melee or ranged build has **no miss floor** and a usable cap of **8**, so the
 ninth point buys a non-dual-wielder literally nothing; a dual-wielder takes the
 +19% penalty in full on both hands and still collects. Spells miss on a flat
-**17%** floored at **1%**, so the usable spell cap is **16** — arriving by two
-routes, only one of which the ladder folds.
+**17%** with **no floor** since round 35 (it was floored at 1%, cap 16), so the
+usable spell cap is **17** — arriving by two routes, only one of which the
+ladder folds.
 
 ### 6.4 Talents — find the forced points first
 
@@ -983,7 +990,7 @@ three true at once.)
 | `mage_arcane` | ~~`pyroblast` -7.618s, `arcane_blast` -6.029s, -4.529s, -3.029s~~, `arcane_blast` -0.029s | **FIXED.** Now one damaging cast, the owner's own, at the haste-rounding boundary |
 | `mage_fire` | `fireball` -0.059s, ~~`scorch` -0.029s~~ | **FIXED** in round 28. One damaging cast, the owner's own, at the haste-rounding boundary; the revert cost **-24.23** and the loop recovered **+17.74** of it |
 | `mage_frostfire` | `frostfire_bolt` -0.049s, ~~`scorch` -0.029s~~ | **FIXED in round 32.** The project's `scorch` addition is reverted for **-25.90 +/- 9.70**, and nothing legal replaces it |
-| `shaman_elemental` | `lightning_bolt` -0.039s, `flame_shock` 0.000s | **FAIL — two, and BOTH ARE THE OWNER'S OWN LINES.** A question for them, not an edit |
+| `shaman_elemental` | ~~`lightning_bolt` -0.039s~~, `flame_shock` 0.000s | **FIXED in round 37, by the owner** -- they took the Lightning Bolt off the opener, so Flame Shock at 0s is the one damaging cast |
 
 **AND A FIXED OPENER'S REMAINING DESIGN SPACE CAN BE EMPTY, WHICH IS A ROW
 RATHER THAN A SHRUG.** On `mage_frostfire` the revert was not recovered at all:
@@ -1002,11 +1009,11 @@ names a profile that appears in this table, the revert is the first thing it
 does, before any dimension is measured.
 
 **`shaman_elemental` WAS RE-AUDITED IN ITS OWN OPTIMISATION ROUND AND STILL
-FAILS, UNCHANGED.** The round added nothing to that opener and moved nothing in
-it: both damaging casts are the owner's lines, so the ruling has to bend or one
-of the two has to move, and neither is this project's call. Both are also
-load-bearing at the published clock -- removing either is about **-16** at 60s
-and **noise** at 180s, which is a figure to quote if the answer is to drop one.
+FAILED, UNCHANGED** -- both damaging casts were the owner's lines, so it was a
+question rather than an edit, and the figure offered with it was that removing
+either was about **-16** at 60s and **noise** at 180s. **THE OWNER ANSWERED IT AT
+ROUND 37 BY MOVING ONE OF THE TWO**, which is the outcome this row said was
+theirs to choose. All 28 openers now pass Gate B.
 
 **AND THE GATE COST ALMOST NOTHING TO APPLY, WHICH IS THE ARGUMENT FOR IT.**
 Reverting the Arcane Mage's four illegal casts took one edit; the loop then
@@ -1023,8 +1030,12 @@ checker would fail:
   is the only damaging action;
 - **`lw_melee` / `hawk_melee`** — `raptor_strike` is armed, `strider_kick` at 0s
   is the one cast;
-- **`bm_hunter` / `lw_ranged`** — `aimed_shot` at a 2s lead and `sniper_shot` at
-  4s both finish at **exactly 0.000s**, because a Hunter carries no haste here;
+- **`bm_hunter` / `lw_ranged`** — `aimed_shot` at a 2s lead finishes at
+  **exactly 0.000s**, because a Hunter carries no haste here (`lw_ranged` opened
+  on a 4s `sniper_shot` until round 37, which finished at 0.000s the same way);
+- **the three stealth Rogues** — `ambush` or `garrote` at 0s is the one damaging
+  action, and since round 37 the potion beside it is drunk SECOND: a completed
+  action breaks Stealth, so a potion first would refuse the opener outright;
 - **the five haste-rounding rows** — `druid_moonkin` (-0.029s),
   `warlock_smds` (-0.096s), `warlock_firelock` (-0.039s),
   `shadow_priest` (-0.029s) and the single-cast Mage rows above. Every one has

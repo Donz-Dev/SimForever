@@ -195,7 +195,9 @@ export class PriorityRotation implements Rotation {
        * is a two-minute cooldown thrown away, and nothing reports it.
        */
       if (entry.sequence && entry.sequence.length > 0) {
-        if (!this.sequenceIsAffordable(context, actor, entry.sequence, target)) continue;
+        if (!this.sequenceIsAffordable(context, actor, entry.abilityId, entry.sequence, target)) {
+          continue;
+        }
         actor.pendingSequence = { abilityIds: entry.sequence, index: 0 };
       }
 
@@ -232,6 +234,20 @@ export class PriorityRotation implements Rotation {
     const pending = actor.pendingSequence;
     if (!pending) return 'none';
 
+    /*
+     * A STEP THE CHARACTER DOES NOT KNOW IS SKIPPED, the rule an ordinary entry
+     * already follows. One Hunter list names Berserking AND Blood Fury as steps
+     * so it serves a Troll and an Orc; each race learns one, and the other is
+     * passed over rather than abandoning the sequence.
+     */
+    while (pending.index < pending.abilityIds.length && !actor.abilities.get(pending.abilityIds[pending.index])) {
+      pending.index += 1;
+    }
+    if (pending.index >= pending.abilityIds.length) {
+      actor.pendingSequence = null;
+      return 'none';
+    }
+
     const ability = actor.abilities.get(pending.abilityIds[pending.index]);
     const target = context.defaultTargetFor(actor);
 
@@ -267,15 +283,36 @@ export class PriorityRotation implements Rotation {
   private sequenceIsAffordable(
     context: SimulationContext,
     actor: Combatant,
+    head: string,
     sequence: readonly string[],
     target: Combatant | undefined,
   ): boolean {
+    const earlier: string[] = [head];
     for (const abilityId of sequence) {
       const ability = actor.abilities.get(abilityId);
-      if (!ability) return false;
-      if (context.castRejection(actor, ability, target, { ignoreGcd: true }) !== undefined) {
-        return false;
-      }
+      // Not known: skipped, as `resumeSequence` will skip it.
+      if (!ability) continue;
+      const opened = (ability.enabledBy ?? []).some((id) => earlier.includes(id));
+      earlier.push(abilityId);
+      const rejection = context.castRejection(actor, ability, target, { ignoreGcd: true });
+      /*
+       * ======================================================================
+       * AN ABILITY'S OWN `canCast` IS FORGIVEN HERE WHEN AN EARLIER STEP IS ONE
+       * IT DECLARES CAN OPEN IT (`Ability.enabledBy`). "Vanish, then Premeditation, then Ambush" is
+       * the owner's sequence and both later steps require the stealth Vanish
+       * creates -- checked before Vanish, both were refused and the whole
+       * sequence never started. CLAUDE.md recorded exactly that as the reason
+       * a sequence could not express a Vanish-Ambush pair.
+       *
+       * ONLY that one reason. Cost, cooldown, stance and target are still
+       * checked, because no earlier step changes them for the better. A step
+       * whose own gate is still shut when its turn comes is ABANDONED by
+       * `resumeSequence`, which is the fallback this check always had.
+       * ======================================================================
+       */
+      if (rejection === undefined) continue;
+      if (rejection === 'condition_failed' && opened) continue;
+      return false;
     }
     return true;
   }

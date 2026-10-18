@@ -1071,7 +1071,13 @@ describe('Rapid Fire reaches the melee Hunter too', () => {
       HUNTER_LONE_WOLF_RANGED,
       HUNTER_LONE_WOLF_MELEE,
     ]) {
-      expect(list.entries.map((entry) => entry.abilityId)).toContain('rapid_fire');
+      /*
+       * AS AN ENTRY OR AS A STEP: since round 37 Rapid Fire is a step of the
+       * owner's Major Frenzy Potion cooldown stack in all three lists, and its
+       * standalone entry is gone.
+       */
+      const named = list.entries.flatMap((entry) => [entry.abilityId, ...(entry.sequence ?? [])]);
+      expect(named).toContain('rapid_fire');
     }
 
     /*

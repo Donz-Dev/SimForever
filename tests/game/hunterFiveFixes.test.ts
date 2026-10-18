@@ -339,7 +339,7 @@ describe('Deadly Aspects fires from Auto Shot', () => {
 });
 
 describe('Summon Hawk survives dropping Bestial Wrath', () => {
-  it('is in the ranged list as well, because a different talent grants it', () => {
+  it('lands in the ranged list, which the owner has since taken the hawk out of', () => {
     /*
      * ------------------------------------------------------------------------
      * `hunterRotation` dispatches on `bestial_wrath`, the 31-point capstone,
@@ -356,10 +356,16 @@ describe('Summon Hawk survives dropping Bestial Wrath', () => {
     expect(hunterRotation(bm.character.combatStyle, bm.talents)?.name).toMatch(/Beast Mastery/);
     expect(hunterRotation(bm.character.combatStyle, without)?.name).toMatch(/Lone Wolf Ranged/);
 
-    // Both of the lists such a build can land in now carry the hawk.
-    for (const list of [HUNTER_BEAST_MASTERY, HUNTER_LONE_WOLF_RANGED]) {
-      expect(list.entries.map((entry) => entry.abilityId)).toContain('summon_hawk');
-    }
+    /*
+     * THE RANGED LIST CARRIED THE HAWK FOR THIS REASON, AND THE OWNER REMOVED IT
+     * at round 37: "Remove Summon Hawk from the combat APL" on MM Hunter, which is
+     * the profile that list serves. So such a build stops casting it by RULING
+     * now, where before it stopped by accident -- and the BM list keeps it.
+     */
+    expect(HUNTER_BEAST_MASTERY.entries.map((entry) => entry.abilityId)).toContain('summon_hawk');
+    expect(HUNTER_LONE_WOLF_RANGED.entries.map((entry) => entry.abilityId)).not.toContain(
+      'summon_hawk',
+    );
   });
 
   it('is silent for the profile that does not take it', () => {

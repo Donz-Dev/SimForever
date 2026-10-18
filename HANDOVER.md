@@ -66,6 +66,7 @@ the tooling to be a bit more sophisticated as well."
 | 34 | **SIX PRs INTEGRATED, AND WHAT THE MERGES THEMSELVES GOT WRONG** -- #287 to #292, strictly sequential because every squash re-conflicted the rest. Rounds renumbered 28-33 in MERGE order; the question count re-derived five times; two SEMANTIC conflicts git could not see | **no figure re-measured**, on the standing instruction. Three resolutions introduced a defect the markers did not show -- one reached `main` and is repaired | see below |
 | 35 | **A MISCELLANEOUS CLEANUP, TEN OWNER ITEMS IN ONE PR** -- Rupture by combo point, the spell miss floor removed, the Paladin seal and Judgement balance pass, the Seal Twist Echo bug, three Shaman options (Flametongue Weapon, Rockbiter Weapon, Flametongue Totem), Frost Oil, and Bane of Doom, Cone of Cold and Soul Fire declared | **not re-baselined**, on the owner's standing instruction. `USES=1` on the five touched profiles: the new imbue entries read `(switched off in the list)` and nothing new never-fires. Five new questions, one old one answered | see below |
 | 36 | **RACIALS, PALADINS, THREE RAID BUFFS AND THE ARCANE MAGE** -- crit damage racials multiply the whole base, Holy Strike's flat damage halved, Consecration 4.125%, One-Handed Weapon Specialization with three exceptions, Devotion Aura everywhere and Thorns/Retribution Aura on the tanks, Missile Barrage off Arcane Missiles, a race swap in the GUI and an Arcane Blast stack chart | **not re-baselined**. Arcane's missiles fall **15.7 -> 10.5 casts a fight** and the profile with them; the tanks gain ~11% of their damage from the two retaliation auras | see below |
+| 37 | **THE OWNER'S LIST ACROSS 25 PROFILES, AND THREE MECHANISMS IT NEEDED** -- five new talent trees, ~30 list and opener edits, Garrote declared, a sequence that VANISH opens (`Ability.enabledBy`), channels spending Revelation and Inner Focus on their last tick, 40 unviable racial entries removed, empty off-hand weapon effects, and the four template sets in the gear picker | **not re-baselined**. `USES=1` on 22 touched profiles: every new entry and sequence fires; two found by it and fixed -- the potion breaking Stealth, and Pure Hemo's Rupture at 0.0 | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -152,6 +153,63 @@ Rupture Rogue's pre-combat `stealth` line as `<-- NEVER HAPPENED`. It does on
 does not read that table the way the APL panel and the opener guard do. A
 reporting gap, not a rotation one.
 
+## Round 37: the owner's list across 25 profiles
+
+**WHAT THE ROUND WAS**: one message from the owner with an item for nearly every
+profile, plus four general asks. All of it is in one PR. The general half:
+
+| | what it was | what it took |
+| --- | --- | --- |
+| unviable racials | an entry for a racial no legal race of the class learns is REMOVED, not switched off | **40 entries across 19 presets** -- Druids 3/3/4, Paladins 4 each, Shamans 2, Mages, Hunters, Warlocks and the Shadow Priest 1 each; Warriors and Rogues none. `racialsForRace` takes the class; `tools/audit_racial_entries.ts` re-counts |
+| sequences | "Life Tap 4x only works once" | the engine repeats a sequence correctly (Searing Pain x4 over three windows). Life Tap's own `canCast` refuses -- it needs 840 mana of room AND more than 840 health, and nothing heals a Warlock on a dummy -- so the later taps are refused for the RESOURCE and the sequence abandons |
+| Vanish-led sequences | Premeditation, Ambush and Garrote need Stealth, which only Vanish grants, so checking the whole sequence first refused all of them | `Ability.enabledBy: ['vanish']` -- the sequence check forgives a `condition_failed` on a step only when an EARLIER step is named there. Forgiving every condition broke the Cold Blood + Eviscerate test at 0 points |
+| channels | Revelation and Inner Focus were spent on the FIRST tick of Wrack, Mind Flay and Arcane Missiles | both spenders wait for `final`, so the whole channel rolls at the charge's crit |
+| template gear | B55 / E65 / E75 / E85 in the gear listing | listed first in every slot picker; a hand-built character gets the templates of the template items it WEARS (`benchmarkTemplatesWorn`) -- found by checking the picker in the browser, where a fresh character showed none |
+| off-hand weapon effect | "OH weapon effect should be empty" on eleven profiles | ONE rule, `withoutUnusedOffHandEffect`: dropped wherever the style's off hand is not a weapon -- which is exactly the eleven |
+
+Per profile, the owner's items as given: new trees for Venom, Combat Mut,
+Combat, Pure Hemo and Arcane; Ele 1 point Totemic Focus -> Shamanistic Focus;
+Seal Twist 2 Unyielding Faith -> Reverence; Shockadin 2H 1 point Two-Handed
+Weapon Specialization -> Consecrated Ground. Slam ungated; Spearing Strike out
+of DW Fury. Frenzy Potion conditions on the three Combat-tree Rogues, Cold Blood
++ Eviscerate as one sequence on five, Vanish + Premeditation + Ambush on two,
+Vanish + Premeditation + GARROTE on Pure Hemo. Garrote declared (7% AP a tick,
+18s, a bleed, stealth only; Opportunity and Initiative reach it). Murder now
+grants nothing -- a target cause. The Cat pools to 74 energy for Berserk with
+Shifting Power spent and Rake and Rip up. Imbues out of the Enh list, Flametongue
+in its opener, the Ret's weapon and a spell-crit stone on its main hand. Fire
+Blast at <=1 Heating Up on both Fire lists. Arcane: Power + PoM + Wrath stacked
+on the Spellblasting potion at four stacks. Holy Shock outside One-Handed Weapon
+Specialization. Hunter traps 13% of max(melee, ranged) AP; Rapid Fire and
+Bestial Wrath off the GCD; every Hunter's cooldowns in one Frenzy Potion stack;
+MM's weave gates and Summon Hawk gone. Shadow Word: Death ungated, Inner Focus
+paired with Mind Flay. Openers as written, except one ordering below.
+
+**ONE CONSEQUENCE NOBODY ASKED FOR**: with Flametongue on the main hand instead
+of Windfury, the ticked Windfury Totem now pays the Enhancement Shaman -- its
+own-imbue clause no longer applies. `windfuryImbue.test.ts` pins both halves.
+
+**`USES=1` FOUND TWO THINGS THE SUITE DID NOT, AND BOTH WERE THIS ROUND'S
+EDITS.**
+
+| | what | fixed by |
+| --- | --- | --- |
+| the potion broke Stealth | the opener test said "ambush never happened" on Rupture and Hemo, "garrote" on Pure Hemo. The stealth rule ends Stealth on any completed action but Premeditation, and the owner's line put the potion first | the stealth opener first, the potion second, in the same instant. **A question**: the first Ambush goes without the potion's AP |
+| Pure Hemo's Rupture at 0.0 | its gate waited for PREMEDITATION to be on cooldown, written when Premeditation opened every fight. Now it is only a Vanish step and sat ready all fight | the gate waits on Vanish, as every other list's does -- and the Vanish -> Garrote sequence was starved to 0.6 a fight by Hemorrhage, so the filler pools for it now. Vanish 2.0, Garrote 3.0, Rupture 1.0; **785.6** against main's 782.4 over 30 fights |
+
+**THE SECOND IS THE SHAPE CLAUDE.md DESCRIBES AS "A MEASUREMENT THAT REMOVES ONE
+ENTRY CAN SILENTLY REMOVE ANOTHER"** -- removing a standalone Premeditation
+entry disabled a Rupture entry that named it in a gate. The suite passed with it
+broken; the uses column is what showed it.
+
+**AND A ZERO THAT WAS CADENCE.** The Shadow Word: Death test was rewritten to
+assert the old hold band is now reached, and it is not: casts land at about 4s,
+29s and 51s, the 18s cooldown plus whatever Mind Flay is running. The ruling is
+checked by the condition being GONE, not by where the casts fall.
+
+**WHAT WAS NOT DONE**: no profile re-baselined, on the standing instruction. The
+DPS figures quoted above are 30-fight `USES=1` reads, not baseline figures.
+
 ## Round 36: racials, Paladins, three raid buffs and the Arcane Mage
 
 | | what changed |
@@ -214,11 +272,8 @@ write-up; none is an engine gap.
 | **Is the Ele Shaman meant to carry a MANA POTION?** It is the only profile in the project where `potion` beats the damage buff, and only at length: Major Mana over Major Spellblasting is **-13.33 +/- 1.65 at 60s** and **+75.77 +/- 3.44 at 180s**. The written rule is "`other` takes the pool the build runs out of and `potion` takes the damage buff", and **no mana potion is selected anywhere** -- so shipping this reverses a project-wide convention on the strength of a clock you have not settled. Not shipped; both figures recorded | round 27 | one consumable row, and whether the convention has an exception |
 | **Three more Ele Shaman answers invert between 60s and 180s and none is shipped**: removing the Searing Totem entry is **+8.12** then **-52.74**, removing the Lava Burst entry is **-5.51** then **+6.97**, and Convection 5/5 is **-0.18 noise** then **+19.05**. Only Convection is free at both, which is why only it went in | round 27 | three list decisions, all downstream of the fight-length question above |
 | **Is `stat_weights`' haste row trustworthy on a build with a Searing Totem?** It prices +1% haste at **-15.12 +/- 0.77** at 180s; taking the same 2% back off through the enchants measures **-22.58**. Both directions lose, so it is not a slope -- totem ticks read **35.0 at haste ratings 0, 9, 10, 11, 30 and 60 and 37.7 at 19, 20 and 21**, and 20 is what the build wears. The 55 second totem's re-application is gated on the aura having fallen off, so whether the last application ticks at all is a knife edge against the fight end. **The enchant question on that profile is therefore unanswered rather than answered**, and the shipped loadout is kept | round 27 | two enchant slots, and whether the totem's re-application rule wants a tolerance |
-| **`shaman_elemental`'s opener finishes TWO damaging casts, and both lines are yours** -- Lightning Bolt at a 2s lead plus Flame Shock at 0s. A player cannot complete both at t=0, so one of them has to move or the ruling has to bend | round 23 | that opener, and whether the at-most-one rule has an exception |
-| **Should the shot-window gate come off the three Hunter cast entries?** With auto shot no longer suspended, "only if a ranged auto-attack fired in the last 0.5s" spends something to buy nothing -- it makes a cast WAIT for a window that is now worthless. Removing it from all three measures **+27.6 REAL on BM Hunter** and +8.6 (noise) on LW Ranged. **They are YOUR conditions, so they are kept**: this is one line per entry, on `aimed_shot` in Beast Mastery and `aimed_shot` plus `sniper_shot` in Lone Wolf Ranged | round 26 | about 28 DPS on one profile, and the reason the gate exists at all |
 | **Are RAGE OF THE FARSEER and ELEMENTAL MASTERY meant to trigger a global cooldown?** Both are instants on a 180 second cooldown, and `abilities/shaman.ts` leaves both ON the GCD as the DEFAULT rather than as a decision -- the spellbook capture states no cost, no cast time and nothing about the GCD, and both comments say so in as many words, including "the owner has ruled several cooldowns off the GCD individually, so if this is one of them it is one line". **THIS ONE PRICES A SHIPPED CHANGE**: pre-casting the farseer at a 0s lead is worth **+13.30** entirely because it dodges the GCD, so if the ability should never have been paying one, that figure is pricing a bug and goes the way Arcane Power's +24.9 did | round 27 | **+13.30 on Enh Shaman**, and the Elemental Shaman's +13.9 for the same pre-cast of Elemental Mastery -- two profiles, same question |
 | **Your Searing Totem pre-cast at a 1.5s lead measures +3.09 +/- 3.02 to REMOVE**, on the Enhancement Shaman. It is kept because it is your line and the figure barely clears its interval -- but it is **also** the subject of the ticking-effect question three rows above, so the same line is now flagged for two independent reasons: it may be worth a little to delete, and it may be illegal before the pull | round 27 | one opener line, and it would answer half of the ticking-effect question by removing the only case | 
-| **Should the Arcane Mage take Arcane Wrath, now that Presence of Mind works on it?** You have raised the spell twice, and its "very solid justification for not taking" expired with the Arcane Blast reading it rested on. It has been un-pricable since: a 3.5-second cast whose one obvious pairing did not work on it. No Mage preset spends the point today | round 29 | the Arcane build and its list, and a spell you have twice said looks worth taking |
 | **The caster benchmark templates aim at a spell cap of 16, which is 17 now.** Every caster row's hit was set so gear plus talents reached 16; with the floor gone each misses 1% more than the template meant. The Tauren precedent was your "+10 hit rating, subtracted from elsewhere"; nothing was changed on that authority, and the Moonkin is pinned one point short in `statHeadroom.test.ts` | round 35 | the hit row on every caster template, about 1% miss on every caster profile |
 | **Soul Fire's coefficient is Classic's 100%**, under `PLACEHOLDER_SOUL_FIRE_SP_COEFFICIENT` -- you gave its damage, cost, cast and cooldown and no coefficient, and the sheet has no row | round 35 | one constant; no profile casts Soul Fire yet |
 | **Flametongue Weapon and Flametongue Totem roll no table and crit at MELEE crit for 2x**, the poison-and-seal precedent for damage riding a weapon hit. They are Fire damage and could equally be spell crit at 1.5x | round 35 | the crit half of both Flametongues |
@@ -227,8 +282,13 @@ write-up; none is an engine gap.
 | **Thorns and Retribution Aura fire on EVERY attack, including a miss, a dodge or a parry** -- your "every time a target attacks you" read literally. Classic's say "when hit". They also cannot crit and roll no table, and they are the CARRIER'S damage, so its multipliers reach them -- which is why your One-Handed Weapon Specialization ruling names them | round 36 | about a third of the two auras' damage on the tanks, who avoid that much |
 | **"Invisible" racial entries are switched OFF and still listed**, greyed and struck through with the eye glyph, rather than hidden. Hiding would also hide the toggle that lights them again | round 36 | how the APL panel reads |
 | **Missile Barrage's missile chance is still in the client's talent row** and is read and ignored in code, ahead of the client. The line to delete when the client ships it is marked | round 36 | nothing until the client changes |
+| **A potion breaks Stealth, so the three stealth openers drink it AFTER the Ambush or Garrote**, in the same instant. Your stealth ruling names Premeditation as the only exception, and a potion is a completed action -- drunk first, it ended Stealth and the Ambush was refused. So the FIRST Ambush (or Garrote) does not carry the Frenzy Potion's attack power | round 37 | whether potions should join Premeditation as a stealth exception |
+| **Arcane Wrath has its own entry above the non-Barrage Missiles, gated at FOUR Arcane Blast stacks** -- the gate of the entry it sits above. "Above the non-Barrage Missiles" gave a position and no condition; ungated, it would cast a 3.5s spell below four stacks where Arcane Blast is meant to be building | round 37 | how often the Wrath is cast outside the stack (4.3 a fight now, counting the stack's) |
+| **Pure Hemo pools energy for its Vanish -> Garrote sequence, and its Rupture and Preparation wait on VANISH**, both ours. Without the pool the sequence fired **0.6** times a fight (Hemorrhage took the energy first); with it, **2.0**. And Premeditation is only ever a sequence step now, so the old "Premeditation on cooldown" gate left Rupture at **0.0** casts | round 37 | three gates on the list, one line each to revert |
+| **The Enh Shaman holds the Seal Twist Ret's two-hander**, as you asked, and that mace's `Classes:` line is rewritten to "Paladin, Shaman" for the borrower -- otherwise the proficiency filter refuses a weapon you specified | round 37 | which classes a template weapon is offered to |
+| **The Hunter cooldown stacks have no standalone Bestial Wrath, Rapid Fire or racial entries any more**, so all of them fire only when every step of the stack is ready together -- once in a 60s fight. In a longer one the stack waits for the slowest cooldown in it | round 37 | casts per fight past three minutes |
 
-**TWENTY-EIGHT ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, and round 36 added four and had one answered the same day -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**THIRTY ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, and round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
@@ -10016,16 +10076,16 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Arcane Mage | Mage | 35/11/5 | 1123.4 | | LW Melee | Hunter | 5/13/33 | 878.8 |
+| Arcane Mage | Mage | 48/3/0 | 1123.4 | | LW Melee | Hunter | 5/13/33 | 878.8 |
 | Frostfire Mage | Mage | 0/29/22 | 1086.4 | | Shockadin | Paladin | 23/0/28 | 867.8 |
 | DW Fury | Warrior | 17/34/0 | 1068.4 | | Combat Mut | Rogue | 30/21/0 | 848.0 |
 | LW Ranged | Hunter | 5/41/5 | 1021.0 | | Hemo Dagger | Rogue | 17/3/31 | 840.2 |
 | Fire Mage | Mage | 15/31/5 | 1020.7 | | **Enh Shaman** | Shaman | 19/32/0 | **838.8** |
 | BM Hunter | Hunter | 31/20/0 | 968.2 | | Moonkin | Druid | 41/0/10 | 820.3 |
-| Cat Druid | Druid | 9/34/8 | 966.9 | | Ele Shaman | Shaman | 32/10/9 | 792.8 |
-| Seal Twist Ret | Paladin | 15/0/36 | 948.6 | | Pure Hemo | Rogue | 21/8/22 | 775.9 |
-| Hawk Melee | Hunter | 16/11/24 | 937.6 | | Venom Rogue | Rogue | 37/12/2 | 771.6 |
-| Shockadin 2H | Paladin | 22/0/29 | 935.2 | | SM/DS | Warlock | 35/11/5 | 769.4 |
+| Cat Druid | Druid | 9/34/8 | 966.9 | | Ele Shaman | Shaman | 32/11/8 | 792.8 |
+| Seal Twist Ret | Paladin | 15/0/36 | 948.6 | | Pure Hemo | Rogue | 19/8/24 | 775.9 |
+| Hawk Melee | Hunter | 16/11/24 | 937.6 | | Venom Rogue | Rogue | 33/16/2 | 771.6 |
+| Shockadin 2H | Paladin | 23/0/28 | 935.2 | | SM/DS | Warlock | 35/11/5 | 769.4 |
 | Shadow Priest | Priest | 14/2/35 | 931.0 | | Rupture Rogue | Rogue | 12/8/31 | 754.9 |
 | 2H Arms | Warrior | 39/10/2 | 927.0 | | Prot Pally | Paladin | 8/34/9 | 551.1 |
 elock | Warlock | 5/11/35 | 910.5 | | Prot Warr | Warrior | 17/0/34 | 499.5 |

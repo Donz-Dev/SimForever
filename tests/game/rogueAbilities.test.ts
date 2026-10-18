@@ -574,7 +574,8 @@ describe('Lethality, which named six abilities and could not reach them', () => 
 
   it('scales with rank, on the MELEE crit half', () => {
     /*
-     * Venom 5/5 is 20% and Combat 4/5 is 16%.
+     * Venom 5/5 is 20%, and Combat 5/5 is 20% too since the owner's round 37
+     * tree (it was 4/5, 16%).
      *
      * THE RUPTURE BUILD SPENDS NOTHING HERE NOW. It held 2/5 for 8% until the
      * owner respecified its Assassination twelve -- Lethality 2 -> 0, with the
@@ -590,7 +591,7 @@ describe('Lethality, which named six abilities and could not reach them', () => 
     expect(rogue('rogue_venom').abilityModifiers.for('sinister_strike').critMultiplierBonus)
       .toBeCloseTo(0.2, 6);
     expect(rogue('rogue_combat').abilityModifiers.for('sinister_strike').critMultiplierBonus)
-      .toBeCloseTo(0.16, 6);
+      .toBeCloseTo(0.2, 6);
     expect(
       rogue('rogue_rupture').abilityModifiers.for('sinister_strike').critMultiplierBonus ?? 0,
     ).toBe(0);
