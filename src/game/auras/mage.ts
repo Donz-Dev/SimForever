@@ -585,6 +585,7 @@ export const MAGE_DAMAGE_SPELL_IDS: readonly string[] = [
   ...FIRE_SPELL_IDS,
   'frostbolt',
   'ice_lance',
+  'cone_of_cold',
   'arcane_missiles',
   'arcane_blast',
 ];
@@ -1115,7 +1116,12 @@ export const WINTERS_CHILL: AuraDefinition = wintersChillAura(5);
  * lists -- it is dealt as Fire because a `DamageRequest` carries one school,
  * and that is a modelling choice rather than a claim that it is not Frost.
  */
-export const FROST_SPELL_IDS: readonly string[] = ['frostbolt', 'ice_lance', 'frostfire_bolt'];
+export const FROST_SPELL_IDS: readonly string[] = [
+  'frostbolt',
+  'ice_lance',
+  'frostfire_bolt',
+  'cone_of_cold',
+];
 
 /**
  * Missile Barrage: "reduce the channeled duration of your next Arcane Missiles

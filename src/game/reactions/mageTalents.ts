@@ -428,7 +428,7 @@ export const wintersChill: TalentReactionBuilder = (chancePercent, values) => {
  */
 
 /** The ids that slow, which is what "a Chill effect" means here. */
-export const CHILL_ABILITY_IDS: readonly string[] = ['frostbolt', 'frostfire_bolt'];
+export const CHILL_ABILITY_IDS: readonly string[] = ['frostbolt', 'frostfire_bolt', 'cone_of_cold'];
 
 export const fingersOfFrost = (charges: number): Reaction => ({
   id: 'fingers_of_frost',

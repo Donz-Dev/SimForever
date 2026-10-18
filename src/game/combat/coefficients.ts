@@ -491,6 +491,9 @@ export const SCORCH_SP_COEFFICIENT = 0.429;
  * ----------------------------------------------------------------------------
  */
 export const ICE_LANCE_SP_COEFFICIENT = 1.5 / 3.5 / 3;
+
+/** Cone of Cold: 12.9% spell power, the owner's figure given with the spell. */
+export const CONE_OF_COLD_SP_COEFFICIENT = 0.129;
 export const BLAST_WAVE_SP_COEFFICIENT = 0.129;
 export const FROSTBOLT_SP_COEFFICIENT = 0.814;
 
@@ -552,6 +555,22 @@ export const INCINERATE_SP_COEFFICIENT = 0.714;
 export const CONFLAGRATE_SP_COEFFICIENT = 0.429;
 export const SHADOWBURN_SP_COEFFICIENT = 0.429;
 export const SEARING_PAIN_SP_COEFFICIENT = 0.429;
+
+/** Bane of Doom: 400% spell power on its one hit, the owner's figure. */
+export const BANE_OF_DOOM_SP_COEFFICIENT = 4.0;
+
+/**
+ * Soul Fire: NO FIGURE HAS BEEN GIVEN, and this is Classic's.
+ *
+ * ----------------------------------------------------------------------------
+ * The owner supplied Soul Fire's damage, cost, cast time and cooldown and no
+ * coefficient, and `WoWSimWorksheet.xlsx` has no row for it. Classic's is its
+ * cast time over 3.5, CAPPED at 1.0 -- a six-second cast is 100%. Borrowed so
+ * the spell is not unreachable, under a `PLACEHOLDER_` name so nothing reads it
+ * without seeing that, and it is a question for the owner.
+ * ----------------------------------------------------------------------------
+ */
+export const PLACEHOLDER_SOUL_FIRE_SP_COEFFICIENT = 1.0;
 
 /** Immolate, both halves: the hit, then the burn per tick. */
 export const IMMOLATE_SP_COEFFICIENT = 0.2;

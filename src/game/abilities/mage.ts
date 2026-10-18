@@ -28,6 +28,7 @@ import {
   ARCANE_BLAST_SP_COEFFICIENT,
   ARCANE_MISSILES_TICK_SP_COEFFICIENT,
   BLAST_WAVE_SP_COEFFICIENT,
+  CONE_OF_COLD_SP_COEFFICIENT,
   FIRE_BLAST_SP_COEFFICIENT,
   FROSTBOLT_SP_COEFFICIENT,
   ICE_LANCE_SP_COEFFICIENT,
@@ -941,6 +942,51 @@ export const ARCANE_WRATH: Ability = {
   },
 };
 
+/**
+ * Cone of Cold: "Targets in a cone in front of the caster take 332.929 to
+ * 362.071 Frost damage and are slowed by 40% for 6 sec." 555 mana, instant, 10
+ * second cooldown, 12.9% spell power.
+ *
+ * ----------------------------------------------------------------------------
+ * THE OWNER'S TOOLTIP, NOT THE CAPTURE. `forever-mage-spellbook.json` has rank
+ * 4 at 260 to 286 for 465 mana; the owner's is the later statement and wins,
+ * the same reading that gives Swipe 3% over a sheet saying 10%.
+ *
+ * ONE TARGET, because every encounter here has one. The cone is positioning.
+ *
+ * THE SLOW IS OUT OF SCOPE EXCEPT AS A CHILL, by the owner's ruling: "the slow
+ * element doesn't need to be part of the scope other than the ability to proc
+ * fingers of frost". So it is in `CHILL_ABILITY_IDS`, and nothing else about
+ * the snare is modelled.
+ *
+ * IT IS WHAT WINTER'S CHILL AND IMPROVED CONE OF COLD WERE WAITING FOR, and
+ * both talents name it: the debuff amplifies Cone of Cold alone, and the talent
+ * is a flat damage bonus on it.
+ * ----------------------------------------------------------------------------
+ */
+export const CONE_OF_COLD_DAMAGE = (332.929 + 362.071) / 2;
+
+export const CONE_OF_COLD: Ability = {
+  id: 'cone_of_cold',
+  name: 'Cone of Cold',
+  cost: { resource: 'mana', amount: 555 },
+  cooldownMs: seconds(10),
+  attackTable: 'spell',
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    dealDamage(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: 'frost',
+      baseAmount: CONE_OF_COLD_DAMAGE,
+      powerCoefficient: CONE_OF_COLD_SP_COEFFICIENT,
+      attackTable: ability.attackTable,
+    });
+  },
+};
+
 export const MAGE_ABILITIES: readonly Ability[] = [
   ARCANE_WRATH,
   FIREBALL,
@@ -952,6 +998,7 @@ export const MAGE_ABILITIES: readonly Ability[] = [
   FROSTBOLT,
   FROSTFIRE_BOLT,
   ICE_LANCE,
+  CONE_OF_COLD,
   ARCANE_MISSILES,
   ARCANE_BLAST_ABILITY,
   ARCANE_POWER_ABILITY,

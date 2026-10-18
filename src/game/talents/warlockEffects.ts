@@ -175,13 +175,13 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      *
      * SM/DS SPENDS THREE POINTS HERE and 48% of its damage is these effects.
      *
-     * FOUR OF THE SEVEN SPELLS IT NAMES EXIST, and it reaches every one that is
+     * FIVE OF THE SEVEN SPELLS IT NAMES EXIST, and it reaches every one that is
      * in the profile's own book -- which is the standard Twin Disciplines set on
      * the Priest: a talent naming spells one by one is fully modelled when it
      * reaches the build's, and the ones missing belong to the SPELL list rather
-     * than to this talent. Bane of Doom, Drain Soul and Drain Life are in the
-     * spellbook capture, are declared nowhere in this project, and
-     * `WoWSimWorksheet.xlsx` has no coefficient row for any of them.
+     * than to this talent. Drain Soul and Drain Life are in the spellbook
+     * capture and declared nowhere in this project. (Bane of Doom joined the
+     * list when the owner gave its figures.)
      * ------------------------------------------------------------------------
      */
     {
@@ -317,9 +317,10 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     {
       kind: 'unmodelled',
       reason:
-        'Three of its four clauses are about SOUL FIRE -- its cooldown, its ' +
-        'cast time and its Soul Shard -- and Soul Fire is not a declared ' +
-        'ability here. The fourth, +6% damage while the target is below 35% ' +
+        'Three of its four clauses are about SOUL FIRE -- a PERCENTAGE off its ' +
+        'cooldown, and a window making it faster and shard-free -- and Soul ' +
+        'Fire is declared now, but a percentage cooldown cut and that window ' +
+        'are not built. The fourth, +6% damage while the target is below 35% ' +
         'health, is a per-ability damage modifier conditional on the final ' +
         'fraction of the fight: 35% is the CLOCK by the owner ruling, the ' +
         'same one the Rogue Quietus runs on, so the threshold is reachable ' +
@@ -353,6 +354,10 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'abilityCastTime', abilityId: 'shadow_bolt' },
     { kind: 'abilityCastTime', abilityId: 'immolate' },
     { kind: 'abilityCastTime', abilityId: 'incinerate' },
+    // "...and your Soul Fire spell by {1} sec" -- the SECOND number, which is
+    // the larger one; reading index 0 would take Soul Fire's off at Shadow
+    // Bolt's rate.
+    { kind: 'abilityCastTime', abilityId: 'soul_fire', valueIndex: 1 },
   ],
 
   molten_skin: [

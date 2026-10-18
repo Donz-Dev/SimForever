@@ -1211,8 +1211,12 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   cap before treating a zero as a bug**, and measure the MISS RATE off the event
   stream rather than computing it: that is the only reading that accounts for the
   dual-wield penalty, per-hand skill and school-scoped hit at once.
-- **SPELLS MISS ON A FLAT 17% AND THE MISS FLOORS AT 1%, so the usable spell hit
-  cap is 16.** The owner's figures. `AttackChances.missFloor` carries it ON THE
+- **SPELLS MISS ON A FLAT 17% AND THERE IS NO FLOOR ANY MORE, so the usable
+  spell hit cap is 17.** The owner first ruled a 1% floor and then removed it:
+  "this has been removed. Which means spells need 17% chance to hit in order to
+  cap." `spellMissFloor` is kept at ZERO rather than deleted, for the reason
+  below -- what follows is why the floor travels with the table, written while
+  it was 1%. `AttackChances.missFloor` carries it ON THE
   TABLE rather than being applied where the table is built, because hit arrives
   along TWO routes and only one goes through `attackChances`: the
   character-wide `hitChance` stat is folded in there, and a SCHOOL-scoped

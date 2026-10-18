@@ -414,7 +414,7 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   frost_channeling: [
     {
       kind: 'grantCastModifier',
-      abilityIds: ['frostbolt', 'frostfire_bolt', 'ice_lance'],
+      abilityIds: ['frostbolt', 'frostfire_bolt', 'ice_lance', 'cone_of_cold'],
       property: 'costFraction',
     },
     { kind: 'unmodelled', scope: 'threat', reason: `Its mana reduction applies. ${NO_THREAT}` },
@@ -505,17 +505,8 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    */
   shatter: [{ kind: 'critWhileAura', auraId: 'fingers_of_frost', abilityId: ALL_ABILITIES }],
 
-  improved_cone_of_cold: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'The damage of Cone of Cold, which IS captured -- 328 to 358 Frost, ' +
-        '555 mana, instant, 10 second cooldown -- and is not declared. It is ' +
-        'the one Mage area spell that would also be a real single-target ' +
-        'instant, so it is the strongest candidate in the spell exclusion ' +
-        'proposal. No Mage profile takes this talent.',
-    },
-  ],
+  // Cone of Cold is declared now, so this is a plain damage bonus on it.
+  improved_cone_of_cold: [{ kind: 'abilityDamage', abilityId: 'cone_of_cold' }],
 
   /*
    * ITS OLD REASON CONTRADICTED ITSELF IN ONE SENTENCE -- "the only Frost
@@ -527,12 +518,11 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     {
       kind: 'unmodelled',
       reason:
-        'Finishes the cooldown on your other Frost spells, and no declared ' +
-        'Frost spell has one -- Frostbolt, Frostfire Bolt and Ice Lance are ' +
-        'off cooldown always. The captured Frost spells that DO have one, ' +
-        'Cone of Cold at 10s, Frost Nova at 25s, Ice Barrier and Frost Ward ' +
-        'at 30s, are not declared; and even with them this is a ten-MINUTE ' +
-        'cooldown resetting seconds. No Mage profile takes it.',
+        'Finishes the cooldown on your other Frost spells. Cone of Cold is ' +
+        'the one declared Frost spell with a cooldown, ten seconds, and this ' +
+        'is a ten-MINUTE cooldown resetting it -- not built, because there is ' +
+        'nothing a reset of a ten-second cooldown once a fight could change. ' +
+        'No Mage profile takes it.',
     },
   ],
 
@@ -597,18 +587,9 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * reads exactly like a field that sometimes fires. See `wintersChillAura`.
    * ==========================================================================
    */
-  winter_s_chill: [
-    { kind: 'reaction', reactionId: 'winter_s_chill' },
-    {
-      kind: 'unmodelled',
-      reason:
-        'Cone of Cold, which IS captured -- 328 to 358 Frost, 555 mana, ' +
-        'instant, 10 second cooldown -- and is not declared, so the spell this ' +
-        'debuff amplifies cannot be cast. The proc chance, the five-stack ' +
-        'debuff and its 40% all apply. Improved Cone of Cold carries the same ' +
-        'blocker, and no Mage profile takes either talent.',
-    },
-  ],
+  // Fully modelled now Cone of Cold is declared: the proc, the five stacks and
+  // the 40% a stack all reach the one spell the debuff names.
+  winter_s_chill: [{ kind: 'reaction', reactionId: 'winter_s_chill' }],
 
   ice_barrier: [
     { kind: 'unmodelled', reason: `An absorb -- ${NOT_ATTACKED} And ${NO_PUSHBACK}` },

@@ -73,6 +73,7 @@ import { castReactionsForEquipment, reactionsForEquipment } from '../items/procs
 import {
   consumableAbilities,
   consumableEffects,
+  consumableReactions,
   weaponDamageBonusFor,
   type ConsumableSelection,
 } from '../buffs/consumables';
@@ -915,6 +916,8 @@ export function createPlayer(options: PlayerOptions): Combatant {
        * first iteration of a batch.
        */
       ...racials.reactions,
+      // Weapon oils that proc -- Frost Oil -- built per character and per hand.
+      ...consumableReactions(options.consumables, style),
       ...(options.extraReactions ?? []),
     ],
     /*

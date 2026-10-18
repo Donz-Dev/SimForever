@@ -1250,7 +1250,9 @@ describe('Fingers of Frost, the one Frozen talent that is not inert', () => {
     // Frostbolt and Frostfire Bolt both "slow movement speed by 40%", and
     // nothing here has movement -- so the slow cannot be detected and the ids
     // are named instead.
-    expect([...CHILL_ABILITY_IDS].sort()).toEqual(['frostbolt', 'frostfire_bolt']);
+    // Cone of Cold joined when it was declared: the owner kept its slow in
+    // scope ONLY as a Chill, so Fingers of Frost can proc off it.
+    expect([...CHILL_ABILITY_IDS].sort()).toEqual(['cone_of_cold', 'frostbolt', 'frostfire_bolt']);
 
     const reaction = fingersOfFrost(2);
     const actor = frostMage();

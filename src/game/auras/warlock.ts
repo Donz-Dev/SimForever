@@ -6,6 +6,7 @@ import {
   IMMOLATE_SP_COEFFICIENT,
   IMMOLATE_TICK_SP_COEFFICIENT,
   SIPHON_LIFE_TICK_SP_COEFFICIENT,
+  BANE_OF_DOOM_SP_COEFFICIENT,
 } from '../combat/coefficients';
 
 /**
@@ -236,6 +237,42 @@ function baneOfAgonyAura(multiplier: number): AuraDefinition {
 }
 
 export const BANE_OF_AGONY: AuraDefinition = baneOfAgonyAura(1);
+
+/**
+ * Bane of Doom: "Afflicts the target with impending doom, causing 1,742 Shadow
+ * damage after 1 min" -- plus 400% of spell power, by the owner.
+ *
+ * ----------------------------------------------------------------------------
+ * ONE TICK, AT THE END. A periodic whose interval IS its duration, so it ticks
+ * exactly once, at the moment it falls off -- and `Periodic` sorts before
+ * `AuraExpiration` at the same timestamp, which is the engine's own rule for
+ * why a DoT's final tick lands. No new mechanism.
+ *
+ * SO IT USUALLY MISSES A SIXTY-SECOND FIGHT, and that is the spell rather than
+ * a bug: cast at the pull it lands at about the one-minute mark, which a fight
+ * of 60s +/- 5% reaches about half the time. It is a spell for fights longer
+ * than its own clock.
+ *
+ * IT CRITS like every DoT here, at spell crit -- so Pandemic's crit damage
+ * reaches it, which Pandemic names it for.
+ * ----------------------------------------------------------------------------
+ */
+export const BANE_OF_DOOM_DAMAGE = 1742;
+export const BANE_OF_DOOM_DURATION_MS = seconds(60);
+
+export const BANE_OF_DOOM: AuraDefinition = {
+  id: 'bane_of_doom',
+  name: 'Bane of Doom',
+  durationMs: BANE_OF_DOOM_DURATION_MS,
+  isDebuff: true,
+  refreshBehaviour: 'reset',
+  periodic: {
+    intervalMs: BANE_OF_DOOM_DURATION_MS,
+    onTick: (context, aura) => {
+      tick(context, aura, BANE_OF_DOOM_DAMAGE, SHADOW, BANE_OF_DOOM_SP_COEFFICIENT);
+    },
+  },
+};
 export const BANE_OF_AGONY_AMPLIFIED: AuraDefinition = baneOfAgonyAura(AMPLIFY_CURSE_MULTIPLIER);
 
 /**

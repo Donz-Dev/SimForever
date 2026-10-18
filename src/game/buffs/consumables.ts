@@ -3,8 +3,11 @@ import type {
   AbilityModifier,
   AttackTableKind,
   DamageSchool,
+  MeleeWeaponSlot,
   PartialStats,
+  Reaction,
 } from '../../engine';
+import { frostOilReaction } from './frostOil';
 import { AttackTableModifiers } from '../../engine';
 import {
   DEMONIC_RUNE_ABILITY,
@@ -194,6 +197,13 @@ export interface Consumable {
    * --------------------------------------------------------------------------
    */
   readonly weaponDamageBonus?: number;
+  /**
+   * A PROC that rides on the coated weapon, built once per character and per
+   * hand -- Frost Oil is the one caller. A factory for the reason every proc
+   * here is one: a reaction built once is shared by every combatant in a batch.
+   * Read by `consumableReactions`, only for a row with a `hand`.
+   */
+  readonly weaponProc?: (hand: MeleeWeaponSlot) => Reaction;
   /** What it does that the simulator does not, in the source's own words. */
   readonly unmodelled?: string;
 }
@@ -331,6 +341,16 @@ const WEAPON_EFFECTS: readonly {
     id: 'dense_sharpening_stone',
     name: '+8 Weapon Damage',
     effect: { weaponDamageBonus: 8 },
+  },
+  {
+    /*
+     * FROST OIL: a 10% chance on each hit of the coated weapon to cast a
+     * Frostbolt for 28 to 32 Frost damage plus 27% of spell power, with no
+     * internal cooldown. The proc is `frostOilReaction`; nothing here is a stat.
+     */
+    id: 'frost_oil',
+    name: 'Frost Oil (Frostbolt proc)',
+    effect: { weaponProc: frostOilReaction },
   },
 ];
 
@@ -839,6 +859,27 @@ export function weaponDamageBonusFor(
     total += consumable.weaponDamageBonus ?? 0;
   }
   return total;
+}
+
+/**
+ * The weapon procs the selection coats onto the character's weapons, one per
+ * hand that holds one.
+ *
+ * THE SAME RULE AS THE STATS: an off-hand row on a character with no off-hand
+ * weapon contributes nothing, because there is no weapon for it to be on.
+ */
+export function consumableReactions(
+  selection: ConsumableSelection | undefined,
+  style?: CombatStyleId,
+): readonly Reaction[] {
+  const reactions: Reaction[] = [];
+  for (const [categoryId, consumable] of selectedConsumableEntries(selection)) {
+    const category = CONSUMABLE_CATEGORIES_BY_ID.get(categoryId)!;
+    if (!category.hand || !consumable.weaponProc) continue;
+    if (!consumableReachesCharacter(category, style)) continue;
+    reactions.push(consumable.weaponProc(category.hand));
+  }
+  return reactions;
 }
 
 /**
