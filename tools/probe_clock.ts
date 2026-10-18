@@ -1,98 +1,110 @@
 /*
  * ============================================================================
- * WHAT ONE PROFILE DOES AT FOUR FIGHT LENGTHS: casts, uptimes and the pool.
+ * ONE PROFILE AT SEVERAL FIGHT LENGTHS, with the cast counts and the mana book
+ * beside each.
  *
- *   PRESET=mage_fire npx vite-node tools/probe_clock.ts
- *   PRESET=mage_arcane LENGTHS=60,300 ITER=100 npx vite-node tools/probe_clock.ts
+ *   npx vite-node tools/probe_clock.ts
+ *   PROFILE=shaman_elemental LENGTHS=60,180,300 npx vite-node tools/probe_clock.ts
  *
  * ----------------------------------------------------------------------------
- * THE FIRST OF THE FOUR THINGS `docs/profile-optimisation.md` SAYS A PAIRED
- * PROBE STRUCTURALLY CANNOT FIND. Every tool in this project defaults to the
- * 60 seconds `createDefaultProfile` carries, so the clock is in the baseline
- * AND in every variant and therefore cancels -- and the owner's instruction is
- * the opposite: "rotations need to be built for longer than 1 minute ... ensure
- * that variable combat time is taken into account."
+ * THE CLOCK IS THE ONE AXIS A PAIRED PROBE CANNOT SEE, which is why this is a
+ * tool and not a scratch script. Every profile carries `durationSeconds: 60`,
+ * so the length is in the baseline AND in every variant and cancels in the
+ * difference -- `docs/profile-optimisation.md`'s "What the loop cannot find".
  *
- * WHAT IT ANSWERS THAT `probe_build.ts DURATION=` CANNOT. That one gives a
- * paired DELTA at one length, which is what to trust for a decision. This gives
- * the CAST COUNTS and the mana book at several lengths, which is what says
- * whether a never-fired entry is dead or merely waiting, and whether the build
- * is bound by the global cooldown or by a pool. Those are different questions
- * and the second has twice been written down as the first.
+ * TWO THINGS ONLY IT ANSWERS:
  *
- * TWO WORKED CASES, BOTH MAGES:
+ *   WHICH POOL BINDS. The Arcane Mage is global-cooldown bound at 60s with
+ *   2,638 mana spare and MANA bound by 300s, which is a different optimisation
+ *   problem wearing the same name. `headroom` as a SHARE of what was gained is
+ *   the reading, because the absolute figure grows with the fight.
  *
- *   `arcane_power` fires 0.00 times at 60s and 2.00 at 240s, and was written up
- *   as a dead entry on the strength of the first figure. The owner: "the moment
- *   a combat run exceeds 3 minutes it'll want to be cast a second time."
+ *   WHETHER A NEVER-FIRED ENTRY IS DEAD. An ability whose cooldown is longer
+ *   than the fight is cast once whatever the list says, so its entry can never
+ *   be reached again -- and that is a fact about the clock, not about the list.
+ *   The owner caught exactly that write-up error: "arcane power being pre-cast
+ *   doesn't remove it from the main combat APL because the moment a combat run
+ *   exceeds 3 minutes it'll want to be cast a second time." Mage Armor at
+ *   THIRTY minutes reads identically in the uses column and is genuinely dead.
  *
- *   `mage_fire`'s Evocation and Demonic Rune both read `<-- NEVER FIRED` at 60s
- *   and fire 1.00 and 2.02 times at 300s, because that build crosses from
- *   GLOBAL-COOLDOWN bound (2,615 mana spare) to MANA bound (196) on the way.
- *   One talent swap there measures +2.92 at 60s and **-33.76 at 300s**.
+ * `DURATION=` on `probe_build.ts` already applies a length to the baseline and
+ * every variant alike; what it does not print is the cast counts, which are the
+ * whole point here.
  *
- * ONE BATCH PER LENGTH, SO READ THE SHAPE AND NOT THE DECIMALS. It is a
- * diagnostic the way `probe_resources.ts` is; `probe_build.ts` is what gives an
- * interval. The DPS column in particular is a single unpaired batch and the
- * fall across lengths is much larger than its own noise, which is the only
- * reason it is printed at all.
- *
- * AURAS AT 100% UPTIME ARE OMITTED, because a raid buff list is fourteen rows
- * of 100.0% on every profile and the rows that move are the ones being read.
+ * ONE BATCH PER LENGTH, SO READ THE SHAPE AND NOT THE DECIMALS. A diagnostic
+ * like `probe_resources.ts`, not a measurement -- nothing here carries an
+ * interval and no figure from it belongs in a baseline.
  * ============================================================================
  */
-import { PRESETS_BY_ID } from '../src/profiles';
-import { runProfileBatch } from '../src/simulator';
+import { runProfileBatch, resourceFlowOf } from '../src/simulator';
+import { PROFILE_PRESETS } from '../src/profiles';
+import type { ResourceType } from '../src/engine';
 
-const PRESET = process.env.PRESET ?? 'mage_fire';
-const ITER = Number(process.env.ITER ?? 40);
-const LENGTHS = (process.env.LENGTHS ?? '60,120,180,300').split(',').map(Number);
+const profileId = process.env.PROFILE ?? 'shaman_elemental';
+const resource = (process.env.RESOURCE ?? 'mana') as ResourceType;
+const ITERATIONS = Number(process.env.ITERATIONS ?? 40);
+const LENGTHS = (process.env.LENGTHS ?? '60,120,180,300')
+  .split(',')
+  .map((s) => Number(s.trim()));
 
-const preset = PRESETS_BY_ID.get(PRESET);
+const preset = PROFILE_PRESETS.find((p) => p.id === profileId);
 if (!preset) {
   throw new Error(
-    `No preset "${PRESET}". Known ids: ${[...PRESETS_BY_ID.keys()].join(', ')}`,
+    `No preset "${profileId}". Known ids: ${PROFILE_PRESETS.map((p) => p.id).join(', ')}`,
   );
 }
+
+console.log(`${preset.label}  (${preset.id})  --  ${ITERATIONS} iterations per length\n`);
 
 for (const seconds of LENGTHS) {
   const profile = preset.build();
   const batch = runProfileBatch({
     ...profile,
-    simulation: { ...profile.simulation, iterations: ITER, durationSeconds: seconds },
+    /*
+     * `simulation.durationSeconds`, NOT `encounter.durationSeconds`. The first
+     * draft of this tool wrote the second -- a field that does not exist -- and
+     * every one of four lengths came back IDENTICAL TO THE DECIMAL, which is
+     * this project's own tell for a patch that did not apply rather than for a
+     * change worth nothing. `trainingDummyEncounter` reads the simulation block.
+     */
+    simulation: {
+      ...profile.simulation,
+      iterations: ITERATIONS,
+      durationSeconds: seconds,
+    },
   });
-
-  /*
-   * THE POOL IS SUMMED FROM THE SAME EVENT STREAM THE RESOURCE PANEL READS,
-   * rather than from a counter -- `headroom` is what says which regime the
-   * build is in, and `wasted` is what says it is capping instead.
-   */
-  const lines: string[] = [];
-  for (const flow of batch.resources) {
-    const gained = flow.gained.reduce((a, g) => a + g.amount, 0);
-    const spent = flow.spent.reduce((a, g) => a + g.amount, 0);
-    const wasted = flow.gained.reduce((a, g) => a + g.wasted, 0);
-    if (gained === 0 && spent === 0) continue;
-    lines.push(
-      `${flow.resource} gained ${gained.toFixed(0)} spent ${spent.toFixed(0)} ` +
-        `headroom ${(gained - spent).toFixed(0)} wasted ${wasted.toFixed(0)}`,
-    );
-  }
+  const flow = resourceFlowOf(batch, resource);
+  const headroom = flow.totalGained - flow.totalSpent;
+  const share = flow.totalGained === 0 ? 0 : (headroom / flow.totalGained) * 100;
 
   console.log(
-    `\n== ${seconds}s ==  ${batch.dps.mean.toFixed(1)} DPS  (${ITER} fights)` +
-      (lines.length > 0 ? `\n   ${lines.join('\n   ')}` : ''),
+    `== ${String(seconds).padStart(4)}s ==  ${batch.dps.mean.toFixed(1)} DPS` +
+      `   ${resource}: gained ${flow.totalGained.toFixed(0)}` +
+      `  spent ${flow.totalSpent.toFixed(0)}` +
+      `  headroom ${headroom.toFixed(0)} (${share.toFixed(1)}%)`,
   );
   for (const row of batch.abilities) {
+    if (row.uses === 0 && row.damage === 0) continue;
     console.log(
-      `   ${row.abilityName.padEnd(28)} ${row.uses.toFixed(2).padStart(7)} uses ` +
-        `${row.share.toFixed(1).padStart(6)}%`,
+      `     ${row.abilityName.padEnd(30)} ${row.uses.toFixed(2).padStart(6)} uses` +
+        `  ${row.damage.toFixed(0).padStart(7)} damage`,
     );
   }
-  for (const row of [...batch.buffUptime, ...batch.debuffUptime]) {
-    if (row.uptime >= 0.999) continue;
-    console.log(
-      `     [aura] ${row.auraName.padEnd(26)} ${(row.uptime * 100).toFixed(1).padStart(6)}%`,
-    );
+  /*
+   * THE UPTIMES, BECAUSE A MAINTENANCE ENTRY IS THE FIRST THING A LONGER FIGHT
+   * BREAKS. A debuff held up by an "if not active" entry needs a free global
+   * cooldown and a free pool to be re-applied, and a build that has run dry has
+   * neither -- so its uptime falls with the clock while the CAST COUNT above
+   * still rises. Only the pair reads correctly.
+   */
+  const held = [...batch.buffUptime, ...batch.debuffUptime].filter(
+    (row) => row.uptime < 0.999,
+  );
+  if (held.length > 0) {
+    console.log('     -- not up all fight --');
+    for (const row of held) {
+      console.log(`     ${row.auraName.padEnd(30)} ${(row.uptime * 100).toFixed(1)}%`);
+    }
   }
+  console.log('');
 }

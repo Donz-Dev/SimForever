@@ -39,6 +39,24 @@ const PROFILE = process.env.PROFILE ?? 'dw_fury';
 const ITERATIONS = Number(process.env.ITERATIONS ?? 3000);
 const SEED = Number(process.env.SEED ?? 20_261_008);
 const PLAN_ONLY = process.env.PLAN === '1';
+/*
+ * ==============================================================================
+ * FIGHT LENGTH IS AN AXIS HERE TOO, and leaving it out hid a stat worth nothing
+ * at a minute and a great deal at three.
+ *
+ * `probe_build.ts` has carried `DURATION=` for exactly this reason and this tool
+ * did not, so every weight it has ever printed was a weight at 60 seconds. On
+ * the Elemental Shaman that is the one length where the answer is least
+ * interesting: the build has 14.3% mana headroom at 60s and 1.3% at 180s and
+ * 300s, so `manaPer5` reads "not measured: the interval swallows the value" at
+ * the default and is a live stat at any realistic raid length.
+ *
+ * APPLIED TO THE BASELINE AND EVERY VARIANT ALIKE, which is what keeps the
+ * comparison paired: `deriveSeed(baseSeed, i)` still fixes iteration i's fight
+ * and only the clock moves.
+ * ==============================================================================
+ */
+const DURATION = process.env.DURATION === undefined ? undefined : Number(process.env.DURATION);
 
 const selected: StatName[] = process.env.STATS
   ? (process.env.STATS.split(',').map((name) => name.trim()) as StatName[])
@@ -52,10 +70,14 @@ if (!preset) {
   process.exit(1);
 }
 
-const profile = preset.build();
+const built = preset.build();
+const profile =
+  DURATION === undefined
+    ? built
+    : { ...built, simulation: { ...built.simulation, durationSeconds: DURATION } };
 const plan = statWeightPlan(profile, selected);
 
-console.log(`\n${preset.label} — ${preset.detail}  (${PROFILE})`);
+console.log(`\n${preset.label} — ${preset.detail}  (${PROFILE})   fight ${profile.simulation.durationSeconds}s`);
 
 /*
  * THE LADDER FIRST, because it is the part a reader has to agree with before

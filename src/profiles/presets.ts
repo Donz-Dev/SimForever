@@ -830,29 +830,53 @@ const DRUID_BEAR_TALENTS: TalentAllocation = {
 const SHAMAN_ELEMENTAL_TALENTS: TalentAllocation = {
   /*
    * ==========================================================================
-   * FOUR POINTS OUT OF RESTORATION FILLER AND INTO ANCESTRAL KNOWLEDGE, worth
-   * **+2.95 +/- 0.63** paired over 400 iterations -- small, real, and the only
-   * talent move on this profile that measured as anything at all.
+   * MINDFULNESS 3 AND CONVECTION 5, WORTH **+84.08 +/- 2.84** AT A 180 SECOND
+   * FIGHT AND **+1.01 +/- 2.09, NOISE,** AT SIXTY.
    *
-   * `totemic_focus` is 25% off a totem cast twice a fight and `mindfulness` is
-   * threat; Ancestral Knowledge is +2% Intellect a rank at Enhancement tier 0,
-   * so the move disturbs no tier gate in either tree.
+   * THE PREVIOUS SPREAD RESTED ON A FINDING THAT WAS TRUE ONLY AT ONE CLOCK.
+   * It read, in capitals, that "the build is CAST-bound and not MANA-bound" --
+   * measured, correctly, at the sixty seconds every profile here carries. Run
+   * longer, the same build has **1.3% mana headroom at 180s and at 300s** and
+   * its DPS falls 802 -> 546 -> 465: it spends the whole pool in the first
+   * minute and then stands still. `tools/probe_clock.ts` prints it.
+   *
+   * SO EVERY MANA TALENT IN THIS TREE WAS PRICED IN THE ONE REGIME WHERE MANA
+   * IS FREE. Convection 5/5 is 10% off Shock, Lightning Bolt, Lava Burst and
+   * Chain Lightning: **-0.18 noise** then, **+19.05 +/- 2.35** now at 180s.
    *
    * ------------------------------------------------------------------------------
-   * AND TEN POINTS IN THIS SPREAD ARE PROVABLY DEAD WITH NOWHERE LIVE TO GO,
-   * which is a statement about the TREE rather than a gap in the search:
-   * `elemental_warding` 3 is damage taken on a profile nothing attacks,
-   * `eye_of_the_storm` 3 is cast pushback, `elemental_reach` 2 is range, and
-   * `trial_by_fire` 2 is Fire Nova, which this list never casts.
+   * AND MINDFULNESS WAS NOT A CHOICE AT ALL -- IT WAS A BROKEN DECLARATION.
+   * The owner's own spread spends 3 points there. The round that moved them out
+   * recorded "`mindfulness` is threat" and measured **+2.95 +/- 0.63** for the
+   * move, which was correct arithmetic on a talent that did nothing: it was
+   * declared `scope: 'threat'` carrying `natural_grace`'s tooltip, one talent
+   * across in the same tier. What it says is "Allows 17/33/50% of your Mana
+   * regeneration to continue while casting", and this build regenerated **ZERO**
+   * mana in a fight -- 163.65 MP5 suppressed by the five second rule from the
+   * pull to the end. See `shamanEffects.ts`.
    *
-   * MOVING ALL TEN TO CONVECTION AND REVERBERATION MEASURED **-0.18, NOISE** --
-   * and the cast counts came back identical to the decimal: 25.0 Lightning
-   * Bolts, 6.0 Lava Bursts, 3.0 Flame Shocks before and after. Convection is
-   * 10% off this build's main spell and it bought nothing, **because the build
-   * is CAST-bound and not MANA-bound**: the Demonic Rune fires 0.8 times a
-   * fight and Evocation never. So every remaining mana talent in the Elemental
-   * tree is worth nothing here, and the ten points stay where the owner put
-   * them rather than being shuffled for a figure inside the interval.
+   * THE RANK LADDER IS MONOTONE AND THE PAIR IS SUPER-ADDITIVE, which is what
+   * says the figure is the mechanism and not a boundary artefact: 1/2/3 ranks
+   * measure **+12.84 / +28.01 / +43.98** at 180s, and Convection on top takes
+   * +43.98 and +19.05 to **+84.08** rather than to their 63.03 sum -- both buy
+   * mana, and enough mana lifts the build out of the dry regime altogether.
+   * Mana gained goes 12,317 -> 13,597 and Lightning Bolt 41.4 -> 51.0 casts a
+   * fight, with Searing Totem's damage going slightly DOWN.
+   *
+   * ------------------------------------------------------------------------------
+   * THE FIVE POINTS LEFT IN `elemental_warding` AND `trial_by_fire` ARE FORCED,
+   * not filler by choice. The Elemental tree sits exactly on every tier gate
+   * it needs -- and with Convection and Concussion both maxed there are only
+   * seventeen points of LIVE talent below tier 20, against the twenty that
+   * Lava Burst and Lightning Overload demand. So three dead points are the
+   * price of reaching tier 20 and a fourth is the price of tier 25. Moving a
+   * point DOWN a tree is always legal, which is why Convection could be bought
+   * with `eye_of_the_storm` 3 and `elemental_reach` 2.
+   *
+   * REVERBERATION IS THE ONE REMAINING DESTINATION AND IT IS WORTH NOTHING:
+   * **+0.03 +/- 0.47** for five points. It takes a second off a shock cooldown
+   * that Call of Flame has already made irrelevant -- Flame Shock lasts
+   * twenty-one seconds and the cooldown is six.
    *
    * ------------------------------------------------------------------------------
    * TIDAL FOCUS IS NOT FILLER AND MUST NOT BE MOVED. This build sits at exactly
@@ -863,14 +887,13 @@ const SHAMAN_ELEMENTAL_TALENTS: TalentAllocation = {
    * ==========================================================================
    */
   // Elemental, 32
-  concussion: 5, elemental_warding: 3, call_of_flame: 3, elemental_focus: 1,
-  elemental_alacrity: 3, trial_by_fire: 2, eye_of_the_storm: 3,
-  elemental_mastery: 1, elemental_reach: 2, lightning_overload: 3,
-  elemental_fury: 5, lava_burst: 1,
+  concussion: 5, convection: 5, elemental_warding: 3, call_of_flame: 3,
+  elemental_focus: 1, elemental_alacrity: 3, trial_by_fire: 2,
+  elemental_mastery: 1, lightning_overload: 3, elemental_fury: 5, lava_burst: 1,
   // Enhancement, 10
   thundering_strikes: 5, ancestral_knowledge: 5,
   // Restoration, 9
-  tidal_focus: 5, totemic_focus: 4,
+  tidal_focus: 5, totemic_focus: 1, mindfulness: 3,
 };
 
 /*
@@ -2627,7 +2650,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'shaman_elemental',
     label: 'Ele Shaman',
-    detail: 'Troll, caster, standing target. 38 Elemental / 13 Enhancement',
+    /*
+     * 32/10/9, WHICH THIS LINE SAID WAS 38/13 FOR SEVERAL REFRESHES. Step 0 of
+     * `docs/profile-optimisation.md` reads `preset.detail` for the theme's
+     * invariants, so a stale split here is the one place it misleads -- and the
+     * figure it gave was not even a legal reading of this tree. Derive it from
+     * `encode_talent_build.mjs --all` rather than editing this sentence.
+     */
+    detail: 'Troll, caster, standing target. 32 Elemental / 10 Enhancement / 9 Restoration',
     characterClass: 'shaman',
     build: () => ({
       ...createDefaultProfile(),

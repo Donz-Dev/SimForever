@@ -55,6 +55,7 @@ the tooling to be a bit more sophisticated as well."
 | 23 | **THE ARCANE MAGE THROUGH THE WHOLE LOOP, and the first round run from a WRITTEN PROCEDURE** -- `docs/profile-optimisation.md`. The illegal opener reverted, every other dimension re-priced on the legal build, and one new finding off the UPTIME table | legal **1080.1 +/- 9.9** -> **1090.3 +/- 12.1**. The revert is **-96.5 +/- 9.4** paired and the channel floor **+13.2 +/- 3.2 REAL**; **every other candidate in all seven dimensions loses** | see below |
 | 24 | **THE OWNER'S AUDIT OF THE ARCANE PROFILE -- three items, and the second was worth all of it** -- Mage Armor out of the list, Presence of Mind and Arcane Power OFF the global cooldown, and the cooldown stack written as a real `sequence` | **1090.3 -> 1123.4 (+33.1)**, and Fire and Frostfire **0.0 to the decimal** | see below |
 | 31 | **THE SHADOW PRIEST, and the round where a SHIPPED change was reverted by its own second measurement** -- Inner Focus in, a refresh window in and then out, and the Mind Flay interrupt answered after sitting uncalled since round 19e | **not re-baselined**, on the owner's standing instruction. One change ships: **+6.13 +/- 0.50** at 60s, **+2.40 +/- 0.26** at 300s. Every other candidate in six dimensions loses | see below |
+| 33 | **THE ELE SHAMAN THROUGH THE LOOP, and the round found the FRAME rather than the rotation** -- the profile collapses **802 -> 546 -> 465 DPS from 60s to 300s**, so every figure ever taken on it was taken in the one regime where its mana is free. A talent declared as a ruled-out THREAT effect turned out to be a live mana talent carrying the tooltip of the talent next door | shipped **+84.08 +/- 2.84 at 180s** and **+1.01 +/- 2.09 noise at 60s**; four other answers INVERT with the clock and are not shipped. **27 of 28 profiles bit-identical** | see below |
 | 25 | **THE AUDIT FOLDED BACK INTO THE PROCEDURE, and a figure RETRACTED in the documents people read** -- all four audit findings share one cause, so the procedure gains a section naming what a paired probe structurally cannot see | **no figure moved**; documentation only, suite green at 3731 | see below |
 | 30 | **THE ENH SHAMAN THROUGH THE WHOLE LOOP, AND THE OWNER'S OWN OPENER LINE WAS HIDING AN ENGINE BUG** -- five shipped changes across four dimensions, plus a correctness fix found by chasing a figure that read as an optimisation: a pre-cast aura outlived its own window by the lead, so a refresh landed inside the stale 1.5s and got a window that ticked **zero times** | 761.9 -> **829.4** from the round (**+67.01 +/- 3.35** paired over 4000) -> **838.8** with the fix. Identical uptime, identical casts, **30% fewer ticks** -- only the tick COUNT saw it. Three answers CHANGED SIGN or VALUE as the round progressed | see below |
 | 26 | **A RULING REVERSED: AUTO SHOT IS NOT SUSPENDED BY A HUNTER'S THREE CAST SHOTS** -- a THIRD `Ability.swingTimer` mode, because the suspension had two halves and `hold` only removes one | **LW Ranged 977.4 -> 1021.0 (+43.7 REAL)** and BM Hunter 963.4 -> 968.2 (+4.8); **25 of 28 rows 0.0 to the decimal**. Dropping the now-pointless weave gate on top is **+27.6 REAL on BM Hunter** and is the owner's call | see below |
@@ -106,13 +107,16 @@ write-up; none is an engine gap.
 | **Fire Blast's Clearcasting gate costs this build about 3.4 DPS, and it is your own gate.** "Fire Blast only while Clearcasting is NOT up" is right reasoning -- a 340-mana instant under the proc eats a charge a 410-mana Fireball wanted -- and it is reasoning about a build the MANA binds. This one ends a 60-second fight with 2,615 mana unspent and `manaPer5` weighs 0.0000, so the gate trades a real global cooldown for a saving worth nothing. **It measured +7.68 +/- 3.22 while Combustion paid a global cooldown and +3.44 +/- 2.03 at 4,000 iterations once your ruling stopped it** -- a knock-on rather than a contradiction: the build has one more free global cooldown now, so holding a 1.5-second instant costs less of one. Still `real`, still not shipped, because your list outranks a measurement of ours | round 28, re-priced after the Combustion ruling | one condition, and whether the gate should be conditioned on the mana instead of removed |
 | **The Scorch refresh window is now TWO constants and only one of them has been swept.** `FIRE_SCORCH_REFRESH_SECONDS` is 5 on the Fire list, from a six-cell sweep (2s -13.7, 3s 0, 4s +6.6, 5s +9.7, 6s +9.8, 8s +8.6); `FROSTFIRE_SCORCH_REFRESH_SECONDS` is left at the 3 the two used to share, because nothing about the Fire sweep transfers to a build with a faster filler. Not a question about the ruleset -- a note that whoever sweeps the Frostfire list owns that number | round 28 | one constant on a profile this round did not touch |
 | **The Shadow Priest's spread is now 14/2/35 and yours said 13/3/35.** One point moved off `twilight_focus` -- three points of a `castPushback` RULING, permanently out of scope -- onto **Inner Focus**, for **+6.13 +/- 0.50** at 60s. Your brief asks for talents to be evaluated, so this is dimension 3 rather than a liberty; it is flagged because the spread is one you stated. **All three legal donors measure the same +6.13** (the other two being all of Twilight Focus, or one point of Meditation), so the choice between them is which donor is safest rather than which is worth more. Build URL: `talentsforever.com/priest/60/00500500103-2-50052201231312251--6` | round 27 | one point of one spread, and whether you would rather it came out of Meditation |
+| **Is the Ele Shaman meant to carry a MANA POTION?** It is the only profile in the project where `potion` beats the damage buff, and only at length: Major Mana over Major Spellblasting is **-13.33 +/- 1.65 at 60s** and **+75.77 +/- 3.44 at 180s**. The written rule is "`other` takes the pool the build runs out of and `potion` takes the damage buff", and **no mana potion is selected anywhere** -- so shipping this reverses a project-wide convention on the strength of a clock you have not settled. Not shipped; both figures recorded | round 27 | one consumable row, and whether the convention has an exception |
+| **Three more Ele Shaman answers invert between 60s and 180s and none is shipped**: removing the Searing Totem entry is **+8.12** then **-52.74**, removing the Lava Burst entry is **-5.51** then **+6.97**, and Convection 5/5 is **-0.18 noise** then **+19.05**. Only Convection is free at both, which is why only it went in | round 27 | three list decisions, all downstream of the fight-length question above |
+| **Is `stat_weights`' haste row trustworthy on a build with a Searing Totem?** It prices +1% haste at **-15.12 +/- 0.77** at 180s; taking the same 2% back off through the enchants measures **-22.58**. Both directions lose, so it is not a slope -- totem ticks read **35.0 at haste ratings 0, 9, 10, 11, 30 and 60 and 37.7 at 19, 20 and 21**, and 20 is what the build wears. The 55 second totem's re-application is gated on the aura having fallen off, so whether the last application ticks at all is a knife edge against the fight end. **The enchant question on that profile is therefore unanswered rather than answered**, and the shipped loadout is kept | round 27 | two enchant slots, and whether the totem's re-application rule wants a tolerance |
 | **`shaman_elemental`'s opener finishes TWO damaging casts, and both lines are yours** -- Lightning Bolt at a 2s lead plus Flame Shock at 0s. A player cannot complete both at t=0, so one of them has to move or the ruling has to bend | round 23 | that opener, and whether the at-most-one rule has an exception |
 | **Should the shot-window gate come off the three Hunter cast entries?** With auto shot no longer suspended, "only if a ranged auto-attack fired in the last 0.5s" spends something to buy nothing -- it makes a cast WAIT for a window that is now worthless. Removing it from all three measures **+27.6 REAL on BM Hunter** and +8.6 (noise) on LW Ranged. **They are YOUR conditions, so they are kept**: this is one line per entry, on `aimed_shot` in Beast Mastery and `aimed_shot` plus `sniper_shot` in Lone Wolf Ranged | round 26 | about 28 DPS on one profile, and the reason the gate exists at all |
 | **Are RAGE OF THE FARSEER and ELEMENTAL MASTERY meant to trigger a global cooldown?** Both are instants on a 180 second cooldown, and `abilities/shaman.ts` leaves both ON the GCD as the DEFAULT rather than as a decision -- the spellbook capture states no cost, no cast time and nothing about the GCD, and both comments say so in as many words, including "the owner has ruled several cooldowns off the GCD individually, so if this is one of them it is one line". **THIS ONE PRICES A SHIPPED CHANGE**: pre-casting the farseer at a 0s lead is worth **+13.30** entirely because it dodges the GCD, so if the ability should never have been paying one, that figure is pricing a bug and goes the way Arcane Power's +24.9 did | round 27 | **+13.30 on Enh Shaman**, and the Elemental Shaman's +13.9 for the same pre-cast of Elemental Mastery -- two profiles, same question |
 | **Your Searing Totem pre-cast at a 1.5s lead measures +3.09 +/- 3.02 to REMOVE**, on the Enhancement Shaman. It is kept because it is your line and the figure barely clears its interval -- but it is **also** the subject of the ticking-effect question three rows above, so the same line is now flagged for two independent reasons: it may be worth a little to delete, and it may be illegal before the pull | round 27 | one opener line, and it would answer half of the ticking-effect question by removing the only case | 
 | **Should the Arcane Mage take Arcane Wrath, now that Presence of Mind works on it?** You have raised the spell twice, and its "very solid justification for not taking" expired with the Arcane Blast reading it rested on. It has been un-pricable since: a 3.5-second cast whose one obvious pairing did not work on it. No Mage preset spends the point today | round 29 | the Arcane build and its list, and a spell you have twice said looks worth taking |
 
-**EIGHTEEN ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**TWENTY-ONE ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
@@ -132,6 +136,24 @@ Combustion question before that round merged -- **and FOURTEEN again once the
 two were MERGED, which neither branch's number described.** Counted from the
 table every time, as the sentence says to: `awk` from the heading to this
 paragraph and `grep -c` the rows.
+opener, TWELVE when round 26 added the Hunter weave gate, **and FIFTEEN now
+that round 27 has added three at once.** Counted from the table, as the
+sentence says to -- and the count is what caught TWO sessions numbering their
+round 26, which is this file's own clean-merge arithmetic failure: two
+branches moved the same figure from the same base, git merged both without a
+conflict in the TABLE, and only the prose collided. **The Ele Shaman round is
+27.**
+**AND ROUND 27'S THREE ARE ALL DOWNSTREAM OF THE FIGHT-LENGTH ROW ABOVE
+THEM**, which makes that row the most expensive question in the table rather
+than merely the broadest: a mana potion, three list decisions and two enchant
+slots on one profile are all waiting on it, and the Elemental Shaman loses
+**more than half its DPS** between 60 and 300 seconds where the Arcane Mage
+loses 17%.
+**AND THE THREE NEW ONES ARE A DIFFERENT KIND FROM THE SIX ABOVE THEM.** Those
+are defensible readings that became load-bearing; these are **a ruling that
+contradicts a shipped field, a rule the engine does not enforce, and a category
+nobody has defined** -- so they block work rather than merely pricing it, and
+the first of the three blocks a whole profile.
 
 **AND THE FIFTH BRANCH CLOSES THE SET: ALL FOUR PICKED 27.** Frostfire,
 Ele Shaman, Shadow Priest and Enh Shaman each took the next free integer from
@@ -1650,6 +1672,220 @@ global default would hide the next test that genuinely gets slower, which is the
 thing a timeout is good at catching. Both failures were captured before
 re-running, which is the only reason either could be diagnosed.
 
+## Round THIRTY-THREE: the Ele Shaman, where the clock was the whole answer
+
+**THE SECOND PROFILE RUN FROM `docs/profile-optimisation.md`, AND THE ROUND
+FOUND THE FRAME RATHER THAN THE ROTATION.**
+
+| | |
+| --- | --- |
+| theme, derived | `32/10/9`, Troll, caster, standing target. Majority Elemental, and it stays |
+| build URL | <https://talentsforever.com/shaman/60/5500331320001351-055-05301-> |
+| Gate A | 51 points, `legalAllocation` drops nothing |
+| Gate B | **still FAILS, unchanged** -- two damaging casts, both the owner's own lines |
+| Gate C | E65 untouched; only `enchantId` is reachable in the variant helpers |
+| containment | **27 of 28 profiles bit-identical** across three seeds; only `shaman_elemental` moved |
+| suite | 3,731 tests, 167 files, green; typecheck clean |
+
+### The finding is that the profile loses more than half its DPS to the clock
+
+`tools/probe_clock.ts`, which this round added because nothing printed cast
+counts per fight length:
+
+| fight | DPS | mana headroom | Lightning Bolts | Lava Bursts | Flame Shock uptime |
+| --- | --- | --- | --- | --- | --- |
+| 60s | **802.1** | 577 (**6.7%**) | 26.2 | 5.97 | 96.8% |
+| 120s | 542.9 | 96 (**1.0%**) | 33.9 | 6.25 | -- |
+| 180s | 459.1 | 210 (**1.7%**) | 41.4 | 7.35 | **64.1%** |
+| 300s | 384.5 | 189 (**1.2%**) | 55.7 | 8.80 | **53.7%** |
+
+It spends the entire pool inside the first minute and then stands still. Lava
+Burst has a ten second cooldown and gets **7.35 casts in 180 seconds** against
+the eighteen the cooldown allows.
+
+**AND THAT FALSIFIED THE LOAD-BEARING SENTENCE IN THE VARIANT FILE**, which read
+in capitals: *"THE ELEMENTAL BUILD IS CAST-BOUND AND NOT MANA-BOUND, WHICH IS
+THE FINDING THAT RULES OUT HALF ITS TREE."* Measured honestly, at 60 seconds,
+where it is true.
+
+### A talent was filed under the wrong ruling, and the ruling was the talent next door's
+
+**Mindfulness** -- "Allows 17/33/50% of your Mana regeneration to continue while
+casting" -- was declared a ruled-out **threat** effect, reason *"Threat, which
+the engine does not track."* That is **`natural_grace`'s tooltip**, one talent
+across in the same tier; `natural_grace`, which really is threat, was filed
+under `healing`. **The two had each other's rulings.**
+
+Only one of the two swaps cost anything. Threat and healing are both out of
+scope, so Natural Grace was correctly dead under the wrong label. Mindfulness
+was a live mana talent **filed as answered** -- and `manaRegenBypass` is exactly
+that stat, granted by six talents in five other classes, with `manaPerTick`'s
+own comment quoting this tooltip almost verbatim.
+
+**THE OWNER'S OWN SPREAD SPENDS THREE POINTS THERE.** An earlier round moved
+them out on that reason and measured **+2.95 +/- 0.63** for the move -- correct
+arithmetic on a talent that did nothing. **A wrong `scope` produced a genuine
+measurement arguing for making the build worse**, which is the only failure mode
+in that section that leaves a positive number behind.
+
+### What shipped: one talent change, and it is free at the published clock
+
+`totemic_focus` 4 to 1 and `mindfulness` 3; `eye_of_the_storm` 3 and
+`elemental_reach` 2 to `convection` 5.
+
+| | 60s | 180s | 300s |
+| --- | --- | --- | --- |
+| **mindfulness 3 + convection 5 (shipped)** | **+1.01 +/- 2.09** noise | **+84.08 +/- 2.84** real | **+80.89 +/- 2.20** real |
+| mindfulness 3 alone | +1.11 | +43.98 +/- 2.49 | +48.75 |
+| mindfulness 2 | +1.35 | +28.01 | +29.72 |
+| mindfulness 1 | +0.67 | +12.84 | +13.82 |
+| convection 5 alone | +1.22 | +19.05 +/- 2.35 | +18.77 |
+| reverberation 5 alone | +0.26 | **+0.03 +/- 0.47** | +0.14 |
+| the owner's spread (ak 1, totems 5, mindfulness 3) | -2.00 | +47.00 | +52.49 |
+
+**THE RANK LADDER IS MONOTONE AND THE PAIR IS SUPER-ADDITIVE**, which is what
+says this is the mechanism and not a boundary artefact: 43.98 and 19.05 make
+**84.08** rather than their 63.03 sum, because both buy mana and enough mana
+lifts the build out of the dry regime. Mana gained goes 12,317 to 13,597 at 180s
+and Lightning Bolt 41.4 to 51.0 casts, **with Searing Totem's damage going
+slightly DOWN** -- so the gain is in the nukes.
+
+**IT SHIPPED BECAUSE IT COSTS NOTHING AT 60 SECONDS.** That is the line this
+round drew: ship what is free at the published clock and gains at every other
+one; raise what trades one clock against another.
+
+### One side effect, and it reads like a regression
+
+**THE DEMONIC RUNE'S ENTRY GOES FROM 1.0 CASTS A FIGHT TO 0.1 AT 60 SECONDS**,
+because the build no longer reaches its 10% mana gate -- headroom at 60s goes
+577 to **1,220**. At 180s it goes the other way, 1.07 to **2.23**. The gate is
+the owner's stated default ("Demonic rune being used at 10% mana remaining
+should be the default behavior for pure mana users"), so **a change that makes a
+build less likely to run dry correctly makes its emergency mana entry fire
+less**. Nothing to fix; said here because a near-zero in the uses column is
+normally the finding.
+
+### Four answers invert with the clock, and none of them shipped
+
+| | 60s | 180s |
+| --- | --- | --- |
+| Major Mana Potion over Spellblasting | **-13.33 +/- 1.65** | **+75.77 +/- 3.44** |
+| removing the Searing Totem entry | **+8.12 +/- 1.50** | **-52.74 +/- 2.77** |
+| removing the Lava Burst entry | -5.51 +/- 4.87 | **+6.97 +/- 3.49** |
+| Convection 5/5 -- shipped anyway, free at both | -0.18 noise, re-read +1.22 | +19.05 |
+
+The potion costs 13.3 at the published clock to gain 75.8 at a realistic one,
+would make this the only profile in the project carrying a mana potion, and
+reverses the written rule that *"`potion` takes the damage buff"*. It is in the
+questions table with both figures.
+
+### One row per dimension, including the five that did not move
+
+| dimension | what was asked | result |
+| --- | --- | --- |
+| **1 gear** | Gate C only | E65 untouched. Nothing to do |
+| **2 enchants** | five head/legs swaps, the gloves slot | **every alternative loses** -- and the figures are an artefact, see below. Shipped loadout kept |
+| **3 talents** | seven full 51-point spreads, swept by rank | **+84.08 shipped.** Reverberation 5 is +0.03 for five points; the five remaining dead points are FORCED by tier 20 and 25 |
+| **4 pre-combat** | all four actions priced by REMOVAL | **-13.55 to -17.56 each at 60s, all noise at 180s.** Nothing added, nothing moved. A 5s Elemental Mastery lead is +0.47 and would rewrite the owner's line |
+| **4 APL** | Earth Shock at six mana gates, two filler floors at four thresholds each, Chain Lightning, four entry removals | **every candidate loses.** Earth Shock is monotone toward "never"; the filler floor loses at every threshold |
+| **5 consumables** | blasted lands, potion, flask, food | **every alternative loses at 60s.** The potion inverts at 180s and is a question |
+
+### Earth Shock: the stated reason was stale and the real one is damage per mana
+
+The list's header read *"Flame Shock's TWELVE seconds of burn beat one instant
+hit."* Call of Flame 3/3 makes that burn **twenty-one** seconds against a six
+second shock cooldown, so there is barely any contention -- and the owner's own
+ruling says so: *"these do share a cooldown, but Flame Shock's duration is long
+enough such that they can be alternated, therefore both deserve to be on the
+list."*
+
+What rules it out is the pool. At 760 spell power Earth Shock is **594 damage in
+a 1.5s global cooldown for 450 mana** and Lightning Bolt **739 in a 2.0s cast
+for 220**: it wins the global cooldown 396 to 295 a second and loses the pool
+**1.32 to 3.36 a mana**. Swept, it is monotone toward never -- **-0.51 at a 90%
+mana floor falling to -21.84 at 50% at 60s, and -0.43 to -77.19 at 180s.**
+
+Chain Lightning is the same shape with the same stale reason: Elemental Alacrity
+takes it to a **1.5s cast, the GCD floor**, which is 371 damage a second against
+the bolt's 370 -- a tie per global cooldown, 1.77 a mana, and **-11.63 at 60s,
+-37.30 at 180s**.
+
+### And Flame Shock's uptime falls with the clock, with no fix available
+
+**96.8% at 60s, 64.1% at 180s, 53.7% at 300s** -- and Lava Burst is gated on the
+shock being present, so the clock takes a maintenance entry and a cooldown entry
+together. The cause is the starvation rule: the shock sits ABOVE the filler and
+is still starved by it, because **priority does not reserve a resource** and 369
+mana loses every race to 198.
+
+**THE FIX THAT SHOULD HAVE WORKED DOES NOT.** A mana floor on the filler --
+flat, or conditioned on something better actually pending -- swept 400 to 1200
+mana, is **-9.22 to -28.33 at 180s** and 0.00 to -7.65 at 60s. The global
+cooldowns spent idling are worth more than the uptime buys. So the falling
+uptime is a property of the economy and not a defect in the order.
+
+### Haste is not a stat weight on this profile, and finding that out took three routes
+
+`stat_weights` at 180s priced **+1% haste at -15.12 +/- 0.77**, which is large,
+statistically solid and wrong-signed. Taking the same 2% back off through the
+two enchants that grant it measured **-22.58 +/- 3.31**. **Both directions lose,
+which no slope can express.**
+
+Swept finely at 60s (`tools/probe_stat_sweep.ts`, added this round):
+
+| step | -20 | -10 | -2 | -1 | +1 | +2 | +10 | +20 | +40 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| delta | -12.04 | -9.80 | -1.01 | -0.46 | +0.54 | +1.12 | -4.34 | -0.40 | +7.74 |
+
+A small positive slope with a step of about **-10** on top. The step is a
+**Searing Totem boundary**: 55 second totem, re-application gated on the aura
+having fallen off, and whether that last application ticks before the fight ends
+moves with anything touching the cast rhythm. Totem ticks are **35.0 at haste
+ratings 0, 9, 10, 11, 30 and 60 and 37.7 at 19, 20 and 21** -- and **20 is
+exactly what the build wears**. Per-tick damage is identical at every value, so
+it is a COUNT and not a magnitude.
+
+**SO THE ENCHANT QUESTION ON THIS PROFILE IS UNANSWERED RATHER THAN ANSWERED**,
+and both of the procedure's routes measure the artefact. The shipped loadout is
+kept, which is also the zero-risk option. It is in the questions table.
+
+### Three tools gained something, and one of them had been blind the whole time
+
+- **`tools/probe_clock.ts`** -- new. One profile at four fight lengths with the
+  mana book, the cast counts and the uptimes beside each. Its first draft wrote
+  `encounter.durationSeconds`, a field that does not exist, and **all four
+  lengths came back identical to the decimal** -- this project's own tell for a
+  patch that did not apply rather than for a change worth nothing.
+- **`tools/probe_stat_sweep.ts`** -- new. One stat, both directions, paired.
+  What distinguishes a weight from a discontinuity.
+- **`tools/stat_weights.ts` now takes `DURATION=`**, which it never did, so
+  **every weight it has ever printed was a weight at sixty seconds.** On this
+  profile `manaPer5` and `spirit` read 0.000, "not measured: the interval
+  swallows the value", at the default and are **0.6623 and 0.3613 a point** at
+  180s, while Intellect goes 0.1337 to **0.6988** and spell power falls 0.6841
+  to 0.4647. The whole table re-sorts.
+
+### And a variant group's labels had expired
+
+Three `elementalPrecombat` rows added actions the opener already carries, so
+they were measuring a DUPLICATE: the Elemental Mastery row read IDENTICAL
+FIGHTS -- the second cast is refused by its own cooldown -- and the Searing
+Totem row read **-5.46**, which is the cost of a wasted pre-combat cast and not
+a verdict on the totem. **A variant label is a claim about the build it is
+applied to, and it expires when that build ships the thing it adds.** All four
+rows are removals now, which is what prices a shipped action.
+
+### The shared checkout, again
+
+Another session was editing this tree live -- seven files modified and three
+untracked, appearing mid-session. The baseline reads taken before that was
+noticed were re-taken in a worktree at `ea3045e` and **reproduced exactly**, so
+nothing here rests on a contaminated run. `git checkout -b` on a shared checkout
+also moves **their** HEAD onto your branch; it was put back with
+`git symbolic-ref`, which touches no files.
+
+---
+
 ## Round TWENTY-SIX: auto shot is not suspended, and the suspension had two halves
 
 **THE OWNER REVERSED A PREVIOUS RULING:** "a previous ruling where ranged
@@ -1755,7 +1991,6 @@ question for the owner. Removing it from all three gated entries measures
 asymmetry explains BM Hunter's small +4.8 above: its Aimed Shot was already
 timed to lose no shot, so the ruling hands it little and the gate is what is
 left on the table.
-
 ## Round TWENTY-FIVE: what the loop structurally cannot find
 
 **THE OWNER AUDITED THE FIRST PROFILE THE PROCEDURE PRODUCED AND FOUND FOUR

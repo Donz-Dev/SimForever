@@ -89,9 +89,37 @@ const hasDebuff = targetHas;
  * boss is cost 485 mana for less damage than a Lightning Bolt. Leaving it out
  * is the correct single-target list and its absence is not an oversight.
  *
- * EARTH SHOCK IS NOT HERE EITHER, for the opposite reason: it shares a
- * cooldown with Flame Shock in the shock school, and Flame Shock's twelve
- * seconds of burn beat one instant hit.
+ * EARTH SHOCK IS NOT HERE EITHER, AND THE REASON THIS USED TO GIVE WAS STALE
+ * ON ONE FIGURE AND WRONG ABOUT THE BINDING CONSTRAINT.
+ *
+ * It read "it shares a cooldown with Flame Shock in the shock school, and Flame
+ * Shock's TWELVE seconds of burn beat one instant hit". Call of Flame 3/3 takes
+ * that burn to **twenty-one** seconds against a six second shock cooldown -- so
+ * about fifteen seconds in twenty-one the shock school is idle and there is no
+ * contention to speak of. The owner's own ruling on the shared cooldown says as
+ * much: "these do share a cooldown, but Flame Shock's duration is long enough
+ * such that they can be alternated, therefore both deserve to be on the list."
+ *
+ * WHAT ACTUALLY RULES IT OUT IS DAMAGE PER MANA, and it rules it out at every
+ * threshold and every fight length. At 760 spell power Earth Shock is
+ * `301 + 0.386 x 760` = 594 in a 1.5 second global cooldown for 450 mana, and
+ * Lightning Bolt `196 + 0.714 x 760` = 739 in a 2.0 second cast for 220 -- so
+ * **396 damage a second against 295, and 1.32 damage a mana against 3.36.** It
+ * wins the global cooldown and loses the pool by two and a half times.
+ *
+ * SWEPT RATHER THAN ASSERTED, because the one cell previously measured (ungated,
+ * -30.3) is a reading of a PARAMETER. A mana floor from 50% to 90% of the pool,
+ * with and without a Flame Shock guard, is **monotone toward "never"**: at 60s
+ * -0.51 at a 90% floor falling to -21.84 at 50%, and at 180s -0.43 falling to
+ * -77.19. There is no peak to find. `tools/shamanVariants.ts`, group
+ * `elementalEarthShock`.
+ *
+ * CHAIN LIGHTNING LOSES THE SAME WAY AND ITS STATED REASON IS ALSO NOT THE
+ * BINDING ONE. The header above rules it out for the two jumps that have
+ * nothing to land on, which is true -- and Elemental Alacrity takes it to a
+ * **1.5 second cast, the global cooldown floor**, which makes it 371 damage a
+ * second against the bolt's 370. Per global cooldown it is a tie; per mana it is
+ * 1.77 against 3.36, and it measures **-11.63 at 60s and -37.30 at 180s**.
  *
  * ----------------------------------------------------------------------------
  * SEARING TOTEM IS WORTH +59.5, which is the largest single rotation finding in
@@ -163,7 +191,42 @@ export const SHAMAN_ELEMENTAL: AplList = {
    * seconds against the shock's twelve -- so putting it first costs the shock
    * one global cooldown once a fight and gets the totem ticking from the pull.
    */
+  /*
+   * ==========================================================================
+   * AND BOTH MAINTENANCE ENTRIES INVERT WITH THE CLOCK, which is worth knowing
+   * before either figure is quoted.
+   *
+   * REMOVING THE SEARING TOTEM ENTRY is **+8.12 at 60s** and **-52.74 at
+   * 180s**. The totem is pre-cast at a 1.5 second lead and lasts 55 seconds, so
+   * a sixty second fight needs ONE application and the entry's only job there
+   * is to spend a global cooldown re-applying it for the last few ticks. At any
+   * longer length it is the second largest damage source in the build.
+   *
+   * REMOVING THE LAVA BURST ENTRY is **-5.51 at 60s** and **+6.97 at 180s**,
+   * for the mirror reason: at 180s the build is mana bound and 238 mana on a
+   * ten second cooldown competes with the filler.
+   *
+   * NEITHER IS CHANGED. Both are the owner's lines, both gains belong to the
+   * one-minute clock that `HANDOVER.md` carries as an open question, and a
+   * figure that reverses between two fight lengths is not an argument for
+   * either -- it is an argument for settling the length.
+   * ==========================================================================
+   */
   { abilityId: 'searing_totem', condition: expired('searing_totem') },
+  /*
+   * "IF NOT ACTIVE" IS RIGHT AND ITS UPTIME STILL FALLS WITH THE CLOCK --
+   * **96.8% at 60s, 64.1% at 180s, 53.7% at 300s** -- because the build runs
+   * dry and a 369 mana shock loses every race to a 198 mana filler. Priority
+   * does not reserve a resource: this entry sits ABOVE Lightning Bolt and is
+   * still starved from beneath by it.
+   *
+   * AND POOLING FOR IT LOSES AT EVERY THRESHOLD. A mana floor on the filler --
+   * flat, or conditioned on something better being pending -- was swept from
+   * 400 to 1200 mana and is **-9.22 to -28.33 at 180s**: the global cooldowns
+   * spent idling are worth more than the shock's extra uptime buys. So the
+   * falling uptime is a consequence of the economy rather than a defect in the
+   * order, and the cheap fix is the one that does not work.
+   */
   { abilityId: 'flame_shock', condition: expired('flame_shock') },
   /*
    * AND THE RACIAL COOLDOWNS *BELOW* THE TWO MAINTENANCE ENTRIES, which is the

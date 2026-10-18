@@ -301,6 +301,44 @@ global-cooldown bound with 962 mana spare in a minute and mana bound in three.
 when the two answers disagree, the owner's instruction decides: *"rotations need
 to be built for longer than 1 minute."*
 
+**AND A THIRD PROFILE FOUND THE SAME FRAME INDEPENDENTLY, WHICH IS WHAT
+MAKES IT A PROPERTY OF THE PROCEDURE RATHER THAN OF ONE BUILD.** The two
+rounds below were measured on separate branches that could not see each
+other, and both arrived at the clock. The Elemental Shaman's figures are the
+starker pair:
+
+**AND THE SECOND PROFILE THROUGH THE PROCEDURE FOUND THE FRAME ITSELF, WHICH IS
+WHAT THAT BLIND SPOT LOOKS LIKE WHEN NOBODY AUDITS IT FOR YOU.** The Elemental
+Shaman reads **802 DPS at 60 seconds, 546 at 180 and 465 at 300**, with mana
+headroom falling 14.3% to **1.3%** -- it empties its pool inside the first
+minute and then stands still. Every figure ever measured on that profile was
+taken in the one regime where its mana is free, and the variant file said so in
+capitals: *"THE ELEMENTAL BUILD IS CAST-BOUND AND NOT MANA-BOUND, WHICH IS THE
+FINDING THAT RULES OUT HALF ITS TREE."* Honest, measured, and a statement about
+a clock.
+
+**FOUR ANSWERS INVERTED OUTRIGHT WHEN THE CLOCK MOVED**, not merely re-priced:
+
+| | 60s | 180s |
+| --- | --- | --- |
+| Convection 5/5, out of dead points | **-0.18** noise | **+19.05** |
+| the Major Mana Potion over Spellblasting | **-13.33** | **+75.77** |
+| removing the Searing Totem entry | **+8.12** | **-52.74** |
+| removing the Lava Burst entry | **-5.51** | **+6.97** |
+
+**A REGIME CLAIM IS A CLAIM ABOUT A CLOCK, AND THE CLOCK CANNOT APPEAR IN A
+VERDICT** -- `probe_build.ts` applies the same length to the baseline and to
+every variant, so it cancels exactly like an ability's GCD flag does. **So write
+the fight length beside any sentence saying which resource binds**, and read
+`tools/probe_clock.ts` before believing one that does not.
+
+**WHAT SHIPS FROM A ROUND LIKE THAT IS WHATEVER IS FREE AT THE PUBLISHED CLOCK
+AND GAINS AT THE OTHERS.** The talent repair is noise at 60s and +84 at 180s, so
+it needs no decision about which length is real; the Major Mana Potion costs
+13.3 at 60s to gain 75.8 at 180s, so it does, and that decision is the owner's.
+**Separating those two is the whole of what a round can honestly do while the
+fight length is an open question.**
+
 ### 1. The named scope is the scope
 
 **ASKED FOR SIX PROFILES ACROSS THREE CLASSES, THIS PROJECT AUDITED NINE
@@ -442,6 +480,41 @@ unfinished work had nothing to report, and 4% hit went missing on all three Drui
 profiles. Classic's Nature's Reach is range and nothing else, which is why the
 name and the first clause agreed with each other and with nothing else.
 
+**AND THE SECOND INSTANCE IS WORSE, BECAUSE THE REASON WAS NOT EVEN ABOUT THAT
+TALENT.** The Shaman's **Mindfulness** is "Allows 17/33/50% of your Mana
+regeneration to continue while casting" and was filed as a ruled-out threat
+effect, reason "Threat, which the engine does not track" -- which is the tooltip
+of **`natural_grace`, one talent across in the same tier**, itself filed under
+`healing`. **The two had each other's rulings**, and only one of the two swaps
+cost anything: threat and healing are both out of scope, so Natural Grace was
+correctly dead under the wrong label, while Mindfulness was a live mana talent
+filed as answered.
+
+**`manaRegenBypass` IS EXACTLY THAT STAT AND SIX TALENTS IN FIVE CLASSES ALREADY
+GRANT IT** -- the Druid's Reflection, the Hunter's two, the Mage's Arcane
+Meditation, the Paladin's Reverence and the Priest's Meditation -- and
+`manaPerTick`'s own comment quotes this tooltip almost word for word, "the stat
+that reads 'allows X% of your mana regeneration to continue while casting'". So
+there was never an engine gap and never a missing number; there was a sentence
+belonging to a different talent.
+
+**WHAT IT COST IS THE OWNER'S OWN THREE POINTS BEING MOVED OUT, WITH A MEASURED
+FIGURE ATTACHED.** `SHAMAN_ELEMENTAL_TALENTS` spent 3 there; an optimisation
+round moved them, recorded "`mindfulness` is threat" as the reason, and measured
+**+2.95 +/- 0.63** for the move -- **correct arithmetic on a talent that did
+nothing.** Restored, with Convection bought out of five dead points, the pair is
+**+84.08 +/- 2.84** at a 180 second fight. **A WRONG `scope` CAN THEREFORE
+PRODUCE A GENUINE MEASUREMENT THAT ARGUES FOR MAKING THE BUILD WORSE**, which is
+the one failure mode in this section that leaves a positive number behind.
+
+**THE CHEAP CHECK IS A GREP AND A TOOLTIP.** Read every `scope`-tagged talent in
+a class's effects file against the client's own words for that talent, not
+against the reason beside it -- and be suspicious of two adjacent talents in one
+tier, because that is where a reason lands on the wrong row. **And no comment may
+QUOTE a declaration**: the census one-liner below counts the literal string, so
+the first draft of the note fixing this took the `threat` column from 11 to 12
+without declaring anything.
+
 **A RULING IS DATA, NOT PROSE.** An `unmodelled` effect carries a `scope` from the
 `OutOfScope` union when the owner has ruled its effect out, and nothing otherwise.
 That is the whole difference between a decision and a gap, and prose could not
@@ -456,7 +529,7 @@ together told someone their build was missing features that were never coming.
 | `positioning` | positions, range, facing, movement, "nearby", radius, travel forms | 23 |
 | `crowdControl` | stuns, fears, roots, snares, silences, incapacitates, disorients, disarms, **and removing any of them** | 37 |
 | `threat` | threat, which is not tracked. Defensive Stance's +30% and Defiance are dropped, not deferred | 11 |
-| `healing` | healing THROUGHPUT. **Mana RETURN is NOT out of scope** — it changes a damage profile's sustain, so it is a live gap and gets no `scope` | 37 |
+| `healing` | healing THROUGHPUT. **Mana RETURN is NOT out of scope** — it changes a damage profile's sustain, so it is a live gap and gets no `scope` | 36 |
 | `stealth` | being stealthed, detecting it, and the openers requiring it — Ambush, Garrote, Cheap Shot. **NOT an in-combat proc that REMOVES a stealth requirement**, which is what Cutthroat is. **NOR an action BREAKING it**, which is now an engine rule | 6 |
 | `castPushback` | avoiding, resisting or reducing the interruption or DELAY of a cast or channel from damage taken. **NOT an interrupt the TARGET suffers** — Earth Shock's school lockout is about the enemy casting and is inert for a different reason | 7 |
 | `totemEntities` | a totem that BUFFS or HEALS on its own. **NOT a totem that deals DAMAGE**, which Searing Totem proved is expressible as a debuff that ticks | 5 |
@@ -593,7 +666,7 @@ expressible, and Searing Totem is modelled as a debuff that ticks.
 
 **AND THE COUNT ABOVE IS NINE MEMBERS, NOT SEVEN, WHICH THIS FILE SAID FOR
 SEVERAL RELEASES.** `OutOfScope` declares nine and the table above has nine rows
-summing to **131 entries**. "Seven members, all of them the owner's" was true the
+summing to **130 entries**. "Seven members, all of them the owner's" was true the
 day the Shaman dive's `castPushback` and `totemEntities` were ratified; `dispel`
 and `immunity` came later, from the one question whose answer split in two, and
 the sentence recording the earlier ratification was left with a total that had
