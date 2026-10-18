@@ -54,15 +54,16 @@ the tooling to be a bit more sophisticated as well."
 | 19 | **BEFORE THE PULL, FOR ALL 28 PROFILES** -- the owner specified an opener per profile, and three Warrior lists lose the entries it replaces | **not re-baselined**, on the owner's standing instruction. Every line of theirs is implemented after one round of corrections: a positioning RULING, two new Druid abilities, a substitution and a periodic that accrues | see below |
 | 23 | **THE ARCANE MAGE THROUGH THE WHOLE LOOP, and the first round run from a WRITTEN PROCEDURE** -- `docs/profile-optimisation.md`. The illegal opener reverted, every other dimension re-priced on the legal build, and one new finding off the UPTIME table | legal **1080.1 +/- 9.9** -> **1090.3 +/- 12.1**. The revert is **-96.5 +/- 9.4** paired and the channel floor **+13.2 +/- 3.2 REAL**; **every other candidate in all seven dimensions loses** | see below |
 | 24 | **THE OWNER'S AUDIT OF THE ARCANE PROFILE -- three items, and the second was worth all of it** -- Mage Armor out of the list, Presence of Mind and Arcane Power OFF the global cooldown, and the cooldown stack written as a real `sequence` | **1090.3 -> 1123.4 (+33.1)**, and Fire and Frostfire **0.0 to the decimal** | see below |
-| 31 | **THE SHADOW PRIEST, and the round where a SHIPPED change was reverted by its own second measurement** -- Inner Focus in, a refresh window in and then out, and the Mind Flay interrupt answered after sitting uncalled since round 19e | **not re-baselined**, on the owner's standing instruction. One change ships: **+6.13 +/- 0.50** at 60s, **+2.40 +/- 0.26** at 300s. Every other candidate in six dimensions loses | see below |
-| 33 | **THE ELE SHAMAN THROUGH THE LOOP, and the round found the FRAME rather than the rotation** -- the profile collapses **802 -> 546 -> 465 DPS from 60s to 300s**, so every figure ever taken on it was taken in the one regime where its mana is free. A talent declared as a ruled-out THREAT effect turned out to be a live mana talent carrying the tooltip of the talent next door | shipped **+84.08 +/- 2.84 at 180s** and **+1.01 +/- 2.09 noise at 60s**; four other answers INVERT with the clock and are not shipped. **27 of 28 profiles bit-identical** | see below |
 | 25 | **THE AUDIT FOLDED BACK INTO THE PROCEDURE, and a figure RETRACTED in the documents people read** -- all four audit findings share one cause, so the procedure gains a section naming what a paired probe structurally cannot see | **no figure moved**; documentation only, suite green at 3731 | see below |
-| 30 | **THE ENH SHAMAN THROUGH THE WHOLE LOOP, AND THE OWNER'S OWN OPENER LINE WAS HIDING AN ENGINE BUG** -- five shipped changes across four dimensions, plus a correctness fix found by chasing a figure that read as an optimisation: a pre-cast aura outlived its own window by the lead, so a refresh landed inside the stale 1.5s and got a window that ticked **zero times** | 761.9 -> **829.4** from the round (**+67.01 +/- 3.35** paired over 4000) -> **838.8** with the fix. Identical uptime, identical casts, **30% fewer ticks** -- only the tick COUNT saw it. Three answers CHANGED SIGN or VALUE as the round progressed | see below |
 | 26 | **A RULING REVERSED: AUTO SHOT IS NOT SUSPENDED BY A HUNTER'S THREE CAST SHOTS** -- a THIRD `Ability.swingTimer` mode, because the suspension had two halves and `hold` only removes one | **LW Ranged 977.4 -> 1021.0 (+43.7 REAL)** and BM Hunter 963.4 -> 968.2 (+4.8); **25 of 28 rows 0.0 to the decimal**. Dropping the now-pointless weave gate on top is **+27.6 REAL on BM Hunter** and is the owner's call | see below |
 | 27 | **THE SAME RULING ON IMPROVED SLAM, where it is CORRECT AND WORTH 0.0** -- `continue` not `hold`, and the client's tooltip said "interrupts **or delays**" all along while this project quoted half of it | **28 of 28 rows 0.0 to the decimal**, and the bound is the finding: 2H Arms takes rank 2, whose 1.0s cast never reaches the next swing because rage arrives per SWING. **At rank 1 the branch fires 12 times in 40 fights** | see below |
 | 28 | **THE FIRE MAGE THROUGH THE WHOLE LOOP, and the first round where THE CLOCK REVERSED A `real` WINNER** (the Arcane round reversed a `noise` row) -- the illegal opener reverted, four changes shipped, and a talent that measures +2.92 at 60s measures **-33.76 at 300s** | legal **1040.1** at 60s, which includes the owner's COMBUSTION RULING arriving mid-round (**+23.9**). The Gate B revert is **-24.23 +/- 4.29** and the loop recovered **+16.77 +/- 3.35** of it, for **-7.53 +/- 4.88** against the published illegal figure; at 300s every row is noise | see below |
 | 29 | **PRESENCE OF MIND WAS A HAND-WRITTEN LIST AND IT HAD DRIFTED** -- it missed Arcane Wrath, which the owner found, and it NAMED Arcane Missiles, a channel it would have delivered one missile of. It is the owner's rule now: catch-all + `requiresCastTime` + a new `excludesChannel` | **28 of 28 rows 0.0**, every reason accounted for off the charge ledger -- Arcane Wrath is in no profile's book, and the PoM charge only ever reached Pyroblast. **Clearcasting shared the list and the gap** | see below |
+| 30 | **THE ENH SHAMAN THROUGH THE WHOLE LOOP, AND THE OWNER'S OWN OPENER LINE WAS HIDING AN ENGINE BUG** -- five shipped changes across four dimensions, plus a correctness fix found by chasing a figure that read as an optimisation: a pre-cast aura outlived its own window by the lead, so a refresh landed inside the stale 1.5s and got a window that ticked **zero times** | 761.9 -> **829.4** from the round (**+67.01 +/- 3.35** paired over 4000) -> **838.8** with the fix. Identical uptime, identical casts, **30% fewer ticks** -- only the tick COUNT saw it. Three answers CHANGED SIGN or VALUE as the round progressed | see below |
+| 31 | **THE SHADOW PRIEST, and the round where a SHIPPED change was reverted by its own second measurement** -- Inner Focus in, a refresh window in and then out, and the Mind Flay interrupt answered after sitting uncalled since round 19e | **not re-baselined**, on the owner's standing instruction. One change ships: **+6.13 +/- 0.50** at 60s, **+2.40 +/- 0.26** at 300s. Every other candidate in six dimensions loses | see below |
 | 32 | **THE FROSTFIRE MAGE, AND THE TWO BIGGEST GAINS WERE WITHHELD AS 60-SECOND ARTEFACTS** -- a second illegal opener reverted, Eureka held for a Fingers of Frost window, and a dead Mage Armor entry the owner had already ruled on | legal **1051.7 -> 1057.7 (+5.99 +/- 0.95 REAL)**. The revert is **-25.90 +/- 9.70**; `critical_mass` 5/5 is **+21.80 at 60s and -10.29 at 180s**, so it is NOT shipped | see below |
+| 33 | **THE ELE SHAMAN THROUGH THE LOOP, and the round found the FRAME rather than the rotation** -- the profile collapses **802 -> 546 -> 465 DPS from 60s to 300s**, so every figure ever taken on it was taken in the one regime where its mana is free. A talent declared as a ruled-out THREAT effect turned out to be a live mana talent carrying the tooltip of the talent next door | shipped **+84.08 +/- 2.84 at 180s** and **+1.01 +/- 2.09 noise at 60s**; four other answers INVERT with the clock and are not shipped. **27 of 28 profiles bit-identical** | see below |
+| 34 | **SIX PRs INTEGRATED, AND WHAT THE MERGES THEMSELVES GOT WRONG** -- #287 to #292, strictly sequential because every squash re-conflicted the rest. Rounds renumbered 28-33 in MERGE order; the question count re-derived five times; two SEMANTIC conflicts git could not see | **no figure re-measured**, on the standing instruction. Three resolutions introduced a defect the markers did not show -- one reached `main` and is repaired | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -244,6 +245,98 @@ IS NOW LOAD-BEARING.** Each was fine while it was worth little and became worth
 asking about the moment a round made it the biggest thing on a profile -- which
 is CLAUDE.md's rule that an interpretation flagged as one is what gets it ruled
 on, and that the label has to survive until the answer arrives.
+
+## Round THIRTY-FOUR: six PRs integrated, and what the merges themselves got wrong
+
+**THE OWNER ASKED FOR #287 TO #292 MERGED, AND FOR THE CONFLICTS AMONG THEM.**
+Five optimisation rounds and the Presence of Mind fix, all branched within a day
+of each other, all pointed at `main`. All six are merged; `main` is
+[ecfedd9](https://github.com/Donz-Dev/SimForever/commit/ecfedd9), typecheck
+clean and 3,774 tests green on the integrated result. **No figure was
+re-measured**, on the standing instruction: each round's numbers landed as its
+author measured them.
+
+| PR | round | conflicts resolved |
+| --- | --- | --- |
+| #289 Fire Mage | 28 | none -- the one that merged clean |
+| #291 Presence of Mind | 29 | `HANDOVER.md` |
+| #292 Enh Shaman | 30 | `HANDOVER.md` |
+| #290 Shadow Priest | 31 | `HANDOVER.md`, including the baseline table |
+| #287 Frostfire | 32 | eight files |
+| #288 Ele Shaman | 33 | five files, one an add/add |
+
+**MERGING #289 TURNED ALL FIVE OTHERS CONFLICTING**, so the order was strictly
+sequential -- merge, merge `main` into the next, resolve, typecheck, test, push,
+CI, merge. Resolving two against one `main` is wasted, because every squash moves
+it.
+
+### What collided, every time
+
+**THE ROUND NUMBER.** Four branches called themselves 27 and two called
+themselves 28, each taking "the next free integer" from one base. They are 28 to
+33 now, in MERGE order, never renumbering what was already on `main` -- the
+round-11 precedent. The Fire Mage round's own text already documented this exact
+collision, and it then happened five more times in the merges after it.
+
+**THE QUESTION COUNT.** Every branch moved the outstanding-questions total by its
+own additions, so every merge presented two adjusted totals and neither was right.
+Re-derived from the rows with an independent `awk` count each time: **15, 17, 18,
+18, 21** -- and the independent count caught the resolution script's own count
+being short by one TWICE.
+
+**THE ROW ORDER OF THE ROUND TABLE**, which this round puts back: the merges
+interleaved rows 23 to 33 as 23, 24, 31, 33, 25, 30, 26, 27, 28, 29, 32. Nothing
+reads that order, so it moved no figure; it is put right because the table is
+the index a person scans.
+
+### What git could not see
+
+| | each side said | merged, the truth was |
+| --- | --- | --- |
+| `docs/profile-optimisation.md` | each Mage branch fixed a DIFFERENT Gate B failure and said the other still failed | `mage_arcane`, `mage_fire` and `mage_frostfire` all fixed; **`shaman_elemental` is the only one left** |
+| `mageAbilities.test.ts` | "no Mage Armor entry, WHERE FROSTFIRE STILL DOES" | Frostfire had removed it too; all three lists are empty, and `selfExpired` went with its last caller |
+| the baseline table | Shadow Priest's copy disagreed with `main` on three rows | the branch had changed ONE thing, its own spread; the rest was a stale copy of a table `main` had rebuilt |
+
+**THE THIRD IS THE ONE WORTH COPYING.** Picking a side of a figures table would
+have reverted three published numbers. `git diff <merge-base> <branch>` named the
+one row the branch meant, and that settled it.
+
+**AND THE AUTO-MERGED FILES WERE CHECKED, NOT TRUSTED.** `presets.ts` merged clean
+every time because the sessions optimised different profiles -- and for each
+branch its own signature additions were grepped for in the merged file, so "both
+edits survived" is a measurement rather than an inference from a clean merge.
+
+### What the resolutions broke
+
+**THREE OF SIX INTRODUCED A DEFECT THE MARKERS DID NOT SHOW, AND ONE REACHED
+`main`.**
+
+| | the defect | caught by |
+| --- | --- | --- |
+| #290 | a row filter dropped `\| **` off the `shaman_elemental` question row, which landed on `main` as a line that no longer renders | the `awk` recount one merge later; restored from `f4d10c4` in #287 |
+| #287 | "keep both" glued one side's `*/` onto the other's comment body | `tsc` |
+| #288 | `shamanVariants.ts` corrupted twice -- two hunks opened inside constructs whose `};` and `],` were SHARED and outside the hunk | `tsc`, reporting 300 lines from the cause |
+
+**AND ONE THAT NOTHING CAUGHT**: the CLAUDE.md half of #287 left a malformed
+bullet, `**  **AND THE SAME TWO INSTANCES`, and Markdown has no compiler. This
+round fixes it, along with two adjacent paragraphs that each called their profile
+"the second" through the procedure -- both true, being concurrent, and now said so.
+
+**GIT'S OWN CLEAN-REGION MERGE PRODUCED TWO COMPILE ERRORS**: a duplicate `apl`
+in one import list and a duplicate `READS_THE_SOURCE_TREE_MS` declaration, each
+added by both branches outside any conflict.
+
+**AND TWO SESSIONS WROTE THE SAME TOOL**, `tools/probe_clock.ts`, with different
+interfaces. The Ele Shaman's is kept -- a superset and the only one any document
+references -- after running it on `mage_fire` to confirm the Fire round's use
+survives. Its interface is `PROFILE=`.
+
+### And a rule broken three times
+
+**#285, #286 AND #291 WERE MERGED WITH `Co-Authored-By` TRAILERS**, which
+CLAUDE.md forbids in a section most readers reach last. `main` is protected, so
+they stay. The rule is restated at the top of CLAUDE.md's Git workflow section
+now, and this commit carries none.
 
 ## ROUND 30 — THE ENH SHAMAN, AND THE BASELINE MOVED FOUR TIMES INSIDE THE ROUND
 

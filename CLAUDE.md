@@ -301,11 +301,12 @@ global-cooldown bound with 962 mana spare in a minute and mana bound in three.
 when the two answers disagree, the owner's instruction decides: *"rotations need
 to be built for longer than 1 minute."*
 
-**AND A THIRD PROFILE FOUND THE SAME FRAME INDEPENDENTLY, WHICH IS WHAT
-MAKES IT A PROPERTY OF THE PROCEDURE RATHER THAN OF ONE BUILD.** The two
-rounds below were measured on separate branches that could not see each
-other, and both arrived at the clock. The Elemental Shaman's figures are the
-starker pair:
+**AND THE ELEMENTAL SHAMAN FOUND THE SAME FRAME INDEPENDENTLY, WHICH IS WHAT
+MAKES IT A PROPERTY OF THE PROCEDURE RATHER THAN OF ONE BUILD.** The paragraph
+above and the one below EACH call their profile "the second" through the
+procedure, and both are right: they were measured concurrently on separate
+branches that could not see each other, and both arrived at the clock. The
+Elemental Shaman's figures are the starker pair:
 
 **AND THE SECOND PROFILE THROUGH THE PROCEDURE FOUND THE FRAME ITSELF, WHICH IS
 WHAT THAT BLIND SPOT LOOKS LIKE WHEN NOBODY AUDITS IT FOR YOU.** The Elemental
@@ -6209,7 +6210,7 @@ shape should fail loudly, not render a tree with a broken arrow.
   one walk, so caching it was the repair; these have one walk in one test each,
   so there is nothing to cache and the limit is the whole fix. Still per-test,
   and `vite.config.ts` still sets no `testTimeout`.
-**  **AND THE SAME TWO INSTANCES NAME THE PRECIPITATING CONDITION: A COLD FILE
+- **AND THE SAME TWO INSTANCES NAME THE PRECIPITATING CONDITION: A COLD FILE
   CACHE IN A FRESH WORKTREE.** `protectedChannelTicks.test.ts` and
   `variableCostIsReported.test.ts` both timed out on the **first** full-suite run
   in a worktree created minutes earlier, and both passed standalone at **188ms
@@ -6789,6 +6790,119 @@ baseline.
 `main` is **protected**: PR required, CI must pass (Node 20 and 22), no direct
 pushes, and that applies to admins. Work on a branch, open a PR, merge with
 `--squash --delete-branch`.
+
+**AND THE `Co-Authored-By` RULE WAS BROKEN AGAIN, THREE TIMES, IN THE SAME
+SESSION THAT HAD THIS FILE IN FRONT OF IT.** This file says not to add the
+trailers and that a project rule beats a harness instruction; #285, #286 and
+#291 were squash-merged with them in the body, and `main` is protected, so they
+stay. **The rule is written in a section most readers reach last.** It is
+restated here, at the top of the Git workflow section, for that reason: no
+`Co-Authored-By` lines in this repository, whatever the tooling asks.
+
+**SIX PRs MERGED IN ONE SITTING, AND EVERY ONE AFTER THE FIRST CONFLICTED.**
+#285 to #292 were five optimisation rounds and one bug fix, all branched from
+within a day of each other and all pointed at `main`. Merging the first clean one
+turned the other five CONFLICTING, so the only workable order was strictly
+sequential: merge one, merge `main` into the next, resolve, typecheck, test, push,
+wait for CI, merge -- five times. **Resolving two against the same `main` in
+parallel is wasted work**, because each squash moves `main` and re-conflicts the
+rest. Prepare the NEXT one by reading it while CI runs on the current one.
+
+**FOUR OF THE SIX BRANCHES NUMBERED THEMSELVES ROUND 27.** Frostfire, Ele Shaman,
+Shadow Priest and Enh Shaman each took "the next free integer" from the same
+base, and the Fire Mage and the Presence of Mind fix both took 28 a commit
+later. They are numbered in MERGE order now -- 28 to 33 -- on the one rule that
+survives that much concurrency: **never renumber what is already on `main`.**
+`HANDOVER.md`'s own text already documented this exact collision and it
+happened anyway, five times, in the merge that came after the documentation.
+**A documented failure is not a prevented one.**
+
+**AND THE OUTSTANDING-QUESTIONS COUNT COLLIDED ON EVERY SINGLE MERGE.** Each
+branch moved it by its own additions from the same base, so every resolution
+presented two adjusted totals, neither right. Re-derived from the rows each time
+with an INDEPENDENT `awk` count: 15, 17, 18, 18, 21. **That independent count
+caught the resolution script being short by one twice** -- the script that made
+the edit also counted it, and got its own slice wrong. Count with a different
+tool from the one that edited.
+
+**THE AUTO-MERGED FILES ARE THE ONES THAT CAN LOSE WORK SILENTLY, SO CHECK
+THEM.** `presets.ts`, `rotations/shaman.ts` and `rotations/mage.ts` merged clean
+every time, because the sessions optimised different profiles. That was
+VERIFIED, not assumed: for each branch, its own signature additions were grepped
+for in the merged file. A clean merge says the text did not overlap; it says
+nothing about whether two edits to one preset both survived.
+
+**TWO CONFLICTS WERE SEMANTIC, AND TAKING EITHER SIDE WOULD HAVE REVERTED A
+FIX.**
+
+| | what each side said | what was true after the merge |
+| --- | --- | --- |
+| `docs/profile-optimisation.md` | each Mage branch fixed a DIFFERENT Gate B failure and said the other still failed | all three of `mage_arcane`, `mage_fire` and `mage_frostfire` fixed |
+| `mageAbilities.test.ts` | "no Mage Armor entry, WHERE FROSTFIRE STILL DOES" | the Frostfire round had removed it too; the contrast was a fact about a moment |
+
+**AND THE SECOND ONLY SHOWED UP AS A FAILING TEST**, with `selfExpired` going
+unused as the compile-time half of the same fact -- three rounds had independently
+concluded a thirty-minute buff cannot fire from that gate. **Read a "where X
+still does" assertion as a claim a concurrent branch can falsify.**
+
+**AND THE BASELINE TABLE CONFLICTED ON THREE ROWS, AND WHAT SETTLED IT WAS
+ASKING WHAT THE BRANCH CHANGED.** The Shadow Priest branch's copy of the table
+disagreed with `main` on Arcane, BM Hunter and LW Ranged. Picking a side would
+have silently reverted three published figures. `git diff <merge-base>
+<branch> -- HANDOVER.md` showed it had changed exactly ONE thing, its own spread
+13/3/35 to 14/2/35; the rest was a stale copy of a table `main` had since
+rebuilt. **A conflict in a table of figures is resolved by the branch's DIFF,
+never by its side of the hunk.**
+
+**THREE OF THE SIX RESOLUTIONS INTRODUCED A DEFECT THE CONFLICT MARKERS DID NOT
+SHOW, AND ONE REACHED `main`.**
+
+| | the defect | what caught it |
+| --- | --- | --- |
+| #290 | a script filtering rows by `startswith('\| **')` dropped the prefix off the `shaman_elemental` question row, which landed on `main` as a line that no longer renders | the independent `awk` recount, one merge later; #287 restored it from `f4d10c4` |
+| #287 | "keep both" glued one side's `*/` onto the other side's comment body | `tsc` |
+| #288 | `shamanVariants.ts`, corrupted TWICE -- see below | `tsc`, 300 lines from the cause |
+
+**AND THE `CLAUDE.md` HALF OF #287 LEFT A MALFORMED BULLET** -- `**  **AND THE
+SAME TWO INSTANCES` -- that nothing checks at all, because Markdown has no
+compiler. It was found reading the file afterwards. **The tools that caught the
+other three cannot see prose, so a prose resolution needs reading.**
+
+**A HUNK CAN OPEN INSIDE A CONSTRUCT WHOSE CLOSER SITS OUTSIDE IT, AND THEN
+"KEEP BOTH" IS WRONG.** Two of `shamanVariants.ts`'s three hunks ended
+mid-object-literal with a SHARED `};` or `],` after the marker, and one began
+inside a shared `/*`. So whichever side goes LAST is closed by the shared tail,
+the side placed FIRST needs its own closer, and the second side's comment tail
+needs a fresh opener. Concatenating both orphaned a `*/` and left a literal open.
+**READ THE LINES EITHER SIDE OF THE MARKERS BEFORE CHOOSING A RESOLUTION**, and
+when `tsc` reports a cascade, go to the hunk boundaries rather than to the
+reported lines -- they were three hundred lines apart.
+
+**AND GIT'S OWN CLEAN-REGION MERGE PRODUCED TWO COMPILE ERRORS.** Both branches
+added `apl` to the same import list in different positions, and both declared
+`READS_THE_SOURCE_TREE_MS` in `protectedChannelTicks.test.ts`, each outside any
+conflict -- so git kept both of each, and `tsc` reported a duplicate identifier
+in a region marked clean. **Typecheck after every merge, including the ones that
+reported no conflict.**
+
+**AND TWO SESSIONS WROTE THE SAME TOOL.** `tools/probe_clock.ts` came back as an
+ADD/ADD conflict -- the Fire and Ele Shaman rounds each wrote one profile at four
+fight lengths, with different interfaces (`PRESET=` against `PROFILE=`). The Ele
+Shaman's was kept: a superset, with a buff-uptime block, and the only one any
+document referenced. It was run on `mage_fire` before being kept, so the Fire
+round's use survived. **Two copies of one tool under one name is worse than
+either**, so pick the one with callers and check it serves the other's.
+
+**`gh pr merge --delete-branch` REMOVES A WORKTREE THAT HAS THE BRANCH CHECKED
+OUT**, and the next command in that directory reports "not a git repository".
+Merge from a checkout that holds no branch being merged, or expect to recreate
+the worktree after every merge.
+
+**AND `git checkout --merge <file>` RESTORES CONFLICT MARKERS LABELLED `ours`
+AND `theirs`**, not `HEAD` and `origin/main` as the original merge wrote them --
+so a resolution script keyed on the label finds nothing on the second attempt.
+Match `<<<<<<< ` and `>>>>>>> ` without the label.
+
 
 **CI RUNS ONLY ON A PULL REQUEST WHOSE BASE IS `main`, SO A STACKED PR IS
 UNTESTED.** `.github/workflows/ci.yml` is `pull_request: branches: [main]`, and
