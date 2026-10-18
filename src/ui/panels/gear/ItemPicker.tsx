@@ -31,6 +31,7 @@ export function ItemPicker({
   style,
   valuation,
   equippedId,
+  benchmarkIds,
   onPick,
   onClose,
 }: {
@@ -40,6 +41,8 @@ export function ItemPicker({
   readonly style: CombatStyleId;
   readonly valuation: StatValuation;
   readonly equippedId?: number;
+  /** The profile's benchmark template items. See `pickerItems`. */
+  readonly benchmarkIds?: ReadonlySet<number>;
   readonly onPick: (itemId: number | undefined) => void;
   readonly onClose: () => void;
 }) {
@@ -57,8 +60,9 @@ export function ItemPicker({
         search,
         showUnusable,
         ...(equippedId !== undefined ? { equippedId } : {}),
+        ...(benchmarkIds ? { benchmarkIds } : {}),
       }),
-    [slot, characterClass, style, valuation, search, showUnusable, equippedId],
+    [slot, characterClass, style, valuation, search, showUnusable, equippedId, benchmarkIds],
   );
 
   return (

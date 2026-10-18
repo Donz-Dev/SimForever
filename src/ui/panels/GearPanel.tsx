@@ -10,6 +10,7 @@ import {
   BENCHMARK_SETS,
   BENCHMARK_TEMPLATES_BY_PRESET,
   benchmarkEquipmentFor,
+  benchmarkItemIdsFor,
 } from '../../game/items/benchmarkSets';
 import { defaultValuationForPreset, templateIdFor } from '../../game/items/defaultValuation';
 import { scoreEnchant, scoreItem, type StatValuation } from '../../game/items/itemValue';
@@ -375,6 +376,7 @@ function GearSlot({
           style={style}
           valuation={valuation}
           {...(worn ? { equippedId: worn.itemId } : {})}
+          benchmarkIds={benchmarkItemIdsFor(templateIdFor(profile.benchmarkTemplateId, profile.character.name))}
           onClose={() => setOpen(undefined)}
           onPick={(itemId) => {
             setOpen(undefined);

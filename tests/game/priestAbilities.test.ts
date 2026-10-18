@@ -656,11 +656,15 @@ describe('Inner Focus, whose two halves are spent at different moments', () => {
     const spender = innerFocusSpender();
 
     // The cast that APPLIED it does not spend it: same timestamp.
-    expect(spender.canTrigger!(simulation, actor, undefined as never)).toBe(false);
+    const plain = { final: true } as never;
+    expect(spender.canTrigger!(simulation, actor, plain)).toBe(false);
 
     simulation.clock.advanceTo(1);
-    expect(spender.canTrigger!(simulation, actor, undefined as never)).toBe(true);
-    spender.onTrigger(simulation, actor, undefined as never);
+    // A channel's earlier ticks do NOT spend it -- the owner's ruling that Mind
+    // Flay inherits the crit for the whole channel. Only the last tick does.
+    expect(spender.canTrigger!(simulation, actor, { final: false } as never)).toBe(false);
+    expect(spender.canTrigger!(simulation, actor, plain)).toBe(true);
+    spender.onTrigger(simulation, actor, plain);
     expect(actor.auras.has('inner_focus')).toBe(false);
   });
 

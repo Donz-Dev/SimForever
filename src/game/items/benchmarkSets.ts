@@ -1147,6 +1147,19 @@ for (const template of BENCHMARK_TEMPLATES) {
 }
 
 /**
+ * Every generated item of ONE template, across its four sets -- what the Gear
+ * panel's picker offers beside the captured items. Empty for an unknown id.
+ */
+export function benchmarkItemIdsFor(presetId: string | undefined): ReadonlySet<number> {
+  const ids = new Set<number>();
+  if (presetId === undefined) return ids;
+  for (const set of BENCHMARK_SETS) {
+    for (const item of BY_KEY.get(`${presetId}|${set.id}`) ?? []) ids.add(item.id);
+  }
+  return ids;
+}
+
+/**
  * The equipment a button installs, or undefined if this profile has no template.
  *
  * SLOT BY SLOT FROM THE GENERATED ITEMS, so the Gear panel shows real rows that
