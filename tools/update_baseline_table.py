@@ -50,6 +50,7 @@ LABELS = {
     '2H Arms': 'two_hand_arms',
     'DW Fury': 'dw_fury',
     'Prot Warr': 'prot_warr',
+    'Fury Prot': 'fury_prot',
     'Venom Rogue': 'rogue_venom',
     'Combat Mut': 'rogue_combat_mut',
     'Combat Rogue': 'rogue_combat',

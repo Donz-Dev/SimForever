@@ -142,7 +142,7 @@ describe('the raid selection after the owner filled it in', () => {
      * Every other profile is still identical, and Windfury is still in all of
      * them, which is the half this file is about.
      */
-    const TANKS = new Set(['prot_warr', 'prot_pally', 'druid_bear']);
+    const TANKS = new Set(['prot_warr', 'fury_prot', 'prot_pally', 'druid_bear']);
     const lists = PROFILE_PRESETS.filter((preset) => !TANKS.has(preset.id)).map(
       (preset) => [preset.id, preset.build().raidBuffs] as const,
     );

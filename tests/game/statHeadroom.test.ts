@@ -316,6 +316,8 @@ describe('hit headroom', () => {
      */
     const AIMED: Readonly<Record<string, AttackTableKind>> = {
       'prot_warr': 'melee-special',
+      // Prot Warr's template row under its own label, so the same aim.
+      'fury_prot': 'melee-special',
       'shaman_enhancement': 'melee-special',
       'druid_cat': 'melee-special',
       'druid_bear': 'melee-special',

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { stanceCastsOutsideExecute } from '../helpers/stanceCasts';
 import { ROLL_MAX, STAT_NAMES, toPercent, toRollUnits, toSeconds } from '../../src/engine';
 import {
   COMBAT_CONSTANTS,
@@ -730,9 +731,8 @@ describe('the Protection priority list', () => {
     expect(compiled(entry.condition)?.(undefined as never, player, undefined)).toBe(true);
   });
 
-  it('never leaves Defensive Stance', () => {
-    const result = runProfileBatch(tank());
-    expect(resourceFlowOf(result, 'rage').spent.some((row) => row.sourceId === 'stance_change')).toBe(false);
+  it('leaves Defensive Stance only inside the Execute window', () => {
+    expect(stanceCastsOutsideExecute(tank(), [1, 2, 3, 4, 5])).toEqual([]);
   });
 
   it('keeps Battle Shout and Sunder Armor up', () => {

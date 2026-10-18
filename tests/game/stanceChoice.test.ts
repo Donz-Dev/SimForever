@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { stanceCastsOutsideExecute } from '../helpers/stanceCasts';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { defaultStanceFor, resolveStance, STANCES } from '../../src/game/character';
 import {
@@ -125,13 +126,23 @@ describe('the tank list stays in Defensive Stance', () => {
     return resourceFlowOf(batch, 'rage').spent.find((row) => row.sourceId === 'stance_change')?.count ?? 0;
   }
 
-  it('never changes stance at all', () => {
+  it('changes stance only inside the Execute window', () => {
     /*
-     * Zero, not "about one". The character OPENS in Defensive -- that is what
-     * choosing the stance does -- so the list's first entry finds the aura
-     * already up and falls straight through to Battle Shout.
+     * It was "never changes stance at all", and the owner's tank Execute clause
+     * is what moved it: the list goes to Battle Stance for Execute in the last
+     * 20% of the fight. So a COUNT says little now -- it is one swap a fight,
+     * or two when Shield Wall pulls it back -- and the claim worth pinning is
+     * that none of them lands before the window.
      */
-    expect(swaps('defensive')).toBe(0);
+    const base = createDefaultProfile();
+    const profile = {
+      ...base,
+      character: { ...base.character, combatStyle: 'one_hand_shield', stance: 'defensive' },
+      equipment: startingEquipmentFor('warrior', 'one_hand_shield'),
+      encounter: { ...base.encounter, targetAttacks: true },
+    };
+    expect(stanceCastsOutsideExecute(profile, [12, 13, 14, 15])).toEqual([]);
+    expect(swaps('defensive')).toBeLessThanOrEqual(40 * 2);
   });
 
   it('is only the tank list that stays put', () => {
@@ -144,9 +155,11 @@ describe('the tank list stays in Defensive Stance', () => {
     expect(swaps('battle')).toBeGreaterThan(3);
   });
 
-  it('keeps Defensive Stance up for the whole fight', () => {
+  it('keeps Defensive Stance up for the whole fight before the Execute window', () => {
     // The point of the list: Defensive is where the damage reduction and
     // Revenge live, and the general list spends most of a fight outside it.
+    // BAR THE LAST 20%, the owner's Execute clause -- so the uptime is about
+    // 0.8 rather than 1, and at least that rather than exactly it.
     const base = createDefaultProfile();
     const batch = runProfileBatch({
       ...base,
@@ -156,7 +169,7 @@ describe('the tank list stays in Defensive Stance', () => {
       encounter: { ...base.encounter, targetAttacks: true },
     } as never);
     const defensive = batch.buffUptime.find((row) => row.auraName === 'Defensive Stance');
-    expect(defensive?.uptime).toBeCloseTo(1, 2);
+    expect(defensive?.uptime ?? 0).toBeGreaterThan(0.78);
   });
 });
 

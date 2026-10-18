@@ -342,7 +342,16 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * enchant block states in its own words.
    * ============================================================================
    */
-  { presetId: 'pally_shockadin_2h', characterClass: 'paladin', label: 'Shockadin 2H', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Mace', speed: 2.0 } },
+  { presetId: 'pally_shockadin_2h', characterClass: 'paladin', label: 'Shockadin 2H', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Mace', speed: 2.0 } },  /*
+   * FURY PROT IS THE PROT WARR ROW under its own label -- the owner's "copy
+   * Prot Warr in almost every other case" -- so it generates the same stats
+   * on its own ids, and the four test-set buttons find it by name.
+   *
+   * APPENDED, NOT PLACED BESIDE PROT WARR, for the reason the row above gives:
+   * ids are allocated by template POSITION, and an insert would renumber every
+   * later set and re-point every saved profile's items.
+   */
+  { presetId: 'fury_prot', characterClass: 'warrior', label: 'Fury Prot', hit: 80, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Sword' }, trinkets: TANK_TRINKETS, statStick: WARRIOR_STICK },
 ];
 
 export const BENCHMARK_TEMPLATES_BY_PRESET: ReadonlyMap<string, BenchmarkTemplate> = new Map(

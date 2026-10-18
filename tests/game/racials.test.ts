@@ -1528,7 +1528,12 @@ describe('the racials are in the priority lists, or they never fire', () => {
     ).map(({ list }) => list.name);
 
     expect(withStoneform.sort()).toEqual(
-      ['Druid (Bear)', 'Paladin (Protection)', 'Warrior (Shield, Defensive)'].sort(),
+      [
+        'Druid (Bear)',
+        'Paladin (Protection)',
+        'Warrior (Shield, Defensive)',
+        'Warrior (Fury Prot)',
+      ].sort(),
     );
   });
 

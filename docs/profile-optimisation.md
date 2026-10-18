@@ -97,6 +97,12 @@ belonged to a named profile.
 and the tools are `tools/bear_survival.ts` and the survival half of the stat
 weights. Do not report a tank round as a DPS round.
 
+**AND `probe_build.ts` PRINTS IT NOW.** Whenever the baseline dies at all,
+every row carries a paired `deaths` delta beside its DPS one -- negative is
+better. It was added for Fury Prot, the first tank taken through this
+procedure, where it is what separated the Heroic Strike floor (+47.4 DPS,
+deaths +0.05 +/- 0.25) from a change that bought damage with deaths.
+
 ---
 
 ## Step 1 — Read the build before you change it

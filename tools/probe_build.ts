@@ -33,6 +33,7 @@ import { VARIANT_GROUPS as PRIEST } from './priestVariants';
 import { VARIANT_GROUPS as ARCANE } from './arcaneVariants';
 import { VARIANT_GROUPS as FIRE } from './fireVariants';
 import { VARIANT_GROUPS as FROSTFIRE } from './frostfireVariants';
+import { VARIANT_GROUPS as FURY_PROT } from './furyProtVariants';
 
 /*
  * ONE REGISTRY, SPREAD FROM THE PER-CLASS FILES. A group name is a command-line
@@ -49,6 +50,7 @@ const VARIANT_GROUPS = {
   ...ARCANE,
   ...FIRE,
   ...FROSTFIRE,
+  ...FURY_PROT,
 };
 
 const PRESET = process.env.PRESET ?? 'pally_shockadin_2h';
@@ -90,7 +92,20 @@ const slice = { from: 0, to: ITER };
 
 const baseline = profileSamples(base, SEED, slice);
 const baseMean = baseline.dps.reduce((a, b) => a + b, 0) / baseline.dps.length;
-console.log(`${PRESET}   baseline ${baseMean.toFixed(1)} DPS over ${ITER} paired iterations at ${base.simulation.durationSeconds}s\n`);
+/*
+ * A TANK IS READ ON DEATHS FIRST, which `docs/profile-optimisation.md` says in
+ * capitals and this tool could not show: the samples already carried a death
+ * count per iteration and only the DPS was differenced. So when the baseline
+ * dies at all, every row gets a paired DEATHS delta beside its DPS one --
+ * negative is better -- and a DPS profile, which never dies, prints as before.
+ */
+const baseDeaths = baseline.deaths.reduce((a, b) => a + b, 0) / baseline.deaths.length;
+const SHOW_DEATHS = baseDeaths > 0;
+console.log(
+  `${PRESET}   baseline ${baseMean.toFixed(1)} DPS` +
+    (SHOW_DEATHS ? `, ${baseDeaths.toFixed(2)} deaths` : '') +
+    ` over ${ITER} paired iterations at ${base.simulation.durationSeconds}s\n`,
+);
 
 const groups = WANTED.includes('all') ? Object.keys(VARIANT_GROUPS) : WANTED;
 
@@ -101,7 +116,13 @@ for (const group of groups) {
     continue;
   }
   console.log(`== ${group} ==`);
-  const rows: { label: string; delta: number; interval: number; spread: number }[] = [];
+  const rows: {
+    label: string;
+    delta: number;
+    interval: number;
+    spread: number;
+    deaths?: { delta: number; interval: number };
+  }[] = [];
   const failures: string[] = [];
   for (const variant of variants) {
     /*
@@ -125,7 +146,14 @@ for (const group of groups) {
     }
     const samples = profileSamples(profile, SEED, slice);
     const d = pairedDelta(baseline.dps, samples.dps);
-    rows.push({ label: variant.label, delta: d.delta, interval: d.interval, spread: d.spread });
+    const dd = SHOW_DEATHS ? pairedDelta(baseline.deaths, samples.deaths) : undefined;
+    rows.push({
+      label: variant.label,
+      delta: d.delta,
+      interval: d.interval,
+      spread: d.spread,
+      ...(dd ? { deaths: { delta: dd.delta, interval: dd.interval } } : {}),
+    });
   }
   rows.sort((a, b) => b.delta - a.delta);
   for (const row of rows) {
@@ -133,7 +161,10 @@ for (const group of groups) {
       row.spread === 0 ? 'IDENTICAL FIGHTS' : Math.abs(row.delta) > row.interval ? 'real' : 'noise';
     console.log(
       `  ${row.label.padEnd(46)} ${row.delta >= 0 ? '+' : ''}${row.delta.toFixed(2)}`.padEnd(58) +
-        `+/- ${row.interval.toFixed(2)}  spread ${row.spread.toFixed(1)}  ${verdict}`,
+        `+/- ${row.interval.toFixed(2)}  spread ${row.spread.toFixed(1)}  ${verdict}` +
+        (row.deaths
+          ? `   deaths ${row.deaths.delta >= 0 ? '+' : ''}${row.deaths.delta.toFixed(3)} +/- ${row.deaths.interval.toFixed(3)}`
+          : ''),
     );
   }
   for (const failure of failures) console.log(failure);

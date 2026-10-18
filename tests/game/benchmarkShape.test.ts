@@ -210,7 +210,7 @@ describe('the two trinkets are the owner s pair of archetypes', () => {
   it('never carries more than the owner s cap between them, on a DPS pair', () => {
     /*
      * ------------------------------------------------------------------------
-     * THE THREE TANKS ARE EXEMPT, AND THAT IS THE OWNER'S TWO STATEMENTS
+     * THE TANKS ARE EXEMPT -- FOUR SINCE FURY PROT -- AND THAT IS THE OWNER'S TWO STATEMENTS
      * DISAGREEING RATHER THAN A HOLE HERE.
      *
      * "A maximum of 28 crit rating across both trinkets" was said of the DPS
@@ -225,7 +225,7 @@ describe('the two trinkets are the owner s pair of archetypes', () => {
      * ------------------------------------------------------------------------
      */
     const declared = BENCHMARK_TEMPLATES.filter((template) => template.trinkets === undefined);
-    expect(declared.length).toBe(BENCHMARK_TEMPLATES.length - 3);
+    expect(declared.length).toBe(BENCHMARK_TEMPLATES.length - 4);
 
     for (const template of declared) {
       for (const set of BENCHMARK_SETS) {
