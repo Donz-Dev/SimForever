@@ -16,9 +16,11 @@ Soul Fire under Decimation in the last 35% of the fight. Everything but the
 lists is the Firelock's. HANDOVER's round 40 has the full optimisation pass;
 the three things to know before touching it:
 
-- **IT IS MANA-BOUND PAST A MINUTE**, so a 60s gain is not a gain until it has
-  been priced at 180s. Aftermath 5/5 and Corruption both win at 60s and lose by
-  180s, and neither is shipped.
+- **IT WAS MANA-BOUND PAST A MINUTE UNTIL LIFE TAP WAS HEALED BACK** (round
+  41), and that was Life Tap running out of health rather than the build. With
+  the group healing every tap a second later, Aftermath 5/5 and Corruption --
+  both held in round 40 -- gain at every length and ship. Price a candidate at
+  180s anyway: the regime moved once and can move again.
 - **DECIMATION IS BUILT AS STANDING EFFECTS**, the owner's reading, so Soul
   Fire is castable on a 6s cooldown from the pull. The list casts it only in
   the window, which is the profile's design; casting it all fight is +77 at

@@ -70,6 +70,7 @@ the tooling to be a bit more sophisticated as well."
 | 38 | **FURY PROT, A 29TH PROFILE, AND THE TANK EXECUTE CLAUSE** -- the owner's 5/31/15 Prot Warr copy with Bloodthirst for Shield Slam, Death Wish and their opener; both shield tanks go to Battle Stance for Execute in the last 20%, with every other rage spender switched off so they stay there. Then a two-pass optimisation, read on deaths first | **not re-baselined**. One change shipped: Fury Prot's Heroic Strike floor 26 -> 65, **+47.4 DPS at 60s, deaths flat**. Two more priced and left as questions | see below |
 | 39 | **WARLOCK DEMONS** -- the Imp and the Succubus fight, chosen under the talent trees; Unholy Power, Improved Imp, Improved Sayaad, Demonic Brand, Soul Link, Demonic Knowledge, Master Demonologist, Demonic Sacrifice with Demonic Pact, and Decimation all built and each measured on the damage that lands. Pet scaling from mythicsim-forever-engine, as the owner pointed | **no figure moves**: no preset summons a demon, and all 29 combat-log hashes are identical to `main`. Five questions | see below |
 | 40 | **DEMONOLOGY, A 30TH PROFILE** -- 5/31/15 on the owner's design: the Imp out, the Succubus sacrificed, Searing Pain and Demonic Brand, Soul Fire under Decimation in the last 35%. Taken through the optimisation procedure at 60s, 180s and 300s | **962.4 at 60s** (USES=1, 30 fights); +19.4 from Searing Pain as the pull and +13.9 from a Bane of Agony opener; the first tree and list stand. Three questions | see below |
+| 41 | **LIFE TAP IS HEALED BACK BY THE GROUP**, one second after the cast, by the owner's ruling. Demonology then ships Aftermath 5/5 and Corruption, both held in round 40 | **no Warlock moves at 60s**; at 300s SM/DS 655 -> 726, Firelock 386 -> 810, Demonology 562 -> 886. Demonology +55.1 at 60s from the two changes. Two round-40 questions closed | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -155,6 +156,50 @@ Rupture Rogue's pre-combat `stealth` line as `<-- NEVER HAPPENED`. It does on
 `main` too: stealth is a `PRECOMBAT_STATES` entry with no ability, and the tool
 does not read that table the way the APL panel and the opener guard do. A
 reporting gap, not a rotation one.
+
+## Round 41: Life Tap is healed back by the group, and what that did to Demonology
+
+**THE OWNER'S RULING**: "Life tap needs to no longer deal damage to the warlock.
+For the purposes of this simulation, it can be assumed to be healed off by a
+group player ... after damage is taken from a life tap, the same amount is
+restored 1 second later." The 840 health is still paid at the cast -- so
+`canCast` still reads it and a second tap inside the second pays from health
+not yet returned -- and an external heal named "Life Tap (healed by the group)"
+gives it back 1,000ms later. `tests/game/lifeTapHeal.test.ts`.
+
+**NOTHING MOVES AT 60 SECONDS AND THE LONG FIGHTS ARE TRANSFORMED.** No Warlock
+runs out of health inside a minute, so all three read the same to the decimal
+at 60s; past it, Life Tap was the binding limit and is now not one
+(`probe_clock.ts`, 40 fights a length, before -> after):
+
+| | 60s | 120s | 180s | 300s | taps at 300s |
+| --- | --- | --- | --- | --- | --- |
+| SM/DS | 767.1 -> 767.1 | 744.8 -> 744.8 | 729.4 -> 731.4 | 655.3 -> **725.9** | 5.4 -> 11.1 |
+| Firelock | 921.2 -> 921.2 | 655.7 -> **846.1** | 509.9 -> **828.9** | 386.2 -> **809.5** | 5.2 -> 33.2 |
+| Demonology | 969.8 -> 969.8 | 904.1 -> 915.0 | 714.2 -> **895.4** | 561.5 -> **886.1** | 5.3 -> 21.7 |
+
+**SO THE "MANA-BOUND PAST A MINUTE" FINDINGS WERE ABOUT LIFE TAP'S HEALTH.**
+The Firelock's falling curve and two of round 40's held decisions rested on it.
+
+**AND TWO OF ROUND 40'S HELD DECISIONS SHIP NOW**, re-measured paired at 400
+iterations on the healed Life Tap:
+
+| | 60s | 180s | 300s |
+| --- | --- | --- | --- |
+| Aftermath 5/5 over Cataclysm 3/3 | +38.61 | +33.52 | +31.68 |
+| + Corruption above Life Tap | +17.35 | +21.33 | +19.55 |
+| **both, shipped** | **+55.07 +/- 5.02** | **+51.31 +/- 2.82** | **+50.72 +/- 2.16** |
+
+Demonology is 5/31/15 with Bane 5 and Aftermath 5 under Ruin now, and its list
+keeps Corruption up with a floor one second past its 18-second duration. Life
+Tap's 5% gate was re-swept and holds (10% is -3.7 at 60s and +1.8 / +2.9
+later, all inside the combined interval). **Soul Fire all fight is still a
+question**: +71.7 at 180s and +69.1 at 300s on the healed Life Tap.
+
+**THE FIRELOCK IS NOT RE-OPTIMISED HERE.** Its curve moved most of all three,
+so its own held decisions -- Corruption out by the owner's instruction, the
+5% Life Tap gate -- are priced on the old regime and want re-asking; that is
+the owner's list and a separate round.
 
 ## Round 40: Demonology, a 30th profile, through the optimisation procedure
 
@@ -453,8 +498,6 @@ write-up; none is an engine gap.
 | **The caster benchmark templates aim at a spell cap of 16, which is 17 now.** Every caster row's hit was set so gear plus talents reached 16; with the floor gone each misses 1% more than the template meant. The Tauren precedent was your "+10 hit rating, subtracted from elsewhere"; nothing was changed on that authority, and the Moonkin is pinned one point short in `statHeadroom.test.ts` | round 35 | the hit row on every caster template, about 1% miss on every caster profile |
 | **Soul Fire's coefficient is Classic's 100%**, under `PLACEHOLDER_SOUL_FIRE_SP_COEFFICIENT` -- you gave its damage, cost, cast and cooldown and no coefficient, and the sheet has no row | round 35 | one constant; no profile casts Soul Fire yet |
 | **Is Decimation's Soul Fire half a standing effect, or a 10 second window?** It is built on your reading -- 6s cooldown, 2.4s cast, no shard, from the pull -- and on that reading Soul Fire cast ALL fight is **+77.27 at 60s, +11.94 at 180s, +7.72 at 300s** on the Demonology profile. Your design for that profile casts it only in the last 35%, which is what the client tooltip's window would force; the list follows the design | round 40 | Demonology, by up to 77 DPS |
-| **Aftermath 5/5 over Cataclysm 3/3 on Demonology is +39.30 at 60s and -23.07 at 180s**, -16.82 at 300s: Immolate's opening hit against 10% off every Destruction spell's mana, on a build that is out of mana by three minutes. Cataclysm is kept, on "rotations need to be built for longer than 1 minute" | round 40 | 39 DPS at 60s against 23 at 180s |
-| **Corruption on Demonology is +16.37 at 60s and -12.89 at 180s** for the same reason -- a 2 second cast and its mana -- and is left out, as it is on the Firelock by your instruction | round 40 | 16 DPS at 60s against 13 at 180s |
 | **Flametongue Weapon and Flametongue Totem roll no table and crit at MELEE crit for 2x**, the poison-and-seal precedent for damage riding a weapon hit. They are Fire damage and could equally be spell crit at 1.5x | round 35 | the crit half of both Flametongues |
 | **Frost Oil rolls the SPELL table** -- 17% miss, spell crit -- because it "procs a Frostbolt". The other reading is the Flametongue one above | round 35 | whether the oil can miss |
 | **Seal of Righteousness's base is CLAMPED outside 1.3 to 4.0 seconds**, and so are both Flametongues. You gave two points and a line; extending the line past them is a number nobody stated | round 35 | nothing today -- no weapon on file is outside the range |
@@ -475,7 +518,7 @@ write-up; none is an engine gap.
 | **The Enh Shaman holds the Seal Twist Ret's two-hander**, as you asked, and that mace's `Classes:` line is rewritten to "Paladin, Shaman" for the borrower -- otherwise the proficiency filter refuses a weapon you specified | round 37 | which classes a template weapon is offered to |
 | **The Hunter cooldown stacks have no standalone Bestial Wrath, Rapid Fire or racial entries any more**, so all of them fire only when every step of the stack is ready together -- once in a 60s fight. In a longer one the stack waits for the slowest cooldown in it | round 37 | casts per fight past three minutes |
 
-**FORTY-ONE ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five, round 38 added four, round 39 added five, the owner answered the Imp's Firebolt pause the same day, and round 40 added three -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**THIRTY-NINE ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five, round 38 added four, round 39 added five, the owner answered the Imp's Firebolt pause the same day, round 40 added three, and round 41 closed two of them by changing Life Tap -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count

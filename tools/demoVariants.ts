@@ -69,6 +69,11 @@ const lifeTapAt = (fraction: number) => regate('life_tap', resourceFraction('bel
  * THE SHIPPED 5/31/15. Movable: the five Destruction points under Ruin besides
  * Bane, and Demonology's four dead points plus Fel Vitality's three. Everything
  * else is the owner's or is forced by Demonic Pact's tier.
+ *
+ * ROUND 41 MOVED IT: Aftermath 5/5 replaced Cataclysm 3/3 + Aftermath 2/5 once
+ * Life Tap stopped costing health. The groups below this one were measured
+ * against the round-40 tree and say so in their figures in HANDOVER; `BASE`
+ * follows the shipped tree, so a variant naming Cataclysm now re-adds it.
  */
 const BASE: Record<string, number> = {
   suppression: 5,
@@ -84,8 +89,7 @@ const BASE: Record<string, number> = {
   master_demonologist: 5,
   demonic_pact: 1,
   bane: 5,
-  cataclysm: 3,
-  aftermath: 2,
+  aftermath: 5,
   ruin: 5,
 };
 
@@ -222,7 +226,30 @@ const DEMO_COMBINED: readonly Variant[] = [
   },
 ];
 
+/* ============================================================ pass three */
+
+/*
+ * AFTER LIFE TAP STOPPED COSTING HEALTH. Both of these lost past a minute only
+ * because the build ran out of mana; with the group healing every tap back,
+ * each now gains at every length, so they are measured as a pair.
+ */
+const CORRUPTION_ENTRY = addAbove(
+  { abilityId: 'corruption', condition: all(targetMissing('corruption'), fightRemaining('atLeast', 19)) },
+  'life_tap',
+);
+const DEMO_PASS3: readonly Variant[] = [
+  { label: 'the shipped profile -- the control', apply: (p) => p },
+  { label: 'Aftermath 5/5, no Cataclysm', apply: with_({ cataclysm: 0, aftermath: 5 }) },
+  { label: '+ Corruption', apply: CORRUPTION_ENTRY },
+  { label: 'Aftermath 5/5 + Corruption', apply: chain(with_({ cataclysm: 0, aftermath: 5 }), CORRUPTION_ENTRY) },
+  {
+    label: 'Aftermath 5/5 + Corruption + Life Tap below 10%',
+    apply: chain(with_({ cataclysm: 0, aftermath: 5 }), CORRUPTION_ENTRY, lifeTapAt(0.1)),
+  },
+];
+
 export const VARIANT_GROUPS: Record<string, readonly Variant[]> = {
+  demoPass3: DEMO_PASS3,
   demoCombined: DEMO_COMBINED,
   demoTalents: DEMO_TALENTS,
   demoPrecombat: DEMO_PRECOMBAT,
