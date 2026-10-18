@@ -1,5 +1,12 @@
 import type { Ability } from '../../engine';
-import { dealDamage, rollApplication, seconds } from '../../engine';
+import {
+  EventPriority,
+  applyHealing,
+  createEvent,
+  dealDamage,
+  rollApplication,
+  seconds,
+} from '../../engine';
 import {
   AMPLIFY_CURSE_AURA,
   AMPLIFY_CURSE_MULTIPLIER,
@@ -314,6 +321,28 @@ export const SIPHON_LIFE_ABILITY: Ability = {
  */
 export const LIFE_TAP_AMOUNT = 840;
 
+/*
+ * ============================================================================
+ * THE HEALTH COMES BACK A SECOND LATER, ON THE OWNER'S RULING: "Life Tap needs
+ * to no longer deal damage to the warlock. For the purposes of this simulation,
+ * it can be assumed to be healed off by a group player ... after damage is
+ * taken from a life tap, the same amount is restored 1 second later."
+ *
+ * SO THE COST IS STILL PAID AND STILL GATES THE CAST -- `canCast` reads health
+ * at the moment of casting, and a second tap inside that second spends from a
+ * pool the first has not yet been given back. What changes is that the pool
+ * no longer drains over a fight: before this, a long fight could run the
+ * Warlock out of health to tap with.
+ *
+ * AN EXTERNAL HEAL, `external: true`, because it is somebody else's spell: the
+ * Warlock's own healing modifiers must not scale it. Reported under its own
+ * name, so the heal is visible on the results page rather than folded into a
+ * row that reads like the Warlock healing itself.
+ * ============================================================================
+ */
+export const LIFE_TAP_HEAL_DELAY_MS = seconds(1);
+export const LIFE_TAP_HEAL_NAME = 'Life Tap (healed by the group)';
+
 export const LIFE_TAP: Ability = {
   id: 'life_tap',
   name: 'Life Tap',
@@ -329,6 +358,21 @@ export const LIFE_TAP: Ability = {
       id: 'life_tap',
       name: 'Life Tap',
     });
+    simulation.events.schedule(
+      simulation.clock.now() + LIFE_TAP_HEAL_DELAY_MS,
+      createEvent(`life-tap-heal:${caster.id}`, EventPriority.Periodic, (context) => {
+        if (context.hasEnded) return;
+        applyHealing(context, {
+          source: caster,
+          target: caster,
+          abilityId: 'life_tap_heal',
+          abilityName: LIFE_TAP_HEAL_NAME,
+          baseAmount: LIFE_TAP_AMOUNT,
+          canCrit: false,
+          external: true,
+        });
+      }),
+    );
   },
   unmodelled:
     'Its "Mana gained is increased by your Spirit" clause states no rate, so ' +

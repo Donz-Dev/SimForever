@@ -1835,9 +1835,13 @@ const WARLOCK_DESTRUCTION_TALENTS: TalentAllocation = {
  *   SUPPRESSION 5   all five Affliction points.
  *   RUIN 5          tier 10 of Destruction, so ten points under it: Bane 5/5
  *                   (which the owner's Decimation figure of a 2.4s Soul Fire
- *                   assumes), Cataclysm 3/3 and Aftermath 2/5 -- the
- *                   Firelock's own choices for those rows. Fifteen in all,
- *                   which is why Agonizing Flames (tier 15) is out of reach.
+ *                   assumes) and Aftermath 5/5. Fifteen in all, which is why
+ *                   Agonizing Flames (tier 15) is out of reach.
+ *
+ * AFTERMATH 5/5 OVER CATACLYSM 3/3 + AFTERMATH 2/5, round 41. Cataclysm's 10%
+ * off every Destruction spell's mana won past a minute only while the build
+ * ran out of mana; once Life Tap stopped costing health the trade inverted,
+ * and Aftermath 5/5 is +38.6 / +33.5 / +31.7 at 60 / 180 / 300s.
  *   DEMONIC PACT    the 31st Demonology point and FORCED: without it,
  *                   summoning the Imp cancels the Succubus sacrifice. It needs
  *                   Soul Link, which needs Demonic Sacrifice.
@@ -1867,8 +1871,7 @@ const WARLOCK_DEMONOLOGY_TALENTS: TalentAllocation = {
   demonic_pact: 1,
   // Destruction, 15
   bane: 5,
-  cataclysm: 3,
-  aftermath: 2,
+  aftermath: 5,
   ruin: 5,
 };
 

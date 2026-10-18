@@ -116,6 +116,8 @@ const targetAuraAtMost = (auraId: string, secondsLeft: number) =>
 const IMMOLATE_REFRESH_SECONDS = 1.5;
 const IMMOLATE_FIGHT_FLOOR_SECONDS = 3;
 const BANE_OF_AGONY_FIGHT_FLOOR_SECONDS = 25;
+/** Corruption's 18 seconds plus one, the same rule as Bane of Agony's floor. */
+const CORRUPTION_FIGHT_FLOOR_SECONDS = 19;
 
 /** "this aura is on the actor", for a proc the next action should spend. */
 const actorHas = selfHas;
@@ -475,6 +477,17 @@ export const WARLOCK_DEMONOLOGY: AplList = {
   },
   ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
   ...CONSUMABLE_HEALS,
+  /*
+   * CORRUPTION, round 41: kept up when it is not, with a floor one second past
+   * its 18-second duration so it goes out only if it can run in full -- the
+   * rule Bane of Agony's floor already follows. It lost past a minute while
+   * Life Tap cost health and the build ran dry; with the group healing every
+   * tap back it is +17.4 / +21.3 / +19.6 at 60 / 180 / 300s.
+   */
+  {
+    abilityId: 'corruption',
+    condition: all(targetLacks('corruption'), fightRemaining('atLeast', CORRUPTION_FIGHT_FLOOR_SECONDS)),
+  },
   { abilityId: 'life_tap', condition: manaBelowFraction(FIRELOCK_LIFE_TAP_MANA) },
   { abilityId: 'searing_pain' },
   ],
