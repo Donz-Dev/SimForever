@@ -401,7 +401,7 @@ export const DEMONIC_RUNE_COOLDOWN_MS = seconds(120);
  * and nothing in the results page would have said which half failed.
  *
  * THE GUARD MIRRORS LIFE TAP'S, which is the same trade in the same direction
- * and already carries `caster.health.current > LIFE_TAP_AMOUNT`. One half of
+ * and already carries `caster.health.current > lifeTapHealth(caster)`. One half of
  * Life Tap's guard is deliberately NOT copied: it also refuses when there is no
  * mana worth gaining, which is right for a spammable filler and wrong for a
  * two-minute cooldown -- when to spend one is the list's decision, and the
