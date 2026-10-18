@@ -2695,10 +2695,30 @@ describe('what round 28 did to the Fire list', () => {
    * analogy, which is what this project does not do.
    * ==========================================================================
    */
-  it('has no Mage Armor entry, where Frostfire still does', () => {
-    expect(MAGE_FIRE.entries.some((row) => row.abilityId === 'mage_armor')).toBe(false);
-    expect(MAGE_FROSTFIRE.entries.some((row) => row.abilityId === 'mage_armor')).toBe(true);
-    expect(MAGE_ARCANE.entries.some((row) => row.abilityId === 'mage_armor')).toBe(false);
+  /*
+   * ==========================================================================
+   * NO MAGE LIST CARRIES A MAGE ARMOR ENTRY, AND THREE ROUNDS GOT THERE APART.
+   *
+   * This read "has no Mage Armor entry, WHERE FROSTFIRE STILL DOES" and pinned
+   * Frostfire's as a deliberate contrast -- true when round 28 wrote it, false
+   * by the time round 32 merged, because the Frostfire round removed its entry
+   * on the same evidence. The two were measured concurrently and neither could
+   * see the other.
+   *
+   * SO THE CONTRAST WAS A FACT ABOUT A MOMENT RATHER THAN A DESIGN. The durable
+   * claim is the one all three agree on: Mage Armor lasts thirty minutes, so a
+   * `selfExpired('mage_armor')` gate is false from the first poll and the entry
+   * can never fire. Arcane dropped it in round 24, Fire in 28, Frostfire in 32.
+   * ==========================================================================
+   */
+  it('has no Mage Armor entry in any of the three lists', () => {
+    for (const [name, list] of [
+      ['arcane', MAGE_ARCANE],
+      ['fire', MAGE_FIRE],
+      ['frostfire', MAGE_FROSTFIRE],
+    ] as const) {
+      expect(list.entries.some((row) => row.abilityId === 'mage_armor'), name).toBe(false);
+    }
   });
 
   /*

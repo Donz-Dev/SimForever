@@ -278,6 +278,14 @@ describe("the owner's openers are transcribed exactly", () => {
       [0, 'elemental_mastery', '+13.9 -- a new capstone, claimed for no GCD'],
     ],
     /*
+     * `mage_frostfire` HAS NO ADDITIONS, AND IT HELD ONE.
+     *
+     * A Scorch at a 1.5s lead, credited with +25.1, was a SECOND damaging
+     * cast finishing before the pull -- which Gate B forbids outright. It is
+     * reverted for **-25.90 +/- 9.70**, and the owner's two lines are the
+     * whole opener again. Nothing legal replaces it: see the preset.
+     */
+    /*
      * THE ENHANCEMENT SHAMAN'S ONE ADDITION, AND IT MEASURED AS A LOSS EARLIER
      * IN THE SAME ROUND THAT SHIPPED IT.
      *
@@ -296,7 +304,13 @@ describe("the owner's openers are transcribed exactly", () => {
     shaman_enhancement: [
       [0, 'rage_of_the_farseer', '+12.71 -- a 25s haste window, claimed for no GCD'],
     ],
-    mage_frostfire: [[1.5, 'scorch', '+25.1 -- one Fire Vulnerability stack at the pull']],
+    /*
+     * EMPTY FOR THE SAME REASON `mage_fire` IS, one round later. Round 32
+     * reverted this profile's Scorch at a 1.5s lead for **-25.90 +/- 9.70**:
+     * it was a SECOND damaging cast finishing before the pull, which Gate B
+     * forbids outright. The key stays so the profile reads as AUDITED.
+     */
+    mage_frostfire: [],
     /*
      * THE ARCANE MAGE'S RAMP IS GONE, AND THIS IS WHAT IS LEFT OF IT.
      *
@@ -329,8 +343,10 @@ describe("the owner's openers are transcribed exactly", () => {
      *
      * LEFT AS AN EMPTY ENTRY RATHER THAN DELETED, because the key is what says
      * this profile was AUDITED and has nothing added, where an absent key reads
-     * the same as a profile nobody has looked at. `mage_frostfire` below still
-     * carries the same addition and is the remaining Gate B failure.
+     * the same as a profile nobody has looked at. `mage_frostfire` carried the
+     * same addition when this was written and round 32 has since reverted it,
+     * so `shaman_elemental` is the one Gate B failure left -- and both of its
+     * damaging pre-combat casts are the owner's own lines.
      */
     mage_fire: [],
     shadow_priest: [

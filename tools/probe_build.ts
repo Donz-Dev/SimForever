@@ -32,6 +32,7 @@ import { VARIANT_GROUPS as SHAMAN } from './shamanVariants';
 import { VARIANT_GROUPS as PRIEST } from './priestVariants';
 import { VARIANT_GROUPS as ARCANE } from './arcaneVariants';
 import { VARIANT_GROUPS as FIRE } from './fireVariants';
+import { VARIANT_GROUPS as FROSTFIRE } from './frostfireVariants';
 
 /*
  * ONE REGISTRY, SPREAD FROM THE PER-CLASS FILES. A group name is a command-line
@@ -47,6 +48,7 @@ const VARIANT_GROUPS = {
   ...PRIEST,
   ...ARCANE,
   ...FIRE,
+  ...FROSTFIRE,
 };
 
 const PRESET = process.env.PRESET ?? 'pally_shockadin_2h';

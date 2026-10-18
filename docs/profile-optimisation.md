@@ -439,7 +439,19 @@ fights a second**, so ten variants at 400 iterations is roughly **20 seconds**.
 | --- | --- |
 | `real` | `|delta| > interval` |
 | `noise` | inside the interval. **A statement about variance, not about whether anything happened** — where the mechanism predicts an exact ratio, check the ratio |
-| `IDENTICAL FIGHTS` | spread is zero. Either the change is worth nothing **or the patch did not apply**. Both readings are reported and never collapsed to "0.0" |
+| `IDENTICAL FIGHTS` | spread is zero, and there are **THREE** readings rather than two: worth nothing, **the patch did not apply**, or **the patch applied somewhere unreachable**. See below |
+
+**THE THIRD READING OF `IDENTICAL FIGHTS` IS THE NEWEST AND THE QUIETEST: A
+PATCH THAT APPLIED WHERE NOTHING CAN REACH IT.** `addEntry` appends, and a list
+whose last entry is **ungated and always castable** is a FLOOR under everything
+below it — so Ice Lance added at the bottom of the Frostfire list ran
+bit-identical fights, which reads exactly like "worth nothing" and means "never
+polled". Placed where the entry actually lived it is **-68.12**.
+
+**"A NEW ENTRY GOES AT THE BOTTOM" IS A RULE ABOUT AN ENTRY THAT COSTS
+SOMETHING**: the property that makes the bottom safe for an unconditional
+addition is the same one that makes it useless for a gated candidate. Read the
+entry above it before believing the zero.
 
 Five rules that have each cost this project a wrong conclusion:
 
@@ -911,16 +923,35 @@ yet, leave the sentence unfinished.**
 Audited at commit `c147ec0`. **Arithmetic only, by the recipe in Gate B** — no
 fight reveals any of this.
 
-**TWO PROFILES STILL FAIL. `mage_arcane` AND `mage_fire` ARE BOTH FIXED**, each
-in its own run of this procedure, at **-96.5 +/- 9.4** and
-**-24.23 +/- 4.29** — the honest price of the ruling:
+**ALL THREE OF THOSE PROFILES ARE NOW FIXED -- `mage_arcane`, `mage_fire` AND
+`mage_frostfire`** -- each in its own run of this procedure, and each at a real
+cost: **-96.5 +/- 9.4**, **-24.23 +/- 4.29** and **-25.90 +/- 9.70**, which is
+the honest price of the ruling. (Two branches fixed the last two concurrently,
+and each one's text said the other still failed; the merge is what made all
+three true at once.)
 
 | profile | damaging actions | verdict |
 | --- | --- | --- |
 | `mage_arcane` | ~~`pyroblast` -7.618s, `arcane_blast` -6.029s, -4.529s, -3.029s~~, `arcane_blast` -0.029s | **FIXED.** Now one damaging cast, the owner's own, at the haste-rounding boundary |
 | `mage_fire` | `fireball` -0.059s, ~~`scorch` -0.029s~~ | **FIXED** in round 28. One damaging cast, the owner's own, at the haste-rounding boundary; the revert cost **-24.23** and the loop recovered **+17.74** of it |
-| `mage_frostfire` | `frostfire_bolt` -0.049s, `scorch` -0.029s | **FAIL — two.** `scorch` is a project addition (+25.1) |
+| `mage_frostfire` | `frostfire_bolt` -0.049s, ~~`scorch` -0.029s~~ | **FIXED in round 32.** The project's `scorch` addition is reverted for **-25.90 +/- 9.70**, and nothing legal replaces it |
 | `shaman_elemental` | `lightning_bolt` -0.039s, `flame_shock` 0.000s | **FAIL — two, and BOTH ARE THE OWNER'S OWN LINES.** A question for them, not an edit |
+
+**AND A FIXED OPENER'S REMAINING DESIGN SPACE CAN BE EMPTY, WHICH IS A ROW
+RATHER THAN A SHRUG.** On `mage_frostfire` the revert was not recovered at all:
+an addition has to be a NON-damaging action, and that build's only non-damaging
+castables are Mage Armor (already in the opener), Evocation (a channel, refused
+outright) and two things **already off the global cooldown** — a potion and the
+Gnome racial. Both measured **BIT-IDENTICAL** at a 0s lead, which is *pre-casting
+is only worth the GCD it saves* measured rather than asserted. **Print each
+variant's precombat list before the fights**, or "identical" cannot be told from
+a patch that did not apply.
+
+**AND THIS APPENDIX WAS DOING ITS JOB AS A RECORD WHILE NOTHING ACTED ON IT.**
+`mage_frostfire` sat here as a known failure for a release, audited and written
+down. **A known-failing row is work, not documentation** — so when a round
+names a profile that appears in this table, the revert is the first thing it
+does, before any dimension is measured.
 
 **AND THE GATE COST ALMOST NOTHING TO APPLY, WHICH IS THE ARGUMENT FOR IT.**
 Reverting the Arcane Mage's four illegal casts took one edit; the loop then

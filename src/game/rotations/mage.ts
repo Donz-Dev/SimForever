@@ -58,8 +58,13 @@ import {
  * ============================================================================
  */
 
-/** "<buff> is not active", on the Mage. */
-const selfExpired = (auraId: string) => selfTime('atMost', 0, auraId);
+/*
+ * `selfExpired` IS GONE WITH THE LAST MAGE ARMOR ENTRY. It had one caller per
+ * list and all three lists dropped theirs -- Arcane in round 24, Fire in 28,
+ * Frostfire in 32 -- for the same reason: the buff lasts thirty minutes, so
+ * the gate is false from the first poll and the entry can never fire. The two
+ * comments below still describe the entries it used to gate.
+ */
 
 /** "<buff> stacks = N", on the Mage. */
 const selfStacksExactly = (auraId: string, count: number) => selfStacks('exactly', count, auraId);
@@ -546,7 +551,38 @@ export const MAGE_FIRE: AplList = {
 export const MAGE_FROSTFIRE: AplList = {
   name: 'Mage (Frostfire)',
   entries: [
-  { abilityId: 'mage_armor', condition: selfExpired('mage_armor') },
+  /*
+   * ==========================================================================
+   * MAGE ARMOR IS NOT IN THIS LIST, BY THE OWNER'S RULING: "Mage Armor doesn't
+   * need to be captured in the main APL section. It's being taken care of in
+   * the pre-combat section."
+   *
+   * THE RULING ARRIVED AS PART OF AN AUDIT OF THE *ARCANE* PROFILE, and the
+   * note on that list recorded the consequence for this one -- "the other two
+   * Mage lists still carry theirs ... recorded here so the next Mage round
+   * starts with it." **This is that round.**
+   *
+   * The entry was `mage_armor` gated on `selfExpired('mage_armor')`, and it
+   * could never fire: this opener casts it at a 4 second lead, the buff lasts
+   * THIRTY MINUTES against a one-minute fight, and nothing in the encounter
+   * dispels. So the gate was false from the pull onward and the entry was a
+   * poll that could only ever be skipped.
+   *
+   * `USES=1` REPORTED IT AS 1.0 USES, WHICH IS THE TRAP. That is the
+   * PRE-COMBAT cast counted against the entry, so the one reading that would
+   * have flagged it showed a working line instead -- the caveat
+   * `docs/profile-optimisation.md`'s Appendix B carries about that block.
+   *
+   * REMOVING IT RUNS BIT-IDENTICAL FIGHTS at 60s, which is the containment
+   * check and is the only thing that distinguishes "redundant" from
+   * "load-bearing".
+   *
+   * **THE FIRE LIST STILL CARRIES ITS COPY**, at a 4.5s lead and equally dead.
+   * A list is changed for the profile that was named rather than by analogy, so
+   * that one waits for a Fire round -- and this note is now the place that says
+   * so, the way the Arcane one did for this list.
+   * ==========================================================================
+   */
   /*
    * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
    *
@@ -554,7 +590,55 @@ export const MAGE_FROSTFIRE: AplList = {
    * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
-  ...RACIAL_COOLDOWNS,
+  ...RACIAL_COOLDOWNS.filter((entry) => entry.abilityId !== 'eureka'),
+  /*
+   * ==========================================================================
+   * EUREKA IS HELD FOR A FINGERS OF FROST WINDOW, WORTH **+5.99 +/- 0.95 REAL**
+   * over 400 paired iterations at 60s.
+   *
+   * The Gnome racial is an 8 SECOND WINDOW of +10% NON-PERIODIC damage, and in
+   * the shared block it carries no condition -- so it was spent on whatever the
+   * first poll of the fight happened to be. The Arcane list gates its copy on a
+   * Missile Barrage proc for exactly this reason and measured +1.92 for it; this
+   * build has no Missile Barrage, so the candidates were its own two windows.
+   *
+   * THE BLOCK IS WHY IT HAD NO GATE RATHER THAN AN OVERSIGHT: that constant is
+   * spread into lists belonging to no race, so a condition written there would
+   * be a condition on three abilities this character cannot cast. Gating it is
+   * therefore a change to THIS list, which is what the filter above does.
+   *
+   * ITS POSITION IS UNCHANGED. Eureka is last of the four, so taking it out of
+   * the spread and restating it immediately after leaves every other racial
+   * exactly where it was.
+   *
+   * ------------------------------------------------------------------------
+   * **FINGERS OF FROST BEAT A PYROBLAST WINDOW, AND A LOOSER GATE BEAT
+   * NEITHER.** Four readings, 400 paired iterations each:
+   *
+   *   Fingers of Frost            **+5.99 +/- 0.95**
+   *   three Heating Up stacks       +5.83 +/- 2.67
+   *   two Heating Up stacks         +4.80 +/- 2.59
+   *   EITHER window                 +4.53 +/- 0.77
+   *
+   * The first two are indistinguishable -- 0.16 apart against a combined
+   * interval of 2.83 -- and the looser "either" gate is WORSE than Fingers
+   * alone by 1.46 against a combined 1.22, because a window spent on a
+   * Pyroblast moment is a window not spent on a Shatter moment. Fingers is
+   * taken for the tighter interval and because `shatter` 3/3 makes that window
+   * the build's own best one.
+   *
+   * THE INTERVALS ARE SMALL BECAUSE A GATE ON A FREE OFF-GCD COOLDOWN CANNOT
+   * FLIP A ROLL -- it moves WHEN the window opens and nothing else, which is
+   * why the Arcane copy of this change also measured to two decimal places.
+   *
+   * AND IT SURVIVES THE CLOCK, WHICH IS THE PART THAT MADE IT SHIPPABLE. The
+   * talent change this round measured at +22.14 INVERTED to -11.27 at 180s;
+   * this is +5.99 at 60s, -0.34 +/- 4.19 at 180s and +2.80 +/- 4.17 at 300s --
+   * a real gain at the published length and noise at every other, so it is
+   * never a loss.
+   * ==========================================================================
+   */
+  { abilityId: 'eureka', condition: selfHas('fingers_of_frost') },
   ...CONSUMABLE_COOLDOWNS,
   ...CONSUMABLE_HEALS,
   { abilityId: 'evocation', condition: evocationFor(EVOCATION_FIGHT_SECONDS) },

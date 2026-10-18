@@ -285,6 +285,22 @@ difference. See the measurement section further down, and
 means a local optimum inside the frame the measurement is taken in, and the
 frame is the part a person has to read.
 
+**AND THE SECOND RUN, ON THE FROSTFIRE MAGE, IS THE FIRST TIME READING THAT
+FRAME CHANGED WHAT SHIPPED RATHER THAN WHAT WAS WRITTEN DOWN.** The round's two
+largest measured gains were both **withheld** -- `critical_mass` 5/5 at
+**+21.80 at 60s and -10.29 at 180s**, and the owner's Scorch refresh window at
+**+18.54 at 60s and +5.22 noise at 180s** -- and what shipped was a **+5.99**
+gate that is noise at every other length and therefore never a loss.
+**A GAIN AT THE PUBLISHED CLOCK CAN BE A LOSS AT A REALISTIC ONE, AND NO PAIRED
+PROBE CAN TELL YOU**: every profile carries `durationSeconds: 60`, so the fight
+length sits in the baseline AND in every variant and cancels. The mechanism is a
+REGIME CHANGE -- `master_of_elements`' third rank, a mana talent, measures
+**+1.22 noise at 60s and -28.29 REAL at 180s**, because the build is
+global-cooldown bound with 962 mana spare in a minute and mana bound in three.
+**So price a candidate at a length longer than a minute before shipping it**, and
+when the two answers disagree, the owner's instruction decides: *"rotations need
+to be built for longer than 1 minute."*
+
 ### 1. The named scope is the scope
 
 **ASKED FOR SIX PROFILES ACROSS THREE CLASSES, THIS PROJECT AUDITED NINE
@@ -402,6 +418,18 @@ number it takes it as an injected function or value — `SimulationConfig.attack
 Rulings by the project owner. **Permanent classifications, not a work queue** — a
 talent blocked on one of these is not an engine gap, and writing it up as pending
 inflates the queue and hides the real items.
+
+**AND THE SAME RULE PAYS WITHOUT A `scope` IN SIGHT: A TALENT'S NAME CAN HIDE
+THE BEST CLAUSE IN A BUILD.** `improved_fireball` is "reduces the casting time of
+your Fireball **and Frostfire Bolt** spells by 0.5 sec", and the Frostfire Mage
+casts no Fireball at all -- so from its name, from the priority list and from the
+damage table its five points read as pure tier tax, which is exactly what an
+optimiser reaches for first. They are the largest talent in the build: half a
+second off a 2.5 second cast on **42.2% of its damage**. Its sibling
+`improved_frostbolt` is "Frostbolt and Frost Blast" and names Frostfire Bolt
+nowhere, so **the two cast-time talents read identically from their names and
+only one of them pays.** Read the tooltip, not the name -- and not the damage
+table either, which cannot show a spell the build never casts.
 
 **READ EVERY CLAUSE BEFORE WRITING A `scope`, AND NEVER WRITE ONE FROM THE
 NAME.** Nature's Reach is "increases the RANGE of your offensive Balance spells
@@ -6092,7 +6120,23 @@ shape should fail loudly, not render a tree with a broken arrow.
   this file and the default is what was too tight for any test touching the
   disk. **A timeout is the symptom; ask what the test READS before widening
   anything**, and never set `testTimeout` globally.
-- **AND THE SIXTH AND SEVENTH NAME THE PRECIPITATING CONDITION: A COLD FILE
+- **AND THE SIXTH AND SEVENTH INSTANCES ARRIVED IN CONSECUTIVE FULL-SUITE RUNS,
+  IN TWO DIFFERENT FILES, WHICH IS WHAT MADE IT A CLASS RATHER THAN A BUG.**
+  `protectedChannelTicks.test.ts` timed out, was given a limit, and the very next
+  run failed on `variableCostIsReported.test.ts` instead -- both at the 5000ms
+  default, both walking the source tree, both passing standalone with a **15x
+  margin** (285ms against 5000ms for the first).
+  **SIX TESTS IN THE SUITE READ THE SOURCE TREE AND ONLY ONE CARRIED A LIMIT**:
+  `auraCatalog`, `rotationIds`, `talentSpreads`, `variableCostIsReported`,
+  `protectedChannelTicks` and `stealthBreaking`. Patching them as they surface is
+  whack-a-mole, so all six carry `READS_THE_SOURCE_TREE_MS` now. **When the same
+  failure arrives twice in different files, grep for the SHAPE and fix every
+  instance** -- the cheap query is `grep -rln "readdir" tests/`.
+  **AND CACHING IS NOT ALWAYS THE FIX.** The fifth instance had three callers of
+  one walk, so caching it was the repair; these have one walk in one test each,
+  so there is nothing to cache and the limit is the whole fix. Still per-test,
+  and `vite.config.ts` still sets no `testTimeout`.
+**  **AND THE SAME TWO INSTANCES NAME THE PRECIPITATING CONDITION: A COLD FILE
   CACHE IN A FRESH WORKTREE.** `protectedChannelTicks.test.ts` and
   `variableCostIsReported.test.ts` both timed out on the **first** full-suite run
   in a worktree created minutes earlier, and both passed standalone at **188ms
@@ -6108,6 +6152,12 @@ shape should fail loudly, not render a tree with a broken arrow.
   concluding anything. Neither of these two caches its walk yet; both are the
   same one-line fix `stealthBreaking.test.ts` already took, and they are
   outstanding work rather than a decision.
+  **TWO BRANCHES FOUND THESE TWO FAILURES INDEPENDENTLY AND REACHED
+  DIFFERENT HALVES OF THE ANSWER** -- one that six tests share the SHAPE and
+  only one carried a limit, one that the trigger is a COLD file cache in a
+  fresh worktree. Both are kept because neither implies the other: the shape
+  says which files to fix, and the cold cache says why a green suite yesterday
+  proves nothing about the first run in a new worktree today.
 - **A SYNCHRONOUS TEST CANNOT TIME OUT.** The body blocks the event loop, so
   vitest's timer never fires — `bloodCraze.test.ts` has a test that takes 5491ms
   and passes against a 5000ms default. So a slow test is not a flaky one, and a

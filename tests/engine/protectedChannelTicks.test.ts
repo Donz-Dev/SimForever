@@ -133,6 +133,7 @@ describe('the ruling', () => {
   });
 });
 
+
 describe('what carries it', () => {
   it('is Mind Flay alone, and Arcane Missiles is deliberately untouched', () => {
     /*
@@ -169,5 +170,28 @@ describe('what carries it', () => {
     walk('src/game');
 
     expect(declaring).toEqual(['src/game/abilities/priest.ts']);
+    /*
+     * ==========================================================================
+     * **THE DEFAULT 5s LIMIT WAS TOO TIGHT FOR A TEST THAT READS THE SOURCE
+     * TREE, AND THIS IS THE SIXTH INSTANCE OF THAT CLASS.**
+     *
+     * This body walks `src/game` and reads every `.ts` file in it synchronously,
+     * which is the one kind of test that gets SLOWER the more tests run beside
+     * it -- vitest transforms 167 test files in parallel and they compete for
+     * the same disk. It timed out at 5000ms under the full suite while passing
+     * standalone in **285ms**, a 17x margin, with the assertion itself
+     * unaffected.
+     *
+     * CLAUDE.md's "Testing" section records the same failure in
+     * `stealthBreaking.test.ts`, whose `sourceFiles` helper caches the walk and
+     * which carries an explicit `READS_THE_SOURCE_TREE_MS` for exactly this. A
+     * CACHE buys nothing here -- there is one walk in one test -- so the limit
+     * is the whole fix rather than insurance behind one.
+     *
+     * **PER-TEST AND NOT `testTimeout`.** `vite.config.ts` deliberately sets no
+     * global limit: widening it would hide the next test that genuinely gets
+     * slower, which is the thing a timeout is actually good at catching.
+     * ==========================================================================
+     */
   }, READS_THE_SOURCE_TREE_MS);
 });
