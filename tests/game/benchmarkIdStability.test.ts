@@ -1,33 +1,67 @@
 import { describe, expect, it } from 'vitest';
-import { BENCHMARK_ID_BASE, BENCHMARK_TEMPLATES, benchmarkEquipmentFor } from '../../src/game/items/benchmarkSets';
+import {
+  BENCHMARK_ID_BASE,
+  BENCHMARK_TEMPLATES,
+  ID_BLOCK_SIZE,
+  benchmarkEquipmentFor,
+  benchmarkItemsFor,
+  checkIdBlocks,
+} from '../../src/game/items/benchmarkSets';
+import { BENCHMARK_SETS } from '../../src/game/items/benchmarkGear';
 
 /*
- * A BENCHMARK ITEM'S ID IS ITS TEMPLATE'S POSITION, so a template inserted
- * anywhere but the end renumbers every set after it and re-points every saved
- * profile's items. Two comments in `benchmarkSets.ts` said so, and round 40
- * inserted Fire Demo beside the Firelock anyway -- Shadow Priest, Shockadin 2H
- * and Fury Prot all moved 400 ids and nothing failed. Round 45 put it back.
+ * A BENCHMARK ITEM'S ID IS ITS ROW'S DECLARED `idBlock`, and a saved profile
+ * stores those ids. Round 40 broke this when the id was still the row's
+ * POSITION: inserting Fire Demo mid-table moved Shadow Priest, Shockadin 2H and
+ * Fury Prot by 400 ids, and nothing failed.
  *
- * SO THE ORDER IS WRITTEN OUT BY HAND. A new template goes on the END of this
- * list and of the table; anything else fails here.
+ * SO EACH ROW'S BLOCK IS WRITTEN OUT BY HAND. A block may be added and never
+ * changed or reused; the table's ORDER is free.
  */
-const ORDER = [
-  'two_hand_arms', 'dw_fury', 'prot_warr', 'rogue_venom', 'rogue_combat_mut', 'rogue_combat',
-  'rogue_rupture', 'rogue_hemo', 'rogue_pure_hemo', 'druid_moonkin', 'druid_cat', 'druid_bear',
-  'shaman_elemental', 'shaman_enhancement', 'mage_frostfire', 'mage_arcane', 'mage_fire',
-  'pally_ret', 'pally_shockadin', 'prot_pally', 'bm_hunter', 'lw_ranged', 'lw_melee', 'hawk_melee',
-  'warlock_smds', 'warlock_firelock', 'shadow_priest', 'pally_shockadin_2h', 'fury_prot',
-  'warlock_demonology', 'warlock_sbolt',
-];
+const BLOCKS: Readonly<Record<string, number>> = {
+  two_hand_arms: 0, dw_fury: 1, prot_warr: 2, rogue_venom: 3, rogue_combat_mut: 4,
+  rogue_combat: 5, rogue_rupture: 6, rogue_hemo: 7, rogue_pure_hemo: 8, druid_moonkin: 9,
+  druid_cat: 10, druid_bear: 11, shaman_elemental: 12, shaman_enhancement: 13,
+  mage_frostfire: 14, mage_arcane: 15, mage_fire: 16, pally_ret: 17, pally_shockadin: 18,
+  prot_pally: 19, bm_hunter: 20, lw_ranged: 21, lw_melee: 22, hawk_melee: 23,
+  warlock_smds: 24, warlock_firelock: 25, shadow_priest: 26, pally_shockadin_2h: 27,
+  fury_prot: 28, warlock_demonology: 29, warlock_sbolt: 30,
+};
 
 describe('benchmark item ids', () => {
-  it('only ever grow at the end of the template table', () => {
-    expect(BENCHMARK_TEMPLATES.map((t) => t.presetId)).toEqual(ORDER);
+  it('keeps every row on the block it was given, which is what a saved profile holds', () => {
+    expect(Object.fromEntries(BENCHMARK_TEMPLATES.map((t) => [t.presetId, t.idBlock]))).toEqual(BLOCKS);
+  });
+
+  it('builds every id from the block and not from the row position', () => {
+    for (const template of BENCHMARK_TEMPLATES) {
+      for (const set of BENCHMARK_SETS) {
+        for (const item of benchmarkItemsFor(template, set)) {
+          expect(Math.floor((item.id - BENCHMARK_ID_BASE) / ID_BLOCK_SIZE), template.presetId).toBe(
+            template.idBlock,
+          );
+        }
+      }
+    }
+  });
+
+  it('does not move an id when a row is taken out of the table', () => {
+    // A copy of a row is in no table at all -- it has no position, only its block.
+    const row = BENCHMARK_TEMPLATES.find((t) => t.presetId === 'shadow_priest')!;
+    const set = BENCHMARK_SETS[1];
+    expect(benchmarkItemsFor({ ...row }, set).map((i) => i.id)).toEqual(
+      benchmarkItemsFor(row, set).map((i) => i.id),
+    );
+  });
+
+  it('refuses two rows with one block, at load', () => {
+    const [a, b] = BENCHMARK_TEMPLATES;
+    expect(() => checkIdBlocks([a, { ...b, idBlock: a.idBlock }])).toThrow(/share idBlock/);
+    expect(() => checkIdBlocks([{ ...a, idBlock: -1 }])).toThrow(/not a whole number/);
   });
 
   it('give Shadow Priest the E65 head it had before Fire Demo was added', () => {
-    // Template 26, set E65 (index 1): the id a profile saved before round 40 holds.
     const head = benchmarkEquipmentFor('shadow_priest', 'E65')!.head!.itemId;
-    expect(Math.floor((head - BENCHMARK_ID_BASE) / 400)).toBe(26);
+    expect(Math.floor((head - BENCHMARK_ID_BASE) / ID_BLOCK_SIZE)).toBe(26);
   });
 });

@@ -89,6 +89,25 @@ import {
  * ==============================================================================
  */
 export interface BenchmarkTemplate {
+  /**
+   * WHERE THIS ROW'S ITEM IDS LIVE: `BENCHMARK_ID_BASE + idBlock * 400 + ...`.
+   *
+   * --------------------------------------------------------------------------
+   * DECLARED, NOT THE ROW'S POSITION. The id used to be the template's INDEX
+   * in this table, so a row inserted anywhere but the end renumbered every set
+   * after it and re-pointed every saved profile's items -- which round 40 did,
+   * moving Shadow Priest, Shockadin 2H and Fury Prot by 400 ids with nothing
+   * failing. A declared block makes the order of the table free: rows can be
+   * grouped, sorted or moved, and no id follows them.
+   *
+   * THE 31 ROWS THAT EXISTED TOOK THE BLOCK THEIR POSITION ALREADY GAVE THEM,
+   * so no saved profile moved when this field arrived. A NEW ROW TAKES THE
+   * NEXT UNUSED NUMBER, and a block is never reused even if its row is
+   * deleted: a saved profile may still hold one of its ids. `checkIdBlocks`
+   * throws at load on a duplicate.
+   * --------------------------------------------------------------------------
+   */
+  readonly idBlock: number;
   readonly presetId: string;
   /**
    * The class this build is, which the generated items STATE on themselves.
@@ -207,10 +226,10 @@ const TANK: readonly BenchStat[] = ['Stamina', 'Strength', 'Agility', 'Defense',
 const PROT_PALLY: readonly BenchStat[] = ['Stamina', 'Strength', 'Spell Power', 'Defense', 'Parry', 'Block'];
 
 export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
-  { presetId: 'two_hand_arms', characterClass: 'warrior', label: '2H Arms', hit: 80, expertise: 10, preferred: MELEE, armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Axe' }, statStick: WARRIOR_STICK },
-  { presetId: 'dw_fury', characterClass: 'warrior', label: 'DW Fury', hit: 80, expertise: 10, preferred: MELEE, armour: 'Plate', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe' }, statStick: WARRIOR_STICK },
-  { presetId: 'prot_warr', characterClass: 'warrior', label: 'Prot Warr', hit: 80, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Sword' }, trinkets: TANK_TRINKETS, statStick: WARRIOR_STICK },
-  { presetId: 'rogue_venom', characterClass: 'rogue', label: 'Venom', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
+  { idBlock: 0, presetId: 'two_hand_arms', characterClass: 'warrior', label: '2H Arms', hit: 80, expertise: 10, preferred: MELEE, armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Axe' }, statStick: WARRIOR_STICK },
+  { idBlock: 1, presetId: 'dw_fury', characterClass: 'warrior', label: 'DW Fury', hit: 80, expertise: 10, preferred: MELEE, armour: 'Plate', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe' }, statStick: WARRIOR_STICK },
+  { idBlock: 2, presetId: 'prot_warr', characterClass: 'warrior', label: 'Prot Warr', hit: 80, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Sword' }, trinkets: TANK_TRINKETS, statStick: WARRIOR_STICK },
+  { idBlock: 3, presetId: 'rogue_venom', characterClass: 'rogue', label: 'Venom', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
   /*
    * COMBAT MUT IS THE VENOM TEMPLATE WITH TWO FIELDS CHANGED, which is the
    * owner's own framing of the profile: it copies everything from Venom but
@@ -219,9 +238,9 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * difference in the BUILD rather than in what it is wearing, which is the
    * whole point of a benchmark set.
    */
-  { presetId: 'rogue_combat_mut', characterClass: 'rogue', label: 'Combat Mut', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
-  { presetId: 'rogue_combat', characterClass: 'rogue', label: 'Combat', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Sword', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
-  { presetId: 'rogue_rupture', characterClass: 'rogue', label: 'Rupture', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
+  { idBlock: 4, presetId: 'rogue_combat_mut', characterClass: 'rogue', label: 'Combat Mut', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
+  { idBlock: 5, presetId: 'rogue_combat', characterClass: 'rogue', label: 'Combat', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Sword', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
+  { idBlock: 6, presetId: 'rogue_rupture', characterClass: 'rogue', label: 'Rupture', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
   /*
    * DAGGERS, NOT THE SPREADSHEET'S "MH Mace, OH Dagger" -- the owner's ruling
    * after the conflict was raised. Ambush is gated on
@@ -238,7 +257,7 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * away from any such file, silently. The same hazard this file already
    * records about `character.name`.
    */
-  { presetId: 'rogue_hemo', characterClass: 'rogue', label: 'Hemo Dagger', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
+  { idBlock: 7, presetId: 'rogue_hemo', characterClass: 'rogue', label: 'Hemo Dagger', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
   /*
    * PURE HEMO IS THE HEMO DAGGER TEMPLATE WITH THE COMBAT TEMPLATE'S MAIN
    * HAND -- the owner's own framing: "the same as Hemo Dagger except it's
@@ -249,11 +268,11 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * list rather than the dagger one, because that list casts Ambush and Ambush
    * needs a dagger. The gear and the rotation are one decision here.
    */
-  { presetId: 'rogue_pure_hemo', characterClass: 'rogue', label: 'Pure Hemo', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Sword', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
-  { presetId: 'druid_moonkin', characterClass: 'druid', label: 'Moonkin', hit: 120, expertise: 0, preferred: CASTER, armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
-  { presetId: 'druid_cat', characterClass: 'druid', label: 'Cat', hit: 40, expertise: 10, preferred: ['Strength', 'Agility', 'Crit', 'Stamina', 'Attack Power'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' } },
-  { presetId: 'druid_bear', characterClass: 'druid', label: 'Bear', hit: 40, expertise: 20, preferred: ['Stamina', 'Bonus Armor', 'Agility', 'Strength', 'Dodge', 'Defense'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' }, trinkets: TANK_TRINKETS },
-  { presetId: 'shaman_elemental', characterClass: 'shaman', label: 'Ele Shaman', hit: 110, expertise: 0, preferred: CASTER, armour: 'Mail', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true } },
+  { idBlock: 8, presetId: 'rogue_pure_hemo', characterClass: 'rogue', label: 'Pure Hemo', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Sword', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
+  { idBlock: 9, presetId: 'druid_moonkin', characterClass: 'druid', label: 'Moonkin', hit: 120, expertise: 0, preferred: CASTER, armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
+  { idBlock: 10, presetId: 'druid_cat', characterClass: 'druid', label: 'Cat', hit: 40, expertise: 10, preferred: ['Strength', 'Agility', 'Crit', 'Stamina', 'Attack Power'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' } },
+  { idBlock: 11, presetId: 'druid_bear', characterClass: 'druid', label: 'Bear', hit: 40, expertise: 20, preferred: ['Stamina', 'Bonus Armor', 'Agility', 'Strength', 'Dodge', 'Defense'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' }, trinkets: TANK_TRINKETS },
+  { idBlock: 12, presetId: 'shaman_elemental', characterClass: 'shaman', label: 'Ele Shaman', hit: 110, expertise: 0, preferred: CASTER, armour: 'Mail', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true } },
   /*
    * RESPECIFIED IN ROUND 37 TO RESEMBLE SHOCKADIN 2H, by the owner: "itemized
    * for Stamina, Strength, Intellect, Spell Power, Hit Rating/Crit Rating. Have
@@ -263,11 +282,11 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * `weaponsFrom`. It was a melee row: Crit, Strength, Intellect, Agility,
    * Stamina, Attack Power, with 10 expertise.
    */
-  { presetId: 'shaman_enhancement', characterClass: 'shaman', label: 'Enh Shaman', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina'], armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Mace' }, weaponsFrom: 'pally_ret' },
-  { presetId: 'mage_frostfire', characterClass: 'mage', label: 'Frostfire', characterName: 'Frostfire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
-  { presetId: 'mage_arcane', characterClass: 'mage', label: 'Arcane', characterName: 'Arcane Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
-  { presetId: 'mage_fire', characterClass: 'mage', label: 'Fire', characterName: 'Fire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
-  { presetId: 'pally_ret', characterClass: 'paladin', label: 'Seal Twist Ret', hit: 80, expertise: 10, preferred: ['Crit', 'Strength', 'Spell Power', 'Agility', 'Intellect', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Mace' } },
+  { idBlock: 13, presetId: 'shaman_enhancement', characterClass: 'shaman', label: 'Enh Shaman', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina'], armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Mace' }, weaponsFrom: 'pally_ret' },
+  { idBlock: 14, presetId: 'mage_frostfire', characterClass: 'mage', label: 'Frostfire', characterName: 'Frostfire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  { idBlock: 15, presetId: 'mage_arcane', characterClass: 'mage', label: 'Arcane', characterName: 'Arcane Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  { idBlock: 16, presetId: 'mage_fire', characterClass: 'mage', label: 'Fire', characterName: 'Fire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  { idBlock: 17, presetId: 'pally_ret', characterClass: 'paladin', label: 'Seal Twist Ret', hit: 80, expertise: 10, preferred: ['Crit', 'Strength', 'Spell Power', 'Agility', 'Intellect', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Mace' } },
   /*
    * A ONE-HANDER AND A SHIELD, NOT THE SPREADSHEET'S "Fast 2H Mace", and the
    * owner already ruled on this conflict from the other side.
@@ -294,15 +313,15 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * was raised rather than guessed at. Settled now, and the one-handed 20% is
    * what the Shockadin's seal reads.
    */
-  { presetId: 'pally_shockadin', characterClass: 'paladin', label: 'Shockadin', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', speed: 2.0, caster: true } },
-  { presetId: 'prot_pally', characterClass: 'paladin', label: 'Prot Pally', hit: 50, expertise: 20, preferred: PROT_PALLY, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true }, trinkets: PROT_PALLY_TRINKETS },
-  { presetId: 'bm_hunter', characterClass: 'hunter', label: 'BM Hunter', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
-  { presetId: 'lw_ranged', characterClass: 'hunter', label: 'LW Ranged', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
-  { presetId: 'lw_melee', characterClass: 'hunter', label: 'LW Melee', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe', ranged: true } },
-  { presetId: 'hawk_melee', characterClass: 'hunter', label: 'Hawk Melee', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe', ranged: true } },
-  { presetId: 'warlock_smds', characterClass: 'warlock', label: 'SM/DS', hit: 120, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
-  { presetId: 'warlock_firelock', characterClass: 'warlock', label: 'Firelock', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
-  { presetId: 'shadow_priest', characterClass: 'priest', label: 'Shadow', characterName: 'Shadow Priest', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  { idBlock: 18, presetId: 'pally_shockadin', characterClass: 'paladin', label: 'Shockadin', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', speed: 2.0, caster: true } },
+  { idBlock: 19, presetId: 'prot_pally', characterClass: 'paladin', label: 'Prot Pally', hit: 50, expertise: 20, preferred: PROT_PALLY, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true }, trinkets: PROT_PALLY_TRINKETS },
+  { idBlock: 20, presetId: 'bm_hunter', characterClass: 'hunter', label: 'BM Hunter', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
+  { idBlock: 21, presetId: 'lw_ranged', characterClass: 'hunter', label: 'LW Ranged', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
+  { idBlock: 22, presetId: 'lw_melee', characterClass: 'hunter', label: 'LW Melee', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe', ranged: true } },
+  { idBlock: 23, presetId: 'hawk_melee', characterClass: 'hunter', label: 'Hawk Melee', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe', ranged: true } },
+  { idBlock: 24, presetId: 'warlock_smds', characterClass: 'warlock', label: 'SM/DS', hit: 120, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  { idBlock: 25, presetId: 'warlock_firelock', characterClass: 'warlock', label: 'Firelock', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  { idBlock: 26, presetId: 'shadow_priest', characterClass: 'priest', label: 'Shadow', characterName: 'Shadow Priest', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   /*
    * ============================================================================
    * SHOCKADIN 2H -- THE SHOCKADIN TEMPLATE WITH A FAST TWO-HANDER IN PLACE OF
@@ -335,23 +354,20 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * two weapon swaps I've identified", held by construction rather than by
    * care, and `shockadinWeapons.test.ts` pins it.
    *
-   * APPENDED RATHER THAN INSERTED BESIDE THE SHOCKADIN, which looks untidy and
-   * is the point: `nextId` is `BENCHMARK_ID_BASE + templateIndex * 400 + ...`,
-   * so a template inserted in the middle renumbers every set after it and
-   * silently re-points every saved profile's items. The same rule the 900,000
-   * enchant block states in its own words.
+   * APPENDED RATHER THAN INSERTED BESIDE THE SHOCKADIN, because ids were
+   * once the row's POSITION. They are its declared `idBlock` now, so a row's
+   * place in this table no longer matters; the order is kept as it was.
    * ============================================================================
    */
-  { presetId: 'pally_shockadin_2h', characterClass: 'paladin', label: 'Shockadin 2H', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Mace', speed: 2.0 } },  /*
+  { idBlock: 27, presetId: 'pally_shockadin_2h', characterClass: 'paladin', label: 'Shockadin 2H', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Mace', speed: 2.0 } },  /*
    * FURY PROT IS THE PROT WARR ROW under its own label -- the owner's "copy
    * Prot Warr in almost every other case" -- so it generates the same stats
    * on its own ids, and the four test-set buttons find it by name.
    *
-   * APPENDED, NOT PLACED BESIDE PROT WARR, for the reason the row above gives:
-   * ids are allocated by template POSITION, and an insert would renumber every
-   * later set and re-point every saved profile's items.
+   * APPENDED, NOT PLACED BESIDE PROT WARR, for the reason the row above gives
+   * -- which `idBlock` has since retired.
    */
-  { presetId: 'fury_prot', characterClass: 'warrior', label: 'Fury Prot', hit: 80, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Sword' }, trinkets: TANK_TRINKETS, statStick: WARRIOR_STICK },
+  { idBlock: 28, presetId: 'fury_prot', characterClass: 'warrior', label: 'Fury Prot', hit: 80, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Sword' }, trinkets: TANK_TRINKETS, statStick: WARRIOR_STICK },
   /*
    * FIRE DEMO AND SBOLT SPAM, APPENDED -- and Fire Demo MOVED here, which
    * undoes a mistake. Round 40 inserted its row beside the Firelock's, which
@@ -364,11 +380,37 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
   // Fire Demo copies the Firelock's row, with 40 MORE hit rating: the owner
   // moved three Suppression points to Agonizing Flames (round 44) and asked
   // for the lost hit back in the gear, paid from the existing stats.
-  { presetId: 'warlock_demonology', characterClass: 'warlock', label: 'Fire Demo', hit: 150, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  { idBlock: 29, presetId: 'warlock_demonology', characterClass: 'warlock', label: 'Fire Demo', hit: 150, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   // Sbolt Spam: the Firelock's gear, by the owner's instruction, and the same
-  // Suppression 5/5, so the same hit. A NEW ROW GOES AFTER THIS ONE.
-  { presetId: 'warlock_sbolt', characterClass: 'warlock', label: 'Sbolt Spam', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  // Suppression 5/5, so the same hit. A NEW ROW TAKES idBlock 31.
+  { idBlock: 30, presetId: 'warlock_sbolt', characterClass: 'warlock', label: 'Sbolt Spam', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
 ];
+
+/** Ids one template owns: four sets of up to 100 items each. */
+export const ID_BLOCK_SIZE = 400;
+
+/**
+ * THROWN AT LOAD rather than discovered later, because the failure it guards
+ * against is silent: two rows sharing a block generate the same ids, and the
+ * second set's items would replace the first's in every lookup by id.
+ */
+export function checkIdBlocks(templates: readonly BenchmarkTemplate[]): void {
+  const seen = new Map<number, string>();
+  for (const template of templates) {
+    if (!Number.isInteger(template.idBlock) || template.idBlock < 0) {
+      throw new Error(`benchmark row ${template.presetId}: idBlock ${template.idBlock} is not a whole number`);
+    }
+    const holder = seen.get(template.idBlock);
+    if (holder !== undefined) {
+      throw new Error(
+        `benchmark rows ${holder} and ${template.presetId} share idBlock ${template.idBlock}`,
+      );
+    }
+    seen.set(template.idBlock, template.presetId);
+  }
+}
+
+checkIdBlocks(BENCHMARK_TEMPLATES);
 
 export const BENCHMARK_TEMPLATES_BY_PRESET: ReadonlyMap<string, BenchmarkTemplate> = new Map(
   BENCHMARK_TEMPLATES.map((t) => [t.presetId, t] as const),
@@ -818,10 +860,11 @@ export function benchmarkItemsFor(
   );
 
   // A stable id per (template, set, slot) so a set is the same every time.
-  const templateIndex = BENCHMARK_TEMPLATES.indexOf(template);
+  // The template's part is its DECLARED block, never its position in the table.
   const setIndex = BENCHMARK_SETS.indexOf(set);
   let seq = 0;
-  const nextId = () => BENCHMARK_ID_BASE + templateIndex * 400 + setIndex * 100 + seq++;
+  const nextId = () =>
+    BENCHMARK_ID_BASE + template.idBlock * ID_BLOCK_SIZE + setIndex * 100 + seq++;
 
   const items: GeneratedItem[] = [];
 
