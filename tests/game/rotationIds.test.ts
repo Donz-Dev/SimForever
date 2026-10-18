@@ -5,6 +5,7 @@ import { HUNTER_ABILITIES } from '../../src/game/abilities/hunter';
 import { MAGE_ABILITIES } from '../../src/game/abilities/mage';
 import { PALADIN_ABILITIES } from '../../src/game/abilities/paladin';
 import { PET_ABILITIES } from '../../src/game/abilities/pet';
+import { DEMON_ABILITIES } from '../../src/game/abilities/demon';
 import { PRIEST_ABILITIES } from '../../src/game/abilities/priest';
 import { ROGUE_ABILITIES } from '../../src/game/abilities/rogue';
 import { SHAMAN_ABILITIES } from '../../src/game/abilities/shaman';
@@ -115,7 +116,8 @@ const OWNER_ABILITIES: Readonly<Record<string, ReadonlySet<string>>> = {
   priest: withSharedAbilities(PRIEST_ABILITIES),
   // A pet's three, which belong to no class: a Hunter cannot cast Claw, and a
   // pet cannot cast a racial.
-  pet: new Set(PET_ABILITIES.map((a) => a.id)),
+  // A Hunter's pet's abilities and a Warlock's demons', both owned by `'pet'`.
+  pet: new Set([...PET_ABILITIES, ...DEMON_ABILITIES].map((a) => a.id)),
 };
 
 /*
@@ -253,7 +255,7 @@ describe('the 25 profiles and their lists', () => {
     expect(unclaimed).toEqual([]);
   });
 
-  it('has exactly two lists no profile reaches, and they are the Warrior fallbacks', () => {
+  it('has exactly four lists no profile reaches: the Warrior fallbacks and the two demons', () => {
     /*
      * NOT DEAD CODE. `warriorRotation` falls through to these for a Warrior
      * whose style and stance match none of its three specific cases -- a
@@ -264,7 +266,16 @@ describe('the 25 profiles and their lists', () => {
      * accumulating, and so deleting a preset shows up here.
      */
     const unreached = ALL_PRIORITY_LISTS.filter((list) => list.profiles.length === 0);
-    expect(unreached.map((list) => list.name)).toEqual(['WARRIOR_BATTLE', 'WARRIOR_SHIELD']);
+    /*
+     * AND THE TWO DEMONS, which every Warlock can summon from the Talents panel
+     * and no preset does: both Warlock presets sacrifice theirs.
+     */
+    expect(unreached.map((list) => list.name)).toEqual([
+      'WARRIOR_BATTLE',
+      'WARRIOR_SHIELD',
+      'IMP_PRIORITY',
+      'SUCCUBUS_PRIORITY',
+    ]);
   });
 });
 

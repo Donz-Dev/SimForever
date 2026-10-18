@@ -122,6 +122,12 @@ const REACTIONS: Partial<Record<ClassId, Readonly<Record<string, TalentReactionB
  */
 export interface PetModifiers {
   readonly damageMultiplier: number;
+  /** Per-ability damage multipliers, by the PET ability's id. */
+  readonly abilityDamage?: Readonly<Record<string, number>>;
+  /** Per-school damage multipliers on everything the pet deals. */
+  readonly schoolDamage?: Readonly<Partial<Record<DamageSchool, number>>>;
+  /** Flat spell power the pet gains from its owner's talents. */
+  readonly spellPower?: number;
   /** Added to the pet's crit chance in percentage POINTS, on top of the 100% it inherits. */
   readonly critBonus: number;
   readonly healthMultiplier: number;
@@ -237,6 +243,8 @@ export interface TalentBuild {
   readonly attackAbilityCostReduction: number;
   /** Cooldown to SUBTRACT from an ability, in milliseconds, by ability id. */
   readonly abilityCooldownReductionMs: ReadonlyMap<string, number>;
+  /** A PERCENTAGE of an ability's own cooldown, by id -- Decimation's Soul Fire. */
+  readonly abilityCooldownPercent: ReadonlyMap<string, number>;
   /** Per-ability crit, crit damage and damage scaling, for the combatant. */
   readonly abilityModifiers: AbilityModifiers;
   /** Per-school crit, crit damage and damage. See `SchoolModifiers`. */
@@ -340,6 +348,7 @@ const EMPTY: TalentBuild = {
   abilityCostReduction: new Map(),
   attackAbilityCostReduction: 0,
   abilityCooldownReductionMs: new Map(),
+  abilityCooldownPercent: new Map(),
   abilityModifiers: new AbilityModifiers(),
   schoolModifiers: new SchoolModifiers(),
   attackTableModifiers: new AttackTableModifiers(),
@@ -390,6 +399,8 @@ export interface TalentBuildContext {
    * same rule a missing weapon already follows.
    */
   readonly hasPet?: boolean;
+  /** The Warlock's summoned demon, for `BuildRequirement.summonedDemon`. */
+  readonly summonedDemon?: string;
   /** Armor the equipped items supply, for talents that scale it. */
   readonly itemArmor?: number;
   /**
@@ -459,6 +470,12 @@ function meets(
    * that is never built.
    */
   if (requires.hasPet !== undefined && requires.hasPet !== hasPet) return false;
+  if (
+    requires.summonedDemon !== undefined &&
+    requires.summonedDemon !== context.summonedDemon
+  ) {
+    return false;
+  }
   /*
    * A SHIELD CLAUSE IS ABOUT THE CHARACTER, not the weapon in a hand, so it is
    * checked before the weapon is even looked at. Bastion has no weapon clause
@@ -524,6 +541,13 @@ function unmetReason(requires: BuildRequirement): string {
       'correctly inert on a Moonkin, and the points are a route to the tier above.'
     );
   }
+  if (requires.summonedDemon) {
+    return (
+      `Applies only while the ${requires.summonedDemon} is summoned, and it is ` +
+      'not. Correctly inert rather than an error: choose that demon in the ' +
+      'Talents panel and it applies.'
+    );
+  }
   if (requires.hasPet) {
     return (
       'Applies only while a pet is active, and this build has none -- Lone ' +
@@ -575,6 +599,8 @@ export function talentContextFor(
     readonly talents: TalentAllocation;
     /** For `statFromLevel`. Omitted leaves the talents that read it inert. */
     readonly level?: number;
+    /** The Warlock's summoned demon. Absent means none is out. */
+    readonly summonedDemon?: string;
   },
 ): TalentBuildContext {
   return {
@@ -588,7 +614,10 @@ export function talentContextFor(
     // asked about separately. Bastion needs it and swings with nothing.
     hasShield: liveEquipment(equipment, style).shield !== undefined,
     // The same function the encounter uses to decide whether to BUILD one.
-    hasPet: build ? bringsPet(build.characterClass, build.talents) : false,
+    hasPet: build
+      ? bringsPet(build.characterClass, build.talents, build.summonedDemon)
+      : false,
+    summonedDemon: build?.summonedDemon,
     // Armor from items ALONE, which is what Toughness scales. The character's
     // armor is this plus the class base, and a percentage of the total would
     // overstate the talent.
@@ -627,6 +656,11 @@ export function talentBuild(
   const abilityCostReduction = new Map<string, number>();
   let attackAbilityCostReduction = 0;
   const abilityCooldownReductionMs = new Map<string, number>();
+  const abilityCooldownPercent = new Map<string, number>();
+  const petAbilityDamage: Record<string, number> = {};
+  const petSchoolDamage: Partial<Record<DamageSchool, number>> = {};
+  let petSpellPower = 0;
+  let petDamageFactor = 1;
   const abilityModifiers = new AbilityModifiers();
   const schoolModifiers = new SchoolModifiers();
   const attackTableModifiers = new AttackTableModifiers();
@@ -930,6 +964,13 @@ export function talentBuild(
           attackAbilityCostReduction += value;
           break;
         case 'abilityCooldown':
+          if (effect.unit === 'percent') {
+            abilityCooldownPercent.set(
+              effect.abilityId,
+              (abilityCooldownPercent.get(effect.abilityId) ?? 0) + value,
+            );
+            break;
+          }
           abilityCooldownReductionMs.set(
             effect.abilityId,
             (abilityCooldownReductionMs.get(effect.abilityId) ?? 0) +
@@ -1112,6 +1153,10 @@ export function talentBuild(
          * so a talent covering three is one entry rather than three.
          */
         case 'schoolDamage':
+          if (effect.requires && !meets(effect.requires, context)) {
+            report(talentId, rank, unmetReason(effect.requires));
+            break;
+          }
           for (const school of effect.schools) {
             schoolModifiers.add(school, { damageMultiplier: 1 + value / 100 });
           }
@@ -1222,12 +1267,20 @@ export function talentBuild(
            * nobody can attribute.
            */
           castModifierAuras.push({
-            id: `talent_${talentId}`,
+            /*
+             * SUFFIXED WHEN A TALENT GRANTS TWO, which Decimation does -- a
+             * cast-time cut and a shard-cost cut on Soul Fire. Two auras with
+             * one id would REFRESH rather than coexist, and the second would
+             * silently replace the first. A talent with one keeps its old id.
+             */
+            id: castModifierAuras.some((aura) => aura.id === `talent_${talentId}`)
+              ? `talent_${talentId}_${effect.property}`
+              : `talent_${talentId}`,
             name: talentId,
             durationMs: 0,
             castModifier: {
               abilityIds: effect.abilityIds,
-              [effect.property]: value / 100,
+              [effect.property]: effect.fraction ?? value / 100,
             },
           });
           break;
@@ -1242,6 +1295,29 @@ export function talentBuild(
           else if (effect.property === 'health') petHealthPct += value;
           else if (effect.property === 'armor') petArmorPct += value;
           else petFocusRegenPct += value;
+          break;
+        case 'petAbilityDamage':
+          petAbilityDamage[effect.abilityId] =
+            (petAbilityDamage[effect.abilityId] ?? 1) * (1 + value / 100);
+          break;
+        case 'petSchoolDamage':
+          if (effect.requires && !meets(effect.requires, context)) {
+            report(talentId, rank, unmetReason(effect.requires));
+            break;
+          }
+          for (const school of effect.schools) {
+            petSchoolDamage[school] = (petSchoolDamage[school] ?? 1) * (1 + value / 100);
+          }
+          break;
+        case 'petSpellPowerFromLevel':
+          if (context.level === undefined) {
+            report(talentId, rank, 'No level was supplied, so a percentage of it is nothing.');
+            break;
+          }
+          petSpellPower += (value / 100) * context.level;
+          break;
+        case 'petDamageFactor':
+          petDamageFactor *= 1 + value / 100;
           break;
         case 'petReaction': {
           const buildPetReaction = REACTIONS[characterClass]?.[effect.reactionId];
@@ -1305,8 +1381,12 @@ export function talentBuild(
     bleedingTargetModifiers,
     schoolDamagePerTargetEffect,
     periodicDamageMultiplier: 1 + periodicDamageBonusPct / 100,
+    abilityCooldownPercent,
     pet: {
-      damageMultiplier: 1 + petDamagePct / 100,
+      damageMultiplier: (1 + petDamagePct / 100) * petDamageFactor,
+      abilityDamage: petAbilityDamage,
+      schoolDamage: petSchoolDamage,
+      spellPower: petSpellPower,
       critBonus: petCritBonus,
       healthMultiplier: 1 + petHealthPct / 100,
       armorMultiplier: 1 + petArmorPct / 100,

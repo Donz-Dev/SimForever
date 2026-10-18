@@ -310,6 +310,16 @@ export function App() {
                   character: { ...profile.character, petFamily },
                 })
               }
+              summonedDemon={profile.character.summonedDemon}
+              onSummonedDemonChange={(demon) => {
+                // REMOVED rather than stored as undefined, so "none out" is the
+                // same file a profile saved before the field existed is.
+                const { summonedDemon: _drop, ...character } = profile.character;
+                editProfile({
+                  ...profile,
+                  character: demon ? { ...character, summonedDemon: demon } : character,
+                });
+              }}
             />
             {/* BETWEEN THE GEAR AND THE RAID BUFFS, the owner's placement, and
                 it reads in the right order: what the character is holding, how

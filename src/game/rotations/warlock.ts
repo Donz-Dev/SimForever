@@ -428,11 +428,30 @@ export function warlockRotation(talents: TalentAllocation): Rotation | undefined
   return WARLOCK_AFFLICTION_ROTATION;
 }
 
-/** Which demon this build sacrificed, if it took the talent. */
+/**
+ * Which demon's sacrifice buff this build carries into the fight, if any.
+ *
+ * ----------------------------------------------------------------------------
+ * THE TOOLTIP DECIDES IT IN TWO SENTENCES. Demonic Sacrifice: "The effect is
+ * canceled if any Demon is summoned." Demonic Pact: "Your Demonic Sacrifice
+ * effect is no longer cancelled by summoning a different Demon pet.
+ * Resummoning the sacrificed pet will still cancel the effect."
+ *
+ *   no demon out                       the sacrifice stands
+ *   a demon out, no Pact               cancelled
+ *   a demon out, Pact, a different one the sacrifice stands -- the owner's
+ *                                      "sacrifice Succubus, summon Imp"
+ *   a demon out, Pact, the same one    cancelled
+ * ----------------------------------------------------------------------------
+ */
 export function sacrificedDemon(
   talents: TalentAllocation,
   petFamily: string | undefined,
+  summonedDemon?: string,
 ): string | undefined {
   if ((talents.demonic_sacrifice ?? 0) === 0) return undefined;
-  return petFamily;
+  if (petFamily === undefined) return undefined;
+  if (summonedDemon === undefined) return petFamily;
+  const pact = (talents.demonic_pact ?? 0) > 0;
+  return pact && summonedDemon !== petFamily ? petFamily : undefined;
 }

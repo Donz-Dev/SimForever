@@ -280,7 +280,14 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
       caveats = (player?.abilities.all ?? [])
         .filter((ability) => ability.unmodelled !== undefined)
         .map((ability) => ({ abilityName: ability.name, reason: ability.unmodelled! }));
-      hasPetInFight = simulation.combatants.some((actor) => actor.kind === 'pet');
+      /*
+       * A HUNTER'S PET ONLY. The caveat is Hunter-worded -- happiness, the
+       * family modifier -- and a Warlock's demon is built by `createDemon`,
+       * which uses neither. A Hunter's pet is the one that runs on FOCUS.
+       */
+      hasPetInFight = simulation.combatants.some(
+        (actor) => actor.kind === 'pet' && actor.resources.get('focus') !== undefined,
+      );
     }
 
     /*

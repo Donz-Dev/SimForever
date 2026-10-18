@@ -362,6 +362,40 @@ export function improvedShadowBoltAura(percent: number): AuraDefinition {
  * Eclipse and Maelstrom Weapon -- and the fourth class to use it. An instant
  * three-second Shadow Bolt is the whole of the talent.
  */
+/**
+ * Demonic Brand, on the target: "brands the target for {1} sec. Your pet's next
+ * {2} attacks against the target deal {3} to {4} Fire or Shadow damage based on
+ * the pet."
+ *
+ * ----------------------------------------------------------------------------
+ * A CHARGE PER ATTACK, held as STACKS, spent one at a time by the demon's own
+ * landed attacks -- `consumeStack` removes the brand with the last one. A
+ * re-brand restores the charges to full rather than adding to them, which is
+ * `chargesOnApply` and is what "your pet's next N attacks" says.
+ *
+ * 65 TO 68 AT EVERY RANK, which the talent row states as its {3} and {4} and
+ * the owner restated: "properly adding +65 to 68 Fire/Shadow damage". The
+ * mythicsim-forever-engine repository adds 0.078 of the WARLOCK's spell power
+ * on top; the owner's figure is the flat range, and the coefficient is a
+ * question in HANDOVER rather than an addition here.
+ * ----------------------------------------------------------------------------
+ */
+export const DEMONIC_BRAND_DURATION_MS = seconds(10);
+export const DEMONIC_BRAND_DAMAGE_MIN = 65;
+export const DEMONIC_BRAND_DAMAGE_MAX = 68;
+
+export function demonicBrandAura(charges: number): AuraDefinition {
+  return {
+    id: 'demonic_brand',
+    name: 'Demonic Brand',
+    durationMs: DEMONIC_BRAND_DURATION_MS,
+    isDebuff: true,
+    refreshBehaviour: 'reset',
+    maxStacks: Math.max(1, charges),
+    chargesOnApply: Math.max(1, charges),
+  };
+}
+
 export const SHADOW_TRANCE_DURATION_MS = seconds(10);
 
 export const SHADOW_TRANCE: AuraDefinition = {
@@ -580,6 +614,7 @@ export const DEMONIC_SACRIFICE_UNMODELLED =
  */
 export const CATALOG_AURAS: readonly AuraDefinition[] = [
   improvedShadowBoltAura(0),
+  demonicBrandAura(6),
   demonicSacrificeAura('imp')!,
   demonicSacrificeAura('succubus')!,
 ];

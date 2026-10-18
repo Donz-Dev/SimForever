@@ -1498,9 +1498,11 @@ describe('the racials are in the priority lists, or they never fire', () => {
     const ids = RACIAL_COOLDOWNS.map((entry) => entry.abilityId);
     expect(ids.sort()).toEqual(['berserking', 'blood_fury', 'elunes_light', 'eureka']);
 
-    for (const { list } of ALL_PRIORITY_LISTS) {
-      // The pet's list is the one exception: a pet gets no racials.
-      if (list.name.toLowerCase().includes('pet')) continue;
+    for (const { list, owner } of ALL_PRIORITY_LISTS) {
+      // A PET'S lists are the exception -- the Hunter's pet and the Warlock's
+      // two demons: a pet gets no racials. Asked of the OWNER rather than of
+      // the name, which said "Pet" for the one pet list there used to be.
+      if (owner === 'pet') continue;
       for (const abilityId of ids) {
         // AS AN ENTRY OR A SEQUENCE STEP: the four Hunter lists carry Berserking
         // and Blood Fury as steps of the owner's cooldown stack (round 37).

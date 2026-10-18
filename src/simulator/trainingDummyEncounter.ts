@@ -7,7 +7,9 @@ import { createTrainingDummy } from '../game/actors/createTrainingDummy';
 import type { RaidBuff } from '../game/buffs/raidBuffs';
 import { raidBuffPoolStats, selectedRaidBuffs } from '../game/buffs/raidBuffs';
 import { createPet } from '../game/actors/createPet';
-import { isPetFamilyId } from '../game/character/petFamilies';
+import { isPetFamilyId, isSummonableDemon } from '../game/character/petFamilies';
+import { createDemon } from '../game/actors/createDemon';
+import { MAX_CHARACTER_LEVEL } from '../game/character';
 import { hasPet } from '../game/rotations/hunter';
 import { talentBuild } from '../game/talents/talentBuild';
 import { sacrificedDemon } from '../game/rotations/warlock';
@@ -175,7 +177,13 @@ export function trainingDummyEncounter(
        * wrong thing entirely. Which demon decides which buff, and that comes
        * from the profile's chosen companion.
        */
-      const demon = sacrificedDemon(profile.talents ?? {}, profile.character.petFamily);
+      const demon = sacrificedDemon(
+        profile.talents ?? {},
+        profile.character.petFamily,
+        isSummonableDemon(profile.character.summonedDemon)
+          ? profile.character.summonedDemon
+          : undefined,
+      );
       const sacrifice = demon ? demonicSacrificeAura(demon) : undefined;
 
       for (const actor of context.combatants) {
@@ -257,6 +265,9 @@ function createPlayerFor(
     characterClass: profile.character.characterClass,
     combatStyle: profile.character.combatStyle,
     stance: profile.character.stance,
+    ...(profile.character.summonedDemon !== undefined
+      ? { summonedDemon: profile.character.summonedDemon }
+      : {}),
     /*
      * THE PROFILE'S OWN LIST, which may have been edited. An empty one is
      * passed as `undefined` rather than as an empty list: a build with no
@@ -351,6 +362,21 @@ function createDummyFor(profile: CharacterProfile): Combatant {
  * ----------------------------------------------------------------------------
  */
 function petFor(profile: CharacterProfile, owner: Combatant): Combatant | undefined {
+  /*
+   * A WARLOCK'S DEMON, when one is summoned. Its talents are resolved with the
+   * demon in the context, because three of them ask WHICH demon is out --
+   * Master Demonologist's two halves -- and one reads the level.
+   */
+  if (profile.character.characterClass === 'warlock') {
+    const demon = profile.character.summonedDemon;
+    if (!isSummonableDemon(demon)) return undefined;
+    const build = talentBuild('warlock', profile.talents ?? {}, {
+      hasPet: true,
+      summonedDemon: demon,
+      level: MAX_CHARACTER_LEVEL,
+    });
+    return createDemon({ owner, demon, talents: build.pet });
+  }
   if (profile.character.characterClass !== 'hunter') return undefined;
   if (!hasPet(profile.talents ?? {})) return undefined;
 

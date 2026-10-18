@@ -100,8 +100,6 @@ const MENTIONS_BUT_IS_A_LIVE_GAP: Record<string, string> = {
     'Names heals, but it also reaches Smite; inert because no Shadow list casts either -- the build, not the ruling.',
   'shaman.elemental_weapons':
     'Names a threat imbue, but the blocker is that Flametongue and Frostbrand scale off a coefficient the SOURCE does not state -- missing data, which asking could clear.',
-  'warlock.demonic_brand':
-    'Names threat, but it is inert because both profiles take Demonic Sacrifice and bring no demon -- the build, which another profile could change.',
   'rogue.riposte':
     'Names a disarm, but it becomes active after PARRYING, so what blocks it is a target that does not swing back -- and `targetAttacks` can change that.',
   'mage.ice_barrier':

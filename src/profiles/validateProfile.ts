@@ -125,6 +125,12 @@ export function validateProfile(value: unknown): ValidationResult {
     if (character.petFamily !== undefined && typeof character.petFamily !== 'string') {
       issues.push({ path: 'character.petFamily', message: 'Pet family must be an id string.' });
     }
+    if (character.summonedDemon !== undefined && typeof character.summonedDemon !== 'string') {
+      issues.push({
+        path: 'character.summonedDemon',
+        message: 'Summoned demon must be an id string.',
+      });
+    }
 
     // Combat style is optional; omitting it means "use the class default".
     if (character.combatStyle !== undefined) {
@@ -473,6 +479,14 @@ export function validateProfile(value: unknown): ValidationResult {
          */
         ...(validated.character.petFamily !== undefined
           ? { petFamily: validated.character.petFamily }
+          : {}),
+        /*
+         * NAMED HERE OR DROPPED ON LOAD, which is the trap this rebuild has
+         * sprung twice (`stance`, then `petFamily`). Unrecognised values load
+         * and build no demon, the `petFamily` rule.
+         */
+        ...(validated.character.summonedDemon !== undefined
+          ? { summonedDemon: validated.character.summonedDemon }
           : {}),
       },
       stats: cleanStats,

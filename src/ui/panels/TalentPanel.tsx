@@ -4,8 +4,13 @@ import { TOTAL_TALENT_POINTS } from '../../game/talents/Talent';
 import { accentFor, talentsForClass } from '../../game/talents/talentData';
 import { Panel } from '../components/Panel';
 import { OptionGroup } from '../components/OptionGroup';
-import type { DemonFamilyId, PetFamilyId } from '../../game/character/petFamilies';
-import { isDemonFamilyId } from '../../game/character/petFamilies';
+import type {
+  DemonFamilyId,
+  PetFamilyId,
+  SummonableDemon,
+} from '../../game/character/petFamilies';
+import { isDemonFamilyId, isSummonableDemon } from '../../game/character/petFamilies';
+import { sacrificedDemon } from '../../game/rotations/warlock';
 import {
   canSpend,
   canUnspend,
@@ -51,6 +56,12 @@ interface TalentPanelProps {
    */
   readonly petFamily?: string;
   readonly onPetFamilyChange?: (family: PetFamilyId) => void;
+  /**
+   * A Warlock's SUMMONED demon, and its setter -- `undefined` is none out.
+   * Separate from `petFamily`, which for a Warlock is the sacrificed demon.
+   */
+  readonly summonedDemon?: string;
+  readonly onSummonedDemonChange?: (demon: SummonableDemon | undefined) => void;
 }
 
 /**
@@ -68,6 +79,20 @@ interface TalentPanelProps {
  * too, and that build has no demon to choose.
  * ============================================================================
  */
+/**
+ * Whether the chosen sacrifice is cancelled by the chosen summon -- the rule
+ * `sacrificedDemon` applies in the fight, asked here so the panel can say so.
+ */
+export function sacrificeCancelled(
+  allocation: TalentAllocation,
+  petFamily: string | undefined,
+  summonedDemon: string | undefined,
+): boolean {
+  if ((allocation.demonic_sacrifice ?? 0) === 0 || petFamily === undefined) return false;
+  if (!isSummonableDemon(summonedDemon)) return false;
+  return sacrificedDemon(allocation, petFamily, summonedDemon) === undefined;
+}
+
 export function sacrificesADemon(
   characterClass: ClassId,
   allocation: TalentAllocation,
@@ -100,6 +125,8 @@ export function TalentPanel({
   onChange,
   petFamily,
   onPetFamilyChange,
+  summonedDemon,
+  onSummonedDemonChange,
 }: TalentPanelProps) {
   const talents = talentsForClass(characterClass);
   if (!talents) return null;
@@ -130,8 +157,24 @@ export function TalentPanel({
           />
         ))}
       </div>
+      {/*
+        UNDER THE TREES AND ABOVE THE SACRIFICE CHOOSER, the owner's placement:
+        which demon is OUT, then which one was sacrificed. Every Warlock gets
+        the first; only Demonic Sacrifice brings the second.
+      */}
+      {characterClass === 'warlock' && onSummonedDemonChange !== undefined ? (
+        <SummonChoice value={summonedDemon} onChange={onSummonedDemonChange} />
+      ) : null}
       {sacrificesADemon(characterClass, allocation) && onPetFamilyChange !== undefined ? (
         <DemonChoice value={petFamily} onChange={onPetFamilyChange} />
+      ) : null}
+      {sacrificeCancelled(allocation, petFamily, summonedDemon) ? (
+        <p className="field-hint">
+          Summoning a demon cancels the sacrifice
+          {(allocation.demonic_pact ?? 0) > 0
+            ? ' when it is the demon you sacrificed -- Demonic Pact keeps it only for a different one.'
+            : '. Demonic Pact keeps it while a different demon is out.'}
+        </p>
       ) : null}
     </Panel>
   );
@@ -159,6 +202,42 @@ export function TalentPanel({
  * that is never attacked and never runs dry. See `DEMONIC_SACRIFICE_UNMODELLED`.
  * ============================================================================
  */
+/**
+ * Which demon a Warlock has OUT in the fight.
+ *
+ * ============================================================================
+ * THREE OPTIONS, AND "NONE" IS ONE OF THEM rather than an unset radio group,
+ * because no demon is a real choice -- it is what both Warlock presets make,
+ * so that Demonic Sacrifice's buff stands. The tooltip cancels the sacrifice
+ * if ANY demon is summoned; Demonic Pact narrows that to the sacrificed one.
+ * A note under the sacrifice chooser says when the pair cancels, because a
+ * sacrifice buff that silently vanished on picking a demon would read as a
+ * bug.
+ * ============================================================================
+ */
+const SUMMON_OPTIONS: readonly { readonly id: 'none' | SummonableDemon; readonly name: string }[] = [
+  { id: 'none', name: 'None' },
+  { id: 'imp', name: 'Imp · Firebolt' },
+  { id: 'succubus', name: 'Succubus · melee, Lash of Pain' },
+];
+
+function SummonChoice({
+  value,
+  onChange,
+}: {
+  readonly value: string | undefined;
+  readonly onChange: (demon: SummonableDemon | undefined) => void;
+}) {
+  return (
+    <OptionGroup<'none' | SummonableDemon>
+      label="Demon summoned"
+      options={SUMMON_OPTIONS}
+      value={isSummonableDemon(value) ? value : 'none'}
+      onChange={(choice) => onChange(choice === 'none' ? undefined : choice)}
+    />
+  );
+}
+
 const DEMON_OPTIONS: readonly { readonly id: DemonFamilyId; readonly name: string }[] = [
   { id: 'imp', name: 'Imp · +15% Shadow' },
   { id: 'succubus', name: 'Succubus · +15% Fire' },

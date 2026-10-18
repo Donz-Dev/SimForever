@@ -116,6 +116,12 @@ describe('Lone Wolf grants the 20% it is named for', () => {
        * alone here rather than edited from a Hunter change.
        */
       demonic_sacrifice: 'Applied per demon by the encounter, so no one id names it.',
+      /*
+       * Demonic Pact changes WHEN the sacrifice buff stands -- a different demon
+       * out no longer cancels it -- and that rule is `sacrificedDemon`, applied
+       * by the encounter beside Demonic Sacrifice itself. Same shape, same reason.
+       */
+      demonic_pact: 'Applied by the encounter, through sacrificedDemon.',
     };
 
     /*

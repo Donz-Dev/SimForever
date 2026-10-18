@@ -53,6 +53,20 @@ export interface CharacterSection {
    */
   readonly petFamily?: string;
   /**
+   * The demon a WARLOCK has out in the fight: `imp` or `succubus`.
+   *
+   * ----------------------------------------------------------------------
+   * SEPARATE FROM `petFamily`, WHICH FOR A WARLOCK IS THE SACRIFICED DEMON.
+   * With Demonic Pact a Warlock holds both at once -- the owner's strategy is
+   * "sacrifice Succubus and summon Imp" for a Fire build and the mirror for
+   * Shadow -- so one field cannot carry both.
+   *
+   * ABSENT MEANS NO DEMON IS OUT, which is what every Warlock profile saved
+   * before this field existed was: nothing built one. So no migration.
+   * ----------------------------------------------------------------------
+   */
+  readonly summonedDemon?: string;
+  /**
    * How the character fights: which weapons auto-attack, and which action
    * priority list applies.
    *

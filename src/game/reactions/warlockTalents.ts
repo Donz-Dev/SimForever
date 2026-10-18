@@ -1,6 +1,10 @@
 import type { TalentReactionBuilder } from './warriorTalents';
+import { dealDamage } from '../../engine';
 import {
+  DEMONIC_BRAND_DAMAGE_MAX,
+  DEMONIC_BRAND_DAMAGE_MIN,
   SHADOW_TRANCE,
+  demonicBrandAura,
   improvedShadowBoltAura,
   shadowAndFlameAura,
 } from '../auras/warlock';
@@ -83,7 +87,62 @@ export const shadowAndFlame: TalentReactionBuilder = (percent) => ({
   },
 });
 
+/**
+ * Demonic Brand, the WARLOCK's half: a Searing Pain that lands brands its
+ * target with `charges` charges -- 2/4/6 by rank, the row's {2}.
+ */
+export const demonicBrand: TalentReactionBuilder = (charges) => ({
+  id: 'demonic_brand',
+  on: 'dealt',
+  outcomes: ['hit', 'crit'],
+  canTrigger: (_context, _actor, attack) => attack.abilityId === 'searing_pain',
+  onTrigger: (context, actor, attack) => {
+    context.applyAura(attack.defender, demonicBrandAura(charges), actor.id);
+  },
+});
+
+/**
+ * Demonic Brand, the DEMON's half: each of its landed attacks on a branded
+ * target spends a charge and deals 65 to 68 more -- Fire from the Imp, Shadow
+ * from anything else, "based on the pet".
+ *
+ * ----------------------------------------------------------------------------
+ * ONLY ITS OWNER'S BRAND, because the aura's source is the Warlock who cast
+ * the Searing Pain and "your pet's next attacks" means the brand that
+ * Warlock's demon reads.
+ *
+ * THE EXTRA HIT ROLLS NO TABLE AND CANNOT CRIT -- no `attackTable` and no
+ * `critFrom` -- because the attack it rides on already landed; the
+ * mythicsim-forever-engine repository casts it as a hit that "cannot miss".
+ * And having no table is also what keeps it from triggering this same
+ * reaction: `dealt` reactions run only for damage that consulted a table.
+ * Dealt inline for the same reason.
+ * ----------------------------------------------------------------------------
+ */
+export const demonicBrandStrike: TalentReactionBuilder = () => ({
+  id: 'demonic_brand_strike',
+  on: 'dealt',
+  outcomes: ['hit', 'crit', 'glance', 'block'],
+  canTrigger: (_context, actor, attack) => {
+    const brand = attack.defender.auras.get('demonic_brand');
+    return brand !== undefined && brand.sourceId === actor.ownerId;
+  },
+  onTrigger: (context, actor, attack) => {
+    attack.defender.auras.consumeStack(context, 'demonic_brand');
+    dealDamage(context, {
+      source: actor,
+      target: attack.defender,
+      abilityId: 'demonic_brand_strike',
+      abilityName: 'Demonic Brand',
+      school: actor.abilities.has('imp_firebolt') ? 'fire' : 'shadow',
+      baseAmount: (DEMONIC_BRAND_DAMAGE_MIN + DEMONIC_BRAND_DAMAGE_MAX) / 2,
+    });
+  },
+});
+
 export const WARLOCK_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
+  demonic_brand: demonicBrand,
+  demonic_brand_strike: demonicBrandStrike,
   nightfall,
   improved_shadow_bolt: improvedShadowBolt,
   shadow_and_flame: shadowAndFlame,

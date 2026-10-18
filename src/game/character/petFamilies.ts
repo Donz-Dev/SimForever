@@ -188,7 +188,33 @@ export function abilitiesForFamily(
  * while you do not have an active pet".
  * ------------------------------------------------------------------------------
  */
-export function bringsPet(characterClass: ClassId, talents: TalentAllocation): boolean {
+export function bringsPet(
+  characterClass: ClassId,
+  talents: TalentAllocation,
+  /*
+   * THE WARLOCK'S SUMMONED DEMON, which is a profile choice rather than a
+   * talent: a Warlock brings a pet exactly when one is summoned. Separate from
+   * the SACRIFICED demon -- `character.petFamily` -- because with Demonic Pact
+   * a Warlock holds both at once, one sacrificed and a different one out.
+   */
+  summonedDemon?: string,
+): boolean {
+  if (characterClass === 'warlock') return isSummonableDemon(summonedDemon);
   if (characterClass !== 'hunter') return false;
   return (talents.lone_wolf ?? 0) === 0;
+}
+
+/**
+ * The demons a Warlock can have OUT in a fight here.
+ *
+ * Imp and Succubus are the two the ruleset owner specified. The Voidwalker and
+ * Felhunter stay sacrifice-only: what they would do in a fight -- taunts,
+ * threat, damage taken, dispels -- is out of scope, and no number for either
+ * has been given.
+ */
+export const SUMMONABLE_DEMONS = ['imp', 'succubus'] as const;
+export type SummonableDemon = (typeof SUMMONABLE_DEMONS)[number];
+
+export function isSummonableDemon(value: unknown): value is SummonableDemon {
+  return typeof value === 'string' && (SUMMONABLE_DEMONS as readonly string[]).includes(value);
 }
