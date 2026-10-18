@@ -126,7 +126,7 @@ the same way.
 
 | | `talentsforever` (ours) | `foreverchanges.pro` | Applied |
 | --- | --- | --- | --- |
-| **Life Tap** r6 | 424 health to mana | **840** | **840**, by the owner's explicit ruling |
+| **Life Tap** r6 | 424 health to mana | **840** | **840**, by the owner's explicit ruling -- **since replaced (round 43) by Wowhead's Forever formula, 430 + Spirit**, on the owner's instruction |
 | **Shadowburn** r6 | 258 to 288 | **251 to 281** | **266** midpoint, by the standing rule |
 | **Searing Pain** r6 | 107 to 125 | **105 to 123** | **114** midpoint, by the standing rule |
 | **Shadowburn cost** | `Reagents: Soul Shard` | `365 Mana` | **both** — the rule does not apply, see above |

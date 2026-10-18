@@ -3,7 +3,7 @@ import type { TelemetryEvent } from '../../src/engine';
 import { castAbility, seconds } from '../../src/engine';
 import {
   LIFE_TAP,
-  LIFE_TAP_AMOUNT,
+  lifeTapHealth,
   LIFE_TAP_HEAL_DELAY_MS,
   LIFE_TAP_HEAL_NAME,
 } from '../../src/game/abilities/warlock';
@@ -40,6 +40,7 @@ describe('Life Tap is healed back by the group', () => {
     expect(LIFE_TAP_HEAL_DELAY_MS).toBe(1000);
     const { actor, target, simulation, events } = tapper();
     const full = actor.health.current;
+    const LIFE_TAP_AMOUNT = lifeTapHealth(actor);
 
     castAbility(simulation, actor, actor.abilities.get('life_tap')!, target);
     expect(full - actor.health.current).toBe(LIFE_TAP_AMOUNT);
@@ -63,6 +64,7 @@ describe('Life Tap is healed back by the group', () => {
   it('still charges the second tap of a pair inside the second, from health not yet returned', () => {
     const { actor, target, simulation } = tapper();
     const full = actor.health.current;
+    const LIFE_TAP_AMOUNT = lifeTapHealth(actor);
     const tap = actor.abilities.get('life_tap')!;
 
     castAbility(simulation, actor, tap, target);

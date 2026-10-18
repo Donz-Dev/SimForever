@@ -72,6 +72,7 @@ the tooling to be a bit more sophisticated as well."
 | 40 | **DEMONOLOGY, A 30TH PROFILE** -- 5/31/15 on the owner's design: the Imp out, the Succubus sacrificed, Searing Pain and Demonic Brand, Soul Fire under Decimation in the last 35%. Taken through the optimisation procedure at 60s, 180s and 300s | **962.4 at 60s** (USES=1, 30 fights); +19.4 from Searing Pain as the pull and +13.9 from a Bane of Agony opener; the first tree and list stand. Three questions | see below |
 | 41 | **LIFE TAP IS HEALED BACK BY THE GROUP**, one second after the cast, by the owner's ruling. Demonology then ships Aftermath 5/5 and Corruption, both held in round 40 | **no Warlock moves at 60s**; at 300s SM/DS 655 -> 726, Firelock 386 -> 810, Demonology 562 -> 886. Demonology +55.1 at 60s from the two changes. Two round-40 questions closed | see below |
 | 42 | **THE FIRELOCK, RE-OPTIMISED ONCE LIFE TAP WAS HEALED BACK** -- Improved Life Tap found never to have worked and wired in; five dead points moved to Improved Life Tap 2 and Aftermath 5/5; a Bane of Agony opener | **+51.9 at 60s, +58.1 at 180s, +60.9 at 300s**, paired. The build is 7/11/33. Two questions | see below |
+| 43 | **LIFE TAP IS (430 + SPIRIT)**, Wowhead's Forever formula, on the owner's instruction -- replacing the ruled flat 840 and the Spirit clause's `unmodelled` caveat. About 674 on every Warlock preset | Firelock **-7.6 at 60s**; the others unchanged at 60s; -4 to -25 at longer lengths, from more taps | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -157,6 +158,35 @@ Rupture Rogue's pre-combat `stealth` line as `<-- NEVER HAPPENED`. It does on
 `main` too: stealth is a `PRECOMBAT_STATES` entry with no ability, and the tool
 does not read that table the way the APL panel and the opener guard do. A
 reporting gap, not a rotation one.
+
+## Round 43: Life Tap is (430 + Spirit), replacing the ruled 840
+
+**THE OWNER'S INSTRUCTION**, after Wowhead's Forever page for rank 6 (spell
+11689) was found to state the Spirit clause's rate: "Converts [(430 + Spirit) *
+(1)] Health into [(430 + Spirit) * (1)] Mana for you." Life Tap had treated
+that clause as `unmodelled` -- "states no rate" -- and converted a flat 840.
+
+**BUILT AS STATED**: 430 plus the character's effective Spirit at the moment of
+the cast, the same figure for the health paid and the base mana, not rounded.
+Improved Life Tap's +20% lands on the mana only, and the group heal a second
+later returns exactly what was paid. `lifeTapHealth` and `lifeTapMana` are the
+two readers; the flat `LIFE_TAP_AMOUNT` is gone, and the ability no longer
+carries an `unmodelled` caveat.
+
+**ON THE THREE WARLOCK PRESETS SPIRIT IS 243-244**, so a tap is about 674 where
+it was 840 -- 809 mana with Improved Life Tap on the Firelock, where it was
+1,008. **Smaller taps mean more of them, and each is a global cooldown**
+(`probe_clock.ts`, 40 fights a length, before -> after):
+
+| | 60s | 120s | 180s | 300s | taps at 300s |
+| --- | --- | --- | --- | --- | --- |
+| SM/DS | 767.1 -> 767.1 | 744.8 -> 745.1 | 731.4 -> 727.5 | 725.9 -> 722.4 | 11.1 -> 13.3 |
+| Firelock | 979.0 -> **971.4** | 905.8 -> 881.2 | 891.3 -> 867.5 | 872.3 -> 846.9 | 28.8 -> 34.2 |
+| Demonology | 1021.0 -> 1021.0 | 957.7 -> 943.2 | 947.3 -> 934.5 | 934.9 -> 919.6 | 25.8 -> 31.0 |
+
+**THE FIRELOCK IS THE ONLY PRESET THAT MOVES AT 60s**, -7.6 on one probe run,
+because it is the only one that taps inside a minute. The 5% Life Tap gates
+were priced on the 840 tap and are not re-swept here.
 
 ## Round 42: the Firelock, re-optimised once Life Tap was healed back
 

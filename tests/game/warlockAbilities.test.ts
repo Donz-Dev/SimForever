@@ -26,7 +26,8 @@ import {
   AMPLIFY_CURSE,
   BANE_OF_AGONY_ABILITY,
   LIFE_TAP,
-  LIFE_TAP_AMOUNT,
+  LIFE_TAP_BASE,
+  lifeTapHealth,
   SEARING_PAIN_DAMAGE,
   SHADOWBURN,
   SHADOWBURN_DAMAGE,
@@ -152,9 +153,14 @@ describe('the numbers', () => {
    * THE CHECKED-IN CAPTURE STILL SAYS 424, deliberately -- it is scraped data
    * and is never hand-edited, so the constant disagreeing with it is the honest
    * state and not drift.
+   *
+   * LIFE TAP HAS SINCE LEFT THIS TABLE: round 43 replaced the ruled 840 with
+   * Wowhead's Forever formula, "(430 + Spirit)", on the owner's instruction.
+   * The base is pinned here so the ruling's history and its replacement sit
+   * side by side.
    */
   it('follows foreverchanges.pro where the two sources disagree', () => {
-    expect(LIFE_TAP_AMOUNT).toBe(840);
+    expect(LIFE_TAP_BASE).toBe(430);
     expect(SHADOWBURN_DAMAGE).toBe(266);
     expect(SEARING_PAIN_DAMAGE).toBe(114);
   });
@@ -379,9 +385,11 @@ describe('the two fights', () => {
 
     castAbility(simulation, actor, actor.abilities.get('life_tap')!, target);
 
-    // Health for mana, one for one, at the figure foreverchanges.pro states.
-    expect(healthBefore - actor.health.current).toBe(LIFE_TAP_AMOUNT);
-    expect(actor.resources.get('mana')!.current - manaBefore).toBe(LIFE_TAP_AMOUNT);
+    // Health for mana, one for one, at 430 + the caster's Spirit.
+    const cost = 430 + actor.stats.effective.spirit;
+    expect(lifeTapHealth(actor)).toBe(cost);
+    expect(healthBefore - actor.health.current).toBe(cost);
+    expect(actor.resources.get('mana')!.current - manaBefore).toBe(cost);
 
     // And it is still in the owner's list, unreached rather than removed.
     expect(WARLOCK_AFFLICTION.entries.map((e) => e.abilityId)).toContain('life_tap');

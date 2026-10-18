@@ -1,4 +1,4 @@
-import type { Ability } from '../../engine';
+import type { Ability, Combatant } from '../../engine';
 import {
   EventPriority,
   applyHealing,
@@ -298,8 +298,9 @@ export const SIPHON_LIFE_ABILITY: Ability = {
  * reason Siphon Life's heal is wasted -- nothing is attacking, so the health
  * has no other use.
  *
- * ITS SPIRIT CLAUSE IS NOT MODELLED. "Mana gained is increased by your Spirit"
- * states no rate, so the flat conversion is used and the ability says so.
+ * ITS SPIRIT CLAUSE IS MODELLED NOW, AT A STATED RATE (round 43). See
+ * `LIFE_TAP_BASE` below: the 840 this paragraph's ruling chose is replaced by
+ * "(430 + Spirit)", on the owner's instruction.
  *
  * ----------------------------------------------------------------------------
  * 840 AND NOT 424, ON THE RULESET OWNER'S RULING, AND THE TWO SOURCES DISAGREE
@@ -319,7 +320,27 @@ export const SIPHON_LIFE_ABILITY: Ability = {
  * disagrees with it and says why.
  * ----------------------------------------------------------------------------
  */
-export const LIFE_TAP_AMOUNT = 840;
+/*
+ * ============================================================================
+ * "CONVERTS [(430 + Spirit) * (1)] HEALTH INTO [(430 + Spirit) * (1)] MANA FOR
+ * YOU. SPIRIT INCREASES THE AMOUNT CONVERTED." -- Wowhead's Forever page for
+ * rank 6 (spell 11689), adopted on the owner's instruction in round 43 and
+ * REPLACING the flat 840 above. The capture's 424 and foreverchanges.pro's 840
+ * both read as this formula with some Spirit already in it; neither is used.
+ *
+ * THE CHARACTER'S EFFECTIVE SPIRIT AT THE MOMENT OF THE CAST, so a buff that
+ * moves Spirit moves the tap. Not rounded: the formula states no rounding, and
+ * a fractional point of mana is what a fractional point of Spirit buys.
+ *
+ * SAME AMOUNT BOTH WAYS -- the health paid and the base mana gained are one
+ * figure -- and Improved Life Tap's +20% lands on the MANA only.
+ * ============================================================================
+ */
+export const LIFE_TAP_BASE = 430;
+
+/** The health one Life Tap costs on this character right now: 430 + Spirit. */
+export const lifeTapHealth = (caster: Combatant): number =>
+  LIFE_TAP_BASE + caster.stats.effective.spirit;
 
 /*
  * ============================================================================
@@ -353,14 +374,14 @@ export const LIFE_TAP_HEAL_NAME = 'Life Tap (healed by the group)';
  * Found in round 42, when Life Tap stopped costing health and became worth
  * pricing at all. No preset took the talent, so no published figure moved.
  *
- * THE MANA ONLY: "increases the amount of Mana awarded". The health paid stays
- * the 840 the owner ruled.
+ * THE MANA ONLY: "increases the amount of Mana awarded". The health paid is
+ * the plain 430 + Spirit.
  */
 export const LIFE_TAP_BONUS_PERCENT_KEY = 'bonusPercent';
 
-/** The mana one Life Tap grants on this build: 840, plus Improved Life Tap's share. */
-export const lifeTapMana = (ability: Ability): number =>
-  LIFE_TAP_AMOUNT * (1 + (ability.bonuses?.[LIFE_TAP_BONUS_PERCENT_KEY] ?? 0) / 100);
+/** The mana one Life Tap grants: 430 + Spirit, plus Improved Life Tap's share. */
+export const lifeTapMana = (caster: Combatant, ability: Ability): number =>
+  lifeTapHealth(caster) * (1 + (ability.bonuses?.[LIFE_TAP_BONUS_PERCENT_KEY] ?? 0) / 100);
 
 export const LIFE_TAP: Ability = {
   id: 'life_tap',
@@ -368,12 +389,15 @@ export const LIFE_TAP: Ability = {
   requiresTarget: false,
   // Only when there is health to spend AND room in the pool for what it grants.
   canCast: ({ caster, ability }) =>
-    caster.health.current > LIFE_TAP_AMOUNT &&
+    caster.health.current > lifeTapHealth(caster) &&
     (caster.resources.get('mana')?.current ?? 0) <
-      (caster.resources.get('mana')?.maximum ?? 0) - lifeTapMana(ability),
+      (caster.resources.get('mana')?.maximum ?? 0) - lifeTapMana(caster, ability),
   onCast: ({ simulation, caster, ability }) => {
-    caster.health.spend(LIFE_TAP_AMOUNT);
-    simulation.grantResource(caster, 'mana', lifeTapMana(ability), {
+    // Read once: the heal a second later returns what was PAID, whatever
+    // Spirit has done in between.
+    const paid = lifeTapHealth(caster);
+    caster.health.spend(paid);
+    simulation.grantResource(caster, 'mana', lifeTapMana(caster, ability), {
       id: 'life_tap',
       name: 'Life Tap',
     });
@@ -386,16 +410,13 @@ export const LIFE_TAP: Ability = {
           target: caster,
           abilityId: 'life_tap_heal',
           abilityName: LIFE_TAP_HEAL_NAME,
-          baseAmount: LIFE_TAP_AMOUNT,
+          baseAmount: paid,
           canCrit: false,
           external: true,
         });
       }),
     );
   },
-  unmodelled:
-    'Its "Mana gained is increased by your Spirit" clause states no rate, so ' +
-    'the flat conversion is used and this understates.',
 };
 
 // ---------------------------------------------------------------------------
