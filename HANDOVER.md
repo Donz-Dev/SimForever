@@ -192,8 +192,12 @@ Priest, Shockadin 2H and Fury Prot all moved 400 ids: a profile saved before
 round 40 pointed at items it never wore, and nothing failed. **Both Warlock
 rows are at the end now**, which restores those three; Fire Demo's own ids
 change once, and its saved files are a day old at most.
-`tests/game/benchmarkIdStability.test.ts` writes the table's order out by
-hand, so the next insert fails instead of re-pointing everybody's gear.
+**AND THE CAUSE IS GONE, NOT ONLY GUARDED**: every row now declares an
+`idBlock` and its ids are built from that, never from its position, so the
+table's order is free. The 31 rows took the blocks their positions already
+gave them -- all 2,004 generated items are id-for-id identical across the
+change -- and `checkIdBlocks` throws at load on a duplicate.
+`tests/game/benchmarkIdStability.test.ts` pins each row's block by hand.
 
 ## Round 44: Fire Demo -- a rename, Agonizing Flames, 40 hit, and Decimation as a buff
 
