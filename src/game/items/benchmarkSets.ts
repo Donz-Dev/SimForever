@@ -302,10 +302,6 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
   { presetId: 'hawk_melee', characterClass: 'hunter', label: 'Hawk Melee', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe', ranged: true } },
   { presetId: 'warlock_smds', characterClass: 'warlock', label: 'SM/DS', hit: 120, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   { presetId: 'warlock_firelock', characterClass: 'warlock', label: 'Firelock', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
-  // Fire Demo copies the Firelock's row, with 40 MORE hit rating: the owner
-  // moved three Suppression points to Agonizing Flames (round 44) and asked
-  // for the lost hit back in the gear, paid from the existing stats.
-  { presetId: 'warlock_demonology', characterClass: 'warlock', label: 'Fire Demo', hit: 150, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   { presetId: 'shadow_priest', characterClass: 'priest', label: 'Shadow', characterName: 'Shadow Priest', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   /*
    * ============================================================================
@@ -356,6 +352,22 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * later set and re-point every saved profile's items.
    */
   { presetId: 'fury_prot', characterClass: 'warrior', label: 'Fury Prot', hit: 80, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Sword' }, trinkets: TANK_TRINKETS, statStick: WARRIOR_STICK },
+  /*
+   * FIRE DEMO AND SBOLT SPAM, APPENDED -- and Fire Demo MOVED here, which
+   * undoes a mistake. Round 40 inserted its row beside the Firelock's, which
+   * renumbered every set after it: Shadow Priest, Shockadin 2H and Fury Prot
+   * all had their benchmark item ids shifted by 400, and a profile saved
+   * before that pointed at items it never wore. Moving it to the end restores
+   * those three; Fire Demo's own ids change once, and its saved files are
+   * hours old.
+   */
+  // Fire Demo copies the Firelock's row, with 40 MORE hit rating: the owner
+  // moved three Suppression points to Agonizing Flames (round 44) and asked
+  // for the lost hit back in the gear, paid from the existing stats.
+  { presetId: 'warlock_demonology', characterClass: 'warlock', label: 'Fire Demo', hit: 150, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  // Sbolt Spam: the Firelock's gear, by the owner's instruction, and the same
+  // Suppression 5/5, so the same hit. A NEW ROW GOES AFTER THIS ONE.
+  { presetId: 'warlock_sbolt', characterClass: 'warlock', label: 'Sbolt Spam', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
 ];
 
 export const BENCHMARK_TEMPLATES_BY_PRESET: ReadonlyMap<string, BenchmarkTemplate> = new Map(

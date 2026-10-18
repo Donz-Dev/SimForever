@@ -414,6 +414,7 @@ describe('a caster weapon trades melee damage for a stated spell power', () => {
       'Moonkin',
       'Prot Pally',
       'SM/DS',
+      'Sbolt Spam',
       'Shadow',
       'Shockadin',
     ]);

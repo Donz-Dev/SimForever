@@ -1905,6 +1905,33 @@ const WARLOCK_DEMONOLOGY_TALENTS: TalentAllocation = {
 };
 
 /**
+ * SBOLT SPAM -- 22 Affliction / 11 Demonology / 18 Destruction, the owner's
+ * build, decoded from their talentsforever.com link:
+ *
+ *   https://talentsforever.com/warlock/60/055000201342-0050230001-0550005003-lmqtCBGIJK2LKTVWa-7
+ */
+const WARLOCK_SBOLT_TALENTS: TalentAllocation = {
+  // Affliction, 22
+  suppression: 5,
+  improved_corruption: 5,
+  improved_bane_of_agony: 2,
+  amplify_curse: 1,
+  pandemic: 3,
+  malevolence: 4,
+  nightfall: 2,
+  // Demonology, 11
+  demonic_embrace: 5,
+  demonic_aegis: 2,
+  improved_voidwalker: 3,
+  demonic_sacrifice: 1,
+  // Destruction, 18
+  improved_shadow_bolt: 5,
+  bane: 5,
+  ruin: 5,
+  agonizing_flames: 3,
+};
+
+/**
  * THE SHADOW PRIEST BUILD. 13/3/35, exactly 51 points, and the twenty-first
  * profile in the project.
  *
@@ -3720,6 +3747,35 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       precombat: [
         ...before(2, 'incinerate'),
         ...before(0, 'bane_of_agony'),
+      ],
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'warlock_sbolt',
+    label: 'Sbolt Spam',
+    detail: 'Orc, caster, Imp sacrificed, standing target. 22 Affliction / 18 Destruction',
+    characterClass: 'warlock',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Sbolt Spam',
+        race: 'orc',
+        characterClass: 'warlock',
+        level: 60,
+        combatStyle: 'caster',
+        stance: 'battle',
+        // Sacrificed for +15% Shadow damage; no demon is summoned.
+        petFamily: 'imp',
+      },
+      talents: { ...WARLOCK_SBOLT_TALENTS },
+      // The Firelock's stone, consumables and raid, by the owner's instruction.
+      warlockStone: 'firestone',
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: casterConsumables('school_fire'),
+      // Shadow Bolt is 3.0s and Bane takes it to 2.5: started at t-2.5, it is the pull.
+      precombat: [
+        ...before(2.5, 'shadow_bolt'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
