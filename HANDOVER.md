@@ -68,6 +68,7 @@ the tooling to be a bit more sophisticated as well."
 | 36 | **RACIALS, PALADINS, THREE RAID BUFFS AND THE ARCANE MAGE** -- crit damage racials multiply the whole base, Holy Strike's flat damage halved, Consecration 4.125%, One-Handed Weapon Specialization with three exceptions, Devotion Aura everywhere and Thorns/Retribution Aura on the tanks, Missile Barrage off Arcane Missiles, a race swap in the GUI and an Arcane Blast stack chart | **not re-baselined**. Arcane's missiles fall **15.7 -> 10.5 casts a fight** and the profile with them; the tanks gain ~11% of their damage from the two retaliation auras | see below |
 | 37 | **THE OWNER'S LIST ACROSS 25 PROFILES, AND THREE MECHANISMS IT NEEDED** -- five new talent trees, ~30 list and opener edits, Garrote declared, a sequence that VANISH opens (`Ability.enabledBy`), channels spending Revelation and Inner Focus on their last tick, 40 unviable racial entries removed, empty off-hand weapon effects, and the four template sets in the gear picker | **not re-baselined**. `USES=1` on 22 touched profiles: every new entry and sequence fires; two found by it and fixed -- the potion breaking Stealth, and Pure Hemo's Rupture at 0.0 | see below |
 | 38 | **FURY PROT, A 29TH PROFILE, AND THE TANK EXECUTE CLAUSE** -- the owner's 5/31/15 Prot Warr copy with Bloodthirst for Shield Slam, Death Wish and their opener; both shield tanks go to Battle Stance for Execute in the last 20%, with every other rage spender switched off so they stay there. Then a two-pass optimisation, read on deaths first | **not re-baselined**. One change shipped: Fury Prot's Heroic Strike floor 26 -> 65, **+47.4 DPS at 60s, deaths flat**. Two more priced and left as questions | see below |
+| 39 | **WARLOCK DEMONS** -- the Imp and the Succubus fight, chosen under the talent trees; Unholy Power, Improved Imp, Improved Sayaad, Demonic Brand, Soul Link, Demonic Knowledge, Master Demonologist, Demonic Sacrifice with Demonic Pact, and Decimation all built and each measured on the damage that lands. Pet scaling from mythicsim-forever-engine, as the owner pointed | **no figure moves**: no preset summons a demon, and all 29 combat-log hashes are identical to `main`. Five questions | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -153,6 +154,65 @@ Rupture Rogue's pre-combat `stealth` line as `<-- NEVER HAPPENED`. It does on
 `main` too: stealth is a `PRECOMBAT_STATES` entry with no ability, and the tool
 does not read that table the way the APL panel and the opener guard do. A
 reporting gap, not a rotation one.
+
+## Round 39: Warlock demons -- the Imp and the Succubus fight
+
+**A WARLOCK CAN HAVE A DEMON OUT NOW**, chosen under the talent trees and above
+the sacrifice chooser ("Demon summoned": None, Imp, Succubus). It is a new
+profile field, `character.summonedDemon`, SEPARATE from `petFamily` -- which
+for a Warlock is the SACRIFICED demon -- because with Demonic Pact one build
+holds both. Absent means none out, which is what every saved Warlock was, so no
+migration; `validateProfile` names the field, which is the trap it has sprung
+twice.
+
+| | the Imp | the Succubus |
+| --- | --- | --- |
+| acts | Firebolt, back to back: 2s cast, 45-50 Fire (the owner) | melee 95-131 at 2.0s, Lash of Pain on its 12s cooldown (the owner) |
+| coefficient | 0.571 | Lash 50 base, 0.429 |
+| own crit | 4.44% spell (264 Int at the Mage rate) | 6.2% spell, 4.25% melee (85 Agi / 20) |
+
+**WHAT A DEMON INHERITS** is mythicsim-forever-engine's, the repository the owner
+pointed at (`src/classes/warlock/prepare/pets.rs`): 100% of the Warlock's spell
+hit and spell crit to both its tables, 10% of its spell power as spell power,
+17% as attack power. No stamina, armor or "happiness" multiplier -- that is the
+Hunter's. `createDemon`, apart from `createPet`, because almost nothing is shared.
+
+**EVERY TALENT THE OWNER NAMED, AND WHAT EACH ONE MEASURES** (`warlockDemons.test.ts`,
+each against the same legal allocation without it):
+
+| talent | built as | measured |
+| --- | --- | --- |
+| Unholy Power 5/5 | `petStat` damage | x1.1 on every demon hit |
+| Improved Imp 3/3 | new `petAbilityDamage` | x1.3 on Firebolt, x1 on anything else |
+| Improved Sayaad 3/3 | `petAbilityDamage` | x1.3 on Lash of Pain |
+| Demonic Brand | a Warlock reaction and a demon reaction | Searing Pain brands with 2/4/6 charges; each demon attack spends one for 65-68 Fire (Imp) or Shadow (Succubus) |
+| Soul Link | `conditionalDamage` + new `petDamageFactor`, the 3 hand-filled | x1.03 on Warlock and demon, only with a demon out; MULTIPLIES with Unholy Power (x1.133) |
+| Demonic Knowledge 3/3 | `statFromLevel` + new `petSpellPowerFromLevel` | +60 spell power on both, only with a demon out |
+| Master Demonologist 5/5 | `schoolDamage` and new `petSchoolDamage`, gated on a new `BuildRequirement.summonedDemon` | +10% Fire on both with the Imp, +10% Shadow with the Succubus |
+| Demonic Sacrifice + Pact | `sacrificedDemon` in the encounter | no demon: stands; a demon without Pact: cancelled; Pact and a DIFFERENT demon: stands; Pact and the same one: cancelled |
+| Decimation 2/2 | percentage cooldown, two cast modifiers, `abilityDamageInFinalFraction` | Soul Fire 6s cooldown, 2.4s cast with Bane 5/5 (3.6s without), no shard; Shadow Bolt and Searing Pain x1.06 in the last 35% |
+
+**THE TEST'S FIRST DRAFT READ SOUL LINK AS x1.4729**, which is 1.03 x 1.1 x 1.3:
+`legalise` pads a deep talent's tiers with filler, and the filler lands in
+Improved Imp and Unholy Power. So every ratio is taken against the same legal
+allocation WITHOUT the talent rather than against an empty tree -- the CLAUDE.md
+rule about a rank-scaling test reading a stripped talent, met from the other
+side: padding can ADD a multiplier as easily as stripping can remove one.
+
+**THREE SMALL ENGINE-SIDE ADDITIONS, NONE A NEW MECHANISM.** `abilityCooldown`
+takes `unit: 'percent'`; `grantCastModifier` takes a fixed `fraction` (no shards
+is the whole cost, and the row carries no 100); and a talent granting TWO cast
+modifiers suffixes the second aura's id, because two auras with one id refresh
+rather than coexist.
+
+**CONTAINMENT: ALL 29 PRESETS' COMBAT-LOG HASHES ARE IDENTICAL TO `main`.** No
+preset summons a demon -- both Warlock presets sacrifice theirs -- so nothing
+published moves. `tools/probe_demons.ts` prints a demon's built stats and damage
+rows; Firelock with the Imp out reads 861.0 against 906.7, which is the
+sacrifice being cancelled with no Pact, and is correct.
+
+**AND THE HUNTER PET CAVEAT NO LONGER FOLLOWS A DEMON**: it was attached to any
+`kind: 'pet'`, and is now attached only to a pet that runs on focus.
 
 ## Round 38: Fury Prot, the tank Execute clause, and its optimisation pass
 
@@ -337,6 +397,11 @@ write-up; none is an engine gap.
 | **Thorns and Retribution Aura fire on EVERY attack, including a miss, a dodge or a parry** -- your "every time a target attacks you" read literally. Classic's say "when hit". They also cannot crit and roll no table, and they are the CARRIER'S damage, so its multipliers reach them -- which is why your One-Handed Weapon Specialization ruling names them | round 36 | about a third of the two auras' damage on the tanks, who avoid that much |
 | **"Invisible" racial entries are switched OFF and still listed**, greyed and struck through with the eye glyph, rather than hidden. Hiding would also hide the toggle that lights them again | round 36 | how the APL panel reads |
 | **Missile Barrage's missile chance is still in the client's talent row** and is read and ignored in code, ahead of the client. The line to delete when the client ships it is marked | round 36 | nothing until the client changes |
+| **Demons cost no mana.** The repository charges 115 a Firebolt and 160 a Lash of Pain against pools of 576 and 1066, so an Imp would stop after five casts unless its regeneration is modelled -- and your "repeatedly casts Firebolt" is what is built | round 39 | whether a demon can run dry |
+| **The Imp casts Firebolt every 2.0 seconds**, the cast time you gave. The repository adds a 0.4s pause -- "beta logs time 281 Firebolts 2.435 sec apart" -- which would be about 18% fewer Firebolts | round 39 | Imp damage, by about a sixth |
+| **Demonic Brand is the flat 65-68 you stated.** The repository adds 0.078 of the WARLOCK's spell power to each brand hit. Unholy Power does reach the brand hit, as "all damage done by your pets" | round 39 | a few points a brand hit |
+| **Decimation is built as you described it, as standing effects** -- 6s cooldown, -40% cast, no shards -- where the client tooltip ties the cast-time and shard clauses to a 10 second window after a Shadow Bolt or Searing Pain below 35% | round 39 | Soul Fire, on any build taking Decimation |
+| **A demon takes its Warlock's spell power when it is BUILT**, before the raid buffs and the pull, the same snapshot a Hunter pet takes of attack power. A buff the Warlock gains mid-fight does not reach its demon's 10% | round 39 | small, and only through buffs that move spell power |
 | **Fury Prot's gloves carry +2% Threat because Prot Warr's do**, and threat is out of scope -- so the slot is worth nothing. +15 Strength is **+7.33 +/- 0.30** at 60s, deaths unchanged. Not shipped, because the copy was your instruction; the same slot on Prot Warr is the same question | round 38 | +7 DPS on one tank, possibly two |
 | **Fury Prot eats Prot Warr's stamina food.** Strength food is +17.0 +/- 8.4 at 60s and +12.8 +/- 8.8 at 180s, with deaths +0.12 and +0.21 -- both inside their intervals. Your tank food ruling is why it is not shipped | round 38 | the tank food ruling, for a tank that has Bloodthirst to feed |
 | **Death Wish is ON the global cooldown** -- `abilities/warrior.ts` gives it no `triggersGcd: false`, the default. Worth nothing at 60s, where it is pre-cast; in a fight past three minutes its second cast takes one | round 38 | one global cooldown per three minutes on Fury Prot and DW Fury |
@@ -347,7 +412,7 @@ write-up; none is an engine gap.
 | **The Enh Shaman holds the Seal Twist Ret's two-hander**, as you asked, and that mace's `Classes:` line is rewritten to "Paladin, Shaman" for the borrower -- otherwise the proficiency filter refuses a weapon you specified | round 37 | which classes a template weapon is offered to |
 | **The Hunter cooldown stacks have no standalone Bestial Wrath, Rapid Fire or racial entries any more**, so all of them fire only when every step of the stack is ready together -- once in a 60s fight. In a longer one the stack waits for the slowest cooldown in it | round 37 | casts per fight past three minutes |
 
-**THIRTY-FOUR ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five, and round 38 added four -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**THIRTY-NINE ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five, round 38 added four, and round 39 added five -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count

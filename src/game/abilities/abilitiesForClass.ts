@@ -234,7 +234,9 @@ function applyTalentChanges(ability: Ability, build: TalentBuild): Ability {
   const costReduction =
     (build.abilityCostReduction.get(ability.id) ?? 0) +
     (ability.attackTable ? build.attackAbilityCostReduction : 0);
-  const cooldownReduction = build.abilityCooldownReductionMs.get(ability.id) ?? 0;
+  const cooldownReduction =
+    (build.abilityCooldownReductionMs.get(ability.id) ?? 0) +
+    ((build.abilityCooldownPercent.get(ability.id) ?? 0) / 100) * (ability.cooldownMs ?? 0);
   const bonuses = build.abilityBonuses.get(ability.id);
   const castReduction = build.abilityCastTimeReductionMs.get(ability.id) ?? 0;
   const gcdReduction = build.abilityGcdReductionMs.get(ability.id) ?? 0;

@@ -67,9 +67,9 @@ const BLANKET = ['conditionalDamage', 'conditionalCrit'];
  * opening the data file. A test that read the index back off the effect would
  * pass whatever the effect said.
  *
- * NINE SINCE ROUND 37: ten after client build 1.60.1.70170 removed the
- * Paladin's Crusade from the tree, and Murder left when the owner ruled its
- * target condition unmet. The count is in the test name on purpose -- an
+ * TEN SINCE THE WARLOCK'S DEMONS: ten after client build 1.60.1.70170
+ * removed the Paladin's Crusade, nine when Murder left at round 37 on the
+ * owner's target ruling, and ten again with Soul Link. The count is in the test name on purpose -- an
  * unrecorded effect and a stale row are both worth failing on, and the second is
  * what this patch produced.
  */
@@ -177,10 +177,19 @@ const BLANKET_MULTIPLIERS: readonly {
     atRankOne: 2,
     wants: 'all damage you deal while a shield is equipped',
   },
+  // Single rank, hand-filled: "both the Demon and the master will inflict 3%
+  // more damage" while the demon is out.
+  {
+    cls: 'warlock',
+    talentId: 'soul_link',
+    index: 0,
+    atRankOne: 3,
+    wants: 'all damage you deal while a demon is out',
+  },
 ];
 
 describe('every blanket damage or crit multiplier reads a number somebody checked', () => {
-  it('has exactly these nine, so a tenth has to be recorded', () => {
+  it('has exactly these ten, so an eleventh has to be recorded', () => {
     /*
      * EQUAL SETS, not "every one found is recorded". A stale row and an
      * unrecorded effect are both worth failing on, and the second is the

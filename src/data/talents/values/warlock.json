@@ -483,8 +483,10 @@
    "tree": "demonology",
    "ranks": 1,
    "text": "When active, 30% of all damage taken by the caster is taken by your Imp, Voidwalker, Succubus, Incubus, or Felhunter Demon instead. In addition, both the Demon and the master will inflict 3% more damage. Lasts as long as the Demon is active.",
-   "values": null,
-   "note": "single rank"
+   "values": [
+    3
+   ],
+   "note": "single rank; \"3% more damage\", hand-filled from the text"
   },
   "demonic_knowledge": {
    "name": "Demonic Knowledge",

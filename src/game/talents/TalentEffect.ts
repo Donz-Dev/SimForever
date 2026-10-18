@@ -200,7 +200,12 @@ export type TalentEffect =
   | {
       readonly kind: 'abilityCooldown';
       readonly abilityId: string;
-      readonly unit: 'seconds' | 'minutes';
+      /**
+       * `percent` is a share of the ability's OWN cooldown, which is what
+       * Decimation states -- "reduces the cooldown of your Soul Fire spell by
+       * {0}%" -- and which a seconds figure could only approximate.
+       */
+      readonly unit: 'seconds' | 'minutes' | 'percent';
       /**
        * Which of the talent's numbers is the cooldown.
        *
@@ -411,6 +416,11 @@ export type TalentEffect =
       readonly kind: 'schoolDamage' | 'schoolCrit' | 'schoolCritDamage' | 'schoolHit';
       readonly schools: readonly DamageSchool[];
       readonly valueIndex?: number;
+      /**
+       * What the character must BE for it to apply. Master Demonologist's
+       * Fire half needs the Imp out and its Shadow half the Succubus.
+       */
+      readonly requires?: BuildRequirement;
     }
 
   /**
@@ -909,6 +919,12 @@ export type TalentEffect =
       /** Which field of the modifier the talent's value feeds. */
       readonly property: 'costFraction' | 'castTimeFraction';
       readonly valueIndex?: number;
+      /**
+       * A fraction stated by a RULING rather than read off the talent's row.
+       * Decimation's "costs no Soul Shards" is the caller: the row carries no
+       * 100 to read, and the clause is the whole cost.
+       */
+      readonly fraction?: number;
     }
 
   /**
@@ -947,6 +963,38 @@ export type TalentEffect =
       readonly reactionId: string;
       readonly valueIndex?: number;
     }
+
+  /**
+   * ----------------------------------------------------------------------
+   * FOUR MORE PET KINDS, FOR THE WARLOCK'S DEMONS, each the pet-side mirror of
+   * a kind the owner already has:
+   *
+   *   petAbilityDamage        Improved Imp's Firebolt and Improved Sayaad's
+   *                           Lash of Pain -- one named pet ability.
+   *   petSchoolDamage         Master Demonologist's demon half, gated on
+   *                           WHICH demon is out.
+   *   petSpellPowerFromLevel  Demonic Knowledge's demon half, "up to {0}% of
+   *                           your level" in spell damage.
+   *   petDamageFactor         Soul Link's demon half. A FACTOR rather than a
+   *                           summed percentage: "+3% more damage" from one
+   *                           talent and Unholy Power's +10% from another are
+   *                           different talents and multiply, where `petStat`
+   *                           damage SUMS the Hunter's talents with each other.
+   * ----------------------------------------------------------------------
+   */
+  | {
+      readonly kind: 'petAbilityDamage';
+      readonly abilityId: string;
+      readonly valueIndex?: number;
+    }
+  | {
+      readonly kind: 'petSchoolDamage';
+      readonly schools: readonly DamageSchool[];
+      readonly valueIndex?: number;
+      readonly requires?: BuildRequirement;
+    }
+  | { readonly kind: 'petSpellPowerFromLevel'; readonly valueIndex?: number }
+  | { readonly kind: 'petDamageFactor'; readonly valueIndex?: number }
 
   /**
    * The talent, or a clause of it, does nothing. `reason` says why, in terms
@@ -1222,6 +1270,16 @@ export interface BuildRequirement {
    * --------------------------------------------------------------------------
    */
   readonly styles?: readonly CombatStyleId[];
+  /**
+   * Which demon a Warlock must have SUMMONED for the effect to apply.
+   *
+   * Master Demonologist is the caller: "Grants both the Warlock and the
+   * summoned demon an effect as long as that demon is active" -- Fire damage
+   * with the Imp out, Shadow damage with the Succubus. The summoned demon is a
+   * profile choice fixed before the pull, which is the same kind of fact a
+   * shield or a form is.
+   */
+  readonly summonedDemon?: 'imp' | 'succubus';
 }
 
 /**

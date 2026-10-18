@@ -27,11 +27,18 @@ import {
  * ----------------------------------------------------------------------------
  */
 
-/** Said once; eleven talents say it. */
+/**
+ * Said once; the demon talents for the two demons that cannot be summoned here.
+ *
+ * THE IMP AND THE SUCCUBUS FIGHT NOW -- `createDemon`, chosen per profile -- so
+ * this reason no longer covers them. What is left is the Voidwalker and the
+ * Felhunter, and talents about summoning and health.
+ */
 const NO_DEMON =
-  'It affects a summoned demon, and both profiles take Demonic Sacrifice -- ' +
-  'which kills the demon for a two-hour buff. Inert because of the BUILD ' +
-  'rather than because of the engine, and neither profile spends a point here.';
+  'It affects a demon this simulator does not summon -- the Voidwalker or the ' +
+  'Felhunter, for which no fighting numbers have been given -- or the act of ' +
+  'summoning, which happens before the pull. Inert because of the BUILD rather ' +
+  'than the engine: only the Imp and the Succubus can be out.';
 
 /**
  * Said once; two talents say it.
@@ -243,11 +250,24 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // --- Demonology ----------------------------------------------------------
 
   improved_health_funnel: [{ kind: 'unmodelled', reason: NO_DEMON }],
-  improved_imp: [{ kind: 'unmodelled', reason: NO_DEMON }],
+  /*
+   * "Increases the damage of your Imp's Firebolt spell by {0}%" -- 30% at 3/3,
+   * a multiplier of 1.3 on the Imp's own Firebolt and nothing else.
+   */
+  improved_imp: [
+    { kind: 'petAbilityDamage', abilityId: 'imp_firebolt', valueIndex: 0 },
+    {
+      kind: 'unmodelled',
+      reason:
+        'Its Fire Shield clause damages whatever hits the shielded target, and ' +
+        'nothing here attacks a Warlock or its demon.',
+    },
+  ],
 
   demonic_embrace: [{ kind: 'stat', stat: 'stamina', operation: 'percentAdd', scale: 0.01 }],
 
-  unholy_power: [{ kind: 'unmodelled', reason: NO_DEMON }],
+  // "Increases all damage done by your ... pets by {0}%" -- 1.1x at 5/5.
+  unholy_power: [{ kind: 'petStat', property: 'damage' }],
 
   demonic_aegis: [
     /*
@@ -288,7 +308,20 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   demonic_energies: [{ kind: 'unmodelled', reason: NO_DEMON }],
-  improved_sayaad: [{ kind: 'unmodelled', reason: NO_DEMON }],
+  /*
+   * "Increases the effect of your Succubus' ... Lash of Pain ... by {0}%" --
+   * 1.3x at 3/3 on Lash of Pain. Soothing Kiss is not a damage ability.
+   */
+  improved_sayaad: [
+    { kind: 'petAbilityDamage', abilityId: 'lash_of_pain', valueIndex: 0 },
+    {
+      kind: 'unmodelled',
+      scope: 'crowdControl',
+      reason:
+        'Seduction and Lesser Invisibility duration: control and stealth, and ' +
+        'neither ability is declared.',
+    },
+  ],
 
   demonic_sacrifice: [{ kind: 'grantAura', auraId: 'demonic_sacrifice' }],
 
@@ -314,35 +347,127 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * Neither profile takes it.
      * ------------------------------------------------------------------------
      */
+    /*
+     * ------------------------------------------------------------------------
+     * BUILT ON THE OWNER'S READING, which is wider than the client tooltip.
+     *
+     * The owner: "it reduces Soul Fire's cooldown to 6 seconds and cast time by
+     * 40%. If Bane rank 5 is taken with Decimation the new Soul Fire cast time
+     * is 2.4 seconds and no longer consumes soul shards. Decimation also
+     * separately buffs Shadow Bolt + Searing Pain by 6% if the combat duration
+     * is <35%." The client ties the cast-time and shard clauses to a 10 second
+     * window after a Shadow Bolt or Searing Pain below 35%; the owner states
+     * them as standing effects, and their figures are what is built. Recorded
+     * in HANDOVER as the reading taken.
+     *
+     *   cooldown   -90% of 60s, {0}                          -> 6s
+     *   cast time  -40%, {4}, AFTER Bane's flat 2 seconds    -> (6 - 2) x 0.6 = 2.4s
+     *   shards     none, the whole cost                       -> a fixed fraction of 1
+     *   damage     +6%, {2}, on Shadow Bolt and Searing Pain in the last 35%, {1}
+     * ------------------------------------------------------------------------
+     */
+    { kind: 'abilityCooldown', abilityId: 'soul_fire', unit: 'percent', valueIndex: 0 },
     {
-      kind: 'unmodelled',
-      reason:
-        'Three of its four clauses are about SOUL FIRE -- a PERCENTAGE off its ' +
-        'cooldown, and a window making it faster and shard-free -- and Soul ' +
-        'Fire is declared now, but a percentage cooldown cut and that window ' +
-        'are not built. The fourth, +6% damage while the target is below 35% ' +
-        'health, is a per-ability damage modifier conditional on the final ' +
-        'fraction of the fight: 35% is the CLOCK by the owner ruling, the ' +
-        'same one the Rogue Quietus runs on, so the threshold is reachable ' +
-        'and the modifier is what is missing. Neither profile takes it.',
+      kind: 'grantCastModifier',
+      abilityIds: ['soul_fire'],
+      property: 'castTimeFraction',
+      valueIndex: 4,
+    },
+    {
+      kind: 'grantCastModifier',
+      abilityIds: ['soul_fire'],
+      property: 'costFraction',
+      fraction: 1,
+    },
+    {
+      kind: 'abilityDamageInFinalFraction',
+      abilityId: 'shadow_bolt',
+      fractionIndex: 1,
+      valueIndex: 2,
+    },
+    {
+      kind: 'abilityDamageInFinalFraction',
+      abilityId: 'searing_pain',
+      fractionIndex: 1,
+      valueIndex: 2,
     },
   ],
 
   fel_domination: [{ kind: 'unmodelled', reason: 'Summoning, and the demon is sacrificed.' }],
-  demonic_brand: [{ kind: 'unmodelled', reason: `${NO_DEMON} ${NO_THREAT}` }],
+  /*
+   * Searing Pain brands the target with {2} charges; each of the DEMON's landed
+   * attacks spends one for 65-68 more Fire (Imp) or Shadow (anything else).
+   * Two halves, two combatants: the brand is the Warlock's reaction and the
+   * extra hit is the demon's.
+   */
+  demonic_brand: [
+    { kind: 'reaction', reactionId: 'demonic_brand', valueIndex: 2 },
+    { kind: 'petReaction', reactionId: 'demonic_brand_strike', valueIndex: 3 },
+    { kind: 'unmodelled', scope: 'threat', reason: NO_THREAT },
+  ],
   improved_felhunter: [{ kind: 'unmodelled', reason: NO_DEMON }],
-  soul_link: [{ kind: 'unmodelled', reason: NO_DEMON }],
-  demonic_knowledge: [{ kind: 'unmodelled', reason: NO_DEMON }],
-  master_demonologist: [{ kind: 'unmodelled', reason: NO_DEMON }],
-
-  demonic_pact: [
+  /*
+   * "Both the Demon and the master will inflict 3% more damage" while the demon
+   * is out. The 3 is hand-filled in `values/warlock.json`: a single-rank
+   * talent's row comes back null, and an effect that reads no value is dropped.
+   */
+  soul_link: [
+    { kind: 'conditionalDamage', requires: { hasPet: true } },
+    { kind: 'petDamageFactor' },
     {
       kind: 'unmodelled',
       reason:
-        'It stops Demonic Sacrifice being cancelled by summoning another ' +
-        'demon. Nothing summons one mid-fight, so there is nothing to cancel.',
+        'Its 30% of damage taken moved to the demon: nothing attacks a ' +
+        'Warlock here, so there is nothing to move.',
     },
   ],
+  /*
+   * "Up to {0}% of your level" in spell damage, to the Warlock AND the demon,
+   * while a demon is out -- 60 at 3/3 and level 60.
+   */
+  demonic_knowledge: [
+    { kind: 'statFromLevel', to: 'spellPower', requires: { hasPet: true } },
+    { kind: 'petSpellPowerFromLevel' },
+  ],
+  /*
+   * "Grants both the Warlock and the summoned demon an effect as long as that
+   * demon is active" -- Imp {0}% Fire damage, Succubus {2}% Shadow damage.
+   */
+  master_demonologist: [
+    { kind: 'schoolDamage', schools: ['fire'], valueIndex: 0, requires: { summonedDemon: 'imp' } },
+    {
+      kind: 'schoolDamage',
+      schools: ['shadow'],
+      valueIndex: 2,
+      requires: { summonedDemon: 'succubus' },
+    },
+    {
+      kind: 'petSchoolDamage',
+      schools: ['fire'],
+      valueIndex: 0,
+      requires: { summonedDemon: 'imp' },
+    },
+    {
+      kind: 'petSchoolDamage',
+      schools: ['shadow'],
+      valueIndex: 2,
+      requires: { summonedDemon: 'succubus' },
+    },
+    {
+      kind: 'unmodelled',
+      reason:
+        'The Voidwalker and Felhunter halves reduce damage taken, and neither ' +
+        'demon can be summoned here.',
+    },
+  ],
+
+  /*
+   * "Your Demonic Sacrifice effect is no longer cancelled by summoning a
+   * different Demon pet." Applied by the ENCOUNTER, beside Demonic Sacrifice
+   * itself -- see `sacrificedDemon` -- which is why this names an aura the
+   * talent registry does not carry, as Demonic Sacrifice already does.
+   */
+  demonic_pact: [{ kind: 'grantAura', auraId: 'demonic_pact' }],
 
   // --- Destruction ---------------------------------------------------------
 

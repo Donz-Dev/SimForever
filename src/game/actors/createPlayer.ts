@@ -107,6 +107,11 @@ export interface PlayerOptions {
    */
   readonly stance?: StanceId;
   /**
+   * A Warlock's summoned demon, which decides whether its "while your demon is
+   * active" talents apply -- Soul Link, Demonic Knowledge, Master Demonologist.
+   */
+  readonly summonedDemon?: string;
+  /**
    * The priority list to run, overriding the stock one for this build.
    *
    * ------------------------------------------------------------------------
@@ -376,6 +381,7 @@ export function createPlayer(options: PlayerOptions): Combatant {
        * runs at 60, and the talent must read the level the FIGHT uses.
        */
       level: MAX_CHARACTER_LEVEL,
+      summonedDemon: options.summonedDemon,
     }),
   );
 

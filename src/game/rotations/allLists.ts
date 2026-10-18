@@ -14,6 +14,7 @@ import {
   PALADIN_SHOCKADIN,
 } from './paladin';
 import { PET_PRIORITY } from './pet';
+import { IMP_PRIORITY, SUCCUBUS_PRIORITY } from './demon';
 import { PRIEST_SHADOW } from './priest';
 import {
   ROGUE_COMBAT,
@@ -328,5 +329,22 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     owner: 'pet',
     list: PET_PRIORITY,
     profiles: ['bm_hunter'],
+  },
+  /*
+   * AND THE WARLOCK'S TWO DEMONS, owned by `'pet'` for the same reason: a
+   * Warlock cannot cast Firebolt (Imp). No preset summons one yet, so neither
+   * list names a profile.
+   */
+  {
+    name: 'IMP_PRIORITY',
+    owner: 'pet',
+    list: IMP_PRIORITY,
+    profiles: [],
+  },
+  {
+    name: 'SUCCUBUS_PRIORITY',
+    owner: 'pet',
+    list: SUCCUBUS_PRIORITY,
+    profiles: [],
   },
 ];
