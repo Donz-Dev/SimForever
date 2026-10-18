@@ -1547,10 +1547,24 @@ describe('the racials are in the priority lists, or they never fire', () => {
       ['shadow_priest', ['berserking']],
     ] as const) {
       const built = PRESETS_BY_ID.get(preset)!.build();
-      const named = built.rotation.entries
-        .map((entry) => entry.abilityId)
-        .filter((id) => RACIAL_ABILITIES[id] !== undefined);
-      expect(named, preset).toEqual([...keeps]);
+      /*
+       * LIT, NOT STORED. Every racial entry is kept now and another race's is
+       * switched off -- the owner's "invisible using the glyph feature" -- so
+       * what this asserts is which are ON, and that every other one is present
+       * and OFF rather than missing.
+       */
+      const racial = built.rotation.entries.filter(
+        (entry) => RACIAL_ABILITIES[entry.abilityId] !== undefined,
+      );
+      expect(
+        racial.filter((entry) => !entry.disabled).map((entry) => entry.abilityId),
+        preset,
+      ).toEqual([...keeps]);
+      for (const entry of racial) {
+        if (!(keeps as readonly string[]).includes(entry.abilityId)) {
+          expect(entry.disabled, `${preset} ${entry.abilityId}`).toBe(true);
+        }
+      }
 
       // And what it stores is exactly what the character actually learned.
       const player = characterAtCombatStart(built)!;
@@ -1613,18 +1627,32 @@ describe('the racials are in the priority lists, or they never fire', () => {
       ...orc,
       character: { ...orc.character, race: 'gnome' },
     });
-    const ids = asGnome.rotation.entries.map((entry) => entry.abilityId);
-    expect(ids).toContain('eureka');
-    expect(ids).not.toContain('blood_fury');
+    const lit = (profile: typeof orc) =>
+      profile.rotation.entries.filter((entry) => !entry.disabled).map((entry) => entry.abilityId);
+    expect(lit(asGnome)).toContain('eureka');
+    expect(lit(asGnome)).not.toContain('blood_fury');
+    // Kept and switched off, so a swap back can light it again in place.
+    expect(asGnome.rotation.entries.find((e) => e.abilityId === 'blood_fury')?.disabled).toBe(true);
 
-    // AND A CUSTOM LIST IS STILL LEFT ALONE, which is the other half of that
-    // function's contract and must not be collateral.
+    /*
+     * A CUSTOM LIST IS NEVER RE-DERIVED -- AND ITS RACIAL EYES STILL FOLLOW THE
+     * RACE, which changed: which racials a character can cast is a fact about
+     * the race, not an edit. Every NON-racial entry must come back identical.
+     */
     const custom = {
       ...orc,
       rotation: { ...orc.rotation, source: 'custom' as const },
       character: { ...orc.character, race: 'gnome' as const },
     };
-    expect(syncDefaultRotation(custom)).toBe(custom);
+    const synced = syncDefaultRotation(custom);
+    expect(synced.rotation.source).toBe('custom');
+    expect(lit(synced)).toContain('eureka');
+    expect(lit(synced)).not.toContain('blood_fury');
+    const nonRacial = (profile: typeof orc) =>
+      profile.rotation.entries.filter((entry) => RACIAL_ABILITIES[entry.abilityId] === undefined);
+    expect(nonRacial(synced)).toEqual(nonRacial(custom));
+    // And a custom list already right for its race is returned untouched.
+    expect(syncDefaultRotation(synced)).toBe(synced);
   });
 });
 

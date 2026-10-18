@@ -65,6 +65,7 @@ the tooling to be a bit more sophisticated as well."
 | 33 | **THE ELE SHAMAN THROUGH THE LOOP, and the round found the FRAME rather than the rotation** -- the profile collapses **802 -> 546 -> 465 DPS from 60s to 300s**, so every figure ever taken on it was taken in the one regime where its mana is free. A talent declared as a ruled-out THREAT effect turned out to be a live mana talent carrying the tooltip of the talent next door | shipped **+84.08 +/- 2.84 at 180s** and **+1.01 +/- 2.09 noise at 60s**; four other answers INVERT with the clock and are not shipped. **27 of 28 profiles bit-identical** | see below |
 | 34 | **SIX PRs INTEGRATED, AND WHAT THE MERGES THEMSELVES GOT WRONG** -- #287 to #292, strictly sequential because every squash re-conflicted the rest. Rounds renumbered 28-33 in MERGE order; the question count re-derived five times; two SEMANTIC conflicts git could not see | **no figure re-measured**, on the standing instruction. Three resolutions introduced a defect the markers did not show -- one reached `main` and is repaired | see below |
 | 35 | **A MISCELLANEOUS CLEANUP, TEN OWNER ITEMS IN ONE PR** -- Rupture by combo point, the spell miss floor removed, the Paladin seal and Judgement balance pass, the Seal Twist Echo bug, three Shaman options (Flametongue Weapon, Rockbiter Weapon, Flametongue Totem), Frost Oil, and Bane of Doom, Cone of Cold and Soul Fire declared | **not re-baselined**, on the owner's standing instruction. `USES=1` on the five touched profiles: the new imbue entries read `(switched off in the list)` and nothing new never-fires. Five new questions, one old one answered | see below |
+| 36 | **RACIALS, PALADINS, THREE RAID BUFFS AND THE ARCANE MAGE** -- crit damage racials multiply the whole base, Holy Strike's flat damage halved, Consecration 4.125%, One-Handed Weapon Specialization with three exceptions, Devotion Aura everywhere and Thorns/Retribution Aura on the tanks, Missile Barrage off Arcane Missiles, a race swap in the GUI and an Arcane Blast stack chart | **not re-baselined**. Arcane's missiles fall **15.7 -> 10.5 casts a fight** and the profile with them; the tanks gain ~11% of their damage from the two retaliation auras | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -151,6 +152,36 @@ Rupture Rogue's pre-combat `stealth` line as `<-- NEVER HAPPENED`. It does on
 does not read that table the way the APL panel and the opener guard do. A
 reporting gap, not a rotation one.
 
+## Round 36: racials, Paladins, three raid buffs and the Arcane Mage
+
+| | what changed |
+| --- | --- |
+| crit damage racials | a FACTOR on the table's base: 1.5 -> 1.53, 2 -> 2.04; a talent bonus scales the bonus half that leaves. `critMultiplierWith` |
+| Holy Strike | `(weapon + 93 + 42.9% SP) x 50%` -- the flat Holy damage used to land whole |
+| Consecration | 4.125% spell power a tick |
+| One-Handed Weapon Specialization | +10% to everything except Consecration, Retribution Aura and Thorns (`exceptAbilityIds`) |
+| Devotion Aura | +735 armor, not item armor, on every preset |
+| Thorns / Retribution Aura | 18 Nature / 20 Holy + 6% of the SUPPLIER'S spell power to every attacker; the three tanks only; a value box, default 700, stored in `raidBuffValues` |
+| Arcane Blast | already behaved as ruled -- nothing clears the stacks but the clock. A dead `castReaction` that implied otherwise is gone |
+| Missile Barrage | no longer procs off Arcane Missiles, ahead of the client |
+| race swap | a Race dropdown on the confirmed character, legal races of both factions, nothing else touched |
+| racial entries | KEPT in every list and switched off by race (the eye), where they used to be dropped -- custom lists included |
+| Arcane Blast stacks | a step chart in Results, the combo-point chart's shape |
+
+**THE CHECK THAT MATTERED WAS ONE FIGHT'S EVENTS, NOT THE CODE.** The ask was
+that Arcane Missiles stop clearing Arcane Blast; no code clears it, and printing
+the aura's events for one Arcane fight showed it applied at 0 and removed at
+14,971ms with two Missiles casts in between. What DID exist was a talent still
+declaring the deleted spender's `castReaction`, silently dropped by the build --
+the kind of dead line that makes a reader believe something is happening.
+
+**THE PREVIEW SERVED THE WRONG CHECKOUT FIRST.** `preview_start` reads the
+SHARED checkout's `.claude/launch.json`, so it ran `main` without any of this
+round -- caught by fetching a source file and looking for `devotion_aura`. A
+temporary entry with `npm run dev --prefix <worktree>` fixed it and was reverted
+after. Vite then ignored the assigned port and took 5173, so the tab had to be
+pointed there by hand.
+
 ## Questions outstanding for the owner
 
 **GATHERED HERE BECAUSE EACH IS BURIED IN THE ROUND THAT RAISED IT**, and a
@@ -184,8 +215,12 @@ write-up; none is an engine gap.
 | **Flametongue Weapon and Flametongue Totem roll no table and crit at MELEE crit for 2x**, the poison-and-seal precedent for damage riding a weapon hit. They are Fire damage and could equally be spell crit at 1.5x | round 35 | the crit half of both Flametongues |
 | **Frost Oil rolls the SPELL table** -- 17% miss, spell crit -- because it "procs a Frostbolt". The other reading is the Flametongue one above | round 35 | whether the oil can miss |
 | **Seal of Righteousness's base is CLAMPED outside 1.3 to 4.0 seconds**, and so are both Flametongues. You gave two points and a line; extending the line past them is a number nobody stated | round 35 | nothing today -- no weapon on file is outside the range |
+| **Your crit case D does not follow the rule A to C state.** `(2 x 1.02 - 1) x 2.2 = 2.288`; the rule B gives -- scale the bonus half the racial leaves, then add the 1 back -- makes it `(2.04 - 1) x 1.2 + 1 = 2.248`. Implemented as 2.248 so all four follow one rule; `racials.test.ts` pins both figures | round 36 | Tauren and Dwarf melee crits with a crit damage talent |
+| **Thorns and Retribution Aura fire on EVERY attack, including a miss, a dodge or a parry** -- your "every time a target attacks you" read literally. Classic's say "when hit". They also cannot crit and roll no table, and they are the CARRIER'S damage, so its multipliers reach them -- which is why your One-Handed Weapon Specialization ruling names them | round 36 | about a third of the two auras' damage on the tanks, who avoid that much |
+| **"Invisible" racial entries are switched OFF and still listed**, greyed and struck through with the eye glyph, rather than hidden. Hiding would also hide the toggle that lights them again | round 36 | how the APL panel reads |
+| **Missile Barrage's missile chance is still in the client's talent row** and is read and ignored in code, ahead of the client. The line to delete when the client ships it is marked | round 36 | nothing until the client changes |
 
-**TWENTY-FIVE ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**TWENTY-NINE ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, and round 36 added four -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count

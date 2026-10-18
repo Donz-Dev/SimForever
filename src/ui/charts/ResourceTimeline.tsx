@@ -121,6 +121,39 @@ export function ResourceTimeline({ title, points, maximum, durationMs }: Resourc
  * Re-deriving would drift the moment anything moved a pool without emitting an
  * event, and would hide exactly that bug.
  */
+/**
+ * How many stacks of one aura an actor carried, over one fight.
+ *
+ * THE SAME STEP SERIES A RESOURCE IS DRAWN AS, read off the aura events instead
+ * of the resource ones -- applied and stacks-changed carry the count, and
+ * removal takes it to zero. The owner asked for Arcane Blast's stacks shown
+ * "similar to combo points on a Rogue", and a combo point line is exactly this
+ * chart, so a stacking buff borrows it rather than getting a chart of its own.
+ */
+export function auraStackTimeline(
+  timeline: readonly TelemetryEvent[],
+  actorId: string,
+  auraId: string,
+): readonly TimelinePoint[] {
+  const points: TimelinePoint[] = [];
+  for (const event of timeline) {
+    if (
+      event.type !== 'aura_applied' &&
+      event.type !== 'aura_refreshed' &&
+      event.type !== 'aura_stacks_changed' &&
+      event.type !== 'aura_removed'
+    ) {
+      continue;
+    }
+    if (event.targetId !== actorId || event.auraId !== auraId) continue;
+    points.push({
+      timeMs: event.timestamp,
+      value: event.type === 'aura_removed' ? 0 : event.stacks,
+    });
+  }
+  return points;
+}
+
 export function resourceTimeline(
   timeline: readonly TelemetryEvent[],
   actorId: string,

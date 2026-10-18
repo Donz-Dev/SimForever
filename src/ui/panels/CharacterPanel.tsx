@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import type { ChangeEvent, ReactNode } from 'react';
 import type { CharacterProfile, ValidationIssue } from '../../profiles';
 import { downloadProfile, readProfileFile } from '../profileFile';
-import type { CharacterSelection, CombatStyleId } from '../../game/character';
+import type { CharacterSelection, CombatStyleId, RaceId } from '../../game/character';
 import { startingEquipmentFor } from '../../game/items/startingSets';
 import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
 import {
@@ -13,6 +13,7 @@ import {
   getClass,
   getCombatStyle,
   getRace,
+  racesForClass,
   racesForFaction,
   resolveCombatStyle,
   STANCES,
@@ -259,6 +260,17 @@ export function CharacterPanel({
         onEdit={clearingIssues(onEdit)}
         onSave={() => downloadProfile(profile)}
         onLoad={() => fileInput.current?.click()}
+        /*
+         * A RACE SWAP KEEPS EVERYTHING ELSE -- class, style, stance, talents,
+         * gear, consumables, list -- which is the owner's "it should be
+         * inconsequential to swap around races". `Change` re-opens creation and
+         * clears the talent allocation, so it was never that. The racial
+         * entries in the list follow on their own: `syncDefaultRotation` runs on
+         * every edit and flips their eye. See `racialsForRace`.
+         */
+        onRaceChange={(race) =>
+          onChange({ ...profile, character: { ...profile.character, race } })
+        }
         fileChooser={fileChooser}
         issues={issueList}
       />
@@ -405,6 +417,7 @@ function ConfirmedCharacter({
   onEdit,
   onSave,
   onLoad,
+  onRaceChange,
   fileChooser,
   issues,
 }: {
@@ -413,6 +426,8 @@ function ConfirmedCharacter({
   readonly onEdit: () => void;
   readonly onSave: () => void;
   readonly onLoad: () => void;
+  /** Swap race, keeping the rest of the build. Only legal races are offered. */
+  readonly onRaceChange: (race: RaceId) => void;
   /** The one hidden file input, built by the panel. See `fileChooser` there. */
   readonly fileChooser: ReactNode;
   /** Why a file did not load, when one did not. Built by the panel too. */
@@ -441,6 +456,25 @@ function ConfirmedCharacter({
             {styleDefinition ? ` · ${styleDefinition.name}` : ''}
             {stanceDefinition ? ` · ${stanceDefinition.name}` : ''}
           </span>
+          {/*
+            * EVERY RACE THAT MAY PLAY THIS CLASS, BOTH FACTIONS. Faction is not a
+            * property of the build here -- nothing in a fight reads it -- so a
+            * Horde race is one click from an Alliance one, which is what makes
+            * the swap cheap enough to compare races with.
+            */}
+          <label className="character-summary-race">
+            <span className="muted">Race</span>
+            <select
+              value={profile.character.race}
+              onChange={(event) => onRaceChange(event.target.value as RaceId)}
+            >
+              {racesForClass(profile.character.characterClass).map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
         {/*
           * SAVE IS HERE AND NOT ON THE CREATION SCREEN, because this is the

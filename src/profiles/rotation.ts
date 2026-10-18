@@ -1,7 +1,7 @@
 import { resolveCombatStyle, resolveStance } from '../game/character';
 import { aplFor } from '../game/rotations/rotationFor';
 import { weaponsFor } from '../game/actors/createPlayer';
-import { withoutOtherRacials } from '../game/rotations/racialCooldowns';
+import { racialsForRace } from '../game/rotations/racialCooldowns';
 import { withoutUnselectedConsumables } from '../game/rotations/consumableCooldowns';
 import type { AplList } from '../game/rotations/apl';
 import type { CharacterProfile, StoredRotation } from './CharacterProfile';
@@ -102,7 +102,7 @@ export function stockListFor(profile: CharacterProfile): AplList | undefined {
   );
   if (!list) return undefined;
   return withoutUnselectedConsumables(
-    withoutOtherRacials(list, profile.character.race),
+    racialsForRace(list, profile.character.race),
     profile.character.characterClass,
     profile.consumables,
   );
@@ -118,7 +118,19 @@ export function stockListFor(profile: CharacterProfile): AplList | undefined {
  * correct until somebody adds a fifth thing and does not think of it.
  */
 export function syncDefaultRotation(profile: CharacterProfile): CharacterProfile {
-  if (profile.rotation.source === 'custom') return profile;
+  /*
+   * A CUSTOM LIST IS NEVER RE-DERIVED -- AND ITS RACIAL ENTRIES STILL FOLLOW
+   * THE RACE. Which racials a character can cast is a fact about the race and
+   * not a choice somebody made in the editor, so swapping race flips the eye
+   * on those entries and touches nothing else. The owner asked that a race
+   * swap be inconsequential; a custom list keeping a Troll's lit Berserking
+   * after the swap to Orc would make it consequential in the one place nobody
+   * would look.
+   */
+  if (profile.rotation.source === 'custom') {
+    const rotation = racialsForRace(profile.rotation, profile.character.race);
+    return rotation === profile.rotation ? profile : { ...profile, rotation };
+  }
   const stock = defaultRotationFor(profile);
   /*
    * COMPARED BY CONTENTS AND NOT BY NAME ALONE, WHICH IS A CHANGE AND IS WHAT

@@ -3,7 +3,12 @@ import type { AttackOutcome } from '../../engine';
 import { Panel } from '../components/Panel';
 import { DonutChart } from '../charts/DonutChart';
 import { UptimeBars } from '../charts/UptimeBars';
-import { ResourceTimeline, resourceTimeline } from '../charts/ResourceTimeline';
+import {
+  ResourceTimeline,
+  auraStackTimeline,
+  resourceTimeline,
+} from '../charts/ResourceTimeline';
+import { ARCANE_BLAST_MAX_STACKS } from '../../game/auras/mage';
 import type {
   BatchCastCharge,
   BatchResourceFlow,
@@ -297,6 +302,7 @@ function ResourceEconomy({ batch }: ResultsPanelProps) {
         * pools themselves cannot show: a free cast emits no `resource_spent`.
         */}
       <CastCharges batch={batch} />
+      <StackedBuffs batch={batch} actorId={player?.id} />
     </>
   );
 }
@@ -406,6 +412,47 @@ const RESOURCE_NAMES: Readonly<Record<string, string>> = {
   focus: 'Focus',
   soulShards: 'Soul shards',
 };
+
+/**
+ * Stacking buffs worth watching like a resource, drawn only when the fight
+ * actually carried one.
+ *
+ * ARCANE BLAST IS THE ONE, on the owner's ask: its stacks are what the Arcane
+ * list is built around keeping, and the only thing that ends them is the
+ * fifteen-second window -- so whether the build keeps four up, and when it
+ * drops to zero, is the question a person tuning that list is asking. A table
+ * rather than a hard-coded block so the next one is a row.
+ */
+const STACK_CHARTS: readonly { readonly auraId: string; readonly name: string; readonly max: number }[] = [
+  { auraId: 'arcane_blast', name: 'Arcane Blast stacks', max: ARCANE_BLAST_MAX_STACKS },
+];
+
+function StackedBuffs({
+  batch,
+  actorId,
+}: {
+  readonly batch: BatchResult;
+  readonly actorId: string | undefined;
+}) {
+  if (!actorId) return null;
+  return (
+    <>
+      {STACK_CHARTS.map((chart) => {
+        const points = auraStackTimeline(batch.representative.timeline, actorId, chart.auraId);
+        if (points.length === 0) return null;
+        return (
+          <ResourceTimeline
+            key={chart.auraId}
+            title={`${chart.name} — one representative fight`}
+            points={points}
+            maximum={chart.max}
+            durationMs={batch.representative.durationMs}
+          />
+        );
+      })}
+    </>
+  );
+}
 
 function ResourceSection({
   flow,

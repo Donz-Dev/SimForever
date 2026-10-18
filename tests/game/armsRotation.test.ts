@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ALL_RACIAL_ABILITY_IDS } from '../../src/game/rotations/racialCooldowns';
 import { seconds } from '../../src/engine';
 import { runProfile } from '../../src/simulator';
 import { critRageMultiplierFor } from '../../src/game/combat/resourceRules';
@@ -15,7 +16,7 @@ import {
 } from '../../src/game/rotations/warrior';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { withoutUnselectedConsumables } from '../../src/game/rotations/consumableCooldowns';
-import { withoutOtherRacials } from '../../src/game/rotations/racialCooldowns';
+import { racialsForRace } from '../../src/game/rotations/racialCooldowns';
 
 /*
  * ============================================================================
@@ -108,6 +109,15 @@ const ORC_ARMS_ORDER = [
   'recklessness_cast',
 ];
 
+/**
+ * The entries a person sees LIT in the panel: every entry except another race's
+ * racial, which is now kept and switched off rather than dropped -- see
+ * `racialsForRace`. Recklessness stays in, switched off or not, because it is
+ * off by the owner's choice and not by race.
+ */
+const lit = (entries: readonly { abilityId: string; disabled?: boolean }[]) =>
+  entries.filter((e) => !(e.disabled && ALL_RACIAL_ABILITY_IDS.has(e.abilityId)));
+
 describe('the 2H Arms list', () => {
   it('is in the order the ruleset owner gave', () => {
     expect(WARRIOR_TWO_HAND_BATTLE.entries.map((entry) => entry.abilityId)).toEqual(OWNER_ORDER);
@@ -122,16 +132,16 @@ describe('the 2H Arms list', () => {
      * they sent.
      */
     const profile = PRESETS_BY_ID.get('two_hand_arms')!.build();
-    expect(profile.rotation.entries.map((entry) => entry.abilityId)).toEqual(ORC_ARMS_ORDER);
+    expect(lit(profile.rotation.entries).map((entry) => entry.abilityId)).toEqual(ORC_ARMS_ORDER);
 
     // And the narrowing is the two shared helpers rather than anything this
     // preset does, which is what stops the two lists drifting apart.
     const narrowed = withoutUnselectedConsumables(
-      withoutOtherRacials(WARRIOR_TWO_HAND_BATTLE, profile.character.race),
+      racialsForRace(WARRIOR_TWO_HAND_BATTLE, profile.character.race),
       profile.character.characterClass,
       profile.consumables,
     );
-    expect(narrowed.entries.map((entry) => entry.abilityId)).toEqual(ORC_ARMS_ORDER);
+    expect(lit(narrowed.entries).map((entry) => entry.abilityId)).toEqual(ORC_ARMS_ORDER);
   });
 
   it('dumps surplus rage at 90, which is what makes its position safe', () => {
