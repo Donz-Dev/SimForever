@@ -1,7 +1,7 @@
 # WARLOCK DEEP DIVE
 
 **Class:** Warlock
-**Profiles:** SM/DS, Firelock, Demonology
+**Profiles:** SM/DS, Firelock, Fire Demo
 
 Read [CLAUDE.md](../../CLAUDE.md) first, then [README.md](README.md) in this
 directory for what the census columns mean and how to reprint every figure below.
@@ -21,10 +21,10 @@ the three things to know before touching it:
   the group healing every tap a second later, Aftermath 5/5 and Corruption --
   both held in round 40 -- gain at every length and ship. Price a candidate at
   180s anyway: the regime moved once and can move again.
-- **DECIMATION IS BUILT AS STANDING EFFECTS**, the owner's reading, so Soul
-  Fire is castable on a 6s cooldown from the pull. The list casts it only in
-  the window, which is the profile's design; casting it all fight is +77 at
-  60s and is a question for the owner.
+- **DECIMATION IS A 10-SECOND BUFF SINCE ROUND 44**, opened by Shadow Bolt or
+  Searing Pain in the last 35% of the fight; it read 100% uptime as standing
+  effects. The list's Soul Fire entry reads the buff. The profile is called
+  **Fire Demo** now, 2/31/18 with Agonizing Flames 3/3.
 - **SOUL FIRE'S COEFFICIENT IS A PLACEHOLDER** and Soul Fire is 12.5% of the
   profile.
 

@@ -1,8 +1,13 @@
 import type { TalentReactionBuilder } from './warriorTalents';
+import type { CastReaction } from '../../engine';
 import { dealDamage } from '../../engine';
+import { inExecutePhase } from '../combat/executePhase';
 import {
+  DECIMATION_TRIGGERS,
+  DECIMATION_WINDOW_FRACTION,
   DEMONIC_BRAND_DAMAGE_MAX,
   DEMONIC_BRAND_DAMAGE_MIN,
+  decimationAura,
   SHADOW_TRANCE,
   demonicBrandAura,
   improvedShadowBoltAura,
@@ -139,6 +144,25 @@ export const demonicBrandStrike: TalentReactionBuilder = () => ({
     });
   },
 });
+
+/**
+ * Decimation: a Shadow Bolt or Searing Pain cast inside the last 35% of the
+ * fight opens -- or refreshes -- the ten-second Soul Fire window. `value` is
+ * the rank's cast-time cut. See `decimationAura`.
+ */
+const decimation = (castTimePercent: number): CastReaction => ({
+  id: 'decimation',
+  canTrigger: (context, _actor, cast) =>
+    DECIMATION_TRIGGERS.includes(cast.ability.id) &&
+    inExecutePhase(context, DECIMATION_WINDOW_FRACTION),
+  onTrigger: (context, actor) => {
+    context.applyAura(actor, decimationAura(castTimePercent), actor.id);
+  },
+});
+
+export const WARLOCK_CAST_REACTIONS: Readonly<Record<string, (value: number) => CastReaction>> = {
+  decimation,
+};
 
 export const WARLOCK_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
   demonic_brand: demonicBrand,

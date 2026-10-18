@@ -11,7 +11,11 @@ import {
   IMP_FIREBOLT_PAUSE_MS,
   LASH_OF_PAIN_COOLDOWN_MS,
 } from '../../src/game/abilities/demon';
-import { DEMONIC_BRAND_DAMAGE_MAX, DEMONIC_BRAND_DAMAGE_MIN } from '../../src/game/auras/warlock';
+import {
+  DEMONIC_BRAND_DAMAGE_MAX,
+  DEMONIC_BRAND_DAMAGE_MIN,
+  decimationAura,
+} from '../../src/game/auras/warlock';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { parseProfile, serializeProfile } from '../../src/profiles';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
@@ -312,18 +316,46 @@ describe('Decimation', () => {
     expect(player.abilities.get('soul_fire')!.cooldownMs).toBe(seconds(6));
   });
 
-  it('makes Soul Fire a 2.4 second cast with Bane 5/5, and shard-free', () => {
+  /*
+   * ROUND 44: the cast-time and shard halves are the 10-second `decimation`
+   * buff, not standing modifiers -- so they apply only while it is up.
+   */
+  it('makes Soul Fire a 2.4 second cast with Bane 5/5, and shard-free, while the buff is up', () => {
     const player = warlock({ decimation: 2, bane: 5 });
-    ready(player);
-    const cast = resolveCast(player, player.abilities.get('soul_fire')!);
-    expect(cast.baseCastTimeMs).toBe(2400);
-    expect(cast.costAmount).toBe(0);
+    const simulation = ready(player);
+    const soulFire = player.abilities.get('soul_fire')!;
+    const before = resolveCast(player, soulFire);
+    expect(before.baseCastTimeMs).toBe(4000);
+    expect(before.costAmount).toBe(1);
+
+    simulation.applyAura(player, decimationAura(40), player.id);
+    const during = resolveCast(player, soulFire);
+    expect(during.baseCastTimeMs).toBe(2400);
+    expect(during.costAmount).toBe(0);
   });
 
   it('is 40% off the cast time without Bane too', () => {
     const player = warlock({ decimation: 2 });
-    ready(player);
+    const simulation = ready(player);
+    simulation.applyAura(player, decimationAura(40), player.id);
     expect(resolveCast(player, player.abilities.get('soul_fire')!).baseCastTimeMs).toBe(3600);
+  });
+
+  it('opens the buff from Searing Pain and Shadow Bolt only inside the last 35%', () => {
+    const reaction = talentBuild('warlock', legalise({ decimation: 2 }, 'warlock')).castReactions.find(
+      (r) => r.id === 'decimation',
+    )!;
+    expect(reaction).toBeDefined();
+    const player = warlock({ decimation: 2 });
+    const simulation = ready(player);
+    const cast = (id: string) =>
+      ({ caster: player, target: undefined, ability: { id } as never, spent: {}, final: true }) as never;
+    // 60 second fight: the window opens at 39 seconds.
+    expect(reaction.canTrigger!(simulation, player, cast('searing_pain'))).toBe(false);
+    simulation.advanceTo(seconds(40));
+    expect(reaction.canTrigger!(simulation, player, cast('searing_pain'))).toBe(true);
+    expect(reaction.canTrigger!(simulation, player, cast('shadow_bolt'))).toBe(true);
+    expect(reaction.canTrigger!(simulation, player, cast('immolate'))).toBe(false);
   });
 
   it('raises Shadow Bolt and Searing Pain 6% in the last 35% of the fight, and not before', () => {

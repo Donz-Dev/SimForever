@@ -396,6 +396,46 @@ export function demonicBrandAura(charges: number): AuraDefinition {
   };
 }
 
+/*
+ * ============================================================================
+ * DECIMATION'S SOUL FIRE WINDOW, as the client tooltip states it: "When you
+ * cast Shadow Bolt or Searing Pain on an enemy below 35% health ... for the
+ * next 10 sec your Soul Fire spell has its cast time reduced by 40% and costs
+ * no Soul Shards."
+ *
+ * IT WAS A STANDING EFFECT AND READ 100% UPTIME, which the owner caught: "It
+ * should be a max uptime of 35%. This should also be a buff that's visible in
+ * the buff drop down in the APL." Round 44 made it this aura -- applied by the
+ * two spells inside the last 35% of the fight, which is "below 35% health" by
+ * the owner's clock ruling -- so its uptime cannot exceed that share and a
+ * list can ask whether it is up.
+ *
+ * THE COOLDOWN HALF STAYS A STANDING EFFECT: "Reduces the cooldown of your
+ * Soul Fire spell by 90%" carries no condition in the tooltip.
+ * ============================================================================
+ */
+export const DECIMATION_DURATION_MS = seconds(10);
+/** "Below 35% health", read as the last 35% of the fight. */
+export const DECIMATION_WINDOW_FRACTION = 0.35;
+/** The two spells that open the window. */
+export const DECIMATION_TRIGGERS: readonly string[] = ['shadow_bolt', 'searing_pain'];
+
+/** The window, at a rank's cast-time cut: 20% at 1/2, 40% at 2/2. */
+export function decimationAura(castTimePercent: number): AuraDefinition {
+  return {
+    id: 'decimation',
+    name: 'Decimation',
+    durationMs: DECIMATION_DURATION_MS,
+    refreshBehaviour: 'reset',
+    castModifier: {
+      abilityIds: ['soul_fire'],
+      castTimeFraction: castTimePercent / 100,
+      // "costs no Soul Shards": the shard is Soul Fire's whole declared cost.
+      costFraction: 1,
+    },
+  };
+}
+
 export const SHADOW_TRANCE_DURATION_MS = seconds(10);
 
 export const SHADOW_TRANCE: AuraDefinition = {
@@ -614,6 +654,7 @@ export const DEMONIC_SACRIFICE_UNMODELLED =
  */
 export const CATALOG_AURAS: readonly AuraDefinition[] = [
   improvedShadowBoltAura(0),
+  decimationAura(40),
   demonicBrandAura(6),
   demonicSacrificeAura('imp')!,
   demonicSacrificeAura('succubus')!,

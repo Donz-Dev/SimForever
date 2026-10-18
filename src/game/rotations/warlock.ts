@@ -450,17 +450,19 @@ export const DECIMATION_PHASE = fightRemainingFraction('atMost', DECIMATION_PHAS
  * ============================================================================
  */
 export const WARLOCK_DEMONOLOGY: AplList = {
-  name: 'Warlock (Demonology)',
+  name: 'Warlock (Fire Demo)',
   entries: [
   buffPotionCooldown('major_spellblasting_potion'),
   ...RACIAL_COOLDOWNS,
   /*
-   * SOUL FIRE IN DECIMATION'S WINDOW, ON COOLDOWN. Decimation takes it to a
-   * 6-second cooldown and, with Bane 5/5, a 2.4-second cast that costs no
-   * shard. Above everything else in the window, because it is the largest
-   * single hit the build has.
+   * SOUL FIRE WHILE DECIMATION IS UP, ON COOLDOWN. The buff -- 10 seconds,
+   * opened by a Searing Pain or Shadow Bolt in the last 35% of the fight --
+   * makes it a 2.4-second cast with Bane 5/5 that costs no shard, and the
+   * talent's standing half takes it to a 6-second cooldown. Above everything
+   * else, because it is the largest single hit the build has. Read off the
+   * BUFF since round 44, so the panel's dropdown names what gates it.
    */
-  { abilityId: 'soul_fire', condition: DECIMATION_PHASE },
+  { abilityId: 'soul_fire', condition: actorHas('decimation') },
   {
     abilityId: 'immolate',
     condition: all(

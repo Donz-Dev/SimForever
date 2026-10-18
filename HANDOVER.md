@@ -73,6 +73,7 @@ the tooling to be a bit more sophisticated as well."
 | 41 | **LIFE TAP IS HEALED BACK BY THE GROUP**, one second after the cast, by the owner's ruling. Demonology then ships Aftermath 5/5 and Corruption, both held in round 40 | **no Warlock moves at 60s**; at 300s SM/DS 655 -> 726, Firelock 386 -> 810, Demonology 562 -> 886. Demonology +55.1 at 60s from the two changes. Two round-40 questions closed | see below |
 | 42 | **THE FIRELOCK, RE-OPTIMISED ONCE LIFE TAP WAS HEALED BACK** -- Improved Life Tap found never to have worked and wired in; five dead points moved to Improved Life Tap 2 and Aftermath 5/5; a Bane of Agony opener | **+51.9 at 60s, +58.1 at 180s, +60.9 at 300s**, paired. The build is 7/11/33. Two questions | see below |
 | 43 | **LIFE TAP IS (430 + SPIRIT)**, Wowhead's Forever formula, on the owner's instruction -- replacing the ruled flat 840 and the Spirit clause's `unmodelled` caveat. About 674 on every Warlock preset | Firelock **-7.6 at 60s**; the others unchanged at 60s; -4 to -25 at longer lengths, from more taps | see below |
+| 44 | **FIRE DEMO** -- the Demonology profile renamed, three Suppression points to Agonizing Flames, +40 hit on its four benchmark sets, and Decimation's Soul Fire half made a 10-second buff opened in the last 35% | **1120.8 at 60s**, from 1021.0; Decimation 100% uptime -> ~33%. One question closed | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -158,6 +159,43 @@ Rupture Rogue's pre-combat `stealth` line as `<-- NEVER HAPPENED`. It does on
 `main` too: stealth is a `PRECOMBAT_STATES` entry with no ability, and the tool
 does not read that table the way the APL panel and the opener guard do. A
 reporting gap, not a rotation one.
+
+## Round 44: Fire Demo -- a rename, Agonizing Flames, 40 hit, and Decimation as a buff
+
+**FOUR OWNER INSTRUCTIONS ON THE DEMONOLOGY PROFILE**, now called **Fire Demo**
+(the id stays `warlock_demonology`, so a saved profile still finds it):
+
+| | what | how |
+| --- | --- | --- |
+| rename | "Fire Demo" | the preset label and the character name; the list is `Warlock (Fire Demo)` |
+| talents | three Suppression points to Agonizing Flames 3/3 | 2/31/18. Fifteen Destruction points under it open its tier exactly |
+| gear | +40 hit rating on all four benchmark sets | the row asks for 150 where it asked for 110, and `spreadRating` pays for it out of crit first, inside every item's budget |
+| Decimation | "should be a max uptime of 35%", and visible in the APL buff dropdown | a 10-second `decimation` buff, opened by Shadow Bolt or Searing Pain in the last 35% of the fight |
+
+**DECIMATION WAS BUILT ON THE STANDING READING AND READ 100% UPTIME.** The
+cast-time and shard halves were permanent cast modifiers, so the results page
+showed a buff that was always up. They are the `decimation` aura now -- the
+client tooltip's "for the next 10 sec", opened by the two spells inside the
+last 35% (the owner's clock reading of "below 35% health") -- and its uptime is
+**33.8% / 33.3% / 31.2% / 31.7%** at 60 / 120 / 180 / 300s. The Soul Fire
+cooldown cut stays standing, as its clause is unconditional, and the +6% to
+Shadow Bolt and Searing Pain in the window is unchanged. The list's Soul Fire
+entry reads the BUFF now (`selfHas('decimation')`), which is the control the
+owner asked for; `aurasForClass('warlock')` offers it. This answers the round-40
+question about the standing reading, so that row is closed.
+
+**AND B55 COULD NOT HOLD 150 HIT UNDER THE HALF-SLOT CAP**, the first set ever
+to overflow. The overflow code put the excess on the first slots in its list --
+the wrists and the NECK, the smallest -- though its own header said "the
+biggest slots"; it does what it says now, round-robin from the largest. The
+shape test that pinned the cap allows an overflow only once every hit slot in
+the set is full, and names the sets where it happens: today, **Fire Demo B55
+alone**. No item exceeds its budget.
+
+**1120.8 DPS at 60s** (`USES=1`, 30 fights), where it was 1021.0 before the
+round -- Agonizing Flames' 10% on every Destruction spell and its crit on the
+filler, the extra hit, and Soul Fire under a real window. Every other profile's
+combat-log hash is identical to `main`.
 
 ## Round 43: Life Tap is (430 + Spirit), replacing the ruled 840
 
@@ -561,7 +599,6 @@ write-up; none is an engine gap.
 | **Soul Fire's coefficient is Classic's 100%**, under `PLACEHOLDER_SOUL_FIRE_SP_COEFFICIENT` -- you gave its damage, cost, cast and cooldown and no coefficient, and the sheet has no row | round 35 | one constant; no profile casts Soul Fire yet |
 | **The Firelock's Aftermath 2/5 with Intensity 3/3 was your respecification, and round 42 reverses it** on measurement: Intensity is cast pushback, which nothing here can do, and Aftermath 5/5 is +38 at every fight length. The old spread is one edit back if it was meant as a choice | round 42 | about 38 DPS |
 | **Corruption on the Firelock, out by your instruction, now prices at +1.18 (noise) / +4.02 / +6.52** at 60 / 180 / 300s -- small, and only past a minute. Kept out | round 42 | up to 6.5 DPS at 300s |
-| **Is Decimation's Soul Fire half a standing effect, or a 10 second window?** It is built on your reading -- 6s cooldown, 2.4s cast, no shard, from the pull -- and on that reading Soul Fire cast ALL fight is **+77.27 at 60s, +11.94 at 180s, +7.72 at 300s** on the Demonology profile. Your design for that profile casts it only in the last 35%, which is what the client tooltip's window would force; the list follows the design | round 40 | Demonology, by up to 77 DPS |
 | **Flametongue Weapon and Flametongue Totem roll no table and crit at MELEE crit for 2x**, the poison-and-seal precedent for damage riding a weapon hit. They are Fire damage and could equally be spell crit at 1.5x | round 35 | the crit half of both Flametongues |
 | **Frost Oil rolls the SPELL table** -- 17% miss, spell crit -- because it "procs a Frostbolt". The other reading is the Flametongue one above | round 35 | whether the oil can miss |
 | **Seal of Righteousness's base is CLAMPED outside 1.3 to 4.0 seconds**, and so are both Flametongues. You gave two points and a line; extending the line past them is a number nobody stated | round 35 | nothing today -- no weapon on file is outside the range |
@@ -582,7 +619,7 @@ write-up; none is an engine gap.
 | **The Enh Shaman holds the Seal Twist Ret's two-hander**, as you asked, and that mace's `Classes:` line is rewritten to "Paladin, Shaman" for the borrower -- otherwise the proficiency filter refuses a weapon you specified | round 37 | which classes a template weapon is offered to |
 | **The Hunter cooldown stacks have no standalone Bestial Wrath, Rapid Fire or racial entries any more**, so all of them fire only when every step of the stack is ready together -- once in a 60s fight. In a longer one the stack waits for the slowest cooldown in it | round 37 | casts per fight past three minutes |
 
-**FORTY-ONE ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five, round 38 added four, round 39 added five, the owner answered the Imp's Firebolt pause the same day, round 40 added three, round 41 closed two of them by changing Life Tap, and round 42 added two -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**FORTY ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five, round 38 added four, round 39 added five, the owner answered the Imp's Firebolt pause the same day, round 40 added three, round 41 closed two of them by changing Life Tap, round 42 added two, and round 44 closed the Decimation one -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
