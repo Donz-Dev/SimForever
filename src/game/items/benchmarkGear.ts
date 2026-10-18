@@ -765,12 +765,23 @@ export function spreadRating(
    * opposite of `staminaFloor`, where the BUDGET is absolute and the floor
    * gives way, because these two numbers have different owners.
    */
+  /*
+   * ONTO THE BIGGEST SLOTS FIRST, which is what the header always said and the
+   * code did not: it walked `slots` in list order, so the first set ever to
+   * overflow -- Fire Demo at B55, round 44 -- put its excess on the wrists and
+   * the NECK, the smallest slots it had, and took the neck to 74% of itself.
+   * Largest capacity first spreads the same excess where it is the smallest
+   * share of a slot, round-robin so no one slot takes it all.
+   */
   if (left > 0) {
-    for (const slot of slots) {
-      if (left <= 0) break;
-      const step = Math.min(RATING_STEP, left);
-      out.set(slot, (out.get(slot) ?? 0) + step);
-      left -= step;
+    const biggestFirst = [...slots].sort((a, b) => capacityOf(b) - capacityOf(a));
+    while (left > 0) {
+      for (const slot of biggestFirst) {
+        if (left <= 0) break;
+        const step = Math.min(RATING_STEP, left);
+        out.set(slot, (out.get(slot) ?? 0) + step);
+        left -= step;
+      }
     }
   }
 

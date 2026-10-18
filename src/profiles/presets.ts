@@ -1874,9 +1874,17 @@ const WARLOCK_DESTRUCTION_TALENTS: TalentAllocation = {
  * three of the four have to sit at tier 10 or below to open Decimation's tier.
  * ============================================================================
  */
+/*
+ * ROUND 44, THE OWNER'S: "Fire Demo", and three Suppression points moved to
+ * Agonizing Flames 3/3 -- +10% to every Destruction spell and +10% crit on
+ * Searing Pain, the filler. Fifteen Destruction points under it open its tier
+ * exactly. The three points of hit they cost are bought back in the gear: the
+ * profile's benchmark row asks for 40 more hit rating, paid out of crit.
+ * The build is 2/31/18.
+ */
 const WARLOCK_DEMONOLOGY_TALENTS: TalentAllocation = {
-  // Affliction, 5
-  suppression: 5,
+  // Affliction, 2
+  suppression: 2,
   // Demonology, 31
   unholy_power: 5,
   improved_imp: 3,
@@ -1889,10 +1897,11 @@ const WARLOCK_DEMONOLOGY_TALENTS: TalentAllocation = {
   demonic_knowledge: 3,
   master_demonologist: 5,
   demonic_pact: 1,
-  // Destruction, 15
+  // Destruction, 18
   bane: 5,
   aftermath: 5,
   ruin: 5,
+  agonizing_flames: 3,
 };
 
 /**
@@ -3716,14 +3725,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
     }),
   },
   {
+    // The id keeps its first name, so a saved profile still finds it.
     id: 'warlock_demonology',
-    label: 'Demonology',
+    label: 'Fire Demo',
     detail: 'Undead, caster, Imp summoned, Succubus sacrificed, standing target. 31 Demonology',
     characterClass: 'warlock',
     build: () => ({
       ...createDefaultProfile(),
       character: {
-        name: 'Demonology',
+        name: 'Fire Demo',
         race: 'undead',
         characterClass: 'warlock',
         level: 60,

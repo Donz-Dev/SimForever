@@ -587,16 +587,40 @@ describe('a hit rating is paid for out of crit, not out of spell power', () => {
      * 25 hit is 97% of a B55 medium slot and 42% of an E85 one, which is why
      * the cap is a SHARE and not an amount. The four slots that read "+25 Hit
      * Rating, +2 Stamina, +1 Spell Power" are what it exists for.
+     *
+     * UNLESS THE OWNER'S TOTAL CANNOT FIT UNDER THE CAPS AT ALL, which first
+     * happened in round 44: Fire Demo asks for 150 hit, and at B55 its hit
+     * slots hold less than that at half a slot each. The total is absolute, so
+     * the cap gives way -- but only once EVERY hit slot in the set is full, and
+     * the sets where that happens are named below rather than tolerated.
      */
-    for (const item of BENCHMARK_ITEMS) {
-      const hit = ITEMS_BY_ID.get(item.id)?.stats.hitChance ?? 0;
-      if (hit === 0) continue;
-      const rating = hit * RATING_PER_PERCENT.hit;
-      const share = (rating * COST.Hit) ** BUDGET_EXPONENT / item.budget ** BUDGET_EXPONENT;
-      expect(`${item.name} ${item.inventoryType}: ${(share * 100).toFixed(0)}%`).toBe(
-        `${item.name} ${item.inventoryType}: ${(Math.min(share, RATING_BUDGET_SHARE) * 100).toFixed(0)}%`,
-      );
+    const shareOf = (item: (typeof BENCHMARK_ITEMS)[number]) => {
+      const rating = (ITEMS_BY_ID.get(item.id)?.stats.hitChance ?? 0) * RATING_PER_PERCENT.hit;
+      return (rating * COST.Hit) ** BUDGET_EXPONENT / item.budget ** BUDGET_EXPONENT;
+    };
+    const overflowing: string[] = [];
+    for (const template of BENCHMARK_TEMPLATES) {
+      for (const set of BENCHMARK_SETS) {
+        const carrying = benchmarkItemsFor(template, set).filter(
+          (item) => (ITEMS_BY_ID.get(item.id)?.stats.hitChance ?? 0) > 0,
+        );
+        const over = carrying.filter((item) => shareOf(item) > RATING_BUDGET_SHARE + 1e-9);
+        if (over.length === 0) continue;
+        overflowing.push(`${template.label} ${set.id}`);
+        // Every slot carrying hit is at its cap: within one step of five.
+        for (const item of carrying) {
+          const nextStep =
+            (((ITEMS_BY_ID.get(item.id)?.stats.hitChance ?? 0) * RATING_PER_PERCENT.hit + RATING_STEP) *
+              COST.Hit) **
+              BUDGET_EXPONENT /
+            item.budget ** BUDGET_EXPONENT;
+          expect(nextStep, `${item.name} ${item.inventoryType} has room left`).toBeGreaterThan(
+            RATING_BUDGET_SHARE,
+          );
+        }
+      }
     }
+    expect(overflowing).toEqual(['Fire Demo B55']);
   });
 
   it('still reaches each profile its EXACT total, which is absolute', () => {

@@ -35,7 +35,7 @@ import { SHAMAN_CAST_REACTIONS, SHAMAN_TALENT_REACTIONS } from '../reactions/sha
 import { MAGE_TALENT_REACTIONS } from '../reactions/mageTalents';
 import { PALADIN_TALENT_REACTIONS } from '../reactions/paladinTalents';
 import { HUNTER_TALENT_REACTIONS } from '../reactions/hunterTalents';
-import { WARLOCK_TALENT_REACTIONS } from '../reactions/warlockTalents';
+import { WARLOCK_CAST_REACTIONS, WARLOCK_TALENT_REACTIONS } from '../reactions/warlockTalents';
 import { PRIEST_TALENT_REACTIONS } from '../reactions/priestTalents';
 import type { ClassId, CombatStyleId, StatFromStat } from '../character';
 import { bringsPet } from '../character/petFamilies';
@@ -93,6 +93,7 @@ const CAST_REACTIONS: Partial<
   shaman: SHAMAN_CAST_REACTIONS,
   druid: DRUID_CAST_REACTIONS,
   priest: PRIEST_CAST_REACTIONS,
+  warlock: WARLOCK_CAST_REACTIONS,
 };
 
 const REACTIONS: Partial<Record<ClassId, Readonly<Record<string, TalentReactionBuilder>>>> = {

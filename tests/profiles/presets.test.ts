@@ -109,7 +109,7 @@ describe('the preset catalogue', () => {
       'Hawk Melee',
       'SM/DS',
       'Firelock',
-      'Demonology',
+      'Fire Demo',
       'Shadow',
     ]);
   });

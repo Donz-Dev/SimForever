@@ -367,19 +367,15 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      *   damage     +6%, {2}, on Shadow Bolt and Searing Pain in the last 35%, {1}
      * ------------------------------------------------------------------------
      */
+    /*
+     * ROUND 44: THE CAST-TIME AND SHARD HALVES ARE A 10-SECOND BUFF NOW, not
+     * standing cast modifiers -- the owner saw Decimation at 100% uptime and
+     * ruled its maximum is 35%. Shadow Bolt or Searing Pain inside the last
+     * 35% opens it; `decimationAura` and the `decimation` cast reaction. The
+     * cooldown cut stays standing, as its clause is unconditional.
+     */
     { kind: 'abilityCooldown', abilityId: 'soul_fire', unit: 'percent', valueIndex: 0 },
-    {
-      kind: 'grantCastModifier',
-      abilityIds: ['soul_fire'],
-      property: 'castTimeFraction',
-      valueIndex: 4,
-    },
-    {
-      kind: 'grantCastModifier',
-      abilityIds: ['soul_fire'],
-      property: 'costFraction',
-      fraction: 1,
-    },
+    { kind: 'castReaction', reactionId: 'decimation', valueIndex: 4 },
     {
       kind: 'abilityDamageInFinalFraction',
       abilityId: 'shadow_bolt',
