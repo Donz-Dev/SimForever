@@ -1,10 +1,11 @@
 import type { Ability } from '../../engine';
-import { dealDamage, seconds } from '../../engine';
+import { dealDamage, rollApplication, seconds } from '../../engine';
 import {
   AMPLIFY_CURSE_AURA,
   AMPLIFY_CURSE_MULTIPLIER,
   BANE_OF_AGONY,
   BANE_OF_AGONY_AMPLIFIED,
+  BANE_OF_DOOM,
   CORRUPTION,
   CORRUPTION_CAST_MS,
   IMMOLATE,
@@ -17,6 +18,7 @@ import {
 import {
   CONFLAGRATE_SP_COEFFICIENT,
   INCINERATE_SP_COEFFICIENT,
+  PLACEHOLDER_SOUL_FIRE_SP_COEFFICIENT,
   SEARING_PAIN_SP_COEFFICIENT,
   SHADOWBURN_SP_COEFFICIENT,
   SHADOW_BOLT_SP_COEFFICIENT,
@@ -88,8 +90,23 @@ export const CORRUPTION_ABILITY: Ability = {
   name: 'Corruption',
   cost: { resource: 'mana', amount: 340 },
   castTimeMs: CORRUPTION_CAST_MS,
-  onCast: ({ simulation, caster, target }) => {
+  attackTable: 'spell',
+  onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
+    /*
+     * A PURE DoT ROLLS TO HIT ON APPLICATION -- the owner's rule -- and has no
+     * damage event to carry the roll, so it asks. `rollApplication` folds in
+     * school-scoped hit the way a damaging spell's roll does.
+     */
+    const landed = !rollApplication(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: 'shadow',
+      attackTable: 'spell',
+    }).avoided;
+    if (!landed) return;
     /*
      * A PURE DoT: the cast itself deals nothing, so the whole coefficient is
      * on the aura's ticks and there is no direct half to weight against.
@@ -124,12 +141,74 @@ export const BANE_OF_AGONY_ABILITY: Ability = {
   id: 'bane_of_agony',
   name: 'Bane of Agony',
   cost: { resource: 'mana', amount: 215 },
-  onCast: ({ simulation, caster, target }) => {
+  attackTable: 'spell',
+  onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
+    /*
+     * A PURE DoT ROLLS TO HIT ON APPLICATION -- the owner's rule -- and has no
+     * damage event to carry the roll, so it asks. `rollApplication` folds in
+     * school-scoped hit the way a damaging spell's roll does.
+     */
+    const landed = !rollApplication(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: 'shadow',
+      attackTable: 'spell',
+    }).avoided;
+    if (!landed) return;
     const amplified = caster.auras.has(AMPLIFY_CURSE_AURA.id);
+    // One Bane per Warlock on a target: this one replaces a Bane of Doom.
+    target.auras.remove(simulation, BANE_OF_DOOM.id);
     simulation.applyAura(target, amplified ? BANE_OF_AGONY_AMPLIFIED : BANE_OF_AGONY, caster.id);
     if (amplified) caster.auras.remove(simulation, AMPLIFY_CURSE_AURA.id);
   },
+};
+
+/**
+ * Bane of Doom: 1,742 Shadow damage plus 400% of spell power, ONE minute after
+ * the cast. 300 mana, instant, one minute cooldown.
+ *
+ * ----------------------------------------------------------------------------
+ * "ONLY ONE BANE PER WARLOCK CAN BE ACTIVE ON ANY ONE TARGET", so casting it
+ * removes a Bane of Agony and Bane of Agony removes it. The Doomguard clause
+ * needs the target to DIE, which no target here does.
+ *
+ * IT ROLLS TO HIT ON APPLICATION, because a pure DoT has no damage event to
+ * carry the roll and the owner's rule is that the application rolls -- as
+ * Corruption, Bane of Agony and Siphon Life now do too. They applied without
+ * asking until this round, which is how the gap was found.
+ * ----------------------------------------------------------------------------
+ */
+export const BANE_OF_DOOM_ABILITY: Ability = {
+  id: 'bane_of_doom',
+  name: 'Bane of Doom',
+  cost: { resource: 'mana', amount: 300 },
+  cooldownMs: seconds(60),
+  attackTable: 'spell',
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    /*
+     * A PURE DoT ROLLS TO HIT ON APPLICATION -- the owner's rule -- and has no
+     * damage event to carry the roll, so it asks. `rollApplication` folds in
+     * school-scoped hit the way a damaging spell's roll does.
+     */
+    const landed = !rollApplication(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: 'shadow',
+      attackTable: 'spell',
+    }).avoided;
+    if (!landed) return;
+    target.auras.remove(simulation, 'bane_of_agony');
+    simulation.applyAura(target, BANE_OF_DOOM, caster.id);
+  },
+  unmodelled:
+    'Its chance to summon a Doomguard needs the target to die from the ' +
+    'damage, and no target here dies.',
 };
 
 /**
@@ -180,8 +259,23 @@ export const SIPHON_LIFE_ABILITY: Ability = {
   id: 'siphon_life',
   name: 'Siphon Life',
   cost: { resource: 'mana', amount: 365 },
-  onCast: ({ simulation, caster, target }) => {
+  attackTable: 'spell',
+  onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
+    /*
+     * A PURE DoT ROLLS TO HIT ON APPLICATION -- the owner's rule -- and has no
+     * damage event to carry the roll, so it asks. `rollApplication` folds in
+     * school-scoped hit the way a damaging spell's roll does.
+     */
+    const landed = !rollApplication(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: 'shadow',
+      attackTable: 'spell',
+    }).avoided;
+    if (!landed) return;
     simulation.applyAura(target, SIPHON_LIFE, caster.id);
   },
   unmodelled:
@@ -415,6 +509,54 @@ export const SHADOWBURN: Ability = {
   },
 };
 
+/**
+ * Soul Fire: "Burn the enemy's soul, causing 394 to 491 Fire damage." 335 mana
+ * AND a Soul Shard, a 6 second cast, one minute cooldown -- the owner's
+ * tooltip, over the capture's 390 to 486.
+ *
+ * ----------------------------------------------------------------------------
+ * SHADOWBURN'S SHAPE EXACTLY: the shard is the declared cost, because shards
+ * are the scarce pool a list has to be able to see, and the mana is taken in
+ * `onCast`. So Cataclysm, which reduces the MANA cost of Destruction spells,
+ * does not reach it -- the same gap Shadowburn has, for the same reason.
+ *
+ * ITS COEFFICIENT IS A PLACEHOLDER. See `PLACEHOLDER_SOUL_FIRE_SP_COEFFICIENT`.
+ *
+ * THE TALENTS THAT NAME IT: Bane takes its cast time down (its second number),
+ * Ruin and Agonizing Flames reach it as a Destruction spell, and Pyroclasm's
+ * stun is out of scope. Decimation's three Soul Fire clauses are still not
+ * built -- a percentage cooldown cut and a window that makes it faster and
+ * shard-free below 35% -- and no profile takes Decimation.
+ * ----------------------------------------------------------------------------
+ */
+export const SOUL_FIRE_MANA = 335;
+export const SOUL_FIRE_DAMAGE = midpoint(394, 491);
+export const SOUL_FIRE_CAST_MS = seconds(6);
+
+export const SOUL_FIRE: Ability = {
+  id: 'soul_fire',
+  name: 'Soul Fire',
+  cost: { resource: 'soulShards', amount: 1 },
+  castTimeMs: SOUL_FIRE_CAST_MS,
+  cooldownMs: seconds(60),
+  attackTable: 'spell',
+  canCast: ({ caster }) => (caster.resources.get('mana')?.current ?? 0) >= SOUL_FIRE_MANA,
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    caster.resources.get('mana')?.spend(SOUL_FIRE_MANA);
+    dealDamage(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: 'fire',
+      baseAmount: SOUL_FIRE_DAMAGE,
+      powerCoefficient: PLACEHOLDER_SOUL_FIRE_SP_COEFFICIENT,
+      attackTable: ability.attackTable,
+    });
+  },
+};
+
 // 105 to 123 from foreverchanges.pro, over talentsforever's 107 to 125, by the
 // same ruling. Same rank 6, same level 58, same build.
 export const SEARING_PAIN_DAMAGE = midpoint(105, 123);
@@ -588,19 +730,21 @@ export const WARLOCK_DESTRUCTION_SPELLS: readonly string[] = [
   'conflagrate',
   'shadowburn',
   'searing_pain',
+  'soul_fire',
 ];
 
 /**
  * The periodic Affliction effects Pandemic and Soul Siphon both count.
  *
  * DECLARED ONES ONLY, and the two talents name more than this between them --
- * Bane of Doom, Drain Life and Drain Soul are in the spellbook capture and not
- * in this project. Each talent carries its own `unmodelled` clause saying so,
+ * Drain Life and Drain Soul are in the spellbook capture and not in this
+ * project. Each talent carries its own `unmodelled` clause saying so,
  * rather than this list pretending to be complete.
  */
 export const WARLOCK_AFFLICTION_PERIODICS: readonly string[] = [
   'corruption',
   'bane_of_agony',
+  'bane_of_doom',
   'siphon_life',
 ];
 
@@ -633,6 +777,9 @@ export const WARLOCK_AFFLICTION_PERIODICS: readonly string[] = [
 export const WARLOCK_SOUL_SIPHON_EFFECTS: readonly string[] = [
   'corruption',
   'bane_of_agony',
+  // An Affliction effect on the target, so it counts; it cannot be up beside
+  // Bane of Agony, so it never raises the count past what Agony did.
+  'bane_of_doom',
   'siphon_life',
   'curse_of_the_elements',
 ];
@@ -641,6 +788,7 @@ export const WARLOCK_ABILITIES: readonly Ability[] = [
   SHADOW_BOLT,
   CORRUPTION_ABILITY,
   BANE_OF_AGONY_ABILITY,
+  BANE_OF_DOOM_ABILITY,
   // Granted by the Affliction talent; `grantsByAbility` gates it.
   AMPLIFY_CURSE,
   SIPHON_LIFE_ABILITY,
@@ -650,6 +798,7 @@ export const WARLOCK_ABILITIES: readonly Ability[] = [
   CONFLAGRATE,
   SHADOWBURN,
   SEARING_PAIN,
+  SOUL_FIRE,
   // Granted by the Affliction capstone; `grantsByAbility` gates it.
   WRACK,
 ];

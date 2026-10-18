@@ -29,21 +29,25 @@ import { makeAttacker, makeTarget } from '../helpers/actors';
 
 /** Written out by hand. The ruleset's flat spell miss, in roll units. */
 const SPELL_MISS = 1700;
-/** And the floor it cannot go below, which makes the usable hit cap 16%. */
-const SPELL_MISS_FLOOR = 100;
+/**
+ * And the floor it cannot go below: ZERO, since the owner removed the 1% --
+ * "spells need 17% chance to hit in order to cap."
+ */
+const SPELL_MISS_FLOOR = 0;
 
 describe('the constants the whole thing is measured against', () => {
   it('misses 17% of spells against a raid boss before any hit at all', () => {
     expect(COMBAT_CONSTANTS.spellMiss).toBe(SPELL_MISS);
   });
 
-  it('never drops below 1%, so 16 points of hit is the most a caster can use', () => {
+  it('has no floor any more, so 17 points of hit is the most a caster can use', () => {
     /*
-     * The ruleset owner: 17% base, "reduced to a minimum of 1% chance to miss.
-     * Effectively making the 'hit cap' 16% for Spells."
+     * The ruleset owner first ruled a 1% floor (a 16% cap) and then removed
+     * it: "Spells currently have a 1% chance to miss at a minimum, this has
+     * been removed. Which means spells need 17% chance to hit in order to cap."
      */
     expect(COMBAT_CONSTANTS.spellMissFloor).toBe(SPELL_MISS_FLOOR);
-    expect((SPELL_MISS - SPELL_MISS_FLOOR) / 100).toBe(16);
+    expect((SPELL_MISS - SPELL_MISS_FLOOR) / 100).toBe(17);
   });
 });
 
@@ -204,7 +208,7 @@ describe('the boundary it moves', () => {
     expect(castAt(ROLL_MAX, 20)).toBe(true);
   });
 
-  it('keeps 1% unreachable on the REAL spell table, by either route to hit', () => {
+  it('reaches zero at 17 on the REAL spell table, by either route to hit', () => {
     /*
      * BOTH ROUTES, because there are two and a floor on one is no floor. The
      * character-wide `hitChance` stat is folded in by `attackChances`; a
@@ -226,12 +230,13 @@ describe('the boundary it moves', () => {
     };
 
     expect(chancesFor(0, 0)).toBe(SPELL_MISS);
-    expect(chancesFor(16, 0)).toBe(SPELL_MISS_FLOOR);
-    // The seventeenth point buys nothing, and neither does the fiftieth.
+    // The seventeenth point is no longer wasted: it takes the last 1%.
+    expect(chancesFor(16, 0)).toBe(100);
     expect(chancesFor(17, 0)).toBe(SPELL_MISS_FLOOR);
+    // The eighteenth buys nothing, and neither does the fiftieth.
     expect(chancesFor(50, 0)).toBe(SPELL_MISS_FLOOR);
     // Nor does arriving at the cap along the school route, or along both.
-    expect(chancesFor(0, 16)).toBe(SPELL_MISS_FLOOR);
+    expect(chancesFor(0, 17)).toBe(SPELL_MISS_FLOOR);
     expect(chancesFor(10, 10)).toBe(SPELL_MISS_FLOOR);
   });
 });

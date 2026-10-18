@@ -852,6 +852,11 @@ describe('Enchant Weapon - Revelation', () => {
        * predicate. Over 30 fights the reaction is asked about 329 auto-attacks
        * and 99 Holy Strikes and fires on NONE of them, and fires only on
        * Judgement, Holy Shock and Hammer of Wrath.
+       *
+       * JUDGEMENT LEFT THAT LIST with the Judgement balance pass, which put it
+       * on the MELEE table -- so it is now asked as a `melee-special` and must
+       * not fire, and Holy Shock carries the spell half alone. Fewer spells a
+       * fight, so the sample is wider than it was.
        * ========================================================================
        */
       const built = PRESETS_BY_ID.get('pally_shockadin')!.build();
@@ -864,7 +869,7 @@ describe('Enchant Weapon - Revelation', () => {
       };
 
       const asked = new Map<string, { n: number; fired: number }>();
-      for (let seed = 1; seed <= 6; seed += 1) {
+      for (let seed = 1; seed <= 20; seed += 1) {
         const sim = new Simulation(
           trainingDummyEncounter(
             { ...profile, simulation: { ...profile.simulation, iterations: 1, seed } } as never,

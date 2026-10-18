@@ -103,30 +103,23 @@ export const COMBAT_CONSTANTS = {
    * The miss a spell can never go below, however much hit is stacked.
    *
    * ----------------------------------------------------------------------------
-   * THE RULESET OWNER: 17% base, "reduced to a minimum of 1% chance to miss.
-   * Effectively making the 'hit cap' 16% for Spells." So the useful range of
-   * spell hit is 0 to 16 and the seventeenth point buys nothing.
+   * ZERO, BY THE OWNER'S LATER RULING: "Spells currently have a 1% chance to
+   * miss at a minimum, this has been removed. Which means spells need 17%
+   * chance to hit in order to cap."
    *
-   * IT WAS A FLOOR OF ZERO, which made the cap 17 and handed a caster at 17%
-   * hit a spell that could not miss.
+   * It was 1% for a release on the owner's earlier "reduced to a minimum of 1%
+   * chance to miss", which made the cap 16. The field and `AttackChances.
+   * missFloor` are KEPT at zero rather than deleted: hit reaches a spell along
+   * two routes -- the `hitChance` stat here and school-scoped `hitBonus` in
+   * `withModifier` -- and the floor travelling with the table is what keeps
+   * the two routes agreeing if a floor is ever reinstated. With zero it does
+   * nothing either route can see; `withModifier` already floors at zero.
    *
-   * AND A PROFILE WAS ALREADY THERE, which this comment first claimed it was
-   * not. No profile exceeds 16% on the `hitChance` STAT -- Venom and Combat sit
-   * exactly on it -- and that is only one of the two routes to spell hit. The
-   * SHOCKADIN takes Divine Precision for +12% HOLY hit on top of 6% from gear,
-   * which is 18 against a 17% miss: its Holy spells could not miss at all, and
-   * now miss 1%. Worth -2.4 DPS.
-   *
-   * **A CAP NOBODY HAS REACHED YET IS STILL THE WRONG CAP** -- and checking only
-   * the stat said nobody had reached it. See `missFloor` on `AttackChances` for
-   * why the floor has to travel with the table rather than live here.
-   *
-   * MELEE AND RANGED KEEP THEIR FLOOR OF ZERO, deliberately: the owner stated
-   * this for SPELLS and `missFromSkill` is a different formula with a skill
-   * term in it. Giving them a floor by analogy would be inventing a rule.
+   * The Shockadin's Divine Precision (+12% Holy hit over 6% from gear) is the
+   * profile this reaches: its Holy spells went back to unable to miss.
    * ----------------------------------------------------------------------------
    */
-  spellMissFloor: 100,
+  spellMissFloor: 0,
 
   /**
    * Crit lost against a higher-level target: 180 plus 100 per level of
@@ -461,9 +454,9 @@ function buildChances(
       return {
         ...NO_CHANCES,
         /*
-         * Spell miss is flat: weapon skill has nothing to do with it, and it
-         * FLOORS AT 1% rather than at zero -- the owner's cap, which makes 16
-         * points of hit the most a caster can use. See `spellMissFloor`.
+         * Spell miss is flat: weapon skill has nothing to do with it. It
+         * floors at `spellMissFloor`, which is ZERO now, so 17 points of hit
+         * cap a caster. See `spellMissFloor`.
          */
         miss: Math.max(
           COMBAT_CONSTANTS.spellMissFloor,

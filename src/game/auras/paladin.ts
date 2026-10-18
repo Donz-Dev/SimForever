@@ -6,6 +6,7 @@ import {
   SEAL_OF_RIGHTEOUSNESS_SP_COEFFICIENT_ONE_HAND,
   SEAL_OF_RIGHTEOUSNESS_SP_COEFFICIENT_TWO_HAND,
 } from '../combat/coefficients';
+import { linearBySpeed } from '../combat/speedRow';
 
 /**
  * Paladin auras, from the WoW Forever beta client (build 1.60.1.69876).
@@ -84,11 +85,57 @@ export function activeSeal(actor: Combatant): string | undefined {
  * ----------------------------------------------------------------------------
  */
 
-/** The low end of "21 to 75", read as the base the coefficient adds to. */
-// 20.5, the low end of foreverchanges.pro's "20.5 to 71.4", against our
-// capture's "21 to 75" at the same build. WHICH END IS THE BASE IS STILL THE
-// SAME INTERPRETATION as before -- only the number moved.
-export const SEAL_OF_RIGHTEOUSNESS_BASE = 20.5;
+/*
+ * ============================================================================
+ * THE SEAL BALANCE PASS PUT WEAPON SPEED BACK, in the owner's own formula:
+ *
+ *     base(speed) x baseSpeed x handMultiplier + coefficient x spellPower
+ *
+ *   base(speed)     23 at a 1.3 base speed and 77 at 4.0, linear between
+ *   handMultiplier  1.2 two-handed; 0.85 - 0.2 x max(0, 2.0 - speed) one-handed
+ *   coefficient     12% two-handed, 10% one-handed
+ *
+ * It replaces the flat 20.5 read off the low end of "21 to 75". The base row is
+ * a per-SECOND-like figure multiplied by the speed again, so a slow weapon gains
+ * twice -- which is what "slower weapons cause more Holy damage per swing" reads
+ * as, and it is the owner's arithmetic rather than a derivation.
+ *
+ * OUTSIDE 1.3 TO 4.0 THE BASE IS CLAMPED to the nearer end -- see
+ * `combat/speedRow.ts`, which Flametongue shares.
+ * ============================================================================
+ */
+export const SEAL_OF_RIGHTEOUSNESS_BASE_AT_MIN_SPEED = 23;
+export const SEAL_OF_RIGHTEOUSNESS_BASE_AT_MAX_SPEED = 77;
+export const SEAL_OF_RIGHTEOUSNESS_TWO_HAND_MULTIPLIER = 1.2;
+
+/** The owner's speed-scaled base row, before the speed and hand multipliers. */
+export function sealOfRighteousnessBaseRow(speedSeconds: number): number {
+  return linearBySpeed(
+    speedSeconds,
+    SEAL_OF_RIGHTEOUSNESS_BASE_AT_MIN_SPEED,
+    SEAL_OF_RIGHTEOUSNESS_BASE_AT_MAX_SPEED,
+  );
+}
+
+/** 1.2 two-handed; `0.85 - 0.2 x max(0, 2.0 - speed)` one-handed. */
+export function sealOfRighteousnessHandMultiplier(
+  speedSeconds: number,
+  twoHanded: boolean,
+): number {
+  if (twoHanded) return SEAL_OF_RIGHTEOUSNESS_TWO_HAND_MULTIPLIER;
+  return 0.85 - 0.2 * Math.max(0, 2.0 - speedSeconds);
+}
+
+/** The flat half of a Seal of Righteousness hit, which spell power adds to. */
+export function sealOfRighteousnessBase(speedSeconds: number, twoHanded: boolean): number {
+  if (speedSeconds <= 0) return 0;
+  return (
+    sealOfRighteousnessBaseRow(speedSeconds) *
+    speedSeconds *
+    sealOfRighteousnessHandMultiplier(speedSeconds, twoHanded)
+  );
+}
+
 
 /**
  * A seal's damage: its flat base, PLUS its spell power coefficient.
@@ -103,8 +150,8 @@ export function sealDamage(base: number, spellPower: number, coefficient: number
 }
 
 /**
- * Seal of Righteousness scales by WHAT IS HELD: 22% with a two-hander, 20%
- * otherwise.
+ * Seal of Righteousness scales by WHAT IS HELD: 12% with a two-hander, 10%
+ * otherwise (the balance pass; it was 22% and 20%).
  *
  * The sheet's two rows read "(1H + Shield)" and "(2H)", so the one-hander
  * figure is the default and the two-hander is the exception -- which is also

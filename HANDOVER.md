@@ -64,6 +64,7 @@ the tooling to be a bit more sophisticated as well."
 | 32 | **THE FROSTFIRE MAGE, AND THE TWO BIGGEST GAINS WERE WITHHELD AS 60-SECOND ARTEFACTS** -- a second illegal opener reverted, Eureka held for a Fingers of Frost window, and a dead Mage Armor entry the owner had already ruled on | legal **1051.7 -> 1057.7 (+5.99 +/- 0.95 REAL)**. The revert is **-25.90 +/- 9.70**; `critical_mass` 5/5 is **+21.80 at 60s and -10.29 at 180s**, so it is NOT shipped | see below |
 | 33 | **THE ELE SHAMAN THROUGH THE LOOP, and the round found the FRAME rather than the rotation** -- the profile collapses **802 -> 546 -> 465 DPS from 60s to 300s**, so every figure ever taken on it was taken in the one regime where its mana is free. A talent declared as a ruled-out THREAT effect turned out to be a live mana talent carrying the tooltip of the talent next door | shipped **+84.08 +/- 2.84 at 180s** and **+1.01 +/- 2.09 noise at 60s**; four other answers INVERT with the clock and are not shipped. **27 of 28 profiles bit-identical** | see below |
 | 34 | **SIX PRs INTEGRATED, AND WHAT THE MERGES THEMSELVES GOT WRONG** -- #287 to #292, strictly sequential because every squash re-conflicted the rest. Rounds renumbered 28-33 in MERGE order; the question count re-derived five times; two SEMANTIC conflicts git could not see | **no figure re-measured**, on the standing instruction. Three resolutions introduced a defect the markers did not show -- one reached `main` and is repaired | see below |
+| 35 | **A MISCELLANEOUS CLEANUP, TEN OWNER ITEMS IN ONE PR** -- Rupture by combo point, the spell miss floor removed, the Paladin seal and Judgement balance pass, the Seal Twist Echo bug, three Shaman options (Flametongue Weapon, Rockbiter Weapon, Flametongue Totem), Frost Oil, and Bane of Doom, Cone of Cold and Soul Fire declared | **not re-baselined**, on the owner's standing instruction. `USES=1` on the five touched profiles: the new imbue entries read `(switched off in the list)` and nothing new never-fires. Five new questions, one old one answered | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -87,6 +88,50 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 35: the miscellaneous cleanup
+
+**TEN ITEMS FROM ONE OWNER MESSAGE, AND THE ONE CALLED A BUG WAS ONE.** Seal Twist
+Ret's Echo of Seal of Command was GUARANTEED -- its comment argued that "applies
+the replaced Seal's effects" meant the hit -- and Seal of Command's effect is a
+7 PPM CHANCE of the hit, so the Echo rolls it now and the charge is spent either
+way. A 3.5-second weapon is 40.8% where it was 100%.
+
+| | what changed |
+| --- | --- |
+| Rupture | 1/2/3% AP a tick for 1/2/3 combo points, capped at 3%; was a flat 3% |
+| Spell miss | the 1% floor is gone, so the spell cap is 17. The field stays at 0 |
+| Seal of Righteousness | `base(speed) x speed x hand + 10%/12% SP`, base 23 at 1.3 to 77 at 4.0 |
+| Seal of Command | rolls `melee-special`, so it can miss or be dodged on its own |
+| all three seals | do not ride on Holy Strike -- nor the Echo, nor Seal of Fury's shield |
+| Judgement | `1.5 / 3.5` with every seal, on `melee-special`: 2x crits, no Revelation |
+| Shaman | Flametongue and Rockbiter Weapon; one main-hand imbue at a time; Elemental Weapons reaches both |
+| raid buffs | Flametongue Totem, exclusive with Windfury Totem, selected by no preset |
+| consumables | Frost Oil, a third weapon effect per hand: 10% for 30 Frost + 27% SP |
+| new spells | Cone of Cold, Bane of Doom and Soul Fire, each wired to the talents that name it |
+| DoT application | Corruption, Bane of Agony, Siphon Life, Shadow Word: Pain and Devouring Plague now ROLL TO HIT when applied, through a new `rollApplication` that folds in school-scoped hit |
+
+**THE HAND-KEPT LISTS ARE WHERE A NEW SPELL GOES MISSING, AND A TEST CAUGHT ONE.**
+Cone of Cold had to join `CHILL_ABILITY_IDS`, `FROST_SPELL_IDS`,
+`MAGE_DAMAGE_SPELL_IDS` (and through it `MAGE_COSTED_SPELL_IDS`) and Frost
+Channeling's list. The Arcane Power cost test derives its list from the book and
+failed until it was added -- the other three would have been silent.
+
+**THE ENHANCEMENT LIST'S IMBUE ENTRY HAD TO CHANGE FOR THE OPTION TO WORK AT
+ALL.** It read `withoutAura('windfury_weapon')`, so a Flametongue put in the
+pre-combat list would have been overwritten by a Windfury at the pull. All
+three imbue entries are gated on NO imbue being up; Windfury is the enabled one.
+
+**FIVE PURE DoTs NEVER ROLLED TO HIT, AND THE WHOLE SUITE PASSED WITH IT.** The
+owner's rule is that a DoT application rolls; an ability that deals damage gets
+the roll from `dealDamage`, and these five deal nothing on the cast, so nothing
+asked. Found while declaring Bane of Doom. **`simulation.rollAttack`, which
+Insect Swarm and Serpent Sting use, was the near miss**: it reads the table
+alone, so Shadow Focus -- the school-scoped hit the Shadow Priest reaches its cap
+through -- would never have reached Shadow Word: Pain. `rollApplication` in
+`engine/combat/damage.ts` is `rollTable` itself with no damage in it. The new
+tests fail 6 of 26 with the fix reverted. SM/DS's Corruption goes 4.0 to 4.2
+casts a fight, which is the misses being recast.
+
 ## Questions outstanding for the owner
 
 **GATHERED HERE BECAUSE EACH IS BURIED IN THE ROUND THAT RAISED IT**, and a
@@ -98,7 +143,6 @@ write-up; none is an engine gap.
 | **Ninety rage on 2H Arms' Heroic Strike** -- re-swept with Recklessness and Hamstring in, 70 measures **+3.95 against a combined interval of 4.73**. The peak has moved toward 70 and has not arrived | round 15 | one constant, and the figure is the owner's own respecification from 75 |
 | **Nature's Reach's second clause** -- "+4% chance to hit", implemented as the flat `hitChance` stat, which the MELEE table reads too. It is what puts the Cat Druid on its 8% cap, and removing it measures **-17.2** | round 14 | if it is meant to be spell-only, the Cat is 4% below cap and its tree needs rebuilding |
 | **Consecrated Ground** -- wording says "Holy SPELLS" and the implementation reaches the seal and Holy Strike too. **+66** to the Shockadin, the biggest talent on that profile | round 12 | the reading, and the Shockadin's figure |
-| **Judgement of Command is left on the sheet's 0.43** where Righteousness and Fury took the exact `1.5 / 3.5`. The note names two abilities; a ruling covers what it says | round 17 | 0.33% on one seal, and whether all three should be the expression |
 | **Explosive Trap's 5% of attack power is on its BURN and not its initial hit.** One figure for two abilities, and only this one has two damage components | round 17 | which half carries it |
 | **"Touch of the Dead"** is the name the Undead note uses for what is plainly Touch of the Grave -- the same block, and the only part of that racial that has ever scaled with anything | round 17 | a naming question, not an ambiguity about which effect |
 | **Does Arcane Blast's window REFRESH?** You describe it as "a maintenance buff that is meant to be kept at 4 stacks for an entire fight", and `refreshBehaviour: 'ignore'` makes that impossible -- fifteen seconds from first application, no cast extends it. `reset` would express what you describe. **STILL OPEN AND NO LONGER BLOCKING: it is now PRICED AT ABOUT ZERO** -- `reset` alone measures 1089.0 against 1090.3, and a maintenance entry on top of it is **-1.1**, because a four-stack refresh costs EIGHT TIMES base and the channel floor shipped in round 23 already captures what maintenance was buying. So this is a CORRECTNESS question about your intent, not a rotation question | round 22, priced in round 23 | the field, and whether the tooltip means what it says. **Not the rotation**: the stack gate still peaks at 4 under both readings, and Arcane Wrath loses by 52 to 86 under both |
@@ -116,8 +160,13 @@ write-up; none is an engine gap.
 | **Are RAGE OF THE FARSEER and ELEMENTAL MASTERY meant to trigger a global cooldown?** Both are instants on a 180 second cooldown, and `abilities/shaman.ts` leaves both ON the GCD as the DEFAULT rather than as a decision -- the spellbook capture states no cost, no cast time and nothing about the GCD, and both comments say so in as many words, including "the owner has ruled several cooldowns off the GCD individually, so if this is one of them it is one line". **THIS ONE PRICES A SHIPPED CHANGE**: pre-casting the farseer at a 0s lead is worth **+13.30** entirely because it dodges the GCD, so if the ability should never have been paying one, that figure is pricing a bug and goes the way Arcane Power's +24.9 did | round 27 | **+13.30 on Enh Shaman**, and the Elemental Shaman's +13.9 for the same pre-cast of Elemental Mastery -- two profiles, same question |
 | **Your Searing Totem pre-cast at a 1.5s lead measures +3.09 +/- 3.02 to REMOVE**, on the Enhancement Shaman. It is kept because it is your line and the figure barely clears its interval -- but it is **also** the subject of the ticking-effect question three rows above, so the same line is now flagged for two independent reasons: it may be worth a little to delete, and it may be illegal before the pull | round 27 | one opener line, and it would answer half of the ticking-effect question by removing the only case | 
 | **Should the Arcane Mage take Arcane Wrath, now that Presence of Mind works on it?** You have raised the spell twice, and its "very solid justification for not taking" expired with the Arcane Blast reading it rested on. It has been un-pricable since: a 3.5-second cast whose one obvious pairing did not work on it. No Mage preset spends the point today | round 29 | the Arcane build and its list, and a spell you have twice said looks worth taking |
+| **The caster benchmark templates aim at a spell cap of 16, which is 17 now.** Every caster row's hit was set so gear plus talents reached 16; with the floor gone each misses 1% more than the template meant. The Tauren precedent was your "+10 hit rating, subtracted from elsewhere"; nothing was changed on that authority, and the Moonkin is pinned one point short in `statHeadroom.test.ts` | round 35 | the hit row on every caster template, about 1% miss on every caster profile |
+| **Soul Fire's coefficient is Classic's 100%**, under `PLACEHOLDER_SOUL_FIRE_SP_COEFFICIENT` -- you gave its damage, cost, cast and cooldown and no coefficient, and the sheet has no row | round 35 | one constant; no profile casts Soul Fire yet |
+| **Flametongue Weapon and Flametongue Totem roll no table and crit at MELEE crit for 2x**, the poison-and-seal precedent for damage riding a weapon hit. They are Fire damage and could equally be spell crit at 1.5x | round 35 | the crit half of both Flametongues |
+| **Frost Oil rolls the SPELL table** -- 17% miss, spell crit -- because it "procs a Frostbolt". The other reading is the Flametongue one above | round 35 | whether the oil can miss |
+| **Seal of Righteousness's base is CLAMPED outside 1.3 to 4.0 seconds**, and so are both Flametongues. You gave two points and a line; extending the line past them is a number nobody stated | round 35 | nothing today -- no weapon on file is outside the range |
 
-**TWENTY-ONE ROWS, AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**TWENTY-FIVE ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
@@ -10209,7 +10258,7 @@ Measured at `d2718b0`, and the numbers say it is not close:
 | **64 of 468 talents are a live gap** | well down from a raw count of 251 unmodelled reasons, because 95 are permanently out of scope by ruling and 35 more are PARTLY modelled. See the census below, and **re-sum it rather than adjusting it** — the raw total is not a work queue. **The Warrior is at zero**, the first class to get there |
 | **114 abilities declared against 478 captured** | the data is on disk; the declarations are not. Druid 15, Hunter 14, Mage 13, Rogue 12, Warlock 10, Shaman 9, Priest 7, Paladin 6, plus the Warrior's 27. **THE WARRIOR IS RECONCILED**, which is what the exclusion list below actually means: 42 captured against 30 declared counting its three stances, and each of the 12 that are not declared is named — 3 that Forever has and nothing here needs, 9 that are threat or crowd control by ruling. See [docs/warrior.md](docs/warrior.md). It is the only class where the subtraction balances |
 | ~~**Coefficients**~~ | **DONE, AND NOW EVERY ROW IS APPLIED.** `WoWSimWorksheet.xlsx`, the owner's authoritative coefficient document, is transcribed in `src/game/combat/coefficients.ts` and applied across all nine classes. Every derived rule is deleted. The last unapplied row was Hammer of Wrath, which was not a declared ability until the owner put it in two Paladin priority lists; the two poison rows went the same way when the poison system landed. [docs/spell-coefficients.md](docs/spell-coefficients.md) |
-| **9 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. **COUNT THE DECLARATIONS, DO NOT ADJUST THE NUMBER**: `grep -rhoE "(export )?const PLACEHOLDER_[A-Z_]+" src/ \| grep -oE "PLACEHOLDER_[A-Z_]+" \| sort -u \| wc -l`. **THE COMMAND THAT USED TO BE HERE COUNTED MENTIONS AND OVER-COUNTED BY FIVE** -- a deleted placeholder leaves its NAME behind in the comment explaining what it used to be, and Combustion's duration, Maelstrom Weapon's chance, the pet's base DPS, the pet's swing and the old coefficient cast cap are all epitaphs rather than placeholders now. That is why this figure has been wrong three times: the instruction was right and its command was not. Sniper Shot's invented 200-mana cost is gone, but it was never one of these -- it was a bare literal with a false caveat, which is worse, because an invented number that is not named cannot be audited |
+| **12 `PLACEHOLDER_*` constants** (re-counted in round 35, which added Soul Fire's coefficient) | each a real number nobody has supplied. **COUNT THE DECLARATIONS, DO NOT ADJUST THE NUMBER**: `grep -rhoE "(export )?const PLACEHOLDER_[A-Z_]+" src/ \| grep -oE "PLACEHOLDER_[A-Z_]+" \| sort -u \| wc -l`. **THE COMMAND THAT USED TO BE HERE COUNTED MENTIONS AND OVER-COUNTED BY FIVE** -- a deleted placeholder leaves its NAME behind in the comment explaining what it used to be, and Combustion's duration, Maelstrom Weapon's chance, the pet's base DPS, the pet's swing and the old coefficient cast cap are all epitaphs rather than placeholders now. That is why this figure has been wrong three times: the instruction was right and its command was not. Sniper Shot's invented 200-mana cost is gone, but it was never one of these -- it was a bare literal with a false caveat, which is worse, because an invented number that is not named cannot be audited |
 | ~~**Rotations are thin and unmeasured**~~ | **DONE.** All 23 priority lists are the ruleset owner's own, specified entry by entry, and every one is measured — see the baseline above and [docs/handoff-rotations.md](docs/handoff-rotations.md). The twelve dead entries of that round are gone; the nine that remain are listed in [docs/ability-audit.md](docs/ability-audit.md), each with a reason and none of them a broken declaration. Fourteen abilities and three talent mechanics were declared to reach them, and six engine capabilities built |
 
 **The Warrior was built first and built properly, and it is not the norm.** Read

@@ -52,11 +52,13 @@ const TABLE: Readonly<Record<string, readonly string[]>> = {
     '+2% Melee Crit Chance',
     '+1% Spell Crit Chance & +36 Spell Power',
     '+8 Weapon Damage',
+    'Frost Oil (Frostbolt proc)',
   ],
   'Weapon Effect (Off Hand)': [
     '+2% Melee Crit Chance',
     '+1% Spell Crit Chance & +36 Spell Power',
     '+8 Weapon Damage',
+    'Frost Oil (Frostbolt proc)',
   ],
   Strength: ['+30 Strength'],
   Agility: ['+25 Agility & +2% Crit Chance'],
@@ -674,6 +676,7 @@ describe('the weapon effect, split into main hand and off hand', () => {
       '+2% Melee Crit Chance',
       '+1% Spell Crit Chance & +36 Spell Power',
       '+8 Weapon Damage',
+      'Frost Oil (Frostbolt proc)',
     ]);
   });
 

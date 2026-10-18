@@ -291,11 +291,13 @@ describe('the preset catalogue', () => {
 
     expect(catalogue.filter((id) => !selected.includes(id))).toEqual([
       'curse_of_recklessness',
+      // Default off by the owner's ruling, and exclusive with Windfury Totem.
+      'flametongue_totem',
     ]);
     // Every id selected is a real buff, which a hand-written list could get
     // wrong in the other direction.
     for (const id of selected) expect(catalogue, id).toContain(id);
-    expect(selected).toHaveLength(catalogue.length - 1);
+    expect(selected).toHaveLength(catalogue.length - 2);
   });
 
   it('starts the target at five Sunders, so the list only refreshes', () => {

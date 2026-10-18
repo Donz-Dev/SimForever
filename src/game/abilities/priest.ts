@@ -1,5 +1,5 @@
 import type { Ability } from '../../engine';
-import { dealDamage, seconds } from '../../engine';
+import { dealDamage, rollApplication, seconds } from '../../engine';
 import { baseManaFor } from '../character/baseStatLookup';
 import {
   DEVOURING_PLAGUE,
@@ -139,8 +139,23 @@ export const SHADOW_WORD_PAIN: Ability = {
   id: 'shadow_word_pain',
   name: 'Shadow Word: Pain',
   cost: { resource: 'mana', amount: 470 },
+  attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
+    /*
+     * A PURE DoT ROLLS TO HIT ON APPLICATION -- the owner's rule -- and has no
+     * damage event to carry the roll, so it asks. `rollApplication` folds in
+     * school-scoped hit the way a damaging spell's roll does.
+     */
+    const landed = !rollApplication(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: 'shadow',
+      attackTable: 'spell',
+    }).avoided;
+    if (!landed) return;
     const extra = ability.bonuses?.[SWP_EXTRA_SECONDS_BONUS] ?? 0;
     simulation.applyAura(target, shadowWordPainAura(extra), caster.id);
   },
@@ -270,8 +285,23 @@ export const DEVOURING_PLAGUE_ABILITY: Ability = {
   name: 'Devouring Plague',
   cost: { resource: 'mana', amount: 985 },
   cooldownMs: DEVOURING_PLAGUE_COOLDOWN_MS,
-  onCast: ({ simulation, caster, target }) => {
+  attackTable: 'spell',
+  onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
+    /*
+     * A PURE DoT ROLLS TO HIT ON APPLICATION -- the owner's rule -- and has no
+     * damage event to carry the roll, so it asks. `rollApplication` folds in
+     * school-scoped hit the way a damaging spell's roll does.
+     */
+    const landed = !rollApplication(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: 'shadow',
+      attackTable: 'spell',
+    }).avoided;
+    if (!landed) return;
     simulation.applyAura(target, DEVOURING_PLAGUE, caster.id);
   },
   unmodelled:

@@ -131,6 +131,8 @@ describe('the raid selection after the owner filled it in', () => {
     const selected = new Set(PRESETS_BY_ID.get('dw_fury')!.build().raidBuffs);
     const missing = RAID_BUFFS.map((buff) => buff.id).filter((id) => !selected.has(id));
 
-    expect(missing).toEqual(['curse_of_recklessness']);
+    // And Flametongue Totem, which the owner asked for DEFAULT OFF: it is
+    // exclusive with Windfury Totem, and Windfury is what every profile runs.
+    expect(missing).toEqual(['curse_of_recklessness', 'flametongue_totem']);
   });
 });

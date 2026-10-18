@@ -33,6 +33,7 @@ import {
   judgementOfWisdomReactions,
 } from './judgementOfWisdom';
 import { windfuryTotemReaction } from './windfury';
+import { flametongueTotemReaction } from './flametongue';
 
 /**
  * Raid buffs, debuffs and consumables a character can be assumed to have.
@@ -364,6 +365,35 @@ const windfuryTotem: RaidBuff = {
   buildReactions: () => ({ damage: windfuryTotemReaction() }),
 };
 
+/**
+ * Flametongue Totem: "Each main hand hit causes 17 to 55 additional Fire
+ * damage, based on the speed of the weapon."
+ *
+ * ----------------------------------------------------------------------------
+ * EXCLUSIVE WITH WINDFURY TOTEM, by the owner's ruling -- both are Air/Fire
+ * totems one Shaman drops in the same slot -- and DEFAULT OFF, so it is the one
+ * entry besides Curse of Recklessness that no preset carries. It is offered so a
+ * user can try "Windfury Weapon + Flametongue Totem" against the default.
+ *
+ * THE FIRST `exclusiveWith` SINCE THE DRUID AURAS STOPPED EXCLUDING EACH OTHER,
+ * which is the field doing what it was kept for: the next exclusive pair being
+ * one line rather than a re-implementation.
+ *
+ * Flametongue WEAPON disables it for its own carrier; see `flametongue.ts`.
+ * ----------------------------------------------------------------------------
+ */
+const flametongueTotem: RaidBuff = {
+  id: 'flametongue_totem',
+  name: 'Flametongue Totem',
+  detail:
+    'Each main-hand hit deals 17 to 55 additional Fire damage, by weapon speed ' +
+    '(1.3 to 4.0). Cannot be taken with Windfury Totem',
+  source: 'Shaman',
+  appliesTo: 'player',
+  exclusiveWith: 'windfury_totem',
+  buildReactions: () => ({ damage: flametongueTotemReaction() }),
+};
+
 const trueshotAura: RaidBuff = {
   id: 'trueshot_aura',
   name: 'Trueshot Aura',
@@ -693,6 +723,7 @@ export const RAID_BUFFS: readonly RaidBuff[] = [
   graceOfAirTotem,
   manaSpringTotem,
   windfuryTotem,
+  flametongueTotem,
   trueshotAura,
   leaderOfThePack,
   moonkinForm,

@@ -22,7 +22,7 @@ import {
   SEAL_AURA_IDS,
   SEAL_OF_COMMAND_WEAPON_FRACTION,
   SEAL_OF_FURY_DAMAGE,
-  SEAL_OF_RIGHTEOUSNESS_BASE,
+  sealOfRighteousnessBase,
   activeSeal,
   sealDamage,
   TEMPLARS_BULWARK,
@@ -134,30 +134,37 @@ describe('the numbers', () => {
   it("uses the ruleset owner's seal formula, coefficients and all", () => {
     /*
      * ------------------------------------------------------------------------
-     * A FLAT SPELL POWER COEFFICIENT PER STRIKE, CHOSEN BY WHAT IS HELD: 20%
-     * with a one-hander, 22% with a two-hander, and NO attack power term.
-     * Hand-transcribed from WoWSimWorksheet.xlsx.
+     * THE SEAL BALANCE PASS, written out BY HAND from the owner's statement:
      *
-     * THIS REPLACED A FORMULA the owner had supplied earlier --
-     * `base + baseWeaponSpeed x (0.022 x AP + 0.044 x SP)` -- which read
-     * attack power too and scaled continuously with weapon speed. The two
-     * disagree about the SHAPE and not only the size, so both are written out
-     * here: the new rule is asserted, and the old one is asserted NOT to hold,
-     * because a half-applied replacement would still look plausible.
+     *   base(speed) = 23 at 1.3, 77 at 4.0, linear between
+     *   damage      = base(speed) x speed x hand + coefficient x spellPower
+     *   hand        = 1.2 two-handed; 0.85 - 0.2 x max(0, 2.0 - speed) one-handed
+     *   coefficient = 12% two-handed, 10% one-handed
+     *
+     * It replaced 20%/22% and a flat 20.5 base, which is asserted NOT to hold
+     * below, because a half-applied replacement would still look plausible.
      * ------------------------------------------------------------------------
      */
-    expect(sealOfRighteousnessCoefficient(false)).toBe(0.2);
-    expect(sealOfRighteousnessCoefficient(true)).toBe(0.22);
+    expect(sealOfRighteousnessCoefficient(false)).toBe(0.1);
+    expect(sealOfRighteousnessCoefficient(true)).toBe(0.12);
 
-    const base = SEAL_OF_RIGHTEOUSNESS_BASE;
+    // The two stated points, and the midpoint of the line between them.
+    expect(sealOfRighteousnessBase(1.3, true)).toBeCloseTo(23 * 1.3 * 1.2, 6);
+    expect(sealOfRighteousnessBase(4.0, true)).toBeCloseTo(77 * 4.0 * 1.2, 6);
+    expect(sealOfRighteousnessBase(2.65, true)).toBeCloseTo(50 * 2.65 * 1.2, 6);
+    // One-handed: no penalty at 2.0 and above, 0.2 a second below it.
+    expect(sealOfRighteousnessBase(2.6, false)).toBeCloseTo((23 + 54 * (1.3 / 2.7)) * 2.6 * 0.85, 6);
+    expect(sealOfRighteousnessBase(1.5, false)).toBeCloseTo((23 + 54 * (0.2 / 2.7)) * 1.5 * 0.75, 6);
+    // Clamped at the two stated ends rather than extended.
+    expect(sealOfRighteousnessBase(1.0, false)).toBeCloseTo(23 * 1.0 * (0.85 - 0.2), 6);
+    expect(sealOfRighteousnessBase(4.5, true)).toBeCloseTo(77 * 4.5 * 1.2, 6);
+    expect(sealOfRighteousnessBase(3.5, true)).not.toBeCloseTo(20.5, 1);
+
+    const base = sealOfRighteousnessBase(3.5, true);
     // The base is ADDED to the coefficient, never replaced by it.
-    expect(sealDamage(base, 500, 0.2)).toBeCloseTo(base + 100, 6);
-    expect(sealDamage(base, 500, 0.22)).toBeCloseTo(base + 110, 6);
-    expect(sealDamage(base, 0, 0.2)).toBeCloseTo(base, 6);
-
-    // ATTACK POWER NO LONGER REACHES IT AT ALL: the only other term is spell
-    // power, so a seal on a character with none is worth exactly its base.
-    expect(sealDamage(base, 0, 0.22)).toBe(base);
+    expect(sealDamage(base, 500, 0.12)).toBeCloseTo(base + 60, 6);
+    // ATTACK POWER DOES NOT REACH IT: a seal with no spell power is its base.
+    expect(sealDamage(base, 0, 0.12)).toBe(base);
   });
 
   it('reads HOLY spell power, which eight pieces of Lawbringer grant', () => {
@@ -259,21 +266,19 @@ describe('the numbers', () => {
     ).toBe(19);
   });
 
-  it('makes a two-hander hit harder, in one step rather than continuously', () => {
+  it('makes a slower weapon hit harder CONTINUOUSLY again, and a two-hander more', () => {
     /*
-     * "Slower weapons cause more Holy damage per swing" still holds, and it
-     * now holds in TWO STEPS rather than in proportion to speed: 22% with a
-     * two-hander against 20% with anything else.
-     *
-     * Under the old formula a 3.6-second weapon was worth exactly twice a
-     * 1.8-second one. Under the sheet it is worth 10% more. The direction
-     * survived the change and the magnitude did not, which is the sort of
-     * thing a test that only checked the direction would have missed.
+     * "Slower weapons cause more Holy damage per swing" held in TWO STEPS under
+     * the sheet (22% against 20%) and is continuous again under the balance
+     * pass: the base row climbs with speed AND is multiplied by it. So a
+     * 3.6-second two-hander's base is far more than twice a 1.8-second one's.
      */
-    const twoHand = sealDamage(21, 500, sealOfRighteousnessCoefficient(true));
-    const oneHand = sealDamage(21, 500, sealOfRighteousnessCoefficient(false));
-    expect(twoHand).toBeGreaterThan(oneHand);
-    expect(twoHand - 21).toBeCloseTo((oneHand - 21) * 1.1, 6);
+    const slow = sealOfRighteousnessBase(3.6, true);
+    const fast = sealOfRighteousnessBase(1.8, true);
+    expect(slow).toBeGreaterThan(fast * 2);
+    // And the two-hander beats a one-hander at the same speed, on both halves.
+    expect(sealOfRighteousnessBase(2.6, true)).toBeGreaterThan(sealOfRighteousnessBase(2.6, false));
+    expect(sealOfRighteousnessCoefficient(true)).toBeGreaterThan(sealOfRighteousnessCoefficient(false));
   });
 
   it('declares an effect for every one of the 50 talents', () => {
