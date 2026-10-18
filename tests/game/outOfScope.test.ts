@@ -78,7 +78,7 @@ function everyReason(): { id: string; reason: string; scope?: string }[] {
  * Unprefixed, so it catches "stealthed" too.
  */
 const RULED_OUT_WORDING =
-  /\bmovement\b|\bimmobilis|\bsnare|\bdaze|\bstun|\bfear\b|\bsilence|\bincapacitat|\bdisorient|\bdisarm|\bthreat\b|\btaunt\b|\bheals?\b|\bhealing\b|has a position|nothing (?:here )?moves|\btravel form\b|\bradius\b|\bstealth|\bpushback\b|avoid(?:ing)? interruption|resist interruption|\bdispel|\bcleans(?:e|ing)\b|\bpurif(?:y|ies)\b|cannot attack/i;
+  /\bmovement\b|\bimmobilis|\bsnare|\bdaze|\bstun|\bfear\b|\bsilence|\bincapacitat|\bdisorient|\bdisarm|\btaunt\b|\bheals?\b|\bhealing\b|has a position|nothing (?:here )?moves|\btravel form\b|\bradius\b|\bstealth|\bpushback\b|avoid(?:ing)? interruption|resist interruption|\bdispel|\bcleans(?:e|ing)\b|\bpurif(?:y|ies)\b|cannot attack/i;
 
 /**
  * Reasons that name a ruled-out concept IN PASSING while being inert for some
@@ -224,7 +224,8 @@ describe('the out-of-scope rulings are data, not prose', () => {
      * are rulings rather than gaps, so nobody reads the raw total as a work
      * queue again.
      */
-    expect(reasons.length).toBeGreaterThan(200);
+    // 196 since round 47, when thirteen threat reasons became threat effects.
+    expect(reasons.length).toBeGreaterThan(180);
     expect(ruled.length).toBeGreaterThan(80);
     expect(ruled.length).toBeLessThan(reasons.length);
   });
@@ -247,7 +248,6 @@ describe('the out-of-scope rulings are data, not prose', () => {
     const EVERY_RULING = [
       'positioning',
       'crowdControl',
-      'threat',
       'healing',
       'stealth',
       'castPushback',

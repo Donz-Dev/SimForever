@@ -134,6 +134,8 @@ const PRESET_RAID_BUFFS: readonly string[] = [
   'blessing_of_wisdom',
   'blessing_of_kings',
   'blessing_of_might',
+  // On every profile whose target does not attack back -- so not the tanks'.
+  'salvation',
   // On every profile, by the owner's instruction.
   'devotion_aura',
   'judgement_of_the_crusader',
@@ -156,7 +158,10 @@ const PRESET_RAID_BUFFS: readonly string[] = [
  * everywhere else they would be a ticked box worth exactly nothing. In
  * catalogue order, like the list above.
  */
-const TANK_RAID_BUFFS: readonly string[] = presetRaidBuffsWith(['thorns', 'retribution_aura']);
+const TANK_RAID_BUFFS: readonly string[] = presetRaidBuffsWith(['thorns', 'retribution_aura']).filter(
+  // A tank's target attacks back, so it carries no Salvation (round 47).
+  (id) => id !== 'salvation',
+);
 
 function presetRaidBuffsWith(extra: readonly string[]): readonly string[] {
   const chosen = new Set([...PRESET_RAID_BUFFS, ...extra]);
@@ -970,7 +975,8 @@ const SHAMAN_ELEMENTAL_TALENTS: TalentAllocation = {
  *                          this profile sets `targetAttacks: false`
  *   improved_ghost_wolf 1  `scope: 'positioning'` -- a travel form
  *   spirit_weapons 1       `scope: 'threat'` -- an unquantified parry chance
- *                          plus two threat clauses
+ *                          plus two threat clauses (live since round 47, and
+ *                          still worth no DPS, so the point stays out)
  *
  * WHAT IT BUYS IS A SHOCK CHARGE. All three shocks share one `cooldownGroup`,
  * so 1.0 second off takes the group from 6.0s to 5.0s -- 12 charges in a 60

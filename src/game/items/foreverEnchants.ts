@@ -78,6 +78,7 @@ interface Declared {
   readonly slots: readonly EquipmentSlot[];
   readonly stats?: PartialStats;
   readonly attackTableModifiers?: Enchant['attackTableModifiers'];
+  readonly threatMultiplier?: number;
   readonly unmodelled?: readonly UnmodelledEffect[];
   /**
    * The source's own words, for an entry that HAS any.
@@ -140,11 +141,8 @@ const DECLARED: readonly Declared[] = [
   {
     name: '-2% Threat',
     slots: ['cloak'],
-    unmodelled: inert(
-      '-2% Threat',
-      'Threat is not tracked. It is a permanent scope ruling rather than a gap -- ' +
-        "nothing in the simulator holds aggro -- so this is visible, selectable and inert.",
-    ),
+    // Live since round 47, when threat stopped being out of scope.
+    threatMultiplier: 0.98,
   },
 
   // ---- Chest --------------------------------------------------------------
@@ -183,11 +181,7 @@ const DECLARED: readonly Declared[] = [
   {
     name: '+2% Threat',
     slots: ['gloves'],
-    unmodelled: inert(
-      '+2% Threat',
-      'Threat is not tracked. The same ruling as the cloak\'s "-2% Threat", pointing the ' +
-        'other way: a tank wants more of it and the simulator measures neither.',
-    ),
+    threatMultiplier: 1.02,
   },
 
   // ---- Boots --------------------------------------------------------------
@@ -311,6 +305,7 @@ export const FOREVER_ENCHANTS: readonly Enchant[] = DECLARED.map((declared, inde
   slots: declared.slots,
   stats: declared.stats ?? {},
   ...(declared.attackTableModifiers ? { attackTableModifiers: declared.attackTableModifiers } : {}),
+  ...(declared.threatMultiplier !== undefined ? { threatMultiplier: declared.threatMultiplier } : {}),
   unmodelled: declared.unmodelled ?? [],
   // The owner's table states the effect and nothing more, so for those rows
   // the "tooltip" IS the effect. Saying more would be writing a tooltip

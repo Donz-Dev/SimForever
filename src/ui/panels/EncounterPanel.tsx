@@ -1,4 +1,5 @@
 import { TARGET_ARMOR_OPTIONS } from '../../game/actors/createTrainingDummy';
+import { withSalvationFor } from '../../game/buffs/raidBuffs';
 import type { CharacterProfile } from '../../profiles';
 import type { SelectOption } from '../components/Field';
 import { CheckboxField, NumberField, SelectField, TextField } from '../components/Field';
@@ -70,7 +71,18 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
       <CheckboxField
         label="Target attacks back"
         checked={profile.encounter.targetAttacks}
-        onChange={(targetAttacks) => setEncounter({ targetAttacks })}
+        onChange={(targetAttacks) =>
+          /*
+           * SALVATION FOLLOWS THE SWITCH, by the owner's instruction: on when
+           * the target does not attack back, off when it does, so a tank is
+           * never carrying -30% threat.
+           */
+          onChange({
+            ...profile,
+            encounter: { ...profile.encounter, targetAttacks },
+            raidBuffs: [...withSalvationFor(profile.raidBuffs, targetAttacks)],
+          })
+        }
       />
 
       {profile.encounter.targetAttacks ? (

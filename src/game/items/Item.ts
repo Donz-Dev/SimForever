@@ -213,6 +213,8 @@ export interface Enchant {
    * --------------------------------------------------------------------------
    */
   readonly attackTableModifiers?: Readonly<Partial<Record<AttackTableKind, AbilityModifier>>>;
+  /** "+2% Threat" is 1.02, "-2% Threat" 0.98; it multiplies everything else. */
+  readonly threatMultiplier?: number;
   readonly unmodelled: readonly UnmodelledEffect[];
   readonly tooltip: string;
 }

@@ -92,8 +92,50 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
            */
           note={isBatch ? `± ${fixed(batch.dps.standardDeviation)}` : undefined}
         />
+        {/*
+         * THREAT PER SECOND, beside the DPS it mostly comes from (round 47).
+         * The player's own: a pet holds its threat separately on a boss.
+         */}
+        <Stat
+          label="TPS"
+          value={fixed(batch.tps.mean)}
+          note={isBatch ? `± ${fixed(batch.tps.standardDeviation)}` : undefined}
+        />
         <StatAverages stats={batch.stats} />
       </div>
+
+      {batch.threat.length > 0 ? (
+        <>
+          <h3>Threat</h3>
+          <table className="breakdown">
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th className="numeric">Threat</th>
+                <th className="numeric">Share</th>
+              </tr>
+            </thead>
+            <tbody>
+              {batch.threat.map((row) => {
+                const total = batch.threat.reduce((sum, entry) => sum + entry.threat, 0);
+                const share = total > 0 ? row.threat / total : 0;
+                return (
+                  <tr key={row.name}>
+                    <td>{row.name}</td>
+                    <td className="numeric">{fixed(row.threat)}</td>
+                    <td className="numeric">
+                      <span className="share">
+                        <span className="share-bar" style={{ width: `${Math.round(share * 100)}%` }} />
+                        <span className="share-text">{(share * 100).toFixed(2)}%</span>
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </>
+      ) : null}
 
       <h3>Damage done</h3>
       {batch.abilities.length > 0 ? (

@@ -371,6 +371,9 @@ const AVOIDED: ReadonlySet<AttackOutcome> = new Set(['miss', 'dodge', 'parry'] a
 
 export class BatchTotals implements TelemetrySink {
   private readonly damageBySource = new Map<string, number>();
+  /** Threat by actor, and by actor and source, across every iteration (round 47). */
+  private readonly threatBySource = new Map<string, number>();
+  private readonly threatByAbility = new Map<string, Map<string, number>>();
   private readonly abilities = new Map<string, Map<string, AbilityAccumulator>>();
   /*
    * ----------------------------------------------------------------------------
@@ -467,6 +470,16 @@ export class BatchTotals implements TelemetrySink {
   }
 
   emit(event: TelemetryEvent): void {
+    if (event.type === 'threat') {
+      this.threatBySource.set(
+        event.sourceId,
+        (this.threatBySource.get(event.sourceId) ?? 0) + event.amount,
+      );
+      const perActor = this.threatByAbility.get(event.sourceId) ?? new Map<string, number>();
+      perActor.set(event.abilityName, (perActor.get(event.abilityName) ?? 0) + event.amount);
+      this.threatByAbility.set(event.sourceId, perActor);
+      return;
+    }
     if (event.type === 'damage') {
       this.damageBySource.set(
         event.sourceId,
@@ -709,6 +722,23 @@ export class BatchTotals implements TelemetrySink {
     let sum = 0;
     for (const id of sourceIds) sum += this.damageBySource.get(id) ?? 0;
     return sum;
+  }
+
+  /** Total threat one actor generated, across every iteration. */
+  totalThreatFor(sourceId: string): number {
+    return this.threatBySource.get(sourceId) ?? 0;
+  }
+
+  /**
+   * Where one actor's threat came from: per-iteration mean by source, largest
+   * first. A source is the ability, or for a resource gain what produced it.
+   */
+  threatBreakdown(sourceId: string): readonly { readonly name: string; readonly threat: number }[] {
+    const perActor = this.threatByAbility.get(sourceId);
+    if (!perActor) return [];
+    return [...perActor]
+      .map(([name, total]) => ({ name, threat: this.per(total) }))
+      .sort((a, b) => b.threat - a.threat);
   }
 
   /** Per-iteration mean damage dealt by one actor. */

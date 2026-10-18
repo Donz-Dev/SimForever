@@ -161,6 +161,49 @@ Rupture Rogue's pre-combat `stealth` line as `<-- NEVER HAPPENED`. It does on
 does not read that table the way the APL panel and the opener guard do. A
 reporting gap, not a rotation one.
 
+## Round 47: Threat, TPS, Salvation, and the threat ruling repealed
+
+**THE OWNER'S FEATURE, AND THE FIRST SCOPE RULING EVER REPEALED.** Threat was a
+member of `OutOfScope`; it is a feature now. One point of damage is one point of
+threat, every factor multiplies, Salvation is -30% and on exactly when the target
+does not attack back, and the two threat enchants are factors of 0.98 and 1.02.
+
+| | what | where |
+| --- | --- | --- |
+| the rule | `(damage x ability mult + ability flat) x every modifier`, landed hits only, post-mitigation | `engine/combat/threat.ts` |
+| derived | `ThreatTracker` reads damage and resource events off the stream and emits `threat` events; no random number | engine |
+| class and form | Rogue x0.71, Cat x0.71, Bear and Dire Bear **x1.5** (Forever's hotfix of 1.3) | `game/combat/threat.ts` |
+| stances | Battle 0.8, Defensive 1.3, Berserker 0.8; Defiance +5/10/15% in Defensive **with a shield** | auras, talents |
+| Righteous Fury | **+90% on Holy**, where the code said 60; Instrument of Law -20% while it is down | auras, talents |
+| talents | Arcane Subtlety, Burning Soul, Frost Channeling, Subtlety, Silent Resolve (Holy and Shadow), Natural Grace, Suppression, Spirit Weapons, Iron Creed, Demonic Brand | the `threat` effect kind |
+| Warrior | Heroic Strike +152.4, Cleave +91.8, Revenge x2.25, Shield Slam x1, Sunder 206 + 5% AP, Demoralizing Shout +47.8 -- wowsims/forever's MEASURED set | |
+| Bear | Maul x1.75, Swipe x2, Lacerate x3.33, Primal Bite x1.5 -- mythicsim's, `PLACEHOLDER_`; Demoralizing Roar +48.4 | |
+| borrowed | Searing Pain, Mind Blast, Earth Shock x2, Classic's, `PLACEHOLDER_` | |
+| resources | rage 5 a point with modifiers; mana 0.5 a point without; energy nothing | |
+| GUI | a TPS tile beside DPS, and a Threat breakdown above Damage done | Results panel |
+
+**MEASURED: ALL 31 PROFILES' DPS REPRODUCE TO THE DECIMAL** against `main`,
+which is the containment check -- threat changes no decision. TPS at 200 fights:
+
+| | TPS/DPS | | TPS/DPS |
+| --- | --- | --- | --- |
+| Bear | **2.53** | Moonkin, Ele, Frostfire, Fire | ~0.70 |
+| Prot Warr | **1.80** | Hunters | 0.58 - 0.73 |
+| Fury Prot | **1.75** | Warlocks | 0.56 - 0.59 |
+| Prot Pally | **1.63** | Arcane Mage | 0.50 |
+| Shadow Priest | 0.86 | Rogues | 0.50 |
+
+**THE ENCHANT TEST FOUND ELEVEN CASTERS WEARING "-2% THREAT"**, which did nothing
+until now: the Arcane Mage reads 0.7 x 0.7 x 0.98, and the first draft of its
+test, which said "Arcane Subtlety and Salvation and nothing else", came out 2% low.
+
+**THE REPEAL SURFACED TWO HIDDEN RULINGS.** Burning Soul's pushback and Silent
+Resolve's stun and fear lived inside their threat reasons, so `castPushback` and
+`crowdControl` each gained an entry when the threat half left. Shadowmeld's
+threat drop is a live gap now: no list casts it.
+
+Four questions, in the table below.
+
 ## Round 46: spell resistance, Spell Piercing, and Curse of the Elements at 10% and -75
 
 **THE OWNER ADOPTED THE PARTIAL-RESIST RULE FROM wowsims/forever#76**, and four
@@ -701,8 +744,12 @@ write-up; none is an engine gap.
 | **K = 9 x caster level is a FIT, not a stated rule** -- the one form in #76 that fits all four logged caster levels (20 to 30); nobody has logged a level-60 caster, and the issue's candidates give 478 to 823 at 60 | round 46 | the Arcane Mage's piercing gain, and every resisted hit the day a target has resistance |
 | **Spell Piercing past zero resistance is BONUS damage**, our reading of the issue's negative resisted values -- you ruled the floor for Curse of the Elements and not for piercing | round 46 | worth about 2.7% of every Arcane hit to the Arcane Mage; floored, it would be worth nothing against a boss |
 | **Only Insect Swarm's ticks take the full resistance**; every other DoT takes a tenth, and channels take the full share by construction. The logs name no other exception | round 46 | nothing today -- the boss resists nothing and only the Arcane Mage pierces |
+| **Instrument of Law's threat clause is a REDUCTION**, as its tooltip says -- wowsims/forever applies it as an increase and says the tooltip disagrees. Which is it? | round 47 | about 20% of a Retribution or Shockadin build's threat |
+| **The Bear's Maul x1.75, Swipe x2, Lacerate x3.33 and Primal Bite x1.5 are unverified** -- mythicsim's, which you chose; Forever's client rows state none and wowsims/forever leaves all four at x1 | round 47 | most of the Bear's TPS: it reads 2.53x its DPS |
+| **Searing Pain, Mind Blast and Earth Shock are Classic's x2**, borrowed by your choice. Neither Forever simulator has measured them | round 47 | the Shadow Priest's 0.86 TPS/DPS and the Ele Shaman's opener |
+| **Healing threat is not modelled** (both simulators use 1.0 a point; no profile heals), and **mana from Sanctified Judgement, Master of Elements and Judgement of Wisdom threatens at 0.5** -- mythicsim says one Paladin mana spell lost its threat at client 70374 and does not name it | round 47 | a few TPS on the Paladins and Mages |
 
-**FORTY-THREE ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five, round 38 added four, round 39 added five, the owner answered the Imp's Firebolt pause the same day, round 40 added three, round 41 closed two of them by changing Life Tap, round 42 added two, round 44 closed the Decimation one, and round 46 added three -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**FORTY-SEVEN ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five, round 38 added four, round 39 added five, the owner answered the Imp's Firebolt pause the same day, round 40 added three, round 41 closed two of them by changing Life Tap, round 42 added two, round 44 closed the Decimation one, round 46 added three, and round 47 added four -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count

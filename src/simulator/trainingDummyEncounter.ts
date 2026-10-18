@@ -1,4 +1,5 @@
 import type { AuraDefinition, Combatant, SimulationConfig } from '../engine';
+import { FOREVER_THREAT_RULES } from '../game/combat/threat';
 import { spellResistanceConstant } from '../game/combat/spellResistance';
 import { runPrecombat, seconds } from '../engine';
 import type { CharacterProfile } from '../profiles';
@@ -110,6 +111,10 @@ export function trainingDummyEncounter(
     // Spell resistance and Spell Piercing, K = 9 x caster level (round 46).
     // The boss resists nothing, so only piercing below zero rolls at all.
     spellResistanceConstant,
+
+    // Threat, round 47. Tracked for every fight; it draws no random number,
+    // so it cannot change a decision.
+    threatRules: FOREVER_THREAT_RULES,
 
     // A factory, not an array: every Monte Carlo iteration needs its own fresh
     // combatants rather than the previous iteration's leftovers.

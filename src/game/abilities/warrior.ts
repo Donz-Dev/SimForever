@@ -1,4 +1,5 @@
 import type { Ability } from '../../engine';
+import { DEMORALIZING_SHOUT_FLAT_THREAT, sunderArmorThreat } from '../combat/threat';
 import { dealDamage, seconds } from '../../engine';
 import { EXECUTE_PHASE_FRACTION, inExecutePhase } from '../combat/executePhase';
 import {
@@ -955,6 +956,8 @@ export const SUNDER_ARMOR_ABILITY: Ability = {
     });
     if (roll.avoided) return;
     simulation.applyAura(target, SUNDER_ARMOR, caster.id);
+    // 206 plus 5% of attack power, on a landed Sunder only (round 47).
+    simulation.generateThreat(caster, target, sunderArmorThreat(caster), 'sunder_armor_cast', 'Sunder Armor');
   },
 };
 
@@ -993,6 +996,13 @@ export const DEMORALIZING_SHOUT_ABILITY: Ability = {
   onCast: ({ simulation, caster, target }) => {
     if (!target) return;
     simulation.applyAura(target, DEMORALIZING_SHOUT, caster.id);
+    simulation.generateThreat(
+      caster,
+      target,
+      DEMORALIZING_SHOUT_FLAT_THREAT,
+      'demoralizing_shout_cast',
+      'Demoralizing Shout',
+    );
   },
 };
 

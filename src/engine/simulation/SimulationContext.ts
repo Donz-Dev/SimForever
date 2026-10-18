@@ -61,6 +61,18 @@ export interface SimulationContext {
   /** K for a caster of this level, or undefined when the fight models no resistance. */
   spellResistanceConstant(casterLevel: number): number | undefined;
 
+  /**
+   * Threat that does not come from damage -- Sunder Armor's flat, a shout's.
+   * The carrier's threat modifiers apply. A no-op when threat is not tracked.
+   */
+  generateThreat(
+    source: Combatant,
+    target: Combatant,
+    amount: number,
+    abilityId: string | undefined,
+    abilityName: string,
+  ): void;
+
   combatant(id: string): Combatant | undefined;
 
   /** Living combatants on the opposing faction. */

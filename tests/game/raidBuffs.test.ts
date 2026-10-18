@@ -98,7 +98,8 @@ describe('the catalogue', () => {
      * FLAMETONGUE TOTEM, an option the owner asked for default OFF.
      */
     // And three more from round 36: Devotion Aura, Retribution Aura, Thorns.
-    expect(RAID_BUFFS).toHaveLength(27);
+    // And Salvation from round 47, on whenever the target does not attack back.
+    expect(RAID_BUFFS).toHaveLength(28);
     expect(RAID_BUFFS_BY_ID.has('demoralizing_shout')).toBe(false);
     expect(RAID_BUFFS_BY_ID.has('judgement_of_wisdom')).toBe(true);
     expect(RAID_BUFFS_BY_ID.has('judgement_of_the_crusader')).toBe(true);

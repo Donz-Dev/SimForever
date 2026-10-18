@@ -337,7 +337,8 @@ describe('what an enchant grants', () => {
 // ---------------------------------------------------------------------------
 
 describe('the enchants that are not modelled', () => {
-  const INERT = ['+11 Healing Power', '+16 Healing Power', '-2% Threat', '+2% Threat', 'Minor Speed'];
+  // The two threat enchants left this list at round 47, when threat became tracked.
+  const INERT = ['+11 Healing Power', '+16 Healing Power', 'Minor Speed'];
 
   it('are selectable, grant nothing, and each records why', () => {
     for (const name of INERT) {
@@ -350,6 +351,11 @@ describe('the enchants that are not modelled', () => {
       expect(enchant.unmodelled[0].text, name).toBe(name);
       expect(enchant.unmodelled[0].reason.length, name).toBeGreaterThan(20);
     }
+  });
+
+  it('carries the two threat enchants as factors, -2% and +2%', () => {
+    expect(ENCHANTS_BY_ID.get(foreverEnchantId('-2% Threat'))!.threatMultiplier).toBe(0.98);
+    expect(ENCHANTS_BY_ID.get(foreverEnchantId('+2% Threat'))!.threatMultiplier).toBe(1.02);
   });
 
   it('leaves every OTHER enchant claiming nothing', () => {

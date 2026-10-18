@@ -1,4 +1,5 @@
 import type { AbilityModifier, PerTargetEffectDamage } from '../combat/abilityModifiers';
+import type { ThreatModifier } from '../combat/threat';
 import {
   AbilityModifiers,
   AttackTableModifiers,
@@ -192,6 +193,12 @@ export interface CombatantOptions {
    * the target's own stat, and nothing shows level adding any.
    */
   readonly resistances?: Partial<Record<DamageSchool, number>>;
+  /**
+   * Factors on everything this combatant threatens for, held for the whole
+   * fight: a class base, a form, a talent, an enchant. An aura's come and go
+   * with it instead. See `engine/combat/threat.ts`.
+   */
+  readonly threatModifiers?: readonly ThreatModifier[];
   readonly stats?: PartialStats;
   readonly resources?: readonly ResourceSpec[];
   readonly abilities?: readonly Ability[];
@@ -441,6 +448,8 @@ export class Combatant {
   readonly level: number;
   /** This combatant's own resistance per school; see `resistanceFor`. */
   readonly resistances: Readonly<Partial<Record<DamageSchool, number>>>;
+  /** Fight-long threat factors; see `CombatantOptions.threatModifiers`. */
+  readonly threatModifiers: readonly ThreatModifier[];
   readonly ownerId: string | undefined;
 
   readonly stats: StatBlock;
@@ -653,6 +662,7 @@ export class Combatant {
     this.faction = options.faction;
     this.level = options.level ?? 60;
     this.resistances = options.resistances ?? {};
+    this.threatModifiers = options.threatModifiers ?? [];
     this.ownerId = options.ownerId;
 
     this.stats = new StatBlock(options.stats, options.statDerivation);

@@ -844,7 +844,20 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   improved_revenge: [{ kind: 'abilityDamage', abilityId: 'revenge' }],
 
 
-  defiance: [{ kind: 'unmodelled', scope: 'threat', reason: 'Threat, which the engine does not track.' }],
+  /*
+   * "Increases all threat generated in Defensive stance by an additional 15%
+   * while a shield is equipped" -- Forever's three ranks of 5%, and its shield
+   * condition, which Classic's Defiance does not have. One more factor on top
+   * of the stance's own 1.3 (round 47).
+   */
+  defiance: [
+    {
+      kind: 'threat',
+      direction: 'increase',
+      whileAura: 'defensive_stance',
+      requires: { shield: true },
+    },
+  ],
 
   improved_sunder_armor: [{ kind: 'abilityCost', abilityId: 'sunder_armor_cast' }],
 

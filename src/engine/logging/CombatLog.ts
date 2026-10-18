@@ -128,6 +128,11 @@ export function formatCombatLogLine(event: TelemetryEvent, nameOf: NameResolver)
       return `${time}  ${nameOf(event.actorId)} dies${killer}`;
     }
 
+    case 'threat': {
+      const verb = event.amount < 0 ? 'loses' : 'gains';
+      return `${time}  ${nameOf(event.sourceId)} ${verb} ${Math.round(Math.abs(event.amount))} threat on ${nameOf(event.targetId)} (${event.abilityName})`;
+    }
+
     /*
      * A STAT SAMPLE IS BOOKKEEPING AND IS RENDERED ANYWAY, because this
      * formatter is total over the union on purpose -- a new event type has to
@@ -160,6 +165,8 @@ export function formatCombatLog(
  * in particular can outnumber everything else several times over.
  */
 const VERBOSE_EVENT_TYPES = new Set<TelemetryEvent['type']>([
+  // One per damage event and per resource gain, so as loud as the resources.
+  'threat',
   'resource_gained',
   'resource_spent',
   // One per buff edge rather than one per swing, so not high-volume -- but it

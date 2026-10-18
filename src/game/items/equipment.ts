@@ -6,6 +6,7 @@ import type {
   WeaponSlot,
   WeaponType,
 } from '../../engine';
+import type { ThreatModifier } from '../../engine';
 import { AttackTableModifiers } from '../../engine';
 import type { CombatStyleId } from '../character';
 import { getCombatStyle } from '../character';
@@ -225,6 +226,20 @@ export function attackTableModifiersForStyle(
     }
   }
   return modifiers;
+}
+
+/** Every equipped enchant's threat factor, one per enchant: they multiply. */
+export function threatModifiersForStyle(
+  equipment: Equipment,
+  style: CombatStyleId,
+): readonly ThreatModifier[] {
+  const out: ThreatModifier[] = [];
+  for (const equipped of Object.values(liveEquipment(equipment, style))) {
+    if (!equipped?.enchantId) continue;
+    const multiplier = ENCHANTS_BY_ID.get(equipped.enchantId)?.threatMultiplier;
+    if (multiplier !== undefined) out.push({ multiplier });
+  }
+  return out;
 }
 
 /**

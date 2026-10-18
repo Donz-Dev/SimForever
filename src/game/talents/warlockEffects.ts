@@ -55,7 +55,6 @@ const NO_PUSHBACK =
   'Warlock profile fighting a target that swings back would make this live.';
 
 /** Said once; three talents say it. */
-const NO_THREAT = 'Threat, which the engine does not track.';
 
 export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // --- Affliction ----------------------------------------------------------
@@ -65,7 +64,8 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   suppression: [
     { kind: 'stat', stat: 'hitChance', operation: 'flat' },
-    { kind: 'unmodelled', scope: 'threat', reason: `The hit applies. ${NO_THREAT}` },
+    // "...and reduces all threat you generate by 20%."
+    { kind: 'threat', direction: 'decrease', valueIndex: 1 },
   ],
 
   improved_corruption: [
@@ -400,7 +400,14 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   demonic_brand: [
     { kind: 'reaction', reactionId: 'demonic_brand', valueIndex: 2 },
     { kind: 'petReaction', reactionId: 'demonic_brand_strike', valueIndex: 3 },
-    { kind: 'unmodelled', scope: 'threat', reason: NO_THREAT },
+    // "Your Searing Pain generates 50% less threat."
+    { kind: 'threat', direction: 'decrease', valueIndex: 0, abilityIds: ['searing_pain'] },
+    {
+      kind: 'unmodelled',
+      reason:
+        "The pet's Shadow brand hit's \"high threat\" is the PET's threat, which " +
+        'the results page does not report; only the player\'s is summed.',
+    },
   ],
   improved_felhunter: [{ kind: 'unmodelled', reason: NO_DEMON }],
   /*
