@@ -219,7 +219,7 @@ than code.
 
 | Profile | Talents | DPS | Was | List |
 | --- | --- | --- | --- | --- |
-| Firelock | 5/11/35 | **544.3** | 544.7, −0.4 noise (Corruption out) | `WARLOCK_DESTRUCTION` |
+| Firelock | 7/11/33 (round 42; 5/11/35 before) | **544.3** | 544.7, −0.4 noise (Corruption out) | `WARLOCK_DESTRUCTION` |
 | SM/DS | 35/11/5 | **479.7** | 441.5, **+38.1 REAL** (the eight rulings) | `WARLOCK_AFFLICTION` |
 
 **FIRELOCK IS NO LONGER THE THIRD-HIGHEST PROFILE IN THE PROJECT.** It sits

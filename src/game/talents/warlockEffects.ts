@@ -60,6 +60,7 @@ const NO_THREAT = 'Threat, which the engine does not track.';
 export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // --- Affliction ----------------------------------------------------------
 
+  // Read by `lifeTapMana` in abilities/warlock.ts -- the reader was missing until round 42.
   improved_life_tap: [{ kind: 'abilityBonus', abilityId: 'life_tap', key: 'bonusPercent' }],
 
   suppression: [

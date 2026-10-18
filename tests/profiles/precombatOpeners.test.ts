@@ -371,6 +371,8 @@ describe("the owner's openers are transcribed exactly", () => {
      * with it rather than giving one. Searing Pain is the pull and brands the
      * target for the Imp; Bane of Agony at 0s deals nothing before it.
      */
+    // Round 42, the Firelock's re-optimisation once Life Tap was healed back.
+    warlock_firelock: [[0, 'bane_of_agony', '+10.30 at 60s, +4.46 at 180s, +4.71 at 300s']],
     warlock_demonology: [
       [1.5, 'searing_pain', '+19.43 against no opener, at 60s'],
       [0, 'bane_of_agony', '+13.88 at 60s; noise at 180s and 300s'],
