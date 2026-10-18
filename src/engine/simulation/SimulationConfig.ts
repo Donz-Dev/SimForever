@@ -40,6 +40,16 @@ export interface SimulationConfig {
   readonly attackChances?: AttackChanceProvider;
 
   /**
+   * The constant K in a spell's average resisted share, `|R| / (|R| + K)`,
+   * for a caster of the given level. See `engine/combat/spellResistance.ts`.
+   *
+   * ABSENT MEANS RESISTANCE IS OFF: no hit is resisted and no random number
+   * is drawn for it, which is what every engine test that builds a fight by
+   * hand wants. The ruleset passes its own.
+   */
+  readonly spellResistanceConstant?: (casterLevel: number) => number;
+
+  /**
    * Runs once at time 0, after combatants exist and before any event fires.
    * Use for opening buffs, pre-pull cooldowns and encounter setup.
    */

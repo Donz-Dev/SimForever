@@ -186,6 +186,12 @@ export interface CombatantOptions {
    * combat tables, and the armor constant. Defaults to 60.
    */
   readonly level?: number;
+  /**
+   * The combatant's own resistance per school. A raid boss has none, by the
+   * owner's ruling (round 46): Forever's logs show resistance comes only from
+   * the target's own stat, and nothing shows level adding any.
+   */
+  readonly resistances?: Partial<Record<DamageSchool, number>>;
   readonly stats?: PartialStats;
   readonly resources?: readonly ResourceSpec[];
   readonly abilities?: readonly Ability[];
@@ -433,6 +439,8 @@ export class Combatant {
   readonly kind: CombatantKind;
   readonly faction: Faction;
   readonly level: number;
+  /** This combatant's own resistance per school; see `resistanceFor`. */
+  readonly resistances: Readonly<Partial<Record<DamageSchool, number>>>;
   readonly ownerId: string | undefined;
 
   readonly stats: StatBlock;
@@ -644,6 +652,7 @@ export class Combatant {
     this.kind = options.kind;
     this.faction = options.faction;
     this.level = options.level ?? 60;
+    this.resistances = options.resistances ?? {};
     this.ownerId = options.ownerId;
 
     this.stats = new StatBlock(options.stats, options.statDerivation);
@@ -754,6 +763,23 @@ export class Combatant {
       );
     }
     return product;
+  }
+
+  /**
+   * This combatant's resistance to a school right now: its own, plus every
+   * aura's `resistanceBySchool`, FLOORED AT ZERO.
+   *
+   * THE FLOOR IS THE OWNER'S RULING ON CURSE OF THE ELEMENTS: its -75 cancels
+   * resistance a target has and cannot push it below none. An attacker's Spell
+   * Piercing is NOT floored -- it is subtracted after this, by the damage
+   * pipeline, and below zero it is bonus damage.
+   */
+  resistanceFor(school: DamageSchool): number {
+    let total = this.resistances[school] ?? 0;
+    for (const aura of this.auras.active) {
+      total += aura.definition.resistanceBySchool?.[school] ?? 0;
+    }
+    return Math.max(0, total);
   }
 
   /** Multiplies damage this combatant takes. */

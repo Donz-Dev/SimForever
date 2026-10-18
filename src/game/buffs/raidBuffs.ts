@@ -563,7 +563,24 @@ const faerieFire: RaidBuff = {
 };
 
 /**
- * Curse of the Elements: every magic school takes 8% more.
+ * Curse of the Elements: every magic school takes 10% more, and loses 75
+ * resistance.
+ *
+ * ----------------------------------------------------------------------------
+ * 10% AND -75, FROM FOREVER'S OWN PAGE (round 46): "Curses the target for 5
+ * min, reducing Magic resistances by 75 and increasing Magic damage taken by
+ * 10%." (Wowhead's Forever spell 1311680, whose effect rows read -74 and 11:
+ * the client's base points, one off the figure as everywhere else.) This was
+ * 8% with no resistance half, so every caster under the preset raid debuffs
+ * was a little short.
+ *
+ * ALL SIX MAGIC SCHOOLS, HOLY INCLUDED, by the owner's ruling on "Magic".
+ *
+ * THE -75 IS FLOORED AT ZERO, also the owner's: it cancels resistance a target
+ * has and does not become bonus damage. A raid boss resists nothing, so the
+ * half is live and worth nothing here -- it is what a resistant target would
+ * need. `Combatant.resistanceFor` applies the floor.
+ * ----------------------------------------------------------------------------
  *
  * PHYSICAL IS ABSENT, which is the whole point of it and also why it currently
  * changes nothing: every Warrior ability is physical, Shield Slam included, so
@@ -575,12 +592,13 @@ const faerieFire: RaidBuff = {
  * who arrives. `damageTakenBySchool` is checked by a test that fires real fire
  * damage at a target carrying this.
  */
-export const CURSE_OF_THE_ELEMENTS_MULTIPLIER = 1.08;
+export const CURSE_OF_THE_ELEMENTS_MULTIPLIER = 1.1;
+export const CURSE_OF_THE_ELEMENTS_RESISTANCE = 75;
 
 const curseOfTheElements: RaidBuff = {
   id: 'curse_of_the_elements',
   name: 'Curse of the Elements',
-  detail: 'Target takes 8% more fire, frost, nature, holy, shadow and arcane damage',
+  detail: 'Target takes 10% more fire, frost, nature, holy, shadow and arcane damage, and loses 75 of each resistance',
   source: 'Warlock',
   appliesTo: 'enemy',
   aura: {
@@ -595,6 +613,14 @@ const curseOfTheElements: RaidBuff = {
       holy: CURSE_OF_THE_ELEMENTS_MULTIPLIER,
       nature: CURSE_OF_THE_ELEMENTS_MULTIPLIER,
       shadow: CURSE_OF_THE_ELEMENTS_MULTIPLIER,
+    },
+    resistanceBySchool: {
+      arcane: -CURSE_OF_THE_ELEMENTS_RESISTANCE,
+      fire: -CURSE_OF_THE_ELEMENTS_RESISTANCE,
+      frost: -CURSE_OF_THE_ELEMENTS_RESISTANCE,
+      holy: -CURSE_OF_THE_ELEMENTS_RESISTANCE,
+      nature: -CURSE_OF_THE_ELEMENTS_RESISTANCE,
+      shadow: -CURSE_OF_THE_ELEMENTS_RESISTANCE,
     },
   },
   unmodelled:

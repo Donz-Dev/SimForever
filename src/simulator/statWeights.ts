@@ -274,6 +274,19 @@ export const WEIGHTABLE_STATS: readonly WeightableStat[] = [
     detail: "Percentage points of the TARGET's armor ignored, not of the reduction.",
   },
   {
+    /*
+     * SPELL PIERCING, round 46. Against a boss that resists nothing every point
+     * is bonus damage on a magic hit, `p / (p + 540)` on average, so it is not
+     * capped -- and a DoT tick reads a tenth of it.
+     */
+    id: 'spellPiercing',
+    name: 'Spell piercing',
+    statPerUnit: 1,
+    unitLabel: '',
+    step: 15,
+    detail: "Off the target's resistance; past zero it is bonus magic damage.",
+  },
+  {
     id: 'dodgeParryReduction',
     name: 'Reduced dodge/parry',
     statPerUnit: 1,

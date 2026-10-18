@@ -525,6 +525,17 @@ export const EFFECT_RULES: readonly EffectRule[] = [
   },
   {
     /*
+     * "+3 Spell Penetration" -- SPELL PIERCING, on 25 of Forever's own
+     * items, read by nothing until round 46 because resistance was ruled to do
+     * nothing. The logs show gear and talent piercing count the same.
+     */
+    pattern: /^\+(\d+) Spell Penetration\.?$/,
+    apply: (value, into) => {
+      into.spellPiercing = (into.spellPiercing ?? 0) + value;
+    },
+  },
+  {
+    /*
      * "Increased Defense +10." -- DEFENSE SKILL, seventeen lines of it across
      * the tank and feral sets.
      *

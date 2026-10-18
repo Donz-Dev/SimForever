@@ -86,6 +86,11 @@ export interface DamageTelemetryEvent extends TelemetryBase {
   readonly critical: boolean;
   /** Removed by armor or resistance before absorbs. */
   readonly mitigated: number;
+  /**
+   * The signed share of the hit a partial resist took -- 0.2 resisted 20%,
+   * -0.1 is 10% added by Spell Piercing. Absent when none was rolled.
+   */
+  readonly resistedShare?: number;
   /** Removed by shields. */
   readonly absorbed: number;
   /** Portion of `amount` that exceeded the target's remaining health. */

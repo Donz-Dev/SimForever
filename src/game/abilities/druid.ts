@@ -44,11 +44,12 @@ import {
  * the spell attack table has its own miss and crit, and cast times are hasted.
  * Nothing here needed an engine change.
  *
- * RESISTANCE IS RULED TO HAVE NO EFFECT. The ruleset owner: assume resistances
- * on enemy targets have no impact on damage for now. So a spell lands for full
- * against a raid boss, and `resistancesFromItems` staying unread is CORRECT
- * rather than a gap -- which is a change from how the engine survey recorded
- * it, and the reason these figures are not "optimistic".
+ * RESISTANCE IS MODELLED SINCE ROUND 46, AND A RAID BOSS HAS NONE. It was
+ * ruled to have no effect at first; Forever's partial-resist rule then arrived
+ * (wowsims/forever#76) with the owner's ruling that the boss resists nothing,
+ * so a spell still lands for full unless Spell Piercing pushes it past zero.
+ * `resistancesFromItems` is the CHARACTER's resistance and still unread,
+ * because nothing casts a spell at a profile.
  *
  * EVERY SPELL SCALES, AND THE DATA DID NOT CHANGE. The spell text still states
  * flat damage -- "62 to 68 Nature damage" -- and no coefficient; what arrived

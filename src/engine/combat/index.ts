@@ -44,6 +44,13 @@ export type { MeleeWeaponSlot } from './reactions';
 export type { HealRequest, HealResolution } from './healing';
 export { applyHealing, resolveHealing } from './healing';
 export {
+  RESIST_STEP,
+  averageResist,
+  resistBucketProbabilities,
+  resistShareFor,
+  rollResist,
+} from './spellResistance';
+export {
   RATING_PER_PERCENT,
   applyHaste,
   MAXIMUM_ARMOR_REDUCTION,

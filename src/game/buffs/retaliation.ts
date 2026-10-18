@@ -65,6 +65,8 @@ export function retaliationReaction(
         school,
         baseAmount: amount,
         appliesArmor: false,
+        // A damage shield is never partially resisted (wowsims/forever#76).
+        noPartialResist: true,
       });
     },
   };

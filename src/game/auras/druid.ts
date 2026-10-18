@@ -960,6 +960,13 @@ function tick(
     // A bleed is physical and still ignores armor; a magical tick is not
     // reduced by armor in the first place.
     appliesArmor: false,
+    /*
+     * INSECT SWARM'S TICKS TAKE THE TARGET'S FULL RESISTANCE, where most DoT
+     * ticks take a tenth: 25.6% resisted on ticks against 25.0% on the same
+     * mobs' direct hits (wowsims/forever#76). Named rather than derived -- the
+     * logs do not say why it escapes the tenth rule.
+     */
+    ...(aura.id === 'insect_swarm' ? { fullResistanceTicks: true } : {}),
   });
 }
 

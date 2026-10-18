@@ -1,4 +1,5 @@
 import type { AuraDefinition, Combatant, SimulationConfig } from '../engine';
+import { spellResistanceConstant } from '../game/combat/spellResistance';
 import { runPrecombat, seconds } from '../engine';
 import type { CharacterProfile } from '../profiles';
 import { createPlayer } from '../game/actors/createPlayer';
@@ -105,6 +106,10 @@ export function trainingDummyEncounter(
     attackChances: createForeverAttackChances({
       targetAttacks: profile.encounter.targetAttacks,
     }),
+
+    // Spell resistance and Spell Piercing, K = 9 x caster level (round 46).
+    // The boss resists nothing, so only piercing below zero rolls at all.
+    spellResistanceConstant,
 
     // A factory, not an array: every Monte Carlo iteration needs its own fresh
     // combatants rather than the previous iteration's leftovers.

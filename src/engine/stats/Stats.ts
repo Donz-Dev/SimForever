@@ -90,6 +90,13 @@ export const STAT_NAMES = [
    */
   'armorPenetration',
   /**
+   * SPELL PIERCING: flat points taken off the target's resistance to this
+   * character's spells, and below zero turned into bonus damage. Forever's
+   * items call it "Spell Penetration"; Arcane Subtlety grants it too, and the
+   * logs show the two count the same. See `engine/combat/spellResistance.ts`.
+   */
+  'spellPiercing',
+  /**
    * Percentage POINTS taken off the DEFENDER's chance to dodge or parry this
    * character's attacks.
    *

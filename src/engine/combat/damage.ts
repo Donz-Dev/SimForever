@@ -1,4 +1,5 @@
 import type { Combatant, ResourceGeneration, WeaponSlot } from '../actors/Combatant';
+import { rollResist } from './spellResistance';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import type { DamageSchool } from './DamageSchool';
 import { isPhysical } from './DamageSchool';
@@ -235,6 +236,21 @@ export interface DamageRequest {
    * ----------------------------------------------------------------------------
    */
   readonly ignoresTargetSchoolScaling?: boolean;
+
+  /**
+   * NEVER PARTIALLY RESISTED, nor raised by Spell Piercing. Forever's logs
+   * never show a damage shield -- Thorns, Retribution Aura -- resisted; their
+   * "resist" is the hit roll. (wowsims/forever#76)
+   */
+  readonly noPartialResist?: boolean;
+
+  /**
+   * A TICK THAT TAKES THE TARGET'S FULL RESISTANCE rather than a tenth of it.
+   * Most damage-over-time ticks roll against a tenth; Insect Swarm's are
+   * measured at the full share (25.6% against 25.0% on direct hits), and a
+   * channel's ticks are not periodic and take it in full by construction.
+   */
+  readonly fullResistanceTicks?: boolean;
   /**
    * This attack CANNOT critically strike, whatever table resolves it.
    *
@@ -370,6 +386,12 @@ export interface DamageResolution {
   readonly raw: number;
   /** Removed by armor or resistance, AND by a block. */
   readonly mitigated: number;
+  /**
+   * The signed share of the hit a partial resist took, AFTER the target's
+   * multipliers: 0.2 is 20% resisted, -0.1 is 10% added by Spell Piercing.
+   * Zero when nothing was rolled.
+   */
+  readonly resistedShare: number;
   /**
    * The block's share of `mitigated`, on its own.
    *
@@ -1247,6 +1269,7 @@ export function resolveDamage(
       avoided: true,
       raw: 0,
       mitigated: 0,
+      resistedShare: 0,
       blocked: 0,
       absorbed: 0,
       amount: 0,
@@ -1401,7 +1424,34 @@ export function resolveDamage(
   const targetSchoolMultiplier = request.ignoresTargetSchoolScaling
     ? target.damageTakenMultiplier
     : target.damageTakenMultiplierFor(request.school, request.periodic === true);
-  const afterTarget = afterAttacker * targetAbilityMultiplier * targetSchoolMultiplier;
+  const afterResistSource = afterAttacker * targetAbilityMultiplier * targetSchoolMultiplier;
+
+  /*
+   * ============================================================================
+   * SPELL RESISTANCE, AND SPELL PIERCING BELOW IT. Magic schools only -- armor
+   * is physical's mitigation -- and only when the ruleset supplies K.
+   *
+   * THE TARGET'S RESISTANCE IS FLOORED AT ZERO FIRST (`resistanceFor`), and the
+   * attacker's piercing comes off after the floor, so piercing past a target's
+   * resistance is bonus damage and a curse's reduction is not.
+   *
+   * A TICK ROLLS AGAINST A TENTH, piercing included, unless it is flagged to
+   * take the full share. Crits are resisted on the pre-crit amount in the logs,
+   * which a multiplier on the whole hit reproduces exactly.
+   * ============================================================================
+   */
+  let resistedShare = 0;
+  if (context && !isPhysical(request.school) && !request.noPartialResist) {
+    const constant = context.spellResistanceConstant(source.level);
+    if (constant !== undefined) {
+      const full =
+        target.resistanceFor(request.school) - source.stats.get('spellPiercing');
+      const effective =
+        request.periodic && !request.fullResistanceTicks ? full / 10 : full;
+      resistedShare = rollResist(effective, constant, context.rng);
+    }
+  }
+  const afterTarget = afterResistSource * (1 - resistedShare);
 
   /*
    * ARMOR PENETRATION SHRINKS THE ARMOR, NOT THE REDUCTION, and the two differ
@@ -1467,6 +1517,7 @@ export function resolveDamage(
     avoided: false,
     raw: afterTarget,
     mitigated,
+    resistedShare,
     blocked,
     absorbed,
     amount,
@@ -1613,6 +1664,8 @@ export function dealDamage(
     outcome: resolution.outcome,
     critical: resolution.critical,
     mitigated: resolution.mitigated,
+    // Only when a partial resist was rolled, so a log with none is unchanged.
+    ...(resolution.resistedShare !== 0 ? { resistedShare: resolution.resistedShare } : {}),
     absorbed: resolution.absorbed,
     overkill,
     periodic: request.periodic ?? false,
