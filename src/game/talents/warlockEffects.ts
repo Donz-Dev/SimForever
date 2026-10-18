@@ -344,7 +344,7 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * per-ability modifier Quietus and Early Demise want -- so this is the
      * THIRD caller for that one mechanism.
      *
-     * Neither profile takes it.
+     * The Demonology profile takes it at 2/2.
      * ------------------------------------------------------------------------
      */
     /*

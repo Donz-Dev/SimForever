@@ -1824,6 +1824,55 @@ const WARLOCK_DESTRUCTION_TALENTS: TalentAllocation = {
 };
 
 /**
+ * DEMONOLOGY -- 5 Affliction / 31 Demonology / 15 Destruction.
+ *
+ * ============================================================================
+ * THE OWNER'S FOUR FIXED POINTS: at least 31 in Demonology, Suppression 5/5,
+ * Ruin 5/5, the Succubus sacrificed and the Imp summoned with Master
+ * Demonologist. Everything else here was chosen, and the tree has almost no
+ * freedom once those are placed:
+ *
+ *   SUPPRESSION 5   all five Affliction points.
+ *   RUIN 5          tier 10 of Destruction, so ten points under it: Bane 5/5
+ *                   (which the owner's Decimation figure of a 2.4s Soul Fire
+ *                   assumes), Cataclysm 3/3 and Aftermath 2/5 -- the
+ *                   Firelock's own choices for those rows. Fifteen in all,
+ *                   which is why Agonizing Flames (tier 15) is out of reach.
+ *   DEMONIC PACT    the 31st Demonology point and FORCED: without it,
+ *                   summoning the Imp cancels the Succubus sacrifice. It needs
+ *                   Soul Link, which needs Demonic Sacrifice.
+ *
+ * THE LIVE DEMONOLOGY TALENTS ARE 23 POINTS: Unholy Power 5, Improved Imp 3,
+ * Fel Vitality 3 (+15% maximum mana), Demonic Sacrifice 1, Demonic Brand 3,
+ * Decimation 2, Soul Link 1, Demonic Knowledge 3, Master Demonologist 5.
+ * Pact's tier wants 30 points under it, so FOUR more go where they do nothing
+ * -- Demonic Embrace 4/5, the stamina talent the Firelock also carries, and
+ * three of the four have to sit at tier 10 or below to open Decimation's tier.
+ * ============================================================================
+ */
+const WARLOCK_DEMONOLOGY_TALENTS: TalentAllocation = {
+  // Affliction, 5
+  suppression: 5,
+  // Demonology, 31
+  unholy_power: 5,
+  improved_imp: 3,
+  demonic_embrace: 4,
+  fel_vitality: 3,
+  demonic_sacrifice: 1,
+  demonic_brand: 3,
+  decimation: 2,
+  soul_link: 1,
+  demonic_knowledge: 3,
+  master_demonologist: 5,
+  demonic_pact: 1,
+  // Destruction, 15
+  bane: 5,
+  cataclysm: 3,
+  aftermath: 2,
+  ruin: 5,
+};
+
+/**
  * THE SHADOW PRIEST BUILD. 13/3/35, exactly 51 points, and the twenty-first
  * profile in the project.
  *
@@ -3633,6 +3682,45 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       consumables: casterConsumables('school_fire'),
       precombat: [
         ...before(2, 'incinerate'),
+      ],
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'warlock_demonology',
+    label: 'Demonology',
+    detail: 'Undead, caster, Imp summoned, Succubus sacrificed, standing target. 31 Demonology',
+    characterClass: 'warlock',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Demonology',
+        race: 'undead',
+        characterClass: 'warlock',
+        level: 60,
+        combatStyle: 'caster',
+        stance: 'battle',
+        // Sacrificed, and Demonic Pact keeps the sacrifice when the Imp is out.
+        petFamily: 'succubus',
+        summonedDemon: 'imp',
+      },
+      talents: { ...WARLOCK_DEMONOLOGY_TALENTS },
+      // The Firelock's stone, consumables and raid: the owner's "everything
+      // else ... the same as the Firelock profile".
+      warlockStone: 'firestone',
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: casterConsumables('school_fire'),
+      /*
+       * SEARING PAIN IS THE PULL AND BANE OF AGONY GOES OUT WITH IT. The Searing
+       * Pain finishes at t=0 and brands the target, so the Imp's first Firebolt
+       * already carries a brand charge; it is the one damaging cast, which is
+       * what Gate B allows. Bane of Agony at a 0s lead deals nothing before
+       * the pull -- its first tick is after it -- and buys the DoT for no
+       * global cooldown: +13.88 +/- 4.87 at 60s, noise at 180s and 300s.
+       */
+      precombat: [
+        ...before(1.5, 'searing_pain'),
+        ...before(0, 'bane_of_agony'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),

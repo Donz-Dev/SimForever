@@ -69,6 +69,7 @@ the tooling to be a bit more sophisticated as well."
 | 37 | **THE OWNER'S LIST ACROSS 25 PROFILES, AND THREE MECHANISMS IT NEEDED** -- five new talent trees, ~30 list and opener edits, Garrote declared, a sequence that VANISH opens (`Ability.enabledBy`), channels spending Revelation and Inner Focus on their last tick, 40 unviable racial entries removed, empty off-hand weapon effects, and the four template sets in the gear picker | **not re-baselined**. `USES=1` on 22 touched profiles: every new entry and sequence fires; two found by it and fixed -- the potion breaking Stealth, and Pure Hemo's Rupture at 0.0 | see below |
 | 38 | **FURY PROT, A 29TH PROFILE, AND THE TANK EXECUTE CLAUSE** -- the owner's 5/31/15 Prot Warr copy with Bloodthirst for Shield Slam, Death Wish and their opener; both shield tanks go to Battle Stance for Execute in the last 20%, with every other rage spender switched off so they stay there. Then a two-pass optimisation, read on deaths first | **not re-baselined**. One change shipped: Fury Prot's Heroic Strike floor 26 -> 65, **+47.4 DPS at 60s, deaths flat**. Two more priced and left as questions | see below |
 | 39 | **WARLOCK DEMONS** -- the Imp and the Succubus fight, chosen under the talent trees; Unholy Power, Improved Imp, Improved Sayaad, Demonic Brand, Soul Link, Demonic Knowledge, Master Demonologist, Demonic Sacrifice with Demonic Pact, and Decimation all built and each measured on the damage that lands. Pet scaling from mythicsim-forever-engine, as the owner pointed | **no figure moves**: no preset summons a demon, and all 29 combat-log hashes are identical to `main`. Five questions | see below |
+| 40 | **DEMONOLOGY, A 30TH PROFILE** -- 5/31/15 on the owner's design: the Imp out, the Succubus sacrificed, Searing Pain and Demonic Brand, Soul Fire under Decimation in the last 35%. Taken through the optimisation procedure at 60s, 180s and 300s | **962.4 at 60s** (USES=1, 30 fights); +19.4 from Searing Pain as the pull and +13.9 from a Bane of Agony opener; the first tree and list stand. Three questions | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -154,6 +155,59 @@ Rupture Rogue's pre-combat `stealth` line as `<-- NEVER HAPPENED`. It does on
 `main` too: stealth is a `PRECOMBAT_STATES` entry with no ability, and the tool
 does not read that table the way the APL panel and the opener guard do. A
 reporting gap, not a rotation one.
+
+## Round 40: Demonology, a 30th profile, through the optimisation procedure
+
+**THE OWNER'S DESIGN**: at least 31 Demonology points, Suppression 5/5, Ruin
+5/5, Fire through Searing Pain and Demonic Brand, Soul Fire under Decimation in
+the last 35% of the fight, the Succubus sacrificed and the Imp summoned for
+Master Demonologist. Everything except the lists is the Firelock's: gear,
+enchants, Firestone, consumables, raid buffs, race. `warlock_demonology`,
+5/31/15:
+
+    https://talentsforever.com/warlock/60/05-0345003001020301351-0050325-
+
+**THE TREE HAS ALMOST NO FREEDOM, WHICH IS THE FIRST RESULT.** Demonic Pact is
+forced -- without it the Imp cancels the sacrifice -- so Demonology is exactly
+31, Ruin's tier wants ten Destruction points under it, and Suppression takes
+the last five. Inside that:
+
+| | chosen | why |
+| --- | --- | --- |
+| Destruction, under Ruin | Bane 5, Cataclysm 3, Aftermath 2 | Bane is in the owner's own 2.4s Soul Fire figure; the other five are the Firelock's |
+| Demonology, live | Unholy Power 5, Improved Imp 3, Fel Vitality 3, Demonic Sacrifice, Demonic Brand 3, Decimation 2, Soul Link, Demonic Knowledge 3, Master Demonologist 5, Demonic Pact | 27 points |
+| Demonology, dead | Demonic Embrace 4 | Pact needs 30 points under it; three of these four must sit at tier 10 or below to open Decimation's tier |
+
+**FIVE DIMENSIONS, ONE ROW EACH**, all paired at 400 iterations, read at 60s,
+180s and 300s because the build is mana-bound past a minute (headroom 24.6%,
+14.7%, 4.0%, 1.8%; DPS 946 / 896 / 717 / 559 on the first list -- the Firelock
+is 921 / 656 / 510 / 386 on the same clock):
+
+| dimension | result |
+| --- | --- |
+| **gear** | the Firelock's E65 template, by the owner's instruction |
+| **enchants** | the Firelock's, by the owner's instruction -- not measured |
+| **talents** | **nothing beats the first tree past a minute.** Aftermath 5/5 over Cataclysm is **+39.30 at 60s and -23.07 / -16.82 at 180s / 300s** -- a regime change, kept out on "rotations need to be built for longer than 1 minute". Cataclysm alone is worth +51.6 at 180s, Aftermath 2/5 +26 / +21 / +14, Fel Vitality +5.4 / +4.7 / +3.2, Bane +62.8 at 60s |
+| **pre-combat** | Searing Pain at 1.5s is the pull (**+19.43** against no opener) and **Bane of Agony at 0s ships, +13.88 +/- 4.87 at 60s**, noise at 180s and 300s. Immolate as the pull instead: -2.95, noise |
+| **the list** | **the first list stands.** Removing Immolate is -104 / -14, removing Bane of Agony -53 / -34; Shadow Bolt as the filler with Searing Pain only for the brand is **-49.6 / -122.5**; Corruption is +16.4 at 60s and -12.9 / -0.4 later; Immolate "if not active" -7.2, noise later; Soul Fire below the DoTs in the window +2.7, noise later; Life Tap's 5% swept 1-40% and nothing beats it at any length |
+| **consumables** | the Firelock's, by the owner's instruction -- not measured |
+
+**THE LARGEST NUMBER IN THE ROUND WAS NOT SHIPPED AND IS A QUESTION.** Soul
+Fire cast ALL fight, not only in the window, is **+77.27 at 60s, +11.94 at
+180s and +7.72 at 300s** -- because Decimation is built on the owner's reading
+as STANDING effects, so the 6s cooldown, the 2.4s cast and the free shard are
+there from the pull. The owner's design for this profile is the opposite --
+"transitioning to Decimation and Soul Fire at <35%" -- and so is the client
+tooltip, which ties those three clauses to a 10 second window. The list follows
+the design; which reading is right is in the questions table.
+
+**AND SOUL FIRE'S COEFFICIENT IS STILL CLASSIC'S PLACEHOLDER**, which now
+matters: it is **12.5%** of this profile at 60s, and the question has been open
+since round 35.
+
+`tools/demoVariants.ts` holds every variant; `tests/game/warlockDemonology.test.ts`
+pins the tree, the demons, the window and Decimation's 35%. **Life Tap reads
+`NEVER FIRED` at 60s**, which is the clock: it fires 4.2 times at 120s.
 
 ## Round 39: Warlock demons -- the Imp and the Succubus fight
 
@@ -398,6 +452,9 @@ write-up; none is an engine gap.
 | **Your Searing Totem pre-cast at a 1.5s lead measures +3.09 +/- 3.02 to REMOVE**, on the Enhancement Shaman. It is kept because it is your line and the figure barely clears its interval -- but it is **also** the subject of the ticking-effect question three rows above, so the same line is now flagged for two independent reasons: it may be worth a little to delete, and it may be illegal before the pull | round 27 | one opener line, and it would answer half of the ticking-effect question by removing the only case | 
 | **The caster benchmark templates aim at a spell cap of 16, which is 17 now.** Every caster row's hit was set so gear plus talents reached 16; with the floor gone each misses 1% more than the template meant. The Tauren precedent was your "+10 hit rating, subtracted from elsewhere"; nothing was changed on that authority, and the Moonkin is pinned one point short in `statHeadroom.test.ts` | round 35 | the hit row on every caster template, about 1% miss on every caster profile |
 | **Soul Fire's coefficient is Classic's 100%**, under `PLACEHOLDER_SOUL_FIRE_SP_COEFFICIENT` -- you gave its damage, cost, cast and cooldown and no coefficient, and the sheet has no row | round 35 | one constant; no profile casts Soul Fire yet |
+| **Is Decimation's Soul Fire half a standing effect, or a 10 second window?** It is built on your reading -- 6s cooldown, 2.4s cast, no shard, from the pull -- and on that reading Soul Fire cast ALL fight is **+77.27 at 60s, +11.94 at 180s, +7.72 at 300s** on the Demonology profile. Your design for that profile casts it only in the last 35%, which is what the client tooltip's window would force; the list follows the design | round 40 | Demonology, by up to 77 DPS |
+| **Aftermath 5/5 over Cataclysm 3/3 on Demonology is +39.30 at 60s and -23.07 at 180s**, -16.82 at 300s: Immolate's opening hit against 10% off every Destruction spell's mana, on a build that is out of mana by three minutes. Cataclysm is kept, on "rotations need to be built for longer than 1 minute" | round 40 | 39 DPS at 60s against 23 at 180s |
+| **Corruption on Demonology is +16.37 at 60s and -12.89 at 180s** for the same reason -- a 2 second cast and its mana -- and is left out, as it is on the Firelock by your instruction | round 40 | 16 DPS at 60s against 13 at 180s |
 | **Flametongue Weapon and Flametongue Totem roll no table and crit at MELEE crit for 2x**, the poison-and-seal precedent for damage riding a weapon hit. They are Fire damage and could equally be spell crit at 1.5x | round 35 | the crit half of both Flametongues |
 | **Frost Oil rolls the SPELL table** -- 17% miss, spell crit -- because it "procs a Frostbolt". The other reading is the Flametongue one above | round 35 | whether the oil can miss |
 | **Seal of Righteousness's base is CLAMPED outside 1.3 to 4.0 seconds**, and so are both Flametongues. You gave two points and a line; extending the line past them is a number nobody stated | round 35 | nothing today -- no weapon on file is outside the range |
@@ -418,7 +475,7 @@ write-up; none is an engine gap.
 | **The Enh Shaman holds the Seal Twist Ret's two-hander**, as you asked, and that mace's `Classes:` line is rewritten to "Paladin, Shaman" for the borrower -- otherwise the proficiency filter refuses a weapon you specified | round 37 | which classes a template weapon is offered to |
 | **The Hunter cooldown stacks have no standalone Bestial Wrath, Rapid Fire or racial entries any more**, so all of them fire only when every step of the stack is ready together -- once in a 60s fight. In a longer one the stack waits for the slowest cooldown in it | round 37 | casts per fight past three minutes |
 
-**THIRTY-EIGHT ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five, round 38 added four, round 39 added five, and the owner answered the Imp's Firebolt pause the same day -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**FORTY-ONE ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five, round 38 added four, round 39 added five, the owner answered the Imp's Firebolt pause the same day, and round 40 added three -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count

@@ -25,7 +25,7 @@ import {
   ROGUE_VENOM,
 } from './rogue';
 import { SHAMAN_ELEMENTAL, SHAMAN_ENHANCEMENT } from './shaman';
-import { WARLOCK_AFFLICTION, WARLOCK_DESTRUCTION } from './warlock';
+import { WARLOCK_AFFLICTION, WARLOCK_DEMONOLOGY, WARLOCK_DESTRUCTION } from './warlock';
 import {
   WARRIOR_BATTLE,
   WARRIOR_DUAL_WIELD_BERSERKER,
@@ -309,6 +309,12 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     owner: 'warlock',
     list: WARLOCK_DESTRUCTION,
     profiles: ['warlock_firelock'],
+  },
+  {
+    name: 'WARLOCK_DEMONOLOGY',
+    owner: 'warlock',
+    list: WARLOCK_DEMONOLOGY,
+    profiles: ['warlock_demonology'],
   },
 
   // Priest -- one profile, one list.

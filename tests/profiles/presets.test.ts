@@ -77,6 +77,7 @@ describe('the preset catalogue', () => {
       'hawk_melee',
       'warlock_smds',
       'warlock_firelock',
+      'warlock_demonology',
       'shadow_priest',
     ]);
     expect(PROFILE_PRESETS.map((preset) => preset.label)).toEqual([
@@ -108,6 +109,7 @@ describe('the preset catalogue', () => {
       'Hawk Melee',
       'SM/DS',
       'Firelock',
+      'Demonology',
       'Shadow',
     ]);
   });
@@ -153,6 +155,7 @@ describe('the preset catalogue', () => {
       hawk_melee: 'hunter',
       warlock_smds: 'warlock',
       warlock_firelock: 'warlock',
+      warlock_demonology: 'warlock',
       shadow_priest: 'priest',
     };
 
