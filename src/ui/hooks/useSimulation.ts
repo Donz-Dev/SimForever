@@ -11,7 +11,12 @@ function randomSeed(): number {
 export type SimulationState =
   | { readonly status: 'idle' }
   | { readonly status: 'running' }
-  | { readonly status: 'done'; readonly batch: BatchResult }
+  /*
+   * `profile` IS THE ONE THAT RAN, SEED INCLUDED (round 48): the hook draws a
+   * fresh seed per run, so the profile on screen cannot reproduce the result
+   * and this one can. Sim History stores it.
+   */
+  | { readonly status: 'done'; readonly batch: BatchResult; readonly profile: CharacterProfile }
   | { readonly status: 'error'; readonly message: string };
 
 /**
@@ -45,11 +50,9 @@ export function useSimulation() {
 
     setTimeout(() => {
       try {
-        const batch = runProfileBatch(
-          { ...profile, simulation: { ...profile.simulation, seed: randomSeed() } },
-          (fraction) => setProgress(fraction),
-        );
-        setState({ status: 'done', batch });
+        const ran = { ...profile, simulation: { ...profile.simulation, seed: randomSeed() } };
+        const batch = runProfileBatch(ran, (fraction) => setProgress(fraction));
+        setState({ status: 'done', batch, profile: ran });
       } catch (error) {
         setState({
           status: 'error',
@@ -59,10 +62,16 @@ export function useSimulation() {
     }, 0);
   }, []);
 
+  /** Put a finished run back on screen as though it had just completed. */
+  const restore = useCallback((batch: BatchResult, profile: CharacterProfile) => {
+    setState({ status: 'done', batch, profile });
+    setProgress(1);
+  }, []);
+
   const reset = useCallback(() => {
     setState({ status: 'idle' });
     setProgress(0);
   }, []);
 
-  return { state, progress, run, reset };
+  return { state, progress, run, restore, reset };
 }

@@ -1,4 +1,5 @@
 import type { BatchResult } from '../../simulator';
+import { headlinePower } from './headlinePower';
 import type { AttackOutcome } from '../../engine';
 import { Panel } from '../components/Panel';
 import { DonutChart } from '../charts/DonutChart';
@@ -632,63 +633,22 @@ function Stat({
 }
 
 /*
- * ============================================================================
- * THE THREE AVERAGES, plus ranged attack power for the classes it means
- * something to.
- *
- * SPELL POWER HIDES AT ZERO, which a melee class genuinely has: a Warrior row
- * reading "Spell Power 0.00" is one a reader learns to skip.
- *
- * RANGED ATTACK POWER HIDES ON A DIFFERENT RULE, and it has to. The character
- * sheet uses `!== 0` and its comment says that keeps the row off "nine classes
- * out of ten" -- which is not what it does, because EVERY class has a base 50
- * and the sheet therefore shows the row for all of them. Fifty ranged attack
- * power on a Rogue is noise by the same argument the comment makes.
- *
- * So this shows it only when it EXCEEDS the melee pool, which is exactly when
- * it is the one the character's damage scales with: 1372 against 1292 for both
- * Hunters, 50 against 1521 for an Arms Warrior. A rule about which number
- * matters rather than a threshold nobody supplied.
- *
  * HASTE IS A PERCENTAGE ABOVE BASE, not the multiplier, because every effect
- * feeding it states itself that way -- Slice and Dice is "+30% attack speed",
- * Flurry and Rapid Fire likewise -- and 1.30 would have to be translated back
- * by the reader. It is the one number here that is never zero, so it is always
- * shown: a character with no haste at all reads 0.00%, which is a fact about
- * the build rather than an empty row.
- * ============================================================================
+ * feeding it states itself that way -- Slice and Dice is "+30% attack speed" --
+ * and 1.30 would have to be translated back by the reader. A character with no
+ * haste reads 0.00%, which is a fact about the build rather than an empty tile.
  */
 function StatAverages({ stats }: { readonly stats: BatchStatAverages | undefined }) {
   if (!stats) return null;
+  /*
+   * THE OWNER'S FOUR, round 48: DPS | TPS | the largest power pool | haste.
+   * One power tile rather than one per pool -- `headlinePower` picks the pool
+   * the build scales with and names it. The rest are on the character sheet.
+   */
+  const power = headlinePower(stats);
   return (
     <>
-      <Stat label="Attack Power" value={fixed(stats.attackPower)} note="fight average" />
-      {stats.rangedAttackPower > stats.attackPower ? (
-        <Stat
-          label="Ranged Attack Power"
-          value={fixed(stats.rangedAttackPower)}
-          note="fight average"
-        />
-      ) : null}
-      {stats.spellPower !== 0 ? (
-        <Stat label="Spell Power" value={fixed(stats.spellPower)} note="fight average" />
-      ) : null}
-      {/*
-       * ONE ROW PER SCHOOL THAT READS MORE THAN THE BLIND POOL, which is the
-       * same shape the character sheet's `scopedSpellPowerRows` already uses --
-       * and the reason this had to be added here is that the sheet showing them
-       * is exactly what made their absence from the fight average invisible.
-       * The blind row above is a real number about a real pool; it is simply
-       * not the number a Shadow Priest's spells read.
-       */}
-      {Object.entries(stats.spellPowerBySchool).map(([school, value]) => (
-        <Stat
-          key={school}
-          label={`${school.charAt(0).toUpperCase() + school.slice(1)} Spell Power`}
-          value={fixed(value)}
-          note="fight average"
-        />
-      ))}
+      <Stat label={power.label} value={fixed(power.value)} note="fight average" />
       <Stat
         label="Haste"
         value={`${((stats.hasteMultiplier - 1) * 100).toFixed(2)}%`}

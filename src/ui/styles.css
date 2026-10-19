@@ -2607,3 +2607,171 @@ button:disabled {
   font-size: 11px;
   color: var(--text-muted);
 }
+
+/* ---------------------------------------------------------------------------
+   THE FIFTH PASS'S LAYOUT (round 48): a header that stays, side columns that
+   stay, and the room they no longer take given to the middle.
+
+   THE HEADER IS COMPACT BECAUSE IT IS STICKY. A 340px wordmark is about 107px
+   tall, and a bar that height pinned to the top of every scroll costs more
+   than it shows -- so the logo is sized by HEIGHT here, and the bar is one
+   fixed height that the side columns can be offset by.
+
+   THE SIDE COLUMNS SCROLL ON THEIR OWN. Pinned with a max height, so a column
+   longer than the window (the character sheet and the simulation panel
+   together) scrolls inside itself rather than being cut off at the bottom.
+   Only where the three columns sit side by side: below those widths the
+   layout stacks and a pinned column would cover the one beneath it.
+   --------------------------------------------------------------------------- */
+
+:root {
+  --header-height: 72px;
+  --column-gap: 20px;
+}
+
+.app {
+  max-width: 1880px;
+  padding-top: 0;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: var(--header-height);
+  align-items: center;
+  margin: 0 -16px var(--column-gap);
+  padding: 6px 16px;
+  background: var(--bg);
+}
+
+.logo {
+  width: auto;
+  height: calc(var(--header-height) - 14px);
+}
+
+.app-layout {
+  grid-template-columns: minmax(300px, 340px) minmax(0, 1fr) var(--rail-width);
+  gap: var(--column-gap);
+}
+
+/*
+ * A PANEL IN A PINNED COLUMN MUST NOT SHRINK. The column is a flex column with
+ * a max height, so its children's default `flex-shrink: 1` squeezed the
+ * character sheet to half its height with the rest clipped inside it -- the
+ * column is the thing meant to scroll, not each panel.
+ */
+.column > * {
+  flex-shrink: 0;
+}
+
+@media (min-width: 901px) {
+  .column-config {
+    position: sticky;
+    top: calc(var(--header-height) + var(--column-gap));
+    max-height: calc(100vh - var(--header-height) - 2 * var(--column-gap));
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    padding-right: 2px;
+  }
+}
+
+@media (min-width: 1201px) {
+  .column-rail {
+    position: sticky;
+    top: calc(var(--header-height) + var(--column-gap));
+    max-height: calc(100vh - var(--header-height) - 2 * var(--column-gap));
+    overflow-y: auto;
+  }
+}
+
+/* Thin scrollbars on the two pinned columns, in the theme's own colours. */
+.column-config,
+.column-rail {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+/* --- character sheet sections (round 48) --- */
+
+.base-stats .sheet-section th {
+  padding: 12px 0 4px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-strong);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.base-stats .sheet-section:first-child th {
+  padding-top: 0;
+}
+
+/* --- sim history (round 48) --- */
+
+.sim-history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sim-history-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-sunken);
+  cursor: pointer;
+  user-select: none;
+}
+
+.sim-history-row:hover {
+  border-color: var(--border-strong);
+}
+
+.sim-history-row.selected {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+
+.sim-history-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.sim-history-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sim-history-dps {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--accent-strong);
+  text-align: right;
+}
+
+.sim-history-meta,
+.sim-history-tps {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.sim-history-tps {
+  text-align: right;
+}
+
+.sim-history-empty {
+  margin: 0;
+  font-size: 12px;
+}
