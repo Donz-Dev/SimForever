@@ -29,12 +29,12 @@ function atPull(presetId: string): Combatant {
 }
 
 describe('class and form', () => {
-  it('gives a Rogue x0.71, before Salvation', () => {
+  it("gives a Rogue x0.8 -- the owner's figure, not Classic's 0.71 -- before Salvation", () => {
     const rogue = createPlayer({ race: 'human', characterClass: 'rogue' });
-    expect(threatMultiplierFor(rogue, all)).toBeCloseTo(0.71, 10);
+    expect(threatMultiplierFor(rogue, all)).toBeCloseTo(0.8, 10);
   });
 
-  it('gives Bear Form x1.5 and Cat Form x0.71', () => {
+  it('gives Bear Form x1.5 -- Dire Bear included, one style -- and Cat Form x0.71', () => {
     const bear = createPlayer({ race: 'tauren', characterClass: 'druid', combatStyle: 'bear' });
     const cat = createPlayer({ race: 'tauren', characterClass: 'druid', combatStyle: 'cat' });
     expect(threatMultiplierFor(bear, all)).toBeCloseTo(1.5, 10);
@@ -50,6 +50,20 @@ describe('the presets at the pull', () => {
     // 1.3 for the stance, times whatever the build's Defiance and gloves add.
     expect(threatMultiplierFor(warrior, all)).toBeGreaterThanOrEqual(1.3);
     expect(defiance).toBe(true);
+  });
+
+  it('give a Retribution Paladin Instrument of Law x Salvation, with no Righteous Fury', () => {
+    /*
+     * THE OWNER'S READING (round 47b): with Righteous Fury OFF the talent is a
+     * reduction; with it ON there is no reduction AND the Fury adds +90% to
+     * Holy. The Retribution list never casts the Fury, so the -20% applies.
+     */
+    const paladin = atPull('pally_ret');
+    expect(paladin.auras.has('righteous_fury')).toBe(false);
+    expect(threatMultiplierFor(paladin, all)).toBeCloseTo(0.8 * 0.7, 6);
+    expect(
+      threatMultiplierFor(paladin, { kind: 'damage', school: 'holy', table: 'spell' }),
+    ).toBeCloseTo(0.8 * 0.7, 6);
   });
 
   it('give a DPS Warrior Berserker Stance x Salvation: 0.8 x 0.7', () => {

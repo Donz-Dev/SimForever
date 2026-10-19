@@ -1792,6 +1792,10 @@ the owner's two rulings, round 47. `engine/combat/threat.ts` is the rule and
   the Encounter panel's switch, and every preset carries it the same way.
 - **THE PLAYER'S TPS ONLY.** A pet holds its own threat on a boss, so it is not
   summed in, where its damage is. Thorns and Retribution Aura ARE the player's.
+- **AND THE OWNER CAN OVERRULE BOTH OF THEM**: the Rogue's passive is **x0.8**
+  by their ruling, where both simulators carry Classic's 0.71 -- "most DPS
+  classes have a way to reduce threat", like the two DPS stances. Cat Form
+  stays x0.71, because the ruling named the Rogue.
 - **WHERE THE TWO FOREVER SIMULATORS DISAGREE, THE OWNER CHOSE**: the Warrior is
   wowsims/forever's set MEASURED in game, the Bear's four abilities are
   mythicsim's multipliers under `PLACEHOLDER_` names, and Searing Pain, Mind
