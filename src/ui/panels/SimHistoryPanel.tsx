@@ -26,9 +26,7 @@ export function SimHistoryPanel({ history, onRestore }: SimHistoryPanelProps) {
       badge={<span className="panel-badge">{`${history.length} of ${SIM_HISTORY_LIMIT}`}</span>}
     >
       {history.length === 0 ? (
-        <p className="muted sim-history-empty">
-          Each run lands here. Double-click one to restore its character, settings and result.
-        </p>
+        <p className="muted sim-history-empty">No runs yet.</p>
       ) : (
         <ul className="sim-history" role="listbox" aria-label="Recent runs">
           {history.map((entry) => {

@@ -35,6 +35,8 @@ interface ResultsPanelProps {
  * a single fight to mean anything. Nothing numeric comes from it.
  */
 export function ResultsPanel({ batch }: ResultsPanelProps) {
+  // Raid-forced auras are 100% by selection and are left out (round 49).
+  const forced = new Set(batch.forcedAuraIds ?? []);
   const isBatch = batch.iterations > 1;
 
   return (
@@ -105,39 +107,6 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
         <StatAverages stats={batch.stats} />
       </div>
 
-      {batch.threat.length > 0 ? (
-        <>
-          <h3>Threat</h3>
-          <table className="breakdown">
-            <thead>
-              <tr>
-                <th>Source</th>
-                <th className="numeric">Threat</th>
-                <th className="numeric">Share</th>
-              </tr>
-            </thead>
-            <tbody>
-              {batch.threat.map((row) => {
-                const total = batch.threat.reduce((sum, entry) => sum + entry.threat, 0);
-                const share = total > 0 ? row.threat / total : 0;
-                return (
-                  <tr key={row.name}>
-                    <td>{row.name}</td>
-                    <td className="numeric">{fixed(row.threat)}</td>
-                    <td className="numeric">
-                      <span className="share">
-                        <span className="share-bar" style={{ width: `${Math.round(share * 100)}%` }} />
-                        <span className="share-text">{(share * 100).toFixed(2)}%</span>
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </>
-      ) : null}
-
       <h3>Damage done</h3>
       {batch.abilities.length > 0 ? (
         <table className="breakdown">
@@ -196,12 +165,12 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
       <DamageTaken batch={batch} />
       <UptimeBars
         title="Buff uptime"
-        rows={batch.buffUptime}
+        rows={batch.buffUptime.filter((row) => !forced.has(row.auraId))}
         empty="Nothing was buffing the character."
       />
       <UptimeBars
         title="Debuff uptime on the target"
-        rows={batch.debuffUptime}
+        rows={batch.debuffUptime.filter((row) => !forced.has(row.auraId))}
         empty="Nothing was on the target."
       />
       <ResourceEconomy batch={batch} />
@@ -390,7 +359,6 @@ function CastCharges({ batch }: ResultsPanelProps) {
         const total = rows.reduce((sum, row) => sum + row.saved, 0);
         const casts = rows.reduce((sum, row) => sum + row.casts, 0);
         const resource = rows.find((row) => row.resource)?.resource;
-        const unit = resource ? (RESOURCE_NAMES[resource] ?? resource).toLowerCase() : '';
 
         return (
           <section key={rows[0].auraId}>
@@ -434,11 +402,6 @@ function CastCharges({ batch }: ResultsPanelProps) {
                 ))}
               </tbody>
             </table>
-            {total === 0 ? (
-              <p className="field-hint">
-                This buff changes cast time rather than cost, so it saves no {unit || 'resource'}.
-              </p>
-            ) : null}
           </section>
         );
       })}
@@ -486,7 +449,7 @@ function StackedBuffs({
         return (
           <ResourceTimeline
             key={chart.auraId}
-            title={`${chart.name} — one representative fight`}
+            title={chart.name}
             points={points}
             maximum={chart.max}
             durationMs={batch.representative.durationMs}
@@ -549,7 +512,7 @@ function ResourceSection({
       </div>
 
       <ResourceTimeline
-        title={`${name} available — one representative fight`}
+        title={`${name} available`}
         points={points}
         maximum={peak}
         durationMs={durationMs}
@@ -648,11 +611,10 @@ function StatAverages({ stats }: { readonly stats: BatchStatAverages | undefined
   const power = headlinePower(stats);
   return (
     <>
-      <Stat label={power.label} value={fixed(power.value)} note="fight average" />
+      <Stat label={power.label} value={fixed(power.value)} />
       <Stat
         label="Haste"
         value={`${((stats.hasteMultiplier - 1) * 100).toFixed(2)}%`}
-        note="fight average"
       />
     </>
   );

@@ -440,7 +440,10 @@ export function App() {
                   * log read the representative iteration, so the two are
                   * describing the same fight.
                   */}
-                <TimelinePanel result={batch.representative} />
+                <TimelinePanel
+                  result={batch.representative}
+                  hiddenAuraIds={batch.forcedAuraIds}
+                />
                 <CombatLogPanel result={batch.representative} />
               </>
             ) : null}

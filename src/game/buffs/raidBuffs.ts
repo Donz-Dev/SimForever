@@ -894,6 +894,20 @@ export function areExclusive(a: RaidBuff, b: RaidBuff): boolean {
 }
 
 /**
+ * The auras a raid buff selection FORCES for the whole fight (round 49): every
+ * selected entry that is a state, not a proc. Windfury Totem and Judgement of
+ * Wisdom apply nothing up front, so their windows are real and stay reported.
+ *
+ * The Results panel and the Timeline leave these out, by the owner's ask: a row
+ * that is 100% because a checkbox says so tells nobody anything.
+ */
+export function raidForcedAuraIds(ids: readonly string[]): readonly string[] {
+  return ids
+    .map((id) => RAID_BUFFS_BY_ID.get(id)?.aura?.id)
+    .filter((id): id is string => id !== undefined);
+}
+
+/**
  * The selection with Salvation on exactly when the target does not attack back.
  *
  * In catalogue order, like `withRaidBuff`, so flipping the switch twice is the

@@ -89,7 +89,6 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
         <>
           <NumberField
             label="Swing damage"
-            hint="first swing, before armor"
             value={profile.encounter.targetSwingDamage}
             min={0}
             step={100}

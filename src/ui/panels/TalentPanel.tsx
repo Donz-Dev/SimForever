@@ -169,12 +169,7 @@ export function TalentPanel({
         <DemonChoice value={petFamily} onChange={onPetFamilyChange} />
       ) : null}
       {sacrificeCancelled(allocation, petFamily, summonedDemon) ? (
-        <p className="field-hint">
-          Summoning a demon cancels the sacrifice
-          {(allocation.demonic_pact ?? 0) > 0
-            ? ' when it is the demon you sacrificed -- Demonic Pact keeps it only for a different one.'
-            : '. Demonic Pact keeps it while a different demon is out.'}
-        </p>
+        <p className="field-hint warn">The summoned demon cancels the sacrifice.</p>
       ) : null}
     </Panel>
   );

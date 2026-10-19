@@ -66,11 +66,7 @@ export function TankStatWeightsPanel({
       ].join(' · ')}
     >
       {ranked.length === 0 ? (
-        <p className="muted">
-          Nothing selected moved the death count. Tank weights need the target to swing
-          back, and a stat the fight cannot read for survival is left out rather than
-          listed at zero.
-        </p>
+        <p className="muted">Nothing selected moved the death count.</p>
       ) : (
         <table className="breakdown">
           <thead>

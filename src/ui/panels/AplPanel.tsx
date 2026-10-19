@@ -124,7 +124,7 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
       badge={list.name || 'none'}
       subtitle={
         list.entries.length > 0
-          ? `${list.entries.length} entries, highest priority first${
+          ? `${list.entries.length} entries${
               list.source === 'custom' ? ' · edited' : ''
             }`
           : 'No list: this build fights with auto attacks only'
@@ -229,10 +229,7 @@ function PrecombatSection({
       <h4 className="apl-precombat-title">Before the pull</h4>
 
       {actions.length === 0 ? (
-        <p className="field-hint">
-          Nothing. Add a stance, a form, Stealth or a spell the character casts before combat
-          starts.
-        </p>
+        <p className="field-hint">None.</p>
       ) : (
         <ol className="apl-precombat-list">
           {actions.map((action, index) => (
@@ -320,10 +317,6 @@ function PrecombatSection({
         ))}
       </select>
 
-      <p className="field-hint">
-        The lead time is real: a buff used 2 sec early has 2 sec less left at the pull, and a
-        cooldown comes back 2 sec sooner. A pre-cast spell lands the moment combat starts.
-      </p>
     </section>
   );
 }

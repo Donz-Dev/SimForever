@@ -133,11 +133,6 @@ export function SimulationPanel({
 
       {statWeights.enabled ? (
         <div className="stat-weight-picker">
-          <p className="field-hint">
-            One baseline run, then one more run per stat, each at the iteration count
-            above. A capped stat is measured in rungs: the points it takes to reach
-            each cap it has left.
-          </p>
 
           <div className="stat-weight-actions">
             <span className="muted">

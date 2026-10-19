@@ -53,3 +53,11 @@ describe('sim history', () => {
     expect(history.map((e) => e.id)).toEqual([12, 11, 10, 9, 8, 7, 6, 5, 4, 3]);
   });
 });
+
+describe('raid-forced auras', () => {
+  it('lists every selected state buff and no proc', async () => {
+    const { raidForcedAuraIds } = await import('../../src/game/buffs/raidBuffs');
+    const ids = raidForcedAuraIds(['blessing_of_kings', 'sunder_armor', 'windfury_totem', 'judgement_of_wisdom']);
+    expect(ids).toEqual(['blessing_of_kings', 'sunder_armor']);
+  });
+});

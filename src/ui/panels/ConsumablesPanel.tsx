@@ -3,10 +3,8 @@ import {
   CONSUMABLE_CATEGORIES,
   consumableOptionsFor,
   selectedConsumables,
-  weaponEffectCount,
 } from '../../game/buffs/consumables';
 import type { ClassId } from '../../game/character';
-import { resolveCombatStyle } from '../../game/character';
 import type { CharacterProfile } from '../../profiles';
 import { Panel } from '../components/Panel';
 
@@ -73,7 +71,6 @@ export function ConsumablesPanel({ profile, onChange }: ConsumablesPanelProps) {
   const selection = profile.consumables;
   const chosen = selectedConsumables(selection);
   const characterClass = profile.character.characterClass;
-  const style = resolveCombatStyle(characterClass, profile.character.combatStyle);
 
   const select = (categoryId: string, consumableId: string) => {
     const consumables: Record<string, string> = { ...selection };
@@ -138,34 +135,7 @@ export function ConsumablesPanel({ profile, onChange }: ConsumablesPanelProps) {
         * should still get one -- and somebody who wants it drunk at a different
         * threshold needs to know where to go.
         */}
-      <p className="consumable-hint">
-        <strong>Potion</strong> and <strong>Other</strong> are used during the fight, so choosing
-        one adds it to the <strong>Priority list</strong> — where the condition it is used on can
-        be changed. Potions share a two minute cooldown; an Other item has its own.
-      </p>
 
-      {/*
-        * SAID ONLY WHERE IT IS TRUE, AND IT NOW SAYS THE OPPOSITE THING.
-        *
-        * It used to read "dual wielding, so the Weapon Effect is applied to
-        * both weapons and counts twice", because ONE selection was applied per
-        * weapon and that was invisible from a panel showing one dropdown.
-        * There are two dropdowns now, so the doubling is on screen and needs
-        * no explaining.
-        *
-        * WHAT DOES NEED SAYING IS THE OTHER CASE: a build with no second
-        * weapon still SEES the off-hand row -- the Warlock stone's
-        * arrangement, where a selection the character cannot read is still
-        * what the file says -- and nothing on the row itself would tell
-        * somebody it is doing nothing.
-        */}
-      {weaponEffectCount(style) === 1 ? (
-        <p className="consumable-hint">
-          This build swings one weapon, so the <strong>Weapon Effect (Off Hand)</strong> row is
-          not applied. A shield, a held off-hand item and a Hunter&rsquo;s melee stat stick are
-          none of them a second coated weapon.
-        </p>
-      ) : null}
 
       {inert.length > 0 ? (
         <ul className="consumable-caveats">

@@ -12,6 +12,8 @@ import { Panel } from '../components/Panel';
 
 interface TimelinePanelProps {
   readonly result: SimulationResult;
+  /** Aura ids that get no lane: the raid buff selection's forced ones. */
+  readonly hiddenAuraIds?: readonly string[];
 }
 
 /** How much of the fight is on screen. "First 30s" is where a pull is read. */
@@ -40,7 +42,9 @@ const OPENING_MS = 30_000;
  * in: what the fight produced, how it was shaped, and then the lines.
  * ============================================================================
  */
-export function TimelinePanel({ result }: TimelinePanelProps) {
+const NO_HIDDEN_AURAS: readonly string[] = [];
+
+export function TimelinePanel({ result, hiddenAuraIds = NO_HIDDEN_AURAS }: TimelinePanelProps) {
   const [includeSwings, setIncludeSwings] = useState(false);
   const [zoom, setZoom] = useState<Zoom>('whole');
 
@@ -51,8 +55,13 @@ export function TimelinePanel({ result }: TimelinePanelProps) {
    * events are read; the zoom is NOT, because it only changes what is drawn.
    */
   const timeline = useMemo(
-    () => buildFightTimeline(result, { includeSwings }),
-    [result, includeSwings],
+    () => {
+      const built = buildFightTimeline(result, { includeSwings });
+      // Raid-forced auras are 100% by selection, so they get no lane (round 49).
+      const hidden = new Set(hiddenAuraIds);
+      return { ...built, auras: built.auras.filter((lane) => !hidden.has(lane.id)) };
+    },
+    [result, includeSwings, hiddenAuraIds],
   );
 
   const windowMs =
@@ -65,7 +74,6 @@ export function TimelinePanel({ result }: TimelinePanelProps) {
       title="Timeline"
       collapsible
       badge={`${Math.round(timeline.durationMs / 1000)}s`}
-      subtitle="One representative fight — the same one the combat log shows"
       actions={
         <>
           {/*
