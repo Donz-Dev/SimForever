@@ -61,3 +61,16 @@ describe('raid-forced auras', () => {
     expect(ids).toEqual(['blessing_of_kings', 'sunder_armor']);
   });
 });
+
+describe('the assumed healer', () => {
+  it('is hidden with the raid-forced auras when the target attacks back', async () => {
+    const { PRESETS_BY_ID } = await import('../../src/profiles');
+    const { runProfileBatch } = await import('../../src/simulator/runBatch');
+    const tank = PRESETS_BY_ID.get('prot_warr')!.build();
+    const batch = runProfileBatch({ ...tank, simulation: { ...tank.simulation, iterations: 1 } });
+    expect(batch.forcedAuraIds).toContain('external_healer');
+    const dps = PRESETS_BY_ID.get('dw_fury')!.build();
+    const other = runProfileBatch({ ...dps, simulation: { ...dps.simulation, iterations: 1 } });
+    expect(other.forcedAuraIds).not.toContain('external_healer');
+  }, 30_000);
+});

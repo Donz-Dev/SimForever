@@ -7,6 +7,7 @@ import type {
   DistributionSummary,
   SimulationResult,
 } from '../analysis';
+import { EXTERNAL_HEALER } from '../game/encounters/externalHealer';
 import { raidForcedAuraIds } from '../game/buffs/raidBuffs';
 import { BatchTotals, summarize } from '../analysis';
 import type { BatchAuraUptime, BatchStatAverages } from '../analysis';
@@ -415,7 +416,15 @@ export function runProfileBatch(
       baseSeed: profile.simulation.seed,
       onProgress,
     }),
-    forcedAuraIds: raidForcedAuraIds(profile.raidBuffs),
+    /*
+     * AND THE ASSUMED HEALER, by the owner's ask: the encounter forces it for
+     * the whole fight whenever the target attacks back, so it is the same kind
+     * of row as a raid buff -- 100% because of a setting.
+     */
+    forcedAuraIds: [
+      ...raidForcedAuraIds(profile.raidBuffs),
+      ...(profile.encounter.targetAttacks ? [EXTERNAL_HEALER.id] : []),
+    ],
   };
 }
 
