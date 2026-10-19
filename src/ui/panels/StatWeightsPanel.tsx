@@ -225,9 +225,7 @@ function HeadroomSection({ report }: { readonly report: HeadroomReport }) {
     <>
       <h3>{report.name}</h3>
       {report.slices.length === 0 ? (
-        <p className="muted">
-          This build rolls on no table the stat can reach, so there is nothing to cap.
-        </p>
+        <p className="muted">Nothing to cap.</p>
       ) : (
         <table className="breakdown">
           <thead>

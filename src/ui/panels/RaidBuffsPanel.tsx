@@ -145,29 +145,20 @@ function BuffGroup({
           <ul className="buff-list">
             {group.map((buff) => (
               <li key={buff.id}>
-                <label className="buff-row">
+                <label
+                  className="buff-row"
+                  title={
+                    buff.exclusiveWith
+                      ? `${buff.detail} — replaces ${RAID_BUFFS_BY_ID.get(buff.exclusiveWith)?.name}`
+                      : buff.detail
+                  }
+                >
                   <input
                     type="checkbox"
                     checked={chosen.has(buff.id)}
                     onChange={() => onToggle(buff.id)}
                   />
                   <span className="buff-name">{buff.name}</span>
-                  <span className="buff-detail muted">
-                    {buff.detail}
-                    {/* Named rather than left to be discovered by ticking it
-                        and watching another box clear itself.
-
-                        ONE PAIR DECLARES `exclusiveWith` NOW: Flametongue Totem
-                        and Windfury Totem. (Leader of the Pack and Moonkin Form
-                        were the first pair and the owner ruled them not
-                        exclusive.) */}
-                    {buff.exclusiveWith ? (
-                      <em>
-                        {' '}
-                        — replaces {RAID_BUFFS_BY_ID.get(buff.exclusiveWith)?.name}
-                      </em>
-                    ) : null}
-                  </span>
                 </label>
                 {/* OUTSIDE THE LABEL, so typing a number does not toggle the
                     switch. Disabled while the buff is off, because a strength

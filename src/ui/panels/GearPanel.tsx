@@ -112,7 +112,6 @@ export function GearPanel({ profile, onChange }: GearPanelProps) {
    */
   const templateId = templateIdFor(profile.benchmarkTemplateId, profile.character.name);
   const valuation: StatValuation = profile.statValuation ?? defaultValuationForPreset(templateId);
-  const scoring = Object.keys(valuation).length > 0;
 
   const weapons = weaponSlotsFor(style);
   const equipped = Object.keys(profile.equipment).length;
@@ -193,10 +192,8 @@ export function GearPanel({ profile, onChange }: GearPanelProps) {
         AND THE WAY BACK IS HERE rather than on the results panel, because a
         results panel is gone the next run and a valuation outlives it.
       */}
-      <p className="gear-sort-note">
-        {profile.statValuation !== undefined ? (
-          <>
-            Sorted by your measured stat weights. Hover any row for its card.{' '}
+      {profile.statValuation !== undefined ? (
+        <p className="gear-sort-note">
             <button
               type="button"
               className="gear-valuation-reset"
@@ -205,22 +202,10 @@ export function GearPanel({ profile, onChange }: GearPanelProps) {
                 onChange(rest);
               }}
             >
-              Use the build default
+              Use the build default stat valuation
             </button>
-          </>
-        ) : scoring ? (
-          <>
-            Sorted by this build&rsquo;s default stat valuation, which is every preferred stat at
-            1.00 until a real one is supplied. Run a stat weights sim to replace it. Hover any row
-            for its card.
-          </>
-        ) : (
-          <>
-            No stat valuation for this build, so items are listed by item level. Hover any row for
-            its card.
-          </>
-        )}
-      </p>
+        </p>
+      ) : null}
 
       {/*
         TWO COLUMNS AND NO MODEL BETWEEN THEM, which is the layout the owner

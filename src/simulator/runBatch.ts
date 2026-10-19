@@ -7,6 +7,7 @@ import type {
   DistributionSummary,
   SimulationResult,
 } from '../analysis';
+import { raidForcedAuraIds } from '../game/buffs/raidBuffs';
 import { BatchTotals, summarize } from '../analysis';
 import type { BatchAuraUptime, BatchStatAverages } from '../analysis';
 import type { SimulationConfig } from '../engine';
@@ -181,6 +182,11 @@ export interface BatchResult {
   readonly castCharges: readonly BatchCastCharge[];
   /** Aura uptime on the player, longest first. */
   readonly buffUptime: readonly BatchAuraUptime[];
+  /**
+   * Aura ids the raid buff selection held up for the whole fight, which the
+   * panels leave out. Set by `runProfileBatch`; empty for a bare config.
+   */
+  readonly forcedAuraIds?: readonly string[];
   /** Aura uptime on the target, longest first. */
   readonly debuffUptime: readonly BatchAuraUptime[];
   /**
@@ -403,11 +409,14 @@ export function runProfileBatch(
   profile: CharacterProfile,
   onProgress?: (fraction: number) => void,
 ): BatchResult {
-  return runBatch(trainingDummyEncounter(profile), {
-    iterations: profile.simulation.iterations,
-    baseSeed: profile.simulation.seed,
-    onProgress,
-  });
+  return {
+    ...runBatch(trainingDummyEncounter(profile), {
+      iterations: profile.simulation.iterations,
+      baseSeed: profile.simulation.seed,
+      onProgress,
+    }),
+    forcedAuraIds: raidForcedAuraIds(profile.raidBuffs),
+  };
 }
 
 /**
