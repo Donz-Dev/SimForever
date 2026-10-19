@@ -4,7 +4,7 @@ import { createPlayer } from '../../game/actors/createPlayer';
 import { resistancesFromItems } from '../../game/items/equipment';
 import { characterAtCombatStart } from '../../simulator';
 import { getStance, isTankBuild, resolveStance } from '../../game/character';
-import { critChanceFrom, spellCritChanceFrom } from '../../engine';
+import { critChanceFrom, spellCritChanceFrom, threatMultiplierFor } from '../../engine';
 import { createTrainingDummy } from '../../game/actors/createTrainingDummy';
 import { createForeverAttackChances } from '../../game/combat/attackChances';
 import { getClass, resolveCombatStyle, resourceLabel } from '../../game/character';
@@ -19,7 +19,17 @@ interface CharacterSheetPanelProps {
 interface SheetRow {
   readonly label: string;
   readonly value: string;
+  /**
+   * The heading it sits under (round 48). The panel prints a heading each
+   * time the section changes, so rows are grouped by ORDER and a builder
+   * decides the grouping by the order it pushes in.
+   */
+  readonly section?: string;
 }
+
+/** Tag every row in a list with one section. */
+const inSection = (section: string, rows: readonly SheetRow[]): SheetRow[] =>
+  rows.map((row) => ({ ...row, section }));
 
 /** Which classes have a considered sheet. Everything else gets the generic one. */
 const TAILORED: ReadonlySet<ClassId> = new Set<ClassId>(['warrior']);
@@ -52,12 +62,21 @@ export function CharacterSheetPanel({ profile }: CharacterSheetPanelProps) {
     <Panel title="Character sheet" collapsible>
       <table className="base-stats">
         <tbody>
-          {rows.map((row) => (
-            <tr key={row.label}>
-              <td>{row.label}</td>
-              <td className="numeric">{row.value}</td>
-            </tr>
-          ))}
+          {rows.flatMap((row, index) => {
+            const heading =
+              row.section && row.section !== rows[index - 1]?.section ? (
+                <tr key={`section-${row.section}`} className="sheet-section">
+                  <th colSpan={2}>{row.section}</th>
+                </tr>
+              ) : null;
+            const line = (
+              <tr key={row.label}>
+                <td>{row.label}</td>
+                <td className="numeric">{row.value}</td>
+              </tr>
+            );
+            return heading ? [heading, line] : [line];
+          })}
         </tbody>
       </table>
     </Panel>
@@ -129,7 +148,7 @@ export function warriorRows(profile: CharacterProfile, style: CombatStyleId): re
       ? `MH: ${percent(pick(forSlot('mainHand')))} | OH: ${percent(pick(forSlot('offHand')))}`
       : percent(pick(forSlot('mainHand')));
 
-  const rows: SheetRow[] = [
+  const rows: SheetRow[] = inSection('Character', [
     /*
      * The stance leads, because it changes almost everything under it: crit,
      * damage done, damage taken, and which abilities are even castable. It
@@ -145,14 +164,18 @@ export function warriorRows(profile: CharacterProfile, style: CombatStyleId): re
     { label: 'Armor', value: round(stats.armor) },
     { label: 'Strength', value: round(stats.strength) },
     { label: 'Agility', value: round(stats.agility) },
-    { label: 'Attack Power', value: round(stats.attackPower) },
-    // The pool a bow actually scales with. Hidden when there is none.
-    ...(stats.rangedAttackPower !== 0
-      ? [{ label: 'Ranged Attack Power', value: round(stats.rangedAttackPower) }]
-      : []),
-  ];
+  ]);
+  rows.push(
+    ...inSection('Offense', [
+      { label: 'Attack Power', value: round(stats.attackPower) },
+      // The pool a bow actually scales with. Hidden when there is none.
+      ...(stats.rangedAttackPower !== 0
+        ? [{ label: 'Ranged Attack Power', value: round(stats.rangedAttackPower) }]
+        : []),
+    ]),
+  );
 
-  rows.push({ label: 'Chance to Miss', value: perHand((c) => c.miss) });
+  rows.push({ label: 'Chance to Miss', value: perHand((c) => c.miss), section: 'Offense' });
 
   /*
    * OFF-HAND HIT, its own row when a talent grants any.
@@ -167,16 +190,16 @@ export function warriorRows(profile: CharacterProfile, style: CombatStyleId): re
    */
   const offHandHit = player.hitBonusFor('offHand');
   if (offHandHit > 0) {
-    rows.push({ label: 'Off-Hand Hit', value: `+${offHandHit.toFixed(2)}%` });
+    rows.push({ label: 'Off-Hand Hit', value: `+${offHandHit.toFixed(2)}%`, section: 'Offense' });
   }
-  rows.push({ label: 'Enemy Dodge', value: perHand((c) => c.dodge) });
+  rows.push({ label: 'Enemy Dodge', value: perHand((c) => c.dodge), section: 'Offense' });
 
   // Enemy parry applies only to a character the target is swinging at, so
   // there is only ever one hand to report it for. It does not derive from
   // weapon skill either. A zero for everyone else would suggest the number was
   // computed and came out at nil.
   if (profile.encounter.targetAttacks) {
-    rows.push({ label: 'Enemy Parry', value: percent(forSlot('mainHand').parry) });
+    rows.push({ label: 'Enemy Parry', value: percent(forSlot('mainHand').parry), section: 'Offense' });
   }
 
   /*
@@ -208,25 +231,27 @@ export function warriorRows(profile: CharacterProfile, style: CombatStyleId): re
     const received = chances('melee-received', target, player, {});
 
     rows.push({
+      section: 'Defense',
       label: 'Defense Skill',
       // Total, not the surplus. 300 of it is free at level 60 and the
       // character sheet in game shows the whole number.
       value: round(player.defenseSkill),
     });
-    rows.push({ label: 'Dodge', value: percent(received.dodge) });
-    rows.push({ label: 'Parry', value: percent(received.parry) });
-    rows.push({ label: 'Block', value: percent(received.block) });
-    rows.push({ label: 'Block Value', value: round(stats.blockValue) });
+    rows.push({ label: 'Dodge', value: percent(received.dodge), section: 'Defense' });
+    rows.push({ label: 'Parry', value: percent(received.parry), section: 'Defense' });
+    rows.push({ label: 'Block', value: percent(received.block), section: 'Defense' });
+    rows.push({ label: 'Block Value', value: round(stats.blockValue), section: 'Defense' });
     /*
      * The boss's side of the same table. Its miss and crit are what defense
      * skill moves, and a tank has no other way to see that the talent did
      * anything -- the character's own dodge going up is only three of the five
      * things a point of defense buys.
      */
-    rows.push({ label: 'Target Miss', value: percent(received.miss) });
-    rows.push({ label: 'Target Crit', value: percent(received.crit) });
-    rows.push({ label: 'Target Crush', value: percent(received.crush) });
+    rows.push({ label: 'Target Miss', value: percent(received.miss), section: 'Defense' });
+    rows.push({ label: 'Target Crit', value: percent(received.crit), section: 'Defense' });
+    rows.push({ label: 'Target Crush', value: percent(received.crush), section: 'Defense' });
     rows.push({
+      section: 'Defense',
       label: 'Armor Reduction',
       value: `${(armorReduction(stats.armor, profile.encounter.targetLevel) * 100).toFixed(2)}%`,
     });
@@ -250,6 +275,7 @@ export function warriorRows(profile: CharacterProfile, style: CombatStyleId): re
     )) {
       if (value <= 0) continue;
       rows.push({
+        section: 'Defense',
         label: `${school.charAt(0).toUpperCase() + school.slice(1)} Resistance`,
         value: round(value),
       });
@@ -266,13 +292,27 @@ export function warriorRows(profile: CharacterProfile, style: CombatStyleId): re
    * the engine's own function and `stats.hasteRating` is never printed raw.
    * Crit was the one stat on this panel read straight off the block.
    */
-  rows.push({ label: 'Crit Chance', value: `${(critChanceFrom(stats) * 100).toFixed(2)}%` });
+  rows.push({
+    label: 'Crit Chance',
+    value: `${(critChanceFrom(stats) * 100).toFixed(2)}%`,
+    section: 'Offense',
+  });
   rows.push({
     label: 'Haste',
     value: `${((hasteMultiplierFrom(stats) - 1) * 100).toFixed(2)}%`,
+    section: 'Offense',
   });
+  rows.push(...threatRows(player));
 
-  return rows;
+  /*
+   * THE TANK ROWS WERE PUSHED BEFORE THE CRIT ROW, so the tank's Defense block
+   * would sit between two Offense rows. Grouping is by order, so the rows are
+   * stably re-sorted by section here -- the order WITHIN a section is untouched.
+   */
+  const order = ['Character', 'Offense', 'Defense', 'Threat'];
+  return [...rows].sort(
+    (a, b) => order.indexOf(a.section ?? '') - order.indexOf(b.section ?? ''),
+  );
 }
 
 /** The fallback, for the eight classes with no considered list yet. */
@@ -286,84 +326,75 @@ export function genericRows(profile: CharacterProfile, style: CombatStyleId): re
       ? player.resources.get(definition.primaryResource)
       : undefined;
 
+  const percentOf = (fraction: number) => `${(fraction * 100).toFixed(2)}%`;
+  const spellCrit = spellCritChanceFrom(stats);
   return [
-    { label: 'Hit Points', value: round(player.health.maximum) },
-    ...(mana ? [{ label: 'Mana', value: round(mana.maximum) }] : []),
-    ...(other ? [{ label: resourceLabel(other.type), value: round(other.maximum) }] : []),
-    { label: 'Strength', value: round(stats.strength) },
-    { label: 'Agility', value: round(stats.agility) },
-    { label: 'Stamina', value: round(stats.stamina) },
-    { label: 'Intellect', value: round(stats.intellect) },
-    { label: 'Spirit', value: round(stats.spirit) },
-    { label: 'Attack Power', value: round(stats.attackPower) },
+    ...inSection('Pools', [
+      { label: 'Hit Points', value: round(player.health.maximum) },
+      ...(mana ? [{ label: 'Mana', value: round(mana.maximum) }] : []),
+      ...(other ? [{ label: resourceLabel(other.type), value: round(other.maximum) }] : []),
+    ]),
+    ...inSection('Attributes', [
+      { label: 'Strength', value: round(stats.strength) },
+      { label: 'Agility', value: round(stats.agility) },
+      { label: 'Stamina', value: round(stats.stamina) },
+      { label: 'Intellect', value: round(stats.intellect) },
+      { label: 'Spirit', value: round(stats.spirit) },
+      { label: 'Armor', value: round(stats.armor) },
+    ]),
+    ...inSection('Offense', [
+      { label: 'Attack Power', value: round(stats.attackPower) },
+      /*
+       * RANGED ATTACK POWER IS A SEPARATE POOL AND DRIVES A HUNTER'S DAMAGE, so
+       * it gets a row of its own -- shown when it exceeds the melee pool, which
+       * is when it is the one the build scales with. Every class carries 50.
+       */
+      ...(stats.rangedAttackPower > stats.attackPower
+        ? [{ label: 'Ranged Attack Power', value: round(stats.rangedAttackPower) }]
+        : []),
+      /*
+       * THROUGH `critChanceFrom` AND `spellCritChanceFrom`, WHICH IS WHAT THE
+       * FIGHT ROLLS AGAINST -- this panel read the raw stat for the whole
+       * project and was thirteen points short on the Warriors. `critRating` is
+       * the other half of both numbers.
+       */
+      { label: 'Crit Chance', value: percentOf(critChanceFrom(stats)) },
+      ...(stats.hitChance !== 0 ? [{ label: 'Hit', value: `${stats.hitChance.toFixed(2)}%` }] : []),
+      ...(stats.armorPenetration !== 0
+        ? [{ label: 'Armor Penetration', value: `${stats.armorPenetration.toFixed(2)}%` }]
+        : []),
+      ...(stats.dodgeParryReduction !== 0
+        ? [{ label: 'Dodge/Parry Reduction', value: `${stats.dodgeParryReduction.toFixed(2)}%` }]
+        : []),
+      { label: 'Haste', value: percentOf(hasteMultiplierFrom(stats) - 1) },
+    ]),
     /*
-     * RANGED ATTACK POWER IS A SEPARATE POOL AND NOW DRIVES A HUNTER'S
-     * DAMAGE, so it gets a row of its own -- but only where there is any.
-     * Showing "Ranged Attack Power 0" on nine classes out of ten is noise,
-     * and hiding it on the one class it decides is worse: the bow reads this
-     * number and nothing on the sheet said so.
+     * SPELL POWER, AND THEN THE SCHOOLS THAT READ MORE OF IT -- the TOTAL each
+     * reads, because that is the figure a gear planner prints. Hidden at zero.
+     * The spell crit row is gated on the COMPUTED figure, not the flat stat: a
+     * Forever caster carries its crit as rating.
      */
-    ...(stats.rangedAttackPower !== 0
-      ? [{ label: 'Ranged Attack Power', value: round(stats.rangedAttackPower) }]
-      : []),
-    { label: 'Armor', value: round(stats.armor) },
-    /*
-     * SPELL POWER, AND THEN THE SCHOOLS THAT READ MORE OF IT.
-     *
-     * The first row is the school-blind stat, which is what "Increases damage
-     * and healing done by magical spells" grants. The rows under it are the
-     * schools whose gear says something narrower -- "Increases damage done by
-     * Shadow spells and effects by up to 39" -- and they show the TOTAL that
-     * school actually reads, not the difference, because the total is the
-     * figure a gear planner prints and the one worth comparing against.
-     *
-     * Hidden at zero, and hidden when no school differs: a Warrior has neither
-     * and rows of nil suggest a stat that was computed and came out at nothing.
-     * Without these, a Shadow Priest's 497 was invisible while being applied,
-     * which is the one thing worse than it being visible and missing.
-     */
-    ...(stats.spellPower !== 0 ? [{ label: 'Spell Power', value: round(stats.spellPower) }] : []),
-    ...scopedSpellPowerRows(player),
-    /*
-     * ==========================================================================
-     * THROUGH `critChanceFrom` AND `spellCritChanceFrom`, WHICH IS WHAT THE
-     * FIGHT ROLLS AGAINST -- AND THIS PANEL READ THE RAW STAT FOR THE WHOLE
-     * PROJECT.
-     *
-     * `critRating` is the other half of both numbers and it was missing from
-     * both rows, on all 28 profiles. The Fire Mage's sheet said **3.00% melee
-     * crit where the engine rolls 14.00%**, and 10.82% spell crit against a
-     * real 21.82%; the two Warriors were out by thirteen points.
-     *
-     * THE COMMENT TWENTY LINES ABOVE THIS ONE ALREADY STATED THE RULE: spell
-     * power goes through "the same function `dealDamage` and the Paladin's seal
-     * use, so the sheet cannot disagree with the fight about what a Holy point
-     * is worth". The two crit rows directly beneath it did exactly that, which
-     * is this project's own "a note saying a number is derived is not the same
-     * as the number being re-derived".
-     *
-     * NO FIGURE MOVES. Nothing in `engine`, `game` or `simulator` reads this
-     * panel -- the engine always used the right function. What it cost was a
-     * PERSON reading the sheet, and it cost one directly: Revelation's proc
-     * rate was built against the 10.82% shown here before the owner said the
-     * number looked wrong.
-     *
-     * THE SPELL ROW IS GATED ON THE COMPUTED FIGURE, not on the flat stat. A
-     * Forever caster carries its crit as RATING, so a build with no flat spell
-     * crit and 154 rating used to show NO SPELL CRIT ROW AT ALL -- an absence
-     * that reads as "this character has none".
-     * ==========================================================================
-     */
-    { label: 'Crit Chance', value: `${(critChanceFrom(stats) * 100).toFixed(2)}%` },
-    ...(spellCritChanceFrom(stats) !== 0
-      ? [
-          {
-            label: 'Spell Crit Chance',
-            value: `${(spellCritChanceFrom(stats) * 100).toFixed(2)}%`,
-          },
-        ]
-      : []),
+    ...inSection('Spell', [
+      ...(stats.spellPower !== 0 ? [{ label: 'Spell Power', value: round(stats.spellPower) }] : []),
+      ...scopedSpellPowerRows(player),
+      ...(spellCrit !== 0 ? [{ label: 'Spell Crit Chance', value: percentOf(spellCrit) }] : []),
+      ...(stats.spellPiercing !== 0
+        ? [{ label: 'Spell Piercing', value: round(stats.spellPiercing) }]
+        : []),
+    ]),
+    ...threatRows(player),
   ];
+}
+
+/**
+ * THE CHARACTER'S THREAT FACTOR AT THE PULL (round 48): the product of every
+ * unscoped modifier it carries -- class, form, stance, talents, enchants,
+ * Salvation. A school- or ability-scoped one (Righteous Fury, Arcane Subtlety)
+ * is not in it; the Results panel's TPS is what those come out as.
+ */
+function threatRows(player: ReturnType<typeof buildPlayer>): SheetRow[] {
+  const factor = threatMultiplierFor(player, { kind: 'damage' });
+  return [{ label: 'Threat Modifier', value: `x${factor.toFixed(3)}`, section: 'Threat' }];
 }
 
 /**

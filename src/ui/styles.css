@@ -39,19 +39,26 @@
 
 :root,
 :root[data-theme='abyss'] {
-  --bg: #0b1417;
-  --bg-deep: #070f11;
-  --surface: #101e22;
-  --surface-raised: #18292e;
-  --surface-sunken: #0c181b;
-  --border: #1e333a;
-  --border-strong: #2e4b54;
+  /*
+   * FORGE, the owner's pick in round 48: the same teal and copper, with the
+   * panels LIFTED off a darker floor -- the floor went darker and the panels
+   * lighter, which is where the contrast comes from -- copper header bars and
+   * a brighter teal for secondary figures. Muted text is brighter too, because
+   * there is a lot of it.
+   */
+  --bg: #050b0d;
+  --bg-deep: #030708;
+  --surface: #132428;
+  --surface-raised: #1d353b;
+  --surface-sunken: #0a1518;
+  --border: #2e4b54;
+  --border-strong: #42656f;
   --text: #f2fafb;
-  --text-muted: #7d8f93;
+  --text-muted: #879ca0;
   --accent: #d98a5f;
   --accent-strong: #f2a97d;
   --accent-contrast: #140903;
-  --success: #56c2a0;
+  --success: #5fd1b0;
   --error: #e2706b;
 
   --logo-metal-1: #f7d3ba;
@@ -2606,4 +2613,268 @@ button:disabled {
 .apl-precombat-unit {
   font-size: 11px;
   color: var(--text-muted);
+}
+
+/* ---------------------------------------------------------------------------
+   THE FIFTH PASS'S LAYOUT (round 48): a header that stays, side columns that
+   stay, and the room they no longer take given to the middle.
+
+   THE HEADER IS COMPACT BECAUSE IT IS STICKY. A 340px wordmark is about 107px
+   tall, and a bar that height pinned to the top of every scroll costs more
+   than it shows -- so the logo is sized by HEIGHT here, and the bar is one
+   fixed height that the side columns can be offset by.
+
+   THE SIDE COLUMNS SCROLL ON THEIR OWN. Pinned with a max height, so a column
+   longer than the window (the character sheet and the simulation panel
+   together) scrolls inside itself rather than being cut off at the bottom.
+   Only where the three columns sit side by side: below those widths the
+   layout stacks and a pinned column would cover the one beneath it.
+   --------------------------------------------------------------------------- */
+
+:root {
+  --header-height: 72px;
+  --column-gap: 20px;
+}
+
+.app {
+  max-width: 1880px;
+  padding-top: 0;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: var(--header-height);
+  align-items: center;
+  margin: 0 -16px var(--column-gap);
+  padding: 6px 16px;
+  background: var(--bg);
+}
+
+.logo {
+  width: auto;
+  height: calc(var(--header-height) - 14px);
+}
+
+.app-layout {
+  grid-template-columns: minmax(300px, 340px) minmax(0, 1fr) var(--rail-width);
+  gap: var(--column-gap);
+}
+
+/*
+ * A PANEL IN A PINNED COLUMN MUST NOT SHRINK. The column is a flex column with
+ * a max height, so its children's default `flex-shrink: 1` squeezed the
+ * character sheet to half its height with the rest clipped inside it -- the
+ * column is the thing meant to scroll, not each panel.
+ */
+.column > * {
+  flex-shrink: 0;
+}
+
+@media (min-width: 901px) {
+  .column-config {
+    position: sticky;
+    top: calc(var(--header-height) + var(--column-gap));
+    max-height: calc(100vh - var(--header-height) - 2 * var(--column-gap));
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    padding-right: 2px;
+  }
+}
+
+@media (min-width: 1201px) {
+  .column-rail {
+    position: sticky;
+    top: calc(var(--header-height) + var(--column-gap));
+    max-height: calc(100vh - var(--header-height) - 2 * var(--column-gap));
+    overflow-y: auto;
+  }
+}
+
+/* Thin scrollbars on the two pinned columns, in the theme's own colours. */
+.column-config,
+.column-rail {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+/* --- character sheet sections (round 48) --- */
+
+.base-stats .sheet-section th {
+  padding: 12px 0 4px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-strong);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.base-stats .sheet-section:first-child th {
+  padding-top: 0;
+}
+
+/* --- sim history (round 48) --- */
+
+.sim-history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sim-history-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-sunken);
+  cursor: pointer;
+  user-select: none;
+}
+
+.sim-history-row:hover {
+  border-color: var(--border-strong);
+}
+
+.sim-history-row.selected {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+
+.sim-history-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.sim-history-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sim-history-dps {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--accent-strong);
+  text-align: right;
+}
+
+.sim-history-meta,
+.sim-history-tps {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.sim-history-tps {
+  text-align: right;
+}
+
+.sim-history-empty {
+  margin: 0;
+  font-size: 12px;
+}
+
+
+/* ---------------------------------------------------------------------------
+   FORGE (round 48): the owner's template. Every rule reads a token, so the
+   three kept schemes take the same treatment in their own colours.
+   --------------------------------------------------------------------------- */
+
+/* The header: a bar of its own, ruled off in copper. */
+.app-header {
+  background: var(--surface-sunken);
+  border-bottom: 2px solid var(--accent);
+}
+
+/* A panel is a lifted card with a copper-edged title bar. */
+.panel {
+  border-color: var(--border);
+  box-shadow: 0 1px 0 var(--bg-deep);
+}
+
+.panel-header {
+  background: var(--surface-raised);
+  border-left: 3px solid var(--accent);
+}
+
+.panel-header h2 {
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.panel-badge,
+.panel-subtitle {
+  color: var(--text-muted);
+}
+
+/* Section headings inside a panel: copper, bold, ruled. */
+.panel-body h3 {
+  color: var(--accent-strong);
+  font-weight: 700;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Tiles are wells cut into the card. */
+.stat {
+  border: 1px solid var(--border);
+  background: var(--surface-sunken);
+}
+
+.stat-label {
+  font-weight: 600;
+}
+
+/* The results header: DPS leads in copper and white, TPS follows in teal. */
+.headline-stats .stat:first-child {
+  border-color: var(--accent);
+}
+
+.headline-stats .stat:first-child .stat-label {
+  color: var(--accent-strong);
+}
+
+.headline-stats .stat:first-child .stat-value {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.headline-stats .stat:nth-child(2) .stat-value {
+  color: var(--success);
+}
+
+/* Tables: copper column headings and striped rows. */
+.breakdown th {
+  color: var(--accent-strong);
+  font-weight: 700;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.breakdown tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--surface-sunken) 70%, transparent);
+}
+
+/* The character sheet: labels recede, values stand out. */
+.base-stats td:first-child {
+  color: var(--text-muted);
+}
+
+.base-stats td.numeric {
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* The character summary wraps its buttons under the name in a 340px column,
+   rather than squeezing "Shadow Priest" onto two lines beside them. */
+.character-summary-body {
+  flex-wrap: wrap;
 }

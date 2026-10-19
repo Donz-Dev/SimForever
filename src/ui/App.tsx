@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { TalentAllocation } from '../game/talents/Talent';
 
 /** How TalentPanel asks for a change: applied to whatever is current. */
@@ -28,6 +28,9 @@ import { NO_STAT_WEIGHTS, SimulationPanel } from './panels/SimulationPanel';
 import { StatWeightsPanel } from './panels/StatWeightsPanel';
 import { TankStatWeightsPanel } from './panels/TankStatWeightsPanel';
 import { TalentPanel } from './panels/TalentPanel';
+import { SimHistoryPanel } from './panels/SimHistoryPanel';
+import type { SimHistoryEntry } from './simHistory';
+import { withRun } from './simHistory';
 
 /**
  * The application shell.
@@ -102,7 +105,42 @@ export function App() {
    */
   const [activePresetId, setActivePresetId] = useState<string | undefined>(undefined);
 
-  const { state, progress, run, reset } = useSimulation();
+  const { state, progress, run, restore, reset } = useSimulation();
+
+  /*
+   * SIM HISTORY (round 48): every finished ordinary run is recorded once, with
+   * the profile it RAN with -- seed included -- and its result. A stat-weight
+   * run is not recorded: its baseline is one part of a larger measurement.
+   *
+   * RECORDED OFF THE STATE rather than inside `run`, because the result arrives
+   * later than the call; the ref stops a re-render, or a restore putting an old
+   * result back on screen, from recording it a second time.
+   */
+  const [history, setHistory] = useState<readonly SimHistoryEntry[]>([]);
+  const recorded = useRef(new WeakSet<object>());
+  const nextHistoryId = useRef(1);
+  useEffect(() => {
+    if (state.status !== 'done' || recorded.current.has(state.batch)) return;
+    recorded.current.add(state.batch);
+    setHistory((previous) =>
+      withRun(previous, {
+        id: nextHistoryId.current++,
+        finishedAt: Date.now(),
+        presetId: activePresetId,
+        profile: state.profile,
+        batch: state.batch,
+      }),
+    );
+  }, [state]);
+
+  /** Double-click on a history row: that run's character, settings and result. */
+  const restoreRun = (entry: SimHistoryEntry) => {
+    setProfile(entry.profile);
+    setActivePresetId(entry.presetId);
+    setConfirmed(true);
+    weightRun.reset();
+    restore(entry.batch, entry.profile);
+  };
 
   /*
    * ----------------------------------------------------------------------------
@@ -274,6 +312,8 @@ export function App() {
                 statWeights={statWeights}
                 onStatWeightsChange={setStatWeights}
               />
+              {/* UNDER THE RUN BUTTON, the owner's placement. */}
+              <SimHistoryPanel history={history} onRestore={restoreRun} />
             </>
           ) : null}
         </div>

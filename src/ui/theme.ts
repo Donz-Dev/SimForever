@@ -47,8 +47,9 @@ export const THEMES: readonly ThemeDefinition[] = [
   {
     id: 'abyss',
     name: 'Abyssal Copper',
-    note: 'Deep teal against copper',
-    swatch: ['#0b1417', '#d98a5f'],
+    // Retuned to the Forge template in round 48: panels lifted off a darker floor.
+    note: 'Deep teal against copper, Forge contrast',
+    swatch: ['#050b0d', '#d98a5f'],
   },
   {
     id: 'graphite',
