@@ -165,7 +165,7 @@ reporting gap, not a rotation one.
 
 | | the ruling | what changed |
 | --- | --- | --- |
-| Rogue | "Rogues have a passive 0.8x multiplier", like Battle and Berserker Stance -- "most DPS classes have a way to reduce threat" | `ROGUE_THREAT_MULTIPLIER` 0.71 -> **0.8**. Both Forever simulators carry Classic's 0.71; the owner's figure wins |
+| Rogue | first "Rogues have a passive 0.8x multiplier", then, the same day, "revert the rogue ruling it should be 0.71x" | **nothing**: it stays **x0.71**, the client row both simulators read -- now confirmed by the owner rather than taken on their agreement |
 | Instrument of Law | the Retribution Paladin's reduction: with Righteous Fury OFF it reduces threat; ON, there is no reduction AND the Fury raises Holy threat | **already built that way.** The Retribution list never casts the Fury, so it reads 0.8 x 0.7 at the pull, now pinned by a test |
 | Bear | "fine for now" | nothing. Bear and Dire Bear are ONE combat style here, so the x1.5 passive applies to the Bear profile, which is in Dire Bear Form |
 | Searing Pain, Mind Blast, Earth Shock | "use classic values for now. There are talents that reduce some of these abilities" | nothing: Demonic Brand already halves Searing Pain's, Silent Resolve cuts Mind Blast's, Natural Grace cuts Earth Shock's |
@@ -174,8 +174,13 @@ reporting gap, not a rotation one.
 **CAT FORM IS STILL x0.71**, which the ruling did not name -- a ruling covers what
 it says. Its passive is the client's -29%, read the same by both simulators.
 
-**THE ROGUE MOVES TPS ONLY**: threat draws no random number, so all six Rogue rows
-keep their DPS to the decimal and their TPS/DPS goes from 0.497 to about 0.56.
+**AND THE ROGUE QUESTION EXPOSED A TRIAGE GAP, WHICH IS THE PART WORTH KEEPING.**
+Round 47 put to the owner only what the two Forever simulators DISAGREED on, and
+built everything they agreed on -- the stances, the forms, the Rogue, Righteous
+Fury -- without asking. Two simulators agreeing means they read the same client
+file; it says nothing about what the owner knows from playing. The Rogue survived
+the challenge, but **a consensus value is still an unasked question**, and the
+hidden class and form passives are where one would hide.
 
 ## Round 47: Threat, TPS, Salvation, and the threat ruling repealed
 

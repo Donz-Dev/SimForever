@@ -29,9 +29,9 @@ function atPull(presetId: string): Combatant {
 }
 
 describe('class and form', () => {
-  it("gives a Rogue x0.8 -- the owner's figure, not Classic's 0.71 -- before Salvation", () => {
+  it('gives a Rogue x0.71, confirmed by the owner, before Salvation', () => {
     const rogue = createPlayer({ race: 'human', characterClass: 'rogue' });
-    expect(threatMultiplierFor(rogue, all)).toBeCloseTo(0.8, 10);
+    expect(threatMultiplierFor(rogue, all)).toBeCloseTo(0.71, 10);
   });
 
   it('gives Bear Form x1.5 -- Dire Bear included, one style -- and Cat Form x0.71', () => {

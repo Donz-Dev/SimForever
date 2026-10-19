@@ -27,7 +27,7 @@ import type { CombatStyleId } from '../character/ids';
  *
  * WHAT BOTH SIMULATORS READ OFF FOREVER'S OWN CLIENT, and so agree on: the
  * three stances (0.8 / 1.3 / 0.8), Bear Form at x1.5 where Classic is x1.3,
- * Cat Form at x0.71, Righteous Fury at +90% on Holy where Classic
+ * Cat Form and the Rogue at x0.71, Righteous Fury at +90% on Holy where Classic
  * is +60%, Holy Shield's damage at x1.2.
  * ==============================================================================
  */
@@ -39,12 +39,11 @@ export const BEAR_FORM_THREAT_MULTIPLIER = 1.5;
 /** Cat Form's passive, -29%. */
 export const CAT_FORM_THREAT_MULTIPLIER = 0.71;
 /**
- * Every Rogue's class passive: x0.8, BY THE OWNER'S RULING (round 47b). Both
- * Forever simulators carry Classic's x0.71; the owner states 0.8, the same as
- * the Battle and Berserker Stance passives -- "most DPS classes have a way to
- * reduce threat".
+ * Every Rogue's class passive, -29%: the client row both Forever simulators
+ * read. The owner briefly ruled 0.8 (round 47b) and then reverted it to 0.71
+ * the same day -- so 0.71 is now a confirmed figure, not only a consensus one.
  */
-export const ROGUE_THREAT_MULTIPLIER = 0.8;
+export const ROGUE_THREAT_MULTIPLIER = 0.71;
 
 export const BATTLE_STANCE_THREAT_MULTIPLIER = 0.8;
 export const DEFENSIVE_STANCE_THREAT_MULTIPLIER = 1.3;
