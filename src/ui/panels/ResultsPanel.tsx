@@ -78,7 +78,7 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
        * figure that actually multiplied the swing timer and scaled the damage.
        * ----------------------------------------------------------------------
        */}
-      <div className="stat-grid">
+      <div className="stat-grid headline-stats">
         <Stat
           label="DPS"
           value={fixed(batch.dps.mean)}

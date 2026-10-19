@@ -2,7 +2,7 @@
 
 **Purpose:** finalize the GUI and the miscellaneous tweaks around it.
 
-**FOUR PASSES ARE DONE, AND THIS DOCUMENT IS NOW THEIR RECORD** rather than a
+**FIVE PASSES ARE DONE, AND THIS DOCUMENT IS NOW THEIR RECORD** rather than a
 brief. Everything below that reads as outstanding work is marked with what
 happened to it. Read it the way the per-class documents are read: for the state
 of the area and the traps in it, not for a queue.
@@ -13,6 +13,7 @@ of the area and the traps in it, not for a queue.
 | 2 | **Save and Load**, and the **Action Priority List** -- a panel, an editor, and the list stored on the profile |
 | 3 | the **Gear panel as a character planner** -- item cards, a class proficiency filter, value sorting, the four test sets |
 | 4 | the APL editor's **duplicate** and **retarget** controls, and the **Timeline** panel |
+| 5 | **pinned header and side columns** and a wider middle; the results header as **DPS, TPS, the largest power pool, haste**; a **sectioned character sheet** with hit, piercing and the threat factor; **Sim History** -- the last ten runs, double-click to restore one, seed included; and the **Forge** contrast pass on the default scheme |
 
 **THE FOURTH PASS IS THE FIRST ONE ASKED FOR AS A MEANS RATHER THAN AN END.**
 The owner's framing was "in order to actually optimize the APL I need the

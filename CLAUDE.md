@@ -199,7 +199,7 @@ reading got written into a comment that contradicted a correct one in the same
 file. The correct note is in `abilities/mage.ts`; do not re-derive this from the
 tooltip.
 
-**THE UI HAS HAD FOUR PASSES NOW, AND THIS LINE HAS ALREADY BEEN WRONG ONCE
+**THE UI HAS HAD FIVE PASSES NOW, AND THIS LINE HAS ALREADY BEEN WRONG ONCE
 BY THE SAME ARITHMETIC.** It once read "THE UI HAS NOT HAD A PASS OF ITS OWN
 and is the next piece of work" while `docs/handoff/gui.md`'s own header read
 "THE FIRST PASS IS DONE, AND THIS DOCUMENT IS NOW ITS RECORD" -- two files
@@ -217,8 +217,13 @@ proficiency filter, items sorted by what the build values, and the four test
 sets exposed. The fourth gave the APL editor **duplicate** and **retarget**
 controls and added the **Timeline** panel -- one fight drawn against the clock,
 which is the view a priority list is read with, because every question a list
-is tuned against is about where two things sat RELATIVE to each other.
-[docs/handoff/gui.md](docs/handoff/gui.md) is the record of all four,
+is tuned against is about where two things sat RELATIVE to each other. The
+fifth pinned the header and both side columns, widened the middle for the APL
+tools, cut the results header to **DPS, TPS, the largest power pool and haste**,
+grouped the character sheet under headings, added **Sim History** -- the last
+ten runs, each restorable with its seed -- and gave the default scheme the
+owner's **Forge** contrast.
+[docs/handoff/gui.md](docs/handoff/gui.md) is the record of all five,
 [docs/apl.md](docs/apl.md) is the APL's own and
 [docs/gear-planner.md](docs/gear-planner.md) is the planner's. What is left is
 named at the end of each: Import still does nothing, nothing writes to

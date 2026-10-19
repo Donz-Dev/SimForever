@@ -39,19 +39,26 @@
 
 :root,
 :root[data-theme='abyss'] {
-  --bg: #0b1417;
-  --bg-deep: #070f11;
-  --surface: #101e22;
-  --surface-raised: #18292e;
-  --surface-sunken: #0c181b;
-  --border: #1e333a;
-  --border-strong: #2e4b54;
+  /*
+   * FORGE, the owner's pick in round 48: the same teal and copper, with the
+   * panels LIFTED off a darker floor -- the floor went darker and the panels
+   * lighter, which is where the contrast comes from -- copper header bars and
+   * a brighter teal for secondary figures. Muted text is brighter too, because
+   * there is a lot of it.
+   */
+  --bg: #050b0d;
+  --bg-deep: #030708;
+  --surface: #132428;
+  --surface-raised: #1d353b;
+  --surface-sunken: #0a1518;
+  --border: #2e4b54;
+  --border-strong: #42656f;
   --text: #f2fafb;
-  --text-muted: #7d8f93;
+  --text-muted: #879ca0;
   --accent: #d98a5f;
   --accent-strong: #f2a97d;
   --accent-contrast: #140903;
-  --success: #56c2a0;
+  --success: #5fd1b0;
   --error: #e2706b;
 
   --logo-metal-1: #f7d3ba;
@@ -2774,4 +2781,100 @@ button:disabled {
 .sim-history-empty {
   margin: 0;
   font-size: 12px;
+}
+
+
+/* ---------------------------------------------------------------------------
+   FORGE (round 48): the owner's template. Every rule reads a token, so the
+   three kept schemes take the same treatment in their own colours.
+   --------------------------------------------------------------------------- */
+
+/* The header: a bar of its own, ruled off in copper. */
+.app-header {
+  background: var(--surface-sunken);
+  border-bottom: 2px solid var(--accent);
+}
+
+/* A panel is a lifted card with a copper-edged title bar. */
+.panel {
+  border-color: var(--border);
+  box-shadow: 0 1px 0 var(--bg-deep);
+}
+
+.panel-header {
+  background: var(--surface-raised);
+  border-left: 3px solid var(--accent);
+}
+
+.panel-header h2 {
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.panel-badge,
+.panel-subtitle {
+  color: var(--text-muted);
+}
+
+/* Section headings inside a panel: copper, bold, ruled. */
+.panel-body h3 {
+  color: var(--accent-strong);
+  font-weight: 700;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Tiles are wells cut into the card. */
+.stat {
+  border: 1px solid var(--border);
+  background: var(--surface-sunken);
+}
+
+.stat-label {
+  font-weight: 600;
+}
+
+/* The results header: DPS leads in copper and white, TPS follows in teal. */
+.headline-stats .stat:first-child {
+  border-color: var(--accent);
+}
+
+.headline-stats .stat:first-child .stat-label {
+  color: var(--accent-strong);
+}
+
+.headline-stats .stat:first-child .stat-value {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.headline-stats .stat:nth-child(2) .stat-value {
+  color: var(--success);
+}
+
+/* Tables: copper column headings and striped rows. */
+.breakdown th {
+  color: var(--accent-strong);
+  font-weight: 700;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.breakdown tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--surface-sunken) 70%, transparent);
+}
+
+/* The character sheet: labels recede, values stand out. */
+.base-stats td:first-child {
+  color: var(--text-muted);
+}
+
+.base-stats td.numeric {
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* The character summary wraps its buttons under the name in a 340px column,
+   rather than squeezing "Shadow Priest" onto two lines beside them. */
+.character-summary-body {
+  flex-wrap: wrap;
 }
