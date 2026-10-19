@@ -77,14 +77,15 @@ section.chart > h2 span { color: var(--muted); font-weight: 500; text-transform:
 .axis { fill: var(--muted); font-size: 13px; font-family: var(--font-data) !important; }
 .tier { fill: var(--muted); font-size: 15px; font-weight: 600; }
 .grid { stroke: var(--grid); stroke-width: 1; }
-.line { fill: none; stroke-width: 2; transition: opacity .15s; }
+.line { fill: none; stroke-width: 1.25; transition: opacity .15s; }
+.hit { fill: none; stroke: transparent; stroke-width: 12; pointer-events: stroke; }
 .dot { stroke: var(--well); stroke-width: 1; }
-.label { font-size: 14px; font-weight: 600; cursor: default; }
-.leader { stroke-width: .8; fill: none; opacity: .7; }
+.label { font-size: 13px; font-weight: 600; }
+.leader { stroke-width: .6; fill: none; opacity: .6; }
 .series { cursor: pointer; }
-.plot.focus .series { opacity: .15; }
+.plot.focus .series { opacity: .12; }
 .plot.focus .series.on { opacity: 1; }
-.series.on .line { stroke-width: 3.2; }
+.series.on .line { stroke-width: 2.5; }
 .value { font-family: var(--font-data) !important; font-size: 12px; fill: var(--text); paint-order: stroke; stroke: var(--well); stroke-width: 4px; }
 .note { font-size: 13px; color: var(--muted); padding: 8px 16px 12px; margin: 0; font-family: var(--font-data); }
 @media (prefers-reduced-motion: reduce) { .line { transition: none; } }
@@ -113,14 +114,15 @@ document.getElementById('meta').textContent =
   DATA.rows.length + ' profiles at four benchmark gear levels, ' + DATA.iterations +
   ' fights each, 60-second fights. Hover a line to see its values.';
 
-function chart(el, rows, metric, unit) {
-  const W = 1240, H = 640, L = 64, R = 200, T = 24, B = 48;
+function chart(el, rows, metric, unit, H) {
+  const W = 1240, L = 64, R = 200, T = 16, B = 44;
   const vals = rows.flatMap((r) => TIERS.map(([t]) => r.levels[t][metric]));
   let lo = Math.min(...vals), hi = Math.max(...vals);
   const span = hi - lo || 1;
-  const step = [10, 20, 25, 50, 100, 200, 250, 500, 1000].find((s) => span / s <= 10) || 1000;
-  lo = Math.floor((lo - span * 0.03) / step) * step;
-  hi = Math.ceil((hi + span * 0.03) / step) * step;
+  // Fitted tight to the data, so the lines get every pixel of separation.
+  const step = [10, 20, 25, 50, 100, 200, 250, 500, 1000].find((s) => span / s <= 14) || 1000;
+  lo = Math.floor(lo / step) * step;
+  hi = Math.ceil(hi / step) * step;
   const x = (i) => L + (i * (W - L - R)) / (TIERS.length - 1);
   const y = (v) => T + ((hi - v) * (H - T - B)) / (hi - lo);
   const ns = 'http://www.w3.org/2000/svg';
@@ -150,7 +152,7 @@ function chart(el, rows, metric, unit) {
   });
   // End labels, spaced so none overlap: sorted by value, pushed down then back up.
   const order = [...series].sort((a, b) => b.end - a.end);
-  const gap = 19;
+  const gap = 16;
   let prev = -Infinity;
   for (const s of order) { s.ly = Math.max(y(s.end), prev + gap); prev = s.ly; }
   const overflow = prev - (H - B);
@@ -162,7 +164,9 @@ function chart(el, rows, metric, unit) {
     const g = add(svg, 'g', { class: 'series' });
     const pts = TIERS.map(([t], i) => x(i) + ',' + y(s.r.levels[t][metric]));
     add(g, 'polyline', { class: 'line', points: pts.join(' '), stroke: s.color, 'stroke-dasharray': s.dash });
-    TIERS.forEach(([t], i) => add(g, 'circle', { class: 'dot', cx: x(i), cy: y(s.r.levels[t][metric]), r: 3.5, fill: s.color }));
+    // A wide invisible stroke on top, so a thin line is still easy to hover.
+    add(g, 'polyline', { class: 'hit', points: pts.join(' ') });
+    TIERS.forEach(([t], i) => add(g, 'circle', { class: 'dot', cx: x(i), cy: y(s.r.levels[t][metric]), r: 2.5, fill: s.color }));
     const ex = x(TIERS.length - 1);
     add(g, 'path', { class: 'leader', d: 'M' + ex + ',' + y(s.end) + ' H' + (ex + 14) + ' L' + (ex + 24) + ',' + s.ly + ' H' + (ex + 32), stroke: s.color });
     add(g, 'text', { class: 'label', x: ex + 36, y: s.ly + 5, fill: s.color }, s.r.name);
@@ -171,24 +175,29 @@ function chart(el, rows, metric, unit) {
       add(g, 'text', { class: 'value', x: x(i), y: y(v) - 10, 'text-anchor': i === 0 ? 'start' : i === 3 ? 'end' : 'middle', visibility: 'hidden' }, v.toFixed(1));
     });
     g.addEventListener('mouseenter', () => {
+      // One line at a time: whatever was lit goes dark first.
+      clear();
       el.classList.add('focus'); g.classList.add('on');
       g.querySelectorAll('.value').forEach((v) => v.setAttribute('visibility', 'visible'));
       g.parentNode.appendChild(g);
     });
-    g.addEventListener('mouseleave', () => {
-      el.classList.remove('focus'); g.classList.remove('on');
-      g.querySelectorAll('.value').forEach((v) => v.setAttribute('visibility', 'hidden'));
+  }
+  function clear() {
+    el.querySelectorAll('.series.on').forEach((other) => {
+      other.classList.remove('on');
+      other.querySelectorAll('.value').forEach((v) => v.setAttribute('visibility', 'hidden'));
     });
   }
+  svg.addEventListener('mouseleave', () => { clear(); el.classList.remove('focus'); });
   add(svg, 'title', {}, unit + ' by gear tier');
   el.appendChild(svg);
 }
 
 const dps = DATA.rows.filter((r) => !r.tank);
 const tanks = DATA.rows.filter((r) => r.tank);
-chart(document.getElementById('c1'), dps, 'dps', 'DPS');
-chart(document.getElementById('c2'), tanks, 'tps', 'Threat per second');
-chart(document.getElementById('c3'), tanks, 'dtps', 'Damage taken per second');
+chart(document.getElementById('c1'), dps, 'dps', 'DPS', 1100);
+chart(document.getElementById('c2'), tanks, 'tps', 'Threat per second', 460);
+chart(document.getElementById('c3'), tanks, 'dtps', 'Damage taken per second', 460);
 </script>
 `;
   return html;
