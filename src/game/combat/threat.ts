@@ -38,7 +38,11 @@ import type { CombatStyleId } from '../character/ids';
 export const BEAR_FORM_THREAT_MULTIPLIER = 1.5;
 /** Cat Form's passive, -29%. */
 export const CAT_FORM_THREAT_MULTIPLIER = 0.71;
-/** Every Rogue's class passive, -29%. */
+/**
+ * Every Rogue's class passive, -29%: the client row both Forever simulators
+ * read. The owner briefly ruled 0.8 (round 47b) and then reverted it to 0.71
+ * the same day -- so 0.71 is now a confirmed figure, not only a consensus one.
+ */
 export const ROGUE_THREAT_MULTIPLIER = 0.71;
 
 export const BATTLE_STANCE_THREAT_MULTIPLIER = 0.8;

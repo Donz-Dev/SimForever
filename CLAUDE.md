@@ -1792,6 +1792,12 @@ the owner's two rulings, round 47. `engine/combat/threat.ts` is the rule and
   the Encounter panel's switch, and every preset carries it the same way.
 - **THE PLAYER'S TPS ONLY.** A pet holds its own threat on a boss, so it is not
   summed in, where its damage is. Thorns and Retribution Aura ARE the player's.
+- **WHAT BOTH SIMULATORS AGREE ON WAS BUILT WITHOUT ASKING, AND THAT IS A GAP.**
+  Two simulators agreeing means they read the same client file, not that the
+  owner agrees. The Rogue's x0.71 was challenged (0.8), then confirmed (0.71)
+  the same day; the other consensus values -- stances, forms, Righteous Fury --
+  have not been put to the owner. **A hidden class or form passive is the kind
+  of modifier that goes missing**: no talent, no tooltip, just a client row.
 - **WHERE THE TWO FOREVER SIMULATORS DISAGREE, THE OWNER CHOSE**: the Warrior is
   wowsims/forever's set MEASURED in game, the Bear's four abilities are
   mythicsim's multipliers under `PLACEHOLDER_` names, and Searing Pain, Mind

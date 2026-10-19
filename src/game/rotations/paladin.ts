@@ -386,12 +386,10 @@ export const PALADIN_PROTECTION: AplList = {
     condition: selfMissing('seal_of_righteousness'),
   },
   /*
-   * RIGHTEOUS FURY DOES NOTHING HERE AND IS CAST ANYWAY, on the owner's
-   * ruling. Its whole effect is "+60% threat from your Holy attacks" and
-   * threat is permanently out of scope -- so the Protection Paladin spends
-   * 30% of its base mana and a global cooldown on it at the pull exactly as it
-   * would in game, and gets nothing modelled back. Dropping the entry would
-   * hand the build a cast it does not get to keep.
+   * RIGHTEOUS FURY: +90% threat from Holy attacks, tracked since round 47 --
+   * this said "+60%, and threat is permanently out of scope" until then. The
+   * Protection Paladin casts it at the pull, which is also what switches
+   * Instrument of Law's reduction OFF for a build that takes that talent.
    */
   { abilityId: 'righteous_fury', condition: selfExpired('righteous_fury') },
   { abilityId: 'holy_shield', condition: selfExpired('holy_shield') },
