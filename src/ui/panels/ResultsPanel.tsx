@@ -42,6 +42,7 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
   return (
     <Panel
       title="Results"
+      className="panel-output"
       subtitle={
         /*
          * THE PRIORITY LIST IS NAMED HERE, and it has to be: a Warrior's list

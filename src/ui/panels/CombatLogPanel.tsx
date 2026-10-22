@@ -18,6 +18,7 @@ export function CombatLogPanel({ result }: CombatLogPanelProps) {
   return (
     <Panel
       title="Combat Log"
+      className="panel-output"
       collapsible
       /*
        * Its line count is already the subtitle, so it needs no `badge`: shut,
