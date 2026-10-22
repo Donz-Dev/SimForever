@@ -315,6 +315,22 @@
   --item-card-stat: #1eff00;
   --item-card-shadow: rgb(0 0 0 / 70%);
 
+  /*
+   * THE TALENT CARD, drawn like the game's: the same near-black as the item
+   * card, a gold name, and the rank text in the client's warm yellow. Roles
+   * for the reason the item card's are -- the colours are Blizzard's and are
+   * read against their black tooltip, whichever scheme the page is in.
+   */
+  --talent-card-bg: #0b0d14;
+  --talent-card-border: #3a3326;
+  --talent-card-name: #f8b700;
+  --talent-card-text: #ffd100;
+  --talent-card-meta: #c9c3b6;
+  --talent-card-dim: #8f8a80;
+  --talent-card-pip: #f8b700;
+  --talent-card-pip-off: #3d3a33;
+  --talent-card-unmet: #ff3b30;
+
   /* The popup list, which IS a page surface and takes the page's shadow. */
   --popup-shadow: rgb(0 0 0 / 55%);
 
@@ -1118,6 +1134,92 @@ button:disabled {
 
 .talent.maxed .talent-rank {
   color: var(--success);
+}
+
+/* The grid cell. It carries the hover card so a locked (disabled) talent,
+   which fires no mouse events of its own, still shows one. */
+.talent-slot {
+  display: block;
+  min-width: 0;
+}
+
+.talent-card {
+  width: 270px;
+  padding: 10px 12px 9px;
+  background: var(--talent-card-bg);
+  border: 1px solid var(--talent-card-border);
+  border-radius: 6px;
+  box-shadow: 0 12px 34px var(--item-card-shadow);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.talent-card-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.talent-card-icon {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--talent-card-border);
+  border-radius: 4px;
+}
+
+/* Small caps over a capitalised name is the client's own lettering. */
+.talent-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant: small-caps;
+  letter-spacing: 0.02em;
+  color: var(--talent-card-name);
+}
+
+.talent-card-rank {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--talent-card-meta);
+}
+
+.talent-card-pips {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.talent-card-pips .pip {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--talent-card-pip-off);
+}
+
+.talent-card-pips .pip.on {
+  background: var(--talent-card-pip);
+}
+
+.talent-card-text {
+  margin: 0 0 6px;
+  color: var(--talent-card-text);
+}
+
+.talent-card-label {
+  font-size: 11px;
+  color: var(--talent-card-meta);
+}
+
+.talent-card-foot {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--talent-card-dim);
+}
+
+.talent-card-foot.is-unmet {
+  color: var(--talent-card-unmet);
 }
 
 .talent-reset {
