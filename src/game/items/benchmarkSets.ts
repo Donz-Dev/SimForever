@@ -394,9 +394,12 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
   // Moonkin, Ele Shaman, Arcane, SM/DS, Firelock, Sbolt and Shadow +10, which
   // caps each of them. `spreadRating` already pays a rating out of crit first.
   //
-  // BOTH SHOCKADINS STAY AT 80, the melee cap: the owner chose the other route
-  // and put Divine Precision 2/3 back into their builds -- 12% Holy hit, which
-  // with these 8 points is past 17. See `PALADIN_SHOCKADIN_TALENTS`.
+  // BOTH SHOCKADINS STAY AT 80, THE MELEE CAP, BY THE OWNER'S DECISION, and
+  // so miss 9% with Holy Shock and Hammer of Wrath. Two routes to the spell cap
+  // were priced and declined: +90 rating breaks two template rulings, and
+  // Divine Precision 2/3 costs 30-34 DPS whichever of Consecrated Ground or
+  // Champion of the Light pays for it -- only those two spells roll the spell
+  // table. The owner: keep Consecrated Ground and Champion of the Light.
   // The Arcane Mage caps ARCANE: Arcane Focus is school-scoped, so its
   // Pyroblast still misses 5%. `tools/probe_spell_hit.ts` prints all ten.
   { idBlock: 30, presetId: 'warlock_sbolt', characterClass: 'warlock', label: 'Sbolt Spam', hit: 120, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },

@@ -1474,39 +1474,11 @@ const PALADIN_SHOCKADIN_TALENTS: TalentAllocation = {
   ...SHOCKADIN_HOLY_BELOW_20,
   holy_shock: 1,
   consecrated_ground: 2,
-  /*
-   * ==========================================================================
-   * DIVINE PRECISION 2/3, BY THE OWNER (round 51): "Put Divine Precision 2/2
-   * back into both Shockadin builds so they reach the spell hit cap, paying the
-   * points from wherever is least costly." The client has since made it THREE
-   * ranks at 6/12/18%, so 2/3 is 12% Holy hit -- with 8 from the template that
-   * is past the 17% cap, and the template stays at 80 rating.
-   *
-   * THE DONOR IS CHAMPION OF THE LIGHT 3 -> 1, AND IT IS THE CHEAPEST OF THREE.
-   * Both trees are forced (Holy has exactly 20 below tier 20, Retribution
-   * exactly 25 below Champion), so the only legal pairs are Consecrated Ground
-   * 2, Champion 2, or one of each. Paired over 600 fights against the build
-   * without Divine Precision:
-   *
-   *                       1H 60s   1H 180s   2H 60s   2H 180s
-   *   Champion -2         -32.1    -30.1     -33.7    -32.4
-   *   one of each         -33.9    -33.0     -37.2    -34.5
-   *   Consecrated -2      -37.4    -37.7     -42.4    -38.2
-   *
-   * EVERY OPTION IS A LOSS, AND THAT IS THE SHAPE OF THIS BUILD RATHER THAN A
-   * BUG. Only Holy Shock and Hammer of Wrath roll the spell table -- Judgement
-   * and Holy Strike roll melee tables and the seals cannot miss -- so the cap
-   * buys about a tenth of two small damage sources, and every donor is worth
-   * more than that. Implemented because the owner asked for the cap.
-   * ==========================================================================
-   */
-  divine_precision: 2,
   ...SHOCKADIN_RET_BELOW_20,
   holy_conduit: 2,
   pursuit_of_justice: 1,
   vengeance: 3,
-  // 3 -> 1 to pay for Divine Precision, the cheapest donor -- see above.
-  champion_of_the_light: 1,
+  champion_of_the_light: 3,
 };
 
 /**
@@ -1523,13 +1495,10 @@ const PALADIN_SHOCKADIN_2H_TALENTS: TalentAllocation = {
   holy_shock: 1,
   // One point from Two-Handed Weapon Specialization, by the owner (round 37).
   consecrated_ground: 2,
-  // Divine Precision 2/3, paid by Champion of the Light 3 -> 1 -- the same
-  // ruling and the same measured cheapest donor as the shield build above.
-  divine_precision: 2,
   ...SHOCKADIN_RET_BELOW_20,
   vengeance: 3,
   two_handed_weapon_specialization: 2,
-  champion_of_the_light: 1,
+  champion_of_the_light: 3,
 };
 
 const PALADIN_PROTECTION_TALENTS: TalentAllocation = {

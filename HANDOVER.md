@@ -75,7 +75,7 @@ the tooling to be a bit more sophisticated as well."
 | 43 | **LIFE TAP IS (430 + SPIRIT)**, Wowhead's Forever formula, on the owner's instruction -- replacing the ruled flat 840 and the Spirit clause's `unmodelled` caveat. About 674 on every Warlock preset | Firelock **-7.6 at 60s**; the others unchanged at 60s; -4 to -25 at longer lengths, from more taps | see below |
 | 44 | **FIRE DEMO** -- the Demonology profile renamed, three Suppression points to Agonizing Flames, +40 hit on its four benchmark sets, and Decimation's Soul Fire half made a 10-second buff opened in the last 35% | **1120.8 at 60s**, from 1021.0; Decimation 100% uptime -> ~33%. One question closed | see below |
 | 45 | **SBOLT SPAM, A 31ST PROFILE** -- the owner's 22/11/18 Orc, Imp sacrificed, their seven-entry list with a cooldown-stack sequence; and Fire Demo's benchmark row moved to the end, restoring three profiles' saved gear ids that round 40 had shifted | **913.0 at 60s**; every other profile's hash identical to `main` | see below |
-| 51 | **SIXTEEN OWNER ITEMS IN ONE PR, AND A MAGE TREE CHANGE THEY TURNED UP** -- casters re-capped for 17% spell hit, Champion of the Light 20/40/60 ahead of the client, Bloodthrill and Aftermath narrowed, Faerie Fire for the Bear, Evocation that stops at a full pool, a Mana Ruby, Fire Blast at T-0, two Mage builds, agility tank consumables, Berserk before Ravage, pet hit by the 17/8 rule, and an editable swing-timer clause | **not re-baselined**, on the owner's standing instruction. `USES=1` on the five touched Druid and Mage profiles: every new entry fires. Piercing Ice is REMOVED from the client's tree and Elemental Precision is 3 ranks at 2/4/6% -- in no note. The Shockadins reach the cap through **Divine Precision 2/3**, paid by Champion of the Light 3 -> 1 at **-30 to -34 DPS** -- the cheapest of three legal donors, and every one a loss | see below |
+| 51 | **SIXTEEN OWNER ITEMS IN ONE PR, AND A MAGE TREE CHANGE THEY TURNED UP** -- casters re-capped for 17% spell hit, Champion of the Light 20/40/60 ahead of the client, Bloodthrill and Aftermath narrowed, Faerie Fire for the Bear, Evocation that stops at a full pool, a Mana Ruby, Fire Blast at T-0, two Mage builds, agility tank consumables, Berserk before Ravage, pet hit by the 17/8 rule, and an editable swing-timer clause | **not re-baselined**, on the owner's standing instruction. `USES=1` on the five touched Druid and Mage profiles: every new entry fires. Piercing Ice is REMOVED from the client's tree and Elemental Precision is 3 ranks at 2/4/6% -- in no note. The Shockadins stay at 80, the melee cap, by the owner's decision, after both routes to the spell cap were priced | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -107,7 +107,7 @@ to expect: a batch like this produces questions, and the answers arrive later.
 | | what changed | how it was checked |
 | --- | --- | --- |
 | spell hit cap | Moonkin, Ele Shaman, Arcane, SM/DS, Firelock, Sbolt and Shadow templates +10 hit rating, paid out of crit by `spreadRating`; Fire Demo was already at 17 | `tools/probe_spell_hit.ts`: 0.0% miss on each main school at B55, E65, E75 and E85 |
-| Shockadin and Shockadin 2H | templates stay at 80; **Divine Precision 2/3** (12% Holy hit) by the owner's answer, paid by **Champion of the Light 3 -> 1**. Builds are 25/0/26 | Holy Shock and Hammer of Wrath 0% miss at every tier; donors measured, below |
+| Shockadin and Shockadin 2H | **left at 80**, the melee cap, by the owner -- so Holy Shock and Hammer of Wrath miss 9% | both routes to the spell cap priced and declined, below |
 | Champion of the Light | 20/40/60% of Intellect, through a REBUILT `PATCH_NOTE_TALENT_VALUES` -- the client still says 10/20/30 and the importer would clobber a values-file edit | `patchNoteValues.test.ts` fails the day the client catches up |
 | Seal of Righteousness / Fury | verified, no change -- see the table below | `tools/seal_table.ts`: formula, hand arithmetic and the shipped reaction agree to the cent |
 | Bloodthrill | rolls only on the main-hand swing (extra attacks are swings), Heroic Strike and Cleave | `bloodthrillTriggers.test.ts`, including seven strikes that no longer roll |
@@ -149,28 +149,21 @@ Overpower windows, so 2H Arms' Recklessness -- below an ungated Hamstring --
 missed its gap on seed 1 and fires in 19 of 20 fights. The test counts over
 twelve now.
 
-**THE SHOCKADINS, ANSWERED.** The first pass gave them +10 like everyone else
-and left them 8 short, because Divine Precision had left their builds. The
-owner: "Put Divine Precision 2/2 back into both Shockadin builds so they reach
-the spell hit cap, paying the points from wherever is least costly." The client
-has since made it THREE ranks at 6/12/18%, so 2/3 is 12% and the templates go
-back to 80.
+**THE SHOCKADINS STAY AT 80, AND THAT IS A DECISION RATHER THAN A GAP.** They
+miss 9% on the spell table because Divine Precision is not in their builds, and
+both ways to the cap were priced:
 
-Both trees are forced -- Holy has exactly 20 below tier 20 and Retribution
-exactly 25 below Champion of the Light -- so only three pairs are legal. Paired
-over 600 fights against the build without Divine Precision:
+- **+90 hit rating** (170 total): the B55 wrist and waist come out "+1 Spell
+  Power" and the E75/E85 heads carry 30 hit, breaking two template rulings.
+- **Divine Precision 2/3** (now 3 ranks at 6/12/18%): both trees are forced, so
+  the two points come from Consecrated Ground or Champion of the Light, and
+  every option LOST -- 30 to 34 DPS at best (Champion -2), 37 to 42 at worst
+  (Consecrated -2), paired over 600 fights at 60s and 180s. Only Holy Shock and
+  Hammer of Wrath roll the spell table; Judgement and Holy Strike are on melee
+  tables and the seals cannot miss.
 
-| donor | 1H 60s | 1H 180s | 2H 60s | 2H 180s |
-| --- | --- | --- | --- | --- |
-| **Champion of the Light -2** (shipped) | **-32.1** | **-30.1** | **-33.7** | **-32.4** |
-| one point from each | -33.9 | -33.0 | -37.2 | -34.5 |
-| Consecrated Ground -2 | -37.4 | -37.7 | -42.4 | -38.2 |
-
-**EVERY OPTION IS A LOSS, AND THAT IS THE BUILD'S SHAPE.** Only Holy Shock and
-Hammer of Wrath roll the spell table -- Judgement and Holy Strike roll melee
-tables and the seals cannot miss -- so the cap buys about a tenth of two small
-damage sources, and every donor is worth more than that. Implemented because
-the owner asked for the cap; the figure is here so the trade is visible.
+The owner: "just leave shockadin at 80 hit rating with consecrated light +
+champion of the light." Builds unchanged at 23/0/28.
 
 ## Round 35: the miscellaneous cleanup
 
@@ -10629,7 +10622,7 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Arcane Mage | Mage | 48/3/0 | 1123.4 | | LW Melee | Hunter | 5/13/33 | 878.8 |
-| Frostfire Mage | Mage | 0/29/22 | 1086.4 | | Shockadin | Paladin | 25/0/26 | 867.8 |
+| Frostfire Mage | Mage | 0/29/22 | 1086.4 | | Shockadin | Paladin | 23/0/28 | 867.8 |
 | DW Fury | Warrior | 17/34/0 | 1068.4 | | Combat Mut | Rogue | 30/21/0 | 848.0 |
 | LW Ranged | Hunter | 5/41/5 | 1021.0 | | Hemo Dagger | Rogue | 17/3/31 | 840.2 |
 | Fire Mage | Mage | 14/34/3 | 1020.7 | | **Enh Shaman** | Shaman | 19/32/0 | **838.8** |
@@ -10637,7 +10630,7 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Cat Druid | Druid | 9/34/8 | 966.9 | | Ele Shaman | Shaman | 32/11/8 | 792.8 |
 | Seal Twist Ret | Paladin | 15/0/36 | 948.6 | | Pure Hemo | Rogue | 19/8/24 | 775.9 |
 | Hawk Melee | Hunter | 16/11/24 | 937.6 | | Venom Rogue | Rogue | 33/16/2 | 771.6 |
-| Shockadin 2H | Paladin | 25/0/26 | 935.2 | | SM/DS | Warlock | 35/11/5 | 769.4 |
+| Shockadin 2H | Paladin | 23/0/28 | 935.2 | | SM/DS | Warlock | 35/11/5 | 769.4 |
 | Shadow Priest | Priest | 14/2/35 | 931.0 | | Rupture Rogue | Rogue | 12/8/31 | 754.9 |
 | 2H Arms | Warrior | 39/10/2 | 927.0 | | Prot Pally | Paladin | 8/34/9 | 551.1 |
 elock | Warlock | 5/11/35 | 910.5 | | Prot Warr | Warrior | 17/0/34 | 499.5 |
