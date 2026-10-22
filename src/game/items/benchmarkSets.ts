@@ -313,7 +313,7 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * was raised rather than guessed at. Settled now, and the one-handed 20% is
    * what the Shockadin's seal reads.
    */
-  { idBlock: 18, presetId: 'pally_shockadin', characterClass: 'paladin', label: 'Shockadin', hit: 90, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', speed: 2.0, caster: true } },
+  { idBlock: 18, presetId: 'pally_shockadin', characterClass: 'paladin', label: 'Shockadin', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', speed: 2.0, caster: true } },
   { idBlock: 19, presetId: 'prot_pally', characterClass: 'paladin', label: 'Prot Pally', hit: 50, expertise: 20, preferred: PROT_PALLY, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true }, trinkets: PROT_PALLY_TRINKETS },
   { idBlock: 20, presetId: 'bm_hunter', characterClass: 'hunter', label: 'BM Hunter', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
   { idBlock: 21, presetId: 'lw_ranged', characterClass: 'hunter', label: 'LW Ranged', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
@@ -359,7 +359,7 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * place in this table no longer matters; the order is kept as it was.
    * ============================================================================
    */
-  { idBlock: 27, presetId: 'pally_shockadin_2h', characterClass: 'paladin', label: 'Shockadin 2H', hit: 90, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Mace', speed: 2.0 } },  /*
+  { idBlock: 27, presetId: 'pally_shockadin_2h', characterClass: 'paladin', label: 'Shockadin 2H', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Mace', speed: 2.0 } },  /*
    * FURY PROT IS THE PROT WARR ROW under its own label -- the owner's "copy
    * Prot Warr in almost every other case" -- so it generates the same stats
    * on its own ids, and the four test-set buttons find it by name.
@@ -394,12 +394,9 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
   // Moonkin, Ele Shaman, Arcane, SM/DS, Firelock, Sbolt and Shadow +10, which
   // caps each of them. `spreadRating` already pays a rating out of crit first.
   //
-  // BOTH SHOCKADINS TOOK THE SAME +10 AND ARE STILL 8 SHORT, which is a
-  // QUESTION FOR THE OWNER rather than a decision: capping them is +90 (170
-  // total), and at 170 the plate templates break two earlier rulings -- B55
-  // wrist and waist come out "+1 Spell Power", and the E75/E85 heads carry 30
-  // hit against the 25 no real item exceeds. Taking Divine Precision 2/2 back
-  // is the other route, and the build is the owner's.
+  // BOTH SHOCKADINS STAY AT 80, the melee cap: the owner chose the other route
+  // and put Divine Precision 2/3 back into their builds -- 12% Holy hit, which
+  // with these 8 points is past 17. See `PALADIN_SHOCKADIN_TALENTS`.
   // The Arcane Mage caps ARCANE: Arcane Focus is school-scoped, so its
   // Pyroblast still misses 5%. `tools/probe_spell_hit.ts` prints all ten.
   { idBlock: 30, presetId: 'warlock_sbolt', characterClass: 'warlock', label: 'Sbolt Spam', hit: 120, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },

@@ -248,8 +248,13 @@ describe('where it lands, and where it correctly does not', () => {
      * a note supplied the 30.
      * ========================================================================
      */
+    /*
+     * 20%, NOT 60%: the Shockadin takes the talent at 1/3 since round 51, when
+     * two of its points paid for Divine Precision. Rank 1 of the override is
+     * 20 where the client's row says 10, so this still proves it ARRIVES.
+     */
     expect(shockadin.stats.get('spellPower')).toBeCloseTo(
-      shockadin.stats.get('intellect') * 0.6,
+      shockadin.stats.get('intellect') * 0.2,
       6,
     );
     expect(shockadin.abilities.has('seal_of_righteousness')).toBe(true);

@@ -75,8 +75,8 @@ export const PROFILES = [
    * digits exactly, which is what says these two are the allocation and not an
    * encoding error.
    */
-  ['paladin', 'Shockadin', 'https://talentsforever.com/paladin/60/550130000001212--0522533020103032-ilkjnprtmvABECHLNM-6'],
-  ['paladin', 'Shockadin 2H', 'https://talentsforever.com/paladin/60/550130000001212--0521533000133032-ilkjnprtmvABECHLNM-6'],
+  ['paladin', 'Shockadin', 'https://talentsforever.com/paladin/60/553030030001212--052253301010301-ilkjnprtmvABECHLNM-6'],
+  ['paladin', 'Shockadin 2H', 'https://talentsforever.com/paladin/60/553030030001212--052153300012301-ilkjnprtmvABECHLNM-6'],
   ['paladin', 'Prot Pally', 'https://talentsforever.com/paladin/60/50003-0530213321301451-5022-hjAESTVYZXWabdefgk-6'],
   ['warrior', '2H Arms', 'https://talentsforever.com/warrior/60/30325213132515201-0505-2-CA2FAE2HE2KJIMNOLQSUEGiD-6'],
   ['warrior', 'DW Fury', 'https://talentsforever.com/warrior/60/30305013002-05253005122210501--SUVTYZbdfha1ACE4HEGKa-6'],
