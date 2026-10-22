@@ -832,6 +832,58 @@ export const EVOCATION: Ability = {
   onCast: ({ simulation, caster }) => {
     caster.auras.remove(simulation, EVOCATION_AURA.id);
   },
+  /*
+   * STOPS AT A FULL POOL, by the owner (round 51): "if while casting evocation
+   * your current mana reaches 100% then stop the channel and continue with the
+   * rotation." The engine polls this, ends the channel, and runs `onCast` above
+   * -- so the regeneration window closes with it.
+   */
+  endsChannelEarly: (_context, caster) => {
+    const mana = caster.resources.get('mana');
+    return mana !== undefined && mana.current >= mana.maximum;
+  },
+};
+
+/**
+ * Mana Ruby: "regain 1000 to 1200 Mana", ONCE A FIGHT, OFF THE GLOBAL COOLDOWN.
+ *
+ * ----------------------------------------------------------------------------
+ * THE OWNER, ROUND 51: "Mana Ruby needs to be APL rotation. If current mana
+ * reaches 25% then use a Mana Ruby to regain 1000 to 1200 Mana. Can be used
+ * once per combat iteration regardless of duration. Does not trigger a global
+ * cooldown."
+ *
+ * "ONCE PER COMBAT ITERATION REGARDLESS OF DURATION" IS A COOLDOWN NO FIGHT
+ * OUTLASTS. A day, named, rather than `Infinity` -- every reader of a cooldown
+ * does arithmetic on it, and a finite number keeps `cooldownTime` and the
+ * panels honest. `freeCastChain.test.ts` requires an off-GCD ability to declare
+ * one anyway, or it could win the list forever in one instant.
+ *
+ * A CLASS ABILITY AND NOT A CONSUMABLE CATEGORY, because the owner stated it as
+ * a Mage's rotation entry rather than as a selection, and a conjured gem shares
+ * no cooldown with a potion -- so it does NOT join `POTION_COOLDOWN_GROUP`.
+ * Free and instant, so neither Clearcasting (`requiresCost`) nor Presence of
+ * Mind (`requiresCastTime`) can spend a charge on it.
+ * ----------------------------------------------------------------------------
+ */
+export const MANA_RUBY_MINIMUM = 1000;
+export const MANA_RUBY_MAXIMUM = 1200;
+export const MANA_RUBY_COOLDOWN_MS = seconds(24 * 60 * 60);
+
+export const MANA_RUBY: Ability = {
+  id: 'mana_ruby',
+  name: 'Mana Ruby',
+  cooldownMs: MANA_RUBY_COOLDOWN_MS,
+  requiresTarget: false,
+  triggersGcd: false,
+  onCast: ({ simulation, caster, ability }) => {
+    simulation.grantResource(
+      caster,
+      'mana',
+      simulation.rng.nextInt(MANA_RUBY_MINIMUM, MANA_RUBY_MAXIMUM),
+      { id: ability.id, name: ability.name },
+    );
+  },
 };
 
 /**
@@ -1007,4 +1059,5 @@ export const MAGE_ABILITIES: readonly Ability[] = [
   PRESENCE_OF_MIND_ABILITY,
   MAGE_ARMOR_ABILITY,
   EVOCATION,
+  MANA_RUBY,
 ];

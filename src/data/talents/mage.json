@@ -439,13 +439,13 @@
     {
      "row": 0,
      "col": 2,
-     "ranks": 5,
+     "ranks": 3,
      "name": "Elemental Precision",
      "icon": "spell_ice_magicdamage",
      "tier": 0,
      "requires": null,
      "requiresRanks": null,
-     "description": "Improves your chance to hit with Frost and Fire spells by 5%."
+     "description": "Improves your chance to hit with Frost and Fire spells by 6%."
     },
     {
      "row": 1,
@@ -462,12 +462,12 @@
      "row": 1,
      "col": 1,
      "ranks": 3,
-     "name": "Permafrost",
-     "icon": "spell_frost_wisp",
+     "name": "Frostbite",
+     "icon": "spell_frost_frostarmor",
      "tier": 5,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases the duration of your Chill effects by 33% and reduces the target's speed by an additional 10%."
+     "description": "Gives your Chill effects a 15% chance to Freeze the target for 5 sec."
     },
     {
      "row": 1,
@@ -484,27 +484,16 @@
      "row": 1,
      "col": 3,
      "ranks": 3,
-     "name": "Frostbite",
-     "icon": "spell_frost_frostarmor",
+     "name": "Permafrost",
+     "icon": "spell_frost_wisp",
      "tier": 5,
      "requires": null,
      "requiresRanks": null,
-     "description": "Gives your Chill effects a 15% chance to Freeze the target for 5 sec."
+     "description": "Increases the duration of your Chill effects by 33% and reduces the target's speed by an additional 10%."
     },
     {
      "row": 2,
      "col": 0,
-     "ranks": 3,
-     "name": "Piercing Ice",
-     "icon": "spell_frost_frostbolt",
-     "tier": 10,
-     "requires": null,
-     "requiresRanks": null,
-     "description": "Increases the damage done by your Frost spells by 6%."
-    },
-    {
-     "row": 2,
-     "col": 1,
      "ranks": 3,
      "name": "Frost Channeling",
      "icon": "spell_frost_stun",
@@ -512,6 +501,17 @@
      "requires": null,
      "requiresRanks": null,
      "description": "Reduces the mana cost of your Frost spells by 15% and reduces the threat caused by your Frost spells by 30%."
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "ranks": 3,
+     "name": "Improved Blizzard",
+     "icon": "spell_frost_icestorm",
+     "tier": 10,
+     "requires": null,
+     "requiresRanks": null,
+     "description": "Adds a Chill effect to your Blizzard spell. This effect lowers the target's movement speed by 40% for 1.5 sec."
     },
     {
      "row": 2,
@@ -523,17 +523,6 @@
      "requires": null,
      "requiresRanks": null,
      "description": "Deals 28 to 32 Frost damage to an enemy target. Deals 200% increased damage to Frozen targets."
-    },
-    {
-     "row": 2,
-     "col": 3,
-     "ranks": 3,
-     "name": "Improved Blizzard",
-     "icon": "spell_frost_icestorm",
-     "tier": 10,
-     "requires": null,
-     "requiresRanks": null,
-     "description": "Adds a Chill effect to your Blizzard spell. This effect lowers the target's movement speed by 40% for 1.5 sec."
     },
     {
      "row": 3,

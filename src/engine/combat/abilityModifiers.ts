@@ -64,6 +64,23 @@ export interface AbilityModifier {
   /** Multiplies the ability's final damage. 1.2 is +20%. */
   readonly damageMultiplier?: number;
   /**
+   * Multiplies the ability's NON-PERIODIC damage only, and leaves its ticks.
+   *
+   * Aftermath is "increases the INITIAL damage of your Immolate", and Immolate's
+   * hit and its burn share one ability id -- a tick carries its aura's id, and
+   * the aura is `immolate` -- so `damageMultiplier` raised the burn too. The
+   * owner, round 51: "ONLY the initial damage from immolate is increased by
+   * 50% (at rank 5), not the DoT effect."
+   *
+   * A SECOND FIELD RATHER THAN A SECOND ID, because a separate id for the hit
+   * would detach it from everything else keyed on `immolate` -- Agonizing
+   * Flames, the crit talents, the damage table's row. `dealDamage` reads it
+   * only when `request.periodic` is false, which is the same test Eureka!'s
+   * `nonPeriodicDamageMultiplier` already makes. A channel's ticks are not
+   * periodic and DO collect it, which is that field's answer too.
+   */
+  readonly directDamageMultiplier?: number;
+  /**
    * Taken off the MISS chance, in percentage POINTS. 5 is "+5% chance to hit".
    *
    * ----------------------------------------------------------------------------
@@ -383,6 +400,7 @@ function combine(a: SchoolModifier, b: SchoolModifier): SchoolModifier {
     // A FACTOR MULTIPLIES, like the damage multiplier beside it.
     critMultiplierFactor: (a.critMultiplierFactor ?? 1) * (b.critMultiplierFactor ?? 1),
     damageMultiplier: (a.damageMultiplier ?? 1) * (b.damageMultiplier ?? 1),
+    directDamageMultiplier: (a.directDamageMultiplier ?? 1) * (b.directDamageMultiplier ?? 1),
     spellPower: (a.spellPower ?? 0) + (b.spellPower ?? 0),
     /*
      * HIT ADDS, like every other chance here. Left out when the field was
@@ -467,6 +485,11 @@ export function scaleByStacks(
     critMultiplierBonus: (modifier.critMultiplierBonus ?? 0) * stacks,
     critMultiplierFactor: (modifier.critMultiplierFactor ?? 1) ** stacks,
     damageMultiplier: stackedMultiplier(modifier.damageMultiplier ?? 1, stacks, additiveDamage),
+    directDamageMultiplier: stackedMultiplier(
+      modifier.directDamageMultiplier ?? 1,
+      stacks,
+      additiveDamage,
+    ),
   };
 }
 

@@ -342,6 +342,12 @@ export type TalentEffect =
        * Corruption a 2% bonus instead of 10%.
        */
       readonly valueIndex?: number;
+      /**
+       * Raise the ability's DIRECT damage only, not its ticks. Aftermath's
+       * "the INITIAL damage of your Immolate", where the hit and the burn
+       * share the id. See `AbilityModifier.directDamageMultiplier`.
+       */
+      readonly directOnly?: boolean;
     }
 
   /**

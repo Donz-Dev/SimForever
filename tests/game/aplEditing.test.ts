@@ -11,9 +11,11 @@ import { compileCondition, compileRotation } from '../../src/game/rotations/apl'
 import {
   addEntry,
   appendTo,
+  blankClause,
   blankClauseNode,
   blankGroup,
   conditionOf,
+  fromClause,
   moveEntry,
   nodeAt,
   removeAt,
@@ -167,6 +169,35 @@ describe('a condition round-trips through the editor', () => {
     const root = rootOf(condition);
     expect(root.children.map((child) => child.kind)).toEqual(['clause', 'fixed']);
     expect(conditionOf(root)).toEqual(condition);
+  });
+
+  it('draws a swing-timer read as a clause, in seconds, and round-trips it', () => {
+    /*
+     * ROUND 51: "if there is X amount of time left in the main-hand / ranged /
+     * off-hand auto-attack swing timer then do Y." `swingIn` was a fixed leaf;
+     * it is a clause now, shown in SECONDS and stored in milliseconds -- and
+     * 300ms is the value that would come back 300.00000000000006 unrounded.
+     */
+    for (const slot of ['mainHand', 'offHand', 'ranged'] as const) {
+      const condition: AplCondition = { kind: 'swingIn', slot, compare: 'atMost', milliseconds: 300 };
+      const root = rootOf(condition);
+      const leaf = root.children[0];
+      expect(leaf.kind, slot).toBe('clause');
+      expect(leaf.kind === 'clause' && leaf.clause).toEqual({
+        kind: 'swing',
+        slot,
+        compare: 'atMost',
+        value: 0.3,
+      });
+      expect(conditionOf(root)).toEqual(condition);
+    }
+    // And a new one from the add control is a real, gated condition.
+    expect(fromClause(blankClause('swing'))).toEqual({
+      kind: 'swingIn',
+      slot: 'mainHand',
+      compare: 'atMost',
+      milliseconds: 500,
+    });
   });
 
   it('reads any, not and nesting as a tree', () => {

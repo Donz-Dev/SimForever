@@ -297,6 +297,19 @@ const EVOCATION_MANA_PERCENT = 10;
 const EVOCATION_FIGHT_SECONDS = 15;
 const FIRE_EVOCATION_FIGHT_SECONDS = 10;
 
+/**
+ * The Mana Ruby at 25% mana -- the owner, round 51: "If current mana reaches 25%
+ * then use a Mana Ruby." ONE ENTRY SHARED BY ALL THREE LISTS, placed just above
+ * Evocation in each: it is free and off the global cooldown, so it needs to sit
+ * above every filler to be REACHED, and above Evocation so the gem is spent
+ * before the eight-second channel is considered at 10%.
+ */
+const MANA_RUBY_MANA_PERCENT = 25;
+const MANA_RUBY_ENTRY = {
+  abilityId: 'mana_ruby',
+  condition: selfResourceBelowPercent('mana', MANA_RUBY_MANA_PERCENT),
+};
+
 const evocationFor = (secondsLeft: number) =>
   all(
     selfResourceBelowPercent('mana', EVOCATION_MANA_PERCENT),
@@ -422,6 +435,7 @@ export const MAGE_FIRE: AplList = {
    */
   ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
   ...CONSUMABLE_HEALS,
+  MANA_RUBY_ENTRY,
   { abilityId: 'evocation', condition: evocationFor(FIRE_EVOCATION_FIGHT_SECONDS) },
   { abilityId: 'scorch', condition: scorchNeededWithin(FIRE_SCORCH_REFRESH_SECONDS) },
   /*
@@ -532,8 +546,14 @@ export const MAGE_FIRE: AplList = {
    * SO THE GATE HOLDS THE CHEAP INSTANT BACK until the free cast has been
    * taken by the filler below.
    * ==========================================================================
+   *
+   * AND THE OWNER HAS DROPPED IT, round 51: "drop the conditional use in the
+   * APL. Just use it on cooldown with no conditions." The Clearcasting and
+   * Heating Up gates above are the decision being superseded and are kept as
+   * its record. Fire Blast opens the fight from the pre-combat list now, so
+   * this entry is its second cast onward.
    */
-  { abilityId: 'fire_blast', condition: all(selfLacks('clearcasting'), heatingUpAtMostOne) },
+  { abilityId: 'fire_blast' },
   /*
    * ARCANE MISSILES ON A BARRAGE PROC, WHICH IS NEW TO THIS LIST AND IS PAID
    * FOR IN TALENTS. The respecification moves six points into Arcane for
@@ -652,6 +672,7 @@ export const MAGE_FROSTFIRE: AplList = {
   { abilityId: 'eureka', condition: selfHas('fingers_of_frost') },
   ...CONSUMABLE_COOLDOWNS,
   ...CONSUMABLE_HEALS,
+  MANA_RUBY_ENTRY,
   { abilityId: 'evocation', condition: evocationFor(EVOCATION_FIGHT_SECONDS) },
   { abilityId: 'scorch', condition: scorchNeededWithin(FROSTFIRE_SCORCH_REFRESH_SECONDS) },
   { abilityId: 'pyroblast', condition: selfStacksExactly('heating_up', HEATING_UP_MAX_STACKS) },
@@ -843,6 +864,7 @@ export const MAGE_ARCANE: AplList = {
    * Druid, Shaman and Warlock lists.
    */
   ...CONSUMABLE_HEALS,
+  MANA_RUBY_ENTRY,
   { abilityId: 'evocation', condition: evocationFor(EVOCATION_FIGHT_SECONDS) },
   /*
    * ARCANE POWER ON A BARRAGE PROC ALONE, which is LOOSER than it was. The
@@ -1075,7 +1097,6 @@ export function mageRotation(talents: TalentAllocation): Rotation | undefined {
     'permafrost',
     'improved_frost_nova',
     'frostbite',
-    'piercing_ice',
     'frost_channeling',
     'ice_lance',
     'improved_blizzard',

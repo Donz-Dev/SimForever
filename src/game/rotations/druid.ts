@@ -556,6 +556,22 @@ export const DRUID_BEAR: AplList = {
    * entry that can never be reached.
    */
   ...consumableCooldowns({ exclude: ['mighty_rage_potion'] }),
+  /*
+   * FAERIE FIRE, the owner's addition in round 51 -- free in Dire Bear Form and
+   * worth 2 x level in base threat, scaled by the Bear's threat modifiers.
+   *
+   * UNGATED AND BELOW EVERY RAGE SPENDER, which is what makes it a FILLER: it
+   * costs nothing, so it is castable on every decision, and an ungated free
+   * entry is a floor under everything beneath it. Below Lacerate, it fires only
+   * on a global cooldown the Bear could not afford to spend on anything else --
+   * a rage-starved moment, which is exactly where 120-odd threat for no rage is
+   * worth a GCD. Above Lacerate it would starve the bleed.
+   *
+   * AND LAST OF ALL, BELOW THE RACIALS AND CONSUMABLES. An off-GCD entry is
+   * still BLOCKED by a running global cooldown, so a free entry that is always
+   * castable above them would take every moment they could have fired in.
+   */
+  { abilityId: 'faerie_fire' },
 ],
 };
 

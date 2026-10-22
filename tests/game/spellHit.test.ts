@@ -69,7 +69,8 @@ const EXPECTED: ReadonlyArray<
   readonly [cls: 'mage' | 'priest' | 'paladin', id: string, rank: number, points: number, schools: readonly DamageSchool[]]
 > = [
   ['mage', 'arcane_focus', 5, 5, ['arcane']],
-  ['mage', 'elemental_precision', 5, 5, ['frost', 'fire']],
+  // Three ranks at 2/4/6% since the client refresh in round 51 (was 5 at 1%).
+  ['mage', 'elemental_precision', 3, 6, ['frost', 'fire']],
   ['priest', 'shadow_focus', 5, 5, ['shadow']],
   ['priest', 'holy_precision', 3, 18, ['holy']],
   ['paladin', 'divine_precision', 3, 18, ['holy']],
@@ -112,9 +113,9 @@ describe('what it does NOT reach', () => {
   });
 
   it('gives Elemental Precision both of its schools and neither of the others', () => {
-    const build = talentBuild('mage', { elemental_precision: 5 });
-    expect(build.schoolModifiers.for('frost').hitBonus).toBe(5);
-    expect(build.schoolModifiers.for('fire').hitBonus).toBe(5);
+    const build = talentBuild('mage', { elemental_precision: 3 });
+    expect(build.schoolModifiers.for('frost').hitBonus).toBe(6);
+    expect(build.schoolModifiers.for('fire').hitBonus).toBe(6);
     expect(build.schoolModifiers.for('arcane').hitBonus ?? 0).toBe(0);
   });
 });

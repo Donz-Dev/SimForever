@@ -194,11 +194,12 @@ describe('the numbers', () => {
     expect(ARCANE_BLAST_BASE_MANA_FRACTION).toBe(0.15);
   });
 
-  it('declares an effect for every one of the 55 talents', () => {
+  it('declares an effect for every one of the 54 talents', () => {
     // 55: ARCANE WRATH was added at client build 1.60.1.70425. Wake of Fire
     // became Improved Fire Blast in the same patch, which is a rename and
-    // changes no count -- so the tree grew by exactly one.
-    expect(Object.keys(MAGE_TALENT_EFFECTS)).toHaveLength(55);
+    // changes no count -- so the tree grew by exactly one. 54 since round 51's
+    // refresh removed Piercing Ice.
+    expect(Object.keys(MAGE_TALENT_EFFECTS)).toHaveLength(54);
   });
 });
 
@@ -450,9 +451,11 @@ describe('the talents that needed a school', () => {
      * so what this reads on the Fire side is CRITICAL MASS -- 4/5 here, the
      * rank the client's new fifth made affordable. Fire Power's own half of the
      * overlap is asserted in the ramp test below, where the count lives.
+     *
+     * 3/5 SINCE THE OWNER'S ROUND 51 BUILD, so +6%.
      */
     const frostfire = presetPlayer('mage_frostfire');
-    expect(frostfire.schoolModifiers.for('fire').critBonus).toBe(8);
+    expect(frostfire.schoolModifiers.for('fire').critBonus).toBe(6);
     expect(frostfire.schoolModifiers.for('frost').critMultiplierBonus).toBeCloseTo(0.5, 6);
   });
 
@@ -1038,10 +1041,11 @@ describe('the three fights', () => {
     for (const [index, total] of totals.entries()) {
       expect(total, String(index)).toBeGreaterThan(6 + 16 + 20 + 30);
     }
-    // AND ALL THREE READ THE SAME, which is the half that catches one Mage
-    // being given a different set: their templates are identical in everything
-    // the budget sees.
-    expect(new Set(totals).size).toBe(1);
+    // AND FIRE AND FROSTFIRE READ THE SAME, which is the half that catches one
+    // Mage being given a different set: their templates are identical in
+    // everything the budget sees. Arcane was the third until round 51 gave its
+    // template 10 more hit rating to reach 17% on Arcane.
+    expect(totals[0]).toBe(totals[1]);
     const named = batchOf('mage_fire', 20, 5).castButNotSimulated.map((e) => e.abilityName);
     expect(named).not.toContain('Fireball');
   });
@@ -2126,47 +2130,6 @@ describe('Frostfire Bolt, which counts as BOTH Frost and Fire', () => {
    * this test first appeared to fail.
    * --------------------------------------------------------------------------
    */
-  const FROST_TIER_10 = { elemental_precision: 5, ice_shards: 5 };
-
-  const frostMage = (talents: Record<string, number>) => {
-    const built = PRESETS_BY_ID.get('mage_frostfire')!.build();
-    return createPlayer({
-      race: 'gnome',
-      characterClass: 'mage',
-      combatStyle: 'caster',
-      talents,
-      equipment: built.equipment,
-    });
-  };
-
-  const meanDirectDamage = (talents: Record<string, number>, abilityId: string): number => {
-    const mage = frostMage(talents);
-    const target = makeTarget({ maxHealth: 1e9 });
-    const events: TelemetryEvent[] = [];
-    const simulation = buildSimulation([mage, target], { durationMs: seconds(2000) }, {
-      emit: (event) => events.push(event),
-    });
-    simulation.begin();
-    const ability = mage.abilities.get(abilityId)!;
-    let now = 0;
-    for (let i = 0; i < 300; i += 1) {
-      now += 4000;
-      simulation.advanceTo(now);
-      mage.resources.get('mana')!.set(100_000);
-      mage.gcdReadyAt = 0;
-      mage.castEndsAt = 0;
-      castAbility(simulation, mage, ability, target);
-    }
-    simulation.advanceTo(now + 20_000);
-    // DIRECT hits only. The burn is in the same row and would dilute the mean.
-    const hits = events.filter(
-      (e): e is Extract<TelemetryEvent, { type: 'damage' }> =>
-        e.type === 'damage' && e.abilityId === abilityId && !e.periodic && e.amount > 0,
-    );
-    expect(hits.length).toBeGreaterThan(150);
-    return hits.reduce((n, e) => n + e.amount, 0) / hits.length;
-  };
-
   it('declares the second school rather than changing its school', () => {
     /*
      * IT IS STILL DEALT AS FIRE, and that is not a contradiction: `school`
@@ -2177,29 +2140,20 @@ describe('Frostfire Bolt, which counts as BOTH Frost and Fire', () => {
     expect([...FROSTFIRE_ALSO_COUNTS_AS]).toEqual(['frost']);
   });
 
-  it('takes Piercing Ice, a FROST damage talent, at its stated 6%', () => {
-    /*
-     * THE ONE THE OWNER SPOTTED. `schoolDamage: ['frost']` could not reach a
-     * spell dealt as Fire, so 3/3 Piercing Ice was worth nothing to the
-     * Frostfire build's own filler.
-     */
-    const without = meanDirectDamage(FROST_TIER_10, 'frostfire_bolt');
-    const withIt = meanDirectDamage({ ...FROST_TIER_10, piercing_ice: 3 }, 'frostfire_bolt');
-    expect(withIt / without).toBeCloseTo(1.06, 2);
-  });
-
-  it('multiplies two DIFFERENT school damage talents together', () => {
-    // Fire Power 5/5 is +10% Fire and Piercing Ice 3/3 is +6% Frost, and a
-    // spell that is both takes both rather than the larger.
-    const fireOnly = meanDirectDamage({ ...FROST_TIER_10, fire_power: 5 }, 'frostfire_bolt');
-    const both = meanDirectDamage(
-      { ...FROST_TIER_10, fire_power: 5, piercing_ice: 3 },
-      'frostfire_bolt',
-    );
-    expect(both / fireOnly).toBeCloseTo(1.06, 2);
-  });
-
+  /*
+   * PIERCING ICE'S TWO TESTS ARE GONE WITH THE TALENT -- the client removed it
+   * in round 51's refresh. They proved that a FROST damage talent reaches a
+   * spell dealt as Fire, and that two school talents multiply; no other Mage
+   * talent is a Frost `schoolDamage` to carry the claim, and `countsAsSchools`
+   * itself is still asserted by the hit and crit cases around this one.
+   */
   it('is paid ONCE by a talent that names both of its schools', () => {
+    /*
+     * ON A BUILD THAT CAN STILL MISS. Since round 51 the Frostfire preset
+     * reaches 17% Fire and Frost hit (11 from gear, 6 from Elemental Precision
+     * 3/3) and neither spell misses at all, so a rate comparison has nothing to
+     * compare. One rank of the talent is 2%, which leaves both at 4%.
+     */
     /*
      * THE DOUBLE-COUNT GUARD, and the first thing this field met. Elemental
      * Precision is "+5% chance to hit with Frost AND Fire spells" -- ONE source
@@ -2211,7 +2165,7 @@ describe('Frostfire Bolt, which counts as BOTH Frost and Fire', () => {
      * one talent naming both schools must leave the two spells on the SAME miss
      * rate -- and paid twice, Frostfire's would be about half of it.
      */
-    const built = PRESETS_BY_ID.get('mage_frostfire')!.build();
+    const built = frostfireThatMisses();
     expect(MAGE_TALENT_EFFECTS.elemental_precision).toEqual([
       { kind: 'schoolHit', schools: ['frost', 'fire'] },
     ]);
@@ -2227,6 +2181,18 @@ describe('Frostfire Bolt, which counts as BOTH Frost and Fire', () => {
     expect(bolt.avoidRate).toBeCloseTo(scorch.avoidRate, 1);
   });
 });
+
+/**
+ * The Frostfire preset one Elemental Precision rank down, so its spells miss.
+ *
+ * Round 51 put it on the 17% cap, and two tests here compare MISS RATES. The two
+ * points go to Permafrost, which is crowd control and does nothing, so the tree
+ * keeps its total and nothing deeper is refunded.
+ */
+function frostfireThatMisses() {
+  const built = PRESETS_BY_ID.get('mage_frostfire')!.build();
+  return { ...built, talents: { ...built.talents, elemental_precision: 1, permafrost: 2 } };
+}
 
 describe('what the Results panel divides its rates by', () => {
   /*
@@ -2246,7 +2212,8 @@ describe('what the Results panel divides its rates by', () => {
    * --------------------------------------------------------------------------
    */
   it('reports a hybrid miss rate over its CASTS, not over its ticks', () => {
-    const built = PRESETS_BY_ID.get('mage_frostfire')!.build();
+    // A rate needs misses, which the capped preset no longer has. See below.
+    const built = frostfireThatMisses();
     const batch = runProfileBatch({
       ...built,
       simulation: { ...built.simulation, iterations: 40 },

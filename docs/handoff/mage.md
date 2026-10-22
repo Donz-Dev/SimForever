@@ -143,7 +143,7 @@ owner supplied.
 | Profile | Talents | DPS | List | Notes |
 | --- | --- | --- | --- | --- |
 | Frostfire | 0/29/22 | **661.3** | `MAGE_FROSTFIRE` | **now the top Mage**, on the three Frost talents that reach its filler |
-| Fire | 15/31/5 | **622.0** | `MAGE_FIRE` | Combustion is a real ramp; Ignite rolls over |
+| Fire | 14/34/3 | **622.0** | `MAGE_FIRE` | Combustion is a real ramp; Ignite rolls over |
 | Arcane | 48/3/0 | **576.1** | `MAGE_ARCANE` | two spells and one aura |
 
 **EVERY FIGURE HERE IS STALE THE MOMENT ANOTHER CLASS MERGES.** These are from

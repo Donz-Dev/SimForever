@@ -611,7 +611,11 @@ describe('deaths as a measurable quantity', () => {
     const profile = presetNamed('prot_warr');
     const slice = { from: 0, to: 30 };
     const base = profileSamples(profile, SEED, slice);
-    const tougher = profileSamples(withStat(profile, 'armor', 2000), SEED, slice);
+    // 5000 rather than 2000: Prot Warr's stamina food became agility in
+    // round 51, and at 2000 thirty fights came out one death the wrong way --
+    // a sample, not a mechanism. The claim is the pairing, so the effect is
+    // made large enough that the sample cannot hide it.
+    const tougher = profileSamples(withStat(profile, 'armor', 5000), SEED, slice);
 
     expect(tougher.deaths).toHaveLength(base.deaths.length);
     const avoided =

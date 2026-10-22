@@ -876,6 +876,7 @@ function GroupEditor({
             <option value="cooldown">Cooldown</option>
             <option value="fight">Fight timing</option>
             <option value="health">Health</option>
+            <option value="swing">Swing timer</option>
           </select>
           {/*
             * A NESTED GROUP IS WHAT MAKES "a and (b or c)" SAYABLE, which is
@@ -1243,6 +1244,37 @@ function ClauseRow({
           <span className="apl-unit">your health</span>
           {compareField(false)}
           {numberField(clause.value, '%')}
+        </>
+      ) : null}
+
+      {/*
+        * THE SWING TIMER: seconds until the named weapon swings again, and zero
+        * while that slot is idle -- so "<= 0.3s" is also true of a hand that is
+        * not swinging at all. The compiler reads the PENDING swing, so haste,
+        * a parry and a cast that reset the timer all move it.
+        */}
+      {clause.kind === 'swing' ? (
+        <>
+          <select
+            value={clause.slot ?? 'mainHand'}
+            aria-label="Which swing timer"
+            onChange={(e) => set({ slot: e.target.value as Clause['slot'] })}
+          >
+            <option value="mainHand">main-hand swing in</option>
+            <option value="offHand">off-hand swing in</option>
+            <option value="ranged">ranged swing in</option>
+          </select>
+          {compareField(false)}
+          <input
+            type="number"
+            step="0.1"
+            min="0"
+            className="apl-number"
+            value={clause.value ?? 0}
+            aria-label="Seconds"
+            onChange={(event) => set({ value: Number(event.target.value) })}
+          />
+          <span className="apl-unit">s</span>
         </>
       ) : null}
 

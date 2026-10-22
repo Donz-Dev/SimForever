@@ -1956,8 +1956,10 @@ the owner's two rulings, round 47. `engine/combat/threat.ts` is the rule and
   the engine happens to clear one line earlier survives until somebody reorders
   two statements.
 - **A COMPLETED CAST OR ATTACK BREAKS STEALTH AND PROWL, AND THAT IS AN ENGINE
-  RULE WITH EXACTLY ONE DECLARED EXCEPTION.** The owner's words and their only
-  exception in one sentence: "Almost every completed cast or attack breaks
+  RULE WITH TWO DECLARED EXCEPTIONS** -- it read "exactly one" until round 51,
+  when the owner ruled that a Druid's **Berserk** "does not break stealth" and
+  moved it into the Cat's opener ahead of Ravage. The first exception, in the
+  owner's own words: "Almost every completed cast or attack breaks
   stealth/prowl, and for the purposes of this simulation the only thing that
   doesn't is a rogue's premeditation." `AuraDefinition.brokenByAction` on the
   two states, `Ability.breaksActionAuras` as the opt-out, and
@@ -5497,7 +5499,7 @@ change: **never invent a number, and never let a borrowed one look sourced.**
 `src/game/character/baseStats.ts` is **generated** by `tools/import_base_stats.py`
 from the base stats spreadsheet. Never edit it by hand; re-run the generator.
 
-`src/data/talents/*.json` (466 talents) and `src/data/items/*.json` were
+`src/data/talents/*.json` (465 talents since round 51 removed Piercing Ice) and `src/data/items/*.json` were
 **scraped** and are checked in. Each directory has a README recording where the
 data came from and how to refresh it. Never hand-edit either —
 `src/data/talents/values/*.json` is the one exception, for the single-rank
@@ -6179,7 +6181,7 @@ shape should fail loudly, not render a tree with a broken arrow.
 - **Write the spec out independently in the test.** The race/class table, the
   per-class resource table and the combat table constants are all duplicated by
   hand on purpose: a test that reads the source data passes no matter what the
-  source data says. Where volume makes that impractical — 466 talents —
+  source data says. Where volume makes that impractical — 465 talents —
   transcribe the shape and assert the invariants that hold for all of them.
 - **Two independent checks on a captured number**: the expected value written out
   by hand from the tooltip, AND the stored tooltip asserted to contain that same

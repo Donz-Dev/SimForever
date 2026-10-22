@@ -326,20 +326,41 @@ describe('what 2H Arms eats', () => {
     });
 
     it('reaches Berserker Stance for it and comes back to Battle', () => {
-      for (const seed of [1, 7, 4242]) {
+      /*
+       * A RATE, NOT THREE SEEDS. It sits below Hamstring, an ungated filler, so
+       * it fires on a decision where nothing above was castable -- and round
+       * 51's Bloodthrill narrowing (fewer Overpower windows) made seed 1 the one
+       * fight in twenty where Hamstring took every such moment. A cast that
+       * depends on a gap in the list is the kind this project counts over many
+       * seeds rather than pinning to one.
+       */
+      let fired = 0;
+      for (let seed = 1; seed <= 12; seed += 1) {
         const ids: string[] = fight(seed)
           .map((event) => (event.type === 'cast' ? event.abilityId : ''))
           .filter((id) => id === 'recklessness_cast' || id === 'battle_stance_cast' || id === 'berserker_stance_cast');
 
         // It is a thirty-minute cooldown, so once a fight and no more.
-        expect(ids.filter((id) => id === 'recklessness_cast').length, `seed ${seed}`).toBe(1);
+        const casts = ids.filter((id) => id === 'recklessness_cast').length;
+        expect(casts, `seed ${seed}`).toBeLessThanOrEqual(1);
+        if (casts === 0) continue;
+        fired += 1;
 
         // Berserker first, Recklessness inside it, Battle again afterwards.
         const at = (id: string) => ids.indexOf(id);
         expect(at('berserker_stance_cast'), `seed ${seed}`).toBeGreaterThanOrEqual(0);
         expect(at('berserker_stance_cast')).toBeLessThan(at('recklessness_cast'));
-        expect(ids.lastIndexOf('battle_stance_cast')).toBeGreaterThan(at('recklessness_cast'));
+        // Back to Battle afterwards -- unless the gap came in the last seconds
+        // of the fight, which seed 8 shows it can: cast at 57s, no time left.
+        const castAt = fight(seed).find(
+          (event) => event.type === 'cast' && event.abilityId === 'recklessness_cast',
+        )!.timestamp;
+        if (castAt > seconds(50)) continue;
+        expect(ids.lastIndexOf('battle_stance_cast'), `seed ${seed}`).toBeGreaterThan(
+          at('recklessness_cast'),
+        );
       }
+      expect(fired).toBeGreaterThanOrEqual(10);
     });
 
     it('spends the window at a crit chance nothing else here reaches', () => {

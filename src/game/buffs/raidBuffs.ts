@@ -14,6 +14,8 @@ import {
  * aura or they will eventually disagree about the number.
  */
 import {
+  FAERIE_FIRE,
+  FAERIE_FIRE_ARMOR_REDUCTION,
   LEADER_OF_THE_PACK_AURA,
   MOONKIN_AURA,
   PARTY_CRIT_AURA_PERCENT,
@@ -577,19 +579,18 @@ const curseOfRecklessness: RaidBuff = {
     'and selecting both applies both.',
 };
 
+/*
+ * THE BEAR CASTS THIS AURA ITSELF NOW (round 51), so it is the Druid's
+ * definition spread with an hour, and not a second declaration of the same 505
+ * that could drift or stack. See `FAERIE_FIRE`.
+ */
 const faerieFire: RaidBuff = {
   id: 'faerie_fire',
   name: 'Faerie Fire',
-  detail: 'Target armor reduced by 505',
+  detail: `Target armor reduced by ${FAERIE_FIRE_ARMOR_REDUCTION}`,
   source: 'Druid',
   appliesTo: 'enemy',
-  aura: {
-    id: 'faerie_fire',
-    name: 'Faerie Fire',
-    durationMs: HOUR,
-    isDebuff: true,
-    statModifiers: [flat('armor', -ARMOR_CURSE_REDUCTION)],
-  },
+  aura: { ...FAERIE_FIRE, durationMs: HOUR },
 };
 
 /**

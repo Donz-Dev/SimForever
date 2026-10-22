@@ -75,6 +75,7 @@ the tooling to be a bit more sophisticated as well."
 | 43 | **LIFE TAP IS (430 + SPIRIT)**, Wowhead's Forever formula, on the owner's instruction -- replacing the ruled flat 840 and the Spirit clause's `unmodelled` caveat. About 674 on every Warlock preset | Firelock **-7.6 at 60s**; the others unchanged at 60s; -4 to -25 at longer lengths, from more taps | see below |
 | 44 | **FIRE DEMO** -- the Demonology profile renamed, three Suppression points to Agonizing Flames, +40 hit on its four benchmark sets, and Decimation's Soul Fire half made a 10-second buff opened in the last 35% | **1120.8 at 60s**, from 1021.0; Decimation 100% uptime -> ~33%. One question closed | see below |
 | 45 | **SBOLT SPAM, A 31ST PROFILE** -- the owner's 22/11/18 Orc, Imp sacrificed, their seven-entry list with a cooldown-stack sequence; and Fire Demo's benchmark row moved to the end, restoring three profiles' saved gear ids that round 40 had shifted | **913.0 at 60s**; every other profile's hash identical to `main` | see below |
+| 51 | **SIXTEEN OWNER ITEMS IN ONE PR, AND A MAGE TREE CHANGE THEY TURNED UP** -- casters re-capped for 17% spell hit, Champion of the Light 20/40/60 ahead of the client, Bloodthrill and Aftermath narrowed, Faerie Fire for the Bear, Evocation that stops at a full pool, a Mana Ruby, Fire Blast at T-0, two Mage builds, agility tank consumables, Berserk before Ravage, pet hit by the 17/8 rule, and an editable swing-timer clause | **not re-baselined**, on the owner's standing instruction. `USES=1` on the five touched Druid and Mage profiles: every new entry fires. Piercing Ice is REMOVED from the client's tree and Elemental Precision is 3 ranks at 2/4/6% -- in no note. One question: the Shockadins are still 8 points short of the spell cap | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -97,6 +98,61 @@ a filled one.
 figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
+
+## Round 51: sixteen owner items, and a tree change underneath them
+
+**WRITTEN SO ANOTHER ROUND CAN BE ADDED**, which this file's own history says
+to expect: a batch like this produces questions, and the answers arrive later.
+
+| | what changed | how it was checked |
+| --- | --- | --- |
+| spell hit cap | Moonkin, Ele Shaman, Arcane, SM/DS, Firelock, Sbolt and Shadow templates +10 hit rating, paid out of crit by `spreadRating`; Fire Demo was already at 17 | `tools/probe_spell_hit.ts`: 0.0% miss on each main school at B55, E65, E75 and E85 |
+| Shockadin and Shockadin 2H | +10 too, and **still at 8% spell miss** -- they had 9%, because Divine Precision is no longer in their build | a QUESTION, below |
+| Champion of the Light | 20/40/60% of Intellect, through a REBUILT `PATCH_NOTE_TALENT_VALUES` -- the client still says 10/20/30 and the importer would clobber a values-file edit | `patchNoteValues.test.ts` fails the day the client catches up |
+| Seal of Righteousness / Fury | verified, no change -- see the table below | `tools/seal_table.ts`: formula, hand arithmetic and the shipped reaction agree to the cent |
+| Bloodthrill | rolls only on the main-hand swing (extra attacks are swings), Heroic Strike and Cleave | `bloodthrillTriggers.test.ts`, including seven strikes that no longer roll |
+| Aftermath | the Immolate HIT only: a new `AbilityModifier.directDamageMultiplier`, read only when `!request.periodic` | `aftermathDirectOnly.test.ts`: hit x1.5, burn x1.0, through real `dealDamage` |
+| Bear | Faerie Fire, free, on the GCD, 2 x level threat through the threat scalers; ONE aura id shared with the raid debuff, and it does not shorten the raid's hour | 4.6 casts a fight, last in the list as a rage-starved filler |
+| Evocation | `Ability.endsChannelEarly`, polled at 100ms: a full pool ends the channel and runs its last tick | `evocationAndManaRuby.test.ts` |
+| Mana Ruby | a Mage ability: 1000-1200 mana, off the GCD, a one-day cooldown, at <= 25% mana in all three lists | 0.5-1.0 casts a fight |
+| Fire Mage | Fire Blast at T-0 in the opener and ungated in the list; 14/34/3 from the owner's URL | **two damaging actions finish at t=0 now** -- Gate B says one; the owner's later instruction is implemented, and both land at the pull |
+| Frostfire | 0/29/22 from the owner's URL | `decode_talent_build.mjs --presets` |
+| Frostfire Bolt and Fire Power | verified, no change: the burn is not counted, the hit gets 3% per Fire effect to 12% | `frostfireFirePower.test.ts`. The burn's own ticks still COLLECT Fire Power, which the ask did not cover |
+| Prot Warr and Bear | +25 Agility Blasted Lands, +20 Agility food. **Fury Prot inherits it**, being Prot Warr's build by design | `consumables.test.ts` |
+| Cat | Berserk at T-0 before Ravage, and `breaksActionAuras: false` -- the second declared exception after Premeditation | the opener guard, and `stealthBreaking.test.ts` |
+| pets | `game/actors/petHit.ts`: a Hunter pet gets the ranged hit on melee and 17/8 of it on spells; a demon the spell hit on spells and 8/17 on melee. **A Hunter pet inherited no hit at all before** | `petHit.test.ts`, on the pets' own rolls |
+| APL | a `swing` clause in the editor, over the existing `swingIn` condition: main hand, off hand or ranged, in seconds | `aplEditing.test.ts` round-trips 300ms exactly |
+
+**THE TWO MAGE URLS DID NOT DECODE, AND THAT IS HOW A PATCH WAS FOUND.**
+`diff_forever_talents.mjs` against the live client: Piercing Ice REMOVED, and
+Elemental Precision five ranks at 1% become three at 2/4/6% -- in no patch note.
+So the tree was imported first, and the builds decoded against it. The Arcane
+preset takes no Frost points and is unaffected; Piercing Ice's effect, its two
+tests and its place in the rotation chooser are gone with it. The tool's own
+Arcane URL was stale and is updated to the preset's.
+
+**SEALS AT 500 SPELL POWER**, measured off the shipped reaction against an
+unarmored target, no crit:
+
+| weapon | SoR base row | x speed | x hand | flat | + SP | **SoR hit** | **Seal of Fury** |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1H 1.4 | 25.00 | 35.00 | 0.73 | 25.55 | 50 (10%) | **75.55** | **85.00** |
+| 1H 2.6 | 49.00 | 127.40 | 0.85 | 108.29 | 50 (10%) | **158.29** | **85.00** |
+| 2H 2.0 | 37.00 | 74.00 | 1.20 | 88.80 | 60 (12%) | **148.80** | **85.00** |
+| 2H 3.6 | 69.00 | 248.40 | 1.20 | 298.08 | 60 (12%) | **358.08** | **85.00** |
+
+Seal of Fury is `35 + 10% SP` whatever the weapon -- the formula has no speed
+term, which is worth stating because Righteousness beside it is all speed.
+
+**ONE TEST STOPPED BEING A SINGLE SEED.** Bloodthrill's narrowing means fewer
+Overpower windows, so 2H Arms' Recklessness -- below an ungated Hamstring --
+missed its gap on seed 1 and fires in 19 of 20 fights. The test counts over
+twelve now.
+
+**QUESTION (Shockadins).** Capping them is +90 hit rating (170 total). At 170
+the plate templates break two earlier rulings: B55 wrist and waist come out
+"+1 Spell Power", and the E75/E85 heads carry 30 hit against the 25 no real item
+exceeds. Taking Divine Precision 2/2 back into the build is the other route.
 
 ## Round 35: the miscellaneous cleanup
 
@@ -10558,7 +10614,7 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Frostfire Mage | Mage | 0/29/22 | 1086.4 | | Shockadin | Paladin | 23/0/28 | 867.8 |
 | DW Fury | Warrior | 17/34/0 | 1068.4 | | Combat Mut | Rogue | 30/21/0 | 848.0 |
 | LW Ranged | Hunter | 5/41/5 | 1021.0 | | Hemo Dagger | Rogue | 17/3/31 | 840.2 |
-| Fire Mage | Mage | 15/31/5 | 1020.7 | | **Enh Shaman** | Shaman | 19/32/0 | **838.8** |
+| Fire Mage | Mage | 14/34/3 | 1020.7 | | **Enh Shaman** | Shaman | 19/32/0 | **838.8** |
 | BM Hunter | Hunter | 31/20/0 | 968.2 | | Moonkin | Druid | 41/0/10 | 820.3 |
 | Cat Druid | Druid | 9/34/8 | 966.9 | | Ele Shaman | Shaman | 32/11/8 | 792.8 |
 | Seal Twist Ret | Paladin | 15/0/36 | 948.6 | | Pure Hemo | Rogue | 19/8/24 | 775.9 |

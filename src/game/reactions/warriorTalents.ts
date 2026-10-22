@@ -190,12 +190,31 @@ export const unbridledWrath: TalentReactionBuilder = (chancePercent) => ({
  * and every reader was given an explicit index.
  * ----------------------------------------------------------------------------
  */
+/**
+ * The abilities Bloodthrill rolls on besides a main-hand SWING.
+ *
+ * THE OWNER, ROUND 51: "now only triggers on main hand auto-attacks, extra
+ * attacks, heroic strikes, and cleave." So the set is the swing and the two
+ * abilities that REPLACE a swing -- every other main-hand weapon use (Mortal
+ * Strike, Slam, Overpower, Whirlwind, Execute) no longer rolls.
+ *
+ * AN EXTRA ATTACK NEEDS NO ENTRY: Windfury Totem, Hand of Justice and the sword
+ * proc go through `extraAttack`, which completes a real `melee-auto` swing, so
+ * "the main-hand swing" already covers them. Named rather than derived from
+ * `onNextSwing`, because a ruling covers what it says -- Maul and Raptor Strike
+ * are on-next-swing too and are not a Warrior's.
+ */
+export const BLOODTHRILL_ABILITY_IDS: ReadonlySet<string> = new Set(['heroic_strike', 'cleave']);
+
 export const bloodthrill: TalentReactionBuilder = (chancePercent) => ({
   id: 'bloodthrill',
   on: 'dealt',
   outcomes: ['hit', 'crit', 'glance'],
   canTrigger: (context, _actor, attack) =>
     isWeaponUseOf(attack, 'mainHand') &&
+    (attack.abilityId === undefined
+      ? attack.attackTable === 'melee-auto'
+      : BLOODTHRILL_ABILITY_IDS.has(attack.abilityId)) &&
     attack.defender.auras.has(REND.id) &&
     context.rng.rollChance(chancePercent / 100),
   onTrigger: (context, actor) => {

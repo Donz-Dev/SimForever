@@ -348,7 +348,8 @@ describe('the Moonkin end to end', () => {
      */
     const hit = player.stats.effective.hitChance;
     expect(hit).toBeGreaterThan(0);
-    const expectedMiss = Math.max(1, 17 - hit);
+    // No floor since round 35, and the round 51 re-cap puts the Moonkin at 17.
+    const expectedMiss = Math.max(0, 17 - hit);
     expect(simulation.attackChances('spell', player, enemy, {}).miss).toBe(
       toRollUnits(expectedMiss),
     );
@@ -364,6 +365,8 @@ describe('the Moonkin end to end', () => {
      *                     landed exactly on the 16-point usable cap
      *   15 hit, 2% miss   the patch replaced Endurance's hit with crit damage
      *   16 hit, 1% miss   the owner raised this template to 120 rating
+     *   17 hit, 0% miss   round 51: the floor had gone in round 35, and the
+     *                     owner re-capped every caster template by 10 rating
      *
      * THE THIRD STEP WAS THE SHARPEST OF THE FIVE TAUREN CASES, because the
      * floor is what made the last point unusually valuable here: it DOUBLED
@@ -377,7 +380,7 @@ describe('the Moonkin end to end', () => {
      * reason the third step above was ever noticed.
      * ========================================================================
      */
-    expect(hit).toBeCloseTo(16, 6);
-    expect(expectedMiss).toBe(1);
+    expect(hit).toBeCloseTo(17, 6);
+    expect(expectedMiss).toBe(0);
   });
 });

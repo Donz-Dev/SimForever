@@ -410,7 +410,12 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   frostbite: [{ kind: 'unmodelled', reason: FROZEN_UNMODELLED }],
 
-  piercing_ice: [{ kind: 'schoolDamage', schools: ['frost'] }],
+  /*
+   * PIERCING ICE IS GONE FROM THE CLIENT'S TREE (refreshed in round 51, the
+   * same refresh that made Elemental Precision 3 ranks at 2/4/6%), so its
+   * `schoolDamage` entry went with it. An effect for a talent the tree no
+   * longer has can never be bought and would only read as a working talent.
+   */
 
   /*
    * FROSTFIRE BOLT IS A FROST SPELL HERE TOO, and this is the one of the three

@@ -242,7 +242,10 @@ export function setCondition(
 export type ClauseCompare = 'atLeast' | 'atMost' | 'exactly' | 'below' | 'above';
 
 /** The kinds of clause the panel can draw controls for. */
-export type ClauseKind = 'buff' | 'resource' | 'cooldown' | 'fight' | 'health';
+export type ClauseKind = 'buff' | 'resource' | 'cooldown' | 'fight' | 'health' | 'swing';
+
+/** Which weapon's swing timer a `swing` clause reads. */
+export type SwingSlot = 'mainHand' | 'offHand' | 'ranged';
 
 /**
  * THE FIVE BUFF TESTS, AND `absent` IS NOT `down`.
@@ -303,6 +306,8 @@ export interface Clause {
   readonly value?: number;
   /** fight: which side of the clock, and in what unit. */
   readonly unit?: FightUnit;
+  /** swing: whose timer. The value is SECONDS until it swings, shown with decimals. */
+  readonly slot?: SwingSlot;
 }
 
 /**
@@ -611,8 +616,26 @@ function toClause(condition: AplCondition): Clause | undefined {
         compare: condition.compare,
         value: Math.round(condition.fraction * 100),
       };
+    case 'swingIn':
+      /*
+       * THE SWING TIMER, EDITABLE SINCE ROUND 51 -- the owner: "if there is X
+       * amount of time left in the main-hand / ranged / off-hand auto-attack
+       * swing timer then do Y". The condition and its compiler already existed
+       * (the Warrior's Slam reads it); what was missing was a control, so a
+       * swing-timer read showed as a fixed sentence nobody could write.
+       *
+       * SHOWN IN SECONDS AND STORED IN MILLISECONDS, like every other clock in
+       * the panel -- and rounded back on the way out, so a stock 300ms survives
+       * the trip as 300 rather than 300.00000000000006.
+       */
+      return {
+        kind: 'swing',
+        slot: condition.slot,
+        compare: condition.compare,
+        value: condition.milliseconds / 1000,
+      };
     default:
-      // `builtin`, `swingIn`, `swungWithin`, `hasReaction`, `castsInstantly`.
+      // `builtin`, `swungWithin`, `hasReaction`, `castsInstantly`.
       // Shown as a sentence, kept exactly, not drawn with controls.
       return undefined;
   }
@@ -671,6 +694,13 @@ export function fromClause(clause: Clause): AplCondition {
         : { kind: 'fightRemaining', compare, fraction: value / 100 };
     case 'health':
       return { kind: 'health', on: 'self', compare, fraction: value / 100 };
+    case 'swing':
+      return {
+        kind: 'swingIn',
+        slot: clause.slot ?? 'mainHand',
+        compare,
+        milliseconds: Math.round(value * 1000),
+      };
   }
 }
 
@@ -687,6 +717,9 @@ export function blankClause(kind: ClauseKind): Clause {
       return { kind: 'fight', compare: 'atMost', value: 20, unit: 'percentLeft' };
     case 'health':
       return { kind: 'health', compare: 'atMost', value: 35 };
+    case 'swing':
+      // "Main hand swings within half a second": a weave or a hold point.
+      return { kind: 'swing', slot: 'mainHand', compare: 'atMost', value: 0.5 };
   }
 }
 

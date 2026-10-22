@@ -643,6 +643,26 @@ export const LACERATE: AuraDefinition = {
 export const DEMORALIZING_ROAR_ATTACK_POWER = 204;
 export const DEMORALIZING_ROAR_DURATION_MS = seconds(30);
 
+/**
+ * Faerie Fire: "Decrease the armor of the target by 505 for 40 sec."
+ *
+ * ONE AURA, TWO ROUTES -- the Bear casting it (round 51) and the raid debuff the
+ * encounter assumes. `raidBuffs.ts` SPREADS this definition with an hour's
+ * duration, which is Judgement of the Crusader's arrangement: one id means the
+ * two can never both apply, so a Bear under the raid's Faerie Fire is not handed
+ * 1,010 armor off the boss.
+ */
+export const FAERIE_FIRE_ARMOR_REDUCTION = 505;
+export const FAERIE_FIRE_DURATION_MS = seconds(40);
+export const FAERIE_FIRE: AuraDefinition = {
+  id: 'faerie_fire',
+  name: 'Faerie Fire',
+  durationMs: FAERIE_FIRE_DURATION_MS,
+  isDebuff: true,
+  refreshBehaviour: 'reset',
+  statModifiers: [flat('armor', -FAERIE_FIRE_ARMOR_REDUCTION)],
+};
+
 export const DEMORALIZING_ROAR: AuraDefinition = {
   id: 'demoralizing_roar',
   name: 'Demoralizing Roar',

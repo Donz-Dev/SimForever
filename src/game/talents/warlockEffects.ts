@@ -547,14 +547,15 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * the same sentence that asserts it.
      * ========================================================================
      */
-    { kind: 'abilityDamage', abilityId: 'immolate', valueIndex: 0 },
-    {
-      kind: 'unmodelled',
-      reason:
-        'It raises Immolate INITIAL damage only, and the initial hit and its ' +
-        'burn share one ability id -- so the burn is raised too. Generous, and ' +
-        'the burn is the larger half.',
-    },
+    /*
+     * DIRECT ONLY, BY THE OWNER'S RULING IN ROUND 51: "ONLY the initial damage
+     * from immolate is increased by 50% (at rank 5), not the DoT effect.
+     * Currently this talent is affecting the entire spell." The hit and the
+     * burn share the `immolate` id, which is what the `unmodelled` caveat here
+     * used to apologise for -- calling it "generous, and the burn is the larger
+     * half". `directOnly` is the field that was missing.
+     */
+    { kind: 'abilityDamage', abilityId: 'immolate', valueIndex: 0, directOnly: true },
   ],
 
   ruin: [
