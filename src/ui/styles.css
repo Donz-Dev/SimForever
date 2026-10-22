@@ -2744,7 +2744,6 @@ button:disabled {
 }
 
 .app-header {
-  position: sticky;
   top: 0;
   z-index: 20;
   height: var(--header-height);
@@ -2759,9 +2758,28 @@ button:disabled {
   height: calc(var(--header-height) - 14px);
 }
 
+/*
+ * ONLY WHERE THREE COLUMNS FIT. This rule shipped bare, after the breakpoints
+ * at the top of the file, so it beat them at EVERY width: a phone got three
+ * columns, the middle one -- results, talents, gear -- came out 0px wide, and
+ * the page scrolled sideways. Below 1201px the earlier breakpoints apply again.
+ */
 .app-layout {
-  grid-template-columns: minmax(300px, 340px) minmax(0, 1fr) var(--rail-width);
   gap: var(--column-gap);
+}
+
+@media (min-width: 1201px) {
+  .app-layout:not(.single) {
+    grid-template-columns: minmax(300px, 340px) minmax(0, 1fr) var(--rail-width);
+  }
+}
+
+/* The header is pinned only where the columns beside it are -- on a phone it
+   would cost a tenth of the screen on every scroll. */
+@media (min-width: 901px) {
+  .app-header {
+    position: sticky;
+  }
 }
 
 /*
@@ -2980,3 +2998,139 @@ button:disabled {
 .character-summary-body {
   flex-wrap: wrap;
 }
+
+/* ---------------------------------------------------------------------------
+   PHONES AND NARROW WINDOWS (round 52). The pinned desktop layout broke the
+   small screen outright; this is what one column needs to be usable.
+   --------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+  /* One column on both screens. The character step's two fixed tracks were
+     wider than a phone (280px + the rail) and pushed the page sideways. */
+  .app-layout,
+  .app-layout.single {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-header {
+    height: auto;
+    margin-bottom: 12px;
+  }
+
+  .logo {
+    height: 48px;
+  }
+
+  /* WHAT A RUN PRODUCES COMES FIRST. One column puts the editing panels -- gear,
+     talents, the priority list -- between the Run button and the results, and
+     with them open that was ten thousand pixels of scrolling to find a DPS
+     figure. `order` moves the three output panels to the top of their column,
+     which on one column is directly under the Simulation panel. */
+  .panel-output {
+    order: -1;
+  }
+
+  /* A breakdown table still scrolls sideways inside its panel -- it is 600px
+     of columns -- so its first column stays put and the row keeps its name. */
+  .breakdown th:first-child,
+  .breakdown td:first-child {
+    position: sticky;
+    /* Past the panel body's 16px padding, or the scrolled columns show
+       through the gap to its left. */
+    left: -16px;
+    z-index: 1;
+    background: var(--surface);
+    box-shadow: 16px 0 0 -15px var(--border);
+  }
+
+  /* A header whose buttons outgrow the title wraps them onto a second line --
+     the Gear panel's four set buttons were 404px in a 341px panel. */
+  .panel-header {
+    flex-wrap: wrap;
+  }
+
+  .panel-actions {
+    flex-shrink: 1;
+    flex-wrap: wrap;
+  }
+
+  /* THE PRIORITY LIST, which is the panel a phone most needs to edit. On the
+     desktop an entry is one row -- rank, conditions, controls -- and at 341px
+     the controls took 140px and squeezed every select to a sliver. Here the
+     controls drop to their own line under the conditions, a clause may wrap
+     inside itself, and no select is wider than the row. */
+  .apl-entry {
+    flex-wrap: wrap;
+  }
+
+  .apl-body {
+    flex: 1 1 calc(100% - 30px);
+    min-width: 0;
+  }
+
+  .apl-controls {
+    flex-basis: 100%;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .apl-clause {
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+
+  .apl-clause select,
+  .apl-clause input,
+  .apl-aura {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Fingers, not a pointer: the row buttons were about 20px square. */
+  .apl-controls button,
+  .apl-clause-remove,
+  .panel-toggle {
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  /* The slot grid's 440px minimum is wider than a phone, so it is one fluid
+     column here; a three-control gear row keeps its label beside the item and
+     puts the enchant on the line below, under the item. */
+  .gear-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gear-slot {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .gear-slot > :nth-child(3) {
+    grid-column: 2;
+  }
+
+  .gear-slot select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* A consumable row puts its category above its choice: 150px of label
+     beside a dropdown sized to its longest option was 440px of row. */
+  .consumable-slot {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+    margin-bottom: 6px;
+  }
+
+  .consumable-slot select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Nothing may push the page wider than the screen: a wide table or grid
+     scrolls inside its own panel instead. */
+  html,
+  body {
+    overflow-x: hidden;
+  }
+}
+

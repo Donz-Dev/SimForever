@@ -72,6 +72,7 @@ export function TimelinePanel({ result, hiddenAuraIds = NO_HIDDEN_AURAS }: Timel
   return (
     <Panel
       title="Timeline"
+      className="panel-output"
       collapsible
       badge={`${Math.round(timeline.durationMs / 1000)}s`}
       actions={
