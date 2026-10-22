@@ -1293,11 +1293,15 @@ export function resolveDamage(
   // Per-ability scaling sits alongside the whole-character multipliers rather
   // than replacing them: "+20% Revenge damage" and "+10% damage done" are
   // different effects and both apply.
+  const abilityModifier = source.abilityModifierFor(
+    request.abilityId,
+    context ? remainingFractionOf(context) : undefined,
+  );
+  // The direct-only half is Aftermath's "INITIAL damage of your Immolate": a
+  // tick of the same ability id must not collect it. See the field.
   const abilityMultiplier =
-    source.abilityModifierFor(
-      request.abilityId,
-      context ? remainingFractionOf(context) : undefined,
-    ).damageMultiplier ?? 1;
+    (abilityModifier.damageMultiplier ?? 1) *
+    (request.periodic ? 1 : abilityModifier.directDamageMultiplier ?? 1);
   /*
    * PER SCHOOL, on the ATTACKER'S side. The mirror of
    * `damageTakenMultiplierFor` below: Fire Power raises the fire damage a Mage

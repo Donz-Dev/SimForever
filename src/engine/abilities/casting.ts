@@ -481,6 +481,22 @@ export function castAbility(
  * should have to reason about.
  * ----------------------------------------------------------------------------
  */
+/**
+ * End the caster's channel NOW, as though its last tick had landed.
+ *
+ * `Ability.endsChannelEarly` is the only caller: the remaining ticks are
+ * cancelled, the caster is freed, and the final tick's effect runs with
+ * `final` set, so whatever the channel closes in its own `onCast` closes here.
+ * Returns the ability that ended, or null when nothing was being channelled.
+ */
+export function finishChannelEarly(context: SimulationContext, caster: Combatant): Ability | null {
+  const ability = caster.interruptChannel(context);
+  if (!ability) return null;
+  caster.recordChannelTick();
+  runCast(context, { simulation: context, caster, target: undefined, ability }, true);
+  return ability;
+}
+
 function runCast(
   context: SimulationContext,
   abilityContext: AbilityContext,

@@ -86,6 +86,11 @@ export const SUNDER_ARMOR_THREAT_AP_COEFFICIENT = 0.05;
 export const DEMORALIZING_SHOUT_FLAT_THREAT = 43 + 0.8 * (60 - 54);
 /** Demoralizing Roar rank 5: the client row's 42, plus 0.8 a level above 52. */
 export const DEMORALIZING_ROAR_FLAT_THREAT = 42 + 0.8 * (60 - 52);
+/**
+ * Faerie Fire: "a base threat of 2 x character level", the owner (round 51),
+ * further modified by the threat scalers -- which `generateThreat` applies.
+ */
+export const FAERIE_FIRE_THREAT_PER_LEVEL = 2;
 
 /*
  * THE BEAR'S FOUR, FROM mythicsim-forever-engine AND UNVERIFIED. Forever's

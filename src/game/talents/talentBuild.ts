@@ -991,7 +991,12 @@ export function talentBuild(
           abilityModifiers.add(effect.abilityId, { critBonus: value });
           break;
         case 'abilityDamage':
-          abilityModifiers.add(effect.abilityId, { damageMultiplier: 1 + value / 100 });
+          abilityModifiers.add(
+            effect.abilityId,
+            effect.directOnly
+              ? { directDamageMultiplier: 1 + value / 100 }
+              : { damageMultiplier: 1 + value / 100 },
+          );
           break;
         case 'reaction': {
           const build = REACTIONS[characterClass]?.[effect.reactionId];

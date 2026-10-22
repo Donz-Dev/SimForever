@@ -531,6 +531,10 @@ describe('what each of the 24 presets opens with', () => {
     expect(PRESETS_BY_ID.get('druid_cat')!.build().consumables.blasted_lands).toBe(
       'blasted_strength',
     );
+    // The two tanks are the owner's exception, round 51: agility for both.
+    for (const id of ['prot_warr', 'druid_bear', 'fury_prot']) {
+      expect(PRESETS_BY_ID.get(id)!.build().consumables.blasted_lands, id).toBe('blasted_agility');
+    }
   });
 
   it('picks the school each profile MEASURED, not the one its name suggests', () => {
@@ -878,11 +882,12 @@ describe('who eats what, on the plate-and-fur row', () => {
   const FOOD: Readonly<Record<string, string>> = {
     two_hand_arms: 'food_strength',
     dw_fury: 'food_strength',
-    prot_warr: 'food_stamina',
+    // Round 51: both tanks went from stamina to AGILITY, by the owner.
+    prot_warr: 'food_agility',
     // Both named now: the Cat with its Major Frenzy Potion swap, the Bear on
-    // its own. Three strength and two stamina, which is still not one row.
+    // its own. Three strength and two agility, which is still not one row.
     druid_cat: 'food_strength',
-    druid_bear: 'food_stamina',
+    druid_bear: 'food_agility',
   };
 
   it('gives each of the five what the owner said, or the row if they said nothing', () => {
@@ -904,7 +909,7 @@ describe('who eats what, on the plate-and-fur row', () => {
     expect(AGILITY_CONSUMABLES.food).toBe('food_attack_power');
   });
 
-  it('is the only category any of the three overrides changes', () => {
+  it('changes only the categories the owner named on each override', () => {
     /*
      * A CONTAINMENT CHECK ON THE OVERRIDE ITSELF. `{ ...ROW, food: x }` is one
      * key, and a future edit that spread something else in would change a
@@ -914,6 +919,8 @@ describe('who eats what, on the plate-and-fur row', () => {
       const selection = PRESETS_BY_ID.get(id)!.build().consumables;
       for (const [category, chosen] of Object.entries(STRENGTH_CONSUMABLES)) {
         if (category === 'food') continue;
+        // Prot Warr's Blasted Lands is the owner's second override, round 51.
+        if (category === 'blasted_lands' && id === 'prot_warr') continue;
         /*
          * THE OFF-HAND WEAPON EFFECT IS DROPPED WHERE NOTHING SWINGS IN THE OFF
          * HAND -- the owner's round 37, "OH weapon effect should be empty", done

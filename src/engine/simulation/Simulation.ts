@@ -2,7 +2,7 @@ import type { Ability } from '../abilities/Ability';
 import { ThreatTracker } from '../combat/threat';
 import { sampleStats } from '../logging/statSample';
 import type { CastCheck, CastCheckOptions } from '../abilities/casting';
-import { castAbility, checkCast } from '../abilities/casting';
+import { castAbility, checkCast, finishChannelEarly } from '../abilities/casting';
 import type { Combatant, WeaponSlot } from '../actors/Combatant';
 import { extraAttack, startAutoAttack } from '../combat/autoAttack';
 import { startResourceRegeneration } from '../resources';
@@ -573,6 +573,34 @@ export class Simulation implements SimulationContext {
         if (ctx.hasEnded || !actor.isAlive || !actor.rotation) return;
 
         /*
+         * A CHANNEL THAT ENDS ITSELF -- Evocation at full mana, round 51. Checked
+         * before the interrupt branch, and it needs no entry to ask: nothing is
+         * cast in its place, the channel simply finishes early and the actor
+         * decides again at once. See `Ability.endsChannelEarly`.
+         */
+        const selfEnding = actor.channelling;
+        if (
+          selfEnding?.endsChannelEarly &&
+          actor.isCasting(ctx.clock.now()) &&
+          selfEnding.endsChannelEarly(ctx, actor)
+        ) {
+          const delivered = actor.channelTicksDelivered;
+          finishChannelEarly(ctx, actor);
+          this.telemetry.emit({
+            type: 'channel_interrupted',
+            timestamp: ctx.clock.now(),
+            sourceId: actor.id,
+            abilityId: selfEnding.id,
+            abilityName: selfEnding.name,
+            interruptedFor: 'its own end condition',
+            ticksDelivered: delivered,
+            ticksTotal: selfEnding.channelTicks ?? 1,
+          });
+          this.scheduleDecision(actor, ctx.clock.now());
+          return;
+        }
+
+        /*
          * AN INTERRUPTIBLE CHANNEL IS RE-DECIDED WHILE IT RUNS. Normally a
          * casting actor has nothing to decide -- every candidate comes back
          * `already_casting` -- so this branch is the only way a channel ends
@@ -652,6 +680,13 @@ export class Simulation implements SimulationContext {
      * one, and undefined on a rotation that does not say -- which keeps the
      * old behaviour for anything that has not been taught to answer.
      */
+    /*
+     * A channel with its own end condition polls for the same reason, and with
+     * no entry needed -- see `Ability.endsChannelEarly`.
+     */
+    if (actor.channelling?.endsChannelEarly && actor.isCasting(now)) {
+      return Math.min(now + ROTATION_POLL_MS, Math.max(actor.gcdReadyAt, actor.castEndsAt));
+    }
     if (
       actor.channelling?.interruptibleChannel &&
       actor.rotation?.interruptsChannels !== false &&

@@ -1090,15 +1090,35 @@ const MAGE_FROSTFIRE_TALENTS: TalentAllocation = {
    * new 5/5 prerequisite.
    * ==========================================================================
    */
+  /*
+   * ROUND 51: THE OWNER'S NEW BUILD, 0/29/22, from
+   * https://talentsforever.com/mage/60/-2355000013013303-2235000301013002-TUVWbefcgimkntrlwvz-8?b=70425h
+   * -- decoded against the refreshed tree, which removed Piercing Ice and made
+   * Elemental Precision 3/3 at 6% a rank. Its three points become Frost
+   * Warding 2 and Improved Frostbolt 2 with Ice Block; Critical Mass 4 -> 3
+   * pays for Improved Fire Blast 2. The note above is the build it replaces.
+   */
   // Fire, 29
-  improved_fire_blast: 1, incineration: 3, improved_fireball: 5,
-  ignite: 5, pyroblast: 1,
-  improved_scorch: 3, heating_up: 1, master_of_elements: 3,
-  critical_mass: 4, fire_power: 3,
+  improved_fire_blast: 2,
+  incineration: 3,
+  improved_fireball: 5,
+  ignite: 5,
+  pyroblast: 1,
+  improved_scorch: 3,
+  heating_up: 1,
+  master_of_elements: 3,
+  critical_mass: 3,
+  fire_power: 3,
   // Frost, 22
-  elemental_precision: 5, ice_shards: 5,
-  piercing_ice: 3, frost_channeling: 3, ice_lance: 1,
-  shatter: 3, fingers_of_frost: 2,
+  frost_warding: 2,
+  improved_frostbolt: 2,
+  elemental_precision: 3,
+  ice_shards: 5,
+  frost_channeling: 3,
+  ice_lance: 1,
+  ice_block: 1,
+  shatter: 3,
+  fingers_of_frost: 2,
 };
 
 /**
@@ -1283,16 +1303,30 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
    * filler's 712.
    * ==========================================================================
    */
-  // Arcane, 15
+  /*
+   * ==========================================================================
+   * ROUND 51: THE OWNER'S NEW BUILD, 14/34/3, decoded from
+   * https://talentsforever.com/mage/60/0502205-23550020130135031-003-TUVWbefcgijBGEDmZ-8?b=70425h
+   *
+   * DECODED AGAINST THE REFRESHED TREE, which it needed: the client has since
+   * removed Piercing Ice and made Elemental Precision THREE ranks at 6% a rank
+   * where it was five at 1%, and the Frostfire URL does not decode against the
+   * old tree at all. Everything above is the record of the build this
+   * replaces -- Arcane Impact is gone, Arcane Subtlety is back at 2, Burning
+   * Soul 2 and Improved Fire Blast 2 are in, Combustion is taken.
+   * ==========================================================================
+   */
+  // Arcane, 14
   arcane_focus: 5,
-  arcane_concentration: 5,
-  arcane_impact: 3,
   missile_barrage: 2,
-  // Fire, 31
-  improved_fire_blast: 1,
+  arcane_subtlety: 2,
+  arcane_concentration: 5,
+  // Fire, 34
+  improved_fire_blast: 2,
   incineration: 3,
   improved_fireball: 5,
   ignite: 5,
+  burning_soul: 2,
   pyroblast: 1,
   improved_scorch: 3,
   heating_up: 1,
@@ -1300,8 +1334,8 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
   critical_mass: 5,
   fire_power: 3,
   combustion: 1,
-  // Frost, 5
-  elemental_precision: 5,
+  // Frost, 3
+  elemental_precision: 3,
 };
 
 /**
@@ -2264,8 +2298,17 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * every point of damage taken worth LESS rage. Read this change on
        * DEATHS, not on the DPS row, and expect the DPS to fall slightly.
        * ----------------------------------------------------------------------
+       *
+       * ROUND 51 REPLACES BOTH STAT ROWS WITH AGILITY, by the owner: "+25
+       * Agility from Blasted Lands buff, and +20 Agility from food buff." The
+       * stamina reasoning above is the decision being superseded and is kept
+       * for the record; agility is crit, dodge and armor to a Warrior.
        */
-      consumables: { ...STRENGTH_CONSUMABLES, food: 'food_stamina' },
+      consumables: {
+        ...STRENGTH_CONSUMABLES,
+        blasted_lands: 'blasted_agility',
+        food: 'food_agility',
+      },
       /*
        * THE ONE OPENER THAT CHARGES OUT OF DEFENSIVE STANCE, and it works for
        * a reason that is in the data rather than in this list: VANGUARD adds
@@ -2768,7 +2811,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       precombat: [
         ...before(2, 'cat_form'),
         ...before(1, 'prowl'),
-        ...before(0, 'ravage'),
+        /*
+         * BERSERK FIRST, AT THE SAME INSTANT, by the owner (round 51): it does
+         * not break Prowl, so the Ravage behind it still has the window -- at
+         * half cost. Two actions at one lead run in declaration order, which
+         * `Array.prototype.sort` being stable is what guarantees.
+         */
+        ...before(0, 'berserk', 'ravage'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -2799,8 +2848,17 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * health, health is what a death count is counted in, and Forever's
        * `D x 10 / H` then makes each point of damage taken worth LESS rage. Read
        * this one on DEATHS, not on the DPS row, and expect the DPS to fall.
+       *
+       * ROUND 51: AGILITY ON BOTH ROWS, by the owner -- "+25 Agility from
+       * Blasted Lands buff, and +20 Agility from food buff", for this and Prot
+       * Warr. Fury Prot is a copy of Prot Warr's build and inherits its row,
+       * which is the arrangement that profile declares on purpose.
        */
-      consumables: { ...STRENGTH_CONSUMABLES, food: 'food_stamina' },
+      consumables: {
+        ...STRENGTH_CONSUMABLES,
+        blasted_lands: 'blasted_agility',
+        food: 'food_agility',
+      },
       /*
        * THE ONE DRUID PROFILE THAT IS HIT BACK, which is the whole point of
        * Bear Form: rage is earned by taking damage as well as dealing it, and
@@ -3239,7 +3297,23 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * removing it.
        * ========================================================================
        */
-      precombat: [...before(4.5, 'mage_armor'), ...before(3, 'fireball')],
+      /*
+       * ROUND 51: FIRE BLAST AT T-0, by the owner -- "use Fire Blast in the
+       * pre-combat APL at T-0. And then drop the conditional use in the APL.
+       * Just use it on cooldown with no conditions."
+       *
+       * IT IS A SECOND DAMAGING ACTION AT THE PULL, beside the Fireball that
+       * finishes there, and Gate B says an opener may finish ONE. The gate is
+       * the owner's ruling and so is this line, and the later, more specific
+       * instruction is the one implemented. Both land at t=0, so nothing is
+       * dealt before the clock starts -- which is the half of Gate B that
+       * this does not touch. Recorded in Appendix A rather than hidden.
+       */
+      precombat: [
+        ...before(4.5, 'mage_armor'),
+        ...before(3, 'fireball'),
+        ...before(0, 'fire_blast'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },

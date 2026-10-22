@@ -441,6 +441,8 @@ describe('Bloodthrill is MAIN HAND only now, at twice the chance', () => {
     outcome: 'hit' as const,
     abilityId: undefined,
     abilityName: 'Auto-Attack',
+    // A swing declares its table, and Bloodthrill reads it (round 51).
+    attackTable: 'melee-auto' as const,
     amount: 300,
     weaponSlot,
     critical: false,

@@ -4,6 +4,7 @@ import type { TelemetryEvent } from '../../src/engine';
 import { Simulation, castAbility, seconds, startAutoAttack } from '../../src/engine';
 import { CLAW, PROWL_ABILITY, RAVAGE } from '../../src/game/abilities/druid';
 import { AMBUSH, PREMEDITATION, VANISH } from '../../src/game/abilities/rogue';
+import { BERSERK } from '../../src/game/abilities/druid';
 import { PROWL } from '../../src/game/auras/druid';
 import { STEALTH } from '../../src/game/auras/rogue';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
@@ -227,7 +228,7 @@ describe('Premeditation, the one exception', () => {
     expect(rogue.auras.has(STEALTH.id), 'and the Ambush does').toBe(false);
   });
 
-  it('is the ONLY thing in the project that opts out', () => {
+  it('opts out only for the two abilities the owner named', () => {
     /*
      * ==========================================================================
      * READ OFF THE SOURCE, because an opt-out list is the thing that grows
@@ -241,10 +242,17 @@ describe('Premeditation, the one exception', () => {
      * a profile at yet.
      * ==========================================================================
      */
+    /*
+     * AND A SECOND, BY NAME (round 51): the owner ruled that a Druid's Berserk
+     * "does not break stealth", so it is listed here the way Premeditation is
+     * -- the exception list grew by one ruling, not by inference.
+     */
     expect(filesDeclaring(/breaksActionAuras:\s*false/)).toEqual([
+      'src/game/abilities/druid.ts',
       'src/game/abilities/rogue.ts',
     ]);
     expect(PREMEDITATION.breaksActionAuras).toBe(false);
+    expect(BERSERK.breaksActionAuras).toBe(false);
 
     // And nothing opts IN, because the default already is in: an explicit
     // `true` is a reader believing the field works the other way round.

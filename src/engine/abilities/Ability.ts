@@ -107,6 +107,30 @@ export interface Ability {
    */
   readonly interruptibleChannel?: boolean;
   /**
+   * A condition that ENDS the channel by itself, with no entry asking.
+   *
+   * --------------------------------------------------------------------------
+   * THE OWNER, ROUND 51, about Evocation: "if while casting evocation your
+   * current mana reaches 100% then stop the channel and continue with the
+   * rotation." That is not an interrupt in `interruptibleChannel`'s sense --
+   * nothing is cast in its place, so `selectInterrupt` has nothing to return --
+   * and it is a property of the CHANNEL rather than of a list, because a full
+   * pool makes the rest of an Evocation worth nothing in every list.
+   *
+   * POLLED, at the 100ms an interruptible channel already uses, so the channel
+   * ends within a tenth of a second of the condition coming true. When it does,
+   * the remaining ticks are cancelled and the FINAL tick's effect runs at once
+   * -- `onCast` with `final` -- so anything the channel closes in its own
+   * `onCast` (Evocation's regeneration window) closes with it, and the cast
+   * reactions see a completed cast. Then the actor decides again at once.
+   *
+   * THE TARGET IS NOT KEPT ACROSS A CAST, so the early finish runs with none:
+   * fine for a self-cast like Evocation, and a reason not to hang this on a
+   * channel that hits something.
+   * --------------------------------------------------------------------------
+   */
+  readonly endsChannelEarly?: (context: SimulationContext, caster: Combatant) => boolean;
+  /**
    * Ticks an interrupt may NOT cancel. Defaults to 0 -- anything may be cut.
    *
    * ==========================================================================

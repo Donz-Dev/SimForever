@@ -645,6 +645,10 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     /*
      * "Increases your spell damage by up to {0}% of your Intellect", 60% at 3/3.
      *
+     * 60% BECAUSE THE OWNER BUFFED IT BACK IN ROUND 51 AND THE CLIENT STILL
+     * SAYS 30 -- the figure arrives through `PATCH_NOTE_TALENT_VALUES`, not the
+     * values file. See `patchNoteValues.ts`.
+     *
      * ----------------------------------------------------------------------
      * IT WAS 33/66/100% UNTIL CLIENT BUILD 1.60.1.70170 -- "Champion of the
      * Light's Intellect to Spell Damage ratio changed to 20/40/60% (Was

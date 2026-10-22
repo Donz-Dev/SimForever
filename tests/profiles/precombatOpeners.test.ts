@@ -130,9 +130,12 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
   ],
   // "2s before cat form, 1s before prowl, 0s Ravage" -- the one opener the
   // owner had to restate, and the one that needed new abilities declaring.
+  // Round 51: "Berserk does not break stealth and therefore should be used a
+  // T-0 just before using Ravage."
   druid_cat: [
     [2, 'cat_form'],
     [1, 'prowl'],
+    [0, 'berserk'],
     [0, 'ravage'],
   ],
   druid_bear: [
@@ -157,9 +160,11 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
     [3, 'mage_armor'],
     [1.5, 'arcane_blast'],
   ],
+  // Round 51: "use Fire Blast in the pre-combat APL at T-0."
   mage_fire: [
     [4.5, 'mage_armor'],
     [3, 'fireball'],
+    [0, 'fire_blast'],
   ],
   pally_ret: [
     [3, 'seal_of_righteousness'],
