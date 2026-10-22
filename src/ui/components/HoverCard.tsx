@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 interface Anchor {
@@ -33,11 +33,14 @@ export function HoverCard({
   card,
   children,
   className,
+  style,
 }: {
   /** Built lazily, so a list of 200 rows does not build 200 cards. */
   readonly card: () => ReactNode;
   readonly children: ReactNode;
   readonly className?: string;
+  /** For a host that has to sit somewhere particular -- a talent's grid cell. */
+  readonly style?: CSSProperties;
 }) {
   const [anchor, setAnchor] = useState<Anchor | undefined>(undefined);
   const host = useRef<HTMLSpanElement>(null);
@@ -52,6 +55,7 @@ export function HoverCard({
     <span
       ref={host}
       className={className}
+      style={style}
       onMouseEnter={show}
       onMouseLeave={hide}
       onFocus={show}

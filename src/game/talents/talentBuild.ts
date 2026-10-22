@@ -82,6 +82,15 @@ const EFFECTS: Partial<Record<ClassId, Readonly<Record<string, TalentEffects>>>>
   priest: PRIEST_TALENT_EFFECTS,
 };
 
+/**
+ * Whether a talent GRANTS an ability -- the in-game card's "Active" against
+ * "Passive". Read off the effect table rather than off the tooltip, because
+ * the table is what decides whether the spellbook gets one.
+ */
+export function grantsAbility(characterClass: ClassId, talentId: string): boolean {
+  return (EFFECTS[characterClass]?.[talentId] ?? []).some((effect) => effect.kind === 'grantAbility');
+}
+
 /** Reaction builders per class, keyed by talent id. */
 /** Procs that fire when an ability is USED, by class. */
 const CAST_REACTIONS: Partial<

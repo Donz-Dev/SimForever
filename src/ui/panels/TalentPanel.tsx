@@ -4,6 +4,8 @@ import { TOTAL_TALENT_POINTS } from '../../game/talents/Talent';
 import { accentFor, talentsForClass } from '../../game/talents/talentData';
 import { Panel } from '../components/Panel';
 import { OptionGroup } from '../components/OptionGroup';
+import { HoverCard } from '../components/HoverCard';
+import { TalentCard } from './TalentCard';
 import type {
   DemonFamilyId,
   PetFamilyId,
@@ -148,6 +150,7 @@ export function TalentPanel({
       <div className="talent-trees">
         {talents.trees.map((tree, index) => (
           <TalentTreeView
+            characterClass={characterClass}
             key={tree.id}
             talents={talents}
             tree={tree}
@@ -265,12 +268,14 @@ function DemonChoice({
 }
 
 function TalentTreeView({
+  characterClass,
   talents,
   tree,
   accent,
   allocation,
   onChange,
 }: {
+  readonly characterClass: ClassId;
   readonly talents: ClassTalents;
   readonly tree: TalentTree;
   readonly accent: string;
@@ -306,6 +311,7 @@ function TalentTreeView({
         {tree.talents.map((talent) => (
           <TalentCell
             key={talent.id}
+            characterClass={characterClass}
             talents={talents}
             talent={talent}
             allocation={allocation}
@@ -327,11 +333,13 @@ function TalentTreeView({
 }
 
 function TalentCell({
+  characterClass,
   talents,
   talent,
   allocation,
   onChange,
 }: {
+  readonly characterClass: ClassId;
   readonly talents: ClassTalents;
   readonly talent: Talent;
   readonly allocation: TalentAllocation;
@@ -344,33 +352,45 @@ function TalentCell({
   const state =
     points >= talent.ranks ? 'maxed' : points > 0 ? 'partial' : addable ? 'open' : 'locked';
 
+  const iconUrl = `${ICON_BASE}/${talent.icon}.jpg`;
+
+  /*
+   * THE CARD HANGS OFF A WRAPPER, NOT THE BUTTON, because a DISABLED button
+   * fires no mouse events in Chromium -- and a locked talent is exactly the one
+   * somebody hovers to read what it would need. The wrapper takes the grid
+   * position the button used to carry.
+   */
   return (
-    <button
-      type="button"
-      className={`talent ${state}`}
-      // Grid positions are one-based; the data is zero-based.
+    <HoverCard
+      className="talent-slot"
       style={{ gridColumn: talent.col + 1, gridRow: talent.row + 1 }}
-      onClick={() => onChange((previous) => spend(talents, previous, talent.id))}
-      onContextMenu={(event) => {
-        // Right click removes, which means suppressing the browser menu.
-        event.preventDefault();
-        onChange((previous) => unspend(talents, previous, talent.id));
-      }}
-      disabled={!addable && !removable}
-      title={`${talent.name} (${points}/${talent.ranks})\n\n${talent.description}${
-        talent.tier > 0 ? `\n\nRequires ${talent.tier} points in ${talent.tree}` : ''
-      }`}
+      card={() => (
+        <TalentCard
+          characterClass={characterClass}
+          talents={talents}
+          talent={talent}
+          allocation={allocation}
+          iconUrl={iconUrl}
+        />
+      )}
     >
-      <img
-        className="talent-icon"
-        src={`${ICON_BASE}/${talent.icon}.jpg`}
-        alt=""
-        loading="lazy"
-        draggable={false}
-      />
-      <span className="talent-rank">
-        {points}/{talent.ranks}
-      </span>
-    </button>
+      <button
+        type="button"
+        className={`talent ${state}`}
+        aria-label={`${talent.name} (${points}/${talent.ranks})`}
+        onClick={() => onChange((previous) => spend(talents, previous, talent.id))}
+        onContextMenu={(event) => {
+          // Right click removes, which means suppressing the browser menu.
+          event.preventDefault();
+          onChange((previous) => unspend(talents, previous, talent.id));
+        }}
+        disabled={!addable && !removable}
+      >
+        <img className="talent-icon" src={iconUrl} alt="" loading="lazy" draggable={false} />
+        <span className="talent-rank">
+          {points}/{talent.ranks}
+        </span>
+      </button>
+    </HoverCard>
   );
 }
