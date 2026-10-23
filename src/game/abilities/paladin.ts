@@ -440,6 +440,7 @@ export const HOLY_SHOCK_COEFFICIENT = HOLY_SHOCK_SP_COEFFICIENT;
 export const HOLY_SHOCK: Ability = {
   id: 'holy_shock',
   name: 'Holy Shock',
+  heals: true,
   cost: { resource: 'mana', amount: 325 },
   cooldownMs: seconds(10),
   attackTable: 'spell',
@@ -529,6 +530,7 @@ export const HOLY_LIGHT_HEAL = midpoint(1495, 1665);
 export const HOLY_LIGHT: Ability = {
   id: 'holy_light',
   name: 'Holy Light',
+  heals: true,
   cost: { resource: 'mana', amount: 660 },
   castTimeMs: seconds(2.5),
   onCast: ({ simulation, caster, target, ability }) => {
@@ -546,6 +548,7 @@ export const FLASH_OF_LIGHT_HEAL = midpoint(291, 325);
 export const FLASH_OF_LIGHT: Ability = {
   id: 'flash_of_light',
   name: 'Flash of Light',
+  heals: true,
   cost: { resource: 'mana', amount: 140 },
   castTimeMs: seconds(1.5),
   onCast: ({ simulation, caster, target, ability }) => {

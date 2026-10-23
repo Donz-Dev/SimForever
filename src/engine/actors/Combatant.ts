@@ -771,16 +771,29 @@ export class Combatant {
    * on the other side, so a caller reads one number rather than remembering to
    * multiply two. Schools no active aura names are untouched.
    */
-  damageDoneMultiplierFor(school: DamageSchool): number {
+  damageDoneMultiplierFor(school: DamageSchool, alsoCountsAs?: readonly DamageSchool[]): number {
     let product = this.damageDoneMultiplier;
     for (const aura of this.auras.active) {
       const bySchool = aura.definition.damageDoneBySchool;
-      if (bySchool?.[school] === undefined) continue;
+      if (!bySchool) continue;
+      /*
+       * A SPELL THAT COUNTS AS TWO SCHOOLS TAKES THE LARGER of what ONE aura
+       * gives either (round 55) -- Frostfire Bolt is Fire and Frost, so Ice
+       * Barrier's Frost bonus reaches it. The larger and not the product,
+       * because one aura naming both schools is one source, the rule
+       * `casterSchoolModifier` already follows for an additive talent.
+       */
+      let factor: number | undefined = bySchool[school];
+      for (const extra of alsoCountsAs ?? []) {
+        const other = bySchool[extra];
+        if (other !== undefined && (factor === undefined || other > factor)) factor = other;
+      }
+      if (factor === undefined) continue;
       // Compounds with stacks by default, matching `auraMultiplier` and the
       // target side -- and ADDS for an aura the owner has ruled additive. See
       // `stackedMultiplier`, which is the one place that rule lives.
       product *= stackedMultiplier(
-        bySchool[school]!,
+        factor,
         aura.definition.modifiersScaleWithStacks ? aura.stacks : 1,
         aura.definition.additiveDamageStacks,
       );
@@ -1007,19 +1020,14 @@ export class Combatant {
   /**
    * The cancel check waiting on the cast in progress, if its entry carried one
    * (round 53). Per-fight state for the reason `pendingSequence` gives. `at` is
-   * the moment the question is asked; `refund` is what the cast cost, handed
-   * back if it is cancelled, with the five-second-rule stamp it replaced.
+   * the moment the question is asked. Nothing needs handing back on a cancel:
+   * a pre-cast pays its cost as it lands (round 55).
    */
   pendingCastCancel: {
     readonly at: Milliseconds;
     readonly ability: Ability;
     readonly target: Combatant | undefined;
     readonly check: CastCancelCheck;
-    readonly refund?: {
-      readonly resource: ResourceType;
-      readonly amount: number;
-      readonly previousSpend: Milliseconds | undefined;
-    };
   } | null = null;
 
   /** Called by the engine when a cast's effect is about to run. */
@@ -1047,15 +1055,6 @@ export class Combatant {
   /** Record that a resource was just spent. Called by the engine on payment. */
   recordResourceSpend(resource: ResourceType, at: Milliseconds): void {
     this.lastSpend.set(resource, at);
-  }
-
-  /**
-   * Put back the last-spent stamp a cancelled cast replaced (round 53), so a
-   * cast that never finished does not start the five second rule.
-   */
-  restoreResourceSpend(resource: ResourceType, at: Milliseconds | undefined): void {
-    if (at === undefined) this.lastSpend.delete(resource);
-    else this.lastSpend.set(resource, at);
   }
 
   /** When this resource was last spent, or undefined if it never has been. */

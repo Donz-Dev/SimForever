@@ -33,6 +33,7 @@ import {
   setGroupOp,
   setInterrupts,
   setCancel,
+  setTarget,
   toggleNegated,
 } from './aplEditing';
 import { Panel } from '../components/Panel';
@@ -76,7 +77,9 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
   const { names, nameOf } = aplNamesFor(profile);
   const abilities = abilityChoicesFor(profile);
   const auras = aurasForClass(profile.character.characterClass);
-  const channels = interruptibleChannelsIn(list.entries, abilityBookFor(profile));
+  const book = abilityBookFor(profile);
+  const channels = interruptibleChannelsIn(list.entries, book);
+  const heals = healsIn(book);
   const matchesBuild = rotationMatchesBuild(profile);
 
   /** Every edit goes through here, so nothing can change a list and forget. */
@@ -206,6 +209,7 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
         abilities={abilities}
         auras={auras}
         channels={channels}
+        heals={heals}
         onChange={update}
       />
 
@@ -465,6 +469,7 @@ export function AplEntries({
   abilities,
   auras,
   channels,
+  heals,
   onChange,
 }: {
   readonly list: ShownList;
@@ -474,6 +479,8 @@ export function AplEntries({
   readonly auras?: readonly CatalogAura[];
   /** The interruptible channels in this list, if any. See the helper above. */
   readonly channels?: readonly { readonly id: string; readonly name: string }[];
+  /** The heals in the book, and whether each has a cast bar. See `healsIn`. */
+  readonly heals?: ReadonlyMap<string, { readonly castBar: boolean }>;
   readonly onChange?: (entries: readonly AplEntry[]) => void;
 }) {
   return (
@@ -522,9 +529,26 @@ export function AplEntries({
                   : undefined
               }
             />
+            {/*
+              * WHO A HEAL GOES TO (round 55), offered on a heal or on an entry
+              * that already names a target -- the last so a target can always
+              * be seen and taken off again.
+              */}
+            {heals?.has(entry.abilityId) || entry.target ? (
+              <EntryTarget
+                target={entry.target}
+                onChange={
+                  onChange
+                    ? (target) => onChange(setTarget(list.entries, index, target))
+                    : undefined
+                }
+              />
+            ) : null}
             <EntryCancel
               cancel={entry.cancel}
               names={names}
+              // A pre-cast is offered on a HEAL WITH A CAST BAR and nothing else.
+              offered={heals?.get(entry.abilityId)?.castBar === true}
               onChange={
                 onChange
                   ? (cancel) => onChange(setCancel(list.entries, index, cancel))
@@ -1283,7 +1307,22 @@ function ClauseRow({
 
       {clause.kind === 'health' ? (
         <>
-          <span className="apl-unit">your health</span>
+          {/*
+            * WHOSE HEALTH (round 55): yours, the entry's target, the tank, or
+            * the mean of your party or the raid -- the last three are what a
+            * healer's list reads, and were fixed sentences before.
+            */}
+          <select
+            value={clause.who ?? 'self'}
+            aria-label="Whose health"
+            onChange={(e) => set({ who: e.target.value as Clause['who'] })}
+          >
+            <option value="self">your health</option>
+            <option value="target">the target&apos;s health</option>
+            <option value="tank">the tank&apos;s health</option>
+            <option value="party">your party&apos;s average health</option>
+            <option value="raid">the raid&apos;s average health</option>
+          </select>
           {compareField(false)}
           {numberField(clause.value, '%')}
         </>
@@ -1488,13 +1527,39 @@ function prettify(id: string): string {
 function EntryCancel({
   cancel,
   names,
+  offered,
   onChange,
 }: {
   readonly cancel: AplEntry['cancel'];
   readonly names: DescribeNames;
+  /** A heal with a cast bar, which is the only kind a pre-cast is for (round 55). */
+  readonly offered: boolean;
   readonly onChange?: (cancel: AplEntry['cancel']) => void;
 }) {
-  if (!cancel) return null;
+  /*
+   * THE TOGGLE IS ONLY ON A CAST-BAR HEAL. An instant has no "part way", and a
+   * damage spell has no one to top up -- so the checkbox is not drawn for
+   * either. A check that somehow sits on another entry is still SHOWN, so it
+   * cannot be silently present.
+   */
+  if (!cancel) {
+    if (!offered || !onChange) return null;
+    return (
+      <label className="apl-cancel" title="Start this heal early and cancel it if it is not needed">
+        <input
+          type="checkbox"
+          checked={false}
+          onChange={() =>
+            onChange({
+              atFraction: DEFAULT_PRECAST_AT,
+              condition: { kind: 'health', on: 'target', compare: 'above', fraction: DEFAULT_PRECAST_ABOVE },
+            })
+          }
+        />
+        pre-cast
+      </label>
+    );
+  }
   const condition = cancel.condition;
   const threshold =
     condition.kind === 'health' && condition.on === 'target' && condition.compare === 'above'
@@ -1504,6 +1569,15 @@ function EntryCancel({
 
   return (
     <span className="apl-cancel">
+      {onChange ? (
+        <input
+          type="checkbox"
+          checked
+          aria-label="Pre-cast"
+          title="Stop pre-casting this heal"
+          onChange={() => onChange(undefined)}
+        />
+      ) : null}
       <span className="apl-flag">pre-cast</span> cancel at{' '}
       {onChange ? (
         <input
@@ -1556,5 +1630,77 @@ function EntryCancel({
         describeCondition(condition, names)
       )}
     </span>
+  );
+}
+
+/** A new pre-cast's defaults, the owner's: cancel at 80% if above 95%. */
+const DEFAULT_PRECAST_AT = 0.8;
+const DEFAULT_PRECAST_ABOVE = 0.95;
+
+/**
+ * The heals in an ability book, and whether each has a CAST BAR -- a cast time
+ * and not a channel -- which is what a pre-cast needs (round 55).
+ */
+export function healsIn(book: readonly Ability[]): ReadonlyMap<string, { readonly castBar: boolean }> {
+  return new Map(
+    book
+      .filter((ability) => ability.heals === true)
+      .map((ability) => [
+        ability.id,
+        { castBar: (ability.castTimeMs ?? 0) > 0 && (ability.channelTicks ?? 1) <= 1 },
+      ]),
+  );
+}
+
+/**
+ * Who an entry is cast at (round 55): the enemy by default, or the tank, or
+ * the raid member with the least health -- with or without the tank.
+ */
+function EntryTarget({
+  target,
+  onChange,
+}: {
+  readonly target: AplEntry['target'];
+  readonly onChange?: (target: AplEntry['target']) => void;
+}) {
+  const value =
+    target === undefined
+      ? 'default'
+      : target.kind === 'tank'
+        ? 'tank'
+        : target.excludeTank
+          ? 'lowestNotTank'
+          : 'lowest';
+  const label: Record<typeof value, string> = {
+    default: 'at the default target',
+    tank: 'on the tank',
+    lowest: 'on the lowest health member',
+    lowestNotTank: 'on the lowest health member, not the tank',
+  };
+  if (!onChange) return <span className="apl-target">{label[value]}</span>;
+  return (
+    <select
+      className="apl-target"
+      value={value}
+      aria-label="Who it is cast at"
+      onChange={(event) => {
+        const next = event.target.value as typeof value;
+        onChange(
+          next === 'default'
+            ? undefined
+            : next === 'tank'
+              ? { kind: 'tank' }
+              : next === 'lowest'
+                ? { kind: 'lowestHealth' }
+                : { kind: 'lowestHealth', excludeTank: true },
+        );
+      }}
+    >
+      {(Object.keys(label) as (typeof value)[]).map((key) => (
+        <option key={key} value={key}>
+          {label[key]}
+        </option>
+      ))}
+    </select>
   );
 }

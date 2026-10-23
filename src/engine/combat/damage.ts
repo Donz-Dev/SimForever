@@ -1288,7 +1288,7 @@ export function resolveDamage(
    * every school before this line read the request's.
    */
   const attackerMultiplier =
-    (request.ignoresAttackerDamageScaling ? 1 : source.damageDoneMultiplierFor(request.school)) *
+    (request.ignoresAttackerDamageScaling ? 1 : source.damageDoneMultiplierFor(request.school, request.countsAsSchools)) *
     versatilityMultiplierFrom(source.stats.effective);
   // Per-ability scaling sits alongside the whole-character multipliers rather
   // than replacing them: "+20% Revenge damage" and "+10% damage done" are

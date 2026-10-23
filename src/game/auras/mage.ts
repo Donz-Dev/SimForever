@@ -864,6 +864,8 @@ export const MAGE_COSTED_SPELL_IDS: readonly string[] = [
   'arcane_wrath',
   ...MAGE_DAMAGE_SPELL_IDS,
   'mage_armor',
+  // Ice Barrier, a trainer spell since round 55: 480 mana.
+  'ice_barrier',
 ];
 
 export const ARCANE_POWER: AuraDefinition = {
@@ -1232,6 +1234,25 @@ export const EVOCATION_AURA: AuraDefinition = {
  */
 export const MAGE_ARMOR_REGEN_BYPASS = 50;
 export const MAGE_ARMOR_MAGIC_RESISTANCE = 15;
+
+/**
+ * Ice Barrier's buff, the OWNER'S figures (round 55): "+6% Frost damage for 60
+ * seconds". The client's tooltip is an 819-point absorb; nothing attacks a
+ * Mage here, so the absorb would do nothing, and the owner stated the buff.
+ *
+ * A SCHOOL BUFF ON THE AURA, `damageDoneBySchool` -- and Frostfire Bolt, which
+ * counts as Frost as well as Fire, collects it through `countsAsSchools`. See
+ * `Combatant.damageDoneMultiplierFor`.
+ */
+export const ICE_BARRIER_FROST_DAMAGE = 1.06;
+export const ICE_BARRIER_DURATION_MS = seconds(60);
+
+export const ICE_BARRIER: AuraDefinition = {
+  id: 'ice_barrier',
+  name: 'Ice Barrier',
+  durationMs: ICE_BARRIER_DURATION_MS,
+  damageDoneBySchool: { frost: ICE_BARRIER_FROST_DAMAGE },
+};
 
 export const MAGE_ARMOR: AuraDefinition = {
   id: 'mage_armor',

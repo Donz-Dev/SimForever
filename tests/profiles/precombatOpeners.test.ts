@@ -153,6 +153,8 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
     [0, 'flame_shock'],
   ],
   mage_frostfire: [
+    // The owner's, round 55: "It should be cast at T-10 seconds."
+    [10, 'ice_barrier'],
     [4, 'mage_armor'],
     [2.5, 'frostfire_bolt'],
   ],

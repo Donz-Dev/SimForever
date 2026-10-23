@@ -23,7 +23,7 @@ import { createDummyFor, createPlayerFor, trainingDummyEncounter } from './train
  * ==============================================================================
  * THE TANK IS A STATED TANK, NOT A BUILT ONE (round 53). The owner's figures:
  *
- *   health        8,500 -- in both fights, and what the raid's 30% is OF
+ *   health        8,500 -- in both fights, and what the raid's 10% is OF
  *   armor         65% damage reduction, in the tank fight
  *   the table     18% dodge, 10% parry, 15% crushed, 2% crit, 55% hit
  *
@@ -40,7 +40,7 @@ import { createDummyFor, createPlayerFor, trainingDummyEncounter } from './train
  * RAID HEALER: twenty to heal, in five parties of five, with the tank in party
  * one. The owner's pattern, as percentages of each target's maximum health:
  *
- *   the tank       30% every 2 seconds
+ *   the tank       10% every 2 seconds, with no ramp (round 55; was 30%)
  *   all twenty     25% every 15 seconds, then 15% every 2 seconds for 8
  *
  * so a raid pulse is 25% at once and four 15% ticks after it.
@@ -86,7 +86,7 @@ export const RAID_MEMBER_HEALTH_MAX = 6_500;
 export const RAID_SIZE = 20;
 export const PARTY_SIZE = 5;
 /** The tank's share of its health lost on each hit, and how often. */
-export const RAID_TANK_HIT_FRACTION = 0.3;
+export const RAID_TANK_HIT_FRACTION = 0.1;
 export const RAID_TANK_HIT_PERIOD_MS = seconds(2);
 /** The raid-wide pulse: an opening hit, then ticks, every period. */
 export const RAID_PULSE_PERIOD_MS = seconds(15);

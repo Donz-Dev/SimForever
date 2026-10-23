@@ -314,7 +314,7 @@ describe("the Holy Pal's list", () => {
 });
 
 describe('the pre-cast (round 53)', () => {
-  it('cancels a Holy Light at 80% of its cast while the tank is above 95%, and hands the mana back', () => {
+  it('cancels a Holy Light at 80% of its cast while the tank is above 95%, and spends no mana on it', () => {
     const { simulation, events } = fight('tank');
     const cancels = events.filter(
       (event): event is Extract<TelemetryEvent, { type: 'channel_interrupted' }> =>
@@ -342,19 +342,19 @@ describe('the pre-cast (round 53)', () => {
         HEALER_TANK_HEALTH,
       ).at(-1)!;
       expect(health.value).toBeGreaterThan(95);
-      // And the cost came back in the same instant, as a refund threat ignores.
-      const spent = events.find(
-        (event) =>
-          event.type === 'resource_spent' && event.actorId === HEALER_ID && event.timestamp === started.timestamp,
-      );
-      const refund = events.find(
-        (event) =>
-          event.type === 'resource_gained' && event.actorId === HEALER_ID &&
-          event.timestamp === cancel.timestamp && event.source === 'holy_light_refund',
-      );
-      expect(refund && spent && refund.type === 'resource_gained' && spent.type === 'resource_spent'
-        ? refund.amount + refund.wasted
-        : undefined).toBe(spent && spent.type === 'resource_spent' ? spent.amount : -1);
+      // And it cost NOTHING (round 55): a pre-cast pays as it lands, so no
+      // Holy Light spend sits anywhere between its start and its cancel, and
+      // there is no refund to hand back.
+      const between = events.slice(events.indexOf(started), events.indexOf(cancel) + 1);
+      expect(
+        between.some(
+          (event) =>
+            event.type === 'resource_spent' && event.actorId === HEALER_ID && event.source === 'holy_light',
+        ),
+      ).toBe(false);
+      expect(
+        events.some((event) => event.type === 'resource_gained' && event.source === 'holy_light_refund'),
+      ).toBe(false);
       // A cancelled cast lands no heal.
       expect(
         events.some(
@@ -371,6 +371,25 @@ describe('the pre-cast (round 53)', () => {
     const waits = cancels.map((cancel) => cancel.timestamp - castBefore(cancel).timestamp);
     expect(Math.max(...waits)).toBeCloseTo(0.8 * fullCast, -1);
     for (const wait of waits) expect(wait).toBeLessThanOrEqual(Math.round(0.8 * fullCast) + 1);
+  });
+
+  it('charges a pre-cast that completes at the moment it lands, and only then', () => {
+    const { events } = fight('tank');
+    const landed = events.filter(
+      (event): event is Extract<TelemetryEvent, { type: 'heal' }> =>
+        event.type === 'heal' && event.sourceId === HEALER_ID && event.abilityId === 'holy_light',
+    );
+    expect(landed.length).toBeGreaterThan(0);
+    // Every Holy Light spend shares its instant with a Holy Light landing: the
+    // list's only Holy Light lines are the pre-cast and line 1, and line 1 is
+    // not a pre-cast -- so some spends are at the start of a cast and the
+    // pre-cast's are at its end. What must never happen is a spend for a
+    // cast that was then cancelled, which the test above covers; here, the
+    // count of spends equals the count of Holy Lights that landed.
+    const spends = events.filter(
+      (event) => event.type === 'resource_spent' && event.actorId === HEALER_ID && event.source === 'holy_light',
+    );
+    expect(spends.length).toBe(landed.length);
   });
 
   it('lets a pre-cast finish when the tank has dropped by the time it is asked', () => {

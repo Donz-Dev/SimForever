@@ -22,10 +22,14 @@ import {
 } from './apl';
 import type { TalentAllocation } from '../talents/Talent';
 import {
+  ICE_BARRIER_DURATION_MS,
   ARCANE_BLAST_MAX_STACKS,
   HEATING_UP_MAX_STACKS,
   IMPROVED_SCORCH_MAX_STACKS,
 } from '../auras/mage';
+
+/** Ice Barrier is recast only above this share of mana (round 55c). */
+export const ICE_BARRIER_MANA_GATE = 0.9;
 
 /**
  * Mage priority lists.
@@ -673,6 +677,46 @@ export const MAGE_FROSTFIRE: AplList = {
   ...CONSUMABLE_COOLDOWNS,
   ...CONSUMABLE_HEALS,
   MANA_RUBY_ENTRY,
+  /*
+   * ICE BARRIER, RECAST WHEN IT FALLS OFF (round 55), the owner's: "it should
+   * be cast when it falls off as well, high in the normal APL." The opener
+   * casts it at T-10, so the first one has fifty seconds left at the pull.
+   * First of the global-cooldown entries, below only the free ones above.
+   *
+   * ONLY WHILE A WHOLE NEW BUFF FITS IN THE FIGHT -- at least sixty seconds
+   * left. Ungated, the 60s fight recast it at ~50s for ten seconds of buff at
+   * the price of a Frostfire Bolt: paired over 500 fights against no Ice
+   * Barrier at all, **+5.0 +/- 5.9 ungated and +30.6 +/- 5.3 gated** at 60s,
+   * and -39.4 against -37.8 at 180s, so the gate is never a loss. Break-even
+   * is about a minute of buff: 6% of the ~44% of damage that counts as Frost,
+   * against one global cooldown.
+   *
+   * AND ONLY ABOVE 90% MANA (round 55c), the owner's: "only cast Ice Barrier
+   * when mana is above a threshold". The build is mana-bound past a minute,
+   * so 480 mana is worth more as Frostfire Bolts than a recast returns.
+   * Swept paired over 500 fights against no Ice Barrier, recast gated on:
+   *
+   *              none     40%     50-70%    80%     90%+
+   *   180s     -37.8   -25.9    -25.6    -21.0   -10.0
+   *   300s     -32.7   -16.2    -16.1    -13.8    -7.7
+   *
+   * MONOTONE, AND 90% IS WHERE THE RECAST STOPS FIRING: it ties the T-10 cast
+   * alone at every length, and no threshold that lets a recast through beats
+   * it. 60s is +30.6 at every threshold, because the time gate already holds
+   * the recast there. The threshold is an ordinary mana clause, editable.
+   *
+   * THE T-10 CAST ITSELF STILL COSTS -10.0 AT 180s AND -7.7 AT 300s, which no
+   * gate here can reach: a pre-combat line is not conditional. Recorded in
+   * HANDOVER as the owner's call.
+   */
+  {
+    abilityId: 'ice_barrier',
+    condition: all(
+      selfMissing('ice_barrier'),
+      fightRemaining('atLeast', ICE_BARRIER_DURATION_MS / 1000),
+      resourceFraction('atLeast', ICE_BARRIER_MANA_GATE, 'mana'),
+    ),
+  },
   { abilityId: 'evocation', condition: evocationFor(EVOCATION_FIGHT_SECONDS) },
   { abilityId: 'scorch', condition: scorchNeededWithin(FROSTFIRE_SCORCH_REFRESH_SECONDS) },
   { abilityId: 'pyroblast', condition: selfStacksExactly('heating_up', HEATING_UP_MAX_STACKS) },

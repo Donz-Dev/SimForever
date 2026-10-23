@@ -17,6 +17,7 @@ import {
   FROSTFIRE_DOT,
   FINGERS_OF_FROST,
   MAGE_ARMOR,
+  ICE_BARRIER,
   MAGE_ARMOR_MAGIC_RESISTANCE,
   PRESENCE_OF_MIND,
   PYROBLAST_CAST_MS,
@@ -775,6 +776,37 @@ export const PRESENCE_OF_MIND_ABILITY: Ability = {
  * Its worth is entirely the five second rule -- see `MAGE_ARMOR` for why the
  * mana half is the half that matters here and the resistance half is not.
  */
+/**
+ * Ice Barrier, a castable buff for any Mage (round 55).
+ *
+ * ============================================================================
+ * THE OWNER'S RULING: "Ice Barrier needs to be a usable skill for Frostfire
+ * profile. It should be cast at T-10 seconds. It applies a buff that gives 6%
+ * Frost Damage for 60 seconds."
+ *
+ * IT IS ALSO A TIER-30 FROST TALENT, which the Frostfire build's 22 Frost
+ * points cannot reach -- so it is declared here, in the trainer book, on the
+ * owner's word. The spellbook capture lists it "Learned at level 58", which is
+ * the line CLAUDE.md warns a talent-granted spell carries too; the ruling is
+ * what settles it, not the line.
+ *
+ * COST, CAST AND COOLDOWN ARE THE CAPTURE'S: 480 mana, instant, 30 seconds.
+ * ============================================================================
+ */
+export const ICE_BARRIER_ABILITY: Ability = {
+  id: 'ice_barrier',
+  name: 'Ice Barrier',
+  cost: { resource: 'mana', amount: 480 },
+  cooldownMs: seconds(30),
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, ICE_BARRIER, caster.id);
+  },
+  unmodelled:
+    'Its 819-point absorb does nothing: no Mage profile is attacked. The +6% ' +
+    'Frost damage the owner stated is modelled in full.',
+};
+
 export const MAGE_ARMOR_ABILITY: Ability = {
   id: 'mage_armor',
   name: 'Mage Armor',
@@ -1058,6 +1090,7 @@ export const MAGE_ABILITIES: readonly Ability[] = [
   ARCANE_POWER_ABILITY,
   PRESENCE_OF_MIND_ABILITY,
   MAGE_ARMOR_ABILITY,
+  ICE_BARRIER_ABILITY,
   EVOCATION,
   MANA_RUBY,
 ];
