@@ -28,6 +28,9 @@ import {
   IMPROVED_SCORCH_MAX_STACKS,
 } from '../auras/mage';
 
+/** Ice Barrier is recast only above this share of mana (round 55c). */
+export const ICE_BARRIER_MANA_GATE = 0.9;
+
 /**
  * Mage priority lists.
  *
@@ -688,13 +691,31 @@ export const MAGE_FROSTFIRE: AplList = {
    * is about a minute of buff: 6% of the ~44% of damage that counts as Frost,
    * against one global cooldown.
    *
-   * AT 180s ICE BARRIER IS A LOSS EVEN AT T-10 ONLY (-10.0 +/- 6.0): the build
-   * is mana-bound at that length, and 480 mana is worth more as Frostfire
-   * Bolts. Whether to keep it there is the owner's call, recorded in HANDOVER.
+   * AND ONLY ABOVE 90% MANA (round 55c), the owner's: "only cast Ice Barrier
+   * when mana is above a threshold". The build is mana-bound past a minute,
+   * so 480 mana is worth more as Frostfire Bolts than a recast returns.
+   * Swept paired over 500 fights against no Ice Barrier, recast gated on:
+   *
+   *              none     40%     50-70%    80%     90%+
+   *   180s     -37.8   -25.9    -25.6    -21.0   -10.0
+   *   300s     -32.7   -16.2    -16.1    -13.8    -7.7
+   *
+   * MONOTONE, AND 90% IS WHERE THE RECAST STOPS FIRING: it ties the T-10 cast
+   * alone at every length, and no threshold that lets a recast through beats
+   * it. 60s is +30.6 at every threshold, because the time gate already holds
+   * the recast there. The threshold is an ordinary mana clause, editable.
+   *
+   * THE T-10 CAST ITSELF STILL COSTS -10.0 AT 180s AND -7.7 AT 300s, which no
+   * gate here can reach: a pre-combat line is not conditional. Recorded in
+   * HANDOVER as the owner's call.
    */
   {
     abilityId: 'ice_barrier',
-    condition: all(selfMissing('ice_barrier'), fightRemaining('atLeast', ICE_BARRIER_DURATION_MS / 1000)),
+    condition: all(
+      selfMissing('ice_barrier'),
+      fightRemaining('atLeast', ICE_BARRIER_DURATION_MS / 1000),
+      resourceFraction('atLeast', ICE_BARRIER_MANA_GATE, 'mana'),
+    ),
   },
   { abilityId: 'evocation', condition: evocationFor(EVOCATION_FIGHT_SECONDS) },
   { abilityId: 'scorch', condition: scorchNeededWithin(FROSTFIRE_SCORCH_REFRESH_SECONDS) },

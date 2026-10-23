@@ -138,11 +138,14 @@ describe('Ice Barrier on the Frostfire Mage', () => {
     expect(mage.auras.remainingMs('ice_barrier', 0)).toBe(seconds(50));
     simulation.advanceTo(seconds(600));
     const casts = events.filter((event) => event.type === 'cast' && event.abilityId === 'ice_barrier');
-    // The opener, then a recast at ~50s with ~100s left -- and NOT at ~110s,
-    // when only ~40s are left and a whole new buff would not fit.
-    expect(casts.length).toBe(2);
-    expect(casts[1].timestamp).toBeGreaterThanOrEqual(seconds(49));
-    expect(casts[1].timestamp).toBeLessThanOrEqual(seconds(90));
+    // The opener, and a recast only while a whole buff fits AND mana is at
+    // 90% -- which this mana-bound build is not by fifty seconds in, so in
+    // practice the T-10 cast is the only one.
+    expect(casts.length).toBeGreaterThanOrEqual(1);
+    for (const cast of casts.slice(1)) expect(cast.timestamp).toBeLessThanOrEqual(seconds(90));
+    const entry = preset.rotation.entries.find((candidate) => candidate.abilityId === 'ice_barrier')!;
+    expect(JSON.stringify(entry.condition)).toContain('"resourceFraction"');
+    expect(JSON.stringify(entry.condition)).toContain('"fraction":0.9');
   });
 
   it('is not recast in a 60 second fight, where a new buff would have ~10s to run', () => {

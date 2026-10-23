@@ -138,9 +138,23 @@ Paired over 500 fights against no Ice Barrier at all:
 Frost on a ~1,018 DPS build. Frostfire Bolt's non-crit hit is 1,392.6 with the
 buff against 1,317.6 without, x1.057.
 
-**AT 180s ICE BARRIER IS A LOSS EVEN CAST ONLY AT T-10**, because the build is
-mana-bound at that length and 480 mana is worth more as Frostfire Bolts. A
-question for the owner: keep it in long fights, or gate it on mana.
+**AND THE RECAST IS GATED ON 90% MANA** (round 55c, the owner's: "only cast
+Ice Barrier when mana is above a threshold"). The build is mana-bound past a
+minute, so 480 mana is worth more as Frostfire Bolts. Swept paired against no
+Ice Barrier, recast gated on:
+
+| | none | 40% | 50-70% | 80% | 90%+ |
+| --- | --- | --- | --- | --- | --- |
+| 60s | +30.6 | +30.6 | +30.6 | +30.6 | +30.6 |
+| 180s | -37.8 | -25.9 | -25.6 | -21.0 | **-10.0** |
+| 300s | -32.7 | -16.2 | -16.1 | -13.8 | **-7.7** |
+
+Monotone, and 90% is where the recast stops firing: it ties the T-10 cast alone
+at every length, and no threshold that lets a recast through beats it. 60s is
+unchanged because the time gate already holds the recast there.
+
+**THE T-10 CAST ITSELF STILL COSTS -10.0 AT 180s AND -7.7 AT 300s**, which no
+gate reaches -- a pre-combat line is not conditional. The owner's call.
 
 Healer, 1000 iterations: tank fight **536 HPS, 2.24 tank deaths**, mana spent
 10,956 where it was 15,917 with the cancelled pre-casts charged and refunded;
