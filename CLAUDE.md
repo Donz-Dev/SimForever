@@ -201,7 +201,7 @@ reading got written into a comment that contradicted a correct one in the same
 file. The correct note is in `abilities/mage.ts`; do not re-derive this from the
 tooltip.
 
-**THE UI HAS HAD FIVE PASSES NOW, AND THIS LINE HAS ALREADY BEEN WRONG ONCE
+**THE UI HAS HAD SIX PASSES NOW, AND THIS LINE HAS ALREADY BEEN WRONG ONCE
 BY THE SAME ARITHMETIC.** It once read "THE UI HAS NOT HAD A PASS OF ITS OWN
 and is the next piece of work" while `docs/handoff/gui.md`'s own header read
 "THE FIRST PASS IS DONE, AND THIS DOCUMENT IS NOW ITS RECORD" -- two files
@@ -224,12 +224,22 @@ fifth pinned the header and both side columns, widened the middle for the APL
 tools, cut the results header to **DPS, TPS, the largest power pool and haste**,
 grouped the character sheet under headings, added **Sim History** -- the last
 ten runs, each restorable with its seed -- and gave the default scheme the
-owner's **Forge** contrast.
-[docs/handoff/gui.md](docs/handoff/gui.md) is the record of all five,
+owner's **Forge** contrast. The sixth was a DECLUTTER: nearly every
+explanatory note came off the panels, the threat table went (the TPS tile
+stays), and auras the raid buffs panel or the encounter FORCES for the whole
+fight are hidden from the uptime tables and the Timeline.
+**HIDDEN IN THE PANELS, NOT IN THE ANALYZERS**: `raidForcedAuraIds` rides on
+the batch as `forcedAuraIds` and the two panels filter on it, so every row is
+still computed and a tool can still read it. **A PROC IS NOT FORCED** --
+Windfury Totem and Judgement of Wisdom apply nothing up front, so their windows
+are real and stay; a "hide what is 100%" rule would have been wrong about the
+fight where a proc happens to cover it.
+[docs/handoff/gui.md](docs/handoff/gui.md) is the record of all six,
 [docs/apl.md](docs/apl.md) is the APL's own and
 [docs/gear-planner.md](docs/gear-planner.md) is the planner's. What is left is
 named at the end of each: Import still does nothing, nothing writes to
-`localStorage`, and five condition kinds are shown but not editable.
+`localStorage` -- so **Sim History is lost on a reload** -- and five condition
+kinds are shown but not editable.
 
 **AND THE FOURTH PASS WAS ASKED FOR AS A MEANS RATHER THAN AN END**, which is
 the Gear panel's lesson stated outright by the person it happened to: "in order
@@ -1805,6 +1815,18 @@ the owner's two rulings, round 47. `engine/combat/threat.ts` is the rule and
   the same day; the other consensus values -- stances, forms, Righteous Fury --
   have not been put to the owner. **A hidden class or form passive is the kind
   of modifier that goes missing**: no talent, no tooltip, just a client row.
+  **SO THE CLIENT ROWS WERE READ, ALL OF THEM (round 47c)**: every threat row in
+  wowsims/forever's `spells_auto_gen.go` and mythicsim's `spells.jsonl`, six
+  re-checked by hand. **No passive is missing**, and the sweep sorted what IS
+  carried into three kinds that read identically in the code: confirmed by
+  both files (the stances, the forms, the Rogue, Righteous Fury, Salvation,
+  every talent curve), MEASURED in game by wowsims (Heroic Strike, Cleave,
+  Sunder's AP share), and **sourced by nothing** -- Bear Form's x1.5, Revenge's
+  x2.25, Holy Shield's x1.2 and the Bear's four ability multipliers. **A
+  constant with no source and a constant with a client row look the same
+  beside each other**, so the sweep's table in HANDOVER is the place to ask
+  which one a figure is. Ten threat ITEMS are in the data and unmodelled; no
+  preset wears one.
 - **WHERE THE TWO FOREVER SIMULATORS DISAGREE, THE OWNER CHOSE**: the Warrior is
   wowsims/forever's set MEASURED in game, the Bear's four abilities are
   mythicsim's multipliers under `PLACEHOLDER_` names, and Searing Pain, Mind
@@ -6832,6 +6854,17 @@ alter a roll is settled in a few hundred iterations; one that can is not settled
 in 3000. **So report the interval beside every figure**, because a reader
 sorting a table by value has no other way to tell which rows the measurement can
 stand behind.
+**AND A VARIANT THAT ADDS A RANDOM DRAW THE BASELINE NEVER MADE UNPAIRS
+ITSELF, SO THE SAME STAT CAN BE TIGHT ON ONE PROFILE AND LOOSE ON THE NEXT.**
+Spell Piercing rolls a partial resist only when piercing is non-zero, so +10
+on the Firelock and the Moonkin -- which carry none -- adds a draw to every
+hit and reads **+15.6 ±3.5** and **+13.8 ±4.1**, while the Arcane Mage, which
+already carries 15 and already rolls, reads **+17.8 ±0.3** for the same
+change. **A wide interval on a stat that "cannot alter a roll" is the tell
+that it adds one**, and it is the arithmetic and not the variance that is
+wrong to doubt: the ceiling there is `p / (p + 540)`, and each profile's share
+of it is its share of direct hits, because a DoT tick sees a tenth.
+
 **AND DO NOT GIVE THE NOISY ONES MORE ITERATIONS, which was tried.** Allocating
 from the spread -- `n = (2 x spread / target)^2`, never from the measured value
 -- is correct and is about twice as cheap, and the owner ruled it out: it made

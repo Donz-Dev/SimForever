@@ -75,6 +75,14 @@ the tooling to be a bit more sophisticated as well."
 | 43 | **LIFE TAP IS (430 + SPIRIT)**, Wowhead's Forever formula, on the owner's instruction -- replacing the ruled flat 840 and the Spirit clause's `unmodelled` caveat. About 674 on every Warlock preset | Firelock **-7.6 at 60s**; the others unchanged at 60s; -4 to -25 at longer lengths, from more taps | see below |
 | 44 | **FIRE DEMO** -- the Demonology profile renamed, three Suppression points to Agonizing Flames, +40 hit on its four benchmark sets, and Decimation's Soul Fire half made a 10-second buff opened in the last 35% | **1120.8 at 60s**, from 1021.0; Decimation 100% uptime -> ~33%. One question closed | see below |
 | 45 | **SBOLT SPAM, A 31ST PROFILE** -- the owner's 22/11/18 Orc, Imp sacrificed, their seven-entry list with a cooldown-stack sequence; and Fire Demo's benchmark row moved to the end, restoring three profiles' saved gear ids that round 40 had shifted | **913.0 at 60s**; every other profile's hash identical to `main` | see below |
+| 46 | **SPELL RESISTANCE, SPELL PIERCING, AND CURSE OF THE ELEMENTS AT 10% AND -75** -- the partial-resist rule from wowsims/forever#76; a raid boss resists nothing, so piercing is the only thing it carries | every fight with no piercing **bit-identical**; the Arcane Mage alone pierces | see below |
+| 46b | **THE PIERCING EXPERIMENT** -- +10 / +25 / +50 on the Arcane Mage, Firelock and Moonkin at E65, 1,500 paired fights each | **1.3 to 1.8 DPS a point**; nothing in the repository changed | see below |
+| 47 | **THREAT, TPS AND SALVATION** -- the first scope ruling ever repealed | **all 31 profiles' DPS to the decimal** | see below |
+| 47b | **THE OWNER ANSWERS THE FOUR THREAT QUESTIONS** -- the Rogue challenged at 0.8 and reverted to x0.71 the same day | nothing changed | see below |
+| 47c | **THE CLIENT-DATA SWEEP FOR HIDDEN THREAT PASSIVES** -- every threat row in two client spell dumps | **none missing**; ten unmodelled threat ITEMS, none on a preset | see below |
+| 48 | **GUI PASS 5** -- pinned header and side columns, DPS/TPS/power/haste tiles, a sectioned character sheet, Sim History, and the Forge theme | **no figure moved**; UI only | see below |
+| 49 | **GUI DECLUTTER** -- notes removed, the threat table removed, raid-forced auras (and then the Healer) hidden from uptimes and the timeline | **no figure moved**; UI only | see below |
+| 50 | **THE TIER SWEEP AS ONE COMMAND** -- all 31 profiles at B55/E65/E75/E85, DPS for 27 and TPS and damage taken for the four tanks, as a chart page | **no figure moved**; a tool | see below |
 | 51 | **SIXTEEN OWNER ITEMS IN ONE PR, AND A MAGE TREE CHANGE THEY TURNED UP** -- casters re-capped for 17% spell hit, Champion of the Light 20/40/60 ahead of the client, Bloodthrill and Aftermath narrowed, Faerie Fire for the Bear, Evocation that stops at a full pool, a Mana Ruby, Fire Blast at T-0, two Mage builds, agility tank consumables, Berserk before Ravage, pet hit by the 17/8 rule, and an editable swing-timer clause | **not re-baselined**, on the owner's standing instruction. `USES=1` on the five touched Druid and Mage profiles: every new entry fires. Piercing Ice is REMOVED from the client's tree and Elemental Precision is 3 ranks at 2/4/6% -- in no note. The Shockadins stay at 80, the melee cap, by the owner's decision, after both routes to the spell cap were priced | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
@@ -404,6 +412,154 @@ Rupture Rogue's pre-combat `stealth` line as `<-- NEVER HAPPENED`. It does on
 `main` too: stealth is a `PRECOMBAT_STATES` entry with no ability, and the tool
 does not read that table the way the APL panel and the opener guard do. A
 reporting gap, not a rotation one.
+
+## Round 50: the tier sweep as one command
+
+**THE OWNER RUNS EVERY PROFILE AT ALL FOUR TEMPLATE GEAR LEVELS EACH WEEK**, and
+this week asked for TPS and damage taken per second on the tanks where last
+week's run had DPS. So it is a tool now, merged as `dc50ebb`
+([#315](https://github.com/Donz-Dev/SimForever/pull/315)):
+
+    HTML=sweep.html npx vite-node tools/tier_sweep.ts                  # the page, 300 fights a point
+    OUT=sweep.json HTML=sweep.html npx vite-node tools/tier_sweep.ts   # and the raw figures
+    IN=sweep.json OUT=sweep.html npx vite-node tools/tier_sweep_chart.ts   # redraw without re-running
+
+Three charts: DPS for the 27 non-tank profiles, and threat per second and damage
+taken per second for the four tanks, each across Pre-BiS, Tier 1, Tier 2 and
+Tier 3 (B55, E65, E75, E85). One line per profile in its class colour, a dash
+pattern to tell a class's profiles apart, labels at the right end pushed apart
+so none overlap. **Hover lights ONE line at a time** and shows its four values;
+the owner's second ask, because a lit line that stayed lit when the pointer
+moved to the next one made the chart harder to read than no highlight at all.
+The DPS chart is 1,100px tall with its axis fitted to the data, on the owner's
+"compressed as much as possible to allow for line separation".
+
+**THIS WEEK'S FIGURES, 300 FIGHTS A POINT, 60s:**
+
+| | B55 | E65 | E75 | E85 |
+| --- | --- | --- | --- | --- |
+| top DPS | Fire Demo 924.5 | Fire Demo **1132.6** | Fire Demo 1217.5 | Fire Demo **1311.7** |
+| bottom DPS | Ele Shaman 613.0 | Ele Shaman **746.5** | Ele Shaman 808.4 | Ele Shaman **879.4** |
+| Bear TPS / DTPS | 1150 / 2109 | | | **1481 / 1535** |
+| Prot Warr TPS / DTPS | 1044 / 2390 | | | **1189 / 1468** |
+| Fury Prot TPS / DTPS | 1176 / 2523 | | | **1328 / 1522** |
+| Prot Pally TPS / DTPS | 907 / 2839 | | | **1055 / 2004** |
+
+**THE BEAR OVERTAKES FURY PROT ON THREAT BETWEEN E65 AND E85**, and the Prot
+Pally takes the most damage at every tier. Published privately as the "Gear
+Tier Sweep" artifact; the JSON is not checked in, because a weekly figure is
+the owner's baseline and not this repository's.
+
+**THE PAGE IS GENERATED BY THE SAME FUNCTION THE TOOL CALLS**, so re-rendering
+the saved JSON reproduced the published page byte for byte -- which is the
+check that the committed tool is the one that made the chart.
+
+## Round 49: GUI declutter -- notes, the threat table, and forced auras
+
+Merged as `1a1b7b5` ([#313](https://github.com/Donz-Dev/SimForever/pull/313))
+and `459b5a1` ([#314](https://github.com/Donz-Dev/SimForever/pull/314)).
+
+- **Nearly every explanatory note is gone from the panels**, on "there are
+  simply too many notes". Raid buff descriptions moved to HOVER TOOLTIPS rather
+  than being deleted. Kept, as data rather than commentary: the ± spreads,
+  application counts and short status lines like "25 of 28 selected".
+- **The threat breakdown table is gone; the TPS tile stays.**
+  `BatchResult.threat` is kept because `tools/probe_threat.ts` reads it.
+- **Raid-forced auras are hidden from the uptime tables and the Timeline.**
+  `raidForcedAuraIds` in `game/buffs/raidBuffs.ts` lists every SELECTED raid
+  buff that applies a standing aura; `runProfileBatch` puts it on the result as
+  `forcedAuraIds`. **A PROC IS NOT FORCED**: Windfury Totem and Judgement of
+  Wisdom apply nothing up front, so their windows are real and stay. A buff the
+  character also casts itself (Battle Shout, Sunder) is 100% from the raid
+  anyway and is hidden too; its CASTS still show in the Casts lane.
+- **And the Healer, on "hide healer"** -- the assumed healer is 100% whenever
+  the target attacks back, forced by the ENCOUNTER rather than the raid panel,
+  which is why the first PR left it in and said so.
+
+**NO ENGINE CHANGE AND NO FIGURE MOVED** -- the filter is in the two panels,
+over a list the batch carries; the analyzers still compute every row.
+
+## Round 48: GUI pass 5 -- pinned layout, four tiles, Sim History, Forge
+
+Merged as `959f165` ([#312](https://github.com/Donz-Dev/SimForever/pull/312)).
+`docs/handoff/gui.md` is the record; in short:
+
+- the header and both side columns are PINNED, and the middle is wider for the
+  APL tools -- **1,255px at a 1920 window**;
+- the results header is **DPS, TPS, the largest power pool** (spell power,
+  school spell power, melee or ranged attack power, whichever is biggest) **and
+  average haste**;
+- the character sheet is grouped under headings and carries hit, piercing and
+  the threat factor;
+- **Sim History** under the Run button -- the last ten runs, click to select,
+  double-click to restore the conditions that produced the figure, seed
+  included. **It does not survive a reload**: nothing in the app writes to
+  `localStorage` yet;
+- the **Forge** contrast pass on the default scheme, chosen by the owner from
+  three mocked templates (Forge, Verdigris, Ledger).
+
+## Round 47c: the client-data sweep for hidden threat passives
+
+**ASKED AFTER THE ROGUE'S 0.8 CHALLENGE**: round 47b's lesson was that a value
+two simulators agree on is still an unasked question, and the cheapest way to
+ask the data is to read every threat row in it. A subagent cloned wowsims/forever
+(`spells_auto_gen.go`) and mythicsim-forever-engine (`spells.jsonl`, client build
+1.60.1.70425); six of its rows were re-checked by hand against the clones.
+**Nothing in the repository changed.**
+
+**NO HIDDEN CLASS, FORM OR STANCE PASSIVE IS MISSING.** The only such rows in the
+data are the ones carried. Confirmed by both files: Rogue and Cat x0.71, the
+three stances, Righteous Fury +90% Holy, Salvation -30%, both threat enchants,
+every threat talent curve, and Sunder 206, Demoralizing Shout 47.8 and
+Demoralizing Roar 48.4.
+
+**NOT IN EITHER FILE, SO A MEASUREMENT, AN OVERRIDE OR A GUESS:**
+
+| | where it comes from |
+| --- | --- |
+| Bear Form x1.5 | wowsims hard-codes it from a client row neither file carries |
+| Heroic Strike 152.4, Cleave 91.8, Sunder's 5% of attack power | wowsims' in-game threat capture |
+| Revenge x2.25, Holy Shield x1.2, the Bear's four multipliers, the three Classic x2 spells | **no source at all** |
+| 5 threat a point of rage, 0.5 of mana | an engine rule in both simulators, not client data |
+
+**INSTRUMENT OF LAW'S ROW SAYS -20% AND ITS CURVE SAYS +10/+20.** We follow the
+row, which matches the tooltip and the owner's ruling; wowsims follows the curve.
+And Righteous Fury carries a -100% modifier on the talent in the data, which is
+the owner's "Fury switches it off" rule written down by the client.
+
+**IN THE DATA AND NOT MODELLED, NONE ON A PRESET**, because every preset wears
+the E65 benchmark set: Rockbiter Weapon's flat threat a hit, Plagueheart 6pc
+(-25% on spell crits and DoTs), Bonescythe 6pc (-8% on four strikes), Frostfire
+8pc (a proc: the next spell makes no threat), Eye of Diminution (-35% for 20s),
+Fetish of the Sand Reaver (-70%), Black Amnesty (a proc: -540 threat), Treacherous
+Treads (+1%), Omokk's Girth Restrainer and Ebon Hilt of Marduk (-1%), and Clever
+Hat (-4%). Two rows in the questions table below.
+
+## Round 46b: the piercing experiment
+
+The owner's ask: the Arcane Mage, Firelock and Moonkin at E65 with +10, +25 and
++50 Spell Piercing. A throwaway probe in a throwaway worktree, 1,500 fights a
+variant, paired on the baseline's seeds; **nothing in the repository changed.**
+
+| | baseline | +10 | +25 | +50 | DPS a point |
+| --- | --- | --- | --- | --- | --- |
+| **Arcane Mage** (carries 15) | 1042.8 | **+17.8** ±0.3 | **+43.0** ±0.4 | **+82.0** ±0.6 | 1.78 -> 1.64 |
+| **Firelock** | 983.2 | **+15.6** ±3.5 | **+36.4** ±3.6 | **+68.5** ±3.7 | 1.56 -> 1.37 |
+| **Moonkin** | 845.0 | **+13.8** ±4.1 | **+33.9** ±4.1 | **+64.3** ±4.2 | 1.38 -> 1.29 |
+
+**THE CEILING IS ARITHMETIC**: the boss resists nothing, so a direct hit gains
+`p / (p + 540)` on average -- 1.8%, 4.4% and 8.5%. The Arcane Mage collects 98-99%
+of it (direct hits, and a channel's ticks take the full share); the Firelock
+82-87% and the Moonkin 87-91%, because a DoT tick sees a TENTH of the piercing
+and only Insect Swarm is exempt. Returns fall about 8% from +10 to +50 as the
+curve flattens, so piercing never caps.
+
+**THE INTERVALS ARE THE FINDING ABOUT PAIRING**, which is CLAUDE.md's stat-weight
+rule seen from a new side: the Firelock and Moonkin draw ZERO resist rolls at
+baseline, so their first point of piercing adds a random draw to every hit, the
+fights stop matching and the interval is ±4. The Arcane Mage already rolls with
+its 15, so adding more changes no draw count and its interval is ±0.5. **A
+variant that introduces a random draw the baseline never made unpairs itself.**
 
 ## Round 47b: the owner answers the four threat questions
 
@@ -997,7 +1153,7 @@ write-up; none is an engine gap.
 | **Demonic Brand is the flat 65-68 you stated.** The repository adds 0.078 of the WARLOCK's spell power to each brand hit. Unholy Power does reach the brand hit, as "all damage done by your pets" | round 39 | a few points a brand hit |
 | **Decimation is built as you described it, as standing effects** -- 6s cooldown, -40% cast, no shards -- where the client tooltip ties the cast-time and shard clauses to a 10 second window after a Shadow Bolt or Searing Pain below 35% | round 39 | Soul Fire, on any build taking Decimation |
 | **A demon takes its Warlock's spell power when it is BUILT**, before the raid buffs and the pull, the same snapshot a Hunter pet takes of attack power. A buff the Warlock gains mid-fight does not reach its demon's 10% | round 39 | small, and only through buffs that move spell power |
-| **Fury Prot's gloves carry +2% Threat because Prot Warr's do**, and threat is out of scope -- so the slot is worth nothing. +15 Strength is **+7.33 +/- 0.30** at 60s, deaths unchanged. Not shipped, because the copy was your instruction; the same slot on Prot Warr is the same question | round 38 | +7 DPS on one tank, possibly two |
+| **Fury Prot's gloves carry +2% Threat because Prot Warr's do**, and threat was out of scope when this was raised -- so the slot was worth nothing to DPS. (Since round 47 it is a x1.02 threat factor, so it now buys 2% TPS.) +15 Strength is **+7.33 +/- 0.30** at 60s, deaths unchanged. Not shipped, because the copy was your instruction; the same slot on Prot Warr is the same question | round 38 | +7 DPS on one tank, possibly two |
 | **Fury Prot eats Prot Warr's stamina food.** Strength food is +17.0 +/- 8.4 at 60s and +12.8 +/- 8.8 at 180s, with deaths +0.12 and +0.21 -- both inside their intervals. Your tank food ruling is why it is not shipped | round 38 | the tank food ruling, for a tank that has Bloodthirst to feed |
 | **Death Wish is ON the global cooldown** -- `abilities/warrior.ts` gives it no `triggersGcd: false`, the default. Worth nothing at 60s, where it is pre-cast; in a fight past three minutes its second cast takes one | round 38 | one global cooldown per three minutes on Fury Prot and DW Fury |
 | **"Spam Execute" switches off every other rage spender in the window**, Sunder Armor, Demoralizing Shout, Heroic Strike, Thunder Clap and Rend included, not only the two Defensive-only abilities that would drag the tank back. Shield Wall is left live, so a tank about to die does return to Defensive for it | round 38 | what the tanks do in the last 20% |
@@ -1009,8 +1165,10 @@ write-up; none is an engine gap.
 | **K = 9 x caster level is a FIT, not a stated rule** -- the one form in #76 that fits all four logged caster levels (20 to 30); nobody has logged a level-60 caster, and the issue's candidates give 478 to 823 at 60 | round 46 | the Arcane Mage's piercing gain, and every resisted hit the day a target has resistance |
 | **Spell Piercing past zero resistance is BONUS damage**, our reading of the issue's negative resisted values -- you ruled the floor for Curse of the Elements and not for piercing | round 46 | worth about 2.7% of every Arcane hit to the Arcane Mage; floored, it would be worth nothing against a boss |
 | **Only Insect Swarm's ticks take the full resistance**; every other DoT takes a tenth, and channels take the full share by construction. The logs name no other exception | round 46 | nothing today -- the boss resists nothing and only the Arcane Mage pierces |
+| **Revenge x2.25 and Holy Shield x1.2 have no source in either client dump**, and neither do the Bear's four ability multipliers. Kept and flagged as unverified | round 47c | the two shield tanks' and the Bear's TPS |
+| **Ten threat items are in the database and not modelled** -- Plagueheart 6pc, Bonescythe 6pc, Frostfire 8pc, Eye of Diminution, Fetish of the Sand Reaver, Black Amnesty, Treacherous Treads, Omokk's Girth Restrainer, Ebon Hilt of Marduk, Clever Hat -- plus Rockbiter Weapon's flat threat | round 47c | nothing on a preset, all of which wear the E65 benchmark set; TPS for anyone who equips one |
 
-**FORTY-THREE ROWS -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five, round 38 added four, round 39 added five, the owner answered the Imp's Firebolt pause the same day, round 40 added three, round 41 closed two of them by changing Life Tap, round 42 added two, round 44 closed the Decimation one, round 46 added three, and round 47 added four that round 47b answered -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
+**FORTY-FIVE ROWS, counted by `awk` from the heading, after round 47c added two -- round 35 answered the Judgement of Command row, added six and answered one of its own, round 36 added four and had one answered the same day, round 37 answered three (the Ele opener, the Hunter shot-window gate, Arcane Wrath) and added five, round 38 added four, round 39 added five, the owner answered the Imp's Firebolt pause the same day, round 40 added three, round 41 closed two of them by changing Life Tap, round 42 added two, round 44 closed the Decimation one, round 46 added three, and round 47 added four that round 47b answered -- AND THE SENTENCE HERE SAID "ALL THREE" FOR SEVERAL ROUNDS.** It
 was written when the table held three and each addition since has been appended
 without it being re-read -- which is CLAUDE.md's own "re-count rather than
 increment" rule, in prose, in a table whose whole job is to be re-read. **Count
