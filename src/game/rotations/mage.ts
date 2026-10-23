@@ -673,6 +673,13 @@ export const MAGE_FROSTFIRE: AplList = {
   ...CONSUMABLE_COOLDOWNS,
   ...CONSUMABLE_HEALS,
   MANA_RUBY_ENTRY,
+  /*
+   * ICE BARRIER, RECAST WHEN IT FALLS OFF (round 55), the owner's: "it should
+   * be cast when it falls off as well, high in the normal APL." The opener
+   * casts it at T-10, so the first one has fifty seconds left at the pull.
+   * First of the global-cooldown entries, below only the free ones above.
+   */
+  { abilityId: 'ice_barrier', condition: selfMissing('ice_barrier') },
   { abilityId: 'evocation', condition: evocationFor(EVOCATION_FIGHT_SECONDS) },
   { abilityId: 'scorch', condition: scorchNeededWithin(FROSTFIRE_SCORCH_REFRESH_SECONDS) },
   { abilityId: 'pyroblast', condition: selfStacksExactly('heating_up', HEATING_UP_MAX_STACKS) },

@@ -586,7 +586,7 @@ export class Simulation implements SimulationContext {
           const stillCasting =
             actor.channelling === pending.ability && actor.isCasting(ctx.clock.now());
           if (stillCasting && pending.check.condition(ctx, actor, pending.target)) {
-            this.cancelCast(actor, pending);
+            this.cancelCast(actor);
           } else {
             this.scheduleDecision(actor, this.nextDecisionTime(actor));
             return;
@@ -667,26 +667,23 @@ export class Simulation implements SimulationContext {
          */
         let cast: Ability | undefined;
         if (decision) {
-          const costResource = decision.ability.cost?.resource;
-          const poolBefore = costResource ? actor.resources.get(costResource)?.current : undefined;
-          const spendBefore = costResource ? actor.lastSpentAt(costResource) : undefined;
-          const result = ctx.cast(actor, decision.ability, decision.target);
+          /*
+           * A PRE-CAST PAYS ONLY IF IT LANDS (round 55): its cost is taken at
+           * completion, so a cancelled one never spends and nothing needs
+           * handing back. See `CastOptions.payCostOnCompletion`.
+           */
+          const result = decision.cancelCast
+            ? castAbility(ctx, actor, decision.ability, decision.target, { payCostOnCompletion: true })
+            : ctx.cast(actor, decision.ability, decision.target);
           if (result.ok) {
             cast = decision.ability;
             const now = ctx.clock.now();
             if (decision.cancelCast && actor.castEndsAt > now && actor.channelling === decision.ability) {
-              const spent =
-                costResource && poolBefore !== undefined
-                  ? poolBefore - (actor.resources.get(costResource)?.current ?? poolBefore)
-                  : 0;
               actor.pendingCastCancel = {
                 at: now + Math.round(decision.cancelCast.atFraction * (actor.castEndsAt - now)),
                 ability: decision.ability,
                 target: decision.target,
                 check: decision.cancelCast,
-                ...(costResource && spent > 0
-                  ? { refund: { resource: costResource, amount: spent, previousSpend: spendBefore } }
-                  : {}),
               };
             }
           }
@@ -699,10 +696,10 @@ export class Simulation implements SimulationContext {
 
   /**
    * Abandon a cast its cancel check said to drop (round 53): the completion
-   * is unscheduled, the cost goes back, and the five second rule forgets the
-   * spend. Reported as an interrupted cast, so the combat log says it.
+   * is unscheduled, and with it the cost, which a pre-cast pays only as it
+   * lands (round 55). Reported as an interrupted cast, so the combat log says it.
    */
-  private cancelCast(actor: Combatant, pending: NonNullable<Combatant['pendingCastCancel']>): void {
+  private cancelCast(actor: Combatant): void {
     const now = this.clock.now();
     const cancelled = actor.interruptChannel(this);
     if (!cancelled) return;
@@ -716,25 +713,6 @@ export class Simulation implements SimulationContext {
       ticksDelivered: 0,
       ticksTotal: cancelled.channelTicks ?? 1,
     });
-    const refund = pending.refund;
-    if (refund) {
-      const pool = actor.resources.get(refund.resource);
-      if (pool) {
-        const result = pool.gain(refund.amount);
-        actor.restoreResourceSpend(refund.resource, refund.previousSpend);
-        this.telemetry.emit({
-          type: 'resource_gained',
-          timestamp: now,
-          actorId: actor.id,
-          resource: refund.resource,
-          amount: result.gained,
-          wasted: result.wasted,
-          current: pool.current,
-          source: `${cancelled.id}_refund`,
-          sourceName: `${cancelled.name} (cancelled)`,
-        });
-      }
-    }
   }
 
   /**

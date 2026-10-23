@@ -9,7 +9,7 @@ import type { SimulationContext } from '../simulation/SimulationContext';
 import type { Milliseconds } from '../time';
 import type { Ability, AbilityContext } from './Ability';
 import { DEFAULT_GCD_MS, MINIMUM_GCD_MS } from './Ability';
-import { castModifiersFor, resolveCast } from './castModifiers';
+import { castModifiersFor, chargesIn, resolveCast } from './castModifiers';
 
 /** Why an ability could not be used. Useful for debugging a stuck rotation. */
 export type CastRejection =
@@ -229,6 +229,16 @@ export interface CastOptions {
    * see `runPrecombat`.
    */
   readonly precombat?: boolean;
+  /**
+   * Pay the cost when the cast COMPLETES rather than when it starts (round 55).
+   *
+   * A PRE-CAST that may be cancelled part way through is the caller: a cast
+   * that is abandoned never finishes, so it never pays, and the mana panel and
+   * the five second rule both see nothing -- which is what "pre-casting
+   * shouldn't cost mana" means. Affordability is still checked at the start,
+   * exactly as for any cast. An instant ignores it: there is no part way.
+   */
+  readonly payCostOnCompletion?: boolean;
 }
 
 export function castAbility(
@@ -268,54 +278,14 @@ export function castAbility(
 
   caster.abilities.consumeCharge(ability.id, now);
 
-  if (ability.cost) {
-    const pool = caster.resources.require(ability.cost.resource);
-    pool.spend(resolved.costAmount);
-    // Recorded so rules keyed on recent spending work: mana regeneration stops
-    // for a few seconds after a cast.
-    caster.recordResourceSpend(ability.cost.resource, now);
-    context.telemetry.emit({
-      type: 'resource_spent',
-      timestamp: now,
-      actorId: caster.id,
-      resource: ability.cost.resource,
-      // What it ACTUALLY cost. The rage and mana panels are audit trails for
-      // exactly this kind of reduction, so reporting the printed cost would
-      // hide the talent that is doing the work.
-      amount: resolved.costAmount,
-      wasted: 0,
-      current: pool.current,
-      // Which ability spent it. This is what turns "83 rage spent" into a
-      // breakdown a person can audit a cost-reduction talent against.
-      source: ability.id,
-      sourceName: ability.name,
-    });
+  const deferCost =
+    options?.payCostOnCompletion === true &&
+    !options.precombat &&
+    (ability.castTimeMs ?? 0) > 0 &&
+    !ability.onNextSwing;
 
-    /*
-     * ARMED HERE, SPENT BY THE FIRST DAMAGE THIS ABILITY RESOLVES. An attack
-     * that misses, is dodged or is parried hands most of the cost back; one
-     * that lands keeps it. Both cases CLEAR it, so a multi-hit ability refunds
-     * only if its FIRST hit was avoided -- Whirlwind's off hand missing after
-     * its main hand connected is not a miss for this purpose.
-     *
-     * A cast that deals no damage at all leaves this armed until the next cast
-     * overwrites it, which is harmless: nothing reads it but a damage
-     * resolution carrying the same ability id.
-     */
-    const refund = caster.costRefundOnMiss;
-    if (
-      refund &&
-      ability.refundsCostOnMiss !== false &&
-      refund.resources.includes(ability.cost.resource)
-    ) {
-      caster.pendingCostRefund = {
-        abilityId: ability.id,
-        resource: ability.cost.resource,
-        amount: resolved.costAmount * refund.fraction,
-      };
-    } else {
-      caster.pendingCostRefund = undefined;
-    }
+  if (ability.cost && !deferCost) {
+    payCost(context, caster, ability, resolved.costAmount);
   }
 
   // A pre-combat cast starts no global cooldown: the fight has not begun.
@@ -359,7 +329,16 @@ export function castAbility(
     abilityId: ability.id,
     abilityName: ability.name,
     ...(ability.cost ? { resource: ability.cost.resource } : {}),
-    saved: Math.max(0, (ability.cost?.amount ?? 0) - resolved.costAmount),
+    /*
+     * AGAINST WHAT THE CAST WOULD HAVE COST WITHOUT THE CHARGES (round 55),
+     * not against the printed cost. Arcane Blast at four stacks costs eight
+     * times its base, so a Clearcasting that makes it free saves all eight --
+     * and measured against the base it read as saving one, or nothing.
+     */
+    saved: Math.max(
+      0,
+      resolveCast(caster, ability, chargesIn(matchedModifiers)).costAmount - resolved.costAmount,
+    ),
   });
 
   /*
@@ -443,6 +422,8 @@ export function castAbility(
             caster.endChannel();
           }
           if (!caster.isAlive) return;
+          // A deferred cost is paid as the cast lands -- see `payCostOnCompletion`.
+          if (last && deferCost && ability.cost) payCost(ctx, caster, ability, resolved.costAmount);
           caster.recordChannelTick();
           runCast(ctx, { simulation: ctx, caster, target, ability }, last);
         }),
@@ -481,6 +462,74 @@ export function castAbility(
  * should have to reason about.
  * ----------------------------------------------------------------------------
  */
+/**
+ * Take an ability's cost and say so: the spend, the five-second-rule stamp,
+ * the telemetry, and the refund a miss would hand back.
+ *
+ * ONE FUNCTION FOR BOTH MOMENTS a cost can be paid -- the start of a cast, and
+ * its completion when `payCostOnCompletion` deferred it (round 55) -- so the
+ * two cannot disagree about what paying means. The pool may have dropped
+ * below the cost while a deferred cast ran; it is then emptied, never taken
+ * negative.
+ */
+function payCost(
+  context: SimulationContext,
+  caster: Combatant,
+  ability: Ability,
+  amount: number,
+): void {
+  if (!ability.cost) return;
+  const now = context.clock.now();
+  const pool = caster.resources.require(ability.cost.resource);
+  const paid = Math.min(amount, pool.current);
+  pool.spend(paid);
+  // Recorded so rules keyed on recent spending work: mana regeneration stops
+  // for a few seconds after a cast.
+  caster.recordResourceSpend(ability.cost.resource, now);
+  context.telemetry.emit({
+    type: 'resource_spent',
+    timestamp: now,
+    actorId: caster.id,
+    resource: ability.cost.resource,
+    // What it ACTUALLY cost. The rage and mana panels are audit trails for
+    // exactly this kind of reduction, so reporting the printed cost would
+    // hide the talent that is doing the work.
+    amount: paid,
+    wasted: 0,
+    current: pool.current,
+    // Which ability spent it. This is what turns "83 rage spent" into a
+    // breakdown a person can audit a cost-reduction talent against.
+    source: ability.id,
+    sourceName: ability.name,
+  });
+
+  /*
+   * ARMED HERE, SPENT BY THE FIRST DAMAGE THIS ABILITY RESOLVES. An attack
+   * that misses, is dodged or is parried hands most of the cost back; one
+   * that lands keeps it. Both cases CLEAR it, so a multi-hit ability refunds
+   * only if its FIRST hit was avoided -- Whirlwind's off hand missing after
+   * its main hand connected is not a miss for this purpose.
+   *
+   * A cast that deals no damage at all leaves this armed until the next cast
+   * overwrites it, which is harmless: nothing reads it but a damage
+   * resolution carrying the same ability id.
+   */
+  const refund = caster.costRefundOnMiss;
+  if (
+    refund &&
+    ability.refundsCostOnMiss !== false &&
+    refund.resources.includes(ability.cost.resource)
+  ) {
+    caster.pendingCostRefund = {
+      abilityId: ability.id,
+      resource: ability.cost.resource,
+      amount: paid * refund.fraction,
+    };
+  } else {
+    caster.pendingCostRefund = undefined;
+  }
+}
+
 /**
  * End the caster's channel NOW, as though its last tick had landed.
  *

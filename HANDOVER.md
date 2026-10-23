@@ -99,6 +99,40 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 55: healer and Mage bug fixes
+
+Seven items from the owner, four healer and three Mage:
+
+| | what changed |
+| --- | --- |
+| pre-cast mana | a pre-cast PAYS ONLY IF IT LANDS: `CastOptions.payCostOnCompletion` takes the cost when the cast completes, so a cancelled one spends nothing and starts no five second rule. Round 53's refund is gone, and with it the "Holy Light (cancelled)" gains in the mana panel |
+| raid tank | 10% of its health every 2 seconds, no ramp, where it was 30% |
+| APL values | a health clause now asks WHOSE -- you, the target, the tank, or the mean of your party or the raid -- so every Holy Pal condition is editable where it was a fixed sentence; heal entries get a target dropdown |
+| pre-cast toggle | offered only on a heal with a cast bar (`Ability.heals`, and a cast time that is not a channel): Holy Light and Flash of Light, not Holy Shock |
+| Clearcasting | Arcane Concentration rolls ONCE per Arcane Missiles, on the first missile that hits, keyed by `castSequence - channelTicksDelivered` |
+| cost rule | cost INCREASES first, and a reduction is a share of the increased cost. Four Arcane Blast stacks (+700%) and Clearcasting (-100%) used to sum to seven times the base; now it is free. The cast-charge saving is measured against the cost without the charge, so it reads the eight times it saved |
+| Ice Barrier | a castable trainer spell for any Mage on the owner's ruling (it is also a tier-30 talent Frostfire cannot reach): 480 mana, 30s cooldown, **+6% Frost damage for 60s**. Frostfire casts it at T-10 and recasts it when it falls off, first of its global-cooldown entries. A Frost buff reaches Frostfire Bolt through `countsAsSchools`, taking the larger per aura |
+
+Measured, 300 fights a profile against `main`:
+
+| | before | after | |
+| --- | --- | --- | --- |
+| Frostfire | 1010.1 | 1014.1 | +4.0 noise |
+| Arcane | 1058.1 | 1052.9 | -5.2 noise |
+| Fire | 1123.8 | 1127.4 | +3.6 noise |
+
+**ICE BARRIER IS WORTH LITTLE AT 60s AND IT DOES WORK**: Frostfire Bolt's
+non-crit hit is 1,392.6 with it against 1,317.6 without, x1.057. What it costs
+is two global cooldowns and 960 mana a minute, cast twice.
+
+Healer, 1000 iterations: tank fight **536 HPS, 2.24 tank deaths**, mana spent
+10,956 where it was 15,917 with the cancelled pre-casts charged and refunded;
+raid fight **570 HPS, 38.95 deaths** where it was 43.19.
+
+Open: whether Holy Shock's instant heal should be offered a pre-cast is
+answered no by the owner's wording ("cast-bar-healing-spells only"), and a
+cancelled pre-cast still spends a cast-start charge such as Infusion of Light.
+
 ## Round 54: a 2,000 boss swing for the tank healer, and smart healing
 
 Round 52's third wave, two items from the owner:

@@ -326,7 +326,16 @@ export interface Clause {
   readonly unit?: FightUnit;
   /** swing: whose timer. The value is SECONDS until it swings, shown with decimals. */
   readonly slot?: SwingSlot;
+  /**
+   * health: WHOSE (round 55) -- you, the entry's target, the tank, or the mean
+   * of your party or the raid. The last three are `friendlyHealth`; absent is
+   * `self`, which is every list written before healing existed.
+   */
+  readonly who?: HealthOf;
 }
+
+/** Whose health a `health` clause reads. See `Clause.who`. */
+export type HealthOf = 'self' | 'target' | 'tank' | 'party' | 'raid';
 
 /**
  * A condition as a TREE the panel can walk.
@@ -622,17 +631,25 @@ function toClause(condition: AplCondition): Clause | undefined {
       };
     case 'health':
       /*
-       * SELF ONLY in the editor, which is every stock use of it. A `health`
-       * condition about the TARGET is expressible in the data model and is
-       * meaningless against this encounter -- the target is a damage sink that
-       * never drops -- so a control for it would offer a rotation rule that
-       * cannot fire. One naming the target stays a fixed leaf.
+       * YOURS OR THE TARGET'S (round 55). It was self only, on the argument
+       * that the target is a damage sink that never drops -- true of a DPS
+       * fight and false of a healer's, where the target is the person being
+       * healed and every one of the Holy Pal's lines reads it. A pet's stays a
+       * fixed leaf, since nothing heals one.
        */
-      if (condition.on !== 'self') return undefined;
+      if (condition.on === 'pet') return undefined;
       return {
         kind: 'health',
+        who: condition.on,
         compare: condition.compare,
-        value: Math.round(condition.fraction * 100),
+        value: percentOf(condition.fraction),
+      };
+    case 'friendlyHealth':
+      return {
+        kind: 'health',
+        who: condition.of,
+        compare: condition.compare,
+        value: percentOf(condition.fraction),
       };
     case 'swingIn':
       /*
@@ -710,8 +727,12 @@ export function fromClause(clause: Clause): AplCondition {
       return clause.unit === 'secondsLeft'
         ? { kind: 'fightRemaining', compare, seconds: value }
         : { kind: 'fightRemaining', compare, fraction: value / 100 };
-    case 'health':
-      return { kind: 'health', on: 'self', compare, fraction: value / 100 };
+    case 'health': {
+      const who = clause.who ?? 'self';
+      return who === 'self' || who === 'target'
+        ? { kind: 'health', on: who, compare, fraction: value / 100 }
+        : { kind: 'friendlyHealth', of: who, compare, fraction: value / 100 };
+    }
     case 'swing':
       return {
         kind: 'swingIn',
@@ -720,6 +741,32 @@ export function fromClause(clause: Clause): AplCondition {
         milliseconds: Math.round(value * 1000),
       };
   }
+}
+
+/**
+ * A stored fraction as the percentage the panel shows, to a tenth -- so 0.95
+ * reads 95 and an owner's 0.655 is not rounded away. It goes back as `/ 100`,
+ * which returns the stored figure exactly for every value a person types.
+ */
+function percentOf(fraction: number): number {
+  return Math.round(fraction * 1000) / 10;
+}
+
+/**
+ * Set or clear who an entry is cast at (round 55). Cleared is DROPPED, the
+ * rule `interruptsChannel` follows, so an entry put back compares equal.
+ */
+export function setTarget(
+  entries: readonly AplEntry[],
+  index: number,
+  target: AplEntry['target'],
+): readonly AplEntry[] {
+  if (index < 0 || index >= entries.length) return entries;
+  return entries.map((entry, at) => {
+    if (at !== index) return entry;
+    const { target: _dropped, ...rest } = entry;
+    return target ? { ...rest, target } : rest;
+  });
 }
 
 /** A new clause of each kind, for the "add a condition" control. */

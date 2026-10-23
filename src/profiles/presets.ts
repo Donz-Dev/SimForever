@@ -3166,7 +3166,12 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * buff is load-bearing and its lead is not.
        * ==================================================================
        */
-      precombat: [...before(4, 'mage_armor'), ...before(2.5, 'frostfire_bolt')],
+      // Ice Barrier at T-10, the owner's (round 55).
+      precombat: [
+        ...before(10, 'ice_barrier'),
+        ...before(4, 'mage_armor'),
+        ...before(2.5, 'frostfire_bolt'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },

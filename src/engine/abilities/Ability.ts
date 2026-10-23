@@ -107,6 +107,13 @@ export interface Ability {
    */
   readonly interruptibleChannel?: boolean;
   /**
+   * The ability HEALS a friendly (round 55). Read by the APL panel and nothing
+   * else: an entry for one is offered a friendly target, and -- when it also
+   * has a cast bar -- a pre-cast. Declared rather than derived, because what
+   * an ability does is decided inside its `onCast` and cannot be read off it.
+   */
+  readonly heals?: boolean;
+  /**
    * A condition that ENDS the channel by itself, with no entry asking.
    *
    * --------------------------------------------------------------------------
