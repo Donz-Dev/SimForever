@@ -7,8 +7,10 @@ import { UptimeBars } from '../charts/UptimeBars';
 import {
   ResourceTimeline,
   auraStackTimeline,
+  healthTimeline,
   resourceTimeline,
 } from '../charts/ResourceTimeline';
+import { TANK_ID } from '../../simulator';
 import { ARCANE_BLAST_MAX_STACKS } from '../../game/auras/mage';
 import type {
   BatchCastCharge,
@@ -19,6 +21,14 @@ import type { TelemetryEvent } from '../../engine';
 
 interface ResultsPanelProps {
   readonly batch: BatchResult;
+  /**
+   * `healing` for a healer fight (round 52): HPS | TPS | Healing Power | Haste
+   * on top, and the healing breakdown in place of the damage one. Everything
+   * below it -- uptimes, mana, cast charges -- is the same report.
+   */
+  readonly mode?: 'damage' | 'healing';
+  /** A title of its own, when there is one report per healer fight. */
+  readonly title?: string;
 }
 
 /*
@@ -34,14 +44,19 @@ interface ResultsPanelProps {
  * The combat log is still the representative iteration, because a log has to be
  * a single fight to mean anything. Nothing numeric comes from it.
  */
-export function ResultsPanel({ batch }: ResultsPanelProps) {
+export function ResultsPanel({ batch, mode = 'damage', title = 'Results' }: ResultsPanelProps) {
+  const healing = mode === 'healing';
   // Raid-forced auras are 100% by selection and are left out (round 49).
   const forced = new Set(batch.forcedAuraIds ?? []);
   const isBatch = batch.iterations > 1;
 
   return (
     <Panel
-      title="Results"
+      title={title}
+      className="panel-output"
+      // Collapsible in a healer run, which has two of these to swap between.
+      collapsible={healing}
+      startOpen
       subtitle={
         /*
          * THE PRIORITY LIST IS NAMED HERE, and it has to be: a Warrior's list
@@ -82,8 +97,8 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
        */}
       <div className="stat-grid headline-stats">
         <Stat
-          label="DPS"
-          value={fixed(batch.dps.mean)}
+          label={healing ? 'HPS' : 'DPS'}
+          value={fixed(healing ? batch.hps.mean : batch.dps.mean)}
           /*
            * ONE STANDARD DEVIATION, which is the spread of SINGLE FIGHTS and
            * not the error on the mean. The two differ by a factor of the square
@@ -93,7 +108,11 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
            * "how sure is this average". A reader comparing two builds wants the
            * second and a reader asking what a pull looks like wants this.
            */
-          note={isBatch ? `± ${fixed(batch.dps.standardDeviation)}` : undefined}
+          note={
+            isBatch
+              ? `± ${fixed(healing ? batch.hps.standardDeviation : batch.dps.standardDeviation)}`
+              : undefined
+          }
         />
         {/*
          * THREAT PER SECOND, beside the DPS it mostly comes from (round 47).
@@ -104,11 +123,13 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
           value={fixed(batch.tps.mean)}
           note={isBatch ? `± ${fixed(batch.tps.standardDeviation)}` : undefined}
         />
-        <StatAverages stats={batch.stats} />
+        <StatAverages stats={batch.stats} healing={healing} />
       </div>
 
-      <h3>Damage done</h3>
-      {batch.abilities.length > 0 ? (
+      {healing ? <HealingDone batch={batch} /> : null}
+
+      {healing ? null : <h3>Damage done</h3>}
+      {healing ? null : batch.abilities.length > 0 ? (
         <table className="breakdown">
           <thead>
             <tr>
@@ -224,6 +245,7 @@ function DamageTaken({ batch }: ResultsPanelProps) {
         <Stat label="Overhealing" value={fixed(survival.overhealing)} />
         <Stat label="Deaths" value={fixed(survival.deaths)} />
       </div>
+      <HealthChart batch={batch} actorId={batch.playerId} title="Hit points %" />
       <table className="breakdown">
         <thead>
           <tr>
@@ -296,7 +318,11 @@ function ResourceEconomy({ batch }: ResultsPanelProps) {
   );
   if (flows.length === 0) return null;
 
-  const player = batch.representative.actors.find((actor) => actor.kind === 'player');
+  // THE REPORT'S OWN ACTOR, which in a healer fight is not the first player --
+  // the tank is a player too, and stands first so the boss swings at it.
+  const player =
+    batch.representative.actors.find((actor) => actor.id === batch.playerId) ??
+    batch.representative.actors.find((actor) => actor.kind === 'player');
 
   return (
     <>
@@ -601,8 +627,23 @@ function Stat({
  * and 1.30 would have to be translated back by the reader. A character with no
  * haste reads 0.00%, which is a fact about the build rather than an empty tile.
  */
-function StatAverages({ stats }: { readonly stats: BatchStatAverages | undefined }) {
+function StatAverages({
+  stats,
+  healing = false,
+}: {
+  readonly stats: BatchStatAverages | undefined;
+  readonly healing?: boolean;
+}) {
   if (!stats) return null;
+  if (healing) {
+    // The owner's healer four: HPS | TPS | Healing Power | Haste (round 52).
+    return (
+      <>
+        <Stat label="Healing Power" value={fixed(stats.healingPower)} />
+        <Stat label="Haste" value={`${((stats.hasteMultiplier - 1) * 100).toFixed(2)}%`} />
+      </>
+    );
+  }
   /*
    * THE OWNER'S FOUR, round 48: DPS | TPS | the largest power pool | haste.
    * One power tile rather than one per pool -- `headlinePower` picks the pool
@@ -621,6 +662,73 @@ function StatAverages({ stats }: { readonly stats: BatchStatAverages | undefined
 }
 
 /**
+ * A healer's breakdown, the healing mirror of "Damage done" (round 52).
+ *
+ * OVERHEALING HAS A COLUMN because it is the healer's equivalent of a miss:
+ * a cast that landed and did nothing. The deaths line above it counts the
+ * people being healed, which is what an HPS figure is FOR.
+ */
+function HealingDone({ batch }: { readonly batch: BatchResult }) {
+  // The raid fight heals more than the tank; the tank fight heals the tank alone.
+  const raid = batch.representative.actors.filter((actor) => actor.faction === 'friendly').length > 2;
+  return (
+    <>
+      <h3>Healing done</h3>
+      {/*
+       * DEATHS FIRST, because they are what an HPS figure is FOR (round 53).
+       * Everybody healed is stood back up at full the instant they die, so a
+       * fight can hold several and the figure is a mean per fight.
+       */}
+      <div className="stat-grid">
+        {raid ? <Stat label="Deaths (all 20)" value={fixed(batch.alliedDeaths)} /> : null}
+        <Stat label="Tank deaths" value={fixed(batch.tankDeaths ?? batch.alliedDeaths)} />
+      </div>
+      <HealthChart batch={batch} actorId={TANK_ID} title="Tank hit points %" />
+      {batch.healing.length > 0 ? (
+        <table className="breakdown">
+          <thead>
+            <tr>
+              <th>Spell</th>
+              <th className="numeric">Uses</th>
+              {/* Pre-casts the cancel check dropped, inside Uses (round 53). */}
+              <th className="numeric">Cancelled</th>
+              <th className="numeric">Healing</th>
+              <th className="numeric">Share</th>
+              <th className="numeric">Heals</th>
+              <th className="numeric">Average</th>
+              <th className="numeric">Crit</th>
+              <th className="numeric">Overheal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {batch.healing.map((row) => (
+              <tr key={row.abilityName}>
+                <td>{row.abilityName}</td>
+                <td className="numeric">{row.uses > 0 ? fixed(row.uses) : '-'}</td>
+                <td className="numeric">{row.cancelled > 0 ? fixed(row.cancelled) : '-'}</td>
+                <td className="numeric">{fixed(row.healing)}</td>
+                <td className="numeric">
+                  <span className="share">
+                    <span className="share-bar" style={{ width: `${Math.round(row.share * 100)}%` }} />
+                    <span className="share-text">{(row.share * 100).toFixed(2)}%</span>
+                  </span>
+                </td>
+                <td className="numeric">{fixed(row.heals)}</td>
+                <td className="numeric">{fixed(row.average)}</td>
+                <td className="numeric">{pct(row.critRate)}</td>
+                <td className="numeric">{pct(row.overhealRate)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p className="muted">Nothing was healed.</p>
+      )}
+    </>
+  );
+}
+
+/**
  * Two decimals, always, so a column of numbers lines up.
  *
  * NEGATIVE ZERO IS CLAMPED. Totals are summed from per-source floats, so a
@@ -634,4 +742,35 @@ function fixed(value: number): string {
 
 function pct(fraction: number): string {
   return `${(fraction * 100).toFixed(2)}%`;
+}
+
+/**
+ * One combatant's hit points over the representative fight, as a percentage
+ * (round 53): the tank's in a tank run and in the Tank Healer fight. Drawn
+ * with the same step chart as a resource's "available" line.
+ *
+ * NOTHING IS DRAWN FOR A COMBATANT NOTHING HIT, which is every DPS run: a line
+ * flat at 100% says nothing the run did not already.
+ */
+function HealthChart({
+  batch,
+  actorId,
+  title,
+}: {
+  readonly batch: BatchResult;
+  readonly actorId: string;
+  readonly title: string;
+}) {
+  const actor = batch.representative.actors.find((candidate) => candidate.id === actorId);
+  if (!actor) return null;
+  const points = healthTimeline(batch.representative.timeline, actorId, actor.maxHealth);
+  if (points.length < 2) return null;
+  return (
+    <ResourceTimeline
+      title={title}
+      points={points}
+      maximum={100}
+      durationMs={batch.representative.durationMs}
+    />
+  );
 }

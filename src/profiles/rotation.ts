@@ -56,6 +56,7 @@ export function defaultRotationFor(profile: CharacterProfile): StoredRotation {
      */
     name: list?.name ?? '',
     entries: list ? [...list.entries] : [],
+    ...(list?.smartHealing ? { smartHealing: true } : {}),
   };
 }
 
@@ -186,5 +187,9 @@ export function rotationMatchesBuild(profile: CharacterProfile): boolean {
  * `defaultRotationFor` the last time this ran.
  */
 function sameRotation(a: StoredRotation, b: StoredRotation): boolean {
-  return a.name === b.name && JSON.stringify(a.entries) === JSON.stringify(b.entries);
+  return (
+    a.name === b.name &&
+    (a.smartHealing === true) === (b.smartHealing === true) &&
+    JSON.stringify(a.entries) === JSON.stringify(b.entries)
+  );
 }

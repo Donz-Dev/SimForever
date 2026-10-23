@@ -12,6 +12,7 @@ import { attackPowerCoefficientFor } from '../combat/weaponDamage';
 import type { SummonableDemon } from '../character/petFamilies';
 import { IMP_FIREBOLT, LASH_OF_PAIN } from '../abilities/demon';
 import { IMP_ROTATION, SUCCUBUS_ROTATION } from '../rotations/demon';
+import { warlockDemonHit } from './petHit';
 
 /*
  * ==============================================================================
@@ -94,6 +95,7 @@ export function createDemon(options: DemonOptions): CombatantType {
   const talents = options.talents ?? NO_PET_MODIFIERS;
   const base = BASE[demon];
   const ownerStats = owner.stats.effective;
+  const demonHit = warlockDemonHit(ownerStats.hitChance);
 
   const ownerSpellCrit = spellCritChanceFrom(ownerStats) * 100;
   const ownSpellCrit =
@@ -147,8 +149,13 @@ export function createDemon(options: DemonOptions): CombatantType {
       attackPower:
         base.strength * DEMON_ATTACK_POWER_PER_STRENGTH +
         ownerStats.spellPower * DEMON_ATTACK_POWER_PER_OWNER_SPELL_POWER,
-      // The owner's SPELL hit and crit, to both of the demon's tables.
-      hitChance: ownerStats.hitChance,
+      /*
+       * The owner's SPELL hit to the demon's spells and 8/17 of it to its
+       * melee, by the round 51 rule in `petHit.ts` -- it was the full spell
+       * figure on both tables, which handed a Succubus nine points of melee
+       * hit it could not use. Crit still reaches both whole.
+       */
+      hitChance: demonHit.hitChance,
       spellCritChance: ownSpellCrit + ownerSpellCrit,
       critChance: ownMeleeCrit + ownerSpellCrit,
     },
@@ -156,6 +163,7 @@ export function createDemon(options: DemonOptions): CombatantType {
     rotation: demon === 'imp' ? IMP_ROTATION : SUCCUBUS_ROTATION,
     abilityModifiers,
     schoolModifiers,
+    attackTableModifiers: demonHit.attackTableModifiers,
     // Unholy Power and Soul Link's demon half. No "happiness" multiplier: that
     // is the Hunter pet's, and the repository states none for a demon.
     damageMultiplier: talents.damageMultiplier,

@@ -994,11 +994,16 @@ describe('Sanctified Judgement', () => {
 /* -------------------------------------------------------------------------- */
 
 describe('Divine Favor', () => {
-  it('guarantees the next Holy Shock a crit and nothing else', () => {
+  it('guarantees the next Holy Shock, Holy Light or Flash of Light a crit and nothing else', () => {
     expect(DIVINE_FAVOR_CRIT_BONUS).toBe(100);
     expect(DIVINE_FAVOR.abilityModifiers?.holy_shock?.critBonus).toBe(100);
-    // Named by id, so it cannot leak onto Judgement or a seal.
-    expect(Object.keys(DIVINE_FAVOR.abilityModifiers ?? {})).toEqual(['holy_shock']);
+    // The tooltip names all three; the two heals arrived in round 52. Named by
+    // id, so it cannot leak onto Judgement or a seal.
+    expect(Object.keys(DIVINE_FAVOR.abilityModifiers ?? {})).toEqual([
+      'holy_shock',
+      'holy_light',
+      'flash_of_light',
+    ]);
   });
 
   it('is spent by the Holy Shock that used it, and not before the crit was rolled', () => {

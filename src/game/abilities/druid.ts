@@ -1,5 +1,5 @@
 import type { Ability } from '../../engine';
-import { DEMORALIZING_ROAR_FLAT_THREAT } from '../combat/threat';
+import { DEMORALIZING_ROAR_FLAT_THREAT, FAERIE_FIRE_THREAT_PER_LEVEL } from '../combat/threat';
 import { dealDamage, seconds } from '../../engine';
 import {
   DEMORALIZING_ROAR,
@@ -17,6 +17,7 @@ import {
   ENRAGE,
   ENRAGE_COOLDOWN_MS,
   ENRAGE_INSTANT_RAGE,
+  FAERIE_FIRE,
   FRENZIED_REGENERATION,
   FRENZIED_REGENERATION_COOLDOWN_MS,
   NATURES_SWIFTNESS,
@@ -727,6 +728,46 @@ export const LACERATE_ABILITY: Ability = {
   },
 };
 
+/**
+ * Faerie Fire, cast from Dire Bear Form -- the owner, round 51: "This can be
+ * used from Dire Bear Form. Faerie Fire generate a base threat of 2 * character
+ * level which is then further modified by % threat scalers."
+ *
+ * FREE, because "Faerie Fire costs no resources in those forms" -- the client's
+ * own wording in the Omen of Clarity fix, which is why it cannot spend a
+ * Clearcasting charge either (`requiresCost`). ON THE GLOBAL COOLDOWN, which is
+ * the whole price of it for a Bear.
+ *
+ * IT DOES NOT ROLL TO HIT, which is the precedent for a non-DoT debuff here --
+ * Thunder Clap's slow and Wrack's amplification apply without rolling on
+ * purpose -- and is RECORDED AS A QUESTION for the owner: Classic's Faerie Fire
+ * rolls spell hit, and a Bear carries none.
+ *
+ * IT DOES NOT SHORTEN THE RAID'S FAERIE FIRE. The preset raid debuffs already
+ * put an hour of this aura on the target, and a `reset` refresh with a 40 second
+ * definition would cut that to 40 seconds and let the armor lapse -- so the
+ * aura is applied only when what is on the target has less than 40 seconds left,
+ * and the threat is generated either way. In every preset fight that makes the
+ * cast PURE THREAT, which is what the owner asked for it for.
+ */
+export const FAERIE_FIRE_ABILITY: Ability = {
+  id: 'faerie_fire',
+  name: 'Faerie Fire',
+  onCast: ({ simulation, caster, target }) => {
+    if (!target) return;
+    if (target.auras.remainingMs(FAERIE_FIRE.id, simulation.clock.now()) < FAERIE_FIRE.durationMs) {
+      simulation.applyAura(target, FAERIE_FIRE, caster.id);
+    }
+    simulation.generateThreat(
+      caster,
+      target,
+      FAERIE_FIRE_THREAT_PER_LEVEL * caster.level,
+      'faerie_fire',
+      'Faerie Fire',
+    );
+  },
+};
+
 export const DEMORALIZING_ROAR_ABILITY: Ability = {
   id: 'demoralizing_roar',
   name: 'Demoralizing Roar',
@@ -826,6 +867,15 @@ export const BERSERK: Ability = {
   name: 'Berserk',
   cooldownMs: BERSERK_COOLDOWN_MS,
   requiresTarget: false,
+  /*
+   * DOES NOT BREAK PROWL -- the owner, round 51: "Berserk does not break
+   * stealth and therefore should be used at T-0 just before using Ravage." The
+   * SECOND declared exception to the engine's action rule, after the Rogue's
+   * Premeditation, and named rather than derived for the reason that one is:
+   * the owner's word is "almost every completed cast breaks stealth/prowl", so
+   * each exception has to be stated.
+   */
+  breaksActionAuras: false,
   onCast: ({ simulation, caster }) => {
     simulation.applyAura(caster, berserkAura(COMBO_POINT_GENERATORS), caster.id);
   },
@@ -899,6 +949,7 @@ export const DRUID_ABILITIES: readonly Ability[] = [
   SWIPE,
   LACERATE_ABILITY,
   DEMORALIZING_ROAR_ABILITY,
+  FAERIE_FIRE_ABILITY,
   BARKSKIN_ABILITY,
   ENRAGE_ABILITY,
   FRENZIED_REGENERATION_ABILITY,

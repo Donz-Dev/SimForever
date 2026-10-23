@@ -23,7 +23,8 @@ import { RaidBuffsPanel } from './panels/RaidBuffsPanel';
 import { ResultsPanel } from './panels/ResultsPanel';
 import { TimelinePanel } from './panels/TimelinePanel';
 import { ProfileRail } from './panels/ProfileRail';
-import type { StatWeightSelection } from './panels/SimulationPanel';
+import type { RunKind, StatWeightSelection } from './panels/SimulationPanel';
+import { withSalvationFor } from '../game/buffs/raidBuffs';
 import { NO_STAT_WEIGHTS, SimulationPanel } from './panels/SimulationPanel';
 import { StatWeightsPanel } from './panels/StatWeightsPanel';
 import { TankStatWeightsPanel } from './panels/TankStatWeightsPanel';
@@ -105,7 +106,7 @@ export function App() {
    */
   const [activePresetId, setActivePresetId] = useState<string | undefined>(undefined);
 
-  const { state, progress, run, restore, reset } = useSimulation();
+  const { state, progress, run, runHealer, restore, reset } = useSimulation();
 
   /*
    * SIM HISTORY (round 48): every finished ordinary run is recorded once, with
@@ -129,6 +130,7 @@ export function App() {
         presetId: activePresetId,
         profile: state.profile,
         batch: state.batch,
+        ...(state.healer ? { healer: state.healer } : {}),
       }),
     );
   }, [state]);
@@ -139,7 +141,7 @@ export function App() {
     setActivePresetId(entry.presetId);
     setConfirmed(true);
     weightRun.reset();
-    restore(entry.batch, entry.profile);
+    restore(entry.batch, entry.profile, entry.healer);
   };
 
   /*
@@ -160,15 +162,43 @@ export function App() {
   const [statWeights, setStatWeights] = useState<StatWeightSelection>(NO_STAT_WEIGHTS);
   const weightRun = useStatWeights();
 
-  /** Both runs draw a fresh seed, for the reason `useSimulation` gives. */
-  const runEither = () => {
+  /**
+   * THE THREE RUN BUTTONS (round 52). Every run draws a fresh seed, for the
+   * reason `useSimulation` gives.
+   *
+   * DPS AND TANK ARE THE OLD CHECKBOX, MOVED ONTO THE BUTTON. "Target attacks
+   * back" is still what the engine reads -- the attacks-received table, the
+   * ramp, the assumed healer, Salvation -- so the button SETS it on the profile
+   * and then runs, which also keeps the character sheet and Sim History saying
+   * which kind of fight the result came from. Salvation follows it exactly as
+   * the checkbox did, so a tank never carries -30% threat.
+   *
+   * HEALER RUNS THE TWO HEALER FIGHTS, and stat weights do not apply to it:
+   * they price a stat in DPS or in deaths, and a healer run is neither.
+   */
+  const runEither = (kind: RunKind = 'dps') => {
+    if (kind === 'healer') {
+      weightRun.reset();
+      runHealer(profile);
+      return;
+    }
+    const attacks = kind === 'tank';
+    const next: CharacterProfile =
+      profile.encounter.targetAttacks === attacks
+        ? profile
+        : {
+            ...profile,
+            encounter: { ...profile.encounter, targetAttacks: attacks },
+            raidBuffs: [...withSalvationFor(profile.raidBuffs, attacks)],
+          };
+    if (next !== profile) editProfile(next);
     if (statWeights.enabled && statWeights.stats.length > 0) {
       reset();
-      void weightRun.run(profile, statWeights.stats, Math.floor(Math.random() * 2 ** 31));
+      void weightRun.run(next, statWeights.stats, Math.floor(Math.random() * 2 ** 31));
       return;
     }
     weightRun.reset();
-    run(profile);
+    run(next);
   };
 
   /*
@@ -430,7 +460,33 @@ export function App() {
               />
             ) : null}
 
-            {batch ? (
+            {/*
+                A HEALER RUN'S TWO REPORTS (round 52), each its own collapsible
+                panel with its own timeline and log, so the two fights can be
+                swapped between by shutting one. The report is the healer's;
+                the tank and the raid are who it was healing.
+            */}
+            {state.status === 'done' && state.healer && weightRun.state.status !== 'done' ? (
+              <>
+                {(
+                  [
+                    ['Tank Healer', state.healer.tank],
+                    ['Raid Healer', state.healer.raid],
+                  ] as const
+                ).map(([label, report]) => (
+                  <div key={label} className="healer-report">
+                    <ResultsPanel batch={report} mode="healing" title={label} />
+                    <TimelinePanel
+                      result={report.representative}
+                      hiddenAuraIds={report.forcedAuraIds}
+                      playerId={report.playerId}
+                      title={`${label} timeline`}
+                    />
+                    <CombatLogPanel result={report.representative} title={`${label} combat log`} />
+                  </div>
+                ))}
+              </>
+            ) : batch ? (
               <>
                 <ResultsPanel batch={batch} />
                 {/*

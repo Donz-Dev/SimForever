@@ -558,6 +558,8 @@ describe('the item data', () => {
          * prefix puts the line past this anchor.
          */
         '^Increases damage and healing done by magical spells and effects by up to (\\d+)\\.?$',
+        // Classic's healing-only sentence, kept for the same reason (round 52).
+        '^Increases healing done by spells and effects by up to (\\d+)\\.?$',
         // Classic's defense and shield-block wordings, now Defense Rating and
         // a bare "+27 Block Value".
         '^Increased Defense \\+(\\d+)\\.?$',

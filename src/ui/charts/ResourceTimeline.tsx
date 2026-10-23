@@ -167,3 +167,29 @@ export function resourceTimeline(
   }
   return points;
 }
+
+/**
+ * One combatant's hit points, as a percentage of its maximum, over one fight
+ * (round 53) -- the tank's line in a tank run and in the Tank Healer fight.
+ *
+ * READ OFF THE EVENTS, like a resource: every damage and heal event carries
+ * the target's health straight after it, and a death that revives stands the
+ * combatant back up at full in the same instant. The fight opens at full.
+ */
+export function healthTimeline(
+  timeline: readonly TelemetryEvent[],
+  actorId: string,
+  maxHealth: number,
+): readonly TimelinePoint[] {
+  if (maxHealth <= 0) return [];
+  const points: TimelinePoint[] = [{ timeMs: 0, value: 100 }];
+  for (const event of timeline) {
+    if ((event.type === 'damage' || event.type === 'heal') && event.targetId === actorId) {
+      if (event.targetHealth === undefined) continue;
+      points.push({ timeMs: event.timestamp, value: (100 * event.targetHealth) / maxHealth });
+    } else if (event.type === 'death' && event.actorId === actorId && event.revived) {
+      points.push({ timeMs: event.timestamp, value: 100 });
+    }
+  }
+  return points;
+}

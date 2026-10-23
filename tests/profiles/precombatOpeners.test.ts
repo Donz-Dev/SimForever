@@ -130,9 +130,12 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
   ],
   // "2s before cat form, 1s before prowl, 0s Ravage" -- the one opener the
   // owner had to restate, and the one that needed new abilities declaring.
+  // Round 51: "Berserk does not break stealth and therefore should be used a
+  // T-0 just before using Ravage."
   druid_cat: [
     [2, 'cat_form'],
     [1, 'prowl'],
+    [0, 'berserk'],
     [0, 'ravage'],
   ],
   druid_bear: [
@@ -150,6 +153,8 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
     [0, 'flame_shock'],
   ],
   mage_frostfire: [
+    // The owner's, round 55: "It should be cast at T-10 seconds."
+    [10, 'ice_barrier'],
     [4, 'mage_armor'],
     [2.5, 'frostfire_bolt'],
   ],
@@ -157,9 +162,11 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
     [3, 'mage_armor'],
     [1.5, 'arcane_blast'],
   ],
+  // Round 51: "use Fire Blast in the pre-combat APL at T-0."
   mage_fire: [
     [4.5, 'mage_armor'],
     [3, 'fireball'],
+    [0, 'fire_blast'],
   ],
   pally_ret: [
     [3, 'seal_of_righteousness'],
@@ -221,6 +228,8 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
     [3, 'shadowform'],
     [1.5, 'mind_blast'],
   ],
+  // Round 52's healer: the owner gave a list and no opener.
+  holy_pal: [],
 };
 
 /** Every cast a fight recorded, with the moment it happened. */
@@ -240,7 +249,7 @@ function castsIn(presetId: string): readonly { id: string; at: number }[] {
 }
 
 describe("the owner's openers are transcribed exactly", () => {
-  it('declares one for all 31 profiles, and only Venom declares none', () => {
+  it('declares one for every profile, and only Venom and Holy Pal declare none', () => {
     expect(Object.keys(OWNER_OPENERS).sort()).toEqual(
       PROFILE_PRESETS.map((preset) => preset.id).sort(),
     );

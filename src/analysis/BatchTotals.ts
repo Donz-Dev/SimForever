@@ -77,6 +77,8 @@ export interface BatchStatAverages {
   readonly rangedAttackPower: number;
   /** School-blind spell power, matching the character sheet's own row. */
   readonly spellPower: number;
+  /** Healing power, averaged the same way (round 52). */
+  readonly healingPower: number;
   /**
    * Per school, for the schools that read MORE than the blind figure above.
    * Already includes it, so this is the number the damage used.
@@ -338,6 +340,7 @@ interface StatAccumulator {
   attackPowerMs: number;
   rangedAttackPowerMs: number;
   spellPowerMs: number;
+  healingPowerMs: number;
   /** The same product, per school, for the schools a sample carried. */
   spellPowerBySchoolMs: Map<DamageSchool, number>;
   hasteMs: number;
@@ -346,6 +349,7 @@ interface StatAccumulator {
   attackPower: number;
   rangedAttackPower: number;
   spellPower: number;
+  healingPower: number;
   spellPowerBySchool: Readonly<Partial<Record<DamageSchool, number>>>;
   hasteMultiplier: number;
   /** False until the first sample, so an actor that emitted none reads empty. */
@@ -355,6 +359,45 @@ interface StatAccumulator {
 interface HealingAccumulator {
   received: number;
   overhealing: number;
+}
+
+/** One ability's heals, from the HEALER's side (round 52). */
+interface HealDoneAccumulator {
+  heals: number;
+  healing: number;
+  overhealing: number;
+  crits: number;
+}
+
+/**
+ * One row of a healer's breakdown, pooled across every iteration.
+ *
+ * The healing mirror of `BatchAbilityTotals`: what the spell restored,
+ * what it wasted on a full bar, and how often it crit.
+ */
+export interface BatchHealingTotals {
+  readonly abilityName: string;
+  /** Mean casts per iteration. */
+  readonly uses: number;
+  /** Mean effective healing per iteration. */
+  readonly healing: number;
+  /** Mean overhealing per iteration. */
+  readonly overhealing: number;
+  /** Mean heals landed per iteration. */
+  readonly heals: number;
+  /**
+   * Mean casts per iteration a pre-cast check CANCELLED (round 53). Counted in
+   * `uses` too, because each was a cast that started; uses minus cancelled is
+   * the casts that finished.
+   */
+  readonly cancelled: number;
+  /** Effective healing per heal. */
+  readonly average: number;
+  /** Share of the healer's effective healing, 0 to 1. */
+  readonly share: number;
+  readonly critRate: number;
+  /** Overhealing as a share of everything the spell put out, 0 to 1. */
+  readonly overhealRate: number;
 }
 
 interface TakenAccumulator {
@@ -402,6 +445,11 @@ export class BatchTotals implements TelemetrySink {
   private readonly stats = new Map<string, StatAccumulator>();
   private readonly deathsByActor = new Map<string, number>();
   private readonly healingByTarget = new Map<string, HealingAccumulator>();
+  /** Effective healing done, by source -- only heals a healer cast. */
+  private readonly healingBySource = new Map<string, number>();
+  private readonly healsDone = new Map<string, Map<string, HealDoneAccumulator>>();
+  /** Casts a pre-cast check cancelled, by caster and ability name (round 53). */
+  private readonly cancelledCasts = new Map<string, Map<string, number>>();
   private iterations = 0;
   private totalDurationMs = 0;
 
@@ -451,6 +499,7 @@ export class BatchTotals implements TelemetrySink {
     entry.attackPowerMs += entry.attackPower * span;
     entry.rangedAttackPowerMs += entry.rangedAttackPower * span;
     entry.spellPowerMs += entry.spellPower * span;
+    entry.healingPowerMs += entry.healingPower * span;
     /*
      * A SCHOOL THE OPEN WINDOW DID NOT CARRY CONTRIBUTES NOTHING, which is
      * right: the window's figure for that school WAS the blind pool, and a
@@ -500,12 +549,14 @@ export class BatchTotals implements TelemetrySink {
         attackPowerMs: 0,
         rangedAttackPowerMs: 0,
         spellPowerMs: 0,
+        healingPowerMs: 0,
         spellPowerBySchoolMs: new Map<DamageSchool, number>(),
         hasteMs: 0,
         openedAt: event.timestamp,
         attackPower: 0,
         rangedAttackPower: 0,
         spellPower: 0,
+        healingPower: 0,
         spellPowerBySchool: {},
         hasteMultiplier: 1,
         sampled: false,
@@ -518,6 +569,7 @@ export class BatchTotals implements TelemetrySink {
       entry.attackPower = event.attackPower;
       entry.rangedAttackPower = event.rangedAttackPower;
       entry.spellPower = event.spellPower;
+      entry.healingPower = event.healingPower;
       entry.spellPowerBySchool = event.spellPowerBySchool;
       entry.hasteMultiplier = event.hasteMultiplier;
       entry.sampled = true;
@@ -540,6 +592,31 @@ export class BatchTotals implements TelemetrySink {
       entry.received += event.amount;
       entry.overhealing += event.overhealing;
       this.healingByTarget.set(event.targetId, entry);
+      /*
+       * AND KEYED ON THE SOURCE, which is healing DONE (round 52) -- except an
+       * external heal, whose source is a stand-in: the assumed tank healer
+       * names the tank it heals, and crediting that to the tank would give a
+       * Protection warrior an HPS.
+       */
+      if (!event.external) {
+        this.healingBySource.set(
+          event.sourceId,
+          (this.healingBySource.get(event.sourceId) ?? 0) + event.amount,
+        );
+        const perActor = mapFor(this.healsDone, event.sourceId);
+        const row = perActor.get(event.abilityName) ?? { heals: 0, healing: 0, overhealing: 0, crits: 0 };
+        row.heals += 1;
+        row.healing += event.amount;
+        row.overhealing += event.overhealing;
+        if (event.critical) row.crits += 1;
+        perActor.set(event.abilityName, row);
+      }
+      return;
+    }
+
+    if (event.type === 'channel_interrupted' && event.interruptedFor === 'its cancel condition') {
+      const perActor = mapFor(this.cancelledCasts, event.sourceId);
+      perActor.set(event.abilityName, (perActor.get(event.abilityName) ?? 0) + 1);
       return;
     }
 
@@ -724,6 +801,51 @@ export class BatchTotals implements TelemetrySink {
     return sum;
   }
 
+  /** Total effective healing done by any of the given actors, every iteration. */
+  totalHealingForAny(sourceIds: Iterable<string>): number {
+    let sum = 0;
+    for (const id of sourceIds) sum += this.healingBySource.get(id) ?? 0;
+    return sum;
+  }
+
+  /** Per-iteration mean effective healing done by one actor. */
+  meanHealingFor(sourceId: string): number {
+    return this.per(this.healingBySource.get(sourceId) ?? 0);
+  }
+
+  /**
+   * One healer's heals by spell, largest first (round 52). `uses` comes from the
+   * same cast rows the damage breakdown reads, so a heal and its cast are one
+   * row on both tables.
+   */
+  healingBreakdown(sourceId: string): readonly BatchHealingTotals[] {
+    const perActor = this.healsDone.get(sourceId);
+    if (!perActor) return [];
+    const total = [...perActor.values()].reduce((sum, row) => sum + row.healing, 0);
+    return [...perActor]
+      .map(([abilityName, row]) => ({
+        abilityName,
+        uses: this.per(this.abilities.get(sourceId)?.get(abilityName)?.uses ?? 0),
+        healing: this.per(row.healing),
+        overhealing: this.per(row.overhealing),
+        heals: this.per(row.heals),
+        cancelled: this.per(this.cancelledCasts.get(sourceId)?.get(abilityName) ?? 0),
+        average: row.heals > 0 ? row.healing / row.heals : 0,
+        share: total > 0 ? row.healing / total : 0,
+        critRate: row.heals > 0 ? row.crits / row.heals : 0,
+        overhealRate:
+          row.healing + row.overhealing > 0 ? row.overhealing / (row.healing + row.overhealing) : 0,
+      }))
+      .sort((a, b) => b.healing - a.healing);
+  }
+
+  /** Every death of any of the given actors so far, cumulatively. */
+  totalDeathsForAny(actorIds: Iterable<string>): number {
+    let sum = 0;
+    for (const id of actorIds) sum += this.deathsByActor.get(id) ?? 0;
+    return sum;
+  }
+
   /** Total threat one actor generated, across every iteration. */
   totalThreatFor(sourceId: string): number {
     return this.threatBySource.get(sourceId) ?? 0;
@@ -872,6 +994,7 @@ export class BatchTotals implements TelemetrySink {
       attackPower: entry.attackPowerMs / this.totalDurationMs,
       rangedAttackPower: entry.rangedAttackPowerMs / this.totalDurationMs,
       spellPower: entry.spellPowerMs / this.totalDurationMs,
+      healingPower: entry.healingPowerMs / this.totalDurationMs,
       spellPowerBySchool: Object.fromEntries(
         [...entry.spellPowerBySchoolMs].map(([school, ms]) => [
           school,

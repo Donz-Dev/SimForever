@@ -83,6 +83,7 @@ the tooling to be a bit more sophisticated as well."
 | 48 | **GUI PASS 5** -- pinned header and side columns, DPS/TPS/power/haste tiles, a sectioned character sheet, Sim History, and the Forge theme | **no figure moved**; UI only | see below |
 | 49 | **GUI DECLUTTER** -- notes removed, the threat table removed, raid-forced auras (and then the Healer) hidden from uptimes and the timeline | **no figure moved**; UI only | see below |
 | 50 | **THE TIER SWEEP AS ONE COMMAND** -- all 31 profiles at B55/E65/E75/E85, DPS for 27 and TPS and damage taken for the four tanks, as a chart page | **no figure moved**; a tool | see below |
+| 51 | **SIXTEEN OWNER ITEMS IN ONE PR, AND A MAGE TREE CHANGE THEY TURNED UP** -- casters re-capped for 17% spell hit, Champion of the Light 20/40/60 ahead of the client, Bloodthrill and Aftermath narrowed, Faerie Fire for the Bear, Evocation that stops at a full pool, a Mana Ruby, Fire Blast at T-0, two Mage builds, agility tank consumables, Berserk before Ravage, pet hit by the 17/8 rule, and an editable swing-timer clause | **not re-baselined**, on the owner's standing instruction. `USES=1` on the five touched Druid and Mage profiles: every new entry fires. Piercing Ice is REMOVED from the client's tree and Elemental Precision is 3 ranks at 2/4/6% -- in no note. The Shockadins stay at 80, the melee cap, by the owner's decision, after both routes to the spell cap were priced | see below |
 
 **ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
 saying rather than quietly closing: for four rounds it read "ROUND 11 IS
@@ -105,6 +106,249 @@ a filled one.
 figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
+
+## Round 55: healer and Mage bug fixes
+
+Seven items from the owner, four healer and three Mage:
+
+| | what changed |
+| --- | --- |
+| pre-cast mana | a pre-cast PAYS ONLY IF IT LANDS: `CastOptions.payCostOnCompletion` takes the cost when the cast completes, so a cancelled one spends nothing and starts no five second rule. Round 53's refund is gone, and with it the "Holy Light (cancelled)" gains in the mana panel |
+| raid tank | 10% of its health every 2 seconds, no ramp, where it was 30% |
+| APL values | a health clause now asks WHOSE -- you, the target, the tank, or the mean of your party or the raid -- so every Holy Pal condition is editable where it was a fixed sentence; heal entries get a target dropdown |
+| pre-cast toggle | offered only on a heal with a cast bar (`Ability.heals`, and a cast time that is not a channel): Holy Light and Flash of Light, not Holy Shock |
+| Clearcasting | Arcane Concentration rolls ONCE per Arcane Missiles, on the first missile that hits, keyed by `castSequence - channelTicksDelivered` |
+| cost rule | cost INCREASES first, and a reduction is a share of the increased cost. Four Arcane Blast stacks (+700%) and Clearcasting (-100%) used to sum to seven times the base; now it is free. The cast-charge saving is measured against the cost without the charge, so it reads the eight times it saved |
+| Ice Barrier | a castable trainer spell for any Mage on the owner's ruling (it is also a tier-30 talent Frostfire cannot reach): 480 mana, 30s cooldown, **+6% Frost damage for 60s**. Frostfire casts it at T-10 and recasts it when it falls off with at least 60s of fight left, first of its global-cooldown entries. A Frost buff reaches Frostfire Bolt through `countsAsSchools`, taking the larger per aura |
+
+Measured, 300 fights a profile against `main`:
+
+| | before | after | |
+| --- | --- | --- | --- |
+| Frostfire | 1010.1 | 1014.1 | +4.0 noise |
+| Arcane | 1058.1 | 1052.9 | -5.2 noise |
+| Fire | 1123.8 | 1127.4 | +3.6 noise |
+
+**ICE BARRIER IS WORTH +30.6 AT 60s, ONCE THE RECAST IS GATED** (round 55b,
+the owner's catch: "+4 dps seems low ... for a 6% increase"). The T-10 cast
+takes no global cooldown, so a 60 second fight spends ONE, on the recast at
+~50s -- and that recast bought ten seconds of buff for a Frostfire Bolt. It now
+recasts only while at least 60 seconds remain, the length of a new buff.
+Paired over 500 fights against no Ice Barrier at all:
+
+| | 60s | 180s |
+| --- | --- | --- |
+| recast whenever it falls off (first push) | +5.0 +/- 5.9 | -39.4 +/- 6.4 |
+| T-10 only | +30.6 +/- 5.3 | -10.0 +/- 6.0 |
+| **recast only with >= 60s left (shipped)** | **+30.6 +/- 5.3** | -37.8 +/- 6.4 |
+
++30.6 is what the arithmetic predicts: 6% of the ~44% of damage that counts as
+Frost on a ~1,018 DPS build. Frostfire Bolt's non-crit hit is 1,392.6 with the
+buff against 1,317.6 without, x1.057.
+
+**AND THE RECAST IS GATED ON 90% MANA** (round 55c, the owner's: "only cast
+Ice Barrier when mana is above a threshold"). The build is mana-bound past a
+minute, so 480 mana is worth more as Frostfire Bolts. Swept paired against no
+Ice Barrier, recast gated on:
+
+| | none | 40% | 50-70% | 80% | 90%+ |
+| --- | --- | --- | --- | --- | --- |
+| 60s | +30.6 | +30.6 | +30.6 | +30.6 | +30.6 |
+| 180s | -37.8 | -25.9 | -25.6 | -21.0 | **-10.0** |
+| 300s | -32.7 | -16.2 | -16.1 | -13.8 | **-7.7** |
+
+Monotone, and 90% is where the recast stops firing: it ties the T-10 cast alone
+at every length, and no threshold that lets a recast through beats it. 60s is
+unchanged because the time gate already holds the recast there.
+
+**THE T-10 CAST ITSELF STILL COSTS -10.0 AT 180s AND -7.7 AT 300s**, which no
+gate reaches -- a pre-combat line is not conditional. The owner's call.
+
+Healer, 1000 iterations: tank fight **536 HPS, 2.24 tank deaths**, mana spent
+10,956 where it was 15,917 with the cancelled pre-casts charged and refunded;
+raid fight **570 HPS, 38.95 deaths** where it was 43.19.
+
+Open: whether Holy Shock's instant heal should be offered a pre-cast is
+answered no by the owner's wording ("cast-bar-healing-spells only"), and a
+cancelled pre-cast still spends a cast-start charge such as Infusion of Light.
+
+## Round 54: a 2,000 boss swing for the tank healer, and smart healing
+
+Round 52's third wave, two items from the owner:
+
+| | what changed |
+| --- | --- |
+| boss | the Tank Healer boss swings for a base **2,000** before its 10% ramp, `HEALER_TANK_BOSS_SWING_DAMAGE`, in place of the Encounter panel's figure. The swing SPEED is still the panel's |
+| smart healing | `AplList.smartHealing`, one switch for the whole list: every entry aimed at a friendly is aimed at whoever has the lowest health PERCENTAGE instead, tank included, and its conditions read that target. Ties go to party order, so at full health it is the tank and the pre-cast stays on it. A checkbox in the APL panel, offered only on a list that heals; toggling it marks the list `custom`. Stored on the profile and named in `validateProfile`'s rebuild |
+| Holy Pal | ships with smart healing ON |
+
+Measured, 1000 iterations each, E65:
+
+| | HPS | deaths a fight | of them the tank |
+| --- | --- | --- | --- |
+| tank fight, either setting | 536.3 +/- 2.6 | 2.23 | 2.23 |
+| raid fight, as written | 701.4 +/- 2.1 | 44.38 | 6.40 |
+| raid fight, smart healing | **717.1** +/- 2.9 | **43.19** | **8.17** |
+
+**THE TANK FIGHT IS IDENTICAL BY CONSTRUCTION**: one person to heal, so the
+lowest health percentage is always the tank. Tank deaths there fall from 8.7
+to 2.2 with the 2,000 swing.
+
+**IN THE RAID SMART HEALING TRADES THE TANK FOR THE RAID**: 1.2 fewer deaths
+overall and 1.8 more of them the tank's, because Holy Light -- written for the
+tank -- now goes to whoever is lowest, and the raid pulse makes that a raid
+member every fifteen seconds. Whether that is the intent is a question for
+the owner.
+
+## Round 53: healer adjustments -- a stated tank, a pre-cast, a health graph
+
+Round 52's second wave, all from the owner after using it:
+
+| | what changed |
+| --- | --- |
+| tank | a STATED tank in both healer fights, not the Prot Warr preset: 8,500 health; in the tank fight 65% armor reduction and a fixed table of 18% dodge, 10% parry, 15% crush, 2% crit, 55% hit. The armor is derived so the curve gives exactly 65% at the tank's own level -- K is read at the DEFENDER's level, and reading it at the boss's 63 gave 66% |
+| raid | the other nineteen roll a whole health from 4,500 to 6,500, off the fight's own random stream at the pull, so a seed reproduces its raid |
+| revive | everybody healed is stood back up at full the instant they die, death recorded first -- `revivesOnDeath`, which already did exactly this; the death event now says `revived` |
+| deaths | Tank deaths tile in both healer reports, Deaths (all 20) in the raid one; `BatchResult.tankDeaths` |
+| graph | "Hit points %" in a tank run and "Tank hit points %" in both healer reports, the step chart the mana line uses. Damage and heal events carry `targetHealth`, the resource events' `current` arrangement |
+| weapon | Holy Pal's caster weapon re-buys its stated spell power as healing power at `x 0.86 / 0.45` -- 94 becomes **179** at E65 -- and carries no spell power. Healing power 769 -> 854 |
+| pre-cast | `AplEntry.cancel { atFraction, condition }`: the condition is asked part way through the cast and true CANCELS it. A cancelled cast hands its cost back (`<ability>_refund`, which threat ignores) and restores the five-second-rule stamp. Both numbers are editable in the APL panel. Holy Pal's list ends with an unconditional Holy Light on the tank, cancelled at 80% if the tank is above 95% |
+| report | a Cancelled column in Healing Done, inside Uses |
+
+First figures, 3000 iterations, E65: **tank fight 433 HPS, 164 TPS, 8.7 tank
+deaths a fight**; **raid fight 698 HPS, 280 TPS, 44.4 deaths, 6.4 of them the
+tank's**. Holy Light in the tank fight: 23.0 casts, 12.8 cancelled, 9.2 landed.
+No DPS figure moves: nothing outside a healer fight sets a cancel check, and
+the new event fields draw no random number.
+
+**THE TANK STILL DIES ABOUT NINE TIMES A FIGHT**, more than round 52's built
+tank: it no longer slows the boss with Thunder Clap or weakens it with
+Demoralizing Shout, and the ramp still outgrows 8,500 health inside a minute.
+
+Open, for the owner:
+
+1. Mana gained in the healer reports includes the refunds -- a cancelled Holy
+   Light is 660 "gained" and 660 "spent". The donut names them
+   "Holy Light (cancelled)".
+2. A cancelled pre-cast still spends what the cast consumed at its START --
+   an Infusion of Light charge in particular. Should a cancel hand that back?
+3. Round 52's seven questions stand (heal coefficients, heal threat, Holy Shock
+   under Holy Light, the first raid pulse at 15s, raid revives, the weapon
+   enchant, Light's Vigil).
+
+## Round 52: the healer archetype, three run buttons, and Holy Pal
+
+**HEALING THROUGHPUT IS SIMULATED NOW**, which is the first time a member of
+`OutOfScope` has been reached by a feature rather than repealed by a ruling.
+The `healing` member and its entries are LEFT IN PLACE: whether each one is
+now a live gap is a per-talent question, and re-filing 36 entries on a
+feature's say-so would be the "a ruling covers what it says" failure.
+
+| | what it is |
+| --- | --- |
+| buttons | Run DPS / Run Tank / Run Healer. The "target attacks back" checkbox is gone; DPS and Tank set `targetAttacks` (and Salvation, through `withSalvationFor`) themselves |
+| tank fight | `healerEncounter(profile, 'tank')`: the Prot Warr preset tanking the real boss under the ordinary 10% ramp, the assumed healer OFF, revived on death; the healer is never attacked |
+| raid fight | 20 members, 5 parties of 5, tank in party 1, health taken from real presets' built characters. Tank 30% every 2s; everybody 25% every 15s then 15% every 2s for 8s |
+| report | one collapsible panel per fight: HPS, TPS, Healing Power, Haste; Healing Done; buffs, mana, timeline and combat log as for a damage run |
+| engine | `healingPower` stat; heals read IT and never spell power; ability crit and a new `healingMultiplier` reach heals; heal threat opt-in via `threatens` |
+| APL | `friendlyHealth` (tank, party, raid average) and an entry `target` (tank, or lowest-health member, optionally excluding the tank) |
+| Holy Pal | 32nd preset, 31/13/7 off the owner's URL; benchmark gear with a 25% healing-power floor beside the stamina floor (measured median 24.5%, `tools/healing_share.ts`), Intellect/Spirit/Crit competing; the owner's four-line list below the shared free entries |
+| words | "+N Healing" is healing only, "+N Spell Damage" damage only, "+N Spell Power" both; the two Healing Power enchants and +44 Healing food are stats now |
+
+First figures, 3000 iterations, E65, `tools/probe_healer.ts`: **tank fight
+342 HPS, 128 TPS, 5.26 tank deaths a fight**; **raid fight 675 HPS, 271 TPS,
+44.5 deaths among the twenty**. No DPS row moved -- the stat is new and no
+damage path reads it.
+
+**WHY THE TANK DIES 5 TIMES WITH A HEALER ON IT**: the ramp. By about 30s the
+boss swings for more than the tank's whole pool, so the tank is one-shot from
+full and the healer has nothing to do between deaths. That is the ramp doing
+what it does on a tank run, and the first thing to look at if the tank fight
+is meant to be survivable.
+
+**HOLY SHOCK FIRES ALMOST NEVER (0.00 a fight)**, and that is the owner's
+order: line 1, Holy Light below 65%, is above line 2, Holy Shock below 30%, so
+whenever the tank is below 30% it is also below 65% and Holy Light wins. Kept
+as written.
+
+Questions for the owner, all recorded where the number lives:
+
+1. The heal coefficients are `PLACEHOLDER_`: Holy Light 2.5/3.5, Flash of Light
+   1.5/3.5, Holy Shock its damage figure -- the worksheet has no heal rows.
+2. Heal threat is `PLACEHOLDER_HEAL_THREAT_PER_POINT` 0.5, split across
+   enemies, and only the Paladin heals opt in. Should self-heals threaten?
+3. Holy Shock under Holy Light -- intended?
+4. The first raid pulse lands at 15s, not at the pull.
+5. Raid members are stood back up when they die, as the tank is.
+6. Enchant Weapon - Spell Power is "damage to spells", so it gives the Holy Pal
+   nothing; there is no healing weapon enchant in the data.
+7. Light's Vigil (a party heal off the next Holy Shock) is not declared.
+
+## Round 51: sixteen owner items, and a tree change underneath them
+
+**WRITTEN SO ANOTHER ROUND CAN BE ADDED**, which this file's own history says
+to expect: a batch like this produces questions, and the answers arrive later.
+
+| | what changed | how it was checked |
+| --- | --- | --- |
+| spell hit cap | Moonkin, Ele Shaman, Arcane, SM/DS, Firelock, Sbolt and Shadow templates +10 hit rating, paid out of crit by `spreadRating`; Fire Demo was already at 17 | `tools/probe_spell_hit.ts`: 0.0% miss on each main school at B55, E65, E75 and E85 |
+| Shockadin and Shockadin 2H | **left at 80**, the melee cap, by the owner -- so Holy Shock and Hammer of Wrath miss 9% | both routes to the spell cap priced and declined, below |
+| Champion of the Light | 20/40/60% of Intellect, through a REBUILT `PATCH_NOTE_TALENT_VALUES` -- the client still says 10/20/30 and the importer would clobber a values-file edit | `patchNoteValues.test.ts` fails the day the client catches up |
+| Seal of Righteousness / Fury | verified, no change -- see the table below | `tools/seal_table.ts`: formula, hand arithmetic and the shipped reaction agree to the cent |
+| Bloodthrill | rolls only on the main-hand swing (extra attacks are swings), Heroic Strike and Cleave | `bloodthrillTriggers.test.ts`, including seven strikes that no longer roll |
+| Aftermath | the Immolate HIT only: a new `AbilityModifier.directDamageMultiplier`, read only when `!request.periodic` | `aftermathDirectOnly.test.ts`: hit x1.5, burn x1.0, through real `dealDamage` |
+| Bear | Faerie Fire, free, on the GCD, 2 x level threat through the threat scalers; ONE aura id shared with the raid debuff, and it does not shorten the raid's hour | 4.6 casts a fight, last in the list as a rage-starved filler |
+| Evocation | `Ability.endsChannelEarly`, polled at 100ms: a full pool ends the channel and runs its last tick | `evocationAndManaRuby.test.ts` |
+| Mana Ruby | a Mage ability: 1000-1200 mana, off the GCD, a one-day cooldown, at <= 25% mana in all three lists | 0.5-1.0 casts a fight |
+| Fire Mage | Fire Blast at T-0 in the opener and ungated in the list; 14/34/3 from the owner's URL | **two damaging actions finish at t=0 now** -- Gate B says one; the owner's later instruction is implemented, and both land at the pull |
+| Frostfire | 0/29/22 from the owner's URL | `decode_talent_build.mjs --presets` |
+| Frostfire Bolt and Fire Power | verified, no change: the burn is not counted, the hit gets 3% per Fire effect to 12% | `frostfireFirePower.test.ts`. The burn's own ticks still COLLECT Fire Power, which the ask did not cover |
+| Prot Warr and Bear | +25 Agility Blasted Lands, +20 Agility food. **Fury Prot inherits it**, being Prot Warr's build by design | `consumables.test.ts` |
+| Cat | Berserk at T-0 before Ravage, and `breaksActionAuras: false` -- the second declared exception after Premeditation | the opener guard, and `stealthBreaking.test.ts` |
+| pets | `game/actors/petHit.ts`: a Hunter pet gets the ranged hit on melee and 17/8 of it on spells; a demon the spell hit on spells and 8/17 on melee. **A Hunter pet inherited no hit at all before** | `petHit.test.ts`, on the pets' own rolls |
+| APL | a `swing` clause in the editor, over the existing `swingIn` condition: main hand, off hand or ranged, in seconds | `aplEditing.test.ts` round-trips 300ms exactly |
+
+**THE TWO MAGE URLS DID NOT DECODE, AND THAT IS HOW A PATCH WAS FOUND.**
+`diff_forever_talents.mjs` against the live client: Piercing Ice REMOVED, and
+Elemental Precision five ranks at 1% become three at 2/4/6% -- in no patch note.
+So the tree was imported first, and the builds decoded against it. The Arcane
+preset takes no Frost points and is unaffected; Piercing Ice's effect, its two
+tests and its place in the rotation chooser are gone with it. The tool's own
+Arcane URL was stale and is updated to the preset's.
+
+**SEALS AT 500 SPELL POWER**, measured off the shipped reaction against an
+unarmored target, no crit:
+
+| weapon | SoR base row | x speed | x hand | flat | + SP | **SoR hit** | **Seal of Fury** |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1H 1.4 | 25.00 | 35.00 | 0.73 | 25.55 | 50 (10%) | **75.55** | **85.00** |
+| 1H 2.6 | 49.00 | 127.40 | 0.85 | 108.29 | 50 (10%) | **158.29** | **85.00** |
+| 2H 2.0 | 37.00 | 74.00 | 1.20 | 88.80 | 60 (12%) | **148.80** | **85.00** |
+| 2H 3.6 | 69.00 | 248.40 | 1.20 | 298.08 | 60 (12%) | **358.08** | **85.00** |
+
+Seal of Fury is `35 + 10% SP` whatever the weapon -- the formula has no speed
+term, which is worth stating because Righteousness beside it is all speed.
+
+**ONE TEST STOPPED BEING A SINGLE SEED.** Bloodthrill's narrowing means fewer
+Overpower windows, so 2H Arms' Recklessness -- below an ungated Hamstring --
+missed its gap on seed 1 and fires in 19 of 20 fights. The test counts over
+twelve now.
+
+**THE SHOCKADINS STAY AT 80, AND THAT IS A DECISION RATHER THAN A GAP.** They
+miss 9% on the spell table because Divine Precision is not in their builds, and
+both ways to the cap were priced:
+
+- **+90 hit rating** (170 total): the B55 wrist and waist come out "+1 Spell
+  Power" and the E75/E85 heads carry 30 hit, breaking two template rulings.
+- **Divine Precision 2/3** (now 3 ranks at 6/12/18%): both trees are forced, so
+  the two points come from Consecrated Ground or Champion of the Light, and
+  every option LOST -- 30 to 34 DPS at best (Champion -2), 37 to 42 at worst
+  (Consecrated -2), paired over 600 fights at 60s and 180s. Only Holy Shock and
+  Hammer of Wrath roll the spell table; Judgement and Holy Strike are on melee
+  tables and the seals cannot miss.
+
+The owner: "just leave shockadin at 80 hit rating with consecrated light +
+champion of the light." Builds unchanged at 23/0/28.
 
 ## Round 35: the miscellaneous cleanup
 
@@ -10716,7 +10960,7 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Frostfire Mage | Mage | 0/29/22 | 1086.4 | | Shockadin | Paladin | 23/0/28 | 867.8 |
 | DW Fury | Warrior | 17/34/0 | 1068.4 | | Combat Mut | Rogue | 30/21/0 | 848.0 |
 | LW Ranged | Hunter | 5/41/5 | 1021.0 | | Hemo Dagger | Rogue | 17/3/31 | 840.2 |
-| Fire Mage | Mage | 15/31/5 | 1020.7 | | **Enh Shaman** | Shaman | 19/32/0 | **838.8** |
+| Fire Mage | Mage | 14/34/3 | 1020.7 | | **Enh Shaman** | Shaman | 19/32/0 | **838.8** |
 | BM Hunter | Hunter | 31/20/0 | 968.2 | | Moonkin | Druid | 41/0/10 | 820.3 |
 | Cat Druid | Druid | 9/34/8 | 966.9 | | Ele Shaman | Shaman | 32/11/8 | 792.8 |
 | Seal Twist Ret | Paladin | 15/0/36 | 948.6 | | Pure Hemo | Rogue | 19/8/24 | 775.9 |

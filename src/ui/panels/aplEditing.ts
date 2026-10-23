@@ -148,6 +148,24 @@ export function addEntry(entries: readonly AplEntry[], abilityId: string): reado
  * compare as different lists.
  * ----------------------------------------------------------------------------
  */
+/**
+ * Set or clear an entry's pre-cast cancel check (round 53). Cleared is DROPPED
+ * rather than stored empty, the rule `interruptsChannel` follows, so a list
+ * edited back to where it was still compares equal to the stock one.
+ */
+export function setCancel(
+  entries: readonly AplEntry[],
+  index: number,
+  cancel: AplEntry['cancel'],
+): readonly AplEntry[] {
+  if (index < 0 || index >= entries.length) return entries;
+  return entries.map((entry, at) => {
+    if (at !== index) return entry;
+    const { cancel: _dropped, ...rest } = entry;
+    return cancel ? { ...rest, cancel } : rest;
+  });
+}
+
 export function setInterrupts(
   entries: readonly AplEntry[],
   index: number,
@@ -242,7 +260,10 @@ export function setCondition(
 export type ClauseCompare = 'atLeast' | 'atMost' | 'exactly' | 'below' | 'above';
 
 /** The kinds of clause the panel can draw controls for. */
-export type ClauseKind = 'buff' | 'resource' | 'cooldown' | 'fight' | 'health';
+export type ClauseKind = 'buff' | 'resource' | 'cooldown' | 'fight' | 'health' | 'swing';
+
+/** Which weapon's swing timer a `swing` clause reads. */
+export type SwingSlot = 'mainHand' | 'offHand' | 'ranged';
 
 /**
  * THE FIVE BUFF TESTS, AND `absent` IS NOT `down`.
@@ -303,7 +324,18 @@ export interface Clause {
   readonly value?: number;
   /** fight: which side of the clock, and in what unit. */
   readonly unit?: FightUnit;
+  /** swing: whose timer. The value is SECONDS until it swings, shown with decimals. */
+  readonly slot?: SwingSlot;
+  /**
+   * health: WHOSE (round 55) -- you, the entry's target, the tank, or the mean
+   * of your party or the raid. The last three are `friendlyHealth`; absent is
+   * `self`, which is every list written before healing existed.
+   */
+  readonly who?: HealthOf;
 }
+
+/** Whose health a `health` clause reads. See `Clause.who`. */
+export type HealthOf = 'self' | 'target' | 'tank' | 'party' | 'raid';
 
 /**
  * A condition as a TREE the panel can walk.
@@ -599,20 +631,46 @@ function toClause(condition: AplCondition): Clause | undefined {
       };
     case 'health':
       /*
-       * SELF ONLY in the editor, which is every stock use of it. A `health`
-       * condition about the TARGET is expressible in the data model and is
-       * meaningless against this encounter -- the target is a damage sink that
-       * never drops -- so a control for it would offer a rotation rule that
-       * cannot fire. One naming the target stays a fixed leaf.
+       * YOURS OR THE TARGET'S (round 55). It was self only, on the argument
+       * that the target is a damage sink that never drops -- true of a DPS
+       * fight and false of a healer's, where the target is the person being
+       * healed and every one of the Holy Pal's lines reads it. A pet's stays a
+       * fixed leaf, since nothing heals one.
        */
-      if (condition.on !== 'self') return undefined;
+      if (condition.on === 'pet') return undefined;
       return {
         kind: 'health',
+        who: condition.on,
         compare: condition.compare,
-        value: Math.round(condition.fraction * 100),
+        value: percentOf(condition.fraction),
+      };
+    case 'friendlyHealth':
+      return {
+        kind: 'health',
+        who: condition.of,
+        compare: condition.compare,
+        value: percentOf(condition.fraction),
+      };
+    case 'swingIn':
+      /*
+       * THE SWING TIMER, EDITABLE SINCE ROUND 51 -- the owner: "if there is X
+       * amount of time left in the main-hand / ranged / off-hand auto-attack
+       * swing timer then do Y". The condition and its compiler already existed
+       * (the Warrior's Slam reads it); what was missing was a control, so a
+       * swing-timer read showed as a fixed sentence nobody could write.
+       *
+       * SHOWN IN SECONDS AND STORED IN MILLISECONDS, like every other clock in
+       * the panel -- and rounded back on the way out, so a stock 300ms survives
+       * the trip as 300 rather than 300.00000000000006.
+       */
+      return {
+        kind: 'swing',
+        slot: condition.slot,
+        compare: condition.compare,
+        value: condition.milliseconds / 1000,
       };
     default:
-      // `builtin`, `swingIn`, `swungWithin`, `hasReaction`, `castsInstantly`.
+      // `builtin`, `swungWithin`, `hasReaction`, `castsInstantly`.
       // Shown as a sentence, kept exactly, not drawn with controls.
       return undefined;
   }
@@ -669,9 +727,46 @@ export function fromClause(clause: Clause): AplCondition {
       return clause.unit === 'secondsLeft'
         ? { kind: 'fightRemaining', compare, seconds: value }
         : { kind: 'fightRemaining', compare, fraction: value / 100 };
-    case 'health':
-      return { kind: 'health', on: 'self', compare, fraction: value / 100 };
+    case 'health': {
+      const who = clause.who ?? 'self';
+      return who === 'self' || who === 'target'
+        ? { kind: 'health', on: who, compare, fraction: value / 100 }
+        : { kind: 'friendlyHealth', of: who, compare, fraction: value / 100 };
+    }
+    case 'swing':
+      return {
+        kind: 'swingIn',
+        slot: clause.slot ?? 'mainHand',
+        compare,
+        milliseconds: Math.round(value * 1000),
+      };
   }
+}
+
+/**
+ * A stored fraction as the percentage the panel shows, to a tenth -- so 0.95
+ * reads 95 and an owner's 0.655 is not rounded away. It goes back as `/ 100`,
+ * which returns the stored figure exactly for every value a person types.
+ */
+function percentOf(fraction: number): number {
+  return Math.round(fraction * 1000) / 10;
+}
+
+/**
+ * Set or clear who an entry is cast at (round 55). Cleared is DROPPED, the
+ * rule `interruptsChannel` follows, so an entry put back compares equal.
+ */
+export function setTarget(
+  entries: readonly AplEntry[],
+  index: number,
+  target: AplEntry['target'],
+): readonly AplEntry[] {
+  if (index < 0 || index >= entries.length) return entries;
+  return entries.map((entry, at) => {
+    if (at !== index) return entry;
+    const { target: _dropped, ...rest } = entry;
+    return target ? { ...rest, target } : rest;
+  });
 }
 
 /** A new clause of each kind, for the "add a condition" control. */
@@ -687,6 +782,9 @@ export function blankClause(kind: ClauseKind): Clause {
       return { kind: 'fight', compare: 'atMost', value: 20, unit: 'percentLeft' };
     case 'health':
       return { kind: 'health', compare: 'atMost', value: 35 };
+    case 'swing':
+      // "Main hand swings within half a second": a weave or a hold point.
+      return { kind: 'swing', slot: 'mainHand', compare: 'atMost', value: 0.5 };
   }
 }
 

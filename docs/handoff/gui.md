@@ -496,3 +496,27 @@ for the opposite case.
   cannot show what they do.
 - **THE ENCHANT LIST IS NOT FILTERED BY CLASS OR BY ITEM**, only by slot, which
   is how it worked before.
+
+## Mobile, after the pinned layout broke it (round 52)
+
+**THE FIFTH PASS'S GRID RULE OVERRODE EVERY BREAKPOINT.** It set three
+`grid-template-columns` bare, after the 1200px and 900px media queries at the
+top of `styles.css`, so it won at every width. On a 375px phone the page was
+569px wide and the middle column -- results, talents, gear, the priority list
+-- came out **0px wide**: invisible, not merely cramped. The character step had
+the same fault, with two fixed tracks wider than the phone.
+
+| | what changed |
+| --- | --- |
+| layout | three columns only at 1201px and up; the earlier 2-column and 1-column breakpoints apply again below that |
+| header | pinned only at 901px and up, where the side columns are; on a phone it scrolls away and the logo is 48px |
+| output first | on one column, Results, Timeline and Combat Log (`.panel-output`) move above the editing panels, so they land directly under Run -- they were ~10,000px down with every panel open |
+| panel headers | wrap their buttons; the Gear panel's set buttons were 404px in a 341px panel |
+| priority list | an entry's controls drop below its conditions, a clause wraps inside itself, no select is wider than the row; touch targets 32px |
+| gear and consumables | the slot grid's 440px minimum becomes one fluid column; a consumable's label sits above its dropdown |
+| breakdown tables | still scroll sideways inside their panel, with the ability column pinned |
+
+**THE CHECK THAT FINDS THIS IS A WIDTH, NOT A LOOK**: open every panel at 375px
+and compare each `.panel-body`'s `clientWidth` against its `scrollWidth`. All
+fit except the deliberately scrolling tables. Desktop at 1500px is unchanged --
+three columns, header and both side columns pinned.

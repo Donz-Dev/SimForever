@@ -104,14 +104,48 @@ export function castModifiersFor(
  * Returns the ability's own numbers unchanged when nothing matches, which is
  * the overwhelmingly common case and costs one array filter.
  */
-export function resolveCast(caster: Combatant, ability: Ability): ResolvedCast {
+export function resolveCast(
+  caster: Combatant,
+  ability: Ability,
+  /**
+   * Leave these out, as though they were not up -- which is how a spent
+   * charge's SAVING is measured: the cost without it, less the cost with it.
+   */
+  except?: ReadonlySet<AuraInstance>,
+): ResolvedCast {
   const baseCast = ability.castTimeMs ?? 0;
-  const baseCost = ability.cost?.amount ?? 0;
+  const printedCost = ability.cost?.amount ?? 0;
 
-  const matching = castModifiersFor(caster, ability);
+  const matching = castModifiersFor(caster, ability).filter((instance) => !except?.has(instance));
   if (matching.length === 0) {
-    return { baseCastTimeMs: baseCast, costAmount: baseCost, modified: false };
+    return { baseCastTimeMs: baseCast, costAmount: printedCost, modified: false };
   }
+
+  /*
+   * ============================================================================
+   * COST INCREASES FIRST, AND EVERY REDUCTION IS A SHARE OF THE INCREASED COST
+   * (round 55).
+   *
+   * Every fraction used to come off the PRINTED cost, so an increase and a
+   * reduction simply added: Arcane Blast at four stacks is +700%, Clearcasting
+   * is -100%, and the sum left the spell at SEVEN times its base where
+   * Clearcasting says the next spell costs nothing. The rule is now that an
+   * increase changes what the spell costs, and a reduction is a share of
+   * THAT. Two reductions still add, exactly as before -- 50% and 25% make 75%
+   * -- because they are both shares of one figure.
+   *
+   * IT MOVES ONLY A CAST CARRYING BOTH AN INCREASE AND A REDUCTION, which is
+   * the Arcane Mage: Arcane Blast's stacks and Arcane Power are the two
+   * increases in the project.
+   * ============================================================================
+   */
+  let increase = 0;
+  for (const instance of matching) {
+    const modifier = instance.definition.castModifier!;
+    const scale = modifier.scalesWithStacks ? instance.stacks : 1;
+    if (modifier.costFraction && modifier.costFraction < 0) increase += -modifier.costFraction * scale;
+  }
+  const baseCost = printedCost * (1 + increase);
 
   let castMs = baseCast;
   let cost = baseCost;
@@ -140,7 +174,8 @@ export function resolveCast(caster: Combatant, ability: Ability): ResolvedCast {
     if (modifier.costReduction) {
       cost -= modifier.costReduction * scale;
     }
-    if (modifier.costFraction) {
+    // Increases were taken above; only a reduction comes off here.
+    if (modifier.costFraction && modifier.costFraction > 0) {
       cost -= baseCost * Math.min(1, modifier.costFraction * scale);
     }
   }
@@ -164,4 +199,12 @@ export function resolveCast(caster: Combatant, ability: Ability): ResolvedCast {
     costAmount: Math.max(0, cost),
     modified: true,
   };
+}
+
+/**
+ * The cast modifiers among these that a cast SPENDS -- the ones a saving is
+ * measured without. See `resolveCast`'s `except`.
+ */
+export function chargesIn(instances: readonly AuraInstance[]): ReadonlySet<AuraInstance> {
+  return new Set(instances.filter((instance) => instance.definition.castModifier?.consumedByCast));
 }

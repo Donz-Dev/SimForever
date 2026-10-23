@@ -433,7 +433,7 @@ describe('what selecting one does to the priority list', () => {
       expect(consumables.potion, `${preset.id} potion`).toBeDefined();
       expect(consumables.other, `${preset.id} other`).toBeDefined();
     }
-    expect(PROFILE_PRESETS).toHaveLength(31);
+    expect(PROFILE_PRESETS).toHaveLength(32);
   });
 
   it("partitions `other` by pool, exactly as the owner's ruling does", () => {
@@ -495,6 +495,8 @@ describe('what selecting one does to the priority list', () => {
       warlock_sbolt: 'demonic_rune',
       warlock_demonology: 'demonic_rune',
       shadow_priest: 'demonic_rune',
+      // A pure mana user, so the owner's rule gives it the Rune.
+      holy_pal: 'demonic_rune',
     };
 
     // EXHAUSTIVE, so a new preset has to be classified rather than defaulting.

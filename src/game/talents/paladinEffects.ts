@@ -4,6 +4,9 @@ import {
   CONSECRATED_GROUND_FLAG,
   IMPROVED_RIGHTEOUS_FURY_FLAG,
   IMPROVED_SEAL_OF_FURY_FLAG,
+  ILLUMINATION_CHANCE_KEY,
+  ILLUMINATION_REFUND_KEY,
+  INFUSION_OF_LIGHT_KEY,
 } from '../auras/paladin';
 
 /**
@@ -48,8 +51,6 @@ import {
  * ----------------------------------------------------------------------------
  */
 
-/** Said once; eleven talents say it. */
-const NO_PROFILE_HEALS = 'Healing, and no Paladin profile heals.';
 
 /** Said once; six talents say it. */
 
@@ -80,13 +81,27 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   divine_intellect: [{ kind: 'stat', stat: 'intellect', operation: 'percentAdd', scale: 0.01 }],
 
-  healing_light: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
+  /*
+   * HEALING IS A FEATURE SINCE ROUND 52 -- the owner's Holy Pal -- so the four
+   * Holy talents its build relies on lost their `healing` scope tags and do
+   * what they say. "+12% to Holy Light, Flash of Light and Holy Shock" heals.
+   */
+  healing_light: [
+    { kind: 'abilityHealing', abilityId: 'holy_light' },
+    { kind: 'abilityHealing', abilityId: 'flash_of_light' },
+    { kind: 'abilityHealing', abilityId: 'holy_shock' },
+  ],
 
   spiritual_focus: [
     {
       kind: 'unmodelled',
-      scope: 'healing',
-      reason: 'Pushback while casting heals. No Paladin profile heals or is interrupted.',
+      /*
+       * CAST PUSHBACK, NOT HEALING (round 52). Filed under `healing` while heals
+       * were out of scope; with them in, what is left is the pushback, which is
+       * its own ruling -- a compound reason losing its first clause.
+       */
+      scope: 'castPushback',
+      reason: 'Pushback while casting heals. Nothing interrupts or pushes back a Paladin here.',
     },
   ],
 
@@ -143,9 +158,24 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  infusion_of_light: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
+  // A Holy Shock or Flash of Light crit takes {1} seconds off the next Holy
+  // Light. The duration, {0}, is the aura's own 15. See `paladinHeal`.
+  infusion_of_light: [
+    { kind: 'abilityBonus', abilityId: 'holy_shock', key: INFUSION_OF_LIGHT_KEY, valueIndex: 1 },
+    { kind: 'abilityBonus', abilityId: 'flash_of_light', key: INFUSION_OF_LIGHT_KEY, valueIndex: 1 },
+  ],
 
-  illumination: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
+  /*
+   * A heal crit returns {1}% of the spell's base cost {0}% of the time. Both
+   * numbers ride on the three heal abilities; Light's Vigil is the fourth the
+   * tooltip names and is not declared. See `paladinHeal`.
+   */
+  illumination: [
+    ...(['holy_light', 'flash_of_light', 'holy_shock'] as const).flatMap((abilityId) => [
+      { kind: 'abilityBonus' as const, abilityId, key: ILLUMINATION_CHANCE_KEY, valueIndex: 0 },
+      { kind: 'abilityBonus' as const, abilityId, key: ILLUMINATION_REFUND_KEY, valueIndex: 1 },
+    ]),
+  ],
 
   divine_favor: [
     /*
@@ -163,14 +193,8 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'grantAbility', abilityId: 'divine_favor' },
     // Single rank, so its values entry is `null`: the reaction takes no number.
     { kind: 'castReaction', reactionId: 'divine_favor', valueless: true },
-    {
-      kind: 'unmodelled',
-      scope: 'healing',
-      reason:
-        'Its Flash of Light and Holy Light clauses. Two of its three spells are ' +
-        'heals and no Paladin profile heals; its Holy Shock clause applies in ' +
-        'full, as a guaranteed crit on the next one.',
-    },
+    // All three of its spells since round 52: the aura names Holy Light and
+    // Flash of Light too, and the reaction spends it on whichever goes first.
   ],
 
   divine_precision: [
@@ -243,7 +267,19 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'stat', stat: 'spellCritChance', operation: 'flat', valueIndex: 1 },
   ],
 
-  light_s_vigil: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
+  /*
+   * A LIVE GAP SINCE ROUND 52, no longer a ruling: healing is a feature, and
+   * the party heal off a Holy Shock is expressible -- it is simply not built,
+   * and the owner's Holy Pal list does not cast it.
+   */
+  light_s_vigil: [
+    {
+      kind: 'unmodelled',
+      reason:
+        "Light's Vigil is not declared: a party heal off the next Holy Shock, and " +
+        'the Holy Pal list does not cast it.',
+    },
+  ],
 
   // --- Protection ----------------------------------------------------------
 
@@ -644,6 +680,10 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   champion_of_the_light: [
     /*
      * "Increases your spell damage by up to {0}% of your Intellect", 60% at 3/3.
+     *
+     * 60% BECAUSE THE OWNER BUFFED IT BACK IN ROUND 51 AND THE CLIENT STILL
+     * SAYS 30 -- the figure arrives through `PATCH_NOTE_TALENT_VALUES`, not the
+     * values file. See `patchNoteValues.ts`.
      *
      * ----------------------------------------------------------------------
      * IT WAS 33/66/100% UNTIL CLIENT BUILD 1.60.1.70170 -- "Champion of the

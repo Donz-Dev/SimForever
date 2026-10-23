@@ -86,6 +86,11 @@ export const SUNDER_ARMOR_THREAT_AP_COEFFICIENT = 0.05;
 export const DEMORALIZING_SHOUT_FLAT_THREAT = 43 + 0.8 * (60 - 54);
 /** Demoralizing Roar rank 5: the client row's 42, plus 0.8 a level above 52. */
 export const DEMORALIZING_ROAR_FLAT_THREAT = 42 + 0.8 * (60 - 52);
+/**
+ * Faerie Fire: "a base threat of 2 x character level", the owner (round 51),
+ * further modified by the threat scalers -- which `generateThreat` applies.
+ */
+export const FAERIE_FIRE_THREAT_PER_LEVEL = 2;
 
 /*
  * THE BEAR'S FOUR, FROM mythicsim-forever-engine AND UNVERIFIED. Forever's
@@ -167,14 +172,26 @@ function resourceThreat(
     return { perPoint: THREAT_PER_RAGE_GAINED };
   }
   if (resource === 'mana') {
-    if (MANA_WITHOUT_THREAT.has(sourceId)) return undefined;
+    // A cancelled cast's cost coming back is not mana GAINED (round 53).
+    if (MANA_WITHOUT_THREAT.has(sourceId) || sourceId.endsWith('_refund')) return undefined;
     return { perPoint: THREAT_PER_MANA_GAINED, ignoresModifiers: true };
   }
   return undefined;
 }
 
 /** Everything the engine needs to track threat in a Forever fight. */
+/**
+ * Threat per point of effective healing (round 52).
+ *
+ * CLASSIC'S HALF A POINT, BORROWED. The owner asked for a healer's TPS and has
+ * stated no figure; 0.5 a point split across the enemies is Classic's rule and
+ * the same shape mana gain already uses here. Named `PLACEHOLDER_` so nothing
+ * can read it without seeing that.
+ */
+export const PLACEHOLDER_HEAL_THREAT_PER_POINT = 0.5;
+
 export const FOREVER_THREAT_RULES: ThreatRules = {
   ability: (abilityId) => ABILITY_THREAT[abilityId],
   resource: resourceThreat,
+  healingPerPoint: PLACEHOLDER_HEAL_THREAT_PER_POINT,
 };

@@ -25,6 +25,7 @@ import {
   shieldBlockValue,
   spreadRating,
   staminaFloor,
+  healingPowerFloor,
   statsFor,
   weightedShares,
   type ArmourClass,
@@ -163,6 +164,15 @@ export interface BenchmarkTemplate {
    * weapon as the Seal Twist Ret profile." The armour is still this template's.
    */
   readonly weaponsFrom?: string;
+  /**
+   * A HEALER: every slot but the trinkets and the weapon carries a healing
+   * power FLOOR, and the eight armour pieces their usual stamina floor, before
+   * `preferred` divides the rest (round 52). The owner's Holy Pal: "minimums
+   * for Stamina and Healing Power, with intellect / spirit / crit rating
+   * competing for item budget." Each floor takes one of the slot's stat lines,
+   * so the slot-count table still decides how many stats an item has.
+   */
+  readonly healer?: boolean;
 }
 
 /** What the character holds. `caster` trades damage for stats. */
@@ -269,10 +279,10 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * needs a dagger. The gear and the rotation are one decision here.
    */
   { idBlock: 8, presetId: 'rogue_pure_hemo', characterClass: 'rogue', label: 'Pure Hemo', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Sword', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
-  { idBlock: 9, presetId: 'druid_moonkin', characterClass: 'druid', label: 'Moonkin', hit: 120, expertise: 0, preferred: CASTER, armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
+  { idBlock: 9, presetId: 'druid_moonkin', characterClass: 'druid', label: 'Moonkin', hit: 130, expertise: 0, preferred: CASTER, armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
   { idBlock: 10, presetId: 'druid_cat', characterClass: 'druid', label: 'Cat', hit: 40, expertise: 10, preferred: ['Strength', 'Agility', 'Crit', 'Stamina', 'Attack Power'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' } },
   { idBlock: 11, presetId: 'druid_bear', characterClass: 'druid', label: 'Bear', hit: 40, expertise: 20, preferred: ['Stamina', 'Bonus Armor', 'Agility', 'Strength', 'Dodge', 'Defense'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' }, trinkets: TANK_TRINKETS },
-  { idBlock: 12, presetId: 'shaman_elemental', characterClass: 'shaman', label: 'Ele Shaman', hit: 110, expertise: 0, preferred: CASTER, armour: 'Mail', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true } },
+  { idBlock: 12, presetId: 'shaman_elemental', characterClass: 'shaman', label: 'Ele Shaman', hit: 120, expertise: 0, preferred: CASTER, armour: 'Mail', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true } },
   /*
    * RESPECIFIED IN ROUND 37 TO RESEMBLE SHOCKADIN 2H, by the owner: "itemized
    * for Stamina, Strength, Intellect, Spell Power, Hit Rating/Crit Rating. Have
@@ -284,7 +294,7 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    */
   { idBlock: 13, presetId: 'shaman_enhancement', characterClass: 'shaman', label: 'Enh Shaman', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina'], armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Mace' }, weaponsFrom: 'pally_ret' },
   { idBlock: 14, presetId: 'mage_frostfire', characterClass: 'mage', label: 'Frostfire', characterName: 'Frostfire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
-  { idBlock: 15, presetId: 'mage_arcane', characterClass: 'mage', label: 'Arcane', characterName: 'Arcane Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  { idBlock: 15, presetId: 'mage_arcane', characterClass: 'mage', label: 'Arcane', characterName: 'Arcane Mage', hit: 120, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   { idBlock: 16, presetId: 'mage_fire', characterClass: 'mage', label: 'Fire', characterName: 'Fire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   { idBlock: 17, presetId: 'pally_ret', characterClass: 'paladin', label: 'Seal Twist Ret', hit: 80, expertise: 10, preferred: ['Crit', 'Strength', 'Spell Power', 'Agility', 'Intellect', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Mace' } },
   /*
@@ -319,9 +329,9 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
   { idBlock: 21, presetId: 'lw_ranged', characterClass: 'hunter', label: 'LW Ranged', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
   { idBlock: 22, presetId: 'lw_melee', characterClass: 'hunter', label: 'LW Melee', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe', ranged: true } },
   { idBlock: 23, presetId: 'hawk_melee', characterClass: 'hunter', label: 'Hawk Melee', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe', ranged: true } },
-  { idBlock: 24, presetId: 'warlock_smds', characterClass: 'warlock', label: 'SM/DS', hit: 120, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
-  { idBlock: 25, presetId: 'warlock_firelock', characterClass: 'warlock', label: 'Firelock', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
-  { idBlock: 26, presetId: 'shadow_priest', characterClass: 'priest', label: 'Shadow', characterName: 'Shadow Priest', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  { idBlock: 24, presetId: 'warlock_smds', characterClass: 'warlock', label: 'SM/DS', hit: 130, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  { idBlock: 25, presetId: 'warlock_firelock', characterClass: 'warlock', label: 'Firelock', hit: 120, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  { idBlock: 26, presetId: 'shadow_priest', characterClass: 'priest', label: 'Shadow', characterName: 'Shadow Priest', hit: 120, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   /*
    * ============================================================================
    * SHOCKADIN 2H -- THE SHOCKADIN TEMPLATE WITH A FAST TWO-HANDER IN PLACE OF
@@ -379,11 +389,38 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    */
   // Fire Demo copies the Firelock's row, with 40 MORE hit rating: the owner
   // moved three Suppression points to Agonizing Flames (round 44) and asked
-  // for the lost hit back in the gear, paid from the existing stats.
+  // for the lost hit back in the gear, paid from the existing stats. It
+  // already reached 17% spell hit, so round 51's re-cap left it at 150 and
+  // moved the Firelock to 120 -- the gap between the two is 30 now.
   { idBlock: 29, presetId: 'warlock_demonology', characterClass: 'warlock', label: 'Fire Demo', hit: 150, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   // Sbolt Spam: the Firelock's gear, by the owner's instruction, and the same
-  // Suppression 5/5, so the same hit. A NEW ROW TAKES idBlock 31.
-  { idBlock: 30, presetId: 'warlock_sbolt', characterClass: 'warlock', label: 'Sbolt Spam', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  // Suppression 5/5, so the same hit.
+  //
+  // ROUND 51: THE SPELL MISS FLOOR WENT IN ROUND 35 AND THE TEMPLATES WERE NEVER
+  // RE-CAPPED. Every hit figure above was set against a 16-point cap, so ten
+  // casters carried 1% miss on their main school -- the Shockadin pair 9%,
+  // because their rows were the MELEE cap and Divine Precision is no longer in
+  // their build. The owner: re-cap for 100%, adding 10 hit rating as needed.
+  // Moonkin, Ele Shaman, Arcane, SM/DS, Firelock, Sbolt and Shadow +10, which
+  // caps each of them. `spreadRating` already pays a rating out of crit first.
+  //
+  // BOTH SHOCKADINS STAY AT 80, THE MELEE CAP, BY THE OWNER'S DECISION, and
+  // so miss 9% with Holy Shock and Hammer of Wrath. Two routes to the spell cap
+  // were priced and declined: +90 rating breaks two template rulings, and
+  // Divine Precision 2/3 costs 30-34 DPS whichever of Consecrated Ground or
+  // Champion of the Light pays for it -- only those two spells roll the spell
+  // table. The owner: keep Consecrated Ground and Champion of the Light.
+  // The Arcane Mage caps ARCANE: Arcane Focus is school-scoped, so its
+  // Pyroblast still misses 5%. `tools/probe_spell_hit.ts` prints all ten.
+  { idBlock: 30, presetId: 'warlock_sbolt', characterClass: 'warlock', label: 'Sbolt Spam', hit: 120, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  /*
+   * HOLY PAL, THE FIRST HEALER (round 52). No hit and no expertise -- a heal
+   * cannot miss. Plate, a caster mace and a shield, the arrangement the
+   * Shockadin already uses. `healer` puts a healing power floor on every slot
+   * and keeps the stamina floor on the armour; intellect, spirit and crit
+   * compete for the rest, in that order. idBlock 31; A NEW ROW TAKES 32.
+   */
+  { idBlock: 31, presetId: 'holy_pal', characterClass: 'paladin', label: 'Holy Pal', hit: 0, expertise: 0, preferred: ['Intellect', 'Spirit', 'Crit'], armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true }, healer: true },
 ];
 
 /** Ids one template owns: four sets of up to 100 items each. */
@@ -588,6 +625,45 @@ function withCasterSpellPower(
 
   return { effects, spent: divided.spent };
 }
+
+/**
+ * A HEALER'S caster weapon: the stated spell power, re-bought as HEALING POWER
+ * at the same budget (round 53).
+ *
+ * ============================================================================
+ * THE OWNER'S INSTRUCTION: "make this healing power instead at a proportionally
+ * larger amount based on established item budget criteria". The criterion is
+ * the cost table -- a stat's budget is `value x cost` before the power -- so
+ * the same points that buy N spell power at 0.86 buy `N x 0.86 / 0.45` healing
+ * power at 0.45. At E65 that is 94 spell power becoming 179 healing power, the
+ * ratio Classic's own healer weapons carry over their damage-caster siblings.
+ *
+ * ONE HEALING LINE, NOT TWO: the healing-power floor may already have put a
+ * "+N Healing" line on the weapon, and two lines of one stat would both parse
+ * and read as a generator bug. The re-bought figure is added to it. Any Spell
+ * Power line the shares bought goes, because a healer's weapon carries none.
+ * `spent` is left alone for the reason `withCasterSpellPower` gives.
+ * ============================================================================
+ */
+function withCasterHealingPower(
+  divided: { effects: { kind: string; text: string }[]; spent: number },
+  spellPower: number,
+): { effects: { kind: string; text: string }[]; spent: number } {
+  const rebought = Math.floor((spellPower * COST['Spell Power']) / COST['Healing Power']);
+  const existing = divided.effects.find(isHealingPowerLine);
+  const already = existing ? Number(/\+(\d+)/.exec(existing.text)?.[1] ?? 0) : 0;
+  const written = LINE['Healing Power'](already + rebought);
+  const line = written.startsWith('Equip: ')
+    ? { kind: 'Equip', text: written.slice(7) }
+    : { kind: 'Stat', text: written };
+  const kept = divided.effects.filter((effect) => !isSpellPowerLine(effect) && !isHealingPowerLine(effect));
+  return { effects: [...kept, line], spent: divided.spent };
+}
+
+const HEALING_POWER_SUFFIX = LINE['Healing Power'](0).replace(/^Equip: /, '').replace('+0', '');
+
+const isHealingPowerLine = (effect: { text: string }): boolean =>
+  effect.text.endsWith(HEALING_POWER_SUFFIX);
 
 /**
  * The tail of a generated Spell Power line, by its own wording.
@@ -980,7 +1056,28 @@ export function benchmarkItemsFor(
      * the two.
      * ------------------------------------------------------------------------
      */
-    const chosen = statsFor(plan, template.preferred, armourIndex);
+    /*
+     * A HEALER'S FLOORS TAKE THEIR LINES FIRST (round 52): healing power on
+     * every slot here, stamina on the eight armour pieces below -- so the
+     * preferences compete for what is left, in as many lines as remain. A
+     * wrist's three are healing, stamina and ONE of intellect, spirit and
+     * crit, turning with the slot like any other tail.
+     */
+    const armourPiece = !plan.noArmour && plan.slot !== 'cloak';
+    const healerLines = template.healer ? 1 + (armourPiece ? 1 : 0) : 0;
+    if (template.healer) {
+      const committedSoFar = [...fixed.entries()].reduce(
+        (sum, [stat, value]) => sum + (value * COST[stat]) ** BUDGET_EXPONENT,
+        0,
+      );
+      const healing = healingPowerFloor(budget, committedSoFar);
+      if (healing > 0) fixed.set('Healing Power', healing);
+    }
+    const chosen = statsFor(
+      healerLines > 0 ? { ...plan, stats: Math.max(1, plan.stats - healerLines) } : plan,
+      template.preferred,
+      armourIndex,
+    );
     let shares = chosen;
     if (!plan.noArmour && plan.slot !== 'cloak') {
       /*
@@ -1059,7 +1156,9 @@ export function benchmarkItemsFor(
      * ==========================================================================
      */
     const { effects, spent } = caster && hand !== 'ranged'
-      ? withCasterSpellPower(divided, casterWeaponSpellPower(set.quality, set.itemLevel))
+      ? template.healer
+        ? withCasterHealingPower(divided, casterWeaponSpellPower(set.quality, set.itemLevel))
+        : withCasterSpellPower(divided, casterWeaponSpellPower(set.quality, set.itemLevel))
       : divided;
     items.push(
       makeItem(
@@ -1131,11 +1230,22 @@ export function benchmarkItemsFor(
      * like a wrist, so it reads the preference order exactly as one does.
      */
     const shieldBudget = base * SLOT_MULTIPLIER.light;
+    // A healer's shield carries the healing floor too, in one of its three lines.
+    const shieldFixed = new Map<BenchStat, number>();
+    if (template.healer) {
+      const healing = healingPowerFloor(shieldBudget);
+      if (healing > 0) shieldFixed.set('Healing Power', healing);
+    }
     const shieldStats = statsFor(
-      { slot: 'shield', inventory: 'Off Hand', slotClass: 'light', stats: SHIELD_STATS },
+      {
+        slot: 'shield',
+        inventory: 'Off Hand',
+        slotClass: 'light',
+        stats: template.healer ? SHIELD_STATS - 1 : SHIELD_STATS,
+      },
       template.preferred,
     );
-    const { effects, spent } = toLines(new Map(), shieldStats, shieldBudget);
+    const { effects, spent } = toLines(shieldFixed, shieldStats, shieldBudget);
     items.push(
       makeItem(
         nextId(),

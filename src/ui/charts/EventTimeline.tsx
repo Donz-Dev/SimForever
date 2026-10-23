@@ -101,15 +101,24 @@ const RESOURCE_NAMES: Readonly<Record<string, string>> = {
  */
 export function buildFightTimeline(
   result: SimulationResult,
-  options: { readonly includeSwings: boolean },
+  options: {
+    readonly includeSwings: boolean;
+    /** Draw only this actor's side: a healer fight's tank and raid are not it. */
+    readonly playerId?: string;
+  },
 ): FightTimeline {
   const friendly = new Set(
-    result.actors.filter((actor) => actor.faction === 'friendly').map((actor) => actor.id),
+    result.actors
+      .filter((actor) => actor.faction === 'friendly')
+      .filter((actor) => options.playerId === undefined || actor.id === options.playerId)
+      .map((actor) => actor.id),
   );
   const hostile = new Set(
     result.actors.filter((actor) => actor.faction === 'hostile').map((actor) => actor.id),
   );
-  const player = result.actors.find((actor) => actor.kind === 'player');
+  const player =
+    result.actors.find((actor) => actor.id === options.playerId) ??
+    result.actors.find((actor) => actor.kind === 'player');
   const durationMs = result.durationMs;
 
   return {

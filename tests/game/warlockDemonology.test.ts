@@ -69,9 +69,11 @@ describe('the Demonology preset', () => {
     expect(preset().character.name).toBe('Fire Demo');
   });
 
-  it('asks its benchmark gear for 40 more hit rating than the Firelock', () => {
+  it('asks its benchmark gear for 30 more hit rating than the Firelock', () => {
+    // 40 when it was written; round 51 re-capped the Firelock by 10 and left
+    // Fire Demo at 150, which already reached 17%.
     const row = (id: string) => BENCHMARK_TEMPLATES.find((t) => t.presetId === id)!;
-    expect(row('warlock_demonology').hit - row('warlock_firelock').hit).toBe(40);
+    expect(row('warlock_demonology').hit - row('warlock_firelock').hit).toBe(30);
   });
 
   it('offers Decimation in the APL buff dropdown for a Warlock', () => {

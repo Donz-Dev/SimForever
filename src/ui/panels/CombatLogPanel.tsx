@@ -4,12 +4,14 @@ import { Panel } from '../components/Panel';
 
 interface CombatLogPanelProps {
   readonly result: SimulationResult;
+  /** A title of its own, when there is one log per healer fight. */
+  readonly title?: string;
 }
 
 /** Lines shown before the user asks for the rest. A 5-minute fight has thousands. */
 const INITIAL_LINE_LIMIT = 300;
 
-export function CombatLogPanel({ result }: CombatLogPanelProps) {
+export function CombatLogPanel({ result, title = 'Combat Log' }: CombatLogPanelProps) {
   const [showAll, setShowAll] = useState(false);
 
   const lines = showAll ? result.combatLog : result.combatLog.slice(0, INITIAL_LINE_LIMIT);
@@ -17,7 +19,8 @@ export function CombatLogPanel({ result }: CombatLogPanelProps) {
 
   return (
     <Panel
-      title="Combat Log"
+      title={title}
+      className="panel-output"
       collapsible
       /*
        * Its line count is already the subtitle, so it needs no `badge`: shut,

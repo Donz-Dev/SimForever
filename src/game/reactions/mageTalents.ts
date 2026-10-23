@@ -201,19 +201,43 @@ export const heatingUp: TalentReactionBuilder = () => ({
  *
  * "After any damage spell hits a target" -- so an avoided spell rolls nothing,
  * which `outcomes` expresses directly.
+ *
+ * ==============================================================================
+ * ONE ROLL PER CAST, NOT PER MISSILE (round 55), the owner's ruling: "Clearcasting
+ * from Arcane Concentration should only have a chance to proc once from casting
+ * Arcane Missiles." A `dealt` reaction fires per DAMAGE EVENT, and a five-tick
+ * channel deals five -- so the talent was rolling five times a cast.
+ *
+ * THE CAST IS KEYED BY `castSequence - channelTicksDelivered`, which is the one
+ * figure that stays put across a channel: `runCast` stamps a new sequence on
+ * EVERY tick, and the delivered count rises with it. The first missile that
+ * HITS takes the roll; a miss before it leaves the roll for the next one, which
+ * is "a chance to proc once" read as once per cast that lands anything.
+ *
+ * THE CLOSURE IS SAFE FOR THE REASON `sealFate`'s IS: `talentBuild` builds a
+ * reaction per character, so one Mage's Missiles cannot spend another's roll.
+ * ==============================================================================
  */
-export const arcaneConcentration: TalentReactionBuilder = (chancePercent) => ({
-  id: 'arcane_concentration',
-  on: 'dealt',
-  outcomes: ['hit', 'crit'],
-  canTrigger: (context, _actor, attack) =>
-    attack.abilityId !== undefined &&
-    DAMAGE_SPELLS.has(attack.abilityId) &&
-    context.rng.rollChance(chancePercent / 100),
-  onTrigger: (context, actor) => {
-    context.applyAura(actor, CLEARCASTING, actor.id);
-  },
-});
+export const arcaneConcentration: TalentReactionBuilder = (chancePercent) => {
+  let rolledFor: number | undefined;
+  return {
+    id: 'arcane_concentration',
+    on: 'dealt',
+    outcomes: ['hit', 'crit'],
+    canTrigger: (context, actor, attack) => {
+      if (attack.abilityId === undefined || !DAMAGE_SPELLS.has(attack.abilityId)) return false;
+      if (attack.abilityId === 'arcane_missiles') {
+        const cast = actor.castSequence - actor.channelTicksDelivered;
+        if (rolledFor === cast) return false;
+        rolledFor = cast;
+      }
+      return context.rng.rollChance(chancePercent / 100);
+    },
+    onTrigger: (context, actor) => {
+      context.applyAura(actor, CLEARCASTING, actor.id);
+    },
+  };
+};
 
 /**
  * Missile Barrage: THREE rates in one talent, and the rank moves all three.

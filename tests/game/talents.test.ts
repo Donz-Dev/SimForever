@@ -24,7 +24,7 @@ import {
  * said -- the same reason the base stats and the ability sheet are each written
  * out twice.
  *
- * The 466 individual talents are not transcribed; what is checked instead is
+ * The 465 individual talents are not transcribed; what is checked instead is
  * every structural invariant that must hold for all of them at once.
  *
  * ----------------------------------------------------------------------------
@@ -106,7 +106,13 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
        * what answers that one.
        */
       ['fire', 17, 'Combustion'],
-      ['frost', 19, 'Ice Barrier'],
+      /*
+       * 18 SINCE THE REFRESH IN ROUND 51: Piercing Ice was removed, and
+       * Elemental Precision went five ranks at 1% to three at 2/4/6%. No note
+       * announced either; the owner's two Mage build URLs would not decode
+       * against the old tree, which is how it surfaced.
+       */
+      ['frost', 18, 'Ice Barrier'],
     ],
   },
   paladin: {
@@ -201,7 +207,7 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
 
 const CLASS_IDS = Object.keys(SPEC);
 
-/** The 466 above, summed, so the total is asserted rather than assumed. */
+/** The 465 above, summed, so the total is asserted rather than assumed. */
 const TOTAL_TALENTS = Object.values(SPEC)
   .flatMap((spec) => spec.trees)
   .reduce((sum, [, count]) => sum + count, 0);
@@ -224,8 +230,9 @@ describe('every class has its trees', () => {
     expect(classesWithTalents()).toEqual([...CLASS_IDS].sort());
   });
 
-  it('adds up to 466 talents', () => {
-    expect(TOTAL_TALENTS).toBe(466);
+  it('adds up to 465 talents', () => {
+    // 466 until round 51's refresh removed the Mage's Piercing Ice.
+    expect(TOTAL_TALENTS).toBe(465);
     const loaded = CLASS_IDS.reduce(
       (sum, id) => sum + talentsOf(id).trees.reduce((n, tree) => n + tree.talents.length, 0),
       0,

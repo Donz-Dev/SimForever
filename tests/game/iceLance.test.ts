@@ -155,7 +155,7 @@ function iceLanceDamage(spellPower: number, frozen: boolean): number {
  * ----------------------------------------------------------------------------
  * AND THE BUILD'S OWN FROST MULTIPLIER IS DIVIDED BACK OUT, which the first
  * draft of this file did not do: the slope came back 0.1136 against a declared
- * 0.1428, a clean 1.06x, and that 6% is PIERCING ICE at 3/3 on the Frostfire
+ * 0.1428, a clean 1.06x, and that 6% was PIERCING ICE at 3/3 on the Frostfire
  * build. Reading it as a coefficient error would have been the obvious move and
  * wrong.
  *
@@ -217,19 +217,20 @@ describe('what the spell actually applies, measured from damage', () => {
     expect(measuredCoefficient(false)).toBeCloseTo(1.5 / 3.5 / 3, 6);
   });
 
-  it('is 1.06x that before the build\'s own Piercing Ice is divided out', () => {
+  it('is the raw slope times whatever Frost multiplier the build carries', () => {
     /*
      * THE RAW SLOPE, asserted so the correction above is visible rather than
-     * buried in a helper. 6% is Piercing Ice at 3/3, and it is the reason a
-     * measured coefficient must name what it divided by -- the first draft of
+     * buried in a helper. It was 1.06x -- Piercing Ice at 3/3 -- until the
+     * client removed that talent in round 51, and that 6% is the reason a
+     * measured coefficient must name what it divided by: the first draft of
      * this file read 0.1136 and the obvious conclusion was that the owner's
-     * figure had been transcribed wrongly.
+     * figure had been transcribed wrongly. The multiplier is READ now, so the
+     * next Frost talent cannot make this stale.
      */
     const frost = mageWithSpellPower(0).schoolModifiers.for('frost').damageMultiplier ?? 1;
-    expect(frost).toBeCloseTo(1.06, 10);
 
     const rawSlope = (iceLanceDamage(1000, false) - iceLanceDamage(0, false)) / 1000;
-    expect(rawSlope).toBeCloseTo((1.5 / 3.5 / 3) * 1.06, 6);
+    expect(rawSlope).toBeCloseTo((1.5 / 3.5 / 3) * frost, 6);
   });
 
   it('scales at THREE TIMES it when Fingers of Frost is up', () => {

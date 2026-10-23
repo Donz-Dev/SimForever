@@ -18,7 +18,7 @@ import type { ScheduledEvent } from '../events';
 import { AuraCollection } from '../effects';
 import type { ResourceRegen, ResourceSpec, ResourceType } from '../resources';
 import { Resource, ResourceCollection } from '../resources';
-import type { Rotation } from '../rotation/Rotation';
+import type { CastCancelCheck, Rotation } from '../rotation/Rotation';
 import type { PartialStats, StatDerivation } from '../stats';
 import { StatBlock } from '../stats';
 import type { StatSampleValues } from '../logging/statSample';
@@ -429,6 +429,13 @@ export interface CombatantOptions {
   readonly revivesOnDeath?: boolean;
   /** For pets and summons: the id of the combatant that owns them. */
   readonly ownerId?: string;
+  /**
+   * A friendly raid member's place, for a healer's priority list (round 52):
+   * whether it is THE tank, and which party of five it stands in. Neither is
+   * read by the engine's combat rules; they exist so a rotation can ask.
+   */
+  readonly raidRole?: 'tank';
+  readonly party?: number;
 }
 
 /**
@@ -451,6 +458,10 @@ export class Combatant {
   /** Fight-long threat factors; see `CombatantOptions.threatModifiers`. */
   readonly threatModifiers: readonly ThreatModifier[];
   readonly ownerId: string | undefined;
+  /** See `CombatantOptions.raidRole`. */
+  readonly raidRole: 'tank' | undefined;
+  /** See `CombatantOptions.party`. */
+  readonly party: number | undefined;
 
   readonly stats: StatBlock;
   readonly health: Resource;
@@ -664,6 +675,8 @@ export class Combatant {
     this.resistances = options.resistances ?? {};
     this.threatModifiers = options.threatModifiers ?? [];
     this.ownerId = options.ownerId;
+    this.raidRole = options.raidRole;
+    this.party = options.party;
 
     this.stats = new StatBlock(options.stats, options.statDerivation);
     this.health = new Resource('health', options.maxHealth);
@@ -758,16 +771,29 @@ export class Combatant {
    * on the other side, so a caller reads one number rather than remembering to
    * multiply two. Schools no active aura names are untouched.
    */
-  damageDoneMultiplierFor(school: DamageSchool): number {
+  damageDoneMultiplierFor(school: DamageSchool, alsoCountsAs?: readonly DamageSchool[]): number {
     let product = this.damageDoneMultiplier;
     for (const aura of this.auras.active) {
       const bySchool = aura.definition.damageDoneBySchool;
-      if (bySchool?.[school] === undefined) continue;
+      if (!bySchool) continue;
+      /*
+       * A SPELL THAT COUNTS AS TWO SCHOOLS TAKES THE LARGER of what ONE aura
+       * gives either (round 55) -- Frostfire Bolt is Fire and Frost, so Ice
+       * Barrier's Frost bonus reaches it. The larger and not the product,
+       * because one aura naming both schools is one source, the rule
+       * `casterSchoolModifier` already follows for an additive talent.
+       */
+      let factor: number | undefined = bySchool[school];
+      for (const extra of alsoCountsAs ?? []) {
+        const other = bySchool[extra];
+        if (other !== undefined && (factor === undefined || other > factor)) factor = other;
+      }
+      if (factor === undefined) continue;
       // Compounds with stacks by default, matching `auraMultiplier` and the
       // target side -- and ADDS for an aura the owner has ruled additive. See
       // `stackedMultiplier`, which is the one place that rule lives.
       product *= stackedMultiplier(
-        bySchool[school]!,
+        factor,
         aura.definition.modifiersScaleWithStacks ? aura.stacks : 1,
         aura.definition.additiveDamageStacks,
       );
@@ -990,6 +1016,19 @@ export class Combatant {
    * ============================================================================
    */
   pendingSequence: { readonly abilityIds: readonly string[]; index: number } | null = null;
+
+  /**
+   * The cancel check waiting on the cast in progress, if its entry carried one
+   * (round 53). Per-fight state for the reason `pendingSequence` gives. `at` is
+   * the moment the question is asked. Nothing needs handing back on a cancel:
+   * a pre-cast pays its cost as it lands (round 55).
+   */
+  pendingCastCancel: {
+    readonly at: Milliseconds;
+    readonly ability: Ability;
+    readonly target: Combatant | undefined;
+    readonly check: CastCancelCheck;
+  } | null = null;
 
   /** Called by the engine when a cast's effect is about to run. */
   recordCast(): number {

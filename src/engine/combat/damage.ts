@@ -814,7 +814,7 @@ export function appliesArmor(request: DamageRequest): boolean {
  * read off a fixed number of seconds would open its window at a different
  * fraction in every fight of a batch.
  */
-function remainingFractionOf(context: SimulationContext): number {
+export function remainingFractionOf(context: SimulationContext): number {
   if (context.plannedDurationMs <= 0) return 0;
   return (context.plannedDurationMs - context.clock.now()) / context.plannedDurationMs;
 }
@@ -1288,16 +1288,20 @@ export function resolveDamage(
    * every school before this line read the request's.
    */
   const attackerMultiplier =
-    (request.ignoresAttackerDamageScaling ? 1 : source.damageDoneMultiplierFor(request.school)) *
+    (request.ignoresAttackerDamageScaling ? 1 : source.damageDoneMultiplierFor(request.school, request.countsAsSchools)) *
     versatilityMultiplierFrom(source.stats.effective);
   // Per-ability scaling sits alongside the whole-character multipliers rather
   // than replacing them: "+20% Revenge damage" and "+10% damage done" are
   // different effects and both apply.
+  const abilityModifier = source.abilityModifierFor(
+    request.abilityId,
+    context ? remainingFractionOf(context) : undefined,
+  );
+  // The direct-only half is Aftermath's "INITIAL damage of your Immolate": a
+  // tick of the same ability id must not collect it. See the field.
   const abilityMultiplier =
-    source.abilityModifierFor(
-      request.abilityId,
-      context ? remainingFractionOf(context) : undefined,
-    ).damageMultiplier ?? 1;
+    (abilityModifier.damageMultiplier ?? 1) *
+    (request.periodic ? 1 : abilityModifier.directDamageMultiplier ?? 1);
   /*
    * PER SCHOOL, on the ATTACKER'S side. The mirror of
    * `damageTakenMultiplierFor` below: Fire Power raises the fire damage a Mage
@@ -1671,6 +1675,7 @@ export function dealDamage(
     ...(resolution.resistedShare !== 0 ? { resistedShare: resolution.resistedShare } : {}),
     absorbed: resolution.absorbed,
     overkill,
+    targetHealth: target.health.current,
     periodic: request.periodic ?? false,
     // What the roll faced. See `DamageTelemetryEvent.critChance`.
     critChance: attack.critChance,

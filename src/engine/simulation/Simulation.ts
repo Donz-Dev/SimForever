@@ -2,7 +2,7 @@ import type { Ability } from '../abilities/Ability';
 import { ThreatTracker } from '../combat/threat';
 import { sampleStats } from '../logging/statSample';
 import type { CastCheck, CastCheckOptions } from '../abilities/casting';
-import { castAbility, checkCast } from '../abilities/casting';
+import { castAbility, checkCast, finishChannelEarly } from '../abilities/casting';
 import type { Combatant, WeaponSlot } from '../actors/Combatant';
 import { extraAttack, startAutoAttack } from '../combat/autoAttack';
 import { startResourceRegeneration } from '../resources';
@@ -414,6 +414,7 @@ export class Simulation implements SimulationContext {
         timestamp: this.clock.now(),
         actorId: target.id,
         killerId: killer?.id,
+        revived: true,
       });
       target.auras.removeOnDeath(this);
       target.health.fill();
@@ -478,6 +479,7 @@ export class Simulation implements SimulationContext {
        * something that never had a step one.
        */
       actor.pendingSequence = null;
+      actor.pendingCastCancel = null;
     }
 
     // The end-of-fight event is what guarantees termination: actors reschedule
@@ -573,6 +575,53 @@ export class Simulation implements SimulationContext {
         if (ctx.hasEnded || !actor.isAlive || !actor.rotation) return;
 
         /*
+         * A CAST WITH A CANCEL CHECK IS WOKEN PART WAY THROUGH (round 53), and
+         * this is that wake. The question is asked once: if it says cancel, the
+         * cast is abandoned, its cost handed back, and the actor decides again
+         * at once; if not, the cast runs to its end as any other does.
+         */
+        const pending = actor.pendingCastCancel;
+        if (pending && ctx.clock.now() >= pending.at) {
+          actor.pendingCastCancel = null;
+          const stillCasting =
+            actor.channelling === pending.ability && actor.isCasting(ctx.clock.now());
+          if (stillCasting && pending.check.condition(ctx, actor, pending.target)) {
+            this.cancelCast(actor);
+          } else {
+            this.scheduleDecision(actor, this.nextDecisionTime(actor));
+            return;
+          }
+        }
+
+        /*
+         * A CHANNEL THAT ENDS ITSELF -- Evocation at full mana, round 51. Checked
+         * before the interrupt branch, and it needs no entry to ask: nothing is
+         * cast in its place, the channel simply finishes early and the actor
+         * decides again at once. See `Ability.endsChannelEarly`.
+         */
+        const selfEnding = actor.channelling;
+        if (
+          selfEnding?.endsChannelEarly &&
+          actor.isCasting(ctx.clock.now()) &&
+          selfEnding.endsChannelEarly(ctx, actor)
+        ) {
+          const delivered = actor.channelTicksDelivered;
+          finishChannelEarly(ctx, actor);
+          this.telemetry.emit({
+            type: 'channel_interrupted',
+            timestamp: ctx.clock.now(),
+            sourceId: actor.id,
+            abilityId: selfEnding.id,
+            abilityName: selfEnding.name,
+            interruptedFor: 'its own end condition',
+            ticksDelivered: delivered,
+            ticksTotal: selfEnding.channelTicks ?? 1,
+          });
+          this.scheduleDecision(actor, ctx.clock.now());
+          return;
+        }
+
+        /*
          * AN INTERRUPTIBLE CHANNEL IS RE-DECIDED WHILE IT RUNS. Normally a
          * casting actor has nothing to decide -- every candidate comes back
          * `already_casting` -- so this branch is the only way a channel ends
@@ -618,13 +667,52 @@ export class Simulation implements SimulationContext {
          */
         let cast: Ability | undefined;
         if (decision) {
-          const result = ctx.cast(actor, decision.ability, decision.target);
-          if (result.ok) cast = decision.ability;
+          /*
+           * A PRE-CAST PAYS ONLY IF IT LANDS (round 55): its cost is taken at
+           * completion, so a cancelled one never spends and nothing needs
+           * handing back. See `CastOptions.payCostOnCompletion`.
+           */
+          const result = decision.cancelCast
+            ? castAbility(ctx, actor, decision.ability, decision.target, { payCostOnCompletion: true })
+            : ctx.cast(actor, decision.ability, decision.target);
+          if (result.ok) {
+            cast = decision.ability;
+            const now = ctx.clock.now();
+            if (decision.cancelCast && actor.castEndsAt > now && actor.channelling === decision.ability) {
+              actor.pendingCastCancel = {
+                at: now + Math.round(decision.cancelCast.atFraction * (actor.castEndsAt - now)),
+                ability: decision.ability,
+                target: decision.target,
+                check: decision.cancelCast,
+              };
+            }
+          }
         }
 
         this.scheduleDecision(actor, this.nextDecisionTime(actor, cast));
       }),
     );
+  }
+
+  /**
+   * Abandon a cast its cancel check said to drop (round 53): the completion
+   * is unscheduled, and with it the cost, which a pre-cast pays only as it
+   * lands (round 55). Reported as an interrupted cast, so the combat log says it.
+   */
+  private cancelCast(actor: Combatant): void {
+    const now = this.clock.now();
+    const cancelled = actor.interruptChannel(this);
+    if (!cancelled) return;
+    this.telemetry.emit({
+      type: 'channel_interrupted',
+      timestamp: now,
+      sourceId: actor.id,
+      abilityId: cancelled.id,
+      abilityName: cancelled.name,
+      interruptedFor: 'its cancel condition',
+      ticksDelivered: 0,
+      ticksTotal: cancelled.channelTicks ?? 1,
+    });
   }
 
   /**
@@ -652,6 +740,13 @@ export class Simulation implements SimulationContext {
      * one, and undefined on a rotation that does not say -- which keeps the
      * old behaviour for anything that has not been taught to answer.
      */
+    /*
+     * A channel with its own end condition polls for the same reason, and with
+     * no entry needed -- see `Ability.endsChannelEarly`.
+     */
+    if (actor.channelling?.endsChannelEarly && actor.isCasting(now)) {
+      return Math.min(now + ROTATION_POLL_MS, Math.max(actor.gcdReadyAt, actor.castEndsAt));
+    }
     if (
       actor.channelling?.interruptibleChannel &&
       actor.rotation?.interruptsChannels !== false &&
@@ -668,6 +763,11 @@ export class Simulation implements SimulationContext {
       return Math.min(now + ROTATION_POLL_MS, Math.max(actor.gcdReadyAt, actor.castEndsAt));
     }
     const busyUntil = Math.max(actor.gcdReadyAt, actor.castEndsAt);
+    // A cast with a cancel check wakes at the check, not at its end (round 53).
+    const cancelAt = actor.pendingCastCancel?.at;
+    if (cancelAt !== undefined && actor.isCasting(now) && cancelAt < busyUntil) {
+      return Math.max(now, cancelAt);
+    }
     if (busyUntil > now) return busyUntil;
 
     /*

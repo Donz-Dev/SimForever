@@ -466,7 +466,7 @@ describe('Aftermath, which read a movement speed as a damage bonus', () => {
       characterClass: 'warlock',
       combatStyle: 'caster',
       talents: legalise({ aftermath: rank }, 'warlock'),
-    }).abilityModifierFor('immolate').damageMultiplier ?? 1;
+    }).abilityModifierFor('immolate').directDamageMultiplier ?? 1;
 
   it('scales with rank rather than reading a constant', () => {
     // {0} by rank: 10 / 20 / 30 / 40 / 50.
@@ -536,7 +536,7 @@ describe('Aftermath, which read a movement speed as a damage bonus', () => {
         characterClass: 'warlock',
         combatStyle: 'caster',
         talents: allocation,
-      }).abilityModifierFor('immolate').damageMultiplier ?? 1;
+      }).abilityModifierFor('immolate').directDamageMultiplier ?? 1;
 
     /*
      * AND THE CASCADE IS NAMED RATHER THAN ASSUMED -- "an isolation probe has

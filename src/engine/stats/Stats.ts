@@ -22,6 +22,16 @@ export const STAT_NAMES = [
   'attackPower',
   'rangedAttackPower',
   'spellPower',
+  /**
+   * What a HEAL scales with, and nothing else reads it (round 52).
+   *
+   * APART FROM `spellPower` BECAUSE FOREVER KEEPS THEM APART. A healer item
+   * reads "+73 Healing" beside "+25 Spell Damage", and the two are different
+   * purchases: the first raises heals and the second raises damage. "+N Spell
+   * Power" -- and Classic's "damage and healing done by magical spells" --
+   * grant BOTH, which the item parser does by writing both stats.
+   */
+  'healingPower',
 
   /*
    * Percentage-point chances.

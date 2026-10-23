@@ -502,6 +502,86 @@ export const PALADIN_PROTECTION: AplList = {
 ],
 };
 
+/**
+ * HOLY -- the owner's Holy Pal, the project's first HEALER list (round 52).
+ *
+ * ----------------------------------------------------------------------------
+ * THE OWNER'S FOUR LINES, IN THEIR ORDER:
+ *
+ *   1. Holy Light on the tank below 65%
+ *   2. Holy Shock on the tank below 30%
+ *   3. Flash of Light on any other raid member below 70%
+ *   4. Flash of Light on the tank below 100%
+ *
+ * "LESS THAN" IS `below`, strict. Each entry names its TARGET, and its
+ * condition reads `health` on that target -- so line 3 picks the raid member
+ * with the least health that is not the tank and casts only if that one is
+ * under 70%.
+ *
+ * LINE 2 SITS UNDER LINE 1 ON PURPOSE AND WILL RARELY FIRE: a tank under 30% is
+ * also under 65%, so Holy Light wins whenever it is castable, and Holy Shock is
+ * reached only while Holy Light is not -- out of mana, or mid-cast with the
+ * instant behind it. That is the order the owner gave and it is kept; whether
+ * the instant should go first is a question for them, recorded in HANDOVER.
+ * ----------------------------------------------------------------------------
+ */
+export const PALADIN_HOLY: AplList = {
+  name: 'Paladin (Holy)',
+  /*
+   * SMART HEALING ON (round 54), the owner's ask: the next heal goes to
+   * whoever has the lowest health percentage. A checkbox in the panel turns it
+   * off, and the four lines then aim exactly where they were written.
+   */
+  smartHealing: true,
+  entries: [
+    /*
+     * THE SHARED FREE ENTRIES FIRST, ABOVE THE OWNER'S FOUR -- the racials and
+     * the mana potion and Demonic Rune, each gated as every other list gates
+     * them. Free and off the global cooldown, so they cost the heals nothing;
+     * at the BOTTOM they would never be reached, because line four is castable
+     * whenever the tank is below full, which is nearly always.
+     */
+    ...RACIAL_COOLDOWNS,
+    ...CONSUMABLE_COOLDOWNS,
+    {
+      abilityId: 'holy_light',
+      target: { kind: 'tank' },
+      condition: { kind: 'health', on: 'target', compare: 'below', fraction: 0.65 },
+    },
+    {
+      abilityId: 'holy_shock',
+      target: { kind: 'tank' },
+      condition: { kind: 'health', on: 'target', compare: 'below', fraction: 0.3 },
+    },
+    {
+      abilityId: 'flash_of_light',
+      target: { kind: 'lowestHealth', excludeTank: true },
+      condition: { kind: 'health', on: 'target', compare: 'below', fraction: 0.7 },
+    },
+    {
+      abilityId: 'flash_of_light',
+      target: { kind: 'tank' },
+      condition: { kind: 'health', on: 'target', compare: 'below', fraction: 1 },
+    },
+    /*
+     * THE PRE-CAST (round 53), the owner's: whenever nothing above is castable
+     * a Holy Light is started on the tank, and at 80% through it is cancelled
+     * if the tank is still above 95%. Last, because it is what fills downtime;
+     * anything above it is a heal that is needed now.
+     */
+    {
+      abilityId: 'holy_light',
+      target: { kind: 'tank' },
+      cancel: {
+        atFraction: 0.8,
+        condition: { kind: 'health', on: 'target', compare: 'above', fraction: 0.95 },
+      },
+      note: 'Pre-cast: cancelled at 80% of the cast if the tank is above 95%.',
+    },
+  ],
+};
+
+export const PALADIN_HOLY_ROTATION: Rotation = compileRotation(PALADIN_HOLY);
 export const PALADIN_RETRIBUTION_ROTATION: Rotation = compileRotation(PALADIN_RETRIBUTION);
 export const PALADIN_SHOCKADIN_ROTATION: Rotation = compileRotation(PALADIN_SHOCKADIN);
 export const PALADIN_PROTECTION_ROTATION: Rotation = compileRotation(PALADIN_PROTECTION);
@@ -521,6 +601,8 @@ export const PALADIN_PROTECTION_ROTATION: Rotation = compileRotation(PALADIN_PRO
 export function paladinRotation(talents: TalentAllocation): Rotation | undefined {
   if ((talents.holy_shield ?? 0) > 0) return PALADIN_PROTECTION_ROTATION;
   if ((talents.twist_of_light ?? 0) > 0) return PALADIN_RETRIBUTION_ROTATION;
+  // The Holy capstone: a 31-point Holy build heals (round 52).
+  if ((talents.light_s_vigil ?? 0) > 0) return PALADIN_HOLY_ROTATION;
   if ((talents.holy_shock ?? 0) > 0) return PALADIN_SHOCKADIN_ROTATION;
   /*
    * A Paladin with none of the three still fights, and gets the SHOCKADIN

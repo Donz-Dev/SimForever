@@ -102,6 +102,13 @@ export interface DamageTelemetryEvent extends TelemetryBase {
   readonly absorbed: number;
   /** Portion of `amount` that exceeded the target's remaining health. */
   readonly overkill: number;
+  /**
+   * The target's health straight after the hit, before any death is processed
+   * (round 53). What the health timeline reads -- the same arrangement as a
+   * resource event's `current`, so the line is the level that happened rather
+   * than a sum of gains and losses.
+   */
+  readonly targetHealth?: number;
   /** True for periodic (damage-over-time) ticks. */
   readonly periodic: boolean;
   /**
@@ -136,7 +143,17 @@ export interface HealTelemetryEvent extends TelemetryBase {
   readonly critical: boolean;
   /** Portion that exceeded the target's missing health. */
   readonly overhealing: number;
+  /** The target's health straight after the heal (round 53). */
+  readonly targetHealth?: number;
   readonly periodic: boolean;
+  /**
+   * The heal came from nobody in the fight -- the assumed tank healer, or a
+   * heal the owner ruled scales with nothing about its source. Its `sourceId`
+   * is a stand-in, so a reader that credits a healer must skip it (round 52).
+   */
+  readonly external?: boolean;
+  /** Only a heal that says so threatens. See `HealRequest.threatens`. */
+  readonly threatens?: boolean;
 }
 
 export interface AuraTelemetryEvent extends TelemetryBase {
@@ -250,6 +267,8 @@ export interface StatSampleEvent extends TelemetryBase {
   readonly rangedAttackPower: number;
   /** School-BLIND spell power, which is what the character sheet's row shows. */
   readonly spellPower: number;
+  /** Healing power (round 52). */
+  readonly healingPower: number;
   /**
    * Per school, for the schools that read MORE than the blind pool: the figure
    * `dealDamage` actually uses. Already includes the blind pool, and empty for
@@ -271,6 +290,11 @@ export interface DeathTelemetryEvent extends TelemetryBase {
   readonly type: 'death';
   readonly actorId: string;
   readonly killerId?: string;
+  /**
+   * The combatant was stood back up at full health in the same instant (round
+   * 53) -- `revivesOnDeath`. Absent for a death that stays dead.
+   */
+  readonly revived?: boolean;
 }
 
 /**
@@ -284,7 +308,7 @@ export interface ThreatTelemetryEvent extends TelemetryBase {
   /** After every modifier. Negative is threat removed. */
   readonly amount: number;
   /** Damage, an ability's flat amount without damage, or a resource gained. */
-  readonly cause: 'damage' | 'ability' | 'resource';
+  readonly cause: 'damage' | 'ability' | 'resource' | 'healing';
   readonly abilityId?: string;
   readonly abilityName: string;
 }

@@ -225,6 +225,11 @@ describe('where it lands, and where it correctly does not', () => {
      *   20/40/60%    client build 1.60.1.70170
      *   10/20/30%    "Champion of the Light now increases your spell damage by
      *                10/20/30% of your Intellect (was 20/40/60%)"
+     *   20/40/60%    the owner, round 51: "buffed back to ... 20/40/60% of
+     *                your Intellect", AHEAD of the client, which still says 30
+     *
+     * SO THE OVERRIDE LAYER IS BACK, and this assertion is once more a check
+     * that it ARRIVES: the client's row would give 0.3 and fail it.
      *
      * Both damage builds take 3/3, so both have now lost half of their largest
      * spell power source on top of the 40% they lost last patch -- the
@@ -244,7 +249,7 @@ describe('where it lands, and where it correctly does not', () => {
      * ========================================================================
      */
     expect(shockadin.stats.get('spellPower')).toBeCloseTo(
-      shockadin.stats.get('intellect') * 0.3,
+      shockadin.stats.get('intellect') * 0.6,
       6,
     );
     expect(shockadin.abilities.has('seal_of_righteousness')).toBe(true);
@@ -267,8 +272,8 @@ describe('where it lands, and where it correctly does not', () => {
      * ------------------------------------------------------------------------
      */
     const ret = characterFor('pally_ret', 'paladin');
-    // 30% at 3/3 since the patch note halved it from 60; see the test above.
-    expect(ret.stats.get('spellPower')).toBeCloseTo(ret.stats.get('intellect') * 0.3, 6);
+    // 60% at 3/3, the owner's round 51 buff-back; see the test above.
+    expect(ret.stats.get('spellPower')).toBeCloseTo(ret.stats.get('intellect') * 0.6, 6);
     expect(ret.abilities.has('seal_of_command')).toBe(true);
   });
 

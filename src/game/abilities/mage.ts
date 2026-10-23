@@ -17,6 +17,7 @@ import {
   FROSTFIRE_DOT,
   FINGERS_OF_FROST,
   MAGE_ARMOR,
+  ICE_BARRIER,
   MAGE_ARMOR_MAGIC_RESISTANCE,
   PRESENCE_OF_MIND,
   PYROBLAST_CAST_MS,
@@ -775,6 +776,37 @@ export const PRESENCE_OF_MIND_ABILITY: Ability = {
  * Its worth is entirely the five second rule -- see `MAGE_ARMOR` for why the
  * mana half is the half that matters here and the resistance half is not.
  */
+/**
+ * Ice Barrier, a castable buff for any Mage (round 55).
+ *
+ * ============================================================================
+ * THE OWNER'S RULING: "Ice Barrier needs to be a usable skill for Frostfire
+ * profile. It should be cast at T-10 seconds. It applies a buff that gives 6%
+ * Frost Damage for 60 seconds."
+ *
+ * IT IS ALSO A TIER-30 FROST TALENT, which the Frostfire build's 22 Frost
+ * points cannot reach -- so it is declared here, in the trainer book, on the
+ * owner's word. The spellbook capture lists it "Learned at level 58", which is
+ * the line CLAUDE.md warns a talent-granted spell carries too; the ruling is
+ * what settles it, not the line.
+ *
+ * COST, CAST AND COOLDOWN ARE THE CAPTURE'S: 480 mana, instant, 30 seconds.
+ * ============================================================================
+ */
+export const ICE_BARRIER_ABILITY: Ability = {
+  id: 'ice_barrier',
+  name: 'Ice Barrier',
+  cost: { resource: 'mana', amount: 480 },
+  cooldownMs: seconds(30),
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, ICE_BARRIER, caster.id);
+  },
+  unmodelled:
+    'Its 819-point absorb does nothing: no Mage profile is attacked. The +6% ' +
+    'Frost damage the owner stated is modelled in full.',
+};
+
 export const MAGE_ARMOR_ABILITY: Ability = {
   id: 'mage_armor',
   name: 'Mage Armor',
@@ -831,6 +863,58 @@ export const EVOCATION: Ability = {
    */
   onCast: ({ simulation, caster }) => {
     caster.auras.remove(simulation, EVOCATION_AURA.id);
+  },
+  /*
+   * STOPS AT A FULL POOL, by the owner (round 51): "if while casting evocation
+   * your current mana reaches 100% then stop the channel and continue with the
+   * rotation." The engine polls this, ends the channel, and runs `onCast` above
+   * -- so the regeneration window closes with it.
+   */
+  endsChannelEarly: (_context, caster) => {
+    const mana = caster.resources.get('mana');
+    return mana !== undefined && mana.current >= mana.maximum;
+  },
+};
+
+/**
+ * Mana Ruby: "regain 1000 to 1200 Mana", ONCE A FIGHT, OFF THE GLOBAL COOLDOWN.
+ *
+ * ----------------------------------------------------------------------------
+ * THE OWNER, ROUND 51: "Mana Ruby needs to be APL rotation. If current mana
+ * reaches 25% then use a Mana Ruby to regain 1000 to 1200 Mana. Can be used
+ * once per combat iteration regardless of duration. Does not trigger a global
+ * cooldown."
+ *
+ * "ONCE PER COMBAT ITERATION REGARDLESS OF DURATION" IS A COOLDOWN NO FIGHT
+ * OUTLASTS. A day, named, rather than `Infinity` -- every reader of a cooldown
+ * does arithmetic on it, and a finite number keeps `cooldownTime` and the
+ * panels honest. `freeCastChain.test.ts` requires an off-GCD ability to declare
+ * one anyway, or it could win the list forever in one instant.
+ *
+ * A CLASS ABILITY AND NOT A CONSUMABLE CATEGORY, because the owner stated it as
+ * a Mage's rotation entry rather than as a selection, and a conjured gem shares
+ * no cooldown with a potion -- so it does NOT join `POTION_COOLDOWN_GROUP`.
+ * Free and instant, so neither Clearcasting (`requiresCost`) nor Presence of
+ * Mind (`requiresCastTime`) can spend a charge on it.
+ * ----------------------------------------------------------------------------
+ */
+export const MANA_RUBY_MINIMUM = 1000;
+export const MANA_RUBY_MAXIMUM = 1200;
+export const MANA_RUBY_COOLDOWN_MS = seconds(24 * 60 * 60);
+
+export const MANA_RUBY: Ability = {
+  id: 'mana_ruby',
+  name: 'Mana Ruby',
+  cooldownMs: MANA_RUBY_COOLDOWN_MS,
+  requiresTarget: false,
+  triggersGcd: false,
+  onCast: ({ simulation, caster, ability }) => {
+    simulation.grantResource(
+      caster,
+      'mana',
+      simulation.rng.nextInt(MANA_RUBY_MINIMUM, MANA_RUBY_MAXIMUM),
+      { id: ability.id, name: ability.name },
+    );
   },
 };
 
@@ -1006,5 +1090,7 @@ export const MAGE_ABILITIES: readonly Ability[] = [
   ARCANE_POWER_ABILITY,
   PRESENCE_OF_MIND_ABILITY,
   MAGE_ARMOR_ABILITY,
+  ICE_BARRIER_ABILITY,
   EVOCATION,
+  MANA_RUBY,
 ];

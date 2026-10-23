@@ -315,6 +315,22 @@
   --item-card-stat: #1eff00;
   --item-card-shadow: rgb(0 0 0 / 70%);
 
+  /*
+   * THE TALENT CARD, drawn like the game's: the same near-black as the item
+   * card, a gold name, and the rank text in the client's warm yellow. Roles
+   * for the reason the item card's are -- the colours are Blizzard's and are
+   * read against their black tooltip, whichever scheme the page is in.
+   */
+  --talent-card-bg: #0b0d14;
+  --talent-card-border: #3a3326;
+  --talent-card-name: #f8b700;
+  --talent-card-text: #ffd100;
+  --talent-card-meta: #c9c3b6;
+  --talent-card-dim: #8f8a80;
+  --talent-card-pip: #f8b700;
+  --talent-card-pip-off: #3d3a33;
+  --talent-card-unmet: #ff3b30;
+
   /* The popup list, which IS a page surface and takes the page's shadow. */
   --popup-shadow: rgb(0 0 0 / 55%);
 
@@ -809,6 +825,25 @@ button:disabled {
   background: var(--accent-strong);
 }
 
+/* Three runs, stacked: DPS, Tank and Healer (round 52). */
+.run-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.run-buttons .run-button {
+  margin-top: 0;
+}
+
+/* One healer fight's report, timeline and log, kept together (round 52). */
+.healer-report {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .progress {
   height: 4px;
   margin-top: 8px;
@@ -1118,6 +1153,92 @@ button:disabled {
 
 .talent.maxed .talent-rank {
   color: var(--success);
+}
+
+/* The grid cell. It carries the hover card so a locked (disabled) talent,
+   which fires no mouse events of its own, still shows one. */
+.talent-slot {
+  display: block;
+  min-width: 0;
+}
+
+.talent-card {
+  width: 270px;
+  padding: 10px 12px 9px;
+  background: var(--talent-card-bg);
+  border: 1px solid var(--talent-card-border);
+  border-radius: 6px;
+  box-shadow: 0 12px 34px var(--item-card-shadow);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.talent-card-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.talent-card-icon {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--talent-card-border);
+  border-radius: 4px;
+}
+
+/* Small caps over a capitalised name is the client's own lettering. */
+.talent-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant: small-caps;
+  letter-spacing: 0.02em;
+  color: var(--talent-card-name);
+}
+
+.talent-card-rank {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--talent-card-meta);
+}
+
+.talent-card-pips {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.talent-card-pips .pip {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--talent-card-pip-off);
+}
+
+.talent-card-pips .pip.on {
+  background: var(--talent-card-pip);
+}
+
+.talent-card-text {
+  margin: 0 0 6px;
+  color: var(--talent-card-text);
+}
+
+.talent-card-label {
+  font-size: 11px;
+  color: var(--talent-card-meta);
+}
+
+.talent-card-foot {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--talent-card-dim);
+}
+
+.talent-card-foot.is-unmet {
+  color: var(--talent-card-unmet);
 }
 
 .talent-reset {
@@ -2289,6 +2410,26 @@ button:disabled {
 
 /* A note is the measured figure or owner ruling that belongs to this entry,
    which lived only in a TypeScript comment before the list was data. */
+/* The list-wide smart healing switch (round 54). */
+.apl-smart-healing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 8px;
+  font-size: 12px;
+}
+
+/* An entry's pre-cast cancel check, on its own line under the condition (round 53). */
+.apl-cancel {
+  flex-basis: 100%;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.apl-cancel .apl-number {
+  width: 4.5em;
+}
+
 .apl-note {
   flex-basis: 100%;
   font-size: 11px;
@@ -2642,7 +2783,6 @@ button:disabled {
 }
 
 .app-header {
-  position: sticky;
   top: 0;
   z-index: 20;
   height: var(--header-height);
@@ -2657,9 +2797,28 @@ button:disabled {
   height: calc(var(--header-height) - 14px);
 }
 
+/*
+ * ONLY WHERE THREE COLUMNS FIT. This rule shipped bare, after the breakpoints
+ * at the top of the file, so it beat them at EVERY width: a phone got three
+ * columns, the middle one -- results, talents, gear -- came out 0px wide, and
+ * the page scrolled sideways. Below 1201px the earlier breakpoints apply again.
+ */
 .app-layout {
-  grid-template-columns: minmax(300px, 340px) minmax(0, 1fr) var(--rail-width);
   gap: var(--column-gap);
+}
+
+@media (min-width: 1201px) {
+  .app-layout:not(.single) {
+    grid-template-columns: minmax(300px, 340px) minmax(0, 1fr) var(--rail-width);
+  }
+}
+
+/* The header is pinned only where the columns beside it are -- on a phone it
+   would cost a tenth of the screen on every scroll. */
+@media (min-width: 901px) {
+  .app-header {
+    position: sticky;
+  }
 }
 
 /*
@@ -2878,3 +3037,140 @@ button:disabled {
 .character-summary-body {
   flex-wrap: wrap;
 }
+
+/* ---------------------------------------------------------------------------
+   PHONES AND NARROW WINDOWS (round 52). The pinned desktop layout broke the
+   small screen outright; this is what one column needs to be usable.
+   --------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+  /* One column on both screens. The character step's two fixed tracks were
+     wider than a phone (280px + the rail) and pushed the page sideways. */
+  .app-layout,
+  .app-layout.single {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-header {
+    height: auto;
+    margin-bottom: 12px;
+  }
+
+  .logo {
+    height: 48px;
+  }
+
+  /* WHAT A RUN PRODUCES COMES FIRST. One column puts the editing panels -- gear,
+     talents, the priority list -- between the Run button and the results, and
+     with them open that was ten thousand pixels of scrolling to find a DPS
+     figure. `order` moves the three output panels to the top of their column,
+     which on one column is directly under the Simulation panel. */
+  .panel-output,
+  .healer-report {
+    order: -1;
+  }
+
+  /* A breakdown table still scrolls sideways inside its panel -- it is 600px
+     of columns -- so its first column stays put and the row keeps its name. */
+  .breakdown th:first-child,
+  .breakdown td:first-child {
+    position: sticky;
+    /* Past the panel body's 16px padding, or the scrolled columns show
+       through the gap to its left. */
+    left: -16px;
+    z-index: 1;
+    background: var(--surface);
+    box-shadow: 16px 0 0 -15px var(--border);
+  }
+
+  /* A header whose buttons outgrow the title wraps them onto a second line --
+     the Gear panel's four set buttons were 404px in a 341px panel. */
+  .panel-header {
+    flex-wrap: wrap;
+  }
+
+  .panel-actions {
+    flex-shrink: 1;
+    flex-wrap: wrap;
+  }
+
+  /* THE PRIORITY LIST, which is the panel a phone most needs to edit. On the
+     desktop an entry is one row -- rank, conditions, controls -- and at 341px
+     the controls took 140px and squeezed every select to a sliver. Here the
+     controls drop to their own line under the conditions, a clause may wrap
+     inside itself, and no select is wider than the row. */
+  .apl-entry {
+    flex-wrap: wrap;
+  }
+
+  .apl-body {
+    flex: 1 1 calc(100% - 30px);
+    min-width: 0;
+  }
+
+  .apl-controls {
+    flex-basis: 100%;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .apl-clause {
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+
+  .apl-clause select,
+  .apl-clause input,
+  .apl-aura {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Fingers, not a pointer: the row buttons were about 20px square. */
+  .apl-controls button,
+  .apl-clause-remove,
+  .panel-toggle {
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  /* The slot grid's 440px minimum is wider than a phone, so it is one fluid
+     column here; a three-control gear row keeps its label beside the item and
+     puts the enchant on the line below, under the item. */
+  .gear-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gear-slot {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .gear-slot > :nth-child(3) {
+    grid-column: 2;
+  }
+
+  .gear-slot select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* A consumable row puts its category above its choice: 150px of label
+     beside a dropdown sized to its longest option was 440px of row. */
+  .consumable-slot {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+    margin-bottom: 6px;
+  }
+
+  .consumable-slot select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Nothing may push the page wider than the screen: a wide table or grid
+     scrolls inside its own panel instead. */
+  html,
+  body {
+    overflow-x: hidden;
+  }
+}
+

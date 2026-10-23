@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import type { BatchResult } from '../../simulator';
-import { runProfileBatch } from '../../simulator';
+import { runHealerBatch, runProfileBatch } from '../../simulator';
 import type { CharacterProfile } from '../../profiles';
 
 /** A fresh non-negative integer seed, in the range the engine expects. */
@@ -16,8 +16,24 @@ export type SimulationState =
    * fresh seed per run, so the profile on screen cannot reproduce the result
    * and this one can. Sim History stores it.
    */
-  | { readonly status: 'done'; readonly batch: BatchResult; readonly profile: CharacterProfile }
+  | {
+      readonly status: 'done';
+      readonly batch: BatchResult;
+      readonly profile: CharacterProfile;
+      /**
+       * A HEALER RUN'S TWO REPORTS (round 52): the Tank Healer fight and the
+       * Raid Healer fight, run back to back at one seed. `batch` is the tank
+       * fight's, so everything that reads a single batch -- Sim History --
+       * still has one.
+       */
+      readonly healer?: HealerReports;
+    }
   | { readonly status: 'error'; readonly message: string };
+
+export interface HealerReports {
+  readonly tank: BatchResult;
+  readonly raid: BatchResult;
+}
 
 /**
  * Runs a simulation and exposes its state to React.
@@ -62,16 +78,42 @@ export function useSimulation() {
     }, 0);
   }, []);
 
-  /** Put a finished run back on screen as though it had just completed. */
-  const restore = useCallback((batch: BatchResult, profile: CharacterProfile) => {
-    setState({ status: 'done', batch, profile });
-    setProgress(1);
+  /**
+   * A healer run: the Tank Healer fight, then the Raid Healer fight, on one
+   * fresh seed. The progress bar covers both, half each.
+   */
+  const runHealer = useCallback((profile: CharacterProfile) => {
+    setState({ status: 'running' });
+    setProgress(0);
+
+    setTimeout(() => {
+      try {
+        const ran = { ...profile, simulation: { ...profile.simulation, seed: randomSeed() } };
+        const tank = runHealerBatch(ran, 'tank', (fraction) => setProgress(fraction / 2));
+        const raid = runHealerBatch(ran, 'raid', (fraction) => setProgress(0.5 + fraction / 2));
+        setState({ status: 'done', batch: tank, profile: ran, healer: { tank, raid } });
+      } catch (error) {
+        setState({
+          status: 'error',
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }, 0);
   }, []);
+
+  /** Put a finished run back on screen as though it had just completed. */
+  const restore = useCallback(
+    (batch: BatchResult, profile: CharacterProfile, healer?: HealerReports) => {
+      setState({ status: 'done', batch, profile, ...(healer ? { healer } : {}) });
+      setProgress(1);
+    },
+    [],
+  );
 
   const reset = useCallback(() => {
     setState({ status: 'idle' });
     setProgress(0);
   }, []);
 
-  return { state, progress, run, restore, reset };
+  return { state, progress, run, runHealer, restore, reset };
 }

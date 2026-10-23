@@ -9,6 +9,7 @@ import {
 } from './hunter';
 import { MAGE_ARCANE, MAGE_FIRE, MAGE_FROSTFIRE } from './mage';
 import {
+  PALADIN_HOLY,
   PALADIN_PROTECTION,
   PALADIN_RETRIBUTION,
   PALADIN_SHOCKADIN,
@@ -268,6 +269,12 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     owner: 'paladin',
     list: PALADIN_SHOCKADIN,
     profiles: ['pally_shockadin', 'pally_shockadin_2h'],
+  },
+  {
+    name: 'PALADIN_HOLY',
+    owner: 'paladin',
+    list: PALADIN_HOLY,
+    profiles: ['holy_pal'],
   },
   {
     name: 'PALADIN_PROTECTION',

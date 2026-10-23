@@ -12,7 +12,9 @@
  */
 export type { BatchOptions, BatchResult } from './runBatch';
 export type { BatchAuraUptime, BatchStatAverages } from '../analysis';
-export { runBatch, runProfileBatch, resourceFlowOf } from './runBatch';
+export { runBatch, runHealerBatch, runProfileBatch, resourceFlowOf } from './runBatch';
+export type { HealerFight } from './healerEncounter';
+export { HEALER_ID, TANK_ID, healerEncounter } from './healerEncounter';
 export { runProfile, runSimulation } from './runSimulation';
 export { FIGHT_DURATION_VARIANCE } from './trainingDummyEncounter';
 export { characterAtCombatStart } from './characterAtCombatStart';

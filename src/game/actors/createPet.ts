@@ -8,6 +8,7 @@ import type { PetFamilyId } from '../character/petFamilies';
 import { PET_FAMILIES, abilitiesForFamily } from '../character/petFamilies';
 import { PET_ABILITIES } from '../abilities/pet';
 import { PET_ROTATION } from '../rotations/pet';
+import { hunterPetHit } from './petHit';
 
 /**
  * A Hunter's pet, built from its owner.
@@ -292,6 +293,11 @@ export function createPet(options: PetOptions): CombatantType {
   const talents = options.talents ?? NO_PET_MODIFIERS;
   const stats = owner.stats.effective;
   const definition = PET_FAMILIES[family];
+  /*
+   * THE OWNER'S RANGED HIT: the character-wide stat plus anything granted to
+   * the ranged slot alone. See `petHit.ts` for the rule and its two numbers.
+   */
+  const hit = hunterPetHit(stats.hitChance + owner.hitBonusFor('ranged'));
 
   /*
    * THE OWNER'S FORMULA, TERM FOR TERM:
@@ -399,6 +405,7 @@ export function createPet(options: PetOptions): CombatantType {
        * ======================================================================
        */
       dodgeParryReduction: stats.dodgeParryReduction * PET_EXPERTISE_SHARE,
+      hitChance: hit.hitChance,
       strength: PET_BASE_STRENGTH,
       agility: PET_BASE_AGILITY,
     },
@@ -415,6 +422,7 @@ export function createPet(options: PetOptions): CombatantType {
     })),
     abilities: [...known, ...(options.extraAbilities ?? [])],
     rotation: PET_ROTATION,
+    attackTableModifiers: hit.attackTableModifiers,
     /*
      * THE FAMILY AND HAPPINESS MODIFIERS, alongside the talents', COMPOSED ONCE.
      *

@@ -142,6 +142,18 @@ export type AplCondition =
       readonly compare: AplCompare;
       readonly fraction: number;
     }
+  /**
+   * A FRIENDLY's health as a fraction of maximum (round 52): the tank's, the
+   * mean of the entry target's party, or the mean of the whole raid. The
+   * entry's own target is `health` with `on: 'target'`, which already existed.
+   * With no raid in the fight every subject reads full.
+   */
+  | {
+      readonly kind: 'friendlyHealth';
+      readonly of: 'tank' | 'party' | 'raid';
+      readonly compare: AplCompare;
+      readonly fraction: number;
+    }
   /** Milliseconds until a weapon swings again. Zero when the slot is idle. */
   | {
       readonly kind: 'swingIn';
@@ -191,9 +203,31 @@ export type AplCondition =
   | { readonly kind: 'builtin'; readonly id: string; readonly args?: readonly (string | number)[] };
 
 /** One line of a priority list, as data. */
+/**
+ * Who an entry casts at, when it is not the default enemy (round 52).
+ *
+ * `tank` is the raid's tank; `lowestHealth` the raid member with the least
+ * health as a fraction, optionally leaving the tank out -- which is "all other
+ * raid members get individual Flash of Light casts". A condition reading
+ * `health` on `target` then asks about whoever this picked.
+ */
+export type AplTarget =
+  | { readonly kind: 'tank' }
+  | { readonly kind: 'lowestHealth'; readonly excludeTank?: boolean };
+
+/** When to ask whether to cancel a cast, and what to ask. See `AplEntry.cancel`. */
+export interface AplCastCancel {
+  /** How far through the cast, from 0 to 1. */
+  readonly atFraction: number;
+  /** True cancels the cast. */
+  readonly condition: AplCondition;
+}
+
 export interface AplEntry {
   readonly abilityId: string;
   readonly condition?: AplCondition;
+  /** Who it is cast at. Absent is the default enemy. */
+  readonly target?: AplTarget;
   /**
    * Whether this entry may cancel an interruptible channel in progress.
    *
@@ -203,6 +237,14 @@ export interface AplEntry {
    * entry above the channel".
    */
   readonly interruptsChannel?: boolean;
+  /**
+   * A PRE-CAST (round 53): ask `condition` at `atFraction` of the way through
+   * this entry's cast, and cancel the cast if it holds. The condition reads
+   * the entry's own target -- `health on target above 0.95` on a Holy Light
+   * aimed at the tank is "the tank is still topped up". A cancelled cast costs
+   * nothing; see `CastCancelCheck` in the engine.
+   */
+  readonly cancel?: AplCastCancel;
   /**
    * A note from whoever wrote the entry, shown in the panel.
    *
@@ -267,4 +309,14 @@ export interface AplEntry {
 export interface AplList {
   readonly name: string;
   readonly entries: readonly AplEntry[];
+  /**
+   * SMART HEALING (round 54), one switch for the whole list: every entry that
+   * aims at a friendly -- the tank, or the lowest-health member -- aims at
+   * whoever has the lowest health PERCENTAGE instead, the tank included, and
+   * its conditions read that target. Entries aimed at the enemy are untouched.
+   *
+   * ABSENT MEANS OFF, and off is dropped rather than stored as `false`, the
+   * rule `disabled` follows, so a list toggled back compares equal.
+   */
+  readonly smartHealing?: boolean;
 }

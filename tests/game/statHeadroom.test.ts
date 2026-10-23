@@ -334,7 +334,12 @@ describe('hit headroom', () => {
      * themselves, so it is a QUESTION and this is where it is findable.
      * ========================================================================
      */
-    const SHORT_SINCE_THE_FLOOR_WENT: Readonly<Record<string, number>> = { druid_moonkin: 1 };
+    /*
+     * AND THE OWNER ANSWERED IT IN ROUND 51: every caster template gained the
+     * 10 hit rating it was short, so the Moonkin is back on the cap and this
+     * table is empty. It stays as the place a future shortfall would be pinned.
+     */
+    const SHORT_SINCE_THE_FLOOR_WENT: Readonly<Record<string, number>> = {};
 
     const tauren = PROFILE_PRESETS.filter(
       (preset) => preset.build().character.race === 'tauren',
