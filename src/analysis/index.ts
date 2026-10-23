@@ -17,6 +17,7 @@ export type {
   BatchAuraUptime,
   BatchDamageTaken,
   BatchCastCharge,
+  BatchHealingTotals,
   BatchResourceFlow,
   BatchResourceTotals,
   BatchStatAverages,

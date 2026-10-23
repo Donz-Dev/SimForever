@@ -2,6 +2,7 @@ import type {
   BatchAbilityTotals,
   BatchDamageTaken,
   BatchCastCharge,
+  BatchHealingTotals,
   BatchResourceFlow,
   BatchSurvival,
   DistributionSummary,
@@ -14,6 +15,8 @@ import type { BatchAuraUptime, BatchStatAverages } from '../analysis';
 import type { SimulationConfig } from '../engine';
 import { Simulation, deriveSeed, toSeconds } from '../engine';
 import { trainingDummyEncounter } from './trainingDummyEncounter';
+import type { HealerFight } from './healerEncounter';
+import { HEALER_ID, healerEncounter } from './healerEncounter';
 import { PET_UNMODELLED } from '../game/actors/createPet';
 import type { CharacterProfile } from '../profiles';
 import { runSimulation } from './runSimulation';
@@ -33,6 +36,17 @@ export interface BatchOptions {
   readonly baseSeed: number;
   /** Called with a 0-to-1 fraction, for a progress bar. */
   readonly onProgress?: (fraction: number) => void;
+  /**
+   * Which figure picks the representative fight for the combat log: the
+   * median DPS by default, the median HPS for a healer run (round 52).
+   */
+  readonly representativeBy?: 'dps' | 'hps';
+  /**
+   * Which combatant the report is ABOUT. The first friendly by default, which
+   * is the player in every ordinary fight; a healer encounter puts the tank
+   * first so the boss swings at it, and names the healer here (round 52).
+   */
+  readonly playerId?: string;
 }
 
 /**
@@ -87,6 +101,25 @@ export interface BatchResult {
   readonly tps: DistributionSummary;
   /** Every iteration's TPS, in the same order as `dpsSamples`. */
   readonly tpsSamples: readonly number[];
+  /**
+   * HEALING PER SECOND, the player's effective healing (round 52). Overhealing
+   * is excluded, and so is any external heal -- the assumed tank healer is not
+   * the player. Zero for anybody who does not heal.
+   */
+  readonly hps: DistributionSummary;
+  /** Every iteration's HPS, in the same order as `dpsSamples`. */
+  readonly hpsSamples: readonly number[];
+  /** The player's heals by spell, pooled across every iteration. */
+  readonly healing: readonly BatchHealingTotals[];
+  /** Mean effective healing done by the player per iteration. */
+  readonly meanHealing: number;
+  /**
+   * Mean deaths per iteration among every OTHER friendly actor -- the people a
+   * healer is keeping up (round 52). Zero in a fight with nobody else in it.
+   */
+  readonly alliedDeaths: number;
+  /** The combatant the report is about -- the healer in a healer fight. */
+  readonly playerId: string;
   /** The player's threat per fight by source, largest first. */
   readonly threat: readonly { readonly name: string; readonly threat: number }[];
   /**
@@ -245,6 +278,9 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
 
   const dpsSamples: number[] = new Array(iterations);
   const tpsSamples: number[] = new Array(iterations);
+  const hpsSamples: number[] = new Array(iterations);
+  let healingSoFar = 0;
+  let alliedIds: readonly string[] = [];
   let threatSoFar = 0;
   const deathSamples: number[] = new Array(iterations);
   const seeds: number[] = new Array(iterations);
@@ -279,9 +315,15 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     const simulation = new Simulation({ ...config, seed }, totals);
     const run = simulation.run();
 
-    const friendlyIds = run.actors
+    const everyFriendly = run.actors
       .filter((actor) => actor.faction === 'friendly')
       .map((actor) => actor.id);
+    /*
+     * A NAMED PLAYER IS THE WHOLE REPORT. A healer fights beside a tank and a
+     * raid whose damage, buffs and swings are not the healer's, so with a
+     * `playerId` the friendly side counted is that one actor (round 52).
+     */
+    const friendlyIds = options.playerId ? [options.playerId] : everyFriendly;
     if (enemyIds.length === 0) {
       enemyIds = run.actors
         .filter((actor) => actor.faction === 'hostile')
@@ -291,8 +333,9 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     const elapsedSeconds = Math.max(toSeconds(run.elapsedMs), 0.001);
     durations[index] = run.elapsedMs;
     if (!playerId) {
-      playerId = friendlyIds[0] ?? '';
+      playerId = options.playerId ?? friendlyIds[0] ?? '';
       friendlyIdsForReporting = friendlyIds;
+      alliedIds = everyFriendly.filter((id) => id !== playerId);
       rotationName = run.actors.find((actor) => actor.id === playerId)?.rotation;
       const player = simulation.combatants.find((actor) => actor.id === playerId);
       caveats = (player?.abilities.all ?? [])
@@ -317,6 +360,11 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     const cumulative = totals.totalForAny(friendlyIds);
     dpsSamples[index] = (cumulative - damageSoFar) / elapsedSeconds;
     damageSoFar = cumulative;
+
+    // HEALING THE SAME WAY, the player's alone (round 52).
+    const healingNow = totals.totalHealingForAny([playerId]);
+    hpsSamples[index] = (healingNow - healingSoFar) / elapsedSeconds;
+    healingSoFar = healingNow;
 
     // THREAT THE SAME WAY, the player's alone.
     const threatNow = totals.totalThreatFor(playerId);
@@ -343,7 +391,11 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
   // Re-run the most typical iteration, this time recording everything. One
   // extra fight is a rounding error next to the batch, and it means the log the
   // user reads actually matches the headline number.
-  const representativeIndex = indexClosestTo(dpsSamples, dps.median);
+  const hps = summarize(hpsSamples);
+  const representativeIndex =
+    options.representativeBy === 'hps'
+      ? indexClosestTo(hpsSamples, hps.median)
+      : indexClosestTo(dpsSamples, dps.median);
   const representative = runSimulation({ ...config, seed: seeds[representativeIndex] });
 
   /*
@@ -366,6 +418,12 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     dpsSamples,
     tps: summarize(tpsSamples),
     tpsSamples,
+    hps,
+    hpsSamples,
+    healing: totals.healingBreakdown(playerId),
+    meanHealing: totals.meanHealingFor(playerId),
+    alliedDeaths: totals.totalDeathsForAny(alliedIds) / iterations,
+    playerId,
     threat: totals.threatBreakdown(playerId),
     deathSamples,
     representative,
@@ -425,6 +483,27 @@ export function runProfileBatch(
       ...raidForcedAuraIds(profile.raidBuffs),
       ...(profile.encounter.targetAttacks ? [EXTERNAL_HEALER.id] : []),
     ],
+  };
+}
+
+/**
+ * A healer's batch for one of the two fights (round 52): the report is about the
+ * healer, and the combat log is the fight closest to the median HPS.
+ */
+export function runHealerBatch(
+  profile: CharacterProfile,
+  fight: HealerFight,
+  onProgress?: (fraction: number) => void,
+): BatchResult {
+  return {
+    ...runBatch(healerEncounter(profile, fight), {
+      iterations: profile.simulation.iterations,
+      baseSeed: profile.simulation.seed,
+      onProgress,
+      representativeBy: 'hps',
+      playerId: HEALER_ID,
+    }),
+    forcedAuraIds: raidForcedAuraIds(profile.raidBuffs),
   };
 }
 

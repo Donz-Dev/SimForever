@@ -999,6 +999,9 @@ export function talentBuild(
         case 'abilityCrit':
           abilityModifiers.add(effect.abilityId, { critBonus: value });
           break;
+        case 'abilityHealing':
+          abilityModifiers.add(effect.abilityId, { healingMultiplier: 1 + value / 100 });
+          break;
         case 'abilityDamage':
           abilityModifiers.add(
             effect.abilityId,

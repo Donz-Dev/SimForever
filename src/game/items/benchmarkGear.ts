@@ -110,7 +110,8 @@ export type BenchStat =
   | 'Parry'
   | 'Block'
   | 'Dodge'
-  | 'Bonus Armor';
+  | 'Bonus Armor'
+  | 'Healing Power';
 
 export const COST: Readonly<Record<BenchStat, number>> = {
   Crit: 1,
@@ -128,6 +129,14 @@ export const COST: Readonly<Record<BenchStat, number>> = {
   Block: 1,
   Dodge: 1,
   'Bonus Armor': 0.1,
+  /*
+   * THE TRANSCRIBED 0.45 (round 52), the figure `tools/item_budget.ts` already
+   * prices Forever's healer items at. `docs/itemization.md` fitted it at 0.42
+   * against both Classic's own items and Forever's once the "+N Spell Damage"
+   * rider stopped being charged as a second purchase -- inside the uncertainty
+   * of the sourced figure, which is why the sourced figure stands.
+   */
+  'Healing Power': 0.45,
 };
 
 /**
@@ -156,6 +165,8 @@ export const LINE: Readonly<Record<BenchStat, (value: number) => string>> = {
   Block: (v) => `Equip: +${v} Block Rating`,
   Dodge: (v) => `Equip: +${v} Dodge Rating`,
   'Bonus Armor': (v) => `+${v} Armor`,
+  // Forever's own healer wording, "Equip: +73 Healing", which `itemData` reads.
+  'Healing Power': (v) => `Equip: +${v} Healing`,
 };
 
 /** Stats that count as a base attribute, for the jewellery rule below. */
@@ -624,6 +635,27 @@ export const STAMINA_BUDGET_SHARE = 0.25;
  * that the floor wins and the budget gives way.
  * ----------------------------------------------------------------------------
  */
+/**
+ * THE HEALER TEMPLATES' HEALING POWER FLOOR, as a share of a slot's budget
+ * (round 52). The owner: "there should be minimums for Stamina and Healing
+ * Power" -- and no figure, which is the stamina floor's story too, so it is
+ * settled the same way: what Forever's own items spend.
+ *
+ * MEASURED BY `tools/healing_share.ts`: 116 clean captured pieces carrying
+ * "+N Healing", priced at 0.45, spend a MEDIAN 24.5% of `budget^1.5` on it
+ * (p25 15.3%; rings and necks over 50%, waists and wrists near 16%). 25% is
+ * that median, and is the stamina floor's own figure.
+ */
+export const HEALING_POWER_BUDGET_SHARE = 0.25;
+
+/** The least healing power a healer's slot carries. See `staminaFloor`. */
+export function healingPowerFloor(budget: number, alreadySpent = 0): number {
+  const wanted = (HEALING_POWER_BUDGET_SHARE * budget ** BUDGET_EXPONENT) ** (1 / BUDGET_EXPONENT);
+  const remaining = Math.max(0, budget ** BUDGET_EXPONENT - alreadySpent);
+  const affordable = remaining ** (1 / BUDGET_EXPONENT);
+  return Math.floor(Math.min(wanted, affordable) / COST['Healing Power']);
+}
+
 export function staminaFloor(budget: number, alreadySpent = 0): number {
   const wanted = (STAMINA_BUDGET_SHARE * budget ** BUDGET_EXPONENT) ** (1 / BUDGET_EXPONENT);
   const remaining = Math.max(0, budget ** BUDGET_EXPONENT - alreadySpent);

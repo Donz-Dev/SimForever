@@ -26,6 +26,7 @@ const BLOCKS: Readonly<Record<string, number>> = {
   prot_pally: 19, bm_hunter: 20, lw_ranged: 21, lw_melee: 22, hawk_melee: 23,
   warlock_smds: 24, warlock_firelock: 25, shadow_priest: 26, pally_shockadin_2h: 27,
   fury_prot: 28, warlock_demonology: 29, warlock_sbolt: 30,
+  holy_pal: 31,
 };
 
 describe('benchmark item ids', () => {

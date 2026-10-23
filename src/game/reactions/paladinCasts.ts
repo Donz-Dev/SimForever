@@ -80,10 +80,17 @@ export const sanctifiedJudgement = (chancePercent: number): CastReaction => ({
  * naming it is both the narrowest and the complete reading: a Paladin who never
  * heals cannot spend the buff any other way.
  */
+export const DIVINE_FAVOR_SPELLS: ReadonlySet<string> = new Set([
+  'holy_shock',
+  'holy_light',
+  'flash_of_light',
+]);
+
 export const divineFavorSpent = (): CastReaction => ({
   id: 'divine_favor_spent',
-  abilityId: 'holy_shock',
-  canTrigger: (_context, actor) => actor.auras.has('divine_favor'),
+  // Any of the three since round 52, when the two heals were declared.
+  canTrigger: (_context, actor, cast) =>
+    DIVINE_FAVOR_SPELLS.has(cast.ability.id) && actor.auras.has('divine_favor'),
   onTrigger: (context, actor) => {
     actor.auras.remove(context, 'divine_favor');
   },

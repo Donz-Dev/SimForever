@@ -28,6 +28,7 @@ const sample = (
   timestamp,
   actorId: 'player',
   attackPower: 0,
+  healingPower: 0,
   rangedAttackPower: 0,
   spellPower: 0,
   spellPowerBySchool: {},

@@ -226,6 +226,8 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
     [3, 'shadowform'],
     [1.5, 'mind_blast'],
   ],
+  // Round 52's healer: the owner gave a list and no opener.
+  holy_pal: [],
 };
 
 /** Every cast a fight recorded, with the moment it happened. */
@@ -245,7 +247,7 @@ function castsIn(presetId: string): readonly { id: string; at: number }[] {
 }
 
 describe("the owner's openers are transcribed exactly", () => {
-  it('declares one for all 31 profiles, and only Venom declares none', () => {
+  it('declares one for every profile, and only Venom and Holy Pal declare none', () => {
     expect(Object.keys(OWNER_OPENERS).sort()).toEqual(
       PROFILE_PRESETS.map((preset) => preset.id).sort(),
     );

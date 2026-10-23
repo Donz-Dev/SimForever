@@ -99,6 +99,54 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 52: the healer archetype, three run buttons, and Holy Pal
+
+**HEALING THROUGHPUT IS SIMULATED NOW**, which is the first time a member of
+`OutOfScope` has been reached by a feature rather than repealed by a ruling.
+The `healing` member and its entries are LEFT IN PLACE: whether each one is
+now a live gap is a per-talent question, and re-filing 36 entries on a
+feature's say-so would be the "a ruling covers what it says" failure.
+
+| | what it is |
+| --- | --- |
+| buttons | Run DPS / Run Tank / Run Healer. The "target attacks back" checkbox is gone; DPS and Tank set `targetAttacks` (and Salvation, through `withSalvationFor`) themselves |
+| tank fight | `healerEncounter(profile, 'tank')`: the Prot Warr preset tanking the real boss under the ordinary 10% ramp, the assumed healer OFF, revived on death; the healer is never attacked |
+| raid fight | 20 members, 5 parties of 5, tank in party 1, health taken from real presets' built characters. Tank 30% every 2s; everybody 25% every 15s then 15% every 2s for 8s |
+| report | one collapsible panel per fight: HPS, TPS, Healing Power, Haste; Healing Done; buffs, mana, timeline and combat log as for a damage run |
+| engine | `healingPower` stat; heals read IT and never spell power; ability crit and a new `healingMultiplier` reach heals; heal threat opt-in via `threatens` |
+| APL | `friendlyHealth` (tank, party, raid average) and an entry `target` (tank, or lowest-health member, optionally excluding the tank) |
+| Holy Pal | 32nd preset, 31/13/7 off the owner's URL; benchmark gear with a 25% healing-power floor beside the stamina floor (measured median 24.5%, `tools/healing_share.ts`), Intellect/Spirit/Crit competing; the owner's four-line list below the shared free entries |
+| words | "+N Healing" is healing only, "+N Spell Damage" damage only, "+N Spell Power" both; the two Healing Power enchants and +44 Healing food are stats now |
+
+First figures, 3000 iterations, E65, `tools/probe_healer.ts`: **tank fight
+342 HPS, 128 TPS, 5.26 tank deaths a fight**; **raid fight 675 HPS, 271 TPS,
+44.5 deaths among the twenty**. No DPS row moved -- the stat is new and no
+damage path reads it.
+
+**WHY THE TANK DIES 5 TIMES WITH A HEALER ON IT**: the ramp. By about 30s the
+boss swings for more than the tank's whole pool, so the tank is one-shot from
+full and the healer has nothing to do between deaths. That is the ramp doing
+what it does on a tank run, and the first thing to look at if the tank fight
+is meant to be survivable.
+
+**HOLY SHOCK FIRES ALMOST NEVER (0.00 a fight)**, and that is the owner's
+order: line 1, Holy Light below 65%, is above line 2, Holy Shock below 30%, so
+whenever the tank is below 30% it is also below 65% and Holy Light wins. Kept
+as written.
+
+Questions for the owner, all recorded where the number lives:
+
+1. The heal coefficients are `PLACEHOLDER_`: Holy Light 2.5/3.5, Flash of Light
+   1.5/3.5, Holy Shock its damage figure -- the worksheet has no heal rows.
+2. Heal threat is `PLACEHOLDER_HEAL_THREAT_PER_POINT` 0.5, split across
+   enemies, and only the Paladin heals opt in. Should self-heals threaten?
+3. Holy Shock under Holy Light -- intended?
+4. The first raid pulse lands at 15s, not at the pull.
+5. Raid members are stood back up when they die, as the tank is.
+6. Enchant Weapon - Spell Power is "damage to spells", so it gives the Holy Pal
+   nothing; there is no healing weapon enchant in the data.
+7. Light's Vigil (a party heal off the next Holy Shock) is not declared.
+
 ## Round 51: sixteen owner items, and a tree change underneath them
 
 **WRITTEN SO ANOTHER ROUND CAN BE ADDED**, which this file's own history says

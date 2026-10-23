@@ -11,6 +11,7 @@ import { SIM_HISTORY_LIMIT, withRun } from '../../src/ui/simHistory';
 
 const averages = (overrides: Partial<BatchStatAverages>): BatchStatAverages => ({
   attackPower: 0,
+  healingPower: 0,
   rangedAttackPower: 50,
   spellPower: 0,
   spellPowerBySchool: {},

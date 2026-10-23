@@ -135,6 +135,16 @@ export function describeCondition(condition: AplCondition, names: DescribeNames 
     case 'health':
       return `${subjectWord(condition.on).replace(' have', '').replace(' has', '')} health is ${comparison(condition.compare)} ${Math.round(condition.fraction * 100)}%`;
 
+    case 'friendlyHealth': {
+      const who =
+        condition.of === 'tank'
+          ? "the tank's health"
+          : condition.of === 'party'
+            ? "the target's party's average health"
+            : "the raid's average health";
+      return `${who} is ${comparison(condition.compare)} ${Math.round(condition.fraction * 100)}%`;
+    }
+
     case 'swingIn':
       return `your ${slotWord(condition.slot)} swing is ${comparison(condition.compare)} ${condition.milliseconds}ms away`;
 

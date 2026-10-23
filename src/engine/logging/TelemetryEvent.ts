@@ -137,6 +137,14 @@ export interface HealTelemetryEvent extends TelemetryBase {
   /** Portion that exceeded the target's missing health. */
   readonly overhealing: number;
   readonly periodic: boolean;
+  /**
+   * The heal came from nobody in the fight -- the assumed tank healer, or a
+   * heal the owner ruled scales with nothing about its source. Its `sourceId`
+   * is a stand-in, so a reader that credits a healer must skip it (round 52).
+   */
+  readonly external?: boolean;
+  /** Only a heal that says so threatens. See `HealRequest.threatens`. */
+  readonly threatens?: boolean;
 }
 
 export interface AuraTelemetryEvent extends TelemetryBase {
@@ -250,6 +258,8 @@ export interface StatSampleEvent extends TelemetryBase {
   readonly rangedAttackPower: number;
   /** School-BLIND spell power, which is what the character sheet's row shows. */
   readonly spellPower: number;
+  /** Healing power (round 52). */
+  readonly healingPower: number;
   /**
    * Per school, for the schools that read MORE than the blind pool: the figure
    * `dealDamage` actually uses. Already includes the blind pool, and empty for
@@ -284,7 +294,7 @@ export interface ThreatTelemetryEvent extends TelemetryBase {
   /** After every modifier. Negative is threat removed. */
   readonly amount: number;
   /** Damage, an ability's flat amount without damage, or a resource gained. */
-  readonly cause: 'damage' | 'ability' | 'resource';
+  readonly cause: 'damage' | 'ability' | 'resource' | 'healing';
   readonly abilityId?: string;
   readonly abilityName: string;
 }

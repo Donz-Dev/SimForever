@@ -208,6 +208,14 @@ export const WEIGHTABLE_STATS: readonly WeightableStat[] = [
     detail: 'School-blind. Each spell scales it by its own coefficient.',
   },
   {
+    id: 'healingPower',
+    name: 'Healing power',
+    statPerUnit: 1,
+    unitLabel: '',
+    step: 30,
+    detail: 'What a heal scales with. Worth nothing to a DPS run, which heals nobody.',
+  },
+  {
     id: 'hitChance',
     /*
      * "HIT RATING", NOT "HIT CHANCE", on the owner's instruction -- Forever

@@ -14,6 +14,10 @@ interface TimelinePanelProps {
   readonly result: SimulationResult;
   /** Aura ids that get no lane: the raid buff selection's forced ones. */
   readonly hiddenAuraIds?: readonly string[];
+  /** Draw only this actor's lanes -- the healer in a healer fight (round 52). */
+  readonly playerId?: string;
+  /** A title of its own, when there is one timeline per healer fight. */
+  readonly title?: string;
 }
 
 /** How much of the fight is on screen. "First 30s" is where a pull is read. */
@@ -44,7 +48,12 @@ const OPENING_MS = 30_000;
  */
 const NO_HIDDEN_AURAS: readonly string[] = [];
 
-export function TimelinePanel({ result, hiddenAuraIds = NO_HIDDEN_AURAS }: TimelinePanelProps) {
+export function TimelinePanel({
+  result,
+  hiddenAuraIds = NO_HIDDEN_AURAS,
+  playerId,
+  title = 'Timeline',
+}: TimelinePanelProps) {
   const [includeSwings, setIncludeSwings] = useState(false);
   const [zoom, setZoom] = useState<Zoom>('whole');
 
@@ -56,12 +65,15 @@ export function TimelinePanel({ result, hiddenAuraIds = NO_HIDDEN_AURAS }: Timel
    */
   const timeline = useMemo(
     () => {
-      const built = buildFightTimeline(result, { includeSwings });
+      const built = buildFightTimeline(result, {
+        includeSwings,
+        ...(playerId !== undefined ? { playerId } : {}),
+      });
       // Raid-forced auras are 100% by selection, so they get no lane (round 49).
       const hidden = new Set(hiddenAuraIds);
       return { ...built, auras: built.auras.filter((lane) => !hidden.has(lane.id)) };
     },
-    [result, includeSwings, hiddenAuraIds],
+    [result, includeSwings, hiddenAuraIds, playerId],
   );
 
   const windowMs =
@@ -71,7 +83,7 @@ export function TimelinePanel({ result, hiddenAuraIds = NO_HIDDEN_AURAS }: Timel
 
   return (
     <Panel
-      title="Timeline"
+      title={title}
       className="panel-output"
       collapsible
       badge={`${Math.round(timeline.durationMs / 1000)}s`}

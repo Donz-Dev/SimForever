@@ -253,9 +253,15 @@ export function trainingDummyEncounter(
  * finished article -- a pet reads its owner's assembled stats, and one built
  * from a half-made character inherits half a character.
  */
-function createPlayerFor(
+export function createPlayerFor(
   profile: CharacterProfile,
   buffs: readonly RaidBuff[],
+  /**
+   * What a healer encounter changes about a character it fights BESIDE rather
+   * than as (round 52): the tank's id, its raid place, and no assumed healer --
+   * the healer is the one being simulated.
+   */
+  overrides: Partial<Parameters<typeof createPlayer>[0]> = {},
 ): Combatant {
   // ONE CALL PER ENTRY. Judgement of Wisdom's two halves share a closure, so
   // building the damage and cast reactions separately would give it two
@@ -342,10 +348,11 @@ function createPlayerFor(
      * directly; `createPlayer` is where both happen.
      */
     consumables: profile.consumables,
+    ...overrides,
   });
 }
 
-function createDummyFor(profile: CharacterProfile): Combatant {
+export function createDummyFor(profile: CharacterProfile): Combatant {
   return createTrainingDummy({
     name: profile.encounter.targetName,
     health: profile.encounter.targetHealth,

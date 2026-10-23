@@ -493,6 +493,8 @@ export const EFFECT_RULES: readonly EffectRule[] = [
       /^Increases damage and healing done by magical spells and effects by up to (\d+)\.?$/,
     apply: (value, into) => {
       into.spellPower = (into.spellPower ?? 0) + value;
+      // "Damage AND HEALING", so heals collect it too (round 52).
+      into.healingPower = (into.healingPower ?? 0) + value;
     },
   },
   {
@@ -518,9 +520,39 @@ export const EFFECT_RULES: readonly EffectRule[] = [
      * carried in the tooltip rather than in a number that does nothing.
      * -------------------------------------------------------------------------
      */
-    pattern: /^\+(\d+) Spell (?:Power|Damage)\.?$/,
+    pattern: /^\+(\d+) Spell Damage\.?$/,
     apply: (value, into) => {
       into.spellPower = (into.spellPower ?? 0) + value;
+    },
+  },
+  {
+    /*
+     * "+94 Spell Power" -- DAMAGE AND HEALING (round 52). The note above records
+     * Forever's split, which cost nothing while the engine had no healing stat;
+     * it has one now, so the split is carried in the number: Spell Power raises
+     * heals as well, Spell Damage does not.
+     */
+    pattern: /^\+(\d+) Spell Power\.?$/,
+    apply: (value, into) => {
+      into.spellPower = (into.spellPower ?? 0) + value;
+      into.healingPower = (into.healingPower ?? 0) + value;
+    },
+  },
+  {
+    /*
+     * "+73 Healing" -- Forever's healer line, HEALING ONLY (round 52). A Forever
+     * healer piece pairs it with "+25 Spell Damage", which goes to damage alone.
+     */
+    pattern: /^\+(\d+) Healing(?: Power)?\.?$/,
+    apply: (value, into) => {
+      into.healingPower = (into.healingPower ?? 0) + value;
+    },
+  },
+  {
+    // Classic's words for the same stat.
+    pattern: /^Increases healing done by spells and effects by up to (\d+)\.?$/,
+    apply: (value, into) => {
+      into.healingPower = (into.healingPower ?? 0) + value;
     },
   },
   {
@@ -1192,6 +1224,8 @@ const ENCHANT_RULES: Readonly<
    */
   22749: {
     slots: ['mainHand', 'offHand', 'twoHand'],
+    // DAMAGE ONLY: the tooltip is "add up to 30 damage to spells", and a heal
+    // reads `healingPower` (round 52). So it is worth nothing to a healer.
     stats: { spellPower: 30 },
     unmodelled: [],
   },

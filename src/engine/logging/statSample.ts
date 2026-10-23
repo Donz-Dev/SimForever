@@ -17,6 +17,8 @@ export interface StatSampleValues {
   readonly attackPower: number;
   readonly rangedAttackPower: number;
   readonly spellPower: number;
+  /** What a heal scales with (round 52), for a healer's report. */
+  readonly healingPower: number;
   /**
    * What a SCHOOL's damage actually reads, for each school that reads more
    * than the blind pool above. Already includes the blind pool.
@@ -52,6 +54,7 @@ export function statSampleOf(actor: Combatant): StatSampleValues {
     attackPower: stats.attackPower,
     rangedAttackPower: stats.rangedAttackPower,
     spellPower: stats.spellPower,
+    healingPower: stats.healingPower,
     spellPowerBySchool: scopedSpellPower(actor, stats.spellPower),
     hasteMultiplier: hasteMultiplierFrom(stats),
   };
@@ -113,6 +116,7 @@ function unchanged(
     previous.attackPower === next.attackPower &&
     previous.rangedAttackPower === next.rangedAttackPower &&
     previous.spellPower === next.spellPower &&
+    previous.healingPower === next.healingPower &&
     previous.hasteMultiplier === next.hasteMultiplier &&
     sameSchools(previous.spellPowerBySchool, next.spellPowerBySchool)
   );

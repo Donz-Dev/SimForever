@@ -168,6 +168,9 @@ export interface PlayerOptions {
    * replaced -- see `revivesOnDeath` on the engine's own options.
    */
   readonly revivesOnDeath?: boolean;
+  /** A healer encounter's raid place: the tank, and a party. See the engine's own. */
+  readonly raidRole?: 'tank';
+  readonly party?: number;
   /**
    * A healer is keeping this character up: a flat random amount every second,
    * from nobody in particular.
@@ -899,6 +902,8 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // cannot ride on `abilityModifiers`, which deliberately skips swings.
     damageMultiplier: build.damageMultiplier,
     revivesOnDeath: options.revivesOnDeath,
+    ...(options.raidRole ? { raidRole: options.raidRole } : {}),
+    ...(options.party !== undefined ? { party: options.party } : {}),
     // Reactive procs, from two sources: the class (a Warrior's Overpower opening
     // because the target dodged) and the gear (Vis'kag, Crusader, Hand of
     // Justice). Gear procs are built per character rather than shared, because

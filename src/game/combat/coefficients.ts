@@ -121,6 +121,31 @@ export const SEAL_OF_FURY_SP_COEFFICIENT = 0.1;
 /** Holy Shock: 42.857% spell power — three sevenths, i.e. 1.5 / 3.5. */
 export const HOLY_SHOCK_SP_COEFFICIENT = 0.4285714285714286;
 
+/*
+ * ============================================================================
+ * THE PALADIN'S HEALS, AND THE SHEET STATES NONE OF THEM (round 52).
+ *
+ * `WoWSimWorksheet.xlsx` has one Paladin row that a heal touches -- Holy Shock
+ * at 1.5 / 3.5 -- and it does not say whether that is the damage half, the heal
+ * half or both. Holy Light and Flash of Light are absent. So these are CLASSIC'S
+ * cast-time rule, `castTime / 3.5`, which this file deleted for damage once the
+ * owner stated every damage figure: borrowed, named `PLACEHOLDER_`, and the
+ * first thing to replace when the owner gives the heal coefficients.
+ *
+ * A HEAL SCALES WITH `healingPower`, never with spell power -- see
+ * `resolveHealing`.
+ * ============================================================================
+ */
+/** Holy Light, a 2.5 second cast: 2.5 / 3.5. Classic's rule, unconfirmed. */
+export const PLACEHOLDER_HOLY_LIGHT_HEAL_COEFFICIENT = 2.5 / 3.5;
+/** Flash of Light, a 1.5 second cast: 1.5 / 3.5. Classic's rule, unconfirmed. */
+export const PLACEHOLDER_FLASH_OF_LIGHT_HEAL_COEFFICIENT = 1.5 / 3.5;
+/**
+ * Holy Shock's HEAL: the sheet's one Holy Shock figure, read as covering both
+ * halves. Unconfirmed for the heal.
+ */
+export const PLACEHOLDER_HOLY_SHOCK_HEAL_COEFFICIENT = HOLY_SHOCK_SP_COEFFICIENT;
+
 /**
  * Consecration: 4.2% spell power PER TICK.
  *
