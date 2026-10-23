@@ -428,6 +428,8 @@ export interface StoredRotation {
    */
   readonly name: string;
   readonly entries: readonly AplEntry[];
+  /** Smart healing, list-wide (round 54). See `AplList.smartHealing`. */
+  readonly smartHealing?: boolean;
 }
 
 /** A sensible starting profile, matching the first-milestone prototype. */

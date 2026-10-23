@@ -527,6 +527,8 @@ export function validateProfile(value: unknown): ValidationResult {
         source: validated.rotation.source === 'custom' ? 'custom' : 'default',
         name: validated.rotation.name,
         entries: validated.rotation.entries.map((entry) => ({ ...entry })),
+        // Named, or the rebuild drops it (round 54).
+        ...(validated.rotation.smartHealing === true ? { smartHealing: true } : {}),
       },
       /*
        * NAMED HERE, WHICH IS THE WHOLE POINT OF THE THREE COMMENTS BELOW.

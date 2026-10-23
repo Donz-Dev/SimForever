@@ -99,6 +99,34 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 54: a 2,000 boss swing for the tank healer, and smart healing
+
+Round 52's third wave, two items from the owner:
+
+| | what changed |
+| --- | --- |
+| boss | the Tank Healer boss swings for a base **2,000** before its 10% ramp, `HEALER_TANK_BOSS_SWING_DAMAGE`, in place of the Encounter panel's figure. The swing SPEED is still the panel's |
+| smart healing | `AplList.smartHealing`, one switch for the whole list: every entry aimed at a friendly is aimed at whoever has the lowest health PERCENTAGE instead, tank included, and its conditions read that target. Ties go to party order, so at full health it is the tank and the pre-cast stays on it. A checkbox in the APL panel, offered only on a list that heals; toggling it marks the list `custom`. Stored on the profile and named in `validateProfile`'s rebuild |
+| Holy Pal | ships with smart healing ON |
+
+Measured, 1000 iterations each, E65:
+
+| | HPS | deaths a fight | of them the tank |
+| --- | --- | --- | --- |
+| tank fight, either setting | 536.3 +/- 2.6 | 2.23 | 2.23 |
+| raid fight, as written | 701.4 +/- 2.1 | 44.38 | 6.40 |
+| raid fight, smart healing | **717.1** +/- 2.9 | **43.19** | **8.17** |
+
+**THE TANK FIGHT IS IDENTICAL BY CONSTRUCTION**: one person to heal, so the
+lowest health percentage is always the tank. Tank deaths there fall from 8.7
+to 2.2 with the 2,000 swing.
+
+**IN THE RAID SMART HEALING TRADES THE TANK FOR THE RAID**: 1.2 fewer deaths
+overall and 1.8 more of them the tank's, because Holy Light -- written for the
+tank -- now goes to whoever is lowest, and the raid pulse makes that a raid
+member every fifteen seconds. Whether that is the intent is a question for
+the owner.
+
 ## Round 53: healer adjustments -- a stated tank, a pre-cast, a health graph
 
 Round 52's second wave, all from the owner after using it:

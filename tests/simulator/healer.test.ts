@@ -5,6 +5,7 @@ import { runHealerBatch } from '../../src/simulator';
 import {
   HEALER_ID,
   HEALER_TANK_ARMOR_REDUCTION,
+  HEALER_TANK_BOSS_SWING_DAMAGE,
   HEALER_TANK_HEALTH,
   HEALER_TANK_TABLE,
   PARTY_SIZE,
@@ -35,8 +36,10 @@ import { makeAttacker, makeTarget } from '../helpers/actors';
  * ==============================================================================
  */
 
-function fight(fightKind: 'tank' | 'raid', seed = 4242) {
-  const profile = PRESETS_BY_ID.get('holy_pal')!.build();
+function fight(fightKind: 'tank' | 'raid', seed = 4242, smartHealing = true) {
+  const preset = PRESETS_BY_ID.get('holy_pal')!.build();
+  const { smartHealing: _dropped, ...asWritten } = preset.rotation;
+  const profile = smartHealing ? preset : { ...preset, rotation: asWritten };
   const events: TelemetryEvent[] = [];
   const simulation = new Simulation(healerEncounter(profile, fightKind, seed), {
     emit: (event) => events.push(event),
@@ -61,6 +64,13 @@ describe('a heal', () => {
 });
 
 describe('the stated tank (round 53)', () => {
+  it('faces a boss whose base swing is 2,000, whatever the Encounter panel says (round 54)', () => {
+    expect(HEALER_TANK_BOSS_SWING_DAMAGE).toBe(2_000);
+    const boss = fight('tank').simulation.combatants.find((actor) => actor.faction === 'hostile')!;
+    expect(boss.weapons.mainHand?.baseDamage).toBe(HEALER_TANK_BOSS_SWING_DAMAGE);
+    expect(PRESETS_BY_ID.get('holy_pal')!.build().encounter.targetSwingDamage).not.toBe(2_000);
+  });
+
   it('has 8,500 health in both fights', () => {
     for (const kind of ['tank', 'raid'] as const) {
       const tank = fight(kind).simulation.combatants.find((actor) => actor.id === TANK_ID)!;
@@ -229,8 +239,8 @@ describe("the Holy Pal's list", () => {
     });
   });
 
-  it('heals the tank with Holy Light and the raid with Flash of Light', () => {
-    const { events } = fight('raid');
+  it('heals the tank with Holy Light and the raid with Flash of Light, with smart healing off', () => {
+    const { events } = fight('raid', 4242, false);
     const heals = events.filter(
       (event): event is Extract<TelemetryEvent, { type: 'heal' }> =>
         event.type === 'heal' && event.sourceId === HEALER_ID,
@@ -243,6 +253,53 @@ describe("the Holy Pal's list", () => {
       (event) => event.abilityId === 'flash_of_light' && event.targetId !== TANK_ID,
     );
     expect(raidFlashes.length).toBeGreaterThan(0);
+  });
+
+  it('ships with smart healing ON, the owner’s ask (round 54)', () => {
+    expect(PALADIN_HOLY.smartHealing).toBe(true);
+    expect(PRESETS_BY_ID.get('holy_pal')!.build().rotation.smartHealing).toBe(true);
+  });
+
+  it('under smart healing, aims every heal at the lowest health % member, tank included', () => {
+    const { simulation, events } = fight('raid');
+    const members = simulation.combatants.filter((actor) => actor.party !== undefined);
+    const heals = events.filter(
+      (event): event is Extract<TelemetryEvent, { type: 'heal' }> =>
+        event.type === 'heal' && event.sourceId === HEALER_ID,
+    );
+    // Holy Light, written for the tank, now reaches the raid too.
+    expect(heals.some((event) => event.abilityId === 'holy_light' && event.targetId !== TANK_ID)).toBe(true);
+    expect(heals.some((event) => event.abilityId === 'holy_light' && event.targetId === TANK_ID)).toBe(true);
+    expect(new Set(heals.map((event) => event.targetId)).size).toBeGreaterThan(3);
+    for (const heal of heals) expect(members.some((member) => member.id === heal.targetId)).toBe(true);
+  });
+
+  it('under smart healing, the target a cast went to was the lowest health % member when it started', () => {
+    const { simulation, events } = fight('raid');
+    // Replay health off the stream: every member opens full, and each event
+    // carries the target's health after it.
+    const maximum = new Map(
+      simulation.combatants
+        .filter((actor) => actor.party !== undefined)
+        .map((actor) => [actor.id, actor.health.maximum] as const),
+    );
+    const health = new Map(maximum);
+    const HEALS = new Set(['holy_light', 'flash_of_light', 'holy_shock']);
+    let checked = 0;
+    for (const event of events) {
+      if (event.type === 'cast' && event.sourceId === HEALER_ID && HEALS.has(event.abilityId) && event.targetId) {
+        const fraction = (id: string) => health.get(id)! / maximum.get(id)!;
+        const lowest = Math.min(...[...maximum.keys()].map(fraction));
+        expect(fraction(event.targetId)).toBeCloseTo(lowest, 6);
+        checked += 1;
+      }
+      if ((event.type === 'damage' || event.type === 'heal') && event.targetHealth !== undefined && maximum.has(event.targetId)) {
+        health.set(event.targetId, event.targetHealth);
+      } else if (event.type === 'death' && event.revived && maximum.has(event.actorId)) {
+        health.set(event.actorId, maximum.get(event.actorId)!);
+      }
+    }
+    expect(checked).toBeGreaterThan(10);
   });
 
   it('makes healing threat, and only the healer’s heals do', () => {
@@ -419,6 +476,21 @@ describe("the Holy Pal's gear", () => {
     for (const stat of ['intellect', 'spirit', 'critRating']) {
       expect(items.some((stats) => (stats[stat] ?? 0) > 0), stat).toBe(true);
     }
+  });
+});
+
+describe('smart healing compiles', () => {
+  it('replaces a friendly target and leaves an enemy-aimed entry alone', async () => {
+    const { compileRotation } = await import('../../src/game/rotations/apl');
+    const list = {
+      name: 'x',
+      smartHealing: true,
+      entries: [{ abilityId: 'holy_light', target: { kind: 'tank' } as const }, { abilityId: 'judgement' }],
+    };
+    // A compiled rotation is opaque, so the check is that it builds and the
+    // stored list is not mutated by doing so.
+    expect(() => compileRotation(list)).not.toThrow();
+    expect(list.entries[0].target).toEqual({ kind: 'tank' });
   });
 });
 

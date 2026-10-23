@@ -46,6 +46,7 @@ interface AplPanelProps {
 interface ShownList {
   readonly name: string;
   readonly entries: readonly AplEntry[];
+  readonly smartHealing?: boolean;
 }
 
 /**
@@ -93,6 +94,7 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
         source: 'custom',
         name: list.name,
         entries,
+        ...(list.smartHealing ? { smartHealing: true } : {}),
       },
     });
   };
@@ -166,6 +168,36 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
         nameOf={nameOf}
         onChange={updatePrecombat}
       />
+
+      {/*
+        * SMART HEALING, LIST-WIDE (round 54). Offered only on a list that heals
+        * somebody -- an entry with a friendly target -- because it changes
+        * nothing anywhere else. Toggling it is an edit, so the list goes
+        * `custom` like any other.
+        */}
+      {list.entries.some((entry) => entry.target !== undefined) ? (
+        <label
+          className="apl-smart-healing"
+          title="Every heal goes to whoever has the lowest health percentage, the tank included"
+        >
+          <input
+            type="checkbox"
+            checked={list.smartHealing === true}
+            onChange={(event) => {
+              const { smartHealing: _dropped, ...rest } = list;
+              onChange({
+                ...profile,
+                rotation: {
+                  ...rest,
+                  source: 'custom',
+                  ...(event.target.checked ? { smartHealing: true } : {}),
+                },
+              });
+            }}
+          />
+          Smart healing: each heal goes to the lowest health % target
+        </label>
+      ) : null}
 
       <AplEntries
         list={list}

@@ -309,4 +309,14 @@ export interface AplEntry {
 export interface AplList {
   readonly name: string;
   readonly entries: readonly AplEntry[];
+  /**
+   * SMART HEALING (round 54), one switch for the whole list: every entry that
+   * aims at a friendly -- the tank, or the lowest-health member -- aims at
+   * whoever has the lowest health PERCENTAGE instead, the tank included, and
+   * its conditions read that target. Entries aimed at the enemy are untouched.
+   *
+   * ABSENT MEANS OFF, and off is dropped rather than stored as `false`, the
+   * rule `disabled` follows, so a list toggled back compares equal.
+   */
+  readonly smartHealing?: boolean;
 }

@@ -2410,6 +2410,15 @@ button:disabled {
 
 /* A note is the measured figure or owner ruling that belongs to this entry,
    which lived only in a TypeScript comment before the list was data. */
+/* The list-wide smart healing switch (round 54). */
+.apl-smart-healing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 8px;
+  font-size: 12px;
+}
+
 /* An entry's pre-cast cancel check, on its own line under the condition (round 53). */
 .apl-cancel {
   flex-basis: 100%;
