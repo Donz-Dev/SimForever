@@ -172,7 +172,8 @@ function resourceThreat(
     return { perPoint: THREAT_PER_RAGE_GAINED };
   }
   if (resource === 'mana') {
-    if (MANA_WITHOUT_THREAT.has(sourceId)) return undefined;
+    // A cancelled cast's cost coming back is not mana GAINED (round 53).
+    if (MANA_WITHOUT_THREAT.has(sourceId) || sourceId.endsWith('_refund')) return undefined;
     return { perPoint: THREAT_PER_MANA_GAINED, ignoresModifiers: true };
   }
   return undefined;

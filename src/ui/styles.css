@@ -2410,6 +2410,17 @@ button:disabled {
 
 /* A note is the measured figure or owner ruling that belongs to this entry,
    which lived only in a TypeScript comment before the list was data. */
+/* An entry's pre-cast cancel check, on its own line under the condition (round 53). */
+.apl-cancel {
+  flex-basis: 100%;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.apl-cancel .apl-number {
+  width: 4.5em;
+}
+
 .apl-note {
   flex-basis: 100%;
   font-size: 11px;

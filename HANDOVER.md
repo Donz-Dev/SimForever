@@ -99,6 +99,42 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 53: healer adjustments -- a stated tank, a pre-cast, a health graph
+
+Round 52's second wave, all from the owner after using it:
+
+| | what changed |
+| --- | --- |
+| tank | a STATED tank in both healer fights, not the Prot Warr preset: 8,500 health; in the tank fight 65% armor reduction and a fixed table of 18% dodge, 10% parry, 15% crush, 2% crit, 55% hit. The armor is derived so the curve gives exactly 65% at the tank's own level -- K is read at the DEFENDER's level, and reading it at the boss's 63 gave 66% |
+| raid | the other nineteen roll a whole health from 4,500 to 6,500, off the fight's own random stream at the pull, so a seed reproduces its raid |
+| revive | everybody healed is stood back up at full the instant they die, death recorded first -- `revivesOnDeath`, which already did exactly this; the death event now says `revived` |
+| deaths | Tank deaths tile in both healer reports, Deaths (all 20) in the raid one; `BatchResult.tankDeaths` |
+| graph | "Hit points %" in a tank run and "Tank hit points %" in both healer reports, the step chart the mana line uses. Damage and heal events carry `targetHealth`, the resource events' `current` arrangement |
+| weapon | Holy Pal's caster weapon re-buys its stated spell power as healing power at `x 0.86 / 0.45` -- 94 becomes **179** at E65 -- and carries no spell power. Healing power 769 -> 854 |
+| pre-cast | `AplEntry.cancel { atFraction, condition }`: the condition is asked part way through the cast and true CANCELS it. A cancelled cast hands its cost back (`<ability>_refund`, which threat ignores) and restores the five-second-rule stamp. Both numbers are editable in the APL panel. Holy Pal's list ends with an unconditional Holy Light on the tank, cancelled at 80% if the tank is above 95% |
+| report | a Cancelled column in Healing Done, inside Uses |
+
+First figures, 3000 iterations, E65: **tank fight 433 HPS, 164 TPS, 8.7 tank
+deaths a fight**; **raid fight 698 HPS, 280 TPS, 44.4 deaths, 6.4 of them the
+tank's**. Holy Light in the tank fight: 23.0 casts, 12.8 cancelled, 9.2 landed.
+No DPS figure moves: nothing outside a healer fight sets a cancel check, and
+the new event fields draw no random number.
+
+**THE TANK STILL DIES ABOUT NINE TIMES A FIGHT**, more than round 52's built
+tank: it no longer slows the boss with Thunder Clap or weakens it with
+Demoralizing Shout, and the ramp still outgrows 8,500 health inside a minute.
+
+Open, for the owner:
+
+1. Mana gained in the healer reports includes the refunds -- a cancelled Holy
+   Light is 660 "gained" and 660 "spent". The donut names them
+   "Holy Light (cancelled)".
+2. A cancelled pre-cast still spends what the cast consumed at its START --
+   an Infusion of Light charge in particular. Should a cancel hand that back?
+3. Round 52's seven questions stand (heal coefficients, heal threat, Holy Shock
+   under Holy Light, the first raid pulse at 15s, raid revives, the weapon
+   enchant, Light's Vigil).
+
 ## Round 52: the healer archetype, three run buttons, and Holy Pal
 
 **HEALING THROUGHPUT IS SIMULATED NOW**, which is the first time a member of

@@ -2,10 +2,36 @@ import type { Ability } from '../abilities/Ability';
 import type { Combatant } from '../actors/Combatant';
 import type { SimulationContext } from '../simulation/SimulationContext';
 
+/**
+ * A check part way through a cast that may CANCEL it (round 53).
+ *
+ * ============================================================================
+ * THE OWNER'S PRE-CAST: "a cast -- like Holy Light -- will be in progress
+ * whenever there is any downtime in the APL. And if the tank is >95% at 80%
+ * through the cast then cancel the cast, else complete the cast." A healer
+ * starts a heal before it is needed and keeps it only if it turns out to be.
+ *
+ * `atFraction` is how far through the cast the question is asked, and
+ * `condition` is the question: true cancels. A cancelled cast hands its cost
+ * back and does not count as a spend for the five second rule, which is what
+ * makes the pattern worth anything -- the cast never finished.
+ * ============================================================================
+ */
+export interface CastCancelCheck {
+  readonly atFraction: number;
+  readonly condition: (
+    context: SimulationContext,
+    actor: Combatant,
+    target: Combatant | undefined,
+  ) => boolean;
+}
+
 /** The ability an actor has chosen, and what to point it at. */
 export interface RotationDecision {
   readonly ability: Ability;
   readonly target: Combatant | undefined;
+  /** A check that may cancel the cast part way through. See `CastCancelCheck`. */
+  readonly cancelCast?: CastCancelCheck;
 }
 
 /**
@@ -109,6 +135,12 @@ export interface PriorityEntry {
    * ============================================================================
    */
   readonly sequence?: readonly string[];
+  /**
+   * Cancel the cast part way through when a condition holds (round 53). Only
+   * meaningful for an ability with a cast time; an instant has finished before
+   * there is a "part way". See `CastCancelCheck`.
+   */
+  readonly cancelCast?: CastCancelCheck;
 }
 
 /**
@@ -201,7 +233,7 @@ export class PriorityRotation implements Rotation {
         actor.pendingSequence = { abilityIds: entry.sequence, index: 0 };
       }
 
-      return { ability, target };
+      return entry.cancelCast ? { ability, target, cancelCast: entry.cancelCast } : { ability, target };
     }
     return null;
   }

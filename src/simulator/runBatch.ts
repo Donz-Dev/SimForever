@@ -16,7 +16,7 @@ import type { SimulationConfig } from '../engine';
 import { Simulation, deriveSeed, toSeconds } from '../engine';
 import { trainingDummyEncounter } from './trainingDummyEncounter';
 import type { HealerFight } from './healerEncounter';
-import { HEALER_ID, healerEncounter } from './healerEncounter';
+import { HEALER_ID, TANK_ID, healerEncounter } from './healerEncounter';
 import { PET_UNMODELLED } from '../game/actors/createPet';
 import type { CharacterProfile } from '../profiles';
 import { runSimulation } from './runSimulation';
@@ -47,6 +47,8 @@ export interface BatchOptions {
    * first so the boss swings at it, and names the healer here (round 52).
    */
   readonly playerId?: string;
+  /** The tank, in a healer fight, so its deaths are counted apart (round 53). */
+  readonly tankId?: string;
 }
 
 /**
@@ -118,6 +120,11 @@ export interface BatchResult {
    * healer is keeping up (round 52). Zero in a fight with nobody else in it.
    */
   readonly alliedDeaths: number;
+  /**
+   * Mean deaths per iteration of the TANK, in a healer fight (round 53), and
+   * absent in any other. Counted inside `alliedDeaths` as well.
+   */
+  readonly tankDeaths?: number;
   /** The combatant the report is about -- the healer in a healer fight. */
   readonly playerId: string;
   /** The player's threat per fight by source, largest first. */
@@ -423,6 +430,7 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     healing: totals.healingBreakdown(playerId),
     meanHealing: totals.meanHealingFor(playerId),
     alliedDeaths: totals.totalDeathsForAny(alliedIds) / iterations,
+    ...(options.tankId ? { tankDeaths: totals.totalDeathsFor(options.tankId) / iterations } : {}),
     playerId,
     threat: totals.threatBreakdown(playerId),
     deathSamples,
@@ -502,6 +510,7 @@ export function runHealerBatch(
       onProgress,
       representativeBy: 'hps',
       playerId: HEALER_ID,
+      tankId: TANK_ID,
     }),
     forcedAuraIds: raidForcedAuraIds(profile.raidBuffs),
   };

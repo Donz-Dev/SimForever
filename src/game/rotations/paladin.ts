@@ -557,6 +557,21 @@ export const PALADIN_HOLY: AplList = {
       target: { kind: 'tank' },
       condition: { kind: 'health', on: 'target', compare: 'below', fraction: 1 },
     },
+    /*
+     * THE PRE-CAST (round 53), the owner's: whenever nothing above is castable
+     * a Holy Light is started on the tank, and at 80% through it is cancelled
+     * if the tank is still above 95%. Last, because it is what fills downtime;
+     * anything above it is a heal that is needed now.
+     */
+    {
+      abilityId: 'holy_light',
+      target: { kind: 'tank' },
+      cancel: {
+        atFraction: 0.8,
+        condition: { kind: 'health', on: 'target', compare: 'above', fraction: 0.95 },
+      },
+      note: 'Pre-cast: cancelled at 80% of the cast if the tank is above 95%.',
+    },
   ],
 };
 

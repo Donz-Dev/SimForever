@@ -148,6 +148,24 @@ export function addEntry(entries: readonly AplEntry[], abilityId: string): reado
  * compare as different lists.
  * ----------------------------------------------------------------------------
  */
+/**
+ * Set or clear an entry's pre-cast cancel check (round 53). Cleared is DROPPED
+ * rather than stored empty, the rule `interruptsChannel` follows, so a list
+ * edited back to where it was still compares equal to the stock one.
+ */
+export function setCancel(
+  entries: readonly AplEntry[],
+  index: number,
+  cancel: AplEntry['cancel'],
+): readonly AplEntry[] {
+  if (index < 0 || index >= entries.length) return entries;
+  return entries.map((entry, at) => {
+    if (at !== index) return entry;
+    const { cancel: _dropped, ...rest } = entry;
+    return cancel ? { ...rest, cancel } : rest;
+  });
+}
+
 export function setInterrupts(
   entries: readonly AplEntry[],
   index: number,

@@ -60,6 +60,14 @@ export function compileEntry(entry: AplEntry): PriorityEntry {
     ...(entry.condition ? { condition: compileCondition(entry.condition) } : {}),
     ...(entry.target ? { selectTarget: compileTarget(entry.target) } : {}),
     ...(entry.interruptsChannel ? { interruptsChannel: true } : {}),
+    ...(entry.cancel
+      ? {
+          cancelCast: {
+            atFraction: entry.cancel.atFraction,
+            condition: compileCondition(entry.cancel.condition),
+          },
+        }
+      : {}),
     /*
      * AN EMPTY SEQUENCE IS DROPPED, not passed through. `PriorityRotation`
      * checks `length > 0` anyway, and a stored `[]` would survive a save and

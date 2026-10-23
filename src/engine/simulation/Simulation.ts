@@ -414,6 +414,7 @@ export class Simulation implements SimulationContext {
         timestamp: this.clock.now(),
         actorId: target.id,
         killerId: killer?.id,
+        revived: true,
       });
       target.auras.removeOnDeath(this);
       target.health.fill();
@@ -478,6 +479,7 @@ export class Simulation implements SimulationContext {
        * something that never had a step one.
        */
       actor.pendingSequence = null;
+      actor.pendingCastCancel = null;
     }
 
     // The end-of-fight event is what guarantees termination: actors reschedule
@@ -573,6 +575,25 @@ export class Simulation implements SimulationContext {
         if (ctx.hasEnded || !actor.isAlive || !actor.rotation) return;
 
         /*
+         * A CAST WITH A CANCEL CHECK IS WOKEN PART WAY THROUGH (round 53), and
+         * this is that wake. The question is asked once: if it says cancel, the
+         * cast is abandoned, its cost handed back, and the actor decides again
+         * at once; if not, the cast runs to its end as any other does.
+         */
+        const pending = actor.pendingCastCancel;
+        if (pending && ctx.clock.now() >= pending.at) {
+          actor.pendingCastCancel = null;
+          const stillCasting =
+            actor.channelling === pending.ability && actor.isCasting(ctx.clock.now());
+          if (stillCasting && pending.check.condition(ctx, actor, pending.target)) {
+            this.cancelCast(actor, pending);
+          } else {
+            this.scheduleDecision(actor, this.nextDecisionTime(actor));
+            return;
+          }
+        }
+
+        /*
          * A CHANNEL THAT ENDS ITSELF -- Evocation at full mana, round 51. Checked
          * before the interrupt branch, and it needs no entry to ask: nothing is
          * cast in its place, the channel simply finishes early and the actor
@@ -646,13 +667,74 @@ export class Simulation implements SimulationContext {
          */
         let cast: Ability | undefined;
         if (decision) {
+          const costResource = decision.ability.cost?.resource;
+          const poolBefore = costResource ? actor.resources.get(costResource)?.current : undefined;
+          const spendBefore = costResource ? actor.lastSpentAt(costResource) : undefined;
           const result = ctx.cast(actor, decision.ability, decision.target);
-          if (result.ok) cast = decision.ability;
+          if (result.ok) {
+            cast = decision.ability;
+            const now = ctx.clock.now();
+            if (decision.cancelCast && actor.castEndsAt > now && actor.channelling === decision.ability) {
+              const spent =
+                costResource && poolBefore !== undefined
+                  ? poolBefore - (actor.resources.get(costResource)?.current ?? poolBefore)
+                  : 0;
+              actor.pendingCastCancel = {
+                at: now + Math.round(decision.cancelCast.atFraction * (actor.castEndsAt - now)),
+                ability: decision.ability,
+                target: decision.target,
+                check: decision.cancelCast,
+                ...(costResource && spent > 0
+                  ? { refund: { resource: costResource, amount: spent, previousSpend: spendBefore } }
+                  : {}),
+              };
+            }
+          }
         }
 
         this.scheduleDecision(actor, this.nextDecisionTime(actor, cast));
       }),
     );
+  }
+
+  /**
+   * Abandon a cast its cancel check said to drop (round 53): the completion
+   * is unscheduled, the cost goes back, and the five second rule forgets the
+   * spend. Reported as an interrupted cast, so the combat log says it.
+   */
+  private cancelCast(actor: Combatant, pending: NonNullable<Combatant['pendingCastCancel']>): void {
+    const now = this.clock.now();
+    const cancelled = actor.interruptChannel(this);
+    if (!cancelled) return;
+    this.telemetry.emit({
+      type: 'channel_interrupted',
+      timestamp: now,
+      sourceId: actor.id,
+      abilityId: cancelled.id,
+      abilityName: cancelled.name,
+      interruptedFor: 'its cancel condition',
+      ticksDelivered: 0,
+      ticksTotal: cancelled.channelTicks ?? 1,
+    });
+    const refund = pending.refund;
+    if (refund) {
+      const pool = actor.resources.get(refund.resource);
+      if (pool) {
+        const result = pool.gain(refund.amount);
+        actor.restoreResourceSpend(refund.resource, refund.previousSpend);
+        this.telemetry.emit({
+          type: 'resource_gained',
+          timestamp: now,
+          actorId: actor.id,
+          resource: refund.resource,
+          amount: result.gained,
+          wasted: result.wasted,
+          current: pool.current,
+          source: `${cancelled.id}_refund`,
+          sourceName: `${cancelled.name} (cancelled)`,
+        });
+      }
+    }
   }
 
   /**
@@ -703,6 +785,11 @@ export class Simulation implements SimulationContext {
       return Math.min(now + ROTATION_POLL_MS, Math.max(actor.gcdReadyAt, actor.castEndsAt));
     }
     const busyUntil = Math.max(actor.gcdReadyAt, actor.castEndsAt);
+    // A cast with a cancel check wakes at the check, not at its end (round 53).
+    const cancelAt = actor.pendingCastCancel?.at;
+    if (cancelAt !== undefined && actor.isCasting(now) && cancelAt < busyUntil) {
+      return Math.max(now, cancelAt);
+    }
     if (busyUntil > now) return busyUntil;
 
     /*

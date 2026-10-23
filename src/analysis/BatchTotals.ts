@@ -385,6 +385,12 @@ export interface BatchHealingTotals {
   readonly overhealing: number;
   /** Mean heals landed per iteration. */
   readonly heals: number;
+  /**
+   * Mean casts per iteration a pre-cast check CANCELLED (round 53). Counted in
+   * `uses` too, because each was a cast that started; uses minus cancelled is
+   * the casts that finished.
+   */
+  readonly cancelled: number;
   /** Effective healing per heal. */
   readonly average: number;
   /** Share of the healer's effective healing, 0 to 1. */
@@ -442,6 +448,8 @@ export class BatchTotals implements TelemetrySink {
   /** Effective healing done, by source -- only heals a healer cast. */
   private readonly healingBySource = new Map<string, number>();
   private readonly healsDone = new Map<string, Map<string, HealDoneAccumulator>>();
+  /** Casts a pre-cast check cancelled, by caster and ability name (round 53). */
+  private readonly cancelledCasts = new Map<string, Map<string, number>>();
   private iterations = 0;
   private totalDurationMs = 0;
 
@@ -603,6 +611,12 @@ export class BatchTotals implements TelemetrySink {
         if (event.critical) row.crits += 1;
         perActor.set(event.abilityName, row);
       }
+      return;
+    }
+
+    if (event.type === 'channel_interrupted' && event.interruptedFor === 'its cancel condition') {
+      const perActor = mapFor(this.cancelledCasts, event.sourceId);
+      perActor.set(event.abilityName, (perActor.get(event.abilityName) ?? 0) + 1);
       return;
     }
 
@@ -815,6 +829,7 @@ export class BatchTotals implements TelemetrySink {
         healing: this.per(row.healing),
         overhealing: this.per(row.overhealing),
         heals: this.per(row.heals),
+        cancelled: this.per(this.cancelledCasts.get(sourceId)?.get(abilityName) ?? 0),
         average: row.heals > 0 ? row.healing / row.heals : 0,
         share: total > 0 ? row.healing / total : 0,
         critRate: row.heals > 0 ? row.crits / row.heals : 0,
