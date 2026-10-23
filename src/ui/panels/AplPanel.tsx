@@ -32,6 +32,7 @@ import {
   setDisabled,
   setGroupOp,
   setInterrupts,
+  setCancel,
   toggleNegated,
 } from './aplEditing';
 import { Panel } from '../components/Panel';
@@ -486,6 +487,15 @@ export function AplEntries({
               onChange={
                 onChange
                   ? (condition) => onChange(setCondition(list.entries, index, condition))
+                  : undefined
+              }
+            />
+            <EntryCancel
+              cancel={entry.cancel}
+              names={names}
+              onChange={
+                onChange
+                  ? (cancel) => onChange(setCancel(list.entries, index, cancel))
                   : undefined
               }
             />
@@ -1432,4 +1442,87 @@ function prettify(id: string): string {
     .split('_')
     .map((word) => (word.length > 0 ? word[0].toUpperCase() + word.slice(1) : word))
     .join(' ');
+}
+
+/**
+ * An entry's PRE-CAST check (round 53): how far through the cast it is asked,
+ * and -- when the question is the usual "is the target still above N%" --
+ * that threshold, both editable. The owner asked for both to be customisable.
+ *
+ * A QUESTION THE TWO FIELDS CANNOT HOLD IS SHOWN AS ITS SENTENCE, the
+ * arrangement a `fixed` condition node already uses: an editor that cannot
+ * express something says so rather than redrawing it as something it can.
+ */
+function EntryCancel({
+  cancel,
+  names,
+  onChange,
+}: {
+  readonly cancel: AplEntry['cancel'];
+  readonly names: DescribeNames;
+  readonly onChange?: (cancel: AplEntry['cancel']) => void;
+}) {
+  if (!cancel) return null;
+  const condition = cancel.condition;
+  const threshold =
+    condition.kind === 'health' && condition.on === 'target' && condition.compare === 'above'
+      ? condition
+      : undefined;
+  const percent = (fraction: number) => Math.round(fraction * 1000) / 10;
+
+  return (
+    <span className="apl-cancel">
+      <span className="apl-flag">pre-cast</span> cancel at{' '}
+      {onChange ? (
+        <input
+          type="number"
+          className="apl-number"
+          min={1}
+          max={99}
+          step={5}
+          value={percent(cancel.atFraction)}
+          aria-label="Percent of the cast"
+          onChange={(event) =>
+            onChange({
+              ...cancel,
+              atFraction: Math.min(0.99, Math.max(0.01, Number(event.target.value) / 100 || 0)),
+            })
+          }
+        />
+      ) : (
+        percent(cancel.atFraction)
+      )}
+      <span className="apl-unit">%</span> of the cast if{' '}
+      {threshold ? (
+        <>
+          the target is above{' '}
+          {onChange ? (
+            <input
+              type="number"
+              className="apl-number"
+              min={0}
+              max={100}
+              step={1}
+              value={percent(threshold.fraction)}
+              aria-label="Target health percent"
+              onChange={(event) =>
+                onChange({
+                  ...cancel,
+                  condition: {
+                    ...threshold,
+                    fraction: Math.min(1, Math.max(0, Number(event.target.value) / 100 || 0)),
+                  },
+                })
+              }
+            />
+          ) : (
+            percent(threshold.fraction)
+          )}
+          <span className="apl-unit">% health</span>
+        </>
+      ) : (
+        describeCondition(condition, names)
+      )}
+    </span>
+  );
 }

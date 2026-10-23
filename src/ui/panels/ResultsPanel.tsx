@@ -7,8 +7,10 @@ import { UptimeBars } from '../charts/UptimeBars';
 import {
   ResourceTimeline,
   auraStackTimeline,
+  healthTimeline,
   resourceTimeline,
 } from '../charts/ResourceTimeline';
+import { TANK_ID } from '../../simulator';
 import { ARCANE_BLAST_MAX_STACKS } from '../../game/auras/mage';
 import type {
   BatchCastCharge,
@@ -243,6 +245,7 @@ function DamageTaken({ batch }: ResultsPanelProps) {
         <Stat label="Overhealing" value={fixed(survival.overhealing)} />
         <Stat label="Deaths" value={fixed(survival.deaths)} />
       </div>
+      <HealthChart batch={batch} actorId={batch.playerId} title="Hit points %" />
       <table className="breakdown">
         <thead>
           <tr>
@@ -666,18 +669,29 @@ function StatAverages({
  * people being healed, which is what an HPS figure is FOR.
  */
 function HealingDone({ batch }: { readonly batch: BatchResult }) {
+  // The raid fight heals more than the tank; the tank fight heals the tank alone.
+  const raid = batch.representative.actors.filter((actor) => actor.faction === 'friendly').length > 2;
   return (
     <>
       <h3>Healing done</h3>
-      <p className="muted">
-        Deaths among those healed: {fixed(batch.alliedDeaths)} per fight
-      </p>
+      {/*
+       * DEATHS FIRST, because they are what an HPS figure is FOR (round 53).
+       * Everybody healed is stood back up at full the instant they die, so a
+       * fight can hold several and the figure is a mean per fight.
+       */}
+      <div className="stat-grid">
+        {raid ? <Stat label="Deaths (all 20)" value={fixed(batch.alliedDeaths)} /> : null}
+        <Stat label="Tank deaths" value={fixed(batch.tankDeaths ?? batch.alliedDeaths)} />
+      </div>
+      <HealthChart batch={batch} actorId={TANK_ID} title="Tank hit points %" />
       {batch.healing.length > 0 ? (
         <table className="breakdown">
           <thead>
             <tr>
               <th>Spell</th>
               <th className="numeric">Uses</th>
+              {/* Pre-casts the cancel check dropped, inside Uses (round 53). */}
+              <th className="numeric">Cancelled</th>
               <th className="numeric">Healing</th>
               <th className="numeric">Share</th>
               <th className="numeric">Heals</th>
@@ -691,6 +705,7 @@ function HealingDone({ batch }: { readonly batch: BatchResult }) {
               <tr key={row.abilityName}>
                 <td>{row.abilityName}</td>
                 <td className="numeric">{row.uses > 0 ? fixed(row.uses) : '-'}</td>
+                <td className="numeric">{row.cancelled > 0 ? fixed(row.cancelled) : '-'}</td>
                 <td className="numeric">{fixed(row.healing)}</td>
                 <td className="numeric">
                   <span className="share">
@@ -727,4 +742,35 @@ function fixed(value: number): string {
 
 function pct(fraction: number): string {
   return `${(fraction * 100).toFixed(2)}%`;
+}
+
+/**
+ * One combatant's hit points over the representative fight, as a percentage
+ * (round 53): the tank's in a tank run and in the Tank Healer fight. Drawn
+ * with the same step chart as a resource's "available" line.
+ *
+ * NOTHING IS DRAWN FOR A COMBATANT NOTHING HIT, which is every DPS run: a line
+ * flat at 100% says nothing the run did not already.
+ */
+function HealthChart({
+  batch,
+  actorId,
+  title,
+}: {
+  readonly batch: BatchResult;
+  readonly actorId: string;
+  readonly title: string;
+}) {
+  const actor = batch.representative.actors.find((candidate) => candidate.id === actorId);
+  if (!actor) return null;
+  const points = healthTimeline(batch.representative.timeline, actorId, actor.maxHealth);
+  if (points.length < 2) return null;
+  return (
+    <ResourceTimeline
+      title={title}
+      points={points}
+      maximum={100}
+      durationMs={batch.representative.durationMs}
+    />
+  );
 }

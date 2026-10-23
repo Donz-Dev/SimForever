@@ -215,6 +215,14 @@ export type AplTarget =
   | { readonly kind: 'tank' }
   | { readonly kind: 'lowestHealth'; readonly excludeTank?: boolean };
 
+/** When to ask whether to cancel a cast, and what to ask. See `AplEntry.cancel`. */
+export interface AplCastCancel {
+  /** How far through the cast, from 0 to 1. */
+  readonly atFraction: number;
+  /** True cancels the cast. */
+  readonly condition: AplCondition;
+}
+
 export interface AplEntry {
   readonly abilityId: string;
   readonly condition?: AplCondition;
@@ -229,6 +237,14 @@ export interface AplEntry {
    * entry above the channel".
    */
   readonly interruptsChannel?: boolean;
+  /**
+   * A PRE-CAST (round 53): ask `condition` at `atFraction` of the way through
+   * this entry's cast, and cancel the cast if it holds. The condition reads
+   * the entry's own target -- `health on target above 0.95` on a Holy Light
+   * aimed at the tank is "the tank is still topped up". A cancelled cast costs
+   * nothing; see `CastCancelCheck` in the engine.
+   */
+  readonly cancel?: AplCastCancel;
   /**
    * A note from whoever wrote the entry, shown in the panel.
    *

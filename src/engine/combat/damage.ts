@@ -1675,6 +1675,7 @@ export function dealDamage(
     ...(resolution.resistedShare !== 0 ? { resistedShare: resolution.resistedShare } : {}),
     absorbed: resolution.absorbed,
     overkill,
+    targetHealth: target.health.current,
     periodic: request.periodic ?? false,
     // What the roll faced. See `DamageTelemetryEvent.critChance`.
     critChance: attack.critChance,

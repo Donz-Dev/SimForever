@@ -627,6 +627,45 @@ function withCasterSpellPower(
 }
 
 /**
+ * A HEALER'S caster weapon: the stated spell power, re-bought as HEALING POWER
+ * at the same budget (round 53).
+ *
+ * ============================================================================
+ * THE OWNER'S INSTRUCTION: "make this healing power instead at a proportionally
+ * larger amount based on established item budget criteria". The criterion is
+ * the cost table -- a stat's budget is `value x cost` before the power -- so
+ * the same points that buy N spell power at 0.86 buy `N x 0.86 / 0.45` healing
+ * power at 0.45. At E65 that is 94 spell power becoming 179 healing power, the
+ * ratio Classic's own healer weapons carry over their damage-caster siblings.
+ *
+ * ONE HEALING LINE, NOT TWO: the healing-power floor may already have put a
+ * "+N Healing" line on the weapon, and two lines of one stat would both parse
+ * and read as a generator bug. The re-bought figure is added to it. Any Spell
+ * Power line the shares bought goes, because a healer's weapon carries none.
+ * `spent` is left alone for the reason `withCasterSpellPower` gives.
+ * ============================================================================
+ */
+function withCasterHealingPower(
+  divided: { effects: { kind: string; text: string }[]; spent: number },
+  spellPower: number,
+): { effects: { kind: string; text: string }[]; spent: number } {
+  const rebought = Math.floor((spellPower * COST['Spell Power']) / COST['Healing Power']);
+  const existing = divided.effects.find(isHealingPowerLine);
+  const already = existing ? Number(/\+(\d+)/.exec(existing.text)?.[1] ?? 0) : 0;
+  const written = LINE['Healing Power'](already + rebought);
+  const line = written.startsWith('Equip: ')
+    ? { kind: 'Equip', text: written.slice(7) }
+    : { kind: 'Stat', text: written };
+  const kept = divided.effects.filter((effect) => !isSpellPowerLine(effect) && !isHealingPowerLine(effect));
+  return { effects: [...kept, line], spent: divided.spent };
+}
+
+const HEALING_POWER_SUFFIX = LINE['Healing Power'](0).replace(/^Equip: /, '').replace('+0', '');
+
+const isHealingPowerLine = (effect: { text: string }): boolean =>
+  effect.text.endsWith(HEALING_POWER_SUFFIX);
+
+/**
  * The tail of a generated Spell Power line, by its own wording.
  *
  * Built from `LINE` rather than written out, so a reworded line cannot leave
@@ -1117,7 +1156,9 @@ export function benchmarkItemsFor(
      * ==========================================================================
      */
     const { effects, spent } = caster && hand !== 'ranged'
-      ? withCasterSpellPower(divided, casterWeaponSpellPower(set.quality, set.itemLevel))
+      ? template.healer
+        ? withCasterHealingPower(divided, casterWeaponSpellPower(set.quality, set.itemLevel))
+        : withCasterSpellPower(divided, casterWeaponSpellPower(set.quality, set.itemLevel))
       : divided;
     items.push(
       makeItem(

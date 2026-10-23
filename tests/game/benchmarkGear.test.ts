@@ -482,10 +482,12 @@ describe('a caster weapon trades melee damage for a stated spell power', () => {
       for (const set of BENCHMARK_SETS) {
         for (const item of benchmarkItemsFor(template, set)) {
           if (item.weapon === null || item.inventoryType === 'Ranged') continue;
-          const lines = item.tooltip
-            .split('\n')
-            .filter((line) => / Spell Power$/.test(line));
-          expect(lines.length, `${template.label} ${set.id} ${item.name}`).toBe(1);
+          const lines = item.tooltip.split('\n');
+          const where = `${template.label} ${set.id} ${item.name}`;
+          // A healer's weapon re-buys the figure as healing power (round 53).
+          const healer = (template as { healer?: boolean }).healer === true;
+          expect(lines.filter((line) => / Spell Power$/.test(line)).length, where).toBe(healer ? 0 : 1);
+          if (healer) expect(lines.filter((line) => / Healing$/.test(line)).length, where).toBe(1);
         }
       }
     }

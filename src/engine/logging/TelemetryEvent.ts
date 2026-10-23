@@ -102,6 +102,13 @@ export interface DamageTelemetryEvent extends TelemetryBase {
   readonly absorbed: number;
   /** Portion of `amount` that exceeded the target's remaining health. */
   readonly overkill: number;
+  /**
+   * The target's health straight after the hit, before any death is processed
+   * (round 53). What the health timeline reads -- the same arrangement as a
+   * resource event's `current`, so the line is the level that happened rather
+   * than a sum of gains and losses.
+   */
+  readonly targetHealth?: number;
   /** True for periodic (damage-over-time) ticks. */
   readonly periodic: boolean;
   /**
@@ -136,6 +143,8 @@ export interface HealTelemetryEvent extends TelemetryBase {
   readonly critical: boolean;
   /** Portion that exceeded the target's missing health. */
   readonly overhealing: number;
+  /** The target's health straight after the heal (round 53). */
+  readonly targetHealth?: number;
   readonly periodic: boolean;
   /**
    * The heal came from nobody in the fight -- the assumed tank healer, or a
@@ -281,6 +290,11 @@ export interface DeathTelemetryEvent extends TelemetryBase {
   readonly type: 'death';
   readonly actorId: string;
   readonly killerId?: string;
+  /**
+   * The combatant was stood back up at full health in the same instant (round
+   * 53) -- `revivesOnDeath`. Absent for a death that stays dead.
+   */
+  readonly revived?: boolean;
 }
 
 /**

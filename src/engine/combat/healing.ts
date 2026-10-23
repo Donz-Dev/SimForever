@@ -158,6 +158,7 @@ export function applyHealing(
     amount: resolution.amount,
     critical: resolution.critical,
     overhealing: resolution.overhealing,
+    targetHealth: request.target.health.current,
     periodic: request.periodic ?? false,
     ...(request.external ? { external: true } : {}),
     ...(request.threatens && !request.external ? { threatens: true } : {}),

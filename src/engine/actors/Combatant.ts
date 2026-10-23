@@ -18,7 +18,7 @@ import type { ScheduledEvent } from '../events';
 import { AuraCollection } from '../effects';
 import type { ResourceRegen, ResourceSpec, ResourceType } from '../resources';
 import { Resource, ResourceCollection } from '../resources';
-import type { Rotation } from '../rotation/Rotation';
+import type { CastCancelCheck, Rotation } from '../rotation/Rotation';
 import type { PartialStats, StatDerivation } from '../stats';
 import { StatBlock } from '../stats';
 import type { StatSampleValues } from '../logging/statSample';
@@ -1004,6 +1004,24 @@ export class Combatant {
    */
   pendingSequence: { readonly abilityIds: readonly string[]; index: number } | null = null;
 
+  /**
+   * The cancel check waiting on the cast in progress, if its entry carried one
+   * (round 53). Per-fight state for the reason `pendingSequence` gives. `at` is
+   * the moment the question is asked; `refund` is what the cast cost, handed
+   * back if it is cancelled, with the five-second-rule stamp it replaced.
+   */
+  pendingCastCancel: {
+    readonly at: Milliseconds;
+    readonly ability: Ability;
+    readonly target: Combatant | undefined;
+    readonly check: CastCancelCheck;
+    readonly refund?: {
+      readonly resource: ResourceType;
+      readonly amount: number;
+      readonly previousSpend: Milliseconds | undefined;
+    };
+  } | null = null;
+
   /** Called by the engine when a cast's effect is about to run. */
   recordCast(): number {
     this.castSequence += 1;
@@ -1029,6 +1047,15 @@ export class Combatant {
   /** Record that a resource was just spent. Called by the engine on payment. */
   recordResourceSpend(resource: ResourceType, at: Milliseconds): void {
     this.lastSpend.set(resource, at);
+  }
+
+  /**
+   * Put back the last-spent stamp a cancelled cast replaced (round 53), so a
+   * cast that never finished does not start the five second rule.
+   */
+  restoreResourceSpend(resource: ResourceType, at: Milliseconds | undefined): void {
+    if (at === undefined) this.lastSpend.delete(resource);
+    else this.lastSpend.set(resource, at);
   }
 
   /** When this resource was last spent, or undefined if it never has been. */
