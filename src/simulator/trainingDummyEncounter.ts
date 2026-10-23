@@ -291,7 +291,13 @@ export function createPlayerFor(
      * character that casts nothing where it used to fall back correctly.
      */
     ...(profile.rotation.entries.length > 0
-      ? { rotation: { name: profile.rotation.name, entries: profile.rotation.entries } }
+      ? {
+          rotation: {
+            name: profile.rotation.name,
+            entries: profile.rotation.entries,
+            ...(profile.rotation.smartHealing ? { smartHealing: true } : {}),
+          },
+        }
       : {}),
     bonusStats: profile.stats,
     equipment: profile.equipment,

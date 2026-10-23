@@ -34,8 +34,8 @@ import { createDummyFor, createPlayerFor, trainingDummyEncounter } from './train
  * table, and nothing of its own to do.
  *
  * TANK HEALER: one target to heal, that tank, under the boss's ordinary swing
- * and 10% ramp -- the mechanism a tank run uses, with the healer's own
- * Encounter panel deciding the swing damage and speed.
+ * and 10% ramp -- the mechanism a tank run uses. The base swing is the owner's
+ * 2,000 (round 54); the swing SPEED is still the Encounter panel's.
  *
  * RAID HEALER: twenty to heal, in five parties of five, with the tank in party
  * one. The owner's pattern, as percentages of each target's maximum health:
@@ -71,6 +71,13 @@ export const HEALER_TANK_HEALTH = 8_500;
 export const HEALER_TANK_ARMOR_REDUCTION = 0.65;
 /** The tank's attacks-received table in the tank fight, in percent. */
 export const HEALER_TANK_TABLE = { dodge: 18, parry: 10, crush: 15, crit: 2, hit: 55 } as const;
+
+/**
+ * The boss's base swing in the tank fight, before the ramp (round 54): the
+ * owner's 2,000, in place of whatever the Encounter panel says. A healer
+ * benchmark wants the same boss every time, as it wants the same tank.
+ */
+export const HEALER_TANK_BOSS_SWING_DAMAGE = 2_000;
 
 /** What the other nineteen roll their health between, inclusive. */
 export const RAID_MEMBER_HEALTH_MIN = 4_500;
@@ -157,10 +164,14 @@ export function healerEncounter(
   const base = trainingDummyEncounter(healer, seed);
   const buffs = selectedRaidBuffs(healer.raidBuffs);
 
-  // What the tank fight's boss is: the healer's encounter, swinging.
+  // What the tank fight's boss is: the healer's encounter, swinging for 2,000.
   const swinging: CharacterProfile = {
     ...profile,
-    encounter: { ...profile.encounter, targetAttacks: true },
+    encounter: {
+      ...profile.encounter,
+      targetAttacks: true,
+      targetSwingDamage: HEALER_TANK_BOSS_SWING_DAMAGE,
+    },
   };
 
   const createCombatants = (): Combatant[] => {

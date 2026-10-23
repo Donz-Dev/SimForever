@@ -51,7 +51,20 @@ export function compileRotation(list: AplList): PriorityRotation {
    * --------------------------------------------------------------------------
    */
   const live = list.entries.filter((entry) => entry.disabled !== true);
-  return new PriorityRotation(list.name, live.map(compileEntry));
+  const smart = list.smartHealing === true;
+  return new PriorityRotation(
+    list.name,
+    live.map((entry) => compileEntry(smart ? smartTargeted(entry) : entry)),
+  );
+}
+
+/**
+ * An entry under smart healing: a friendly target becomes the lowest-health
+ * member, the tank included. Ties go to party order, so at full health that
+ * is the tank -- which keeps a pre-cast on the tank while nobody needs it.
+ */
+function smartTargeted(entry: AplEntry): AplEntry {
+  return entry.target ? { ...entry, target: { kind: 'lowestHealth' } } : entry;
 }
 
 export function compileEntry(entry: AplEntry): PriorityEntry {

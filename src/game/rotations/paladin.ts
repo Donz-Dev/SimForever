@@ -527,6 +527,12 @@ export const PALADIN_PROTECTION: AplList = {
  */
 export const PALADIN_HOLY: AplList = {
   name: 'Paladin (Holy)',
+  /*
+   * SMART HEALING ON (round 54), the owner's ask: the next heal goes to
+   * whoever has the lowest health percentage. A checkbox in the panel turns it
+   * off, and the four lines then aim exactly where they were written.
+   */
+  smartHealing: true,
   entries: [
     /*
      * THE SHARED FREE ENTRIES FIRST, ABOVE THE OWNER'S FOUR -- the racials and
