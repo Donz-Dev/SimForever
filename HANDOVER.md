@@ -111,7 +111,7 @@ Seven items from the owner, four healer and three Mage:
 | pre-cast toggle | offered only on a heal with a cast bar (`Ability.heals`, and a cast time that is not a channel): Holy Light and Flash of Light, not Holy Shock |
 | Clearcasting | Arcane Concentration rolls ONCE per Arcane Missiles, on the first missile that hits, keyed by `castSequence - channelTicksDelivered` |
 | cost rule | cost INCREASES first, and a reduction is a share of the increased cost. Four Arcane Blast stacks (+700%) and Clearcasting (-100%) used to sum to seven times the base; now it is free. The cast-charge saving is measured against the cost without the charge, so it reads the eight times it saved |
-| Ice Barrier | a castable trainer spell for any Mage on the owner's ruling (it is also a tier-30 talent Frostfire cannot reach): 480 mana, 30s cooldown, **+6% Frost damage for 60s**. Frostfire casts it at T-10 and recasts it when it falls off, first of its global-cooldown entries. A Frost buff reaches Frostfire Bolt through `countsAsSchools`, taking the larger per aura |
+| Ice Barrier | a castable trainer spell for any Mage on the owner's ruling (it is also a tier-30 talent Frostfire cannot reach): 480 mana, 30s cooldown, **+6% Frost damage for 60s**. Frostfire casts it at T-10 and recasts it when it falls off with at least 60s of fight left, first of its global-cooldown entries. A Frost buff reaches Frostfire Bolt through `countsAsSchools`, taking the larger per aura |
 
 Measured, 300 fights a profile against `main`:
 
@@ -121,9 +121,26 @@ Measured, 300 fights a profile against `main`:
 | Arcane | 1058.1 | 1052.9 | -5.2 noise |
 | Fire | 1123.8 | 1127.4 | +3.6 noise |
 
-**ICE BARRIER IS WORTH LITTLE AT 60s AND IT DOES WORK**: Frostfire Bolt's
-non-crit hit is 1,392.6 with it against 1,317.6 without, x1.057. What it costs
-is two global cooldowns and 960 mana a minute, cast twice.
+**ICE BARRIER IS WORTH +30.6 AT 60s, ONCE THE RECAST IS GATED** (round 55b,
+the owner's catch: "+4 dps seems low ... for a 6% increase"). The T-10 cast
+takes no global cooldown, so a 60 second fight spends ONE, on the recast at
+~50s -- and that recast bought ten seconds of buff for a Frostfire Bolt. It now
+recasts only while at least 60 seconds remain, the length of a new buff.
+Paired over 500 fights against no Ice Barrier at all:
+
+| | 60s | 180s |
+| --- | --- | --- |
+| recast whenever it falls off (first push) | +5.0 +/- 5.9 | -39.4 +/- 6.4 |
+| T-10 only | +30.6 +/- 5.3 | -10.0 +/- 6.0 |
+| **recast only with >= 60s left (shipped)** | **+30.6 +/- 5.3** | -37.8 +/- 6.4 |
+
++30.6 is what the arithmetic predicts: 6% of the ~44% of damage that counts as
+Frost on a ~1,018 DPS build. Frostfire Bolt's non-crit hit is 1,392.6 with the
+buff against 1,317.6 without, x1.057.
+
+**AT 180s ICE BARRIER IS A LOSS EVEN CAST ONLY AT T-10**, because the build is
+mana-bound at that length and 480 mana is worth more as Frostfire Bolts. A
+question for the owner: keep it in long fights, or gate it on mana.
 
 Healer, 1000 iterations: tank fight **536 HPS, 2.24 tank deaths**, mana spent
 10,956 where it was 15,917 with the cancelled pre-casts charged and refunded;

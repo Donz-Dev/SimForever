@@ -138,8 +138,23 @@ describe('Ice Barrier on the Frostfire Mage', () => {
     expect(mage.auras.remainingMs('ice_barrier', 0)).toBe(seconds(50));
     simulation.advanceTo(seconds(600));
     const casts = events.filter((event) => event.type === 'cast' && event.abilityId === 'ice_barrier');
-    // The opener, then a recast after each fall-off: at ~50s and ~110s.
-    expect(casts.length).toBeGreaterThanOrEqual(3);
+    // The opener, then a recast at ~50s with ~100s left -- and NOT at ~110s,
+    // when only ~40s are left and a whole new buff would not fit.
+    expect(casts.length).toBe(2);
+    expect(casts[1].timestamp).toBeGreaterThanOrEqual(seconds(49));
+    expect(casts[1].timestamp).toBeLessThanOrEqual(seconds(90));
+  });
+
+  it('is not recast in a 60 second fight, where a new buff would have ~10s to run', () => {
+    const events: TelemetryEvent[] = [];
+    const preset = PRESETS_BY_ID.get('mage_frostfire')!.build();
+    const simulation = new Simulation(trainingDummyEncounter(preset, 11), { emit: (e) => events.push(e) });
+    simulation.begin();
+    simulation.advanceTo(seconds(600));
+    const casts = events.filter((event) => event.type === 'cast' && event.abilityId === 'ice_barrier');
+    // The T-10 opener only, which takes no global cooldown.
+    expect(casts).toHaveLength(1);
+    expect(casts[0].timestamp).toBe(0);
   });
 });
 

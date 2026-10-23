@@ -22,6 +22,7 @@ import {
 } from './apl';
 import type { TalentAllocation } from '../talents/Talent';
 import {
+  ICE_BARRIER_DURATION_MS,
   ARCANE_BLAST_MAX_STACKS,
   HEATING_UP_MAX_STACKS,
   IMPROVED_SCORCH_MAX_STACKS,
@@ -678,8 +679,23 @@ export const MAGE_FROSTFIRE: AplList = {
    * be cast when it falls off as well, high in the normal APL." The opener
    * casts it at T-10, so the first one has fifty seconds left at the pull.
    * First of the global-cooldown entries, below only the free ones above.
+   *
+   * ONLY WHILE A WHOLE NEW BUFF FITS IN THE FIGHT -- at least sixty seconds
+   * left. Ungated, the 60s fight recast it at ~50s for ten seconds of buff at
+   * the price of a Frostfire Bolt: paired over 500 fights against no Ice
+   * Barrier at all, **+5.0 +/- 5.9 ungated and +30.6 +/- 5.3 gated** at 60s,
+   * and -39.4 against -37.8 at 180s, so the gate is never a loss. Break-even
+   * is about a minute of buff: 6% of the ~44% of damage that counts as Frost,
+   * against one global cooldown.
+   *
+   * AT 180s ICE BARRIER IS A LOSS EVEN AT T-10 ONLY (-10.0 +/- 6.0): the build
+   * is mana-bound at that length, and 480 mana is worth more as Frostfire
+   * Bolts. Whether to keep it there is the owner's call, recorded in HANDOVER.
    */
-  { abilityId: 'ice_barrier', condition: selfMissing('ice_barrier') },
+  {
+    abilityId: 'ice_barrier',
+    condition: all(selfMissing('ice_barrier'), fightRemaining('atLeast', ICE_BARRIER_DURATION_MS / 1000)),
+  },
   { abilityId: 'evocation', condition: evocationFor(EVOCATION_FIGHT_SECONDS) },
   { abilityId: 'scorch', condition: scorchNeededWithin(FROSTFIRE_SCORCH_REFRESH_SECONDS) },
   { abilityId: 'pyroblast', condition: selfStacksExactly('heating_up', HEATING_UP_MAX_STACKS) },
