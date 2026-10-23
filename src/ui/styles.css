@@ -825,6 +825,25 @@ button:disabled {
   background: var(--accent-strong);
 }
 
+/* Three runs, stacked: DPS, Tank and Healer (round 52). */
+.run-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.run-buttons .run-button {
+  margin-top: 0;
+}
+
+/* One healer fight's report, timeline and log, kept together (round 52). */
+.healer-report {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .progress {
   height: 4px;
   margin-top: 8px;
@@ -3025,7 +3044,8 @@ button:disabled {
      with them open that was ten thousand pixels of scrolling to find a DPS
      figure. `order` moves the three output panels to the top of their column,
      which on one column is directly under the Simulation panel. */
-  .panel-output {
+  .panel-output,
+  .healer-report {
     order: -1;
   }
 

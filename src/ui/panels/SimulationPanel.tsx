@@ -37,10 +37,20 @@ export interface StatWeightSelection {
  */
 export const NO_STAT_WEIGHTS: StatWeightSelection = { enabled: false, stats: [] };
 
+/** Which of the three runs a button starts. */
+export type RunKind = 'dps' | 'tank' | 'healer';
+
 interface SimulationPanelProps {
   readonly profile: CharacterProfile;
   readonly onChange: (profile: CharacterProfile) => void;
-  readonly onRun: () => void;
+  /**
+   * THREE RUNS, the owner's (round 52): a DPS run against a target that stands
+   * still, a TANK run against one that swings back -- which is what the
+   * Encounter panel's "Target attacks back" checkbox used to switch, and the
+   * checkbox is gone -- and a HEALER run, the Tank Healer and Raid Healer
+   * fights back to back.
+   */
+  readonly onRun: (kind: RunKind) => void;
   readonly isRunning: boolean;
   readonly progress: number;
   readonly statWeights: StatWeightSelection;
@@ -100,9 +110,17 @@ export function SimulationPanel({
         onChange={(iterations) => setSimulation({ iterations: Math.round(iterations) })}
       />
 
-      <button type="button" className="run-button" onClick={onRun} disabled={isRunning}>
-        {isRunning ? 'Running...' : 'Run Simulation'}
-      </button>
+      <div className="run-buttons">
+        <button type="button" className="run-button" onClick={() => onRun('dps')} disabled={isRunning}>
+          {isRunning ? 'Running...' : 'Run DPS Simulation'}
+        </button>
+        <button type="button" className="run-button" onClick={() => onRun('tank')} disabled={isRunning}>
+          Run Tank Simulation
+        </button>
+        <button type="button" className="run-button" onClick={() => onRun('healer')} disabled={isRunning}>
+          Run Healer Simulation
+        </button>
+      </div>
 
       {isRunning && profile.simulation.iterations > 1 ? (
         <div className="progress">

@@ -337,8 +337,9 @@ describe('what an enchant grants', () => {
 // ---------------------------------------------------------------------------
 
 describe('the enchants that are not modelled', () => {
-  // The two threat enchants left this list at round 47, when threat became tracked.
-  const INERT = ['+11 Healing Power', '+16 Healing Power', 'Minor Speed'];
+  // The two threat enchants left this list at round 47, when threat became
+  // tracked, and the two healing power enchants at round 52, when healing did.
+  const INERT = ['Minor Speed'];
 
   it('are selectable, grant nothing, and each records why', () => {
     for (const name of INERT) {
@@ -636,6 +637,12 @@ const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   shadow_priest: {
     head: '+1% Haste', neck: '+6 Spell Power', cloak: '-2% Threat', chest: '+4 Stats',
     wrists: '+16 Spell Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: 'Minor Speed',
+  },
+  // Round 52's healer, which has no owner row yet: chosen by the healer's stats.
+  holy_pal: {
+    head: '+1% Haste', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',
+    wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: '+7 Agility',
+    shield: '+9 Stamina',
   },
 };
 

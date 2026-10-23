@@ -385,19 +385,18 @@ describe('per-school spell power', () => {
     expect(fromTalents.for('shadow').spellPower ?? 0).toBe(0);
   });
 
-  it('is DAMAGE only, so a heal reads the school-blind pool alone', () => {
+  it('is DAMAGE only, so a heal reads healing power and nothing else', () => {
     /*
-     * The gear wording draws this line itself: the school-blind line is
-     * "increases damage AND HEALING done by magical spells", the scoped one is
-     * "increases DAMAGE done by Shadow spells". So `resolveHealing` reads the
-     * stat and never `spellPowerFor` -- a Holy-scoped 161 on a Paladin raises
-     * its seal and not its Holy Light.
+     * The gear wording draws this line itself: "increases DAMAGE done by Shadow
+     * spells" is scoped, and a heal scales with HEALING power (round 52) --
+     * never `spellPowerFor` and never the school-blind spell power either, so a
+     * Holy-scoped 161 on a Paladin raises its seal and not its Holy Light.
      */
     const schools = new SchoolModifiers();
     schools.add('holy', { spellPower: 161 });
     const actor = makeAttacker({
       autoAttack: 'none',
-      stats: { spellPower: 100 },
+      stats: { spellPower: 100, healingPower: 40 },
       schoolModifiers: schools,
     });
     const target = makeTarget({ maxHealth: 1_000_000 });
@@ -407,6 +406,6 @@ describe('per-school spell power', () => {
       { source: actor, target, abilityName: 'Test Heal', baseAmount: 500, powerCoefficient: 1, canCrit: false },
       rng,
     );
-    expect(healed.raw).toBeCloseTo(600, 6);
+    expect(healed.raw).toBeCloseTo(540, 6);
   });
 });

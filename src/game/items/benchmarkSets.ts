@@ -25,6 +25,7 @@ import {
   shieldBlockValue,
   spreadRating,
   staminaFloor,
+  healingPowerFloor,
   statsFor,
   weightedShares,
   type ArmourClass,
@@ -163,6 +164,15 @@ export interface BenchmarkTemplate {
    * weapon as the Seal Twist Ret profile." The armour is still this template's.
    */
   readonly weaponsFrom?: string;
+  /**
+   * A HEALER: every slot but the trinkets and the weapon carries a healing
+   * power FLOOR, and the eight armour pieces their usual stamina floor, before
+   * `preferred` divides the rest (round 52). The owner's Holy Pal: "minimums
+   * for Stamina and Healing Power, with intellect / spirit / crit rating
+   * competing for item budget." Each floor takes one of the slot's stat lines,
+   * so the slot-count table still decides how many stats an item has.
+   */
+  readonly healer?: boolean;
 }
 
 /** What the character holds. `caster` trades damage for stats. */
@@ -384,7 +394,7 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
   // moved the Firelock to 120 -- the gap between the two is 30 now.
   { idBlock: 29, presetId: 'warlock_demonology', characterClass: 'warlock', label: 'Fire Demo', hit: 150, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   // Sbolt Spam: the Firelock's gear, by the owner's instruction, and the same
-  // Suppression 5/5, so the same hit. A NEW ROW TAKES idBlock 31.
+  // Suppression 5/5, so the same hit.
   //
   // ROUND 51: THE SPELL MISS FLOOR WENT IN ROUND 35 AND THE TEMPLATES WERE NEVER
   // RE-CAPPED. Every hit figure above was set against a 16-point cap, so ten
@@ -403,6 +413,14 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
   // The Arcane Mage caps ARCANE: Arcane Focus is school-scoped, so its
   // Pyroblast still misses 5%. `tools/probe_spell_hit.ts` prints all ten.
   { idBlock: 30, presetId: 'warlock_sbolt', characterClass: 'warlock', label: 'Sbolt Spam', hit: 120, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  /*
+   * HOLY PAL, THE FIRST HEALER (round 52). No hit and no expertise -- a heal
+   * cannot miss. Plate, a caster mace and a shield, the arrangement the
+   * Shockadin already uses. `healer` puts a healing power floor on every slot
+   * and keeps the stamina floor on the armour; intellect, spirit and crit
+   * compete for the rest, in that order. idBlock 31; A NEW ROW TAKES 32.
+   */
+  { idBlock: 31, presetId: 'holy_pal', characterClass: 'paladin', label: 'Holy Pal', hit: 0, expertise: 0, preferred: ['Intellect', 'Spirit', 'Crit'], armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true }, healer: true },
 ];
 
 /** Ids one template owns: four sets of up to 100 items each. */
@@ -999,7 +1017,28 @@ export function benchmarkItemsFor(
      * the two.
      * ------------------------------------------------------------------------
      */
-    const chosen = statsFor(plan, template.preferred, armourIndex);
+    /*
+     * A HEALER'S FLOORS TAKE THEIR LINES FIRST (round 52): healing power on
+     * every slot here, stamina on the eight armour pieces below -- so the
+     * preferences compete for what is left, in as many lines as remain. A
+     * wrist's three are healing, stamina and ONE of intellect, spirit and
+     * crit, turning with the slot like any other tail.
+     */
+    const armourPiece = !plan.noArmour && plan.slot !== 'cloak';
+    const healerLines = template.healer ? 1 + (armourPiece ? 1 : 0) : 0;
+    if (template.healer) {
+      const committedSoFar = [...fixed.entries()].reduce(
+        (sum, [stat, value]) => sum + (value * COST[stat]) ** BUDGET_EXPONENT,
+        0,
+      );
+      const healing = healingPowerFloor(budget, committedSoFar);
+      if (healing > 0) fixed.set('Healing Power', healing);
+    }
+    const chosen = statsFor(
+      healerLines > 0 ? { ...plan, stats: Math.max(1, plan.stats - healerLines) } : plan,
+      template.preferred,
+      armourIndex,
+    );
     let shares = chosen;
     if (!plan.noArmour && plan.slot !== 'cloak') {
       /*
@@ -1150,11 +1189,22 @@ export function benchmarkItemsFor(
      * like a wrist, so it reads the preference order exactly as one does.
      */
     const shieldBudget = base * SLOT_MULTIPLIER.light;
+    // A healer's shield carries the healing floor too, in one of its three lines.
+    const shieldFixed = new Map<BenchStat, number>();
+    if (template.healer) {
+      const healing = healingPowerFloor(shieldBudget);
+      if (healing > 0) shieldFixed.set('Healing Power', healing);
+    }
     const shieldStats = statsFor(
-      { slot: 'shield', inventory: 'Off Hand', slotClass: 'light', stats: SHIELD_STATS },
+      {
+        slot: 'shield',
+        inventory: 'Off Hand',
+        slotClass: 'light',
+        stats: template.healer ? SHIELD_STATS - 1 : SHIELD_STATS,
+      },
       template.preferred,
     );
-    const { effects, spent } = toLines(new Map(), shieldStats, shieldBudget);
+    const { effects, spent } = toLines(shieldFixed, shieldStats, shieldBudget);
     items.push(
       makeItem(
         nextId(),

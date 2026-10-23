@@ -1,11 +1,15 @@
 import type { Ability, AuraDefinition, Combatant, SimulationContext } from '../../engine';
-import { dealDamage, seconds, spellPowerAgainst } from '../../engine';
+import { applyHealing, dealDamage, seconds, spellPowerAgainst } from '../../engine';
 import { baseManaFor } from '../character/baseStatLookup';
 import { inExecutePhase } from '../combat/executePhase';
 import {
   CONSECRATED_GROUND_FLAG,
   DIVINE_FAVOR,
+  ILLUMINATION_CHANCE_KEY,
+  ILLUMINATION_REFUND_KEY,
   IMPROVED_RIGHTEOUS_FURY_FLAG,
+  INFUSION_OF_LIGHT_KEY,
+  infusionOfLight,
   HOLY_SHIELD,
   JUDGEMENT_OF_THE_CRUSADER,
   RIGHTEOUS_FURY_THREAT_PERCENT,
@@ -29,6 +33,9 @@ import {
   JUDGEMENT_OF_COMMAND_SP_COEFFICIENT,
   JUDGEMENT_OF_FURY_SP_COEFFICIENT,
   JUDGEMENT_OF_RIGHTEOUSNESS_SP_COEFFICIENT,
+  PLACEHOLDER_FLASH_OF_LIGHT_HEAL_COEFFICIENT,
+  PLACEHOLDER_HOLY_LIGHT_HEAL_COEFFICIENT,
+  PLACEHOLDER_HOLY_SHOCK_HEAL_COEFFICIENT,
 } from '../combat/coefficients';
 
 /**
@@ -438,6 +445,15 @@ export const HOLY_SHOCK: Ability = {
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
+    /*
+     * A FRIENDLY TARGET IS HEALED, an enemy is struck (round 52): "causing 334
+     * to 362 Holy damage to an enemy, or 307 to 333 healing to an ally". Which
+     * one is the target's side, so the entry that picked the target decides.
+     */
+    if (!target.isHostileTo(caster)) {
+      paladinHeal(simulation, caster, target, ability, HOLY_SHOCK_HEAL, PLACEHOLDER_HOLY_SHOCK_HEAL_COEFFICIENT);
+      return;
+    }
     dealDamage(simulation, {
       source: caster,
       target,
@@ -449,7 +465,100 @@ export const HOLY_SHOCK: Ability = {
       attackTable: ability.attackTable,
     });
   },
-  unmodelled: 'Its healing half is not modelled; no Paladin profile heals.',
+};
+
+/** Holy Shock's heal: "307 to 333 healing to an ally". */
+export const HOLY_SHOCK_HEAL = midpoint(307, 333);
+
+/**
+ * A Paladin heal, and the two Holy talents that ride on its crit.
+ *
+ * ----------------------------------------------------------------------------
+ * ILLUMINATION: "after getting a critical effect from your Flash of Light, Holy
+ * Light, Light's Vigil, or Holy Shock heal spell you have a {0}% chance to gain
+ * Mana equal to {1}% of the base cost of the spell". BASE cost, so the declared
+ * `cost` rather than whatever a reduction left of it.
+ *
+ * INFUSION OF LIGHT: a Holy Shock or Flash of Light crit takes {1} seconds off
+ * the next Holy Light within 15.
+ *
+ * BOTH ARE READ OFF THE ABILITY COPY'S `bonuses`, which `applyTalentChanges`
+ * fills per character -- so a Paladin without the talent heals plainly.
+ * ----------------------------------------------------------------------------
+ */
+export function paladinHeal(
+  simulation: SimulationContext,
+  caster: Combatant,
+  target: Combatant,
+  ability: Ability,
+  amount: number,
+  coefficient: number,
+): void {
+  const result = applyHealing(simulation, {
+    source: caster,
+    target,
+    abilityId: ability.id,
+    abilityName: ability.name,
+    baseAmount: amount,
+    powerCoefficient: coefficient,
+    threatens: true,
+  });
+  if (!result.critical) return;
+
+  const chance = ability.bonuses?.[ILLUMINATION_CHANCE_KEY] ?? 0;
+  const refund = ability.bonuses?.[ILLUMINATION_REFUND_KEY] ?? 0;
+  if (chance > 0 && refund > 0 && ability.cost?.resource === 'mana') {
+    if (simulation.rng.rollChance(chance / 100)) {
+      simulation.grantResource(caster, 'mana', (ability.cost.amount * refund) / 100, {
+        id: 'illumination',
+        name: 'Illumination',
+      });
+    }
+  }
+
+  const infusion = ability.bonuses?.[INFUSION_OF_LIGHT_KEY] ?? 0;
+  if (infusion > 0) simulation.applyAura(caster, infusionOfLight(infusion), caster.id);
+}
+
+/**
+ * Holy Light: "Heals a friendly target for 1,495 to 1,665." 660 mana, a 2.5
+ * second cast. Rank 9, the capture's.
+ */
+export const HOLY_LIGHT_HEAL = midpoint(1495, 1665);
+
+export const HOLY_LIGHT: Ability = {
+  id: 'holy_light',
+  name: 'Holy Light',
+  cost: { resource: 'mana', amount: 660 },
+  castTimeMs: seconds(2.5),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target || target.isHostileTo(caster)) return;
+    paladinHeal(simulation, caster, target, ability, HOLY_LIGHT_HEAL, PLACEHOLDER_HOLY_LIGHT_HEAL_COEFFICIENT);
+  },
+};
+
+/**
+ * Flash of Light: "Heals a friendly target for 291 to 325." 140 mana, a 1.5
+ * second cast. Rank 6, the capture's.
+ */
+export const FLASH_OF_LIGHT_HEAL = midpoint(291, 325);
+
+export const FLASH_OF_LIGHT: Ability = {
+  id: 'flash_of_light',
+  name: 'Flash of Light',
+  cost: { resource: 'mana', amount: 140 },
+  castTimeMs: seconds(1.5),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target || target.isHostileTo(caster)) return;
+    paladinHeal(
+      simulation,
+      caster,
+      target,
+      ability,
+      FLASH_OF_LIGHT_HEAL,
+      PLACEHOLDER_FLASH_OF_LIGHT_HEAL_COEFFICIENT,
+    );
+  },
 };
 
 /**
@@ -733,6 +842,8 @@ export const PALADIN_ABILITIES: readonly Ability[] = [
   SWIFT_JUDGEMENT,
   HOLY_STRIKE,
   HOLY_SHOCK,
+  HOLY_LIGHT,
+  FLASH_OF_LIGHT,
   DIVINE_FAVOR_ABILITY,
   CONSECRATION,
   HOLY_SHIELD_ABILITY,

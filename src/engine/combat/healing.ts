@@ -2,6 +2,7 @@ import type { Combatant } from '../actors/Combatant';
 import type { RNG } from '../rng';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import { spellCritChanceFrom, versatilityMultiplierFrom } from './ratings';
+import { remainingFractionOf } from './damage';
 
 /** Healing crits for this much. Matches the spell crit multiplier. */
 const HEALING_CRIT_MULTIPLIER = 1.5;
@@ -12,7 +13,8 @@ const HEALING_CRIT_MULTIPLIER = 1.5;
  * healing has overhealing; absorbs will slot in the same way shields do on the
  * damage side.
  *
- * The foundation is here; no content uses it yet.
+ * USED SINCE ROUND 52, when the owner made healing a feature: the Paladin's
+ * Holy Light, Flash of Light and Holy Shock heal through here.
  */
 export interface HealRequest {
   readonly source: Combatant;
@@ -44,6 +46,13 @@ export interface HealRequest {
    * knows only the first line would read that call as a mistake.
    */
   readonly external?: boolean;
+  /**
+   * Whether this heal generates threat (round 52). OPT-IN, so the self-heals
+   * that existed before healing was a feature -- potions, Healthstones, Frenzied
+   * Regeneration, Life Tap's heal-back -- leave every published TPS exactly
+   * where it was. A healer's spells set it.
+   */
+  readonly threatens?: boolean;
 }
 
 export interface HealResolution {
@@ -57,7 +66,16 @@ export interface HealResolution {
 }
 
 /** Run a heal request through the pipeline without applying it. */
-export function resolveHealing(request: HealRequest, rng: RNG): HealResolution {
+export function resolveHealing(
+  request: HealRequest,
+  rng: RNG,
+  /**
+   * The fight clock's remaining fraction, for the ability modifiers conditional
+   * on it -- Quietus, Early Demise. `applyHealing` always passes it; a caller
+   * resolving a heal outside a fight has no clock and gets none of them.
+   */
+  remainingFraction?: number,
+): HealResolution {
   const { source, target } = request;
 
   const coefficient = request.powerCoefficient ?? 0;
@@ -69,17 +87,38 @@ export function resolveHealing(request: HealRequest, rng: RNG): HealResolution {
    * Paladin raises its Seal of Righteousness and not its Holy Light. See
    * `spellPowerFor`, which is the damage side of the same question.
    */
-  const scaled = request.baseAmount + coefficient * source.stats.get('spellPower');
+  /*
+   * HEALING POWER, NOT SPELL POWER (round 52). Forever keeps the two apart --
+   * "+73 Healing" beside "+25 Spell Damage" on one item -- and the item parser
+   * writes "+N Spell Power" into BOTH stats, so this reads everything that
+   * heals and nothing that only hurts. An external heal is not scaled at all,
+   * so the stand-in source's healing power cannot leak into it.
+   */
+  const scaled =
+    request.baseAmount + (request.external ? 0 : coefficient * source.stats.get('healingPower'));
+
+  /*
+   * THE ABILITY'S OWN MODIFIERS REACH A HEAL TOO: Holy Power's +15% crit on
+   * Holy Shock, Divine Favor's guaranteed crit and Healing Light's +12% are
+   * all keyed by ability id. Read through `abilityModifierFor`, the one funnel
+   * every damage reader uses, so a conditional or aura-borne modifier arrives
+   * the same way it does on the damage side.
+   */
+  const modifier =
+    request.external || !request.abilityId
+      ? undefined
+      : source.abilityModifierFor(request.abilityId, remainingFraction);
 
   // Healing does not miss, so it rolls crit directly rather than going through
   // a combat table.
-  const critical =
-    (request.canCrit ?? true) && rng.rollChance(spellCritChanceFrom(source.stats.effective));
+  const critChance = spellCritChanceFrom(source.stats.effective) + (modifier?.critBonus ?? 0) / 100;
+  const critical = (request.canCrit ?? true) && rng.rollChance(Math.min(1, critChance));
   const afterCrit = critical ? scaled * HEALING_CRIT_MULTIPLIER : scaled;
 
   const raw = request.external
     ? afterCrit
     : afterCrit *
+      (modifier?.healingMultiplier ?? 1) *
       source.healingDoneMultiplier *
       versatilityMultiplierFrom(source.stats.effective);
 
@@ -101,7 +140,7 @@ export function applyHealing(
   context: SimulationContext,
   request: HealRequest,
 ): HealResolution {
-  const resolution = resolveHealing(request, context.rng);
+  const resolution = resolveHealing(request, context.rng, remainingFractionOf(context));
 
   // Dead combatants are not healed back to life; resurrection is its own
   // mechanic and will need its own event.
@@ -120,6 +159,8 @@ export function applyHealing(
     critical: resolution.critical,
     overhealing: resolution.overhealing,
     periodic: request.periodic ?? false,
+    ...(request.external ? { external: true } : {}),
+    ...(request.threatens && !request.external ? { threatens: true } : {}),
   });
 
   return resolution;

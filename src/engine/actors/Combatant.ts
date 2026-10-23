@@ -429,6 +429,13 @@ export interface CombatantOptions {
   readonly revivesOnDeath?: boolean;
   /** For pets and summons: the id of the combatant that owns them. */
   readonly ownerId?: string;
+  /**
+   * A friendly raid member's place, for a healer's priority list (round 52):
+   * whether it is THE tank, and which party of five it stands in. Neither is
+   * read by the engine's combat rules; they exist so a rotation can ask.
+   */
+  readonly raidRole?: 'tank';
+  readonly party?: number;
 }
 
 /**
@@ -451,6 +458,10 @@ export class Combatant {
   /** Fight-long threat factors; see `CombatantOptions.threatModifiers`. */
   readonly threatModifiers: readonly ThreatModifier[];
   readonly ownerId: string | undefined;
+  /** See `CombatantOptions.raidRole`. */
+  readonly raidRole: 'tank' | undefined;
+  /** See `CombatantOptions.party`. */
+  readonly party: number | undefined;
 
   readonly stats: StatBlock;
   readonly health: Resource;
@@ -664,6 +675,8 @@ export class Combatant {
     this.resistances = options.resistances ?? {};
     this.threatModifiers = options.threatModifiers ?? [];
     this.ownerId = options.ownerId;
+    this.raidRole = options.raidRole;
+    this.party = options.party;
 
     this.stats = new StatBlock(options.stats, options.statDerivation);
     this.health = new Resource('health', options.maxHealth);

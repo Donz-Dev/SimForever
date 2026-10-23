@@ -331,6 +331,12 @@ export type TalentEffect =
    * The ability id can be an aura's, because a periodic tick carries the aura's
    * id -- which is how Improved Rend scales a bleed rather than a cast.
    */
+  /**
+   * Multiplies ONE ability's HEALING. The value is a percentage, so 12 is x1.12.
+   * Healing Light (round 52). Kept apart from `abilityDamage` because Holy
+   * Shock both damages and heals, and a heal talent must not raise the damage.
+   */
+  | { readonly kind: 'abilityHealing'; readonly abilityId: string; readonly valueIndex?: number }
   | {
       readonly kind: 'abilityDamage';
       readonly abilityId: string;

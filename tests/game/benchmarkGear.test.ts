@@ -397,7 +397,7 @@ describe('a caster weapon trades melee damage for a stated spell power', () => {
     );
   };
 
-  it('covers exactly the ten profiles the owner named', () => {
+  it('covers exactly the profiles the owner named, and Holy Pal', () => {
     /*
      * The list is the owner's: Moonkin, Ele Shaman, Frostfire, Arcane, Fire,
      * Shockadin, Prot Pally, SM/DS, Firelock, Shadow. Pinned because the rule
@@ -411,6 +411,7 @@ describe('a caster weapon trades melee damage for a stated spell power', () => {
       'Fire Demo',
       'Firelock',
       'Frostfire',
+      'Holy Pal',
       'Moonkin',
       'Prot Pally',
       'SM/DS',

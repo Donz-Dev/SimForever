@@ -814,7 +814,7 @@ export function appliesArmor(request: DamageRequest): boolean {
  * read off a fixed number of seconds would open its window at a different
  * fraction in every fight of a batch.
  */
-function remainingFractionOf(context: SimulationContext): number {
+export function remainingFractionOf(context: SimulationContext): number {
   if (context.plannedDurationMs <= 0) return 0;
   return (context.plannedDurationMs - context.clock.now()) / context.plannedDurationMs;
 }

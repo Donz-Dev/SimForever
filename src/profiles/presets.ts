@@ -1470,6 +1470,40 @@ const SHOCKADIN_RET_BELOW_20: TalentAllocation = {
  * it to twenty-three. The two spare go into Holy Conduit and Pursuit of
  * Justice, which is where Retribution's dead points live.
  */
+/**
+ * HOLY PAL -- 31 Holy / 13 Protection / 7 Retribution, the owner's healer
+ * (round 52), decoded from
+ * https://talentsforever.com/paladin/60/05320213025101051-500051002-0502-BDCHGF1LKNJFPQRVZikW-8?b=70425h
+ *
+ * Healing Light, Illumination, Infusion of Light, Divine Favor and Holy Power
+ * are the five that reach a heal; Light's Vigil is the capstone and the list
+ * does not cast it. The Protection points are Toughness, Anticipation, Sacred
+ * Duty and Improved Seal of Fury -- a healer standing in a raid, not a tank.
+ */
+const HOLY_PAL_TALENTS: TalentAllocation = {
+  // Holy, 31
+  divine_intellect: 5,
+  healing_light: 3,
+  spiritual_focus: 2,
+  unyielding_faith: 2,
+  voice_of_truth: 1,
+  reverence: 3,
+  infusion_of_light: 2,
+  illumination: 5,
+  divine_favor: 1,
+  holy_shock: 1,
+  holy_power: 5,
+  light_s_vigil: 1,
+  // Protection, 13
+  toughness: 5,
+  anticipation: 5,
+  improved_seal_of_fury: 1,
+  sacred_duty: 2,
+  // Retribution, 7
+  benediction: 5,
+  holy_conduit: 2,
+};
+
 const PALADIN_SHOCKADIN_TALENTS: TalentAllocation = {
   ...SHOCKADIN_HOLY_BELOW_20,
   holy_shock: 1,
@@ -3953,6 +3987,51 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         // Shadow Word: Pain is off the opener, by the owner (round 37).
         ...before(0, 'devouring_plague'),
       ],
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    /*
+     * ==================================================================
+     * HOLY PAL, THE FIRST HEALER (round 52). Run with "Run Healer
+     * Simulation": a Tank Healer fight and a Raid Healer fight, both
+     * reported in HPS. A DPS run of it measures a Paladin hitting a dummy
+     * with nothing it can cast, which is why the list is heals and nothing
+     * else.
+     *
+     * CASTER STYLE, so no auto-attack: the mace and the shield are stat
+     * sticks, as the Elemental Shaman's are. The gear is the same four
+     * benchmark sets every profile wears, from its own `healer` template.
+     *
+     * CONSUMABLES ARE THE HEALING ROW: the +150 Spell Power flask (Spell
+     * Power heals), the +44 Healing Power food, a mana potion and the
+     * Demonic Rune for the pool. No weapon effect -- every option raises
+     * damage or crit on a weapon that never swings.
+     * ==================================================================
+     */
+    id: 'holy_pal',
+    label: 'Holy Pal',
+    detail: 'Human, caster mace and shield, a healer. 31 Holy / 13 Protection / 7 Retribution',
+    characterClass: 'paladin',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Holy Pal',
+        race: 'human',
+        characterClass: 'paladin',
+        level: 60,
+        combatStyle: 'caster',
+        stance: 'battle',
+      },
+      talents: { ...HOLY_PAL_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: {
+        ...casterConsumables('school_holy'),
+        flask: 'flask_spell_power',
+        food: 'food_healing_power',
+        potion: 'major_mana_potion',
+        other: 'demonic_rune',
+      },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },

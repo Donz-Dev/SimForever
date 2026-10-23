@@ -1,8 +1,7 @@
 import { TARGET_ARMOR_OPTIONS } from '../../game/actors/createTrainingDummy';
-import { withSalvationFor } from '../../game/buffs/raidBuffs';
 import type { CharacterProfile } from '../../profiles';
 import type { SelectOption } from '../components/Field';
-import { CheckboxField, NumberField, SelectField, TextField } from '../components/Field';
+import { NumberField, SelectField, TextField } from '../components/Field';
 import { Panel } from '../components/Panel';
 
 interface EncounterPanelProps {
@@ -68,42 +67,29 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
         onChange={(targetArmor) => setEncounter({ targetArmor })}
       />
 
-      <CheckboxField
-        label="Target attacks back"
-        checked={profile.encounter.targetAttacks}
-        onChange={(targetAttacks) =>
-          /*
-           * SALVATION FOLLOWS THE SWITCH, by the owner's instruction: on when
-           * the target does not attack back, off when it does, so a tank is
-           * never carrying -30% threat.
-           */
-          onChange({
-            ...profile,
-            encounter: { ...profile.encounter, targetAttacks },
-            raidBuffs: [...withSalvationFor(profile.raidBuffs, targetAttacks)],
-          })
-        }
+      {/*
+        * THE "TARGET ATTACKS BACK" CHECKBOX IS GONE (round 52): the Simulation
+        * panel's Run Tank Simulation button is that switch now, and it carries
+        * Salvation with it exactly as the checkbox did. The swing figures stay
+        * here, always shown, because both a tank run and the Tank Healer fight
+        * read them.
+        */}
+      <NumberField
+        label="Swing damage"
+        hint="tank and healer runs"
+        value={profile.encounter.targetSwingDamage}
+        min={0}
+        step={100}
+        onChange={(targetSwingDamage) => setEncounter({ targetSwingDamage })}
       />
-
-      {profile.encounter.targetAttacks ? (
-        <>
-          <NumberField
-            label="Swing damage"
-            value={profile.encounter.targetSwingDamage}
-            min={0}
-            step={100}
-            onChange={(targetSwingDamage) => setEncounter({ targetSwingDamage })}
-          />
-          <NumberField
-            label="Swing speed"
-            hint="seconds"
-            value={profile.encounter.targetSwingSeconds}
-            min={0.1}
-            step={0.1}
-            onChange={(targetSwingSeconds) => setEncounter({ targetSwingSeconds })}
-          />
-        </>
-      ) : null}
+      <NumberField
+        label="Swing speed"
+        hint="seconds"
+        value={profile.encounter.targetSwingSeconds}
+        min={0.1}
+        step={0.1}
+        onChange={(targetSwingSeconds) => setEncounter({ targetSwingSeconds })}
+      />
     </Panel>
   );
 }

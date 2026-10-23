@@ -112,17 +112,9 @@ const DECLARED: readonly Declared[] = [
 
   // ---- Neck ---------------------------------------------------------------
   { name: '+5 Strength', slots: ['neck'], stats: { strength: 5 } },
-  { name: '+6 Spell Power', slots: ['neck'], stats: { spellPower: 6 } },
-  {
-    name: '+11 Healing Power',
-    slots: ['neck'],
-    unmodelled: inert(
-      '+11 Healing Power',
-      'Healing power is not a stat the engine has: nothing a character does here heals ' +
-        'anybody, so there is no throughput for it to scale. Kept selectable on the ' +
-        "owner's instruction, and worth exactly nothing.",
-    ),
-  },
+  { name: '+6 Spell Power', slots: ['neck'], stats: { spellPower: 6, healingPower: 6 } },
+  // A stat since round 52, when healing became a feature: `healingPower`.
+  { name: '+11 Healing Power', slots: ['neck'], stats: { healingPower: 11 } },
   { name: '+5 Agility', slots: ['neck', 'cloak'], stats: { agility: 5 } },
   { name: '+5 Defense Skill', slots: ['neck'], stats: { defenseSkill: 5 } },
 
@@ -163,21 +155,14 @@ const DECLARED: readonly Declared[] = [
 
   // ---- Bracer -------------------------------------------------------------
   { name: '+9 Strength', slots: ['wrists'], stats: { strength: 9 } },
-  { name: '+16 Spell Power', slots: ['wrists'], stats: { spellPower: 16 } },
+  { name: '+16 Spell Power', slots: ['wrists'], stats: { spellPower: 16, healingPower: 16 } },
   { name: '+9 Agility', slots: ['wrists'], stats: { agility: 9 } },
-  {
-    name: '+16 Healing Power',
-    slots: ['wrists'],
-    unmodelled: inert(
-      '+16 Healing Power',
-      'Healing power is not a stat the engine has. See the neck enchant of the same name.',
-    ),
-  },
+  { name: '+16 Healing Power', slots: ['wrists'], stats: { healingPower: 16 } },
 
   // ---- Gloves -------------------------------------------------------------
   { name: '+15 Strength', slots: ['gloves'], stats: { strength: 15 } },
   { name: '+15 Agility', slots: ['gloves'], stats: { agility: 15 } },
-  { name: '+20 Spell Power', slots: ['gloves'], stats: { spellPower: 20 } },
+  { name: '+20 Spell Power', slots: ['gloves'], stats: { spellPower: 20, healingPower: 20 } },
   {
     name: '+2% Threat',
     slots: ['gloves'],
@@ -249,7 +234,7 @@ const DECLARED: readonly Declared[] = [
    *   +25 Agility      The melee-weapon default for the two bow Hunters, whose
    *                    two-hander is a stat stick they never swing.
    * ========================================================================== */
-  { name: '+65 Spell Power', slots: ['twoHand'], stats: { spellPower: 65 } },
+  { name: '+65 Spell Power', slots: ['twoHand'], stats: { spellPower: 65, healingPower: 65 } },
   { name: '+9 Stamina', slots: ['shield'], stats: { stamina: 9 } },
   { name: '+25 Agility', slots: ['mainHand', 'offHand', 'twoHand'], stats: { agility: 25 } },
 

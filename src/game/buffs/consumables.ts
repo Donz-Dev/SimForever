@@ -368,7 +368,7 @@ export const CONSUMABLE_CATEGORIES: readonly ConsumableCategory[] = [
     name: 'Flask',
     options: [
       { id: 'flask_hit_points', name: '+1200 Hit Points', bonusHitPoints: 1200 },
-      { id: 'flask_spell_power', name: '+150 Spell Power', stats: { spellPower: 150 } },
+      { id: 'flask_spell_power', name: '+150 Spell Power', stats: { spellPower: 150, healingPower: 150 } },
     ],
   },
   /*
@@ -510,7 +510,7 @@ export const CONSUMABLE_CATEGORIES: readonly ConsumableCategory[] = [
   {
     id: 'spell_power',
     name: 'Spell Power',
-    options: [{ id: 'spell_power_35', name: '+35 Spell Power', stats: { spellPower: 35 } }],
+    options: [{ id: 'spell_power_35', name: '+35 Spell Power', stats: { spellPower: 35, healingPower: 35 } }],
   },
   {
     id: 'school_spell_power',
@@ -559,15 +559,9 @@ export const CONSUMABLE_CATEGORIES: readonly ConsumableCategory[] = [
        * IT MOVES FOUR PUBLISHED ROWS and is meant to: Seal Twist Ret, the
        * Shockadin, Prot Pally and the Moonkin all take this row.
        */
-      { id: 'food_spell_power', name: '+28 Spell Power', stats: { spellPower: 28 } },
-      {
-        id: 'food_healing_power',
-        name: '+44 Healing Power',
-        unmodelled:
-          'Healing power is not a stat the engine has: nothing a character does here heals ' +
-          'anybody, so there is no throughput for it to scale. Selectable and worth nothing, ' +
-          'the same as the two Healing Power armour enchants.',
-      },
+      { id: 'food_spell_power', name: '+28 Spell Power', stats: { spellPower: 28, healingPower: 28 } },
+      // A stat since round 52, when healing became a feature.
+      { id: 'food_healing_power', name: '+44 Healing Power', stats: { healingPower: 44 } },
       { id: 'food_stamina', name: '+20 Stamina', stats: { stamina: 20 } },
       { id: 'food_strength', name: '+20 Strength', stats: { strength: 20 } },
       { id: 'food_agility', name: '+20 Agility', stats: { agility: 20 } },

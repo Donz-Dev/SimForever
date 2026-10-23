@@ -44,7 +44,7 @@ export interface ThreatContext {
   readonly table?: AttackTableKind;
   readonly abilityId?: string;
   /** Threat that is not from damage: a resource gain or a debuff's flat. */
-  readonly kind: 'damage' | 'ability' | 'resource';
+  readonly kind: 'damage' | 'ability' | 'resource' | 'healing';
 }
 
 /**
@@ -124,6 +124,12 @@ export interface ThreatRules {
     resource: ResourceType,
     sourceId: string | undefined,
   ) => ResourceThreat | undefined;
+  /**
+   * Threat per point of EFFECTIVE healing -- overhealing threatens nothing --
+   * split across every enemy in the fight, and scaled by the healer's threat
+   * modifiers (round 52). Absent means a heal threatens nothing.
+   */
+  readonly healingPerPoint?: number;
 }
 
 /**
@@ -145,6 +151,7 @@ export class ThreatTracker implements TelemetrySink {
     this.sink.emit(event);
     if (event.type === 'damage') this.fromDamage(event);
     else if (event.type === 'resource_gained') this.fromResource(event);
+    else if (event.type === 'heal') this.fromHeal(event);
   }
 
   /** Threat that is not from damage, granted by content -- Sunder Armor's flat. */
@@ -204,12 +211,29 @@ export class ThreatTracker implements TelemetrySink {
     }
   }
 
+  /** A heal's threat, split across the healer's enemies like a resource gain's. */
+  private fromHeal(event: Extract<TelemetryEvent, { type: 'heal' }>): void {
+    const perPoint = this.rules.healingPerPoint ?? 0;
+    // Opt-in: only a healer's spells threaten. See `HealRequest.threatens`.
+    if (perPoint === 0 || event.amount <= 0 || !event.threatens) return;
+    const healer = this.combatant(event.sourceId);
+    if (!healer || healer.kind !== 'player') return;
+    const enemies = this.enemiesOf(healer);
+    if (enemies.length === 0) return;
+    const each =
+      (event.amount * perPoint * threatMultiplierFor(healer, { kind: 'healing', abilityId: event.abilityId })) /
+      enemies.length;
+    for (const enemy of enemies) {
+      this.send(event.timestamp, healer.id, enemy.id, each, 'healing', event.abilityId, event.abilityName);
+    }
+  }
+
   private send(
     timestamp: number,
     sourceId: string,
     targetId: string,
     amount: number,
-    cause: 'damage' | 'ability' | 'resource',
+    cause: 'damage' | 'ability' | 'resource' | 'healing',
     abilityId: string | undefined,
     abilityName: string,
   ): void {

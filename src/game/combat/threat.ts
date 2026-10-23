@@ -179,7 +179,18 @@ function resourceThreat(
 }
 
 /** Everything the engine needs to track threat in a Forever fight. */
+/**
+ * Threat per point of effective healing (round 52).
+ *
+ * CLASSIC'S HALF A POINT, BORROWED. The owner asked for a healer's TPS and has
+ * stated no figure; 0.5 a point split across the enemies is Classic's rule and
+ * the same shape mana gain already uses here. Named `PLACEHOLDER_` so nothing
+ * can read it without seeing that.
+ */
+export const PLACEHOLDER_HEAL_THREAT_PER_POINT = 0.5;
+
 export const FOREVER_THREAT_RULES: ThreatRules = {
   ability: (abilityId) => ABILITY_THREAT[abilityId],
   resource: resourceThreat,
+  healingPerPoint: PLACEHOLDER_HEAL_THREAT_PER_POINT,
 };

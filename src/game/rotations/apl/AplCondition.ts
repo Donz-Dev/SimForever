@@ -142,6 +142,18 @@ export type AplCondition =
       readonly compare: AplCompare;
       readonly fraction: number;
     }
+  /**
+   * A FRIENDLY's health as a fraction of maximum (round 52): the tank's, the
+   * mean of the entry target's party, or the mean of the whole raid. The
+   * entry's own target is `health` with `on: 'target'`, which already existed.
+   * With no raid in the fight every subject reads full.
+   */
+  | {
+      readonly kind: 'friendlyHealth';
+      readonly of: 'tank' | 'party' | 'raid';
+      readonly compare: AplCompare;
+      readonly fraction: number;
+    }
   /** Milliseconds until a weapon swings again. Zero when the slot is idle. */
   | {
       readonly kind: 'swingIn';
@@ -191,9 +203,23 @@ export type AplCondition =
   | { readonly kind: 'builtin'; readonly id: string; readonly args?: readonly (string | number)[] };
 
 /** One line of a priority list, as data. */
+/**
+ * Who an entry casts at, when it is not the default enemy (round 52).
+ *
+ * `tank` is the raid's tank; `lowestHealth` the raid member with the least
+ * health as a fraction, optionally leaving the tank out -- which is "all other
+ * raid members get individual Flash of Light casts". A condition reading
+ * `health` on `target` then asks about whoever this picked.
+ */
+export type AplTarget =
+  | { readonly kind: 'tank' }
+  | { readonly kind: 'lowestHealth'; readonly excludeTank?: boolean };
+
 export interface AplEntry {
   readonly abilityId: string;
   readonly condition?: AplCondition;
+  /** Who it is cast at. Absent is the default enemy. */
+  readonly target?: AplTarget;
   /**
    * Whether this entry may cancel an interruptible channel in progress.
    *

@@ -73,6 +73,7 @@ export const STAT_FOR_BENCH_STAT: Readonly<Record<BenchStat, StatName>> = {
   Block: 'blockChance',
   Dodge: 'dodgeChance',
   'Bonus Armor': 'armor',
+  'Healing Power': 'healingPower',
 };
 
 /** The weight every preferred stat gets until the owner supplies a valuation. */

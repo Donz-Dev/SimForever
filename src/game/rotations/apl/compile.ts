@@ -3,6 +3,8 @@ import { PriorityRotation } from '../../../engine';
 import { comboPointsOn } from '../../combat/comboPoints';
 import type { AplCompare, AplCondition, AplEntry, AplList } from './AplCondition';
 import { builtinCondition } from './builtins';
+import { averageHealth, healthFraction, lowestHealth, partyMembers, raidMembers, tankOf } from './friendlies';
+import type { AplTarget } from './AplCondition';
 
 /** The shape `PriorityEntry.condition` has. */
 type Condition = (
@@ -56,6 +58,7 @@ export function compileEntry(entry: AplEntry): PriorityEntry {
   return {
     abilityId: entry.abilityId,
     ...(entry.condition ? { condition: compileCondition(entry.condition) } : {}),
+    ...(entry.target ? { selectTarget: compileTarget(entry.target) } : {}),
     ...(entry.interruptsChannel ? { interruptsChannel: true } : {}),
     /*
      * AN EMPTY SEQUENCE IS DROPPED, not passed through. `PriorityRotation`
@@ -65,6 +68,20 @@ export function compileEntry(entry: AplEntry): PriorityEntry {
      */
     ...(entry.sequence && entry.sequence.length > 0 ? { sequence: [...entry.sequence] } : {}),
   };
+}
+
+/** An entry's target, as the engine's `selectTarget`. See `AplTarget`. */
+function compileTarget(
+  target: AplTarget,
+): (context: SimulationContext, actor: Combatant) => Combatant | undefined {
+  switch (target.kind) {
+    case 'tank':
+      return (context, actor) => tankOf(context, actor);
+    case 'lowestHealth': {
+      const excludeTank = target.excludeTank === true;
+      return (context, actor) => lowestHealth(context, actor, { excludeTank });
+    }
+  }
 }
 
 /** Apply a comparison. `below` and `above` are STRICT; see `AplCompare`. */
@@ -247,6 +264,23 @@ export function compileCondition(condition: AplCondition): Condition {
         const subject = subjectOf(on, context, actor, target);
         if (!subject || subject.health.maximum <= 0) return false;
         return compare(subject.health.current / subject.health.maximum, how, fraction);
+      };
+    }
+
+    case 'friendlyHealth': {
+      const { of, compare: how, fraction } = condition;
+      return (context, actor, target) => {
+        if (of === 'tank') {
+          const tank = tankOf(context, actor);
+          return tank !== undefined && compare(healthFraction(tank), how, fraction);
+        }
+        if (of === 'party') {
+          // The party of whoever the entry picked, and nobody's without one.
+          if (target?.party === undefined) return false;
+          return compare(averageHealth(partyMembers(context, actor, target.party)), how, fraction);
+        }
+        const raid = raidMembers(context, actor);
+        return raid.length > 0 && compare(averageHealth(raid), how, fraction);
       };
     }
 

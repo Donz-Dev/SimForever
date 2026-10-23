@@ -313,27 +313,23 @@ describe('what a consumable is worth', () => {
     }
   });
 
-  it('reports the two healing-power entries as doing nothing, and only those', () => {
+  it("reports the Major Mender's Potion as doing nothing, and only that", () => {
     /*
      * An inert effect that SAYS it is inert is the honest failure mode. The
      * mirror assertion is the one that expires: any OTHER consumable gaining a
      * caveat, or either of these gaining a stat, has to be a deliberate edit
      * here.
      *
-     * BOTH ARE HEALING POWER, AND THAT IS THE WHOLE LIST. Nothing a character
-     * does in this simulator heals anybody, so there is no throughput for the
-     * Food's +44 or the Major Mender's Potion's +75 to scale -- and they are the
-     * only two entries in the owner's table that name it.
+     * IT WAS TWO UNTIL ROUND 52, when a healer could be simulated: the Food's
+     * +44 is a starting stat and became `healingPower`. The potion is a
+     * mid-fight buff and stays inert until it is given an aura.
      */
     const inert = CONSUMABLE_CATEGORIES.flatMap((category) => category.options).filter(
       (option) => option.unmodelled !== undefined,
     );
-    expect(inert.map((option) => option.name)).toEqual([
-      '+44 Healing Power',
-      "Major Mender's Potion",
-    ]);
+    expect(inert.map((option) => option.name)).toEqual(["Major Mender's Potion"]);
     for (const option of inert) expect(option.stats, option.name).toBeUndefined();
-    expect(consumableEffects({ food: 'food_healing_power' }).unmodelled).toHaveLength(1);
+    expect(consumableEffects({ food: 'food_healing_power' }).stats).toEqual({ healingPower: 44 });
     expect(consumableEffects({ potion: 'major_menders_potion' }).unmodelled).toHaveLength(1);
   });
 

@@ -716,8 +716,49 @@ export const DIVINE_FAVOR: AuraDefinition = {
   name: 'Divine Favor',
   // Permanent: "your next" is a count, and the count is spent by the reaction.
   durationMs: 0,
-  abilityModifiers: { holy_shock: { critBonus: DIVINE_FAVOR_CRIT_BONUS } },
+  /*
+   * ALL THREE SPELLS SINCE ROUND 52, when Flash of Light and Holy Light were
+   * declared: "gives your next Flash of Light, Holy Light, or Holy Shock spell
+   * a 100% critical effect chance". The heal path reads ability modifiers, so a
+   * Holy Shock heal and a Holy Shock bolt both collect it.
+   */
+  abilityModifiers: {
+    holy_shock: { critBonus: DIVINE_FAVOR_CRIT_BONUS },
+    holy_light: { critBonus: DIVINE_FAVOR_CRIT_BONUS },
+    flash_of_light: { critBonus: DIVINE_FAVOR_CRIT_BONUS },
+  },
 };
+
+/**
+ * Infusion of Light: "Your Holy Shock and Flash of Light critical hits reduce
+ * the cast time of your next Holy Light cast within {0} sec by {1} sec."
+ *
+ * A FACTORY because the reduction is the RANK's: 1 second at 2/2. The duration
+ * is constant across ranks in the values row, and is the talent's stated 15.
+ */
+export const INFUSION_OF_LIGHT_DURATION_MS = seconds(15);
+export function infusionOfLight(reductionSeconds: number): AuraDefinition {
+  return {
+    id: 'infusion_of_light',
+    name: 'Infusion of Light',
+    durationMs: INFUSION_OF_LIGHT_DURATION_MS,
+    refreshBehaviour: 'reset',
+    castModifier: {
+      abilityIds: ['holy_light'],
+      castTimeReductionMs: seconds(reductionSeconds),
+      consumedByCast: 'all',
+    },
+  };
+}
+
+/**
+ * The ability-bonus keys the two crit-triggered Holy talents set on the heals
+ * that can trigger them, read by `paladinHeal`. The Twist of Light pattern:
+ * each character's ability copy carries its own rank's number.
+ */
+export const ILLUMINATION_CHANCE_KEY = 'illuminationChance';
+export const ILLUMINATION_REFUND_KEY = 'illuminationRefund';
+export const INFUSION_OF_LIGHT_KEY = 'infusionOfLight';
 
 /**
  * Vindication: "Gives your damaging melee attacks a chance to reduce the
@@ -957,4 +998,5 @@ export const CATALOG_AURAS: readonly AuraDefinition[] = [
   vindicationSelfAura(0),
   vindicationDebuff(0),
   redoubtAura(0),
+  infusionOfLight(1),
 ];

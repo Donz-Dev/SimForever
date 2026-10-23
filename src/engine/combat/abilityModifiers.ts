@@ -81,6 +81,15 @@ export interface AbilityModifier {
    */
   readonly directDamageMultiplier?: number;
   /**
+   * Multiplies the ability's HEALING. 1.12 is +12%.
+   *
+   * A FIELD OF ITS OWN rather than `damageMultiplier` read by the heal path,
+   * because Holy Shock both deals damage and heals and the talents that raise
+   * one do not raise the other -- Healing Light is "the amount HEALED by your
+   * Holy Light, Flash of Light, and Holy Shock" (round 52).
+   */
+  readonly healingMultiplier?: number;
+  /**
    * Taken off the MISS chance, in percentage POINTS. 5 is "+5% chance to hit".
    *
    * ----------------------------------------------------------------------------
@@ -401,6 +410,7 @@ function combine(a: SchoolModifier, b: SchoolModifier): SchoolModifier {
     critMultiplierFactor: (a.critMultiplierFactor ?? 1) * (b.critMultiplierFactor ?? 1),
     damageMultiplier: (a.damageMultiplier ?? 1) * (b.damageMultiplier ?? 1),
     directDamageMultiplier: (a.directDamageMultiplier ?? 1) * (b.directDamageMultiplier ?? 1),
+    healingMultiplier: (a.healingMultiplier ?? 1) * (b.healingMultiplier ?? 1),
     spellPower: (a.spellPower ?? 0) + (b.spellPower ?? 0),
     /*
      * HIT ADDS, like every other chance here. Left out when the field was
@@ -490,6 +500,7 @@ export function scaleByStacks(
       stacks,
       additiveDamage,
     ),
+    healingMultiplier: stackedMultiplier(modifier.healingMultiplier ?? 1, stacks, additiveDamage),
   };
 }
 

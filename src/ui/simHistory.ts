@@ -31,6 +31,8 @@ export interface SimHistoryEntry {
   /** The profile exactly as it ran, seed included. */
   readonly profile: CharacterProfile;
   readonly batch: BatchResult;
+  /** A healer run's two reports, when the entry is one (round 52). */
+  readonly healer?: { readonly tank: BatchResult; readonly raid: BatchResult };
 }
 
 /** The newest first, at most `SIM_HISTORY_LIMIT` long. */
