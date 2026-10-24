@@ -107,6 +107,43 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 56: a cast holds the swing timer at zero until it finishes
+
+The owner asked to verify a Shaman weaving Lightning Bolt between swings, with
+the expected order "Auto-attack .. start casting (auto-attack swing timer reset
+back to 0) finish casting .. auto-attack swing timer starts again". **The
+engine did not do that.** A resetting cast restarted the timer when the cast
+STARTED, and a swing that came due inside the cast was held to its end -- so
+the next swing landed at `max(cast start + swing, cast end)`.
+
+Probed on the Enhancement Shaman, a two-second bolt 200ms after each swing, a
+2.88-second hasted swing:
+
+| | next swing after the bolt lands |
+| --- | --- |
+| before | **880ms** -- a full swing from the cast's START |
+| after | **2,880ms** -- a full swing from its END |
+
+So a cast shorter than the swing timer cost only the swing it interrupted, and
+weaving was nearly free. `resetSwingTimers` now takes the cast time and starts
+the full swing from an event at the cast's end, hasted by whatever haste the
+character has THEN; a cast that ends early -- a channel interrupted, a pre-cast
+cancelled -- starts it at the moment it actually ended. `hold` and `continue`
+are unchanged.
+
+**TWO PROFILES MOVE AND THIRTY ARE IDENTICAL TO THE DECIMAL**, 300 fights each:
+
+| | before | after | |
+| --- | --- | --- | --- |
+| Shockadin | 837.3 | 822.7 | **-14.6 REAL** |
+| Shockadin 2H | 946.3 | 928.0 | **-18.3 REAL** |
+
+Both cast a one-second Hammer of Wrath, which now costs a whole swing on top of
+the cast. Seal Twist Ret's Hammer is instant through Instrument of Law, and the
+Enhancement Shaman casts Lightning Bolt only at five Maelstrom stacks, where it
+is instant, so neither moves -- **a melee profile is moved by this only if it
+casts something with a cast bar**, which in the stock lists is two.
+
 ## Round 55: healer and Mage bug fixes
 
 Seven items from the owner, four healer and three Mage:

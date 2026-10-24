@@ -371,11 +371,11 @@ export function castAbility(
 
   /*
    * Starting a cast interrupts the swing in progress unless the ability says
-   * otherwise. Done BEFORE `castEndsAt` is set, so the reset schedules a full
-   * swing from now rather than being held behind the cast that caused it.
+   * otherwise, and the timer sits at zero until the cast FINISHES (round 56)
+   * -- the full swing is counted from the cast's end. See `resetSwingTimers`.
    */
   if ((ability.swingTimer ?? 'reset') === 'reset') {
-    resetSwingTimers(context, caster);
+    resetSwingTimers(context, caster, castTime);
   }
 
   caster.castEndsAt = now + castTime;

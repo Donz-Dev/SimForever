@@ -4,7 +4,7 @@ import { sampleStats } from '../logging/statSample';
 import type { CastCheck, CastCheckOptions } from '../abilities/casting';
 import { castAbility, checkCast, finishChannelEarly } from '../abilities/casting';
 import type { Combatant, WeaponSlot } from '../actors/Combatant';
-import { extraAttack, startAutoAttack } from '../combat/autoAttack';
+import { extraAttack, resetSwingTimers, startAutoAttack } from '../combat/autoAttack';
 import { startResourceRegeneration } from '../resources';
 import type {
   AttackChanceProvider,
@@ -607,6 +607,7 @@ export class Simulation implements SimulationContext {
         ) {
           const delivered = actor.channelTicksDelivered;
           finishChannelEarly(ctx, actor);
+          this.restartSwingAfterCast(actor, selfEnding);
           this.telemetry.emit({
             type: 'channel_interrupted',
             timestamp: ctx.clock.now(),
@@ -640,6 +641,7 @@ export class Simulation implements SimulationContext {
           if (urgent) {
             const delivered = actor.channelTicksDelivered;
             const channelled = actor.interruptChannel(ctx);
+            if (channelled) this.restartSwingAfterCast(actor, channelled);
             if (channelled) {
               this.telemetry.emit({
                 type: 'channel_interrupted',
@@ -703,6 +705,7 @@ export class Simulation implements SimulationContext {
     const now = this.clock.now();
     const cancelled = actor.interruptChannel(this);
     if (!cancelled) return;
+    this.restartSwingAfterCast(actor, cancelled);
     this.telemetry.emit({
       type: 'channel_interrupted',
       timestamp: now,
@@ -713,6 +716,17 @@ export class Simulation implements SimulationContext {
       ticksDelivered: 0,
       ticksTotal: cancelled.channelTicks ?? 1,
     });
+  }
+
+  /**
+   * A cast that ended EARLY starts the swing timer now, not at the end it was
+   * planned to have (round 56). A resetting cast holds the timer at zero until
+   * it finishes -- see `resetSwingTimers` -- and an interrupted or cancelled
+   * one has finished. A `hold` or `continue` cast never stopped the timer, so
+   * there is nothing to restart.
+   */
+  private restartSwingAfterCast(actor: Combatant, ability: Ability): void {
+    if ((ability.swingTimer ?? 'reset') === 'reset') resetSwingTimers(this, actor);
   }
 
   /**

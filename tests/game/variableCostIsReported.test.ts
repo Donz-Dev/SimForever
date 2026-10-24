@@ -101,6 +101,9 @@ describe('Execute reports the whole bar it spends, not just its declared 15', ()
     // which refuses the cast and reports a spend of zero.
     simulation.advanceTo(seconds(55));
     player.gcdReadyAt = 0;
+    // And any cast in progress, for the same reason: a Slam started just before
+    // fifty-five seconds refuses the Execute with `already_casting`.
+    player.interruptChannel(simulation);
     rage.set(startingRage);
 
     // Only what THIS cast emitted; the list has been running for 55 seconds.
