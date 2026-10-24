@@ -68,7 +68,7 @@ export const AUTO_ATTACK_NAMES: Readonly<Record<WeaponSlot, string>> = {
  * ----------------------------------------------------------------------------
  */
 export function autoAttackName(attacker: Combatant, slot: WeaponSlot): string {
-  if (attacker.kind === 'pet' || attacker.kind === 'summon') {
+  if (attacker.kind === 'pet' || attacker.kind === 'summon' || attacker.namesOwnSwings) {
     return `${attacker.name} Melee`;
   }
   return AUTO_ATTACK_NAMES[slot];

@@ -402,6 +402,13 @@ export interface CombatantOptions {
    */
   readonly survivesLethalDamage?: boolean;
   /**
+   * Whether this combatant's auto-attack is reported under its OWN name --
+   * "Training Dummy add 1 Melee" -- rather than as "Main Hand Auto-Attack".
+   * A pet always is; an encounter's extra target sets this so its swings do
+   * not merge into the boss's row of the damage-taken table (round 57).
+   */
+  readonly namesOwnSwings?: boolean;
+  /**
    * Death is recorded and then undone: health returns to full and the fight
    * carries on.
    *
@@ -514,6 +521,7 @@ export class Combatant {
   readonly periodicDamageMultiplier: number;
   readonly survivesLethalDamage: boolean;
   readonly revivesOnDeath: boolean;
+  readonly namesOwnSwings: boolean;
 
   /**
    * When each resource was last spent.
@@ -706,6 +714,7 @@ export class Combatant {
     this.periodicDamageMultiplier = options.periodicDamageMultiplier ?? 1;
     this.survivesLethalDamage = options.survivesLethalDamage ?? false;
     this.revivesOnDeath = options.revivesOnDeath ?? false;
+    this.namesOwnSwings = options.namesOwnSwings ?? false;
   }
 
   get isAlive(): boolean {

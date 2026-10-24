@@ -107,6 +107,120 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 57: multiple targets
+
+The owner's request: a **Number of Targets** dropdown in the Encounter panel,
+presets 1 to 8 and 1 by default; an APL condition on the count "so it can
+prioritize AoE actions that aren't normally cast on single target encounters";
+the AoE abilities of all nine classes; and, for a tank run, "each extra target
+swings for base 500 damage every 2 seconds, does not ramp."
+
+**AT ONE TARGET NOTHING MOVES, AND THAT IS CHECKED RATHER THAN ASSUMED.**
+`tools/rotation_fingerprint.ts` gives all 32 profiles x 3 seeds the same
+combat-log hash and event count as `main`, taken after every engine change.
+Every new mechanism resolves to the old single target: `selectTargets` returns
+`[primary]`, each "strike another opponent" reaction finds nobody to strike, and
+removing an aura nobody carries emits nothing.
+
+| | what | where |
+| --- | --- | --- |
+| profile | `encounter.numberOfTargets`, **format 17**; a version 16 file migrates to 1. Named in `validateProfile`'s rebuild, and `profile.test.ts` round-trips a 3 | `CharacterProfile.ts`, `migrateProfile.ts`, `validateProfile.ts` |
+| encounter | the boss is `dummy_1` and first in the list, so the rotation and a pet stay on it; adds `dummy_2`.. are its twins (same level and armor). **The raid's debuffs go on the boss only** | `trainingDummyEncounter.ts` `createTargetsFor` |
+| tank run | each add swings for `EXTRA_TARGET_SWING_DAMAGE` 500 every 2s with the boss's 15% variance and **no ramp**; the boss keeps its ramp. An add's swings are their own damage-taken row (`namesOwnSwings`) | `raidBoss.ts`, `createTrainingDummy.ts`, `Combatant.ts` |
+| APL | `targetCount` -- living enemies against a count. In the editor as "Number of targets" (`targets >= 3`), and it round-trips | `AplCondition.ts`, `compile.ts`, `aplEditing.ts`, `AplPanel.tsx` |
+| reporting | DPS and TPS sum across targets, as they always summed every friendly source. **Debuff uptime reads the boss only**: every enemy gave one row per target per aura | `runBatch.ts` |
+| panel | the dropdown, and the Encounter badge says "4 targets" when it is more than one | `EncounterPanel.tsx` |
+
+**THE ABILITIES, ALL FROM THE CAPTURES.** `game/combat/multiTarget.ts` holds the
+two shared pieces: `areaTargets` (the engine's `selectTargets`, primary first)
+and the two copy reactions.
+
+| class | ability | targets | state before |
+| --- | --- | --- | --- |
+| Warrior | Thunder Clap | 4 | declared, hit one |
+| | Whirlwind, Cleave | 4, 2 | **already looped over every enemy** |
+| | Sweeping Strikes | copies 5 landed melee hits onto a second target | declared, inert |
+| Rogue | Blade Flurry | copies every landed melee hit while up | haste only; caveat removed |
+| Hunter | Multi-Shot | 3 | declared, hit one |
+| | Explosive Trap | all, hit and burn | declared, hit one |
+| | **Volley** | all, 6 x 112 | new |
+| Mage | Blast Wave | all | declared, hit one |
+| | **Arcane Explosion**, **Blizzard** | all; 238-258, and 8 x 146 | new |
+| Priest | **Holy Nova** | all, 174-200, **no threat** | talent was `unmodelled`; now grants it |
+| Druid | Swipe | 3 | already looped |
+| | Primal Bite | **3 while Berserk is up** -- Berserk's own tooltip, so not a question | declared, hit one |
+| | **Hurricane** | all, 10 x 132 | new |
+| Shaman | Fire Nova | all | declared, hit one |
+| | **Magma Totem** | all, a pulse of 73 every 2s for 20s, Searing Totem's shape; one fire totem at a time | new |
+| Paladin | Consecration | all; the first four take 312, the rest the 96 | declared, one debuff |
+| Warlock | **Hellfire**, **Rain of Fire** | all; 15 x 210, and 4 x 221 | new |
+| | **Bane of Havoc** | 15% of damage to other targets copied onto the cursed one | talent was `unmodelled`; now grants it |
+
+Holy Nova and Bane of Havoc are talents in Forever's trees (the capture's
+"Learned at level" line notwithstanding, as CLAUDE.md warns), so each talent's
+effect went from `unmodelled` to `grantAbility`. The Mage's hand-kept lists took
+the two new spells: `MAGE_DAMAGE_SPELL_IDS`, `FROST_SPELL_IDS` and Frost
+Channeling's cost list.
+
+**NO STOCK LIST CHANGED.** They are single-target lists, and an AoE entry gated
+on `targetCount` is the user's to write. `tools/probe_multi_target.ts` puts one
+first in a list, gated at `>= 3`, and runs a profile at 1 and 4 targets (30
+fights; a diagnostic, not a baseline, and its entries are deliberately naive --
+it recasts Magma Totem and Arcane Explosion whenever it can):
+
+| | 1 target | 4 targets | the AoE row at 4 |
+| --- | --- | --- | --- |
+| Prot Warr (tank run), Thunder Clap | 619.0 | 889.8 | 10.03 casts, 10.8%; each add ~1.8k damage taken |
+| DW Fury, Whirlwind | 1030.3 | 1358.1 | 14.9% |
+| Combat Rogue, Blade Flurry | 880.7 | 1142.8 | 22.9% |
+| Seal Twist Ret, Consecration | 961.2 | 1161.4 | 21.9% |
+| BM Hunter, Multi-Shot | 1010.5 | 1147.5 | 25.2% |
+| Bear (tank run), Swipe | 502.2 | 809.5 | 38.1% |
+| Arcane Mage, Arcane Explosion | 1045.2 | **942.7** | 98.4% |
+| Firelock, Rain of Fire | 950.3 | **649.1** | 89.7% |
+
+**THE TWO THAT LOSE DPS AT FOUR TARGETS ARE THE PLACEHOLDER ZEROS SHOWING**,
+not a bug: Arcane Explosion and Rain of Fire carry no spell power at all, so a
+list spamming them trades the build's scaling spells for flat damage. Every
+debuff table above has one row per aura.
+
+### Questions for the owner
+
+1. **Eight coefficients.** `WoWSimWorksheet.xlsx` has no row for Hellfire, Rain
+   of Fire, Volley, Arcane Explosion, Blizzard, Holy Nova, Hurricane or Magma
+   Totem, so each is a `PLACEHOLDER_` ZERO in `coefficients.ts` rather than a
+   Classic figure from memory. Volley's also needs WHICH power, since Forever
+   moved Arcane Shot onto ranged attack power. `everySpellScales.test.ts`
+   exempts seven of them by name, and fails when a figure lands without its
+   exemption going.
+2. **Tick cadence for Blizzard and Rain of Fire.** Both tooltips give a total
+   over 8 seconds and no interval; implemented as Classic's 8 ticks a second
+   apart and 4 ticks two seconds apart.
+3. **The raid's debuffs are on the boss only.** Sunder, the Judgements and the
+   curses are not on the adds, so an add takes AoE at full armor. The other
+   reading is every debuff on every target.
+4. **Sweeping Strikes and Blade Flurry copy the hit that landed** onto the first
+   other enemy -- no second roll, no second armor, nothing procs off the copy.
+   The alternative is a full second attack.
+5. **Bane of Havoc can only go on the boss**, because a priority list has no way
+   to aim a cast at an add -- and "one Bane per Warlock per target" makes it
+   replace Bane of Agony or Doom there. Its copy is dealt as Shadow with none of
+   the boss's vulnerabilities applied, since a hit's school is not on the event.
+6. **Hellfire's 210 to the Warlock** is health lost and floored at one, not a
+   damage event: a self-hit would count as the Warlock's own damage done, and in
+   a DPS run nothing heals, so it would kill on the second channel. Should it be
+   able to kill?
+7. **Consecration beyond the fourth target** takes the 96 at the same per-tick
+   coefficient as the first four. The sheet's one figure does not say which half
+   it belongs to.
+8. **Parry haste stays on the adds**, since you stated it for "mobs", so a
+   parried add can swing before its 2 seconds are up.
+
+**NOT DONE, AND SAID SO:** the healer fights stay single-target (they build
+their own combatants); Chain Lightning jumps and is not on the list, so it still
+strikes one; Hurricane's 20% attack slow and Holy Nova's party heal are not
+applied; and no stock list carries an AoE entry.
+
 ## Round 56: a cast holds the swing timer at zero until it finishes
 
 The owner asked to verify a Shaman weaving Lightning Bolt between swings, with

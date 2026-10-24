@@ -30,7 +30,12 @@ import {
   SHADOWBURN_SP_COEFFICIENT,
   SHADOW_BOLT_SP_COEFFICIENT,
   WRACK_TICK_SP_COEFFICIENT,
+  PLACEHOLDER_HELLFIRE_TICK_SP_COEFFICIENT,
+  PLACEHOLDER_RAIN_OF_FIRE_TICK_SP_COEFFICIENT,
 } from '../combat/coefficients';
+import { areaTargets } from '../combat/multiTarget';
+import { baseManaFor } from '../character/baseStatLookup';
+import { BANE_OF_HAVOC } from '../auras/warlock';
 
 /**
  * Warlock abilities, from the WoW Forever beta client (build 1.60.1.69876).
@@ -166,8 +171,10 @@ export const BANE_OF_AGONY_ABILITY: Ability = {
     }).avoided;
     if (!landed) return;
     const amplified = caster.auras.has(AMPLIFY_CURSE_AURA.id);
-    // One Bane per Warlock on a target: this one replaces a Bane of Doom.
+    // One Bane per Warlock on a target: this one replaces a Bane of Doom, and
+    // a Bane of Havoc (round 57; silent when none is up).
     target.auras.remove(simulation, BANE_OF_DOOM.id);
+    target.auras.remove(simulation, BANE_OF_HAVOC.id);
     simulation.applyAura(target, amplified ? BANE_OF_AGONY_AMPLIFIED : BANE_OF_AGONY, caster.id);
     if (amplified) caster.auras.remove(simulation, AMPLIFY_CURSE_AURA.id);
   },
@@ -211,6 +218,7 @@ export const BANE_OF_DOOM_ABILITY: Ability = {
     }).avoided;
     if (!landed) return;
     target.auras.remove(simulation, 'bane_of_agony');
+    target.auras.remove(simulation, BANE_OF_HAVOC.id);
     simulation.applyAura(target, BANE_OF_DOOM, caster.id);
   },
   unmodelled:
@@ -868,6 +876,150 @@ export const WARLOCK_SOUL_SIPHON_EFFECTS: readonly string[] = [
   'curse_of_the_elements',
 ];
 
+// ---------------------------------------------------------------------------
+// Area spells (round 57)
+// ---------------------------------------------------------------------------
+
+/**
+ * Hellfire, rank 3: "Ignites the area surrounding the caster, causing 210 Fire
+ * damage to himself and 210 Fire damage to all nearby enemies every 1 sec.
+ * Lasts 15 sec." 1,300 mana, channelled.
+ *
+ * ----------------------------------------------------------------------------
+ * FIFTEEN TICKS, EACH STRIKING EVERY TARGET with its own spell roll -- a channel
+ * tick is an ordinary non-periodic damage event.
+ *
+ * THE 210 TO HIMSELF IS HEALTH LOST, NOT A DAMAGE EVENT, and it stops at one
+ * health. A damage event from the Warlock to the Warlock would be counted as
+ * the Warlock's own DAMAGE DONE -- every friendly source sums into DPS -- and
+ * nothing in a damage run heals a Warlock, so a lethal version would end the
+ * fight on the second channel. Health spent the way Life Tap spends it is the
+ * shape that is honest about both: Life Tap does see the missing health. Whether
+ * the self-damage should be able to KILL is a question for the owner.
+ *
+ * ITS COEFFICIENT IS A PLACEHOLDER OF ZERO -- the sheet has no row for it.
+ * ----------------------------------------------------------------------------
+ */
+export const HELLFIRE_TICK_DAMAGE = 210;
+export const HELLFIRE_SELF_DAMAGE = 210;
+export const HELLFIRE_TICKS = 15;
+
+export const HELLFIRE: Ability = {
+  id: 'hellfire',
+  name: 'Hellfire',
+  cost: { resource: 'mana', amount: 1300 },
+  castTimeMs: seconds(15),
+  channelTicks: HELLFIRE_TICKS,
+  interruptibleChannel: true,
+  attackTable: 'spell',
+  targets: { maxTargets: Infinity },
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    const lost = Math.min(HELLFIRE_SELF_DAMAGE, caster.health.current - 1);
+    if (lost > 0) caster.health.spend(lost);
+    for (const struck of areaTargets(simulation, caster, target, ability)) {
+      dealDamage(simulation, {
+        source: caster,
+        target: struck,
+        abilityId: ability.id,
+        abilityName: ability.name,
+        school: 'fire',
+        baseAmount: HELLFIRE_TICK_DAMAGE,
+        powerCoefficient: PLACEHOLDER_HELLFIRE_TICK_SP_COEFFICIENT,
+        attackTable: ability.attackTable,
+      });
+    }
+  },
+  unmodelled:
+    'Its spell power coefficient is not stated anywhere this project reads, so ' +
+    'it is zero. Its 210 to the caster is health lost, floored at one health, ' +
+    'rather than damage that can kill.',
+};
+
+/**
+ * Rain of Fire, rank 4: "Calls down a fiery rain to burn enemies in the area of
+ * effect for 884 Fire damage over 8 sec." 1,185 mana, channelled.
+ *
+ * FOUR TICKS OF 221, ONE EVERY TWO SECONDS, and the cadence is an
+ * INTERPRETATION: the tooltip states a total and a duration only. Every two
+ * seconds is Classic's and divides 884 exactly. Coefficient: a placeholder zero.
+ */
+export const RAIN_OF_FIRE_TOTAL = 884;
+export const RAIN_OF_FIRE_TICKS = 4;
+
+export const RAIN_OF_FIRE: Ability = {
+  id: 'rain_of_fire',
+  name: 'Rain of Fire',
+  cost: { resource: 'mana', amount: 1185 },
+  castTimeMs: seconds(8),
+  channelTicks: RAIN_OF_FIRE_TICKS,
+  interruptibleChannel: true,
+  attackTable: 'spell',
+  targets: { maxTargets: Infinity },
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    for (const struck of areaTargets(simulation, caster, target, ability)) {
+      dealDamage(simulation, {
+        source: caster,
+        target: struck,
+        abilityId: ability.id,
+        abilityName: ability.name,
+        school: 'fire',
+        baseAmount: RAIN_OF_FIRE_TOTAL / RAIN_OF_FIRE_TICKS,
+        powerCoefficient: PLACEHOLDER_RAIN_OF_FIRE_TICK_SP_COEFFICIENT,
+        attackTable: ability.attackTable,
+      });
+    }
+  },
+  unmodelled:
+    'Its spell power coefficient is not stated anywhere this project reads, so ' +
+    'it is zero. Its tick interval is every two seconds, which the tooltip does ' +
+    'not state.',
+};
+
+/** Bane of Havoc's "5% of base mana", off the Undead row both presets are. */
+export const BANE_OF_HAVOC_COST = Math.round(baseManaFor('undead', 'warlock') * 0.05);
+
+/**
+ * Bane of Havoc, granted by the Destruction talent: "Afflicts the target for 5
+ * min, causing 15% of all damage done by the Warlock to other targets to also be
+ * dealt to the cursed target."
+ *
+ * ----------------------------------------------------------------------------
+ * IT GOES ON THE PRIMARY TARGET, because a priority list here has no way to
+ * point a cast at an add -- so it is the boss that carries it and the adds'
+ * damage that is copied onto the boss. And "only one Bane per Warlock on any one
+ * target" means it REPLACES a Bane of Agony or Doom there, which is the real
+ * cost of casting it. Both are flagged for the owner.
+ *
+ * THE COPY IS `BANE_OF_HAVOC_REACTION` in `reactions/warlockTalents.ts`. At one
+ * target there are no "other targets" and it copies nothing.
+ * ----------------------------------------------------------------------------
+ */
+export const BANE_OF_HAVOC_ABILITY: Ability = {
+  id: 'bane_of_havoc',
+  name: 'Bane of Havoc',
+  cost: { resource: 'mana', amount: BANE_OF_HAVOC_COST },
+  attackTable: 'spell',
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    // A debuff with no damage of its own: the application rolls, as every
+    // Bane's does.
+    const landed = !rollApplication(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: 'shadow',
+      attackTable: 'spell',
+    }).avoided;
+    if (!landed) return;
+    target.auras.remove(simulation, 'bane_of_agony');
+    target.auras.remove(simulation, BANE_OF_DOOM.id);
+    simulation.applyAura(target, BANE_OF_HAVOC, caster.id);
+  },
+};
+
 export const WARLOCK_ABILITIES: readonly Ability[] = [
   SHADOW_BOLT,
   CORRUPTION_ABILITY,
@@ -885,4 +1037,8 @@ export const WARLOCK_ABILITIES: readonly Ability[] = [
   SOUL_FIRE,
   // Granted by the Affliction capstone; `grantsByAbility` gates it.
   WRACK,
+  HELLFIRE,
+  RAIN_OF_FIRE,
+  // Granted by the Destruction talent; `grantsByAbility` gates it.
+  BANE_OF_HAVOC_ABILITY,
 ];

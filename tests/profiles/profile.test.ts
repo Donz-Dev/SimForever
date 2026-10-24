@@ -46,6 +46,8 @@ describe('profile serialization', () => {
         targetAttacks: true,
         targetSwingDamage: 4500,
         targetSwingSeconds: 2,
+        // Not the default, so a rebuild that forgot the field fails here.
+        numberOfTargets: 3,
       },
     };
 

@@ -21,7 +21,10 @@ import type { AplEntry } from '../game/rotations/apl';
  * moves on. Getting this in before anyone has saved anything is much cheaper
  * than retrofitting it later.
  */
-export const CURRENT_PROFILE_VERSION = 16;
+export const CURRENT_PROFILE_VERSION = 17;
+
+/** The most targets an encounter can hold: the Encounter panel's presets run 1 to 8. */
+export const MAX_ENCOUNTER_TARGETS = 8;
 
 export interface CharacterSection {
   readonly name: string;
@@ -156,6 +159,23 @@ export interface EncounterSection {
   readonly targetSwingDamage: number;
   /** Seconds between target swings. Also a Classic placeholder. */
   readonly targetSwingSeconds: number;
+  /**
+   * How many hostile targets the fight holds, 1 to `MAX_ENCOUNTER_TARGETS`
+   * (round 57). The owner's "Number of Targets" dropdown.
+   *
+   * THE FIRST IS THE BOSS AND THE REST ARE ADDS. Every target is the same
+   * training dummy -- same level, same armor -- and the rotation's primary
+   * target is always the first; what the extra targets are FOR is the area
+   * abilities, which strike them through `selectTargets`, and the APL's
+   * `targetCount` condition, which reads this number.
+   *
+   * ON A TANK RUN THE ADDS SWING TOO, by the owner's ruling: "each extra target
+   * swings for base 500 damage every 2 seconds, does not ramp." The boss keeps
+   * `targetSwingDamage` and its ramp. See `EXTRA_TARGET_SWING_DAMAGE`.
+   *
+   * ONE BY DEFAULT, and a migrated profile gets one, so no saved result moves.
+   */
+  readonly numberOfTargets: number;
 }
 
 /**
@@ -500,6 +520,7 @@ export function createDefaultProfile(): CharacterProfile {
       // The opening swing. It grows by ten percent every swing from there.
       targetSwingDamage: 5000,
       targetSwingSeconds: 2,
+      numberOfTargets: 1,
     },
   };
 }

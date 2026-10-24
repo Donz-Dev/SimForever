@@ -1,5 +1,6 @@
 import type { Ability, AuraDefinition, Combatant, SimulationContext } from '../../engine';
 import { applyHealing, dealDamage, seconds, spellPowerAgainst } from '../../engine';
+import { areaTargets } from '../combat/multiTarget';
 import { baseManaFor } from '../character/baseStatLookup';
 import { inExecutePhase } from '../combat/executePhase';
 import {
@@ -568,11 +569,14 @@ export const FLASH_OF_LIGHT: Ability = {
  * Consecration: "96 Holy damage over 8 sec to enemies who enter the area. The
  * first 4 enemies will take an additional 216 damage over 8 sec."
  *
- * BOTH HALVES LAND ON ONE TARGET, because there is one target and it is
- * certainly among the first four. 312 over eight seconds, as a ground effect
- * the target is standing in -- modelled as a debuff on it, which is the only
- * shape the engine has and is exactly right for a target that never moves.
+ * A GROUND EFFECT MODELLED AS A DEBUFF ON EVERY TARGET STANDING IN IT, which
+ * is the only shape the engine has and is exactly right for targets that never
+ * move (round 57). The first four in the fight -- the boss and three adds --
+ * take both halves, 312 over eight seconds; a fifth and later take the 96.
+ * Consecrated Ground's 10% is "against the first 4 enemies", so it rides on
+ * the first four only. One target in the fight is the old single debuff.
  */
+export const CONSECRATION_FULL_TARGETS = 4;
 export const CONSECRATION_BASE_TOTAL = 96;
 export const CONSECRATION_BONUS_TOTAL = 216;
 
@@ -581,6 +585,7 @@ export const CONSECRATION: Ability = {
   name: 'Consecration',
   cost: { resource: 'mana', amount: 565 },
   cooldownMs: seconds(8),
+  targets: { maxTargets: Infinity },
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
     /*
@@ -588,16 +593,17 @@ export const CONSECRATION: Ability = {
      * pattern -- so reading it here is per character by construction and a
      * Paladin without the talent lays the plain version.
      */
-    simulation.applyAura(
-      target,
-      consecrationGround(ability.bonuses?.[CONSECRATED_GROUND_FLAG] ?? 0),
-      caster.id,
-    );
+    const percent = ability.bonuses?.[CONSECRATED_GROUND_FLAG] ?? 0;
+    areaTargets(simulation, caster, target, ability).forEach((struck, index) => {
+      simulation.applyAura(
+        struck,
+        index < CONSECRATION_FULL_TARGETS
+          ? consecrationGround(percent)
+          : consecrationGround(0, CONSECRATION_BASE_TOTAL),
+        caster.id,
+      );
+    });
   },
-  unmodelled:
-    'It is a ground effect, modelled as a debuff on the one target -- which ' +
-    'is right for a target that never moves and says nothing about its value ' +
-    'against several.',
 };
 
 /** Holy Shield, granted by the Protection capstone. */

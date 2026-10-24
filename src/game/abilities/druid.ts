@@ -1,6 +1,8 @@
 import type { Ability } from '../../engine';
 import { DEMORALIZING_ROAR_FLAT_THREAT, FAERIE_FIRE_THREAT_PER_LEVEL } from '../combat/threat';
-import { dealDamage, seconds } from '../../engine';
+import { dealDamage, seconds, selectTargets } from '../../engine';
+import { areaTargets } from '../combat/multiTarget';
+import { PLACEHOLDER_HURRICANE_TICK_SP_COEFFICIENT } from '../combat/coefficients';
 import {
   DEMORALIZING_ROAR,
   ECLIPSE_CHARGES_PER_WRATH,
@@ -650,19 +652,33 @@ export const MANGLE: Ability = {
   attackTable: 'melee-special',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
-    dealDamage(simulation, {
-      source: caster,
-      target,
-      abilityId: ability.id,
-      abilityName: ability.name,
-      school: PHYSICAL,
-      baseAmount: MANGLE_BASE_DAMAGE,
-      weaponScaling: { slot: MAIN_HAND },
-      attackTable: ability.attackTable,
-      weaponSlot: MAIN_HAND,
-    });
+    /*
+     * BERSERK'S "STRIKE UP TO 3 TARGETS" (round 57): while the aura is up the
+     * bite reaches the primary and two more, each a full hit with its own roll
+     * -- which is what Cleave and Swipe already do. Single target otherwise,
+     * and at one target in the fight either way.
+     */
+    const struck = caster.auras.has('berserk')
+      ? selectTargets(simulation, caster, target, { maxTargets: BERSERK_PRIMAL_BITE_TARGETS })
+      : [target];
+    for (const each of struck) {
+      dealDamage(simulation, {
+        source: caster,
+        target: each,
+        abilityId: ability.id,
+        abilityName: ability.name,
+        school: PHYSICAL,
+        baseAmount: MANGLE_BASE_DAMAGE,
+        weaponScaling: { slot: MAIN_HAND },
+        attackTable: ability.attackTable,
+        weaponSlot: MAIN_HAND,
+      });
+    }
   },
 };
+
+/** Berserk: "Causes your Primal Bite ability to strike up to 3 targets". */
+export const BERSERK_PRIMAL_BITE_TARGETS = 3;
 
 export const MAUL: Ability = {
   id: 'maul',
@@ -880,8 +896,8 @@ export const BERSERK: Ability = {
     simulation.applyAura(caster, berserkAura(COMBO_POINT_GENERATORS), caster.id);
   },
   unmodelled:
-    'Its "strike up to 3 targets" does nothing -- every encounter here has ' +
-    'one -- and its Fear immunity is crowd control, which is out of scope.',
+    'Its Fear immunity is crowd control, which is out of scope. Its "strike ' +
+    'up to 3 targets" is modelled on Primal Bite (round 57).',
 };
 
 /**
@@ -929,7 +945,50 @@ export const NATURES_SWIFTNESS_ABILITY: Ability = {
  * line says where the client would show the spell, not how it is obtained.
  * ----------------------------------------------------------------------------
  */
+/**
+ * Hurricane, rank 3: "Creates a violent storm in the target area causing 132
+ * Nature damage to enemies every 1 sec, and increasing the time between attacks
+ * by 20%. Lasts 10 sec." 1,495 mana, channelled (round 57).
+ *
+ * TEN TICKS, EACH STRIKING EVERY TARGET with its own spell roll. The attack
+ * slow is not applied: it reaches only an enemy that swings, which a Balance
+ * Druid's fight never has, and it is a separate debuff nobody asked for. Its
+ * coefficient is a placeholder zero -- the sheet has no row for it.
+ */
+export const HURRICANE_TICK_DAMAGE = 132;
+export const HURRICANE_TICKS = 10;
+
+export const HURRICANE: Ability = {
+  id: 'hurricane',
+  name: 'Hurricane',
+  cost: { resource: 'mana', amount: 1495 },
+  castTimeMs: seconds(10),
+  channelTicks: HURRICANE_TICKS,
+  interruptibleChannel: true,
+  attackTable: 'spell',
+  targets: { maxTargets: Infinity },
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    for (const struck of areaTargets(simulation, caster, target, ability)) {
+      dealDamage(simulation, {
+        source: caster,
+        target: struck,
+        abilityId: ability.id,
+        abilityName: ability.name,
+        school: 'nature',
+        baseAmount: HURRICANE_TICK_DAMAGE,
+        powerCoefficient: PLACEHOLDER_HURRICANE_TICK_SP_COEFFICIENT,
+        attackTable: ability.attackTable,
+      });
+    }
+  },
+  unmodelled:
+    'Its spell power coefficient is not stated anywhere this project reads, so ' +
+    'it is zero. Its 20% attack slow is not applied.',
+};
+
 export const DRUID_ABILITIES: readonly Ability[] = [
+  HURRICANE,
   WRATH,
   STARFIRE,
   MOONFIRE,

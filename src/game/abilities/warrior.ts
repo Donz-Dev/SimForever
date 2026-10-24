@@ -1,6 +1,7 @@
 import type { Ability } from '../../engine';
 import { DEMORALIZING_SHOUT_FLAT_THREAT, sunderArmorThreat } from '../combat/threat';
 import { dealDamage, seconds } from '../../engine';
+import { areaTargets } from '../combat/multiTarget';
 import { EXECUTE_PHASE_FRACTION, inExecutePhase } from '../combat/executePhase';
 import {
   BATTLE_SHOUT,
@@ -671,29 +672,32 @@ export const THUNDER_CLAP: Ability = {
   targets: { maxTargets: 4 },
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
-    dealDamage(simulation, {
-      source: caster,
-      target,
-      abilityId: ability.id,
-      abilityName: ability.name,
-      school: PHYSICAL,
-      // The owner's ruling: the crit comes from the spell table, the rest of the
-      // roll does not. See the block on `attackTable` above.
-      critTable: 'spell',
-      // Flat, PLUS the sheet's 7% of attack power.
-      baseAmount: 103,
-      powerCoefficient: THUNDER_CLAP_AP_COEFFICIENT,
-      attackTable: ability.attackTable,
-      weaponSlot: 'ranged',
-    });
+    // Up to four, the primary first -- `[target]` alone at one target (round 57).
+    for (const struck of areaTargets(simulation, caster, target, ability)) {
+      dealDamage(simulation, {
+        source: caster,
+        target: struck,
+        abilityId: ability.id,
+        abilityName: ability.name,
+        school: PHYSICAL,
+        // The owner's ruling: the crit comes from the spell table, the rest of
+        // the roll does not. See the block on `attackTable` above.
+        critTable: 'spell',
+        // Flat, PLUS the sheet's 7% of attack power.
+        baseAmount: 103,
+        powerCoefficient: THUNDER_CLAP_AP_COEFFICIENT,
+        attackTable: ability.attackTable,
+        weaponSlot: 'ranged',
+      });
 
-    /*
-     * APPLIED WHETHER OR NOT THE DAMAGE LANDED. The slow is a separate effect
-     * of the cast rather than a rider on the hit -- the spell applies an aura
-     * and deals damage, and nothing in the source ties the first to the
-     * second. `dealDamage` above reports its own outcome either way.
-     */
-    simulation.applyAura(target, THUNDER_CLAP_SLOW, caster.id);
+      /*
+       * APPLIED WHETHER OR NOT THE DAMAGE LANDED. The slow is a separate effect
+       * of the cast rather than a rider on the hit -- the spell applies an aura
+       * and deals damage, and nothing in the source ties the first to the
+       * second. `dealDamage` above reports its own outcome either way.
+       */
+      simulation.applyAura(struck, THUNDER_CLAP_SLOW, caster.id);
+    }
   },
 };
 
@@ -1240,11 +1244,11 @@ export const LAST_STAND_ABILITY: Ability = {
 /**
  * 30 rage, 30 second cooldown, Battle Stance.
  *
- * INERT AGAINST ONE TARGET, which is every encounter this simulator has. Its
- * only effect is that the next five melee attacks strike an additional
- * opponent, and there is no additional opponent. Defined so the talent grants
- * something real; kept out of every rotation so it does not burn rage for
- * nothing.
+ * INERT AGAINST ONE TARGET. Its only effect is that the next five melee attacks
+ * strike an additional opponent, which a multi-target encounter now supplies
+ * (round 57) -- the strike itself is `SWEEPING_STRIKES_EXTRA_OPPONENT` in
+ * `reactions/warrior.ts`. Kept out of every stock list, which are single-target
+ * lists; an AoE entry is the user's, gated on `targetCount`.
  */
 export const SWEEPING_STRIKES_ABILITY: Ability = {
   id: 'sweeping_strikes',

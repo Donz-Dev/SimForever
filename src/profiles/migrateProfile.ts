@@ -18,6 +18,19 @@ type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
  */
 const migrations: Record<number, Migration> = {
   /**
+   * Version 17 added `encounter.numberOfTargets` (round 57). A saved profile
+   * fought ONE target, so it gets one and no result moves.
+   */
+  16: (profile) => {
+    const encounter = profile.encounter;
+    if (typeof encounter !== 'object' || encounter === null) return { ...profile };
+    return {
+      ...profile,
+      encounter: { numberOfTargets: 1, ...(encounter as Record<string, unknown>) },
+    };
+  },
+
+  /**
    * Version 16 added `precombat`, what the character did before the pull.
    *
    * --------------------------------------------------------------------------

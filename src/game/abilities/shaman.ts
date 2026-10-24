@@ -1,5 +1,6 @@
 import type { Ability, Combatant, SimulationContext } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
+import { areaTargets } from '../combat/multiTarget';
 import {
   ELEMENTAL_MASTERY_AURA,
   FLAME_SHOCK_COEFFICIENTS,
@@ -7,6 +8,7 @@ import {
   flameShockDot,
   RAGE_OF_THE_FARSEER,
   SEARING_TOTEM_DOT,
+  MAGMA_TOTEM_DOT,
   STORMSTRIKE_DAMAGE_BONUS,
   STORMSTRIKE_DEBUFF,
   WINDFURY_WEAPON_IMBUE,
@@ -490,8 +492,8 @@ export const FIRE_NOVA_DAMAGE = midpoint(232, 258);
 export const FIRE_NOVA_COOLDOWN_MS = seconds(10);
 export const FIRE_NOVA_COEFFICIENT = FIRE_NOVA_SP_COEFFICIENT;
 
-/** Every fire totem this class has, which is one. */
-export const FIRE_TOTEM_AURA_IDS: readonly string[] = [SEARING_TOTEM_DOT.id];
+/** Every fire totem this class has: Searing, and Magma since round 57. */
+export const FIRE_TOTEM_AURA_IDS: readonly string[] = [SEARING_TOTEM_DOT.id, MAGMA_TOTEM_DOT.id];
 
 /** Whether any fire totem of this caster's is up on the target. */
 function fireTotemActive(target: Combatant | undefined): boolean {
@@ -506,19 +508,23 @@ export const FIRE_NOVA: Ability = {
   cooldownMs: FIRE_NOVA_COOLDOWN_MS,
   attackTable: 'spell',
   requiresTarget: true,
+  // "to enemies within 10 yd of your active Fire totem": every target (round 57).
+  targets: { maxTargets: Infinity },
   canCast: ({ target }) => fireTotemActive(target),
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
-    dealDamage(simulation, {
-      source: caster,
-      target,
-      abilityId: ability.id,
-      abilityName: ability.name,
-      school: 'fire',
-      baseAmount: FIRE_NOVA_DAMAGE,
-      powerCoefficient: FIRE_NOVA_COEFFICIENT,
-      attackTable: ability.attackTable,
-    });
+    for (const struck of areaTargets(simulation, caster, target, ability)) {
+      dealDamage(simulation, {
+        source: caster,
+        target: struck,
+        abilityId: ability.id,
+        abilityName: ability.name,
+        school: 'fire',
+        baseAmount: FIRE_NOVA_DAMAGE,
+        powerCoefficient: FIRE_NOVA_COEFFICIENT,
+        attackTable: ability.attackTable,
+      });
+    }
   },
   unmodelled:
     'It hits every enemy within 10 yards of the totem and every encounter here ' +
@@ -707,6 +713,11 @@ export const SEARING_TOTEM: Ability = {
   requiresTarget: true,
   onCast: ({ simulation, caster, target }) => {
     if (!target) return;
+    // ONE FIRE TOTEM AT A TIME (round 57): placing this one takes Magma Totem
+    // down, off every target. Silent when none is up, so no log moves.
+    for (const enemy of simulation.enemiesOf(caster)) {
+      enemy.auras.remove(simulation, MAGMA_TOTEM_DOT.id);
+    }
     simulation.applyAura(target, SEARING_TOTEM_DOT, caster.id);
   },
   unmodelled:
@@ -747,7 +758,34 @@ export const ELEMENTAL_MASTERY: Ability = {
   },
 };
 
+/**
+ * Magma Totem: 650 mana, instant, and every target carries its pulse (round
+ * 53). ONE FIRE TOTEM AT A TIME, so it takes Searing Totem down first -- and
+ * it is a fire totem for Fire Nova's requirement. The totem itself is not an
+ * entity, as Searing Totem's is not.
+ */
+export const MAGMA_TOTEM: Ability = {
+  id: 'magma_totem',
+  name: 'Magma Totem',
+  cost: { resource: 'mana', amount: 650 },
+  requiresTarget: true,
+  targets: { maxTargets: Infinity },
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    for (const enemy of simulation.enemiesOf(caster)) {
+      enemy.auras.remove(simulation, SEARING_TOTEM_DOT.id);
+    }
+    for (const struck of areaTargets(simulation, caster, target, ability)) {
+      simulation.applyAura(struck, MAGMA_TOTEM_DOT, caster.id);
+    }
+  },
+  unmodelled:
+    'The totem is not an entity and cannot be killed. Its spell power ' +
+    'coefficient is not stated anywhere this project reads, so it is zero.',
+};
+
 export const SHAMAN_ABILITIES: readonly Ability[] = [
+  MAGMA_TOTEM,
   LIGHTNING_BOLT,
   ELEMENTAL_MASTERY,
   CHAIN_LIGHTNING,

@@ -613,14 +613,12 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   pyroclasm: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'A stun, which is out of scope as every stun is.' }],
 
-  bane_of_havoc: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'It copies damage dealt to OTHER targets onto the cursed one, and ' +
-        'there is one target -- so there are no others to copy from.',
-    },
-  ],
+  /*
+   * THE ABILITY, AND THE COPY RIDES ON THE WARLOCK (round 57): every Warlock
+   * carries `BANE_OF_HAVOC_REACTIONS`, gated on an enemy carrying the curse, so
+   * the reaction needs no talent and the talent needs no reaction.
+   */
+  bane_of_havoc: [{ kind: 'grantAbility', abilityId: 'bane_of_havoc' }],
 
   fire_and_brimstone: [{ kind: 'abilityCrit', abilityId: 'conflagrate' }],
 

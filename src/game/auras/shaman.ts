@@ -1,5 +1,6 @@
 import type { AuraDefinition } from '../../engine';
 import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
+import { PLACEHOLDER_MAGMA_TOTEM_PULSE_SP_COEFFICIENT } from '../combat/coefficients';
 import {
   FLAME_SHOCK_SP_COEFFICIENT,
   FLAME_SHOCK_TICK_SP_COEFFICIENT,
@@ -333,6 +334,49 @@ export const SEARING_TOTEM_DOT: AuraDefinition = {
          * talent raising "the critical strike damage bonus of your Searing
          * Totem" is meaningless against something that cannot crit.
          */
+        critFrom: 'spell',
+        appliesArmor: false,
+      });
+    },
+  },
+};
+
+/**
+ * Magma Totem, rank 4: "Summons a Magma Totem with 5 health at the feet of the
+ * caster for 20 sec that causes 73 Fire damage to creatures within 8 yards
+ * every 2 seconds." (round 57)
+ *
+ * SEARING TOTEM'S SHAPE: a damage totem is expressible as a debuff that ticks,
+ * and this one is applied to EVERY target, because "creatures within 8 yards"
+ * is everyone when nothing has a position. Ten pulses over twenty seconds, each
+ * a periodic tick that rolls a crit at spell crit the way Searing Totem's does.
+ * Its coefficient is a placeholder zero -- the sheet has no row for it.
+ */
+export const MAGMA_TOTEM_PULSE_DAMAGE = 73;
+export const MAGMA_TOTEM_DURATION_MS = seconds(20);
+export const MAGMA_TOTEM_PULSE_INTERVAL_MS = seconds(2);
+
+export const MAGMA_TOTEM_DOT: AuraDefinition = {
+  id: 'magma_totem',
+  name: 'Magma Totem',
+  durationMs: MAGMA_TOTEM_DURATION_MS,
+  isDebuff: true,
+  refreshBehaviour: 'reset',
+  periodic: {
+    intervalMs: MAGMA_TOTEM_PULSE_INTERVAL_MS,
+    onTick: (context, aura) => {
+      const source = context.combatant(aura.sourceId);
+      const target = context.combatant(aura.targetId);
+      if (!source || !target || !target.isAlive) return;
+      dealDamage(context, {
+        source,
+        target,
+        abilityId: aura.id,
+        abilityName: aura.name,
+        school: FIRE,
+        baseAmount: MAGMA_TOTEM_PULSE_DAMAGE,
+        powerCoefficient: PLACEHOLDER_MAGMA_TOTEM_PULSE_SP_COEFFICIENT,
+        periodic: true,
         critFrom: 'spell',
         appliesArmor: false,
       });

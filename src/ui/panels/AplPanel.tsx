@@ -943,6 +943,7 @@ function GroupEditor({
             <option value="fight">Fight timing</option>
             <option value="health">Health</option>
             <option value="swing">Swing timer</option>
+            <option value="targets">Number of targets</option>
           </select>
           {/*
             * A NESTED GROUP IS WHAT MAKES "a and (b or c)" SAYABLE, which is
@@ -1356,6 +1357,29 @@ function ClauseRow({
             onChange={(event) => set({ value: Number(event.target.value) })}
           />
           <span className="apl-unit">s</span>
+        </>
+      ) : null}
+
+      {/*
+        * NUMBER OF TARGETS (round 57): how many enemies the fight holds, which
+        * is the Encounter panel's Number of Targets. "At least 3" is an AoE
+        * entry that a single-target fight never reaches.
+        */}
+      {clause.kind === 'targets' ? (
+        <>
+          {/* One word, so the clause reads "targets >= 3" on one line. */}
+          <span className="apl-unit">targets</span>
+          {compareField(false)}
+          <input
+            type="number"
+            step="1"
+            min="1"
+            max="8"
+            className="apl-number"
+            value={clause.value ?? 1}
+            aria-label="Number of targets"
+            onChange={(event) => set({ value: Math.round(Number(event.target.value)) })}
+          />
         </>
       ) : null}
 

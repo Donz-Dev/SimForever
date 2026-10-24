@@ -1,5 +1,6 @@
 import { TARGET_ARMOR_OPTIONS } from '../../game/actors/createTrainingDummy';
 import type { CharacterProfile } from '../../profiles';
+import { MAX_ENCOUNTER_TARGETS } from '../../profiles/CharacterProfile';
 import type { SelectOption } from '../components/Field';
 import { NumberField, SelectField, TextField } from '../components/Field';
 import { Panel } from '../components/Panel';
@@ -45,8 +46,10 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
       // What the fight is against, so a shut panel still answers the question
       // someone opens it to check.
       badge={`${profile.encounter.targetName} · level ${profile.encounter.targetLevel}${
-        profile.encounter.targetAttacks ? ' · swings back' : ''
-      }`}
+        (profile.encounter.numberOfTargets ?? 1) > 1
+          ? ` · ${profile.encounter.numberOfTargets} targets`
+          : ''
+      }${profile.encounter.targetAttacks ? ' · swings back' : ''}`}
     >
       <TextField
         label="Target"
@@ -65,6 +68,19 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
         value={profile.encounter.targetArmor}
         options={armorOptions(profile.encounter.targetArmor)}
         onChange={(targetArmor) => setEncounter({ targetArmor })}
+      />
+      {/*
+        * NUMBER OF TARGETS (round 57), the owner's dropdown: presets from 1 to
+        * 8, one by default. The first is the boss and the rest are adds; area
+        * abilities strike them and the APL's "Number of targets" condition
+        * reads the count. On a tank run each add swings for 500 every two
+        * seconds and does not ramp.
+        */}
+      <SelectField
+        label="Number of Targets"
+        value={profile.encounter.numberOfTargets ?? 1}
+        options={TARGET_COUNT_OPTIONS}
+        onChange={(numberOfTargets) => setEncounter({ numberOfTargets })}
       />
 
       {/*
@@ -93,6 +109,12 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
     </Panel>
   );
 }
+
+/** The Number of Targets presets, 1 to `MAX_ENCOUNTER_TARGETS`. */
+export const TARGET_COUNT_OPTIONS: readonly SelectOption<number>[] = Array.from(
+  { length: MAX_ENCOUNTER_TARGETS },
+  (_, index) => ({ value: index + 1, label: String(index + 1) }),
+);
 
 /**
  * The armor values the encounter can be set to.

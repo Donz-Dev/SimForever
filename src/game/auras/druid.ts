@@ -842,7 +842,8 @@ export const FRENZIED_REGENERATION: AuraDefinition = {
  * FOUR CLAUSES AND THEY LAND IN FOUR DIFFERENT PLACES, which is why this is a
  * long comment for a short aura.
  *
- *   3 TARGETS      unmodelled. Every encounter here has one.
+ *   3 TARGETS      `MANGLE`'s own `onCast` reads the aura (round 57), and at
+ *                  one target in the fight it strikes one.
  *   NO COOLDOWN    `suppressesCooldownOf`, an aura field that did not exist:
  *                  `CastModifier` carries cast time and cost, and an ability's
  *                  cooldown lives in the `AbilityBook` where no aura reached.

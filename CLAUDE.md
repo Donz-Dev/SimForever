@@ -63,6 +63,7 @@ ABILITIES=mark npx vite-node tools/probe_precombat_abilities.ts   # map an owner
 npx vite-node tools/probe_precombat_pools.ts     # what each profile ARRIVES with, and its lockout remainder
 npx vite-node tools/probe_party_crit.ts          # does any profile hold a party crit aura TWICE
 npx vite-node tools/verify_opener.ts             # does the opener's RAMP actually arrive, read off the combatant
+PROFILES=prot_warr TARGETS=1,4 npx vite-node tools/probe_multi_target.ts   # a profile at N targets with one AoE entry, and what the report shows
 HTML=sweep.html npx vite-node tools/tier_sweep.ts   # every profile at B55/E65/E75/E85: DPS, and tank TPS and damage taken, as a chart page
 IN=sweep.json OUT=sweep.html npx vite-node tools/tier_sweep_chart.ts   # re-render a saved sweep without re-running it
 ```

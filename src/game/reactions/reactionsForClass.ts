@@ -7,6 +7,22 @@ import { windfuryWeaponReaction } from './shaman';
 import { flametongueWeaponReaction } from '../buffs/flametongue';
 import { PALADIN_REACTIONS, PALADIN_SHIELD_REACTIONS } from './paladin';
 import { omenOfClarityChanceFor, omenOfClarityReaction } from './druid';
+import { damageCopyReactions, extraOpponentReaction } from '../combat/multiTarget';
+import { BANE_OF_HAVOC, BANE_OF_HAVOC_SHARE } from '../auras/warlock';
+
+/** Bane of Havoc: 15% of the Warlock's damage to other targets, onto the cursed one. */
+export const BANE_OF_HAVOC_REACTIONS: readonly Reaction[] = damageCopyReactions({
+  auraId: BANE_OF_HAVOC.id,
+  name: BANE_OF_HAVOC.name,
+  share: BANE_OF_HAVOC_SHARE,
+});
+
+/** Blade Flurry: "your melee attacks strike an additional nearby opponent". */
+export const BLADE_FLURRY_EXTRA_OPPONENT: Reaction = extraOpponentReaction({
+  auraId: 'blade_flurry',
+  name: 'Blade Flurry',
+  consumesCharge: false,
+});
 
 /**
  * Reactive procs a class has.
@@ -72,6 +88,15 @@ export function reactionsForClass(
   if (characterClass === 'druid') {
     return [omenOfClarityReaction(omenOfClarityChanceFor(style))];
   }
+
+  /*
+   * BLADE FLURRY'S SECOND OPPONENT (round 57), carried by every Rogue and gated
+   * on the aura, the Windfury Weapon arrangement. Nothing fires at one target.
+   */
+  if (characterClass === 'rogue') return [BLADE_FLURRY_EXTRA_OPPONENT];
+
+  // BANE OF HAVOC'S COPY (round 57), gated on an enemy carrying the curse.
+  if (characterClass === 'warlock') return BANE_OF_HAVOC_REACTIONS;
 
   if (characterClass === 'shaman') {
     /*

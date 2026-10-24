@@ -922,7 +922,16 @@ export const CONSECRATION_TICK_COEFFICIENT = CONSECRATION_TICK_SP_COEFFICIENT;
  */
 export const CONSECRATED_GROUND_FLAG = 'consecratedGround';
 
-export function consecrationGround(holyDamageTakenPercent = 0): AuraDefinition {
+/**
+ * `total` is the damage over the eight seconds: both halves for the first four
+ * enemies, and the 96 alone beyond them (round 57). The coefficient per tick is
+ * the same either way -- a READING, since the sheet gives one per-tick figure
+ * and does not say which half it belongs to.
+ */
+export function consecrationGround(
+  holyDamageTakenPercent = 0,
+  total: number = CONSECRATION_TOTAL,
+): AuraDefinition {
   return {
   id: 'consecration',
   name: 'Consecration',
@@ -957,8 +966,7 @@ export function consecrationGround(holyDamageTakenPercent = 0): AuraDefinition {
         abilityId: aura.id,
         abilityName: aura.name,
         school: 'holy',
-        baseAmount:
-          CONSECRATION_TOTAL / (CONSECRATION_DURATION_MS / CONSECRATION_TICK_INTERVAL_MS),
+        baseAmount: total / (CONSECRATION_DURATION_MS / CONSECRATION_TICK_INTERVAL_MS),
         // A pure periodic effect: 8 seconds over 15, spread across its ticks.
         powerCoefficient: CONSECRATION_TICK_COEFFICIENT,
         periodic: true,

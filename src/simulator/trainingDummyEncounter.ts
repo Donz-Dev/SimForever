@@ -6,6 +6,10 @@ import type { CharacterProfile } from '../profiles';
 import { createPlayer } from '../game/actors/createPlayer';
 import { createForeverAttackChances } from '../game/combat/attackChances';
 import { createTrainingDummy } from '../game/actors/createTrainingDummy';
+import {
+  EXTRA_TARGET_SWING_DAMAGE,
+  EXTRA_TARGET_SWING_SECONDS,
+} from '../game/encounters/raidBoss';
 import type { RaidBuff } from '../game/buffs/raidBuffs';
 import { raidBuffPoolStats, selectedRaidBuffs } from '../game/buffs/raidBuffs';
 import { createPet } from '../game/actors/createPet';
@@ -136,7 +140,7 @@ export function trainingDummyEncounter(
     createCombatants: () => {
       const player = createPlayerFor(profile, buffs);
       const pet = petFor(profile, player);
-      return [player, ...(pet ? [pet] : []), createDummyFor(profile)];
+      return [player, ...(pet ? [pet] : []), ...createTargetsFor(profile)];
     },
 
     /*
@@ -218,6 +222,15 @@ export function trainingDummyEncounter(
          * ------------------------------------------------------------------
          */
         if (actor.kind === 'pet' || actor.kind === 'summon') continue;
+
+        /*
+         * THE RAID'S DEBUFFS ARE ON THE BOSS, NOT ON EVERY ADD (round 57). Five
+         * Sunders, the two Judgements and the curses are what a raid puts on
+         * the thing it is fighting; an add being AoE'd down carries none of
+         * them. A READING, flagged for the owner -- see HANDOVER -- and it
+         * changes nothing at one target, where the boss is the only enemy.
+         */
+        if (!actor.isPlayerControlled && actor.id !== PRIMARY_TARGET_ID) continue;
 
         const applicable = actor.isPlayerControlled ? onPlayer : onTarget;
         for (const buff of applicable) {
@@ -358,8 +371,54 @@ export function createPlayerFor(
   });
 }
 
+/** The boss's id, which every rotation targets first. `createTrainingDummy`'s default. */
+export const PRIMARY_TARGET_ID = 'dummy_1';
+
+/**
+ * Every hostile target in the fight, the boss first (round 57).
+ *
+ * ----------------------------------------------------------------------------
+ * ONE TARGET IS EXACTLY THE OLD ENCOUNTER, which is the containment check: the
+ * list is `[createDummyFor(profile)]` and nothing else, so every combat log at
+ * one target is byte-identical to before this existed.
+ *
+ * THE ADDS ARE THE BOSS'S TWINS IN EVERYTHING BUT THE SWING -- same level, same
+ * armor, the same unkillable dummy -- because nothing states otherwise and a
+ * different level would move every combat table against them. On a TANK run
+ * each swings for `EXTRA_TARGET_SWING_DAMAGE` every `EXTRA_TARGET_SWING_SECONDS`
+ * and does not ramp, by the owner's ruling. Parry haste stays: the owner states
+ * it applies "to both players and mobs".
+ *
+ * AFTER THE BOSS IN THE COMBATANT LIST, which is load-bearing:
+ * `defaultTargetFor` takes the first living enemy, so the rotation and the pet
+ * stay on the boss and only area abilities reach the rest.
+ * ----------------------------------------------------------------------------
+ */
+export function createTargetsFor(profile: CharacterProfile): Combatant[] {
+  const count = Math.max(1, Math.floor(profile.encounter.numberOfTargets ?? 1));
+  const targets = [createDummyFor(profile)];
+  for (let i = 2; i <= count; i++) {
+    targets.push(
+      createTrainingDummy({
+        id: `dummy_${i}`,
+        name: `${profile.encounter.targetName} add ${i - 1}`,
+        health: profile.encounter.targetHealth,
+        armor: profile.encounter.targetArmor,
+        level: profile.encounter.targetLevel,
+        attacks: profile.encounter.targetAttacks,
+        swingDamage: EXTRA_TARGET_SWING_DAMAGE,
+        swingSeconds: EXTRA_TARGET_SWING_SECONDS,
+        ramps: false,
+        namesOwnSwings: true,
+      }),
+    );
+  }
+  return targets;
+}
+
 export function createDummyFor(profile: CharacterProfile): Combatant {
   return createTrainingDummy({
+    id: PRIMARY_TARGET_ID,
     name: profile.encounter.targetName,
     health: profile.encounter.targetHealth,
     armor: profile.encounter.targetArmor,

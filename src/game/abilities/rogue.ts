@@ -3,7 +3,6 @@ import { dealDamage, rollApplication, seconds } from '../../engine';
 import {
   ADRENALINE_RUSH,
   BLADE_FLURRY,
-  BLADE_FLURRY_UNMODELLED,
   COLD_BLOOD,
   COLD_BLOOD_ABILITIES,
   CUTTHROAT,
@@ -549,7 +548,6 @@ export const BLADE_FLURRY_ABILITY: Ability = {
   onCast: ({ simulation, caster }) => {
     simulation.applyAura(caster, BLADE_FLURRY, caster.id);
   },
-  unmodelled: BLADE_FLURRY_UNMODELLED,
 };
 
 export const COLD_BLOOD_ABILITY: Ability = {

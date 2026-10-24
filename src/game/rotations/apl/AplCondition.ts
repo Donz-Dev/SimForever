@@ -136,6 +136,13 @@ export type AplCondition =
    * somebody would reasonably want to write.
    */
   | { readonly kind: 'fightElapsed'; readonly compare: AplCompare; readonly seconds: number }
+  /**
+   * How many targets the fight holds (round 57) -- the owner's "condition for
+   * number of targets, so it can prioritize AoE actions that aren't normally
+   * cast on single target encounters". Living enemies, which is the
+   * encounter's Number of Targets for the whole fight: no dummy dies.
+   */
+  | { readonly kind: 'targetCount'; readonly compare: AplCompare; readonly count: number }
   | {
       readonly kind: 'health';
       readonly on: AplSubject;

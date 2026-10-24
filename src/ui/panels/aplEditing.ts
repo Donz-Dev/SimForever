@@ -260,7 +260,15 @@ export function setCondition(
 export type ClauseCompare = 'atLeast' | 'atMost' | 'exactly' | 'below' | 'above';
 
 /** The kinds of clause the panel can draw controls for. */
-export type ClauseKind = 'buff' | 'resource' | 'cooldown' | 'fight' | 'health' | 'swing';
+export type ClauseKind =
+  | 'buff'
+  | 'resource'
+  | 'cooldown'
+  | 'fight'
+  | 'health'
+  | 'swing'
+  // How many targets the fight holds (round 57). `value` is the count.
+  | 'targets';
 
 /** Which weapon's swing timer a `swing` clause reads. */
 export type SwingSlot = 'mainHand' | 'offHand' | 'ranged';
@@ -629,6 +637,8 @@ function toClause(condition: AplCondition): Clause | undefined {
         value: condition.seconds,
         unit: 'secondsElapsed',
       };
+    case 'targetCount':
+      return { kind: 'targets', compare: condition.compare, value: condition.count };
     case 'health':
       /*
        * YOURS OR THE TARGET'S (round 55). It was self only, on the argument
@@ -740,6 +750,8 @@ export function fromClause(clause: Clause): AplCondition {
         compare,
         milliseconds: Math.round(value * 1000),
       };
+    case 'targets':
+      return { kind: 'targetCount', compare, count: value };
   }
 }
 
@@ -785,6 +797,9 @@ export function blankClause(kind: ClauseKind): Clause {
     case 'swing':
       // "Main hand swings within half a second": a weave or a hold point.
       return { kind: 'swing', slot: 'mainHand', compare: 'atMost', value: 0.5 };
+    case 'targets':
+      // "Three or more targets": the AoE pull the condition exists for.
+      return { kind: 'targets', compare: 'atLeast', value: 3 };
   }
 }
 

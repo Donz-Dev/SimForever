@@ -1,5 +1,7 @@
 import type { Ability } from '../../engine';
 import { dealDamage, rollApplication, seconds } from '../../engine';
+import { areaTargets } from '../combat/multiTarget';
+import { PLACEHOLDER_HOLY_NOVA_SP_COEFFICIENT } from '../combat/coefficients';
 import { baseManaFor } from '../character/baseStatLookup';
 import {
   DEVOURING_PLAGUE,
@@ -504,7 +506,48 @@ export const POWER_INFUSION_ABILITY: Ability = {
   unmodelled: POWER_INFUSION_UNMODELLED,
 };
 
+/**
+ * Holy Nova, granted by the Holy talent: "causing 174 to 200 Holy damage to all
+ * enemy targets within 10 yards and healing all party members within 10 yards
+ * for 288 to 334. These effects cause no threat." 750 mana, instant (round 57).
+ *
+ * The spellbook's rank 6 -- the talent tooltip's 26 to 30 is rank 1. EVERY
+ * TARGET, each with its own spell roll; "no threat" is `holy_nova` in the threat
+ * table at a multiplier of zero. The heal is not applied: in a damage fight
+ * there is no injured party member to receive it. Coefficient: a placeholder
+ * zero.
+ */
+export const HOLY_NOVA_DAMAGE = (174 + 200) / 2;
+
+export const HOLY_NOVA: Ability = {
+  id: 'holy_nova',
+  name: 'Holy Nova',
+  cost: { resource: 'mana', amount: 750 },
+  attackTable: 'spell',
+  targets: { maxTargets: Infinity },
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    for (const struck of areaTargets(simulation, caster, target, ability)) {
+      dealDamage(simulation, {
+        source: caster,
+        target: struck,
+        abilityId: ability.id,
+        abilityName: ability.name,
+        school: 'holy',
+        baseAmount: HOLY_NOVA_DAMAGE,
+        powerCoefficient: PLACEHOLDER_HOLY_NOVA_SP_COEFFICIENT,
+        attackTable: ability.attackTable,
+      });
+    }
+  },
+  unmodelled:
+    'Its spell power coefficient is not stated anywhere this project reads, so ' +
+    'it is zero. Its party heal is not applied.',
+};
+
 export const PRIEST_ABILITIES: readonly Ability[] = [
+  // Granted by the Holy talent; `grantsByAbility` gates it.
+  HOLY_NOVA,
   SHADOWFORM_ABILITY,
   MIND_BLAST,
   SHADOW_WORD_PAIN,

@@ -461,8 +461,13 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
      * Debuffs are read off the TARGET, not the player. "Sunder Armor uptime"
      * means how long the boss carried it, which is the only reading that
      * matters and the only one the aura lives on.
+     *
+     * THE FIRST ENEMY ONLY, which is the boss (round 57). With adds in the
+     * fight, reading every enemy printed one row per target for the same aura
+     * -- eight "Thunder Clap" rows on an eight-target fight -- and the boss is
+     * what "on the target" has always meant. At one target it is the same list.
      */
-    debuffUptime: enemyIds.flatMap((id) => totals.auraUptime(id, 'debuff')),
+    debuffUptime: enemyIds.slice(0, 1).flatMap((id) => totals.auraUptime(id, 'debuff')),
     castButNotSimulated: castButNotSimulated(caveats, abilities),
     // Present only when a pet was actually built, so a Lone Wolf hunter and a
     // sacrificed demon say nothing rather than carrying someone else's caveat.

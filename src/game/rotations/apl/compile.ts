@@ -279,6 +279,11 @@ export function compileCondition(condition: AplCondition): Condition {
       return (context) => compare(context.clock.now(), how, milliseconds);
     }
 
+    case 'targetCount': {
+      const { compare: how, count } = condition;
+      return (context, actor) => compare(context.enemiesOf(actor).length, how, count);
+    }
+
     case 'health': {
       const { on, compare: how, fraction } = condition;
       return (context, actor, target) => {

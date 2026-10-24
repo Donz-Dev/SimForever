@@ -231,7 +231,8 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'unmodelled', reason: 'Smite and the heals, none of which a Shadow list casts.' },
   ],
 
-  holy_nova: [{ kind: 'unmodelled', reason: 'An area spell, and there is one target.' }],
+  // The ability, which strikes every target in the fight (round 57).
+  holy_nova: [{ kind: 'grantAbility', abilityId: 'holy_nova' }],
   blessed_recovery: [{ kind: 'unmodelled', reason: NOT_ATTACKED }],
   inspiration: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
   holy_reach: [{ kind: 'unmodelled', scope: 'positioning', reason: 'Range, and nothing here has a position.' }],

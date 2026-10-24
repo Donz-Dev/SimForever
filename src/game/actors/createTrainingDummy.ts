@@ -48,6 +48,14 @@ export interface TrainingDummyOptions {
   readonly swingDamage?: number;
   /** Seconds between swings. Defaults to the placeholder boss figure. */
   readonly swingSeconds?: number;
+  /**
+   * Whether each swing makes the next harder. On by default -- the boss ramps
+   * -- and OFF for an encounter's extra targets, by the owner's ruling that an
+   * add "does not ramp" (round 57).
+   */
+  readonly ramps?: boolean;
+  /** Report its swings under its own name. True for an extra target; see `Combatant`. */
+  readonly namesOwnSwings?: boolean;
 }
 
 /**
@@ -84,6 +92,7 @@ export function createTrainingDummy(options: TrainingDummyOptions = {}): Combata
      * which silently changes the denominator of every per-second figure in it.
      */
     survivesLethalDamage: true,
+    ...(options.namesOwnSwings ? { namesOwnSwings: true } : {}),
     id: options.id ?? 'dummy_1',
     name: options.name ?? 'Training Dummy',
     kind: 'enemy',
@@ -105,7 +114,7 @@ export function createTrainingDummy(options: TrainingDummyOptions = {}): Combata
            * rides on the weapon rather than being part of the dummy, because a
            * target that is not swinging has nothing to ramp.
            */
-          reactions: [BOSS_DAMAGE_RAMP_REACTION],
+          ...(options.ramps === false ? {} : { reactions: [BOSS_DAMAGE_RAMP_REACTION] }),
           /*
            * PARRY HASTE ON THE BOSS, which is the half of the mechanic a tank
            * actually feels: parrying it brings its next swing forward, so a

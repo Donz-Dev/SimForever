@@ -792,3 +792,36 @@ export const FLAT_DAMAGE_SOURCES = [
   'hamstring',
   'summon_hawk',
 ] as const;
+
+/**
+ * THE EIGHT AREA SPELLS WITH NO STATED COEFFICIENT (round 57).
+ *
+ * ----------------------------------------------------------------------------
+ * Declared for the owner's multi-target request -- Hellfire, Rain of Fire,
+ * Volley, Arcane Explosion, Blizzard, Holy Nova, Hurricane and Magma Totem --
+ * and NONE OF THEM IS A ROW IN `WoWSimWorksheet.xlsx`, which states area
+ * coefficients only for the area abilities that already existed (Blast Wave,
+ * Consecration, Thunder Clap, Swipe, Multi-Shot, Fire Nova).
+ *
+ * ZERO, AND NAMED `PLACEHOLDER_`, rather than a Classic figure recalled from
+ * memory: a borrowed number has to be a SOURCED one, and nothing in this
+ * project's sources carries these. So each spell deals exactly its tooltip's
+ * flat damage and no spell power reaches it, which UNDERSTATES all eight by
+ * whatever the owner's figure turns out to be. A question for the owner,
+ * recorded in HANDOVER; `everySpellScales.test.ts` exempts the eight by name
+ * and fails the day one of these becomes non-zero without its exemption going.
+ *
+ * PER TICK for the five channels, per cast for Arcane Explosion and Holy Nova,
+ * and per pulse for Magma Totem -- the unit the eventual figure will be stated
+ * in is part of the question.
+ * ----------------------------------------------------------------------------
+ */
+export const PLACEHOLDER_HELLFIRE_TICK_SP_COEFFICIENT = 0;
+export const PLACEHOLDER_RAIN_OF_FIRE_TICK_SP_COEFFICIENT = 0;
+/** Volley is a Hunter ability, so its eventual scaler may be RANGED attack power. */
+export const PLACEHOLDER_VOLLEY_TICK_COEFFICIENT = 0;
+export const PLACEHOLDER_ARCANE_EXPLOSION_SP_COEFFICIENT = 0;
+export const PLACEHOLDER_BLIZZARD_TICK_SP_COEFFICIENT = 0;
+export const PLACEHOLDER_HOLY_NOVA_SP_COEFFICIENT = 0;
+export const PLACEHOLDER_HURRICANE_TICK_SP_COEFFICIENT = 0;
+export const PLACEHOLDER_MAGMA_TOTEM_PULSE_SP_COEFFICIENT = 0;
