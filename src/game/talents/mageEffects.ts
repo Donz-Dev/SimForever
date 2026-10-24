@@ -259,17 +259,8 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'threat', direction: 'decrease', valueIndex: 1, schools: ['fire'] },
   ],
 
-  improved_flamestrike: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'The critical strike chance of Flamestrike, which IS captured in the ' +
-        'spellbook and is not declared. Which spells get a declaration is an ' +
-        'open question for the ruleset owner -- 478 captured against 113 ' +
-        'declared -- and this class three area spells are named in that ' +
-        'proposal. No Mage profile takes this talent.',
-    },
-  ],
+  // Flamestrike is declared since round 58, so its crit talent reaches it.
+  improved_flamestrike: [{ kind: 'abilityCrit', abilityId: 'flamestrike' }],
 
   pyroblast: [{ kind: 'grantAbility', abilityId: 'pyroblast' }],
 
@@ -453,14 +444,20 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * would have to be added to `CHILL_ABILITY_IDS` by hand. That is a property
    * of the SPELL and not of this talent.
    */
+  /*
+   * THE CHILL IS LIVE NOW, ON THE OWNER'S RULING (round 58): "Improved Blizzard
+   * adds a chill effect to the Blizzard spell. Each tick of Blizzard then has a
+   * chance to grant the Fingers of Frost effect." So the talent is two clauses
+   * with two answers: the movement slow is a snare and stays ruled out, and the
+   * CHILL is what Fingers of Frost reads -- the reaction below marks the built
+   * character, and `fingersOfFrost` rolls on Blizzard's ticks when it is there.
+   */
   improved_blizzard: [
+    { kind: 'reaction', reactionId: 'improved_blizzard', valueless: true },
     {
       kind: 'unmodelled',
       scope: 'crowdControl',
-      reason:
-        'A Chill: it lowers the target movement speed and does nothing else. ' +
-        'Declaring Blizzard would not reach it, which is what the old reason ' +
-        'implied. The same clause as Permafrost, scoped the same way.',
+      reason: 'Its movement slow: a snare, the same clause as Permafrost, scoped the same way.',
     },
   ],
 

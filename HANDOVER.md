@@ -107,6 +107,26 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 58: Mage AoE -- Flamestrike, Blast Wave, and the Blizzard chill
+
+Three items from the owner:
+
+| | what changed |
+| --- | --- |
+| Improved Blizzard | the owner's ruling: it "adds a chill effect to the Blizzard spell. Each tick of Blizzard then has a chance to grant the Fingers of Frost effect." The talent now marks the built character, and Fingers of Frost rolls on Blizzard -- **once per tick, not once per target the tick strikes**, and only with both talents taken. The movement slow stays ruled out as a snare (`crowdControl`, count unchanged) |
+| Blast Wave | already declared in round 57 at 12.9%, which is the owner's figure; the coefficient now says so. It is talent-granted and **no Mage profile takes the talent** |
+| Flamestrike | declared: rank 6, 990 mana, a 3 second cast, 381 to 465 on every target, then 332 over 8s as four ticks of 83. **15.7% on the hit and 12.2% a tick**, the owner's. It joins `FIRE_SPELL_IDS` and Fire Power's effect list (five entries now, against a cap of four), and Improved Flamestrike's crit -- unmodelled until now -- reaches it |
+
+**WOWHEAD'S FIGURES ARE LEVEL-SCALED**: its Forever tooltips render Blast Wave
+464-545 and Flamestrike 384-468, the capture's 453-533 and 381-465 scaled from
+the level each is learned at. Nothing in this project scales a spell by level,
+so the capture's base is declared. A question for the owner.
+
+**NO FIGURE MOVES**: no list casts Flamestrike or Blast Wave and no profile
+takes Improved Blizzard. All three Mages reproduce to the decimal against
+`main` (1038.7, 1052.9, 1127.4). Using any of these needs a list entry --
+gated on the round 57 `targetCount` condition -- which is not written yet.
+
 ## Round 57: multiple targets
 
 The owner's request: a **Number of Targets** dropdown in the Encounter panel,
