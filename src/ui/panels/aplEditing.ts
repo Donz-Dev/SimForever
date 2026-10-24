@@ -260,7 +260,15 @@ export function setCondition(
 export type ClauseCompare = 'atLeast' | 'atMost' | 'exactly' | 'below' | 'above';
 
 /** The kinds of clause the panel can draw controls for. */
-export type ClauseKind = 'buff' | 'resource' | 'cooldown' | 'fight' | 'health' | 'swing';
+export type ClauseKind =
+  | 'buff'
+  | 'resource'
+  | 'cooldown'
+  | 'fight'
+  | 'health'
+  | 'swing'
+  // How many targets the fight holds (round 57). `value` is the count.
+  | 'targets';
 
 /** Which weapon's swing timer a `swing` clause reads. */
 export type SwingSlot = 'mainHand' | 'offHand' | 'ranged';
@@ -629,6 +637,8 @@ function toClause(condition: AplCondition): Clause | undefined {
         value: condition.seconds,
         unit: 'secondsElapsed',
       };
+    case 'targetCount':
+      return { kind: 'targets', compare: condition.compare, value: condition.count };
     case 'health':
       /*
        * YOURS OR THE TARGET'S (round 55). It was self only, on the argument
@@ -740,6 +750,8 @@ export function fromClause(clause: Clause): AplCondition {
         compare,
         milliseconds: Math.round(value * 1000),
       };
+    case 'targets':
+      return { kind: 'targetCount', compare, count: value };
   }
 }
 
@@ -750,6 +762,25 @@ export function fromClause(clause: Clause): AplCondition {
  */
 function percentOf(fraction: number): number {
   return Math.round(fraction * 1000) / 10;
+}
+
+/**
+ * Set or clear an entry's Multi-DoT count (round 57). Cleared, or one -- which
+ * is the plain single target -- is DROPPED, so an entry put back compares equal.
+ */
+export function setMultiDot(
+  entries: readonly AplEntry[],
+  index: number,
+  targets: number | undefined,
+): readonly AplEntry[] {
+  if (index < 0 || index >= entries.length) return entries;
+  return entries.map((entry, at) => {
+    if (at !== index) return entry;
+    const { multiDot: _dropped, ...rest } = entry;
+    return targets !== undefined && targets > 1
+      ? { ...rest, multiDot: Math.floor(targets) }
+      : rest;
+  });
 }
 
 /**
@@ -785,6 +816,9 @@ export function blankClause(kind: ClauseKind): Clause {
     case 'swing':
       // "Main hand swings within half a second": a weave or a hold point.
       return { kind: 'swing', slot: 'mainHand', compare: 'atMost', value: 0.5 };
+    case 'targets':
+      // "Three or more targets": the AoE pull the condition exists for.
+      return { kind: 'targets', compare: 'atLeast', value: 3 };
   }
 }
 

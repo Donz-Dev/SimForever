@@ -260,6 +260,21 @@ export const BANE_OF_AGONY: AuraDefinition = baneOfAgonyAura(1);
 export const BANE_OF_DOOM_DAMAGE = 1742;
 export const BANE_OF_DOOM_DURATION_MS = seconds(60);
 
+/**
+ * Bane of Havoc's curse (round 57): five minutes, and nothing of its own -- the
+ * copy of the Warlock's damage is a reaction on the WARLOCK, which reads whether
+ * an enemy carries this. See `BANE_OF_HAVOC_REACTIONS`.
+ */
+export const BANE_OF_HAVOC_SHARE = 0.15;
+
+export const BANE_OF_HAVOC: AuraDefinition = {
+  id: 'bane_of_havoc',
+  name: 'Bane of Havoc',
+  durationMs: seconds(300),
+  isDebuff: true,
+  refreshBehaviour: 'reset',
+};
+
 export const BANE_OF_DOOM: AuraDefinition = {
   id: 'bane_of_doom',
   name: 'Bane of Doom',

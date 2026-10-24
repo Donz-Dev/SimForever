@@ -866,14 +866,10 @@ export const LAST_STAND: AuraDefinition = {
  * Spell 12292, Sweeping Strikes: "Your next 5 melee attacks strike an
  * additional nearby opponent." 30 rage, 30 second cooldown, Battle Stance.
  *
- * DOES NOTHING AGAINST ONE TARGET, and that is the whole ability. Its entire
- * effect is the additional opponent, and an encounter here has exactly one
- * enemy -- so this is 30 rage and a global cooldown for no damage whatever.
- *
- * It is defined rather than omitted so that the talent grants something real
- * and so the charge count is written down. It is deliberately absent from every
- * rotation, for the same reason the inert buffs were. See
- * `engine/combat/targeting.ts`.
+ * DOES NOTHING AGAINST ONE TARGET, and that is the whole ability: its entire
+ * effect is the additional opponent. With adds in the encounter (round 57) each
+ * of the five charges is one copied strike -- `SWEEPING_STRIKES_EXTRA_OPPONENT`
+ * spends them -- so the aura STARTS FULL, which is what `chargesOnApply` is for.
  */
 export const SWEEPING_STRIKES_CHARGES = 5;
 export const SWEEPING_STRIKES_DURATION_MS = seconds(30);
@@ -883,6 +879,7 @@ export const SWEEPING_STRIKES: AuraDefinition = {
   name: 'Sweeping Strikes',
   durationMs: SWEEPING_STRIKES_DURATION_MS,
   maxStacks: SWEEPING_STRIKES_CHARGES,
+  chargesOnApply: SWEEPING_STRIKES_CHARGES,
 };
 
 /*

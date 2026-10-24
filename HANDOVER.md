@@ -107,6 +107,138 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 57: multiple targets
+
+The owner's request: a **Number of Targets** dropdown in the Encounter panel,
+presets 1 to 8 and 1 by default; an APL condition on the count "so it can
+prioritize AoE actions that aren't normally cast on single target encounters";
+the AoE abilities of all nine classes; and, for a tank run, "each extra target
+swings for base 500 damage every 2 seconds, does not ramp."
+
+**AT ONE TARGET NOTHING MOVES, AND THAT IS CHECKED RATHER THAN ASSUMED.**
+`tools/rotation_fingerprint.ts` gives all 32 profiles x 3 seeds the same
+combat-log hash and event count as `main`, taken after every engine change.
+Every new mechanism resolves to the old single target: `selectTargets` returns
+`[primary]`, each "strike another opponent" reaction finds nobody to strike, and
+removing an aura nobody carries emits nothing.
+
+| | what | where |
+| --- | --- | --- |
+| profile | `encounter.numberOfTargets`, **format 17**; a version 16 file migrates to 1. Named in `validateProfile`'s rebuild, and `profile.test.ts` round-trips a 3 | `CharacterProfile.ts`, `migrateProfile.ts`, `validateProfile.ts` |
+| encounter | the boss is `dummy_1` and first in the list, so the rotation and a pet stay on it; adds `dummy_2`.. are its twins (same level and armor). **The raid's debuffs go on the boss only** | `trainingDummyEncounter.ts` `createTargetsFor` |
+| tank run | each add swings for `EXTRA_TARGET_SWING_DAMAGE` 500 every 2s with the boss's 15% variance and **no ramp**; the boss keeps its ramp. An add's swings are their own damage-taken row (`namesOwnSwings`) | `raidBoss.ts`, `createTrainingDummy.ts`, `Combatant.ts` |
+| APL | `targetCount` -- living enemies against a count. In the editor as "Number of targets" (`targets >= 3`), and it round-trips | `AplCondition.ts`, `compile.ts`, `aplEditing.ts`, `AplPanel.tsx` |
+| reporting | DPS and TPS sum across targets, as they always summed every friendly source. **Debuff uptime reads the boss only**: every enemy gave one row per target per aura | `runBatch.ts` |
+| panel | the dropdown, and the Encounter badge says "4 targets" when it is more than one | `EncounterPanel.tsx` |
+
+**THE ABILITIES, ALL FROM THE CAPTURES.** `game/combat/multiTarget.ts` holds the
+two shared pieces: `areaTargets` (the engine's `selectTargets`, primary first)
+and the two copy reactions.
+
+| class | ability | targets | state before |
+| --- | --- | --- | --- |
+| Warrior | Thunder Clap | 4 | declared, hit one |
+| | Whirlwind, Cleave | 4, 2 | **already looped over every enemy** |
+| | Sweeping Strikes | copies 5 landed melee hits onto a second target | declared, inert |
+| Rogue | Blade Flurry | copies every landed melee hit while up | haste only; caveat removed |
+| Hunter | Multi-Shot | 3 | declared, hit one |
+| | Explosive Trap | all, hit and burn | declared, hit one |
+| | **Volley** | all, 6 x 112 | new |
+| Mage | Blast Wave | all | declared, hit one |
+| | **Arcane Explosion**, **Blizzard** | all; 238-258, and 8 x 146 | new |
+| Priest | **Holy Nova** | all, 174-200, **no threat** | talent was `unmodelled`; now grants it |
+| Druid | Swipe | 3 | already looped |
+| | Primal Bite | **3 while Berserk is up** -- Berserk's own tooltip, so not a question | declared, hit one |
+| | **Hurricane** | all, 10 x 132 | new |
+| Shaman | Fire Nova | all | declared, hit one |
+| | **Magma Totem** | all, a pulse of 73 every 2s for 20s, Searing Totem's shape; one fire totem at a time | new |
+| | Chain Lightning | 3, each jump x0.7 (57b); no cooldown under Elemental Mastery | declared, hit one |
+| Paladin | Consecration | all; the first four take 312, the rest the 96 | declared, one debuff |
+| Warlock | **Hellfire**, **Rain of Fire** | all; 15 x 210, and 4 x 221 | new |
+| | **Bane of Havoc** | 15% of damage to other targets copied onto the cursed one | talent was `unmodelled`; now grants it |
+
+Holy Nova and Bane of Havoc are talents in Forever's trees (the capture's
+"Learned at level" line notwithstanding, as CLAUDE.md warns), so each talent's
+effect went from `unmodelled` to `grantAbility`. The Mage's hand-kept lists took
+the two new spells: `MAGE_DAMAGE_SPELL_IDS`, `FROST_SPELL_IDS` and Frost
+Channeling's cost list.
+
+**NO STOCK LIST CHANGED.** They are single-target lists, and an AoE entry gated
+on `targetCount` is the user's to write. `tools/probe_multi_target.ts` puts one
+first in a list, gated at `>= 3`, and runs a profile at 1 and 4 targets (30
+fights; a diagnostic, not a baseline, and its entries are deliberately naive --
+it recasts Magma Totem and Arcane Explosion whenever it can). These figures are
+the FIRST half of the round, with the eight placeholder zeros -- see below:
+
+| | 1 target | 4 targets | the AoE row at 4 |
+| --- | --- | --- | --- |
+| Prot Warr (tank run), Thunder Clap | 619.0 | 889.8 | 10.03 casts, 10.8%; each add ~1.8k damage taken |
+| DW Fury, Whirlwind | 1030.3 | 1358.1 | 14.9% |
+| Combat Rogue, Blade Flurry | 880.7 | 1142.8 | 22.9% |
+| Seal Twist Ret, Consecration | 961.2 | 1161.4 | 21.9% |
+| BM Hunter, Multi-Shot | 1010.5 | 1147.5 | 25.2% |
+| Bear (tank run), Swipe | 502.2 | 809.5 | 38.1% |
+| Arcane Mage, Arcane Explosion | 1045.2 | **942.7** | 98.4% |
+| Firelock, Rain of Fire | 950.3 | **649.1** | 89.7% |
+
+**THE TWO THAT LOST DPS AT FOUR TARGETS WERE THE PLACEHOLDER ZEROS SHOWING**,
+not a bug: Arcane Explosion and Rain of Fire then carried no spell power at
+all. With the owner's coefficients (57b, below) Arcane Explosion goes
+**1045.2 -> 1386.0** at four targets. **Rain of Fire still loses, 950.3 ->
+714.9, and that is arithmetic rather than a coefficient**: one cast is about
+1,000 damage a target over eight seconds for 1,185 mana, so four targets is
+about 500 DPS against the Firelock's single-target 950 -- the spell wants far
+more targets, or a list that does not spam it. The probe's entries are naive on
+purpose: its Magma Totem line recasts whenever it can, which is why the
+Elemental Shaman reads 749 -> 308 there.
+
+### 57b: the owner's answers, all applied
+
+| | the ruling | what changed |
+| --- | --- | --- |
+| 1 | the eight coefficients: Hellfire **2.2%** SP a tick, Rain of Fire **3%** a tick, Volley **3% RANGED AP** a tick, Arcane Explosion **14.3%**, Blizzard **3%** a tick, Holy Nova **10.7%**, Hurricane **3%** a tick, Magma Totem **2.55%** a pulse | the `PLACEHOLDER_` zeros are owner-stated constants now; Volley adds ranged attack power into its flat damage, as Arcane Shot does. Six `everySpellScales` exemptions removed; Volley's stays, as a ranged-AP spell. **A refresh of the sheet will not carry them** -- recorded beside the constants |
+| 2 | Blizzard ticks every 1s, Rain of Fire every 2s | what shipped; the "interpretation" notes come off |
+| 3 | raid debuffs on the primary target only | what shipped; now a ruling in the comment |
+| 4 | Sweeping Strikes and Blade Flurry copy the hit or hits that landed | what shipped |
+| 5 | DoTs, Bane of Havoc included, need **"Multi-DoT: X targets"** in the APL; X above the number of targets is the number of targets | `AplEntry.multiDot` and the engine's `PriorityEntry.multiDot`: the entry is tried against the first X enemies, boss first, and cast at the first whose CONDITION holds and that the ability can be cast on -- so "Corruption, if the target's Corruption is not up, Multi-DoT 3" walks it across three targets. Offered in the APL panel on every enemy entry once the fight has adds; dropped when cleared or set to 1; validated on load. **Bane of Havoc is limited to one target** -- casting it takes it off every other enemy |
+| 6 | Hellfire's self-damage is recorded and automatically restored, like Life Tap's | each tick spends 210 health and the group heals it back a second later as **"Hellfire (healed by the group)"** -- `payHealthAndHealBack`. Life Tap keeps its own copy of the same shape, untouched, so its fights stay byte-identical |
+| 7 | Consecration keeps its coefficient past the fourth target and loses base damage | what shipped |
+| 8 | parry haste works for adds and tanks alike | what shipped |
+| 9 | the healer stays single-target; Chain Lightning and its Elemental Mastery interaction to be added; Hurricane's slow and Holy Nova's party heal are out of scope | **Chain Lightning jumps** to two more targets at x0.7 each jump, flat damage and coefficient alike, each with its own roll; Lightning Overload, a cast reaction, still copies only the primary hit. **Elemental Mastery removes Chain Lightning's cooldown** through `suppressesCooldownOf`, Berserk's field -- its talent's reason said nothing could suspend a cooldown, which stopped being true when Berserk landed. The slow and the heal are noted as out of scope on the two abilities |
+
+**57c: LIGHTNING OVERLOAD DUPLICATES THE WHOLE CHAIN LIGHTNING**, the owner's
+ruling: "make lightning overload cast a duplicate chain lightning at half damage
+and no mana or threat." One roll per cast as before; on a proc the copy strikes
+the same primary and two jumps at x0.7, every hit at half, each with its own
+spell roll. No mana needs nothing, since a reaction's damage is not a cast. No
+threat is a new `DamageRequest.noThreat`, carried onto the damage event because
+threat is derived from the stream, and `ThreatTracker` skips it. **Lightning
+Bolt's overload is unchanged, threat included** -- the ruling names Chain
+Lightning, and the Elemental profile casts Lightning Bolt. All 32 profiles stay
+byte-identical, since no stock list casts Chain Lightning; 4,135 tests pass.
+
+**AND MAGMA TOTEM BEING DECLARED CLOSED THREE MORE SHAMAN CLAUSES**, which no
+answer asked for and a test found: Call of Flame's damage reaches it, Elemental
+Fury's crit damage reaches its Fire pulses with nothing to declare, and Trial by
+Fire's "+20 sec" is an `abilityBonus` on it, Flame Shock's arrangement. **Trial
+by Fire's clause had been filed under `totemEntities`** -- the ruling for totems
+that buff or heal -- for a damage totem, so the CLAUDE.md scope table's row is
+**4, counted from the declarations**, not 5. Elemental Mastery and those three
+leave the Shaman's partly-modelled list: the Elemental build's is Tidal Focus
+alone now.
+
+**AT ONE TARGET NOTHING MOVED THROUGH ANY OF IT**: all 32 profiles x 3 seeds
+still give `main`'s combat-log hashes and event counts after 57b. `npm test`
+**4,134 passing**, 53 of them in `tests/game/multiTarget.test.ts`. The
+Multi-DoT control was checked in the browser: absent at one target, on every
+enemy entry at three.
+
+**NOT DONE, AND SAID SO:** the healer fights stay single-target, by the owner's
+answer; Hurricane's attack slow and Holy Nova's party heal are out of scope, by
+the same; and no stock list carries an AoE or Multi-DoT entry -- that is a list
+decision for the owner, and nothing in the published table moves until one is
+made.
+
 ## Round 56: a cast holds the swing timer at zero until it finishes
 
 The owner asked to verify a Shaman weaving Lightning Bolt between swings, with

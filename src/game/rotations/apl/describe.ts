@@ -132,6 +132,9 @@ export function describeCondition(condition: AplCondition, names: DescribeNames 
       if (condition.compare === 'exactly' && condition.seconds === 0) return 'at the pull';
       return `${comparison(condition.compare)} ${condition.seconds}s into the fight`;
 
+    case 'targetCount':
+      return `${comparison(condition.compare)} ${condition.count} target${condition.count === 1 ? '' : 's'}`;
+
     case 'health':
       return `${subjectWord(condition.on).replace(' have', '').replace(' has', '')} health is ${comparison(condition.compare)} ${Math.round(condition.fraction * 100)}%`;
 

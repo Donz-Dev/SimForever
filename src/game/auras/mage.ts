@@ -588,6 +588,9 @@ export const MAGE_DAMAGE_SPELL_IDS: readonly string[] = [
   'cone_of_cold',
   'arcane_missiles',
   'arcane_blast',
+  // The two area spells, round 57.
+  'arcane_explosion',
+  'blizzard',
 ];
 
 /**
@@ -1123,6 +1126,7 @@ export const FROST_SPELL_IDS: readonly string[] = [
   'ice_lance',
   'frostfire_bolt',
   'cone_of_cold',
+  'blizzard',
 ];
 
 /**

@@ -32,6 +32,7 @@ import {
   setDisabled,
   setGroupOp,
   setInterrupts,
+  setMultiDot,
   setCancel,
   setTarget,
   toggleNegated,
@@ -210,6 +211,7 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
         auras={auras}
         channels={channels}
         heals={heals}
+        multiTarget={(profile.encounter.numberOfTargets ?? 1) > 1}
         onChange={update}
       />
 
@@ -470,6 +472,7 @@ export function AplEntries({
   auras,
   channels,
   heals,
+  multiTarget,
   onChange,
 }: {
   readonly list: ShownList;
@@ -481,6 +484,8 @@ export function AplEntries({
   readonly channels?: readonly { readonly id: string; readonly name: string }[];
   /** The heals in the book, and whether each has a cast bar. See `healsIn`. */
   readonly heals?: ReadonlyMap<string, { readonly castBar: boolean }>;
+  /** Whether the fight has adds, which is when Multi-DoT is offered (round 57). */
+  readonly multiTarget?: boolean;
   readonly onChange?: (entries: readonly AplEntry[]) => void;
 }) {
   return (
@@ -555,6 +560,21 @@ export function AplEntries({
                   : undefined
               }
             />
+            {/*
+              * MULTI-DOT (round 57): offered on an enemy entry once the fight
+              * has adds, and always shown where it is already set, so a stored
+              * count can be seen and cleared at one target.
+              */}
+            {!entry.target && (multiTarget || entry.multiDot !== undefined) ? (
+              <EntryMultiDot
+                multiDot={entry.multiDot}
+                onChange={
+                  onChange
+                    ? (targets) => onChange(setMultiDot(list.entries, index, targets))
+                    : undefined
+                }
+              />
+            ) : null}
             {entry.note ? <span className="apl-note">{entry.note}</span> : null}
           </div>
           <InterruptToggle
@@ -943,6 +963,7 @@ function GroupEditor({
             <option value="fight">Fight timing</option>
             <option value="health">Health</option>
             <option value="swing">Swing timer</option>
+            <option value="targets">Number of targets</option>
           </select>
           {/*
             * A NESTED GROUP IS WHAT MAKES "a and (b or c)" SAYABLE, which is
@@ -1081,6 +1102,48 @@ function InterruptToggle({
         onChange={(event) => onChange(event.target.checked)}
       />
       interrupt {names}
+    </label>
+  );
+}
+
+/**
+ * Multi-DoT: "spread this across the first X targets" (round 57). Empty is
+ * off, and so is one, which is the plain single target.
+ */
+function EntryMultiDot({
+  multiDot,
+  onChange,
+}: {
+  readonly multiDot: number | undefined;
+  readonly onChange?: (targets: number | undefined) => void;
+}) {
+  if (!onChange) {
+    return multiDot !== undefined ? (
+      <span className="apl-flag" title="Cast at the first of these targets whose condition holds">
+        multi-DoT {multiDot}
+      </span>
+    ) : null;
+  }
+  return (
+    <label
+      className="apl-interrupt"
+      title="Cast at the first of the first X targets, boss first, whose condition holds"
+    >
+      Multi-DoT:
+      <input
+        type="number"
+        min="1"
+        max="8"
+        step="1"
+        className="apl-number"
+        value={multiDot ?? ''}
+        placeholder="–"
+        aria-label="Multi-DoT targets"
+        onChange={(event) =>
+          onChange(event.target.value === '' ? undefined : Math.round(Number(event.target.value)))
+        }
+      />
+      targets
     </label>
   );
 }
@@ -1356,6 +1419,29 @@ function ClauseRow({
             onChange={(event) => set({ value: Number(event.target.value) })}
           />
           <span className="apl-unit">s</span>
+        </>
+      ) : null}
+
+      {/*
+        * NUMBER OF TARGETS (round 57): how many enemies the fight holds, which
+        * is the Encounter panel's Number of Targets. "At least 3" is an AoE
+        * entry that a single-target fight never reaches.
+        */}
+      {clause.kind === 'targets' ? (
+        <>
+          {/* One word, so the clause reads "targets >= 3" on one line. */}
+          <span className="apl-unit">targets</span>
+          {compareField(false)}
+          <input
+            type="number"
+            step="1"
+            min="1"
+            max="8"
+            className="apl-number"
+            value={clause.value ?? 1}
+            aria-label="Number of targets"
+            onChange={(event) => set({ value: Math.round(Number(event.target.value)) })}
+          />
         </>
       ) : null}
 

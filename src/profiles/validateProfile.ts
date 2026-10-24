@@ -17,6 +17,7 @@ import type { TalentAllocation } from '../game/talents/Talent';
 import { talentsForClass } from '../game/talents/talentData';
 import { isLegal } from '../game/talents/talentRules';
 import type { CharacterProfile } from './CharacterProfile';
+import { MAX_ENCOUNTER_TARGETS } from './CharacterProfile';
 import { DEFAULT_POISON_LOADOUT } from '../game/reactions/poisons';
 import {
   DEFAULT_WARLOCK_STONE,
@@ -276,6 +277,17 @@ export function validateProfile(value: unknown): ValidationResult {
     }
     requireNonNegativeNumber(encounter.targetSwingDamage, 'encounter.targetSwingDamage', issues);
     requirePositiveNumber(encounter.targetSwingSeconds, 'encounter.targetSwingSeconds', issues);
+    if (
+      typeof encounter.numberOfTargets !== 'number' ||
+      !Number.isInteger(encounter.numberOfTargets) ||
+      encounter.numberOfTargets < 1 ||
+      encounter.numberOfTargets > MAX_ENCOUNTER_TARGETS
+    ) {
+      issues.push({
+        path: 'encounter.numberOfTargets',
+        message: `Must be a whole number from 1 to ${MAX_ENCOUNTER_TARGETS}.`,
+      });
+    }
   }
 
   /*
@@ -373,6 +385,17 @@ export function validateProfile(value: unknown): ValidationResult {
             message: 'Each entry needs an abilityId.',
           });
           return;
+        }
+        if (
+          entry.multiDot !== undefined &&
+          (typeof entry.multiDot !== 'number' ||
+            !Number.isInteger(entry.multiDot) ||
+            entry.multiDot < 1)
+        ) {
+          issues.push({
+            path: `rotation.entries.${index}.multiDot`,
+            message: 'Multi-DoT must be a whole number of targets, 1 or more.',
+          });
         }
         if (entry.condition !== undefined) {
           const unknown = unknownBuiltin(entry.condition);
@@ -505,6 +528,8 @@ export function validateProfile(value: unknown): ValidationResult {
         targetAttacks: validated.encounter.targetAttacks,
         targetSwingDamage: validated.encounter.targetSwingDamage,
         targetSwingSeconds: validated.encounter.targetSwingSeconds,
+        // NAMED, or the rebuild drops it and every loaded fight has one target.
+        numberOfTargets: validated.encounter.numberOfTargets,
       },
       raidBuffs: [...validated.raidBuffs],
       // NAMED, or the rebuild drops it -- the `stance` and `petFamily` hole.

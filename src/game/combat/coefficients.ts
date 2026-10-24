@@ -792,3 +792,31 @@ export const FLAT_DAMAGE_SOURCES = [
   'hamstring',
   'summon_hawk',
 ] as const;
+
+/**
+ * THE EIGHT AREA SPELLS, round 57 -- the OWNER'S figures, given directly.
+ *
+ * ----------------------------------------------------------------------------
+ * None is a row in `WoWSimWorksheet.xlsx`, which states area coefficients only
+ * for the area abilities that already existed (Blast Wave, Consecration,
+ * Thunder Clap, Swipe, Multi-Shot, Fire Nova). They shipped as `PLACEHOLDER_`
+ * zeros in the first half of the round and the owner supplied all eight in
+ * answer -- so, like Wrack's 14.3%, A REFRESH OF THE SHEET WILL NOT CARRY THEM,
+ * and a reader who knows the sheet should not read them as drift.
+ *
+ * PER TICK for the five channels and Magma Totem's pulse, per cast for Arcane
+ * Explosion and Holy Nova -- the owner's own units.
+ *
+ * VOLLEY READS RANGED ATTACK POWER, not spell power, the way Forever's Arcane
+ * Shot does, so it is added into the tick's flat damage exactly as
+ * `ARCANE_SHOT_RAP_COEFFICIENT` is.
+ * ----------------------------------------------------------------------------
+ */
+export const HELLFIRE_TICK_SP_COEFFICIENT = 0.022;
+export const RAIN_OF_FIRE_TICK_SP_COEFFICIENT = 0.03;
+export const VOLLEY_TICK_RAP_COEFFICIENT = 0.03;
+export const ARCANE_EXPLOSION_SP_COEFFICIENT = 0.143;
+export const BLIZZARD_TICK_SP_COEFFICIENT = 0.03;
+export const HOLY_NOVA_SP_COEFFICIENT = 0.107;
+export const HURRICANE_TICK_SP_COEFFICIENT = 0.03;
+export const MAGMA_TOTEM_PULSE_SP_COEFFICIENT = 0.0255;

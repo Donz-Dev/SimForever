@@ -100,6 +100,8 @@ export interface DamageTelemetryEvent extends TelemetryBase {
   readonly resistedShare?: number;
   /** Removed by shields. */
   readonly absorbed: number;
+  /** This hit generates no threat. See `DamageRequest.noThreat`. */
+  readonly noThreat?: boolean;
   /** Portion of `amount` that exceeded the target's remaining health. */
   readonly overkill: number;
   /**

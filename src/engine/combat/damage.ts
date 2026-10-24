@@ -374,6 +374,14 @@ export interface DamageRequest {
    * event rather than inferred from the school alone.
    */
   readonly appliesArmor?: boolean;
+  /**
+   * This damage generates no threat (round 57c). Carried onto the telemetry
+   * event, where the threat tracker reads it -- threat is derived from the
+   * stream, so the flag has to travel with the event. Absent on every hit
+   * that threatens, which is all of them but the one ruling that asked:
+   * Lightning Overload's duplicate Chain Lightning, "no mana or threat".
+   */
+  readonly noThreat?: boolean;
 }
 
 /** The fully resolved outcome of a damage request. */
@@ -1679,6 +1687,8 @@ export function dealDamage(
     periodic: request.periodic ?? false,
     // What the roll faced. See `DamageTelemetryEvent.critChance`.
     critChance: attack.critChance,
+    // Only when set, so a log with none is unchanged.
+    ...(request.noThreat ? { noThreat: true } : {}),
   });
 
   // Taking damage can generate resource: this is how a warrior builds rage

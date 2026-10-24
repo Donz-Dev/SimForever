@@ -128,6 +128,8 @@ const ABILITY_THREAT: Readonly<Record<string, AbilityThreat>> = {
   mind_blast: { multiplier: PLACEHOLDER_MIND_BLAST_THREAT_MULTIPLIER },
   earth_shock: { multiplier: PLACEHOLDER_EARTH_SHOCK_THREAT_MULTIPLIER },
   holy_shield: { multiplier: HOLY_SHIELD_THREAT_MULTIPLIER },
+  // "These effects cause no threat" -- the tooltip's own words (round 57).
+  holy_nova: { multiplier: 0 },
 };
 
 /** Sunder Armor's flat threat for this warrior, at its attack power now. */

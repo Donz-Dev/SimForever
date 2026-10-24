@@ -1,4 +1,4 @@
-import type { Ability, Combatant } from '../../engine';
+import type { Ability, Combatant, SimulationContext } from '../../engine';
 import {
   EventPriority,
   applyHealing,
@@ -30,7 +30,12 @@ import {
   SHADOWBURN_SP_COEFFICIENT,
   SHADOW_BOLT_SP_COEFFICIENT,
   WRACK_TICK_SP_COEFFICIENT,
+  HELLFIRE_TICK_SP_COEFFICIENT,
+  RAIN_OF_FIRE_TICK_SP_COEFFICIENT,
 } from '../combat/coefficients';
+import { areaTargets } from '../combat/multiTarget';
+import { baseManaFor } from '../character/baseStatLookup';
+import { BANE_OF_HAVOC } from '../auras/warlock';
 
 /**
  * Warlock abilities, from the WoW Forever beta client (build 1.60.1.69876).
@@ -166,8 +171,10 @@ export const BANE_OF_AGONY_ABILITY: Ability = {
     }).avoided;
     if (!landed) return;
     const amplified = caster.auras.has(AMPLIFY_CURSE_AURA.id);
-    // One Bane per Warlock on a target: this one replaces a Bane of Doom.
+    // One Bane per Warlock on a target: this one replaces a Bane of Doom, and
+    // a Bane of Havoc (round 57; silent when none is up).
     target.auras.remove(simulation, BANE_OF_DOOM.id);
+    target.auras.remove(simulation, BANE_OF_HAVOC.id);
     simulation.applyAura(target, amplified ? BANE_OF_AGONY_AMPLIFIED : BANE_OF_AGONY, caster.id);
     if (amplified) caster.auras.remove(simulation, AMPLIFY_CURSE_AURA.id);
   },
@@ -211,6 +218,7 @@ export const BANE_OF_DOOM_ABILITY: Ability = {
     }).avoided;
     if (!landed) return;
     target.auras.remove(simulation, 'bane_of_agony');
+    target.auras.remove(simulation, BANE_OF_HAVOC.id);
     simulation.applyAura(target, BANE_OF_DOOM, caster.id);
   },
   unmodelled:
@@ -363,6 +371,42 @@ export const lifeTapHealth = (caster: Combatant): number =>
  */
 export const LIFE_TAP_HEAL_DELAY_MS = seconds(1);
 export const LIFE_TAP_HEAL_NAME = 'Life Tap (healed by the group)';
+
+/**
+ * Spend health now and have the group heal the same amount back a second later
+ * -- Life Tap's ruling, and Hellfire's since round 57 ("like Life Tap damage,
+ * should be recorded for user information purposes but then automatically
+ * restored"). The HEAL is the record: it lands under its own name, so the page
+ * shows what the spell cost the Warlock.
+ *
+ * NEVER BELOW ONE HEALTH, so a spend that would empty the pool pays what is
+ * there and heals back exactly that. Nothing in a damage run kills a Warlock.
+ */
+export function payHealthAndHealBack(
+  simulation: SimulationContext,
+  caster: Combatant,
+  amount: number,
+  heal: { readonly id: string; readonly name: string },
+): void {
+  const paid = Math.max(0, Math.min(amount, caster.health.current - 1));
+  if (paid <= 0) return;
+  caster.health.spend(paid);
+  simulation.events.schedule(
+    simulation.clock.now() + LIFE_TAP_HEAL_DELAY_MS,
+    createEvent(`${heal.id}:${caster.id}`, EventPriority.Periodic, (context) => {
+      if (context.hasEnded) return;
+      applyHealing(context, {
+        source: caster,
+        target: caster,
+        abilityId: heal.id,
+        abilityName: heal.name,
+        baseAmount: paid,
+        canCrit: false,
+        external: true,
+      });
+    }),
+  );
+}
 
 /*
  * IMPROVED LIFE TAP'S "+20% MANA AWARDED", the key it writes on this ability.
@@ -868,6 +912,152 @@ export const WARLOCK_SOUL_SIPHON_EFFECTS: readonly string[] = [
   'curse_of_the_elements',
 ];
 
+// ---------------------------------------------------------------------------
+// Area spells (round 57)
+// ---------------------------------------------------------------------------
+
+/**
+ * Hellfire, rank 3: "Ignites the area surrounding the caster, causing 210 Fire
+ * damage to himself and 210 Fire damage to all nearby enemies every 1 sec.
+ * Lasts 15 sec." 1,300 mana, channelled.
+ *
+ * ----------------------------------------------------------------------------
+ * FIFTEEN TICKS, EACH STRIKING EVERY TARGET with its own spell roll -- a channel
+ * tick is an ordinary non-periodic damage event.
+ *
+ * THE 210 TO HIMSELF IS RECORDED AND HEALED BACK, LIKE LIFE TAP -- the owner's
+ * ruling: "Hellfire damage, like Life Tap damage, should be recorded for user
+ * information purposes but then automatically restored." So each tick spends
+ * the health, and the group heals it back a
+ * second later under its own name -- `LIFE_TAP`'s arrangement, through the
+ * same helper, `payHealthAndHealBack`. NOT a damage event: one from the Warlock
+ * to the Warlock would count as the Warlock's own DAMAGE DONE.
+ *
+ * 2.2% of spell power a tick, the owner's figure.
+ * ----------------------------------------------------------------------------
+ */
+export const HELLFIRE_TICK_DAMAGE = 210;
+export const HELLFIRE_SELF_DAMAGE = 210;
+export const HELLFIRE_HEAL_NAME = 'Hellfire (healed by the group)';
+export const HELLFIRE_TICKS = 15;
+
+export const HELLFIRE: Ability = {
+  id: 'hellfire',
+  name: 'Hellfire',
+  cost: { resource: 'mana', amount: 1300 },
+  castTimeMs: seconds(15),
+  channelTicks: HELLFIRE_TICKS,
+  interruptibleChannel: true,
+  attackTable: 'spell',
+  targets: { maxTargets: Infinity },
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    payHealthAndHealBack(simulation, caster, HELLFIRE_SELF_DAMAGE, {
+      id: 'hellfire_heal',
+      name: HELLFIRE_HEAL_NAME,
+    });
+    for (const struck of areaTargets(simulation, caster, target, ability)) {
+      dealDamage(simulation, {
+        source: caster,
+        target: struck,
+        abilityId: ability.id,
+        abilityName: ability.name,
+        school: 'fire',
+        baseAmount: HELLFIRE_TICK_DAMAGE,
+        powerCoefficient: HELLFIRE_TICK_SP_COEFFICIENT,
+        attackTable: ability.attackTable,
+      });
+    }
+  },
+};
+
+/**
+ * Rain of Fire, rank 4: "Calls down a fiery rain to burn enemies in the area of
+ * effect for 884 Fire damage over 8 sec." 1,185 mana, channelled.
+ *
+ * FOUR TICKS OF 221, ONE EVERY TWO SECONDS -- the owner's cadence, which the
+ * tooltip leaves unstated -- at 3% of spell power a tick, also the owner's.
+ */
+export const RAIN_OF_FIRE_TOTAL = 884;
+export const RAIN_OF_FIRE_TICKS = 4;
+
+export const RAIN_OF_FIRE: Ability = {
+  id: 'rain_of_fire',
+  name: 'Rain of Fire',
+  cost: { resource: 'mana', amount: 1185 },
+  castTimeMs: seconds(8),
+  channelTicks: RAIN_OF_FIRE_TICKS,
+  interruptibleChannel: true,
+  attackTable: 'spell',
+  targets: { maxTargets: Infinity },
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    for (const struck of areaTargets(simulation, caster, target, ability)) {
+      dealDamage(simulation, {
+        source: caster,
+        target: struck,
+        abilityId: ability.id,
+        abilityName: ability.name,
+        school: 'fire',
+        baseAmount: RAIN_OF_FIRE_TOTAL / RAIN_OF_FIRE_TICKS,
+        powerCoefficient: RAIN_OF_FIRE_TICK_SP_COEFFICIENT,
+        attackTable: ability.attackTable,
+      });
+    }
+  },
+};
+
+/** Bane of Havoc's "5% of base mana", off the Undead row both presets are. */
+export const BANE_OF_HAVOC_COST = Math.round(baseManaFor('undead', 'warlock') * 0.05);
+
+/**
+ * Bane of Havoc, granted by the Destruction talent: "Afflicts the target for 5
+ * min, causing 15% of all damage done by the Warlock to other targets to also be
+ * dealt to the cursed target."
+ *
+ * ----------------------------------------------------------------------------
+ * WHERE IT GOES IS THE LIST'S CHOICE, through the APL entry's MULTI-DOT
+ * setting (round 57, the owner's ruling): an entry that may reach the first X
+ * targets casts at the first one whose condition holds, so "Bane of Havoc, on
+ * 2 targets, if the target has no Bane of Agony" puts it on an add. Without
+ * that setting it goes on the boss.
+ *
+ * "LIMITED TO 1 TARGET": casting it takes it off every other enemy first. And
+ * "only one Bane per Warlock on any one target" means it REPLACES a Bane of
+ * Agony or Doom on the target it lands on.
+ *
+ * THE COPY IS `BANE_OF_HAVOC_REACTION` in `reactions/warlockTalents.ts`. At one
+ * target there are no "other targets" and it copies nothing.
+ * ----------------------------------------------------------------------------
+ */
+export const BANE_OF_HAVOC_ABILITY: Ability = {
+  id: 'bane_of_havoc',
+  name: 'Bane of Havoc',
+  cost: { resource: 'mana', amount: BANE_OF_HAVOC_COST },
+  attackTable: 'spell',
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    // A debuff with no damage of its own: the application rolls, as every
+    // Bane's does.
+    const landed = !rollApplication(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: 'shadow',
+      attackTable: 'spell',
+    }).avoided;
+    if (!landed) return;
+    // Limited to one target: off every other enemy first.
+    for (const enemy of simulation.enemiesOf(caster)) {
+      if (enemy.id !== target.id) enemy.auras.remove(simulation, BANE_OF_HAVOC.id);
+    }
+    target.auras.remove(simulation, 'bane_of_agony');
+    target.auras.remove(simulation, BANE_OF_DOOM.id);
+    simulation.applyAura(target, BANE_OF_HAVOC, caster.id);
+  },
+};
+
 export const WARLOCK_ABILITIES: readonly Ability[] = [
   SHADOW_BOLT,
   CORRUPTION_ABILITY,
@@ -885,4 +1075,8 @@ export const WARLOCK_ABILITIES: readonly Ability[] = [
   SOUL_FIRE,
   // Granted by the Affliction capstone; `grantsByAbility` gates it.
   WRACK,
+  HELLFIRE,
+  RAIN_OF_FIRE,
+  // Granted by the Destruction talent; `grantsByAbility` gates it.
+  BANE_OF_HAVOC_ABILITY,
 ];

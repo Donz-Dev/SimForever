@@ -55,6 +55,21 @@ export const PLACEHOLDER_BOSS_SWING_DAMAGE = 5000;
 export const PLACEHOLDER_BOSS_DAMAGE_VARIANCE = 0.15;
 
 /**
+ * An EXTRA target's swing on a tank run, before armor and the attacks-received
+ * table (round 57).
+ *
+ * THE OWNER'S RULING, not a placeholder: "each extra target swings for base 500
+ * damage every 2 seconds, does not ramp." "Base" is read the way the boss's own
+ * figure is read -- the centre of the same `PLACEHOLDER_BOSS_DAMAGE_VARIANCE`
+ * spread, before armor -- so an add is a boss swing at a tenth of the size that
+ * never grows. Not editable on the panel, because nobody asked to vary it.
+ */
+export const EXTRA_TARGET_SWING_DAMAGE = 500;
+
+/** An extra target's seconds between swings. The owner's ruling, beside the damage. */
+export const EXTRA_TARGET_SWING_SECONDS = 2;
+
+/**
  * How much harder the target hits with each swing it takes.
  *
  * ----------------------------------------------------------------------------

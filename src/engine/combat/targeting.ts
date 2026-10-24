@@ -5,31 +5,16 @@ import type { SimulationContext } from '../simulation';
  * How many enemies an ability strikes, and which ones.
  *
  * ----------------------------------------------------------------------------
- * A SKELETON. THE ENCOUNTER HAS ONE TARGET, AND THIS RESOLVES TO ONE TARGET.
+ * IT WAS A SKELETON FOR A LONG TIME AND IS LIVE SINCE ROUND 57. The encounter
+ * builds `numberOfTargets` dummies -- the boss first, then adds -- and every
+ * area ability in the game layer asks this function, through
+ * `game/combat/multiTarget.ts`'s `areaTargets`. Nothing here had to change: the
+ * shape below was written so that the day a second enemy existed, only the
+ * callers would be new, and that is how it went.
  *
- * Four Warrior abilities hit more than one enemy in Forever -- Cleave (2),
- * Whirlwind (4), Thunder Clap (all nearby) and Sweeping Strikes (the next 5
- * melee attacks each strike an additional opponent). None of them can do that
- * here, because `trainingDummyEncounter` builds exactly one dummy and nothing
- * in the engine has ever created a second.
- *
- * The decision is deliberate: model the SHAPE now so that each ability can
- * state what it hits, and resolve it to one target until an encounter exists
- * that has more. The alternative -- leaving multi-target entirely unsaid --
- * was how Whirlwind and Cleave came to look like single-target abilities with
- * no note anywhere explaining that they are not.
- *
- * WHAT THIS MEANS FOR RESULTS, and it is not nothing:
- *
- *   - Cleave, Whirlwind and Thunder Clap are UNDERSTATED by exactly the
- *     targets they do not hit. Against a single dummy that understatement is
- *     correct, because a single dummy IS one target.
- *   - Sweeping Strikes does nothing at all. Its entire effect is the extra
- *     opponent, so against one target it is 30 rage for no damage. That is the
- *     honest answer for this encounter and a wrong answer for a real fight.
- *
- * Anything reading these numbers for a multi-target fight is reading the wrong
- * simulator, and should say so before it says anything else.
+ * AT ONE TARGET IT RETURNS `[primary]`, which is what keeps a one-target fight
+ * byte-identical to the encounter before adds existed. The primary comes FIRST
+ * so the events it produces are emitted in their old order.
  * ----------------------------------------------------------------------------
  */
 export interface TargetSelection {
@@ -56,10 +41,8 @@ export const SINGLE_TARGET: TargetSelection = { maxTargets: 1 };
 /**
  * The enemies an ability actually strikes, primary first.
  *
- * TODAY THIS ALWAYS RETURNS AT MOST ONE COMBATANT, because an encounter has one
- * enemy in it. It takes the whole context anyway so that the day an encounter
- * gains a second enemy, this function is the only thing that has to change --
- * every caller already asks the right question.
+ * Living enemies other than the primary, in combatant order -- which is the
+ * encounter's own order, boss then adds.
  */
 export function selectTargets(
   context: SimulationContext,

@@ -428,7 +428,7 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   frost_channeling: [
     {
       kind: 'grantCastModifier',
-      abilityIds: ['frostbolt', 'frostfire_bolt', 'ice_lance', 'cone_of_cold'],
+      abilityIds: ['frostbolt', 'frostfire_bolt', 'ice_lance', 'cone_of_cold', 'blizzard'],
       property: 'costFraction',
     },
     { kind: 'threat', direction: 'decrease', valueIndex: 1, schools: ['frost'] },

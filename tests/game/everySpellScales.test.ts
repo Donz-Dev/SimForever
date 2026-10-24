@@ -91,6 +91,9 @@ const EXEMPT: Readonly<Record<string, string>> = {
   explosive_trap:
     'The same ruling, in the owner’s words when they put it in: "there isn’t ' +
     'an AP or SP scaler". Both its initial hit and its burn are flat.',
+  // Volley, round 57: 3% of RANGED attack power a tick, the owner's figure --
+  // the same reason Arcane Shot is exempt.
+  volley: 'A Hunter channel ticking ARCANE that scales with ranged attack power.',
 };
 
 /*

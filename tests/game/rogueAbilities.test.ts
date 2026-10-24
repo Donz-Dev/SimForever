@@ -230,9 +230,10 @@ describe('the finishers it can now afford', () => {
 
   it('says on the results page what it cannot do', () => {
     /*
-     * BLADE FLURRY ONLY, AND ADRENALINE RUSH IS NO LONGER ON THAT LIST. Blade
-     * Flurry's haste half works and its second target does not exist here, so
-     * the caveat is real and stays.
+     * NEITHER IS ON THAT LIST NOW. Blade Flurry carried a caveat for its second
+     * target, which no encounter had; round 57's Number of Targets supplies one
+     * and `BLADE_FLURRY_EXTRA_OPPONENT` strikes it, so the caveat went WITH the
+     * limitation -- which is this test's own rule, below.
      *
      * THIS TEST PINNED A STALE LIMITATION AND IS WHY ONE SURVIVED SO LONG. Its
      * own comment asserted "the engine has no multiplier on it", which was
@@ -246,7 +247,7 @@ describe('the finishers it can now afford', () => {
     const named = batchOf('rogue_combat', 20, 3).castButNotSimulated.map(
       (entry) => entry.abilityName,
     );
-    expect(named).toContain('Blade Flurry');
+    expect(named).not.toContain('Blade Flurry');
     expect(named).not.toContain('Adrenaline Rush');
   });
 });

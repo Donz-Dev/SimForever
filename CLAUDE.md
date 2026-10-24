@@ -63,6 +63,7 @@ ABILITIES=mark npx vite-node tools/probe_precombat_abilities.ts   # map an owner
 npx vite-node tools/probe_precombat_pools.ts     # what each profile ARRIVES with, and its lockout remainder
 npx vite-node tools/probe_party_crit.ts          # does any profile hold a party crit aura TWICE
 npx vite-node tools/verify_opener.ts             # does the opener's RAMP actually arrive, read off the combatant
+PROFILES=prot_warr TARGETS=1,4 npx vite-node tools/probe_multi_target.ts   # a profile at N targets with one AoE entry, and what the report shows
 HTML=sweep.html npx vite-node tools/tier_sweep.ts   # every profile at B55/E65/E75/E85: DPS, and tank TPS and damage taken, as a chart page
 IN=sweep.json OUT=sweep.html npx vite-node tools/tier_sweep_chart.ts   # re-render a saved sweep without re-running it
 ```
@@ -550,7 +551,7 @@ together told someone their build was missing features that were never coming.
 | `healing` | healing THROUGHPUT. **Mana RETURN is NOT out of scope** — it changes a damage profile's sustain, so it is a live gap and gets no `scope`. **Round 52 made a healer simulable**, so each entry here is now a per-talent question rather than a settled one -- see HANDOVER | 36 |
 | `stealth` | being stealthed, detecting it, and the openers requiring it — Ambush, Garrote, Cheap Shot. **NOT an in-combat proc that REMOVES a stealth requirement**, which is what Cutthroat is. **NOR an action BREAKING it**, which is now an engine rule | 5 |
 | `castPushback` | avoiding, resisting or reducing the interruption or DELAY of a cast or channel from damage taken. **NOT an interrupt the TARGET suffers** — Earth Shock's school lockout is about the enemy casting and is inert for a different reason | 8 |
-| `totemEntities` | a totem that BUFFS or HEALS on its own. **NOT a totem that deals DAMAGE**, which Searing Totem proved is expressible as a debuff that ticks | 5 |
+| `totemEntities` | a totem that BUFFS or HEALS on its own. **NOT a totem that deals DAMAGE**, which Searing Totem proved is expressible as a debuff that ticks -- and Magma Totem is, since round 57, which took Trial by Fire out of this row | 4 |
 | `dispel` | removing a poison, disease, curse or magic effect, **and RESISTING a dispel**, which is the same concept from the other side. **NOT removing crowd control**, which `crowdControl` covers in its own words | 2 |
 | `immunity` | an immunity that **also stops the character attacking** — Blessing of Protection, Divine Protection, Ice Block. **NOT one you can attack through**: Forever's Divine Shield reduces your damage 50% instead of disarming you, so it stays a live gap | 3 |
 

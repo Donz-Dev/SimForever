@@ -1,5 +1,7 @@
 import type { Ability, AuraDefinition, Combatant, SimulationContext } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
+import { areaTargets } from '../combat/multiTarget';
+import { VOLLEY_TICK_RAP_COEFFICIENT } from '../combat/coefficients';
 import { baseManaFor } from '../character/baseStatLookup';
 import {
   ASPECT_AURA_IDS,
@@ -262,23 +264,24 @@ export const MULTI_SHOT: Ability = {
   cooldownMs: seconds(6),
   cooldownGroup: 'aimed_shot',
   attackTable: 'ranged-special',
+  // "hitting 3 targets", each a full shot with its own roll (round 57).
+  targets: { maxTargets: MULTI_SHOT_TARGETS },
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
-    dealDamage(simulation, {
-      source: caster,
-      target,
-      abilityId: ability.id,
-      abilityName: ability.name,
-      school: PHYSICAL,
-      baseAmount: 0,
-      weaponScaling: { slot: RANGED, normalized: true },
-      attackTable: ability.attackTable,
-      weaponSlot: RANGED,
-    });
+    for (const struck of areaTargets(simulation, caster, target, ability)) {
+      dealDamage(simulation, {
+        source: caster,
+        target: struck,
+        abilityId: ability.id,
+        abilityName: ability.name,
+        school: PHYSICAL,
+        baseAmount: 0,
+        weaponScaling: { slot: RANGED, normalized: true },
+        attackTable: ability.attackTable,
+        weaponSlot: RANGED,
+      });
+    }
   },
-  unmodelled:
-    `It hits ${MULTI_SHOT_TARGETS} targets and there is one, so only that ` +
-    'one is dealt damage -- which says nothing about its value in a pull.',
 };
 
 /**
@@ -706,27 +709,31 @@ export const EXPLOSIVE_TRAP_ABILITY: Ability = {
   name: 'Explosive Trap',
   cost: { resource: 'mana', amount: 520 },
   cooldownMs: seconds(30),
+  // "to all within 10 yards", which is every target in the fight (round 57).
+  targets: { maxTargets: Infinity },
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
-    dealDamage(simulation, {
-      source: caster,
-      target,
-      abilityId: ability.id,
-      abilityName: ability.name,
-      school: FIRE,
-      baseAmount: EXPLOSIVE_TRAP_INITIAL_DAMAGE,
-      // The owner's ruling, the same as the burn's: neither pool scales it.
-      powerCoefficient: 0,
-      critFrom: 'ranged-special',
-    });
-    simulation.applyAura(target, EXPLOSIVE_TRAP, caster.id);
+    for (const struck of areaTargets(simulation, caster, target, ability)) {
+      dealDamage(simulation, {
+        source: caster,
+        target: struck,
+        abilityId: ability.id,
+        abilityName: ability.name,
+        school: FIRE,
+        baseAmount: EXPLOSIVE_TRAP_INITIAL_DAMAGE,
+        // The owner's ruling, the same as the burn's: neither pool scales it.
+        powerCoefficient: 0,
+        critFrom: 'ranged-special',
+      });
+      simulation.applyAura(struck, EXPLOSIVE_TRAP, caster.id);
+    }
   },
   unmodelled:
     'It is placed on the ground and explodes when an enemy approaches, and the ' +
     'engine has no positions -- so on the ruleset owner’s ruling it triggers ' +
     'instantly when cast, the same ruling Immolation Trap runs on. Its ' +
-    'one-minute life as an untriggered trap goes with that, and so does "to all ' +
-    'within 10 yards": there is one target. It scales with no SPELL power, ' +
+    'one-minute life as an untriggered trap goes with that; "to all within 10 ' +
+    'yards" is every target in the fight. It scales with no SPELL power, ' +
     'which is still that ruling -- but its BURN now takes 5% of ATTACK power ' +
     'over its duration, which the patch note added. Its INITIAL HIT keeps the ' +
     'owner’s "no scaler", because the note names one figure for two ' +
@@ -806,7 +813,53 @@ export const WING_CLIP: Ability = {
     'reasons it is pressed here, and both are modelled.',
 };
 
+/**
+ * Volley, rank 3: "Continuously fires a volley of ammo at the target area,
+ * causing 112 Arcane damage to enemy targets within 8 yards every 1 sec for 6
+ * sec." 490 mana, channelled (round 57).
+ *
+ * SIX TICKS, EACH STRIKING EVERY TARGET, on the ranged table Arcane Shot uses --
+ * a Hunter's Arcane damage is a shot, not a spell. NOT A WEAPON USE, so it
+ * procs nothing off the bow. A cast here resets the ranged swing like any
+ * other: no ruling names Volley among the shots auto-attack continues through.
+ *
+ * 3% OF RANGED ATTACK POWER A TICK, the owner's figure -- added into the flat
+ * damage the way Arcane Shot's is, because Forever moved a Hunter's Arcane
+ * damage off spell power and onto the ranged pool.
+ */
+export const VOLLEY_TICK_DAMAGE = 112;
+export const VOLLEY_TICKS = 6;
+
+export const VOLLEY: Ability = {
+  id: 'volley',
+  name: 'Volley',
+  cost: { resource: 'mana', amount: 490 },
+  castTimeMs: seconds(6),
+  channelTicks: VOLLEY_TICKS,
+  interruptibleChannel: true,
+  attackTable: 'ranged-special',
+  targets: { maxTargets: Infinity },
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    for (const struck of areaTargets(simulation, caster, target, ability)) {
+      dealDamage(simulation, {
+        source: caster,
+        target: struck,
+        abilityId: ability.id,
+        abilityName: ability.name,
+        school: 'arcane',
+        baseAmount:
+          VOLLEY_TICK_DAMAGE +
+          caster.stats.effective.rangedAttackPower * VOLLEY_TICK_RAP_COEFFICIENT,
+        powerCoefficient: 0,
+        attackTable: ability.attackTable,
+      });
+    }
+  },
+};
+
 export const HUNTER_ABILITIES: readonly Ability[] = [
+  VOLLEY,
   HUNTERS_MARK_ABILITY,
   ASPECT_OF_THE_HAWK_ABILITY,
   ASPECT_OF_THE_BEAST_ABILITY,

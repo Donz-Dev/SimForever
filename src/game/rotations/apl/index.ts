@@ -28,6 +28,7 @@ export {
   resourceFraction,
   selfExpired,
   selfHas,
+  targetCount,
   selfHealth,
   selfMissing,
   selfStacks,

@@ -1,4 +1,5 @@
 import type { Reaction } from '../../engine';
+import { extraOpponentReaction } from '../combat/multiTarget';
 import { OVERPOWER_READY, REVENGE_READY } from '../auras/warrior';
 
 /**
@@ -52,7 +53,19 @@ export const REVENGE_ON_AVOID: Reaction = {
   },
 };
 
+/**
+ * Sweeping Strikes' strike on a second target, one charge each (round 57). The
+ * shape is shared with Blade Flurry -- see `extraOpponentReaction`. Stateless,
+ * so one module constant is safe across a batch.
+ */
+export const SWEEPING_STRIKES_EXTRA_OPPONENT: Reaction = extraOpponentReaction({
+  auraId: 'sweeping_strikes',
+  name: 'Sweeping Strikes',
+  consumesCharge: true,
+});
+
 export const WARRIOR_REACTIONS: readonly Reaction[] = [
   OVERPOWER_ON_DODGE,
   REVENGE_ON_AVOID,
+  SWEEPING_STRIKES_EXTRA_OPPONENT,
 ];

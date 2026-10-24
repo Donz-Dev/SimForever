@@ -409,9 +409,9 @@ export const ADRENALINE_RUSH: AuraDefinition = {
  * "Increases your melee attack speed by 20% and your melee attacks strike an
  * additional nearby opponent. Lasts 15 sec."
  *
- * THE HASTE IS REAL AND THE CLEAVE IS NOT, and only because every encounter
- * here has one enemy. The second target is not a missing number; it is a
- * missing opponent.
+ * THE HASTE APPLIES ALWAYS AND THE CLEAVE ONLY WITH ADDS (round 57): the strike
+ * on a second opponent is `BLADE_FLURRY_EXTRA_OPPONENT` in
+ * `reactions/reactionsForClass.ts`, and at one target there is nobody to strike.
  */
 export const BLADE_FLURRY_ATTACK_SPEED = 0.2;
 export const BLADE_FLURRY_DURATION_MS = seconds(15);
@@ -425,10 +425,6 @@ export const BLADE_FLURRY: AuraDefinition = {
   ],
 };
 
-export const BLADE_FLURRY_UNMODELLED =
-  'The 20% attack speed applies. Striking an additional nearby opponent does ' +
-  'not, because every encounter here has exactly one enemy -- a missing ' +
-  'opponent rather than a missing number.';
 
 /**
  * "Increases the critical strike chance of your next Sinister Strike,

@@ -1,5 +1,10 @@
 import type { Ability, Combatant } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
+import {
+  ARCANE_EXPLOSION_SP_COEFFICIENT,
+  BLIZZARD_TICK_SP_COEFFICIENT,
+} from '../combat/coefficients';
+import { areaTargets } from '../combat/multiTarget';
 import { baseManaFor } from '../character/baseStatLookup';
 import {
   arcaneBlastAura,
@@ -194,10 +199,9 @@ export const FIRE_BLAST: Ability = {
 /**
  * Blast Wave, granted by the Fire talent.
  *
- * AN AREA EFFECT ON A SINGLE TARGET. It lands in full on the one enemy there
- * is, which is correct for that enemy and says nothing about what the spell is
- * worth in a pull of five. The talent tooltip's 154 to 184 is rank 1; a level
- * 60 trains rank 5.
+ * "All enemies caught within the blast", which is every target in the fight
+ * (round 57), each with its own spell roll. The talent tooltip's 154 to 184 is
+ * rank 1; a level 60 trains rank 5. The Daze is a snare and out of scope.
  */
 export const BLAST_WAVE_DAMAGE = midpoint(453, 533);
 export const BLAST_WAVE_COEFFICIENT = BLAST_WAVE_SP_COEFFICIENT;
@@ -208,22 +212,22 @@ export const BLAST_WAVE: Ability = {
   cost: { resource: 'mana', amount: 545 },
   cooldownMs: seconds(45),
   attackTable: 'spell',
+  targets: { maxTargets: Infinity },
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
-    dealDamage(simulation, {
-      source: caster,
-      target,
-      abilityId: ability.id,
-      abilityName: ability.name,
-      school: 'fire',
-      baseAmount: BLAST_WAVE_DAMAGE,
-      powerCoefficient: BLAST_WAVE_COEFFICIENT,
-      attackTable: ability.attackTable,
-    });
+    for (const struck of areaTargets(simulation, caster, target, ability)) {
+      dealDamage(simulation, {
+        source: caster,
+        target: struck,
+        abilityId: ability.id,
+        abilityName: ability.name,
+        school: 'fire',
+        baseAmount: BLAST_WAVE_DAMAGE,
+        powerCoefficient: BLAST_WAVE_COEFFICIENT,
+        attackTable: ability.attackTable,
+      });
+    }
   },
-  unmodelled:
-    'It is an AREA effect and lands on the one target this project has, so ' +
-    'its value in a pull of several is not shown.',
 };
 
 /**
@@ -1073,6 +1077,86 @@ export const CONE_OF_COLD: Ability = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// Area spells (round 57)
+// ---------------------------------------------------------------------------
+
+/**
+ * Arcane Explosion, rank 6: "causing 238 to 258 Arcane damage to all targets
+ * within 10 yards." 390 mana, instant.
+ *
+ * EVERY TARGET IN THE FIGHT, each with its own spell roll -- nothing here has a
+ * position, so "within 10 yards" is everyone. In no stock list: it is for an
+ * entry gated on the APL's Number of Targets.
+ *
+ * 14.3% of spell power, the owner's figure (the sheet has no row for it).
+ */
+export const ARCANE_EXPLOSION_DAMAGE = midpoint(238, 258);
+
+export const ARCANE_EXPLOSION: Ability = {
+  id: 'arcane_explosion',
+  name: 'Arcane Explosion',
+  cost: { resource: 'mana', amount: 390 },
+  attackTable: 'spell',
+  targets: { maxTargets: Infinity },
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    for (const struck of areaTargets(simulation, caster, target, ability)) {
+      dealDamage(simulation, {
+        source: caster,
+        target: struck,
+        abilityId: ability.id,
+        abilityName: ability.name,
+        school: 'arcane',
+        baseAmount: ARCANE_EXPLOSION_DAMAGE,
+        powerCoefficient: ARCANE_EXPLOSION_SP_COEFFICIENT,
+        attackTable: ability.attackTable,
+      });
+    }
+  },
+};
+
+/**
+ * Blizzard, rank 6: "Ice shards pelt the target area doing 1,168 Frost damage
+ * over 8 sec." 1,400 mana, channelled.
+ *
+ * EIGHT TICKS OF 146, ONE A SECOND -- the owner's cadence, which the tooltip
+ * leaves unstated -- at 3% of spell power a tick, also the owner's. Each tick
+ * strikes every target with its own spell roll: a channel tick is an ordinary
+ * non-periodic damage event.
+ *
+ * ITS CHILL IS IMPROVED BLIZZARD'S and is a snare, out of scope by ruling.
+ */
+export const BLIZZARD_TOTAL = 1168;
+export const BLIZZARD_TICKS = 8;
+export const BLIZZARD_CHANNEL_MS = seconds(8);
+
+export const BLIZZARD: Ability = {
+  id: 'blizzard',
+  name: 'Blizzard',
+  cost: { resource: 'mana', amount: 1400 },
+  castTimeMs: BLIZZARD_CHANNEL_MS,
+  channelTicks: BLIZZARD_TICKS,
+  interruptibleChannel: true,
+  attackTable: 'spell',
+  targets: { maxTargets: Infinity },
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    for (const struck of areaTargets(simulation, caster, target, ability)) {
+      dealDamage(simulation, {
+        source: caster,
+        target: struck,
+        abilityId: ability.id,
+        abilityName: ability.name,
+        school: 'frost',
+        baseAmount: BLIZZARD_TOTAL / BLIZZARD_TICKS,
+        powerCoefficient: BLIZZARD_TICK_SP_COEFFICIENT,
+        attackTable: ability.attackTable,
+      });
+    }
+  },
+};
+
 export const MAGE_ABILITIES: readonly Ability[] = [
   ARCANE_WRATH,
   FIREBALL,
@@ -1093,4 +1177,6 @@ export const MAGE_ABILITIES: readonly Ability[] = [
   ICE_BARRIER_ABILITY,
   EVOCATION,
   MANA_RUBY,
+  ARCANE_EXPLOSION,
+  BLIZZARD,
 ];

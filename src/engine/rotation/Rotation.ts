@@ -86,6 +86,20 @@ export interface PriorityEntry {
   /** Overrides the actor's default target for this entry. */
   readonly selectTarget?: (context: SimulationContext, actor: Combatant) => Combatant | undefined;
   /**
+   * MULTI-DOT (round 57): the owner's "Multi-DoT: X target". The entry may be
+   * cast at any of the first X enemies in combatant order -- the boss first,
+   * then the adds -- and is cast at the FIRST whose condition holds and which
+   * the ability can be cast on. So "Corruption, on 3 targets, if the target's
+   * Corruption has run out" walks a DoT across three enemies one global
+   * cooldown at a time.
+   *
+   * X ABOVE THE NUMBER OF TARGETS IS THE NUMBER OF TARGETS, by the owner's
+   * ruling, which falls out of taking the first X. Ignored on an entry with a
+   * `selectTarget`, which names a friendly target. Absent, or one, is the old
+   * single target exactly: the same calls in the same order.
+   */
+  readonly multiDot?: number;
+  /**
    * Whether this entry may CANCEL an interruptible channel in progress.
    *
    * ----------------------------------------------------------------------------
@@ -151,6 +165,27 @@ export interface PriorityEntry {
  * a good fit for WoW because real rotations genuinely are priority lists rather
  * than fixed sequences.
  */
+/**
+ * The targets an entry may be cast at, in the order they are tried (round 57).
+ *
+ * ONE unless the entry multi-dots: its `selectTarget` if it names one, else the
+ * default enemy -- the call the rotation always made. A multi-dot entry offers
+ * the first `multiDot` living enemies, the boss first; asking for more than
+ * there are is asking for all of them.
+ */
+export function entryTargets(
+  context: SimulationContext,
+  actor: Combatant,
+  entry: PriorityEntry,
+): readonly (Combatant | undefined)[] {
+  if (entry.selectTarget) return [entry.selectTarget(context, actor)];
+  if (entry.multiDot !== undefined && entry.multiDot > 1) {
+    const enemies = context.enemiesOf(actor).slice(0, entry.multiDot);
+    if (enemies.length > 0) return enemies;
+  }
+  return [context.defaultTargetFor(actor)];
+}
+
 export class PriorityRotation implements Rotation {
   /**
    * Computed once, because it cannot change: the entries are fixed when the
@@ -191,13 +226,29 @@ export class PriorityRotation implements Rotation {
       const ability = actor.abilities.get(entry.abilityId);
       if (!ability) continue;
 
-      const target = entry.selectTarget
-        ? entry.selectTarget(context, actor)
-        : context.defaultTargetFor(actor);
+      /*
+       * THE CANDIDATE TARGETS, which are one unless the entry multi-dots. The
+       * first whose condition holds and that can be cast on wins; the first
+       * whose condition holds but that cannot is the one a stance swap is
+       * considered for, which at one candidate is exactly the old order.
+       */
+      let target: Combatant | undefined;
+      let refused: { target: Combatant | undefined } | undefined;
+      let found = false;
+      for (const candidate of entryTargets(context, actor, entry)) {
+        if (entry.condition && !entry.condition(context, actor, candidate)) continue;
+        if (!context.canCast(actor, ability, candidate)) {
+          refused ??= { target: candidate };
+          continue;
+        }
+        target = candidate;
+        found = true;
+        break;
+      }
 
-      if (entry.condition && !entry.condition(context, actor, target)) continue;
-
-      if (!context.canCast(actor, ability, target)) {
+      if (!found) {
+        if (!refused) continue;
+        target = refused.target;
         /*
          * STANCE DANCING. The one rejection worth acting on rather than
          * skipping past: everything else means "not now", while the wrong
@@ -387,20 +438,18 @@ export class PriorityRotation implements Rotation {
       const ability = actor.abilities.get(entry.abilityId);
       if (!ability) continue;
 
-      const target = entry.selectTarget
-        ? entry.selectTarget(context, actor)
-        : context.defaultTargetFor(actor);
+      for (const target of entryTargets(context, actor, entry)) {
+        if (entry.condition && !entry.condition(context, actor, target)) continue;
 
-      if (entry.condition && !entry.condition(context, actor, target)) continue;
+        // Everything except the cast lock has to be satisfied already.
+        // Castable but for the channel in progress: cost, cooldown, global
+        // cooldown, stance and target all checked, the cast lock alone ignored.
+        if (context.castRejection(actor, ability, target, { ignoreCastLock: true }) !== undefined) {
+          continue;
+        }
 
-      // Everything except the cast lock has to be satisfied already.
-      // Castable but for the channel in progress: cost, cooldown, global
-      // cooldown, stance and target all checked, the cast lock alone ignored.
-      if (context.castRejection(actor, ability, target, { ignoreCastLock: true }) !== undefined) {
-        continue;
+        return { ability, target };
       }
-
-      return { ability, target };
     }
     return null;
   }

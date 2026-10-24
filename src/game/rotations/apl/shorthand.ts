@@ -152,6 +152,13 @@ export const fightRemainingFraction = (
   fraction: number,
 ): AplCondition => ({ kind: 'fightRemaining', compare, fraction });
 
+/** How many targets the fight holds. `('atLeast', 3)` is "an AoE pull". */
+export const targetCount = (compare: AplCompare, count: number): AplCondition => ({
+  kind: 'targetCount',
+  compare,
+  count,
+});
+
 /** Seconds since the pull. `('exactly', 0)` is the opener. */
 export const fightElapsed = (compare: AplCompare, seconds: number): AplCondition => ({
   kind: 'fightElapsed',

@@ -1340,16 +1340,17 @@ describe('what is left, which is the claim this deep dive makes', () => {
        * census is re-read after a patch rather than only after a code change.
        * ========================================================================
        */
+      /*
+       * ROUND 57 TOOK FOUR OFF IT AT ONCE: Magma Totem is declared, so Call of
+       * Flame, Elemental Fury and Trial by Fire reach it, and Elemental
+       * Mastery's Chain Lightning clause is Berserk's `suppressesCooldownOf`.
+       * What is left is the encounter (Improved Stormstrike), healing (Tidal
+       * Focus) and Elemental Weapons.
+       */
       expect(partly, preset).toEqual(
         preset === 'shaman_enhancement'
-          ? ['call_of_flame', 'elemental_weapons', 'improved_stormstrike', 'trial_by_fire']
-          : [
-              'call_of_flame',
-              'elemental_fury',
-              'elemental_mastery',
-              'tidal_focus',
-              'trial_by_fire',
-            ],
+          ? ['elemental_weapons', 'improved_stormstrike']
+          : ['tidal_focus'],
       );
     }
   });
@@ -1366,38 +1367,38 @@ describe('what is left, which is the claim this deep dive makes', () => {
     }
     expect(scopes.get('castPushback')?.sort()).toEqual(['eye_of_the_storm', 'healing_focus']);
     /*
-     * TRIAL BY FIRE IS THE FIFTH `totemEntities` ENTRY, and the only one whose
-     * talent does something else as well: the other four are totems and nothing
-     * but totems, where this one's Fire Nova damage and cooldown clauses both
-     * apply and only its Magma Totem duration does not.
+     * TRIAL BY FIRE WAS THE FIFTH `totemEntities` ENTRY AND IS GONE (round 57):
+     * its Magma Totem duration clause was filed under the entity ruling, which
+     * covers totems that BUFF or HEAL -- and Magma Totem is a damage totem,
+     * declared now. The four left are totems and nothing but totems.
      */
     expect(scopes.get('totemEntities')?.sort()).toEqual([
       'earth_s_grasp',
       'guardian_totems',
       'mana_tide_totem',
       'restorative_totems',
-      'trial_by_fire',
     ]);
   });
 
-  it('keeps Magma Totem OUT of the totem ruling, because it is a damage totem', () => {
+  it('reaches Magma Totem from all three talents that name it, now that it is declared', () => {
     /*
-     * The reading that reaches Searing Totem reaches Magma Totem too -- it deals
-     * damage, so a debuff that ticks expresses it. What it lacks is a spell power
-     * coefficient, the same thing Searing Totem and Fire Nova lacked until the
-     * owner supplied one. Filing it under the entity ruling would park a
-     * one-message question behind an engine change, which is exactly what
-     * Improved Fire Nova's reason did for the whole project.
+     * ROUND 57 DECLARED MAGMA TOTEM, a damage totem in Searing Totem's shape, and
+     * the owner supplied its coefficient -- which is exactly what the reasons on
+     * these talents said was missing. So none of the three is partly modelled.
      */
-    for (const id of ['call_of_flame', 'elemental_fury']) {
-      const magma = SHAMAN_TALENT_EFFECTS[id]!.filter(
-        (effect) => effect.kind === 'unmodelled',
-      ) as Array<{ kind: 'unmodelled'; reason: string; scope?: string }>;
-      expect(magma, id).toHaveLength(1);
-      expect(magma[0].reason, id).toMatch(/Magma Totem/);
-      expect(magma[0].reason, id).toMatch(/coefficient/);
-      expect(magma[0].scope, id).toBeUndefined();
+    for (const id of ['call_of_flame', 'elemental_fury', 'trial_by_fire']) {
+      expect(
+        SHAMAN_TALENT_EFFECTS[id]!.some((effect) => effect.kind === 'unmodelled'),
+        id,
+      ).toBe(false);
     }
+    expect(SHAMAN_TALENT_EFFECTS.call_of_flame).toContainEqual({
+      kind: 'abilityDamage',
+      abilityId: 'magma_totem',
+    });
+    expect(SHAMAN_TALENT_EFFECTS.trial_by_fire).toContainEqual(
+      expect.objectContaining({ kind: 'abilityBonus', abilityId: 'magma_totem', valueIndex: 2 }),
+    );
   });
 });
 
