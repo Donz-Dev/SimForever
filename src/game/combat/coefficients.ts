@@ -532,7 +532,14 @@ export const ICE_LANCE_SP_COEFFICIENT = 1.5 / 3.5 / 3;
 
 /** Cone of Cold: 12.9% spell power, the owner's figure given with the spell. */
 export const CONE_OF_COLD_SP_COEFFICIENT = 0.129;
+/** Blast Wave: 12.9% spell power, the owner's figure, restated with the spell (round 58). */
 export const BLAST_WAVE_SP_COEFFICIENT = 0.129;
+/**
+ * Flamestrike, the owner's figures given with the spell (round 58): 15.7% of
+ * spell power on the hit and 12.2% on EACH TICK of the burn.
+ */
+export const FLAMESTRIKE_SP_COEFFICIENT = 0.157;
+export const FLAMESTRIKE_TICK_SP_COEFFICIENT = 0.122;
 export const FROSTBOLT_SP_COEFFICIENT = 0.814;
 
 /**

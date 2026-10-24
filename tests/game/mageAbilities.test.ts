@@ -572,7 +572,7 @@ describe('the talents that needed a school', () => {
     }
   });
 
-  it('counts four Fire effects and excludes the one that mixes schools', () => {
+  it('counts five Fire effects and excludes the one that mixes schools', () => {
     /*
      * ========================================================================
      * THE TOOLTIP'S LAST SENTENCE, AND THE LIST IS THE WHOLE OF ITS
@@ -591,6 +591,8 @@ describe('the talents that needed a school', () => {
       'pyroblast',
       'ignite',
       'fire_vulnerability',
+      // Flamestrike's burn, round 58.
+      'flamestrike',
     ]);
     expect(MAGE_FIRE_POWER_EFFECTS).not.toContain('frostfire_bolt');
     /*
@@ -1507,7 +1509,7 @@ describe('Combustion, whose end condition is four crits rather than a clock', ()
      */
     const fire = MAGE_ABILITIES.filter((ability) =>
       // Every Mage ability that deals Fire damage, found from its own source.
-      ['fireball', 'scorch', 'pyroblast', 'fire_blast', 'blast_wave', 'frostfire_bolt'].includes(
+      ['fireball', 'scorch', 'pyroblast', 'fire_blast', 'blast_wave', 'frostfire_bolt', 'flamestrike'].includes(
         ability.id,
       ),
     ).map((ability) => ability.id);

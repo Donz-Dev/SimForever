@@ -3,6 +3,7 @@ import { ALL_ABILITIES, dealDamage, flat, seconds } from '../../engine';
 import {
   FIREBALL_SP_COEFFICIENT,
   FIREBALL_TICK_SP_COEFFICIENT,
+  FLAMESTRIKE_TICK_SP_COEFFICIENT,
   FROSTFIRE_BOLT_SP_COEFFICIENT,
   FROSTFIRE_BOLT_TICK_SP_COEFFICIENT,
   PYROBLAST_SP_COEFFICIENT,
@@ -169,6 +170,10 @@ export const FIREBALL_COEFFICIENTS = {
  * armor".
  *
  * ------------------------------------------------------------------------------
+ * FIVE ENTRIES SINCE ROUND 58 (Flamestrike's burn), WHERE IT WAS FOUR -- AND
+ * FOUR IS EXACTLY THE CAP AT 3/3, so a fifth only pays while one of the others
+ * is down. What follows was written for four:
+ *
  * FOUR ENTRIES, AND FOUR IS EXACTLY THE CAP AT 3/3. 3% each with a 12% ceiling
  * means the fourth effect is the last one that pays, so a fully-loaded target
  * sits precisely on the maximum and a fifth would be worth nothing. That is the
@@ -204,6 +209,8 @@ export const MAGE_FIRE_POWER_EFFECTS: readonly string[] = [
   'pyroblast',
   'ignite',
   'fire_vulnerability',
+  // Flamestrike's burn, round 58: a Fire effect of the Mage's on the target.
+  'flamestrike',
 ];
 
 export const FIREBALL_DOT: AuraDefinition = {
@@ -221,6 +228,39 @@ export const FIREBALL_DOT: AuraDefinition = {
         FIREBALL_DOT_TOTAL / (FIREBALL_DOT_DURATION_MS / FIREBALL_TICK_INTERVAL_MS),
         FIRE,
         FIREBALL_COEFFICIENTS.perTick,
+      ),
+  },
+};
+
+/**
+ * Flamestrike's burn: "an additional 332 Fire damage over 8 sec", which the
+ * Forever tooltip's buff line states as "83 Fire damage every 2" -- four ticks.
+ * 12.2% of spell power a tick, the owner's (round 58).
+ *
+ * THE SAME ID AS THE SPELL, the arrangement Fireball's and Pyroblast's burns
+ * have, so a talent naming Flamestrike reaches its ticks the way Improved
+ * Flamestrike's crit does. "Only one Flamestrike can be active per Mage at a
+ * time" is a recast refreshing every target's burn, which `reset` is.
+ */
+export const FLAMESTRIKE_DOT_TOTAL = 332;
+export const FLAMESTRIKE_DOT_DURATION_MS = seconds(8);
+export const FLAMESTRIKE_TICK_INTERVAL_MS = seconds(2);
+
+export const FLAMESTRIKE_DOT: AuraDefinition = {
+  id: 'flamestrike',
+  name: 'Flamestrike',
+  durationMs: FLAMESTRIKE_DOT_DURATION_MS,
+  isDebuff: true,
+  refreshBehaviour: 'reset',
+  periodic: {
+    intervalMs: FLAMESTRIKE_TICK_INTERVAL_MS,
+    onTick: (context, aura) =>
+      tick(
+        context,
+        aura,
+        FLAMESTRIKE_DOT_TOTAL / (FLAMESTRIKE_DOT_DURATION_MS / FLAMESTRIKE_TICK_INTERVAL_MS),
+        FIRE,
+        FLAMESTRIKE_TICK_SP_COEFFICIENT,
       ),
   },
 };
@@ -569,6 +609,8 @@ export const FIRE_SPELL_IDS: readonly string[] = [
   'fire_blast',
   'blast_wave',
   'frostfire_bolt',
+  // Round 58.
+  'flamestrike',
 ];
 
 /**

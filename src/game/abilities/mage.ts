@@ -3,6 +3,7 @@ import { dealDamage, seconds } from '../../engine';
 import {
   ARCANE_EXPLOSION_SP_COEFFICIENT,
   BLIZZARD_TICK_SP_COEFFICIENT,
+  FLAMESTRIKE_SP_COEFFICIENT,
 } from '../combat/coefficients';
 import { areaTargets } from '../combat/multiTarget';
 import { baseManaFor } from '../character/baseStatLookup';
@@ -13,6 +14,7 @@ import {
   COMBUSTION,
   FIREBALL_CAST_MS,
   FIREBALL_COEFFICIENTS,
+  FLAMESTRIKE_DOT,
   FIREBALL_DOT,
   EVOCATION_AURA,
   EVOCATION_CHANNEL_MS,
@@ -1157,6 +1159,48 @@ export const BLIZZARD: Ability = {
   },
 };
 
+/**
+ * Flamestrike, rank 6 (round 58): "Calls down a pillar of fire, burning all
+ * enemies within the area for 381 to 465 Fire damage and an additional 332
+ * Fire damage over 8 sec." 990 mana, a three-second cast.
+ *
+ * THE CAPTURE'S FIGURES, which is this project's source of record. Wowhead's
+ * Forever tooltip renders 384 to 468, which is the same rank scaled to level
+ * 60 from the level 56 it is learned at; nothing else in the project scales a
+ * spell by level, so the capture's base is what is declared. A question for
+ * the owner rather than a correction.
+ *
+ * EVERY TARGET IN THE FIGHT, each with its own spell roll, and a burn on every
+ * one the hit lands on. 15.7% of spell power on the hit, the owner's.
+ */
+export const FLAMESTRIKE_DAMAGE = midpoint(381, 465);
+export const FLAMESTRIKE_CAST_MS = seconds(3);
+
+export const FLAMESTRIKE: Ability = {
+  id: 'flamestrike',
+  name: 'Flamestrike',
+  cost: { resource: 'mana', amount: 990 },
+  castTimeMs: FLAMESTRIKE_CAST_MS,
+  attackTable: 'spell',
+  targets: { maxTargets: Infinity },
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    for (const struck of areaTargets(simulation, caster, target, ability)) {
+      const result = dealDamage(simulation, {
+        source: caster,
+        target: struck,
+        abilityId: ability.id,
+        abilityName: ability.name,
+        school: 'fire',
+        baseAmount: FLAMESTRIKE_DAMAGE,
+        powerCoefficient: FLAMESTRIKE_SP_COEFFICIENT,
+        attackTable: ability.attackTable,
+      });
+      if (!result.avoided) simulation.applyAura(struck, FLAMESTRIKE_DOT, caster.id);
+    }
+  },
+};
+
 export const MAGE_ABILITIES: readonly Ability[] = [
   ARCANE_WRATH,
   FIREBALL,
@@ -1179,4 +1223,5 @@ export const MAGE_ABILITIES: readonly Ability[] = [
   MANA_RUBY,
   ARCANE_EXPLOSION,
   BLIZZARD,
+  FLAMESTRIKE,
 ];

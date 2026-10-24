@@ -465,18 +465,50 @@ export const wintersChill: TalentReactionBuilder = (chancePercent, values) => {
 /** The ids that slow, which is what "a Chill effect" means here. */
 export const CHILL_ABILITY_IDS: readonly string[] = ['frostbolt', 'frostfire_bolt', 'cone_of_cold'];
 
-export const fingersOfFrost = (charges: number): Reaction => ({
-  id: 'fingers_of_frost',
+/**
+ * IMPROVED BLIZZARD'S MARK (round 58). It does nothing itself: its presence on
+ * the built character is what makes Blizzard a chill for `fingersOfFrost`,
+ * read the way the APL's `hasReaction` reads a talent -- by the reaction, not
+ * the talent id, so a reaction built for one character answers for that one.
+ */
+export const IMPROVED_BLIZZARD_MARK = 'improved_blizzard';
+
+export const improvedBlizzardMark = (): Reaction => ({
+  id: IMPROVED_BLIZZARD_MARK,
   on: 'dealt',
-  outcomes: ['hit', 'crit'],
-  canTrigger: (context, _actor, attack) =>
-    attack.abilityId !== undefined &&
-    CHILL_ABILITY_IDS.includes(attack.abilityId) &&
-    context.rng.rollChance(FINGERS_OF_FROST_PROC_CHANCE / 100),
-  onTrigger: (context, actor) => {
-    context.applyAura(actor, fingersOfFrostAura(charges), actor.id);
-  },
+  outcomes: [],
+  canTrigger: () => false,
+  onTrigger: () => {},
 });
+
+export const fingersOfFrost = (charges: number): Reaction => {
+  /*
+   * ONE ROLL PER BLIZZARD TICK, NOT PER TARGET IT STRIKES (round 58): "each
+   * tick of Blizzard then has a chance". A tick is one `runCast`, which stamps
+   * one `castSequence`, so the first struck target of a tick takes the roll
+   * and the rest of that tick does not.
+   */
+  let blizzardTickRolled: number | undefined;
+  return {
+    id: 'fingers_of_frost',
+    on: 'dealt',
+    outcomes: ['hit', 'crit'],
+    canTrigger: (context, actor, attack) => {
+      if (attack.abilityId === undefined) return false;
+      if (attack.abilityId === 'blizzard') {
+        if (!actor.reactions.some((reaction) => reaction.id === IMPROVED_BLIZZARD_MARK)) return false;
+        if (blizzardTickRolled === actor.castSequence) return false;
+        blizzardTickRolled = actor.castSequence;
+      } else if (!CHILL_ABILITY_IDS.includes(attack.abilityId)) {
+        return false;
+      }
+      return context.rng.rollChance(FINGERS_OF_FROST_PROC_CHANCE / 100);
+    },
+    onTrigger: (context, actor) => {
+      context.applyAura(actor, fingersOfFrostAura(charges), actor.id);
+    },
+  };
+};
 
 /*
  * ============================================================================
@@ -575,4 +607,5 @@ export const MAGE_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilde
   improved_scorch: improvedScorchReaction,
   fingers_of_frost: fingersOfFrost,
   winter_s_chill: wintersChill,
+  improved_blizzard: improvedBlizzardMark,
 };
