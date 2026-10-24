@@ -170,6 +170,7 @@ export class ThreatTracker implements TelemetrySink {
 
   private fromDamage(event: Extract<TelemetryEvent, { type: 'damage' }>): void {
     if (AVOIDED_OUTCOMES.has(event.outcome)) return;
+    if (event.noThreat) return;
     const source = this.combatant(event.sourceId);
     if (!source) return;
     const own = event.abilityId ? this.rules.ability?.(event.abilityId, source) : undefined;

@@ -28,6 +28,10 @@ import {
 } from '../../src/game/abilities/shaman';
 import { ELEMENTAL_MASTERY_AURA } from '../../src/game/auras/shaman';
 import {
+  LIGHTNING_OVERLOAD_FRACTION,
+  lightningOverload,
+} from '../../src/game/reactions/shamanTalents';
+import {
   ARCANE_EXPLOSION_SP_COEFFICIENT,
   BLIZZARD_TICK_SP_COEFFICIENT,
   HELLFIRE_TICK_SP_COEFFICIENT,
@@ -278,6 +282,45 @@ describe('Chain Lightning jumps', () => {
         5,
       );
     }
+  });
+
+  it('overloads into a whole duplicate chain at half damage, with no threat (57c)', () => {
+    const events: TelemetryEvent[] = [];
+    const caster = makeAttacker({
+      autoAttack: 'none',
+      abilities: [CHAIN_LIGHTNING],
+      castReactions: [lightningOverload(100)],
+      stats: { spellPower: 0 },
+      resources: [{ type: 'mana', maximum: 100_000 }],
+    });
+    const enemies = Array.from({ length: 5 }, (_, i) =>
+      makeTarget({ id: `dummy_${i + 1}`, maxHealth: 10_000_000 }),
+    );
+    const simulation = buildSimulation([caster, ...enemies], { threatRules: FOREVER_THREAT_RULES }, {
+      emit: (event) => events.push(event),
+    });
+    const manaBefore = caster.resources.get('mana')!.current;
+    castAbility(simulation, caster, caster.abilities.get('chain_lightning')!, enemies[0]);
+    simulation.advanceTo(seconds(5));
+
+    const overload = events.filter(
+      (e) => e.type === 'damage' && e.abilityName === 'Chain Lightning (Overload)',
+    );
+    expect(overload.map((e) => e.type === 'damage' && e.targetId)).toEqual(['dummy_1', 'dummy_2', 'dummy_3']);
+    for (const hit of overload) {
+      if (hit.type !== 'damage' || hit.amount === 0 || hit.critical) continue;
+      const jump = Number(hit.targetId.slice(-1)) - 1;
+      expect(hit.amount).toBeCloseTo(
+        CHAIN_LIGHTNING_DAMAGE * LIGHTNING_OVERLOAD_FRACTION * CHAIN_LIGHTNING_JUMP_FACTOR ** jump,
+        5,
+      );
+    }
+    // No threat from the copy, and the cast itself still threatens.
+    const threat = events.filter((e) => e.type === 'threat');
+    expect(threat.some((e) => e.type === 'threat' && e.abilityName === 'Chain Lightning (Overload)')).toBe(false);
+    expect(threat.some((e) => e.type === 'threat' && e.abilityName === 'Chain Lightning')).toBe(true);
+    // No mana: one cast's cost and nothing more.
+    expect(manaBefore - caster.resources.get('mana')!.current).toBe(CHAIN_LIGHTNING.cost!.amount);
   });
 
   it('is one target at one target', () => {

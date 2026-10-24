@@ -206,6 +206,17 @@ Elemental Shaman reads 749 -> 308 there.
 | 8 | parry haste works for adds and tanks alike | what shipped |
 | 9 | the healer stays single-target; Chain Lightning and its Elemental Mastery interaction to be added; Hurricane's slow and Holy Nova's party heal are out of scope | **Chain Lightning jumps** to two more targets at x0.7 each jump, flat damage and coefficient alike, each with its own roll; Lightning Overload, a cast reaction, still copies only the primary hit. **Elemental Mastery removes Chain Lightning's cooldown** through `suppressesCooldownOf`, Berserk's field -- its talent's reason said nothing could suspend a cooldown, which stopped being true when Berserk landed. The slow and the heal are noted as out of scope on the two abilities |
 
+**57c: LIGHTNING OVERLOAD DUPLICATES THE WHOLE CHAIN LIGHTNING**, the owner's
+ruling: "make lightning overload cast a duplicate chain lightning at half damage
+and no mana or threat." One roll per cast as before; on a proc the copy strikes
+the same primary and two jumps at x0.7, every hit at half, each with its own
+spell roll. No mana needs nothing, since a reaction's damage is not a cast. No
+threat is a new `DamageRequest.noThreat`, carried onto the damage event because
+threat is derived from the stream, and `ThreatTracker` skips it. **Lightning
+Bolt's overload is unchanged, threat included** -- the ruling names Chain
+Lightning, and the Elemental profile casts Lightning Bolt. All 32 profiles stay
+byte-identical, since no stock list casts Chain Lightning; 4,135 tests pass.
+
 **AND MAGMA TOTEM BEING DECLARED CLOSED THREE MORE SHAMAN CLAUSES**, which no
 answer asked for and a test found: Call of Flame's damage reaches it, Elemental
 Fury's crit damage reaches its Fire pulses with nothing to declare, and Trial by

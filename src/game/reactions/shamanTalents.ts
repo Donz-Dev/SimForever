@@ -1,5 +1,5 @@
 import type { CastReaction } from '../../engine';
-import { dealDamage, isWeaponUse, seconds } from '../../engine';
+import { dealDamage, isWeaponUse, seconds, selectTargets } from '../../engine';
 import type { TalentReactionBuilder } from './warriorTalents';
 import { flurry } from './warriorTalents';
 import {
@@ -12,6 +12,8 @@ import {
 import {
   CHAIN_LIGHTNING_COEFFICIENT,
   CHAIN_LIGHTNING_DAMAGE,
+  CHAIN_LIGHTNING_JUMP_FACTOR,
+  CHAIN_LIGHTNING_TARGETS,
   LIGHTNING_BOLT_COEFFICIENT,
   LIGHTNING_BOLT_DAMAGE,
 } from '../abilities/shaman';
@@ -229,6 +231,41 @@ export const lightningOverload = (chancePercent: number): CastReaction => ({
   onTrigger: (context, actor, cast) => {
     const copy = OVERLOADABLE.get(cast.ability.id);
     if (!copy || !cast.target) return;
+    /*
+     * ==========================================================================
+     * A CHAIN LIGHTNING OVERLOAD IS A WHOLE DUPLICATE CHAIN LIGHTNING (round
+     * 57c), the owner's ruling: "make lightning overload cast a duplicate chain
+     * lightning at half damage and no mana or threat."
+     *
+     * So it strikes the same three targets the cast could -- the primary, then
+     * two jumps at x0.7 each -- every hit at HALF, with its own spell roll. NO
+     * MANA needs nothing: a reaction's damage is not a cast and pays no cost.
+     * NO THREAT is `noThreat` on each hit. At one target it is the single copy
+     * it always was, plus that flag.
+     *
+     * LIGHTNING BOLT'S OVERLOAD IS UNCHANGED, threat included: the ruling names
+     * Chain Lightning.
+     * ==========================================================================
+     */
+    if (cast.ability.id === 'chain_lightning') {
+      selectTargets(context, actor, cast.target, { maxTargets: CHAIN_LIGHTNING_TARGETS }).forEach(
+        (struck, jump) => {
+          const falloff = CHAIN_LIGHTNING_JUMP_FACTOR ** jump;
+          dealDamage(context, {
+            source: actor,
+            target: struck,
+            abilityId: cast.ability.id,
+            abilityName: copy.name + ' (Overload)',
+            school: 'nature',
+            baseAmount: copy.damage * LIGHTNING_OVERLOAD_FRACTION * falloff,
+            powerCoefficient: copy.coefficient * LIGHTNING_OVERLOAD_FRACTION * falloff,
+            attackTable: 'spell',
+            noThreat: true,
+          });
+        },
+      );
+      return;
+    }
     dealDamage(context, {
       source: actor,
       target: cast.target,

@@ -168,9 +168,11 @@ export const LIGHTNING_BOLT: Ability = {
  * "the damage". Each strike rolls its own spell table. At one target there is
  * nothing to jump to and the cast is exactly what it was.
  *
- * LIGHTNING OVERLOAD STILL COPIES ONE HIT, the primary's: it is a CAST reaction
- * and reads the cast's target, so a jump never overloads. Elemental Mastery
- * removes this spell's cooldown while it is up -- see `ELEMENTAL_MASTERY_AURA`.
+ * LIGHTNING OVERLOAD DUPLICATES THE WHOLE CHAIN (round 57c, the owner's ruling):
+ * one roll per cast, and on a proc a second Chain Lightning at half damage with
+ * the same jumps, no mana and no threat -- see `lightningOverload`. Elemental
+ * Mastery removes this spell's cooldown while it is up -- see
+ * `ELEMENTAL_MASTERY_AURA`.
  */
 export const CHAIN_LIGHTNING_JUMP_FACTOR = 0.7;
 /*
