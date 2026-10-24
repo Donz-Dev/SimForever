@@ -1,7 +1,7 @@
 import type { Ability, AuraDefinition, Combatant, SimulationContext } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
 import { areaTargets } from '../combat/multiTarget';
-import { PLACEHOLDER_VOLLEY_TICK_COEFFICIENT } from '../combat/coefficients';
+import { VOLLEY_TICK_RAP_COEFFICIENT } from '../combat/coefficients';
 import { baseManaFor } from '../character/baseStatLookup';
 import {
   ASPECT_AURA_IDS,
@@ -823,9 +823,9 @@ export const WING_CLIP: Ability = {
  * procs nothing off the bow. A cast here resets the ranged swing like any
  * other: no ruling names Volley among the shots auto-attack continues through.
  *
- * ITS COEFFICIENT IS A PLACEHOLDER OF ZERO, and which POOL it would read is part
- * of the question: Forever moved Arcane Shot off spell power and onto ranged
- * attack power, so Volley's scaler, if it has one, may be the same.
+ * 3% OF RANGED ATTACK POWER A TICK, the owner's figure -- added into the flat
+ * damage the way Arcane Shot's is, because Forever moved a Hunter's Arcane
+ * damage off spell power and onto the ranged pool.
  */
 export const VOLLEY_TICK_DAMAGE = 112;
 export const VOLLEY_TICKS = 6;
@@ -848,15 +848,14 @@ export const VOLLEY: Ability = {
         abilityId: ability.id,
         abilityName: ability.name,
         school: 'arcane',
-        baseAmount: VOLLEY_TICK_DAMAGE,
-        powerCoefficient: PLACEHOLDER_VOLLEY_TICK_COEFFICIENT,
+        baseAmount:
+          VOLLEY_TICK_DAMAGE +
+          caster.stats.effective.rangedAttackPower * VOLLEY_TICK_RAP_COEFFICIENT,
+        powerCoefficient: 0,
         attackTable: ability.attackTable,
       });
     }
   },
-  unmodelled:
-    'Its coefficient is not stated anywhere this project reads, so it is zero ' +
-    'until the owner supplies one -- and says which power it reads.',
 };
 
 export const HUNTER_ABILITIES: readonly Ability[] = [

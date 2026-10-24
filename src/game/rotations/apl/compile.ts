@@ -72,6 +72,7 @@ export function compileEntry(entry: AplEntry): PriorityEntry {
     abilityId: entry.abilityId,
     ...(entry.condition ? { condition: compileCondition(entry.condition) } : {}),
     ...(entry.target ? { selectTarget: compileTarget(entry.target) } : {}),
+    ...(entry.multiDot !== undefined && entry.multiDot > 1 ? { multiDot: entry.multiDot } : {}),
     ...(entry.interruptsChannel ? { interruptsChannel: true } : {}),
     ...(entry.cancel
       ? {

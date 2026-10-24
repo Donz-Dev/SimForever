@@ -1,6 +1,6 @@
 import type { AuraDefinition } from '../../engine';
 import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
-import { PLACEHOLDER_MAGMA_TOTEM_PULSE_SP_COEFFICIENT } from '../combat/coefficients';
+import { MAGMA_TOTEM_PULSE_SP_COEFFICIENT } from '../combat/coefficients';
 import {
   FLAME_SHOCK_SP_COEFFICIENT,
   FLAME_SHOCK_TICK_SP_COEFFICIENT,
@@ -349,12 +349,17 @@ export const SEARING_TOTEM_DOT: AuraDefinition = {
  * SEARING TOTEM'S SHAPE: a damage totem is expressible as a debuff that ticks,
  * and this one is applied to EVERY target, because "creatures within 8 yards"
  * is everyone when nothing has a position. Ten pulses over twenty seconds, each
- * a periodic tick that rolls a crit at spell crit the way Searing Totem's does.
- * Its coefficient is a placeholder zero -- the sheet has no row for it.
+ * a periodic tick that rolls a crit at spell crit the way Searing Totem's does,
+ * at 2.55% of spell power a pulse -- the owner's figure.
  */
 export const MAGMA_TOTEM_PULSE_DAMAGE = 73;
 export const MAGMA_TOTEM_DURATION_MS = seconds(20);
 export const MAGMA_TOTEM_PULSE_INTERVAL_MS = seconds(2);
+
+/** Magma Totem's pulse, `extraSeconds` longer for Trial by Fire. */
+export function magmaTotemAura(extraSeconds = 0): AuraDefinition {
+  return { ...MAGMA_TOTEM_DOT, durationMs: MAGMA_TOTEM_DURATION_MS + seconds(extraSeconds) };
+}
 
 export const MAGMA_TOTEM_DOT: AuraDefinition = {
   id: 'magma_totem',
@@ -375,7 +380,7 @@ export const MAGMA_TOTEM_DOT: AuraDefinition = {
         abilityName: aura.name,
         school: FIRE,
         baseAmount: MAGMA_TOTEM_PULSE_DAMAGE,
-        powerCoefficient: PLACEHOLDER_MAGMA_TOTEM_PULSE_SP_COEFFICIENT,
+        powerCoefficient: MAGMA_TOTEM_PULSE_SP_COEFFICIENT,
         periodic: true,
         critFrom: 'spell',
         appliesArmor: false,
@@ -709,17 +714,11 @@ export function maelstromWeaponAura(reductionPercentPerStack: number): AuraDefin
  * half a second off a 2.0s Lightning Bolt is 25%, and off a 1.5s one it is 33%.
  *
  * ------------------------------------------------------------------------------
- * THE THIRD CLAUSE IS NOT HERE AND THE TALENT SAYS SO. "Removing the cooldown
- * from Chain Lightning" needs an aura that SUSPENDS a cooldown while it is up,
- * and nothing expresses that: `abilityCooldown` is resolved when the character
- * is built, and a `CastModifier` carries cast time and cost. Declared as an
- * `unmodelled` reason on the talent rather than silently absent.
- *
- * WHICH COSTS LESS THAN IT READS, on a single-target encounter: Chain Lightning
- * is a multi-target spell and sits in no priority list here, so a cooldown it
- * never reaches is a cooldown worth removing to nobody. That is a LIST cause
- * rather than an engine one, and it is named on the talent so the day a
- * multi-target encounter exists somebody re-reads it.
+ * THE THIRD CLAUSE IS `suppressesCooldownOf` (round 57), which is Berserk's
+ * field for Primal Bite. It used to be an `unmodelled` reason on the talent,
+ * claiming nothing could suspend a cooldown while an aura was up -- and Berserk
+ * had built exactly that. The reason expired when Berserk landed and was not
+ * re-read until multiple targets made Chain Lightning worth casting.
  * ==============================================================================
  */
 export const ELEMENTAL_MASTERY_DURATION_MS = seconds(15);
@@ -733,6 +732,7 @@ export const ELEMENTAL_MASTERY_AURA: AuraDefinition = {
     abilityIds: ['lightning_bolt', 'lava_burst'],
     castTimeReductionMs: ELEMENTAL_MASTERY_CAST_REDUCTION_MS,
   },
+  suppressesCooldownOf: ['chain_lightning'],
 };
 
 export const CATALOG_AURAS: readonly AuraDefinition[] = [

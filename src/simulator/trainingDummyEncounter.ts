@@ -227,8 +227,8 @@ export function trainingDummyEncounter(
          * THE RAID'S DEBUFFS ARE ON THE BOSS, NOT ON EVERY ADD (round 57). Five
          * Sunders, the two Judgements and the curses are what a raid puts on
          * the thing it is fighting; an add being AoE'd down carries none of
-         * them. A READING, flagged for the owner -- see HANDOVER -- and it
-         * changes nothing at one target, where the boss is the only enemy.
+         * them. The owner's ruling: "Raid debuffs are meant to be on the
+         * primary target only." It changes nothing at one target.
          */
         if (!actor.isPlayerControlled && actor.id !== PRIMARY_TARGET_ID) continue;
 

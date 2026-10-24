@@ -1,5 +1,5 @@
 import type { TalentEffects } from './TalentEffect';
-import { FLAME_SHOCK_EXTRA_DURATION_BONUS } from '../abilities/shaman';
+import { FLAME_SHOCK_EXTRA_DURATION_BONUS, MAGMA_TOTEM_EXTRA_DURATION_BONUS } from '../abilities/shaman';
 
 /**
  * What each Shaman talent does, as data.
@@ -65,37 +65,15 @@ const TOTEMS_NOT_MODELLED =
   'Searing Totem does not reach it: there is nothing to attach a group mana ' +
   'return or a damage reduction to.';
 
-/**
- * Said once; two talents say it, and it is NOT the totem ruling.
- *
+/*
  * ----------------------------------------------------------------------------
- * MAGMA TOTEM IS A DAMAGE TOTEM, so the reading that reaches Searing Totem
- * reaches it too -- it is not blocked on a totem being an entity and must not
- * borrow that ruling. The capture states everything but one number: "Summons a
- * Magma Totem with 5 health at the feet of the caster for 20 sec that causes 73
- * Fire damage to creatures within 8 yards every 2 seconds", 650 mana, instant.
- *
- * WHAT IS MISSING IS THE SPELL POWER COEFFICIENT, exactly as it was for Searing
- * Totem until the owner supplied 8% a tick, and for Fire Nova until the owner
- * supplied 10%. `WoWSimWorksheet.xlsx` has no row for either. So this is a
- * question one message would answer, and recording it as the entity ruling
- * would park it behind an engine change it does not need -- which is the
- * mistake Improved Fire Nova's reason made for the whole project.
- *
- * IT WOULD NOT BE CAST EITHER WAY, which is worth knowing before anyone spends
- * the question: 73 every 2 seconds for 20 seconds is 36.5 damage a second for
- * 650 mana, against Searing Totem's 31.3 a second for 55 seconds and 170 mana,
- * and only one fire totem stands at a time. Single-target it loses on both
- * sustain and mana. Recorded in HANDOVER.md as an open question rather than as
- * work.
+ * MAGMA TOTEM IS DECLARED SINCE ROUND 57, with the owner's 2.55% a pulse, and
+ * three talents' Magma Totem clauses reach it: Call of Flame's damage, Elemental
+ * Fury's crit damage (a school effect, so its Fire pulses needed nothing) and
+ * Trial by Fire's twenty extra seconds. Each carried an `unmodelled` reason that
+ * named the missing coefficient -- which was the right reason, and expired.
  * ----------------------------------------------------------------------------
  */
-const MAGMA_TOTEM_UNDECLARED =
-  'Magma Totem is not a declared ability. It is a DAMAGE totem, so the ' +
-  'damage-over-time reading that reaches Searing Totem reaches it too and the ' +
-  'entity ruling does not apply -- what it lacks is a spell power ' +
-  'coefficient, which the owner supplied for Searing Totem and Fire Nova and ' +
-  'which the coefficient sheet has no row for.';
 
 /** Said once; fourteen talents say it. */
 const NO_PROFILE_HEALS = 'Healing, and neither Shaman profile heals.';
@@ -188,10 +166,9 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
       key: FLAME_SHOCK_EXTRA_DURATION_BONUS,
       valueIndex: 1,
     },
-    {
-      kind: 'unmodelled',
-      reason: `Its Magma Totem clause does nothing; every other clause is modelled, including the Flame Shock duration. ${MAGMA_TOTEM_UNDECLARED}`,
-    },
+    // And Magma Totem, the other Fire Totem, since round 57 -- keyed on the
+    // aura's id for the same reason Searing Totem is.
+    { kind: 'abilityDamage', abilityId: 'magma_totem' },
   ],
 
   elemental_devastation: [{ kind: 'reaction', reactionId: 'elemental_devastation' }],
@@ -233,10 +210,8 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * the case an expired `unmodelled` reason hides, because nothing fails and
      * the caveat keeps printing.
      */
-    {
-      kind: 'unmodelled',
-      reason: `Its Magma Totem clause does nothing. ${MAGMA_TOTEM_UNDECLARED}`,
-    },
+    // Magma Totem's pulses are Fire, so the school effect reaches them as it
+    // does Searing Totem's -- nothing to declare (round 57).
   ],
 
   /*
@@ -279,13 +254,12 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   trial_by_fire: [
     { kind: 'abilityDamage', abilityId: 'fire_nova' },
     { kind: 'abilityCooldown', abilityId: 'fire_nova', unit: 'seconds', valueIndex: 1 },
+    // "increases the duration of your Magma Totem by {2} sec" (round 57).
     {
-      kind: 'unmodelled',
-      scope: 'totemEntities',
-      reason:
-        'Its Magma Totem duration clause reaches nothing -- Magma Totem is a ' +
-        'totem that damages what stands around it and is not declared. Its ' +
-        'Fire Nova damage and cooldown clauses both APPLY.',
+      kind: 'abilityBonus',
+      abilityId: 'magma_totem',
+      key: MAGMA_TOTEM_EXTRA_DURATION_BONUS,
+      valueIndex: 2,
     },
   ],
 
@@ -330,29 +304,19 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * Bolt and Lava Burst by 0.5 sec, and removing the cooldown from Chain
    * Lightning. Lasts 15 sec." Three minute cooldown.
    *
-   * TWO CLAUSES OF THREE APPLY. The cast time is a `castModifier` on the aura
+   * ALL THREE CLAUSES APPLY. The cast time is a `castModifier` on the aura
    * naming both abilities, with NO `consumedByCast`: it is a duration effect,
    * so every cast inside the fifteen seconds is shortened rather than only the
    * next one -- the distinction Arcane Power already rests on.
    *
-   * THE COOLDOWN REMOVAL DOES NOT, and is declared rather than dropped:
-   * nothing suspends an ability's cooldown for the life of an aura.
-   * `abilityCooldown` is fixed when the character is built, and a
-   * `CastModifier` carries cast time and cost and not cooldown.
+   * THE COOLDOWN REMOVAL IS `suppressesCooldownOf` (round 57). This said
+   * nothing could suspend a cooldown for the life of an aura, which stopped
+   * being true when Berserk built that field for Primal Bite -- an expired
+   * reason, found when multiple targets made Chain Lightning worth casting.
    * ==========================================================================
    */
-  elemental_mastery: [
-    { kind: 'grantAbility', abilityId: 'elemental_mastery' },
-    {
-      kind: 'unmodelled',
-      reason:
-        'Its "removing the cooldown from Chain Lightning" clause needs an aura ' +
-        'that SUSPENDS a cooldown while up, which nothing expresses: ' +
-        '`abilityCooldown` is resolved when the character is built and a ' +
-        '`CastModifier` carries cast time and cost. The cast-time clause on ' +
-        'Lightning Bolt and Lava Burst applies.',
-    },
-  ],
+  // All three clauses are on the aura, Chain Lightning's cooldown since round 57.
+  elemental_mastery: [{ kind: 'grantAbility', abilityId: 'elemental_mastery' }],
 
   elemental_reach: [{ kind: 'unmodelled', scope: 'positioning', reason: 'Range, and nothing here has a position.' }],
 

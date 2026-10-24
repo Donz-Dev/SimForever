@@ -1,4 +1,4 @@
-import type { Ability, Combatant } from '../../engine';
+import type { Ability, Combatant, SimulationContext } from '../../engine';
 import {
   EventPriority,
   applyHealing,
@@ -30,8 +30,8 @@ import {
   SHADOWBURN_SP_COEFFICIENT,
   SHADOW_BOLT_SP_COEFFICIENT,
   WRACK_TICK_SP_COEFFICIENT,
-  PLACEHOLDER_HELLFIRE_TICK_SP_COEFFICIENT,
-  PLACEHOLDER_RAIN_OF_FIRE_TICK_SP_COEFFICIENT,
+  HELLFIRE_TICK_SP_COEFFICIENT,
+  RAIN_OF_FIRE_TICK_SP_COEFFICIENT,
 } from '../combat/coefficients';
 import { areaTargets } from '../combat/multiTarget';
 import { baseManaFor } from '../character/baseStatLookup';
@@ -371,6 +371,42 @@ export const lifeTapHealth = (caster: Combatant): number =>
  */
 export const LIFE_TAP_HEAL_DELAY_MS = seconds(1);
 export const LIFE_TAP_HEAL_NAME = 'Life Tap (healed by the group)';
+
+/**
+ * Spend health now and have the group heal the same amount back a second later
+ * -- Life Tap's ruling, and Hellfire's since round 57 ("like Life Tap damage,
+ * should be recorded for user information purposes but then automatically
+ * restored"). The HEAL is the record: it lands under its own name, so the page
+ * shows what the spell cost the Warlock.
+ *
+ * NEVER BELOW ONE HEALTH, so a spend that would empty the pool pays what is
+ * there and heals back exactly that. Nothing in a damage run kills a Warlock.
+ */
+export function payHealthAndHealBack(
+  simulation: SimulationContext,
+  caster: Combatant,
+  amount: number,
+  heal: { readonly id: string; readonly name: string },
+): void {
+  const paid = Math.max(0, Math.min(amount, caster.health.current - 1));
+  if (paid <= 0) return;
+  caster.health.spend(paid);
+  simulation.events.schedule(
+    simulation.clock.now() + LIFE_TAP_HEAL_DELAY_MS,
+    createEvent(`${heal.id}:${caster.id}`, EventPriority.Periodic, (context) => {
+      if (context.hasEnded) return;
+      applyHealing(context, {
+        source: caster,
+        target: caster,
+        abilityId: heal.id,
+        abilityName: heal.name,
+        baseAmount: paid,
+        canCrit: false,
+        external: true,
+      });
+    }),
+  );
+}
 
 /*
  * IMPROVED LIFE TAP'S "+20% MANA AWARDED", the key it writes on this ability.
@@ -889,19 +925,20 @@ export const WARLOCK_SOUL_SIPHON_EFFECTS: readonly string[] = [
  * FIFTEEN TICKS, EACH STRIKING EVERY TARGET with its own spell roll -- a channel
  * tick is an ordinary non-periodic damage event.
  *
- * THE 210 TO HIMSELF IS HEALTH LOST, NOT A DAMAGE EVENT, and it stops at one
- * health. A damage event from the Warlock to the Warlock would be counted as
- * the Warlock's own DAMAGE DONE -- every friendly source sums into DPS -- and
- * nothing in a damage run heals a Warlock, so a lethal version would end the
- * fight on the second channel. Health spent the way Life Tap spends it is the
- * shape that is honest about both: Life Tap does see the missing health. Whether
- * the self-damage should be able to KILL is a question for the owner.
+ * THE 210 TO HIMSELF IS RECORDED AND HEALED BACK, LIKE LIFE TAP -- the owner's
+ * ruling: "Hellfire damage, like Life Tap damage, should be recorded for user
+ * information purposes but then automatically restored." So each tick spends
+ * the health, and the group heals it back a
+ * second later under its own name -- `LIFE_TAP`'s arrangement, through the
+ * same helper, `payHealthAndHealBack`. NOT a damage event: one from the Warlock
+ * to the Warlock would count as the Warlock's own DAMAGE DONE.
  *
- * ITS COEFFICIENT IS A PLACEHOLDER OF ZERO -- the sheet has no row for it.
+ * 2.2% of spell power a tick, the owner's figure.
  * ----------------------------------------------------------------------------
  */
 export const HELLFIRE_TICK_DAMAGE = 210;
 export const HELLFIRE_SELF_DAMAGE = 210;
+export const HELLFIRE_HEAL_NAME = 'Hellfire (healed by the group)';
 export const HELLFIRE_TICKS = 15;
 
 export const HELLFIRE: Ability = {
@@ -915,8 +952,10 @@ export const HELLFIRE: Ability = {
   targets: { maxTargets: Infinity },
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
-    const lost = Math.min(HELLFIRE_SELF_DAMAGE, caster.health.current - 1);
-    if (lost > 0) caster.health.spend(lost);
+    payHealthAndHealBack(simulation, caster, HELLFIRE_SELF_DAMAGE, {
+      id: 'hellfire_heal',
+      name: HELLFIRE_HEAL_NAME,
+    });
     for (const struck of areaTargets(simulation, caster, target, ability)) {
       dealDamage(simulation, {
         source: caster,
@@ -925,24 +964,19 @@ export const HELLFIRE: Ability = {
         abilityName: ability.name,
         school: 'fire',
         baseAmount: HELLFIRE_TICK_DAMAGE,
-        powerCoefficient: PLACEHOLDER_HELLFIRE_TICK_SP_COEFFICIENT,
+        powerCoefficient: HELLFIRE_TICK_SP_COEFFICIENT,
         attackTable: ability.attackTable,
       });
     }
   },
-  unmodelled:
-    'Its spell power coefficient is not stated anywhere this project reads, so ' +
-    'it is zero. Its 210 to the caster is health lost, floored at one health, ' +
-    'rather than damage that can kill.',
 };
 
 /**
  * Rain of Fire, rank 4: "Calls down a fiery rain to burn enemies in the area of
  * effect for 884 Fire damage over 8 sec." 1,185 mana, channelled.
  *
- * FOUR TICKS OF 221, ONE EVERY TWO SECONDS, and the cadence is an
- * INTERPRETATION: the tooltip states a total and a duration only. Every two
- * seconds is Classic's and divides 884 exactly. Coefficient: a placeholder zero.
+ * FOUR TICKS OF 221, ONE EVERY TWO SECONDS -- the owner's cadence, which the
+ * tooltip leaves unstated -- at 3% of spell power a tick, also the owner's.
  */
 export const RAIN_OF_FIRE_TOTAL = 884;
 export const RAIN_OF_FIRE_TICKS = 4;
@@ -966,15 +1000,11 @@ export const RAIN_OF_FIRE: Ability = {
         abilityName: ability.name,
         school: 'fire',
         baseAmount: RAIN_OF_FIRE_TOTAL / RAIN_OF_FIRE_TICKS,
-        powerCoefficient: PLACEHOLDER_RAIN_OF_FIRE_TICK_SP_COEFFICIENT,
+        powerCoefficient: RAIN_OF_FIRE_TICK_SP_COEFFICIENT,
         attackTable: ability.attackTable,
       });
     }
   },
-  unmodelled:
-    'Its spell power coefficient is not stated anywhere this project reads, so ' +
-    'it is zero. Its tick interval is every two seconds, which the tooltip does ' +
-    'not state.',
 };
 
 /** Bane of Havoc's "5% of base mana", off the Undead row both presets are. */
@@ -986,11 +1016,15 @@ export const BANE_OF_HAVOC_COST = Math.round(baseManaFor('undead', 'warlock') * 
  * dealt to the cursed target."
  *
  * ----------------------------------------------------------------------------
- * IT GOES ON THE PRIMARY TARGET, because a priority list here has no way to
- * point a cast at an add -- so it is the boss that carries it and the adds'
- * damage that is copied onto the boss. And "only one Bane per Warlock on any one
- * target" means it REPLACES a Bane of Agony or Doom there, which is the real
- * cost of casting it. Both are flagged for the owner.
+ * WHERE IT GOES IS THE LIST'S CHOICE, through the APL entry's MULTI-DOT
+ * setting (round 57, the owner's ruling): an entry that may reach the first X
+ * targets casts at the first one whose condition holds, so "Bane of Havoc, on
+ * 2 targets, if the target has no Bane of Agony" puts it on an add. Without
+ * that setting it goes on the boss.
+ *
+ * "LIMITED TO 1 TARGET": casting it takes it off every other enemy first. And
+ * "only one Bane per Warlock on any one target" means it REPLACES a Bane of
+ * Agony or Doom on the target it lands on.
  *
  * THE COPY IS `BANE_OF_HAVOC_REACTION` in `reactions/warlockTalents.ts`. At one
  * target there are no "other targets" and it copies nothing.
@@ -1014,6 +1048,10 @@ export const BANE_OF_HAVOC_ABILITY: Ability = {
       attackTable: 'spell',
     }).avoided;
     if (!landed) return;
+    // Limited to one target: off every other enemy first.
+    for (const enemy of simulation.enemiesOf(caster)) {
+      if (enemy.id !== target.id) enemy.auras.remove(simulation, BANE_OF_HAVOC.id);
+    }
     target.auras.remove(simulation, 'bane_of_agony');
     target.auras.remove(simulation, BANE_OF_DOOM.id);
     simulation.applyAura(target, BANE_OF_HAVOC, caster.id);

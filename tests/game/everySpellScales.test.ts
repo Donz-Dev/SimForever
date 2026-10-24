@@ -91,21 +91,9 @@ const EXEMPT: Readonly<Record<string, string>> = {
   explosive_trap:
     'The same ruling, in the owner’s words when they put it in: "there isn’t ' +
     'an AP or SP scaler". Both its initial hit and its burn are flat.',
-  /*
-   * THE AREA SPELLS WITH NO STATED COEFFICIENT (round 57), every one a
-   * `PLACEHOLDER_` zero in `coefficients.ts` and a question for the owner. NOT
-   * a ruling: the day a figure arrives, the entry here goes with it, and this
-   * test is what fails if the constant moves and the exemption does not.
-   * Holy Nova is the eighth and is not listed, because no preset takes the talent
-   * that grants it -- so this test never discovers it.
-   */
-  hellfire: 'PLACEHOLDER: no coefficient stated -- asked of the owner (round 57).',
-  rain_of_fire: 'PLACEHOLDER: no coefficient stated -- asked of the owner (round 57).',
-  volley: 'PLACEHOLDER: no coefficient stated, nor which power -- asked (round 57).',
-  arcane_explosion: 'PLACEHOLDER: no coefficient stated -- asked of the owner (round 57).',
-  blizzard: 'PLACEHOLDER: no coefficient stated -- asked of the owner (round 57).',
-  hurricane: 'PLACEHOLDER: no coefficient stated -- asked of the owner (round 57).',
-  magma_totem: 'PLACEHOLDER: no coefficient stated -- asked of the owner (round 57).',
+  // Volley, round 57: 3% of RANGED attack power a tick, the owner's figure --
+  // the same reason Arcane Shot is exempt.
+  volley: 'A Hunter channel ticking ARCANE that scales with ranged attack power.',
 };
 
 /*

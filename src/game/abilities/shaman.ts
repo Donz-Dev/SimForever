@@ -9,6 +9,7 @@ import {
   RAGE_OF_THE_FARSEER,
   SEARING_TOTEM_DOT,
   MAGMA_TOTEM_DOT,
+  magmaTotemAura,
   STORMSTRIKE_DAMAGE_BONUS,
   STORMSTRIKE_DEBUFF,
   WINDFURY_WEAPON_IMBUE,
@@ -161,12 +162,17 @@ export const LIGHTNING_BOLT: Ability = {
  * additional nearby enemies. Each jump reduces the damage by 30%. Affects 3
  * total targets."
  *
- * THE JUMPS ARE NOT MODELLED AND CANNOT BE. Every encounter in this project
- * has exactly one target, so the second and third hits have nothing to land
- * on. Only the first target's damage is dealt, which is the honest reading for
- * a single-target fight and is what makes this spell a poor one here relative
- * to what it is worth in a pull of three.
+ * THE JUMPS LAND SINCE ROUND 57, on the owner's ask: the primary first, then up
+ * to two more targets, each jump 30% less than the hit before -- x1, x0.7,
+ * x0.49 -- on the flat damage AND the coefficient, since the reduction is to
+ * "the damage". Each strike rolls its own spell table. At one target there is
+ * nothing to jump to and the cast is exactly what it was.
+ *
+ * LIGHTNING OVERLOAD STILL COPIES ONE HIT, the primary's: it is a CAST reaction
+ * and reads the cast's target, so a jump never overloads. Elemental Mastery
+ * removes this spell's cooldown while it is up -- see `ELEMENTAL_MASTERY_AURA`.
  */
+export const CHAIN_LIGHTNING_JUMP_FACTOR = 0.7;
 /*
  * ==============================================================================
  * 116 TO 130 IS `foreverchanges.pro`'s FIGURE AND IT BEATS THE CAPTURE ABOVE,
@@ -241,22 +247,23 @@ export const CHAIN_LIGHTNING: Ability = {
   castTimeMs: CHAIN_LIGHTNING_CAST_MS,
   cooldownMs: seconds(6),
   attackTable: 'spell',
+  targets: { maxTargets: CHAIN_LIGHTNING_TARGETS },
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
-    dealDamage(simulation, {
-      source: caster,
-      target,
-      abilityId: ability.id,
-      abilityName: ability.name,
-      school: 'nature',
-      baseAmount: CHAIN_LIGHTNING_DAMAGE * spendStormstrike(simulation, target),
-      powerCoefficient: CHAIN_LIGHTNING_COEFFICIENT,
-      attackTable: ability.attackTable,
+    areaTargets(simulation, caster, target, ability).forEach((struck, jump) => {
+      const falloff = CHAIN_LIGHTNING_JUMP_FACTOR ** jump;
+      dealDamage(simulation, {
+        source: caster,
+        target: struck,
+        abilityId: ability.id,
+        abilityName: ability.name,
+        school: 'nature',
+        baseAmount: CHAIN_LIGHTNING_DAMAGE * falloff * spendStormstrike(simulation, struck),
+        powerCoefficient: CHAIN_LIGHTNING_COEFFICIENT * falloff,
+        attackTable: ability.attackTable,
+      });
     });
   },
-  unmodelled:
-    `It also jumps to ${CHAIN_LIGHTNING_TARGETS - 1} further enemies at 30% less ` +
-    'damage each, and every encounter here has one target.',
 };
 
 /*
@@ -527,12 +534,8 @@ export const FIRE_NOVA: Ability = {
     }
   },
   unmodelled:
-    'It hits every enemy within 10 yards of the totem and every encounter here ' +
-    'has one target, so only that one is struck -- the same single-target ' +
-    'reading Chain Lightning and Blast Wave carry. Its 10 yard radius is ' +
-    'dropped with every other distance. Magma Totem is the other fire totem ' +
-    'that would satisfy its requirement and is not modelled, so here the ' +
-    'requirement means Searing Totem.',
+    'Its 10 yard radius is dropped with every other distance, so it strikes ' +
+    'every target in the fight.',
 };
 
 // ---------------------------------------------------------------------------
@@ -764,6 +767,9 @@ export const ELEMENTAL_MASTERY: Ability = {
  * it is a fire totem for Fire Nova's requirement. The totem itself is not an
  * entity, as Searing Totem's is not.
  */
+/** The key Trial by Fire writes on Magma Totem: extra seconds of totem. */
+export const MAGMA_TOTEM_EXTRA_DURATION_BONUS = 'magmaTotemExtraDurationSeconds';
+
 export const MAGMA_TOTEM: Ability = {
   id: 'magma_totem',
   name: 'Magma Totem',
@@ -775,13 +781,13 @@ export const MAGMA_TOTEM: Ability = {
     for (const enemy of simulation.enemiesOf(caster)) {
       enemy.auras.remove(simulation, SEARING_TOTEM_DOT.id);
     }
+    // Trial by Fire's extra seconds arrive on the ability, Flame Shock's way.
+    const aura = magmaTotemAura(ability.bonuses?.[MAGMA_TOTEM_EXTRA_DURATION_BONUS] ?? 0);
     for (const struck of areaTargets(simulation, caster, target, ability)) {
-      simulation.applyAura(struck, MAGMA_TOTEM_DOT, caster.id);
+      simulation.applyAura(struck, aura, caster.id);
     }
   },
-  unmodelled:
-    'The totem is not an entity and cannot be killed. Its spell power ' +
-    'coefficient is not stated anywhere this project reads, so it is zero.',
+  unmodelled: 'The totem is not an entity and cannot be killed.',
 };
 
 export const SHAMAN_ABILITIES: readonly Ability[] = [

@@ -2,7 +2,7 @@ import type { Ability } from '../../engine';
 import { DEMORALIZING_ROAR_FLAT_THREAT, FAERIE_FIRE_THREAT_PER_LEVEL } from '../combat/threat';
 import { dealDamage, seconds, selectTargets } from '../../engine';
 import { areaTargets } from '../combat/multiTarget';
-import { PLACEHOLDER_HURRICANE_TICK_SP_COEFFICIENT } from '../combat/coefficients';
+import { HURRICANE_TICK_SP_COEFFICIENT } from '../combat/coefficients';
 import {
   DEMORALIZING_ROAR,
   ECLIPSE_CHARGES_PER_WRATH,
@@ -950,10 +950,9 @@ export const NATURES_SWIFTNESS_ABILITY: Ability = {
  * Nature damage to enemies every 1 sec, and increasing the time between attacks
  * by 20%. Lasts 10 sec." 1,495 mana, channelled (round 57).
  *
- * TEN TICKS, EACH STRIKING EVERY TARGET with its own spell roll. The attack
- * slow is not applied: it reaches only an enemy that swings, which a Balance
- * Druid's fight never has, and it is a separate debuff nobody asked for. Its
- * coefficient is a placeholder zero -- the sheet has no row for it.
+ * TEN TICKS, EACH STRIKING EVERY TARGET with its own spell roll, at 3% of spell
+ * power a tick -- the owner's figure. The 20% attack slow is OUT OF SCOPE for a
+ * multi-target damage simulation, by the owner's ruling.
  */
 export const HURRICANE_TICK_DAMAGE = 132;
 export const HURRICANE_TICKS = 10;
@@ -977,14 +976,14 @@ export const HURRICANE: Ability = {
         abilityName: ability.name,
         school: 'nature',
         baseAmount: HURRICANE_TICK_DAMAGE,
-        powerCoefficient: PLACEHOLDER_HURRICANE_TICK_SP_COEFFICIENT,
+        powerCoefficient: HURRICANE_TICK_SP_COEFFICIENT,
         attackTable: ability.attackTable,
       });
     }
   },
   unmodelled:
-    'Its spell power coefficient is not stated anywhere this project reads, so ' +
-    'it is zero. Its 20% attack slow is not applied.',
+    'Its 20% attack slow is out of scope for a multi-target damage simulation, ' +
+    'by the owner’s ruling.',
 };
 
 export const DRUID_ABILITIES: readonly Ability[] = [

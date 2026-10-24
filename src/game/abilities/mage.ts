@@ -1,8 +1,8 @@
 import type { Ability, Combatant } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
 import {
-  PLACEHOLDER_ARCANE_EXPLOSION_SP_COEFFICIENT,
-  PLACEHOLDER_BLIZZARD_TICK_SP_COEFFICIENT,
+  ARCANE_EXPLOSION_SP_COEFFICIENT,
+  BLIZZARD_TICK_SP_COEFFICIENT,
 } from '../combat/coefficients';
 import { areaTargets } from '../combat/multiTarget';
 import { baseManaFor } from '../character/baseStatLookup';
@@ -1089,8 +1089,7 @@ export const CONE_OF_COLD: Ability = {
  * position, so "within 10 yards" is everyone. In no stock list: it is for an
  * entry gated on the APL's Number of Targets.
  *
- * ITS COEFFICIENT IS A PLACEHOLDER OF ZERO, because the sheet has no row for it.
- * See `PLACEHOLDER_ARCANE_EXPLOSION_SP_COEFFICIENT`.
+ * 14.3% of spell power, the owner's figure (the sheet has no row for it).
  */
 export const ARCANE_EXPLOSION_DAMAGE = midpoint(238, 258);
 
@@ -1110,27 +1109,23 @@ export const ARCANE_EXPLOSION: Ability = {
         abilityName: ability.name,
         school: 'arcane',
         baseAmount: ARCANE_EXPLOSION_DAMAGE,
-        powerCoefficient: PLACEHOLDER_ARCANE_EXPLOSION_SP_COEFFICIENT,
+        powerCoefficient: ARCANE_EXPLOSION_SP_COEFFICIENT,
         attackTable: ability.attackTable,
       });
     }
   },
-  unmodelled:
-    'Its spell power coefficient is not stated anywhere this project reads, ' +
-    'so it is zero until the owner supplies one.',
 };
 
 /**
  * Blizzard, rank 6: "Ice shards pelt the target area doing 1,168 Frost damage
  * over 8 sec." 1,400 mana, channelled.
  *
- * EIGHT TICKS OF 146, ONE A SECOND, and the cadence is an INTERPRETATION: the
- * tooltip states a total and a duration and no interval. One a second is
- * Classic's and divides 1,168 exactly. Each tick strikes every target with its
- * own spell roll -- a channel tick is an ordinary non-periodic damage event.
+ * EIGHT TICKS OF 146, ONE A SECOND -- the owner's cadence, which the tooltip
+ * leaves unstated -- at 3% of spell power a tick, also the owner's. Each tick
+ * strikes every target with its own spell roll: a channel tick is an ordinary
+ * non-periodic damage event.
  *
- * ITS CHILL IS IMPROVED BLIZZARD'S and is a snare, out of scope by ruling. Its
- * coefficient is a placeholder of zero -- see the constant.
+ * ITS CHILL IS IMPROVED BLIZZARD'S and is a snare, out of scope by ruling.
  */
 export const BLIZZARD_TOTAL = 1168;
 export const BLIZZARD_TICKS = 8;
@@ -1155,15 +1150,11 @@ export const BLIZZARD: Ability = {
         abilityName: ability.name,
         school: 'frost',
         baseAmount: BLIZZARD_TOTAL / BLIZZARD_TICKS,
-        powerCoefficient: PLACEHOLDER_BLIZZARD_TICK_SP_COEFFICIENT,
+        powerCoefficient: BLIZZARD_TICK_SP_COEFFICIENT,
         attackTable: ability.attackTable,
       });
     }
   },
-  unmodelled:
-    'Its spell power coefficient is not stated anywhere this project reads, ' +
-    'so it is zero until the owner supplies one. Its tick interval is one a ' +
-    'second, which the tooltip does not state.',
 };
 
 export const MAGE_ABILITIES: readonly Ability[] = [

@@ -765,6 +765,25 @@ function percentOf(fraction: number): number {
 }
 
 /**
+ * Set or clear an entry's Multi-DoT count (round 57). Cleared, or one -- which
+ * is the plain single target -- is DROPPED, so an entry put back compares equal.
+ */
+export function setMultiDot(
+  entries: readonly AplEntry[],
+  index: number,
+  targets: number | undefined,
+): readonly AplEntry[] {
+  if (index < 0 || index >= entries.length) return entries;
+  return entries.map((entry, at) => {
+    if (at !== index) return entry;
+    const { multiDot: _dropped, ...rest } = entry;
+    return targets !== undefined && targets > 1
+      ? { ...rest, multiDot: Math.floor(targets) }
+      : rest;
+  });
+}
+
+/**
  * Set or clear who an entry is cast at (round 55). Cleared is DROPPED, the
  * rule `interruptsChannel` follows, so an entry put back compares equal.
  */

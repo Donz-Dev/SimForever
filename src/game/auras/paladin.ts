@@ -925,8 +925,9 @@ export const CONSECRATED_GROUND_FLAG = 'consecratedGround';
 /**
  * `total` is the damage over the eight seconds: both halves for the first four
  * enemies, and the 96 alone beyond them (round 57). The coefficient per tick is
- * the same either way -- a READING, since the sheet gives one per-tick figure
- * and does not say which half it belongs to.
+ * the same either way, by the owner's ruling: Consecration "retains the same
+ * Spell Power coefficient, but loses a substantial amount of base damage on the
+ * 5th-8th targets".
  */
 export function consecrationGround(
   holyDamageTakenPercent = 0,

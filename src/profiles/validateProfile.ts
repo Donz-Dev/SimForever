@@ -386,6 +386,17 @@ export function validateProfile(value: unknown): ValidationResult {
           });
           return;
         }
+        if (
+          entry.multiDot !== undefined &&
+          (typeof entry.multiDot !== 'number' ||
+            !Number.isInteger(entry.multiDot) ||
+            entry.multiDot < 1)
+        ) {
+          issues.push({
+            path: `rotation.entries.${index}.multiDot`,
+            message: 'Multi-DoT must be a whole number of targets, 1 or more.',
+          });
+        }
         if (entry.condition !== undefined) {
           const unknown = unknownBuiltin(entry.condition);
           if (unknown !== undefined) {

@@ -236,6 +236,14 @@ export interface AplEntry {
   /** Who it is cast at. Absent is the default enemy. */
   readonly target?: AplTarget;
   /**
+   * MULTI-DOT (round 57): the entry may be cast at any of the first X enemies,
+   * the boss first, and goes to the first whose condition holds. X above the
+   * fight's Number of Targets is the number of targets. DROPPED rather than
+   * stored when cleared, so an entry put back compares equal. See
+   * `PriorityEntry.multiDot`.
+   */
+  readonly multiDot?: number;
+  /**
    * Whether this entry may cancel an interruptible channel in progress.
    *
    * BOTH HALVES STILL HAVE TO AGREE -- the channel declares

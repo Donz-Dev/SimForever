@@ -10,14 +10,36 @@ import { CONSECRATION, CONSECRATION_FULL_TARGETS } from '../../src/game/abilitie
 import { CONSECRATION_TOTAL } from '../../src/game/auras/paladin';
 import { FIRE_NOVA, MAGMA_TOTEM } from '../../src/game/abilities/shaman';
 import { SEARING_TOTEM_DOT } from '../../src/game/auras/shaman';
+
 import { HURRICANE, MANGLE, SWIPE } from '../../src/game/abilities/druid';
 import { HOLY_NOVA } from '../../src/game/abilities/priest';
 import {
   BANE_OF_HAVOC_ABILITY,
+  CORRUPTION_ABILITY,
   HELLFIRE,
+  HELLFIRE_HEAL_NAME,
   HELLFIRE_SELF_DAMAGE,
   RAIN_OF_FIRE,
 } from '../../src/game/abilities/warlock';
+import {
+  CHAIN_LIGHTNING,
+  CHAIN_LIGHTNING_DAMAGE,
+  CHAIN_LIGHTNING_JUMP_FACTOR,
+} from '../../src/game/abilities/shaman';
+import { ELEMENTAL_MASTERY_AURA } from '../../src/game/auras/shaman';
+import {
+  ARCANE_EXPLOSION_SP_COEFFICIENT,
+  BLIZZARD_TICK_SP_COEFFICIENT,
+  HELLFIRE_TICK_SP_COEFFICIENT,
+  HOLY_NOVA_SP_COEFFICIENT,
+  HURRICANE_TICK_SP_COEFFICIENT,
+  MAGMA_TOTEM_PULSE_SP_COEFFICIENT,
+  RAIN_OF_FIRE_TICK_SP_COEFFICIENT,
+  VOLLEY_TICK_RAP_COEFFICIENT,
+} from '../../src/game/combat/coefficients';
+import { compileRotation } from '../../src/game/rotations/apl';
+import type { AplList } from '../../src/game/rotations/apl';
+import { setMultiDot } from '../../src/ui/panels/aplEditing';
 import { BANE_OF_HAVOC, BANE_OF_HAVOC_SHARE } from '../../src/game/auras/warlock';
 import { SWEEPING_STRIKES, SWEEPING_STRIKES_CHARGES } from '../../src/game/auras/warrior';
 import { BLADE_FLURRY } from '../../src/game/auras/rogue';
@@ -177,16 +199,166 @@ describe('the area abilities strike every target they are allowed', () => {
   });
 });
 
-describe('Hellfire burns the caster, and never to death', () => {
-  it('takes 210 a tick off the caster and stops at one health', () => {
-    const run = castOnce(HELLFIRE, 1, (_simulation, caster) => {
-      caster.health.set(HELLFIRE_SELF_DAMAGE * 3 + 50);
-    });
-    expect(run.caster.health.current).toBe(1);
+describe('Hellfire burns the caster, and the group heals it back', () => {
+  it('takes 210 a tick, records it as a heal a second later, and ends whole', () => {
+    const run = fight(1, { abilities: [HELLFIRE] });
+    run.simulation.advanceTo(0);
+    const full = run.caster.health.current;
+    castAbility(run.simulation, run.caster, run.caster.abilities.get('hellfire')!, run.enemies[0]);
+    // Two seconds in: two ticks paid, the first already healed back.
+    run.simulation.advanceTo(seconds(2) + 1);
+    expect(run.caster.health.current).toBe(full - HELLFIRE_SELF_DAMAGE);
+    run.simulation.advanceTo(seconds(40));
+    expect(run.caster.health.current).toBe(full);
+    const heals = run.events.filter((e) => e.type === 'heal' && e.abilityName === HELLFIRE_HEAL_NAME);
+    expect(heals).toHaveLength(15);
     // A health cost, not a damage event: nothing from the caster to itself.
     expect(
       run.events.some((e) => e.type === 'damage' && e.targetId === run.caster.id),
     ).toBe(false);
+  });
+});
+
+describe("the owner's eight coefficients", () => {
+  it('are the stated figures', () => {
+    expect(HELLFIRE_TICK_SP_COEFFICIENT).toBe(0.022);
+    expect(RAIN_OF_FIRE_TICK_SP_COEFFICIENT).toBe(0.03);
+    expect(VOLLEY_TICK_RAP_COEFFICIENT).toBe(0.03);
+    expect(ARCANE_EXPLOSION_SP_COEFFICIENT).toBe(0.143);
+    expect(BLIZZARD_TICK_SP_COEFFICIENT).toBe(0.03);
+    expect(HOLY_NOVA_SP_COEFFICIENT).toBe(0.107);
+    expect(HURRICANE_TICK_SP_COEFFICIENT).toBe(0.03);
+    expect(MAGMA_TOTEM_PULSE_SP_COEFFICIENT).toBe(0.0255);
+  });
+
+  /** Mean damage of one ability's landed, non-crit hits at a given stat block. */
+  function meanHit(ability: Ability, id: string, stats: Record<string, number>): number {
+    const run = fight(1, { abilities: [ability], stats });
+    castAbility(run.simulation, run.caster, run.caster.abilities.get(ability.id)!, run.enemies[0]);
+    run.simulation.advanceTo(seconds(40));
+    const hits = run.events.flatMap((e) =>
+      e.type === 'damage' && e.abilityId === id && e.amount > 0 && !e.critical ? [e.amount] : [],
+    );
+    return hits.reduce((a, b) => a + b, 0) / hits.length;
+  }
+
+  it.each([
+    [ARCANE_EXPLOSION, 'arcane_explosion', 0.143],
+    [HOLY_NOVA, 'holy_nova', 0.107],
+    [BLIZZARD, 'blizzard', 0.03],
+    [HURRICANE, 'hurricane', 0.03],
+  ] as const)('%s gains its coefficient per point of spell power', (ability, id, coefficient) => {
+    // Variance-free: each spell's flat damage is a midpoint, and these rows roll
+    // no spread, so the slope over 1000 spell power is the coefficient.
+    const slope = (meanHit(ability, id, { spellPower: 1000 }) - meanHit(ability, id, { spellPower: 0 })) / 1000;
+    expect(slope).toBeCloseTo(coefficient, 3);
+  });
+
+  it('Volley reads RANGED attack power and not spell power', () => {
+    const low = meanHit(VOLLEY, 'volley', { rangedAttackPower: 0, spellPower: 0 });
+    const high = meanHit(VOLLEY, 'volley', { rangedAttackPower: 1000, spellPower: 0 });
+    const sp = meanHit(VOLLEY, 'volley', { rangedAttackPower: 0, spellPower: 1000 });
+    expect((high - low) / 1000).toBeCloseTo(VOLLEY_TICK_RAP_COEFFICIENT, 3);
+    expect(sp).toBeCloseTo(low, 5);
+  });
+});
+
+describe('Chain Lightning jumps', () => {
+  it('strikes three targets, each jump 30% less than the hit before', () => {
+    const run = fight(5, { abilities: [CHAIN_LIGHTNING], stats: { spellPower: 0 } });
+    castAbility(run.simulation, run.caster, run.caster.abilities.get('chain_lightning')!, run.enemies[0]);
+    run.simulation.advanceTo(seconds(5));
+    const hits = run.events.filter((e) => e.type === 'damage' && e.abilityId === 'chain_lightning');
+    expect(hits.map((e) => e.type === 'damage' && e.targetId)).toEqual(['dummy_1', 'dummy_2', 'dummy_3']);
+    const landed = hits.flatMap((e) => (e.type === 'damage' && e.amount > 0 && !e.critical ? [e] : []));
+    for (const hit of landed) {
+      const jump = Number(hit.type === 'damage' ? hit.targetId.slice(-1) : 0) - 1;
+      expect(hit.type === 'damage' && hit.amount).toBeCloseTo(
+        CHAIN_LIGHTNING_DAMAGE * CHAIN_LIGHTNING_JUMP_FACTOR ** jump,
+        5,
+      );
+    }
+  });
+
+  it('is one target at one target', () => {
+    const run = castOnce(CHAIN_LIGHTNING, 1);
+    expect([...struckBy(run.events, 'chain_lightning')]).toEqual(['dummy_1']);
+  });
+
+  it('has no cooldown while Elemental Mastery is up', () => {
+    const run = fight(3, { abilities: [CHAIN_LIGHTNING] });
+    run.simulation.advanceTo(0);
+    const chain = run.caster.abilities.get('chain_lightning')!;
+    castAbility(run.simulation, run.caster, chain, run.enemies[0]);
+    run.simulation.advanceTo(seconds(2.1));
+    expect(run.simulation.castRejection(run.caster, chain, run.enemies[0], { ignoreGcd: true })).toBe(
+      'on_cooldown',
+    );
+    run.simulation.applyAura(run.caster, ELEMENTAL_MASTERY_AURA, run.caster.id);
+    expect(run.simulation.castRejection(run.caster, chain, run.enemies[0], { ignoreGcd: true })).toBeUndefined();
+  });
+});
+
+describe('Multi-DoT', () => {
+  /** A fight running one entry: Corruption, gated on the target lacking it. */
+  function spread(targets: number, multiDot: number | undefined) {
+    const list: AplList = {
+      name: 'Multi-DoT test',
+      entries: [
+        {
+          abilityId: 'corruption',
+          condition: { kind: 'aura', on: 'target', auraId: 'corruption', present: false },
+          ...(multiDot !== undefined ? { multiDot } : {}),
+        },
+      ],
+    };
+    const run = fight(targets, {
+      abilities: [{ ...CORRUPTION_ABILITY, castTimeMs: 0 }],
+      rotation: compileRotation(list),
+      stats: { spellPower: 0, hitChance: 100 },
+    });
+    run.simulation.advanceTo(seconds(10));
+    return new Set(
+      run.events.flatMap((e) =>
+        e.type === 'aura_applied' && e.auraId === 'corruption' ? [e.targetId] : [],
+      ),
+    );
+  }
+
+  it('spreads a DoT across the first X targets, boss first', () => {
+    expect([...spread(5, 3)].sort()).toEqual(['dummy_1', 'dummy_2', 'dummy_3']);
+  });
+
+  it('treats X above the number of targets as the number of targets', () => {
+    expect([...spread(2, 6)].sort()).toEqual(['dummy_1', 'dummy_2']);
+  });
+
+  it('without it, an entry stays on the boss', () => {
+    expect([...spread(5, undefined)]).toEqual(['dummy_1']);
+  });
+
+  it('is stored only when it is more than one, and validated on load', () => {
+    const entries = [{ abilityId: 'corruption' }];
+    expect(setMultiDot(entries, 0, 3)).toEqual([{ abilityId: 'corruption', multiDot: 3 }]);
+    expect(setMultiDot(setMultiDot(entries, 0, 3), 0, undefined)).toEqual(entries);
+    expect(setMultiDot(entries, 0, 1)).toEqual(entries);
+    const profile = JSON.parse(serializeProfile(createDefaultProfile()));
+    profile.rotation.entries = [{ abilityId: 'corruption', multiDot: 0 }];
+    expect(validateProfile(profile).ok).toBe(false);
+    profile.rotation.entries = [{ abilityId: 'corruption', multiDot: 4 }];
+    expect(validateProfile(profile).ok).toBe(true);
+  });
+
+  it('puts Bane of Havoc on one target only', () => {
+    const run = fight(3, { abilities: [BANE_OF_HAVOC_ABILITY], stats: { hitChance: 100 } });
+    run.simulation.advanceTo(0);
+    const havoc = run.caster.abilities.get('bane_of_havoc')!;
+    castAbility(run.simulation, run.caster, havoc, run.enemies[1]);
+    run.simulation.advanceTo(seconds(2));
+    castAbility(run.simulation, run.caster, havoc, run.enemies[2]);
+    const carriers = run.enemies.filter((e) => e.auras.has(BANE_OF_HAVOC.id)).map((e) => e.id);
+    expect(carriers.length).toBeLessThanOrEqual(1);
+    if (carriers.length === 1) expect(carriers).toEqual(['dummy_3']);
   });
 });
 

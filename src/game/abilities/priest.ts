@@ -1,7 +1,7 @@
 import type { Ability } from '../../engine';
 import { dealDamage, rollApplication, seconds } from '../../engine';
 import { areaTargets } from '../combat/multiTarget';
-import { PLACEHOLDER_HOLY_NOVA_SP_COEFFICIENT } from '../combat/coefficients';
+import { HOLY_NOVA_SP_COEFFICIENT } from '../combat/coefficients';
 import { baseManaFor } from '../character/baseStatLookup';
 import {
   DEVOURING_PLAGUE,
@@ -513,9 +513,9 @@ export const POWER_INFUSION_ABILITY: Ability = {
  *
  * The spellbook's rank 6 -- the talent tooltip's 26 to 30 is rank 1. EVERY
  * TARGET, each with its own spell roll; "no threat" is `holy_nova` in the threat
- * table at a multiplier of zero. The heal is not applied: in a damage fight
- * there is no injured party member to receive it. Coefficient: a placeholder
- * zero.
+ * table at a multiplier of zero. 10.7% of spell power, the owner's figure. The
+ * party heal is OUT OF SCOPE for a multi-target damage simulation, by the
+ * owner's ruling.
  */
 export const HOLY_NOVA_DAMAGE = (174 + 200) / 2;
 
@@ -535,14 +535,14 @@ export const HOLY_NOVA: Ability = {
         abilityName: ability.name,
         school: 'holy',
         baseAmount: HOLY_NOVA_DAMAGE,
-        powerCoefficient: PLACEHOLDER_HOLY_NOVA_SP_COEFFICIENT,
+        powerCoefficient: HOLY_NOVA_SP_COEFFICIENT,
         attackTable: ability.attackTable,
       });
     }
   },
   unmodelled:
-    'Its spell power coefficient is not stated anywhere this project reads, so ' +
-    'it is zero. Its party heal is not applied.',
+    'Its party heal is out of scope for a multi-target damage simulation, by ' +
+    'the owner’s ruling.',
 };
 
 export const PRIEST_ABILITIES: readonly Ability[] = [

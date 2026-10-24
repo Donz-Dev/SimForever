@@ -46,11 +46,9 @@ export function targetCount(simulation: SimulationContext, actor: Combatant): nu
  * charges.
  *
  * ----------------------------------------------------------------------------
- * A COPY OF THE HIT THAT LANDED, ON THE FIRST OTHER ENEMY. That is the Classic
- * behaviour of both abilities and the only reading the words support: the
- * attack strikes another opponent, so the other opponent takes what the attack
- * did. A READING, flagged for the owner in HANDOVER -- the alternative is a
- * second full roll on the second target.
+ * A COPY OF THE HIT THAT LANDED, ON THE FIRST OTHER ENEMY -- the owner's
+ * ruling: both "are meant to copy the hit or hits that landed". Not a second
+ * full roll on the second target.
  *
  * SO IT CARRIES NONE OF THE ATTACKER'S SCALING A SECOND TIME AND NO ARMOR:
  * `attack.amount` is already after both. The add's OWN modifiers still apply,
