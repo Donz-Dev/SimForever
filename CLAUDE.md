@@ -1860,7 +1860,9 @@ the owner's two rulings, round 47. `engine/combat/threat.ts` is the rule and
   a fight rather than fail one. Both Mage cooldowns already had one.
 - **A cast interrupts the swing in progress and the swing timer resets**, which
   is what makes a cast a real cost to a melee character rather than free damage
-  between swings. `Ability.swingTimer: 'hold'` is the exception: the timer runs
+  between swings. **The timer sits at zero for the whole cast and the full swing
+  is counted from the END of it** (round 56, the owner's ruling) -- it used to
+  count from the start, which made any cast shorter than a swing nearly free. `Ability.swingTimer: 'hold'` is the exception: the timer runs
   on behind the cast and a swing due during it waits rather than being lost.
 - **AND `continue` IS A THIRD MODE, WHICH IS WHERE THE SUSPENSION'S SECOND HALF
   LIVES.** The owner has ruled that a Hunter's three cast shots do not pause

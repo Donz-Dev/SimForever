@@ -6,7 +6,8 @@ import { makeAttacker, makeTarget } from '../helpers/actors';
 
 /*
  * RULESET: casting anything with a cast time interrupts the swing in progress
- * and RESETS the swing timer. An ability marked `swingTimer: 'hold'` is the
+ * and RESETS the swing timer -- held at zero for the whole cast, with the full
+ * swing counted from the END of it (round 56, the owner's ruling). An ability marked `swingTimer: 'hold'` is the
  * exception -- the timer runs on behind the cast, and a swing that comes due
  * during it waits for the cast to finish rather than being lost.
  *
@@ -87,9 +88,17 @@ describe('a cast and the melee swing timer', () => {
   });
 
   it('resets the timer by default, losing the swing in progress', () => {
-    // Cast at 1000. The swing due at 2000 never happens; the timer restarts
-    // and the next swing is a full 2000 later, at 3000.
-    expect(swingTimes('reset', 1000)).toEqual([0, 3000, 5000, 7000, 9000]);
+    // Cast at 1000, finishing at 2500. The swing due at 2000 never happens;
+    // the timer sits at zero through the cast and the next swing is a full
+    // 2000 after it ENDS, at 4500 -- the owner's "finish casting .. auto-attack
+    // swing timer starts again" (round 56). It was 3000, a full swing after
+    // the cast STARTED, which made any cast shorter than a swing nearly free.
+    expect(swingTimes('reset', 1000)).toEqual([0, 4500, 6500, 8500]);
+  });
+
+  it('counts the full swing from the end of a cast longer than the swing timer too', () => {
+    // A 3-second cast at 1000 ends at 4000; the next swing is at 6000.
+    expect(swingTimes('reset', 1000, seconds(3))).toEqual([0, 6000, 8000]);
   });
 
   it('holds a swing that comes due mid-cast until the cast finishes', () => {
@@ -101,8 +110,9 @@ describe('a cast and the melee swing timer', () => {
   it('holding beats resetting over the same fight', () => {
     const reset = swingTimes('reset', 1000);
     const hold = swingTimes('hold', 1000);
-    // Same number of swings, but every one of them lands sooner.
-    expect(hold.length).toBe(reset.length);
+    // At least as many swings, and every one of them lands sooner -- a reset
+    // now costs the swing in progress AND the cast's length.
+    expect(hold.length).toBeGreaterThanOrEqual(reset.length);
     expect(hold[1]).toBeLessThan(reset[1]);
   });
 

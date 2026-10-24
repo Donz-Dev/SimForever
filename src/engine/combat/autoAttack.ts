@@ -143,18 +143,52 @@ export function extraAttack(
 }
 
 /**
- * Restart every swinging weapon's timer from now.
+ * Restart every swinging weapon's timer: the swing in progress is lost, and a
+ * full swing begins `afterMs` from now.
  *
- * What a cast does to a melee character by default: the swing in progress is
- * lost and the timer begins again. Exported because casting is what calls it,
- * and casting lives in the abilities layer.
+ * ============================================================================
+ * A CAST HOLDS THE TIMER AT ZERO AND IT STARTS AGAIN WHEN THE CAST FINISHES
+ * (round 56), the owner's: "Auto-attack .. start casting (auto-attack swing
+ * timer reset back to 0) finish casting .. auto-attack swing timer starts
+ * again." So casting passes its cast time, and the full swing is counted from
+ * the END of the cast.
+ *
+ * IT USED TO COUNT FROM THE START, with any swing that came due inside the
+ * cast held to its end. A Shaman weaving a two-second Lightning Bolt into a
+ * 2.88-second swing therefore swung 880ms after the bolt landed rather than a
+ * full swing after it -- every cast shorter than the swing timer cost the
+ * swing it interrupted and nothing more, which made weaving nearly free.
+ *
+ * THE TIMER STARTS FROM AN EVENT AT THE CAST'S END, not from a delay worked
+ * out now, so the swing is hasted by whatever haste the character has WHEN IT
+ * BEGINS -- a buff landing during the cast speeds the swing that follows it.
+ * The event is held as the slot's pending swing, so the one-pending-swing rule
+ * still holds: anything that schedules a swing meanwhile replaces it.
+ * ============================================================================
  */
-export function resetSwingTimers(context: SimulationContext, attacker: Combatant): void {
+export function resetSwingTimers(
+  context: SimulationContext,
+  attacker: Combatant,
+  afterMs = 0,
+): void {
   for (const slot of swingingSlots(attacker)) {
     const weapon = attacker.weapons[slot];
     if (!weapon) continue;
-    const haste = hasteMultiplierFrom(attacker.stats.effective);
-    scheduleSwing(context, attacker, slot, applyHaste(weapon.swingTimerMs, haste));
+    if (afterMs <= 0) {
+      const haste = hasteMultiplierFrom(attacker.stats.effective);
+      scheduleSwing(context, attacker, slot, applyHaste(weapon.swingTimerMs, haste));
+      continue;
+    }
+    context.events.cancel(attacker.pendingSwing(slot));
+    const handle = context.events.schedule(
+      context.clock.now() + afterMs,
+      createEvent(`swing-timer-start:${attacker.id}:${slot}`, EventPriority.AutoAttack, (ctx) => {
+        if (!attacker.isAlive || ctx.hasEnded) return;
+        const haste = hasteMultiplierFrom(attacker.stats.effective);
+        scheduleSwing(ctx, attacker, slot, applyHaste(weapon.swingTimerMs, haste));
+      }),
+    );
+    attacker.setPendingSwing(slot, handle);
   }
 }
 
