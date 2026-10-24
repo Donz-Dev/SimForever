@@ -13,6 +13,7 @@ import {
   selfHealth,
   selfMissing,
   selfTime,
+  swungWithin,
 } from './apl';
 import type { TalentAllocation } from '../talents/Talent';
 
@@ -341,10 +342,26 @@ export const PALADIN_SHOCKADIN: AplList = {
    * Law is tier 25 in Retribution and neither Shockadin can afford it -- taking
    * it costs both of Holy's tier-20 slots and measures **-41**. So this entry
    * pays a cast that resets the swing timer on a build that is half swing
-   * damage, and is still worth having: dropping it measures **-20**, and the
-   * bottom of the list is where that cast is cheapest.
+   * damage, and the bottom of the list is where that cast is cheapest.
+   *
+   * ONLY WITHIN 300ms OF A MAIN-HAND SWING (round 56b), the owner's call. A
+   * cast holds the swing timer at zero until it finishes (round 56), so a
+   * cast started just after a swing throws away almost none of the next one.
+   * Paired over 500 fights against no Hammer of Wrath at all:
+   *
+   *                       ungated            gated 300ms
+   *   Shockadin     60s   +13.3 +/- 2.9      +16.0 +/- 2.4
+   *                180s   +14.7 +/- 1.5      +17.5 +/- 1.5
+   *   Shockadin 2H  60s    +8.1 +/- 3.2      +14.6 +/- 2.7
+   *                180s    -8.2 +/- 1.8       -3.6 +/- 1.7
+   *
+   * Better at both lengths on both builds. The 2H build is still a loss at
+   * 180s, where it is mana-bound and casts it 1.8 times against the
+   * one-hander's 3.9; removing the entry would gain that 3.6 and cost 14.6 at
+   * 60s. The old "dropping it measures -20" predates round 56, when a
+   * one-second cast cost almost nothing.
    */
-  { abilityId: 'hammer_of_wrath' },
+  { abilityId: 'hammer_of_wrath', condition: swungWithin('mainHand', 300) },
   ],
 };
 

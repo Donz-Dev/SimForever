@@ -144,6 +144,20 @@ Enhancement Shaman casts Lightning Bolt only at five Maelstrom stacks, where it
 is instant, so neither moves -- **a melee profile is moved by this only if it
 casts something with a cast bar**, which in the stock lists is two.
 
+**AND HAMMER OF WRATH IS NOW WOVEN** (round 56b, the owner's call): both
+Shockadins cast it only within 300ms of a main-hand swing, since a cast started
+just after a swing throws away almost none of the next one. Paired over 500
+fights against no Hammer of Wrath at all:
+
+| | 60s ungated | 60s woven | 180s ungated | 180s woven |
+| --- | --- | --- | --- | --- |
+| Shockadin | +13.3 | **+16.0** | +14.7 | **+17.5** |
+| Shockadin 2H | +8.1 | **+14.6** | -8.2 | **-3.6** |
+
+Better at both lengths on both builds. The 2H build is still a loss at 180s,
+where it is mana-bound; removing the entry would gain that 3.6 and cost 14.6 at
+60s, so it stays.
+
 ## Round 55: healer and Mage bug fixes
 
 Seven items from the owner, four healer and three Mage:

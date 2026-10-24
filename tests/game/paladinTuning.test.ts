@@ -214,18 +214,19 @@ describe('Instrument of Law, and the Hammer of Wrath it makes', () => {
     expect(withRangedPower).toBeCloseTo(flat, 6);
   });
 
-  it('is in the Retribution list under that condition, and ungated in the Shockadin', () => {
+  it('is in the Retribution list under that condition, and woven after a swing in the Shockadin', () => {
     const ret = PALADIN_RETRIBUTION.entries.find((e) => e.abilityId === 'hammer_of_wrath');
-    expect(ret?.condition).toBeDefined();
+    expect(ret?.condition).toEqual({ kind: 'castsInstantly', abilityId: 'hammer_of_wrath' });
 
     /*
-     * THE SHOCKADIN'S IS DELIBERATELY UNGATED. That build takes no Instrument of
-     * Law and casts the one-second version about twice a fight; the owner's
-     * instruction named the Retribution profile, and widening it would silently
-     * delete an entry that fires.
+     * THE SHOCKADIN'S IS NOT THE RETRIBUTION GATE. That build takes no
+     * Instrument of Law and casts the one-second version, so it is gated on
+     * TIMING instead -- within 300ms of a main-hand swing, the owner's call
+     * (round 56b), because a cast holds the swing timer at zero until it ends.
+     * The Retribution gate here would delete an entry that fires.
      */
     const shockadin = PALADIN_SHOCKADIN.entries.find((e) => e.abilityId === 'hammer_of_wrath');
-    expect(shockadin?.condition).toBeUndefined();
+    expect(shockadin?.condition).toEqual({ kind: 'swungWithin', slot: 'mainHand', withinMs: 300 });
   });
 });
 
