@@ -982,6 +982,20 @@ export function consecrationGround(
 /** The untalented ground effect, which is what a Paladin without the talent lays. */
 export const CONSECRATION_GROUND: AuraDefinition = consecrationGround();
 
+/**
+ * Light's Vigil (round 61): "Applies Light's Vigil to the target for 30 sec.
+ * Your next Holy Shock cast on them triggers no cooldown and ..." The aura is
+ * the mark and nothing else; what it does is read by Holy Shock, which spends
+ * it. See `LIGHTS_VIGIL_ABILITY`.
+ */
+export const LIGHTS_VIGIL_DURATION_MS = seconds(30);
+export const LIGHTS_VIGIL: AuraDefinition = {
+  id: 'lights_vigil',
+  name: "Light's Vigil",
+  durationMs: LIGHTS_VIGIL_DURATION_MS,
+  refreshBehaviour: 'reset',
+};
+
 /*
  * ----------------------------------------------------------------------------
  * THE AURAS THIS MODULE BUILDS WITH A FACTORY, LISTED SO THE PANEL CAN OFFER

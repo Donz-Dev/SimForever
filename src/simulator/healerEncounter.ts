@@ -41,7 +41,8 @@ import { createDummyFor, createPlayerFor, trainingDummyEncounter } from './train
  * one. The owner's pattern, as percentages of each target's maximum health:
  *
  *   the tank       10% every 2 seconds, with no ramp (round 55; was 30%)
- *   all twenty     25% every 15 seconds, then 15% every 2 seconds for 8
+ *   all twenty     25% every 20 seconds, then 15% every 2 seconds for 8
+ *                  (round 61; was every 15)
  *
  * so a raid pulse is 25% at once and four 15% ticks after it.
  *
@@ -53,8 +54,9 @@ import { createDummyFor, createPlayerFor, trainingDummyEncounter } from './train
  * death is recorded first. That is `revivesOnDeath`, the mechanism a tank run
  * already uses.
  *
- * THE FIRST RAID PULSE LANDS AT 15 SECONDS, not at the pull: "every 15 seconds"
- * read as a period, so a sixty-second fight takes four. A modelling choice the
+ * THE FIRST RAID PULSE LANDS AT 20 SECONDS, not at the pull: "every 20 seconds"
+ * read as a period, so a sixty-second fight takes three. (15 until round 61,
+ * when the owner eased the pressure.) A modelling choice the
  * owner stated no figure for, and the one constant to move if they meant t=0.
  * ==============================================================================
  */
@@ -89,8 +91,8 @@ export const PARTY_SIZE = 5;
 export const RAID_TANK_HIT_FRACTION = 0.1;
 export const RAID_TANK_HIT_PERIOD_MS = seconds(2);
 /** The raid-wide pulse: an opening hit, then ticks, every period. */
-export const RAID_PULSE_PERIOD_MS = seconds(15);
-export const RAID_PULSE_FIRST_MS = seconds(15);
+export const RAID_PULSE_PERIOD_MS = seconds(20);
+export const RAID_PULSE_FIRST_MS = seconds(20);
 export const RAID_PULSE_OPENING_FRACTION = 0.25;
 export const RAID_PULSE_TICK_FRACTION = 0.15;
 export const RAID_PULSE_TICK_PERIOD_MS = seconds(2);

@@ -94,9 +94,6 @@ const MENTIONS_BUT_IS_A_LIVE_GAP: Record<string, string> = {
   'paladin.sacred_duty':
     "Its Divine Protection half IS scoped. What is left is Divine Shield, which Forever does NOT disarm you with -- it reduces your damage by 50% -- so it is a real survival cooldown nobody has declared.",
 
-  'paladin.light_s_vigil':
-    'Names a heal, and healing throughput IS simulated since round 52 -- it is a party heal nobody has declared, a live gap.',
-
   'shaman.water_shield':
     'MANA RETURN, which is explicitly in scope. Inert because neither profile is attacked and neither heals -- the target, not the ruling.',
   'priest.divine_fury':

@@ -8,7 +8,10 @@ import {
   healthFraction,
   injuredCount,
   lowestHealth,
+  lowestParty,
+  lowestPartyMember,
   partyMembers,
+  raidCarriesAura,
   raidMembers,
   tankOf,
   withAuraFrom,
@@ -79,6 +82,8 @@ function smartTargeted(entry: AplEntry): AplEntry {
    * health -- so it is left exactly as written.
    */
   if (entry.target?.kind === 'withAura') return entry;
+  // Nor a `lowestParty` one (round 61): the party is the choice there.
+  if (entry.target?.kind === 'lowestParty') return entry;
   return entry.target ? { ...entry, target: { kind: 'lowestHealth' } } : entry;
 }
 
@@ -121,6 +126,10 @@ function compileTarget(
     case 'withAura': {
       const { auraId } = target;
       return (context, actor) => withAuraFrom(context, actor, auraId);
+    }
+    case 'lowestParty': {
+      const { withoutAura } = target;
+      return (context, actor) => lowestPartyMember(context, actor, { withoutAura });
     }
   }
 }
@@ -336,9 +345,26 @@ export function compileCondition(condition: AplCondition): Condition {
           if (target?.party === undefined) return false;
           return compare(averageHealth(partyMembers(context, actor, target.party)), how, fraction);
         }
+        if (of === 'lowestParty') {
+          const party = lowestParty(context, actor);
+          return (
+            party !== undefined &&
+            compare(averageHealth(partyMembers(context, actor, party)), how, fraction)
+          );
+        }
         const raid = raidMembers(context, actor);
         return raid.length > 0 && compare(averageHealth(raid), how, fraction);
       };
+    }
+
+    case 'raidSize': {
+      const { compare: how, count } = condition;
+      return (context, actor) => compare(raidMembers(context, actor).length, how, count);
+    }
+
+    case 'raidAura': {
+      const { auraId, present } = condition;
+      return (context, actor) => raidCarriesAura(context, actor, auraId) === present;
     }
 
     case 'swingIn': {

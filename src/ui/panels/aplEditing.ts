@@ -270,7 +270,9 @@ export type ClauseKind =
   // How many targets the fight holds (round 57). `value` is the count.
   | 'targets'
   // How many friendlies need healing (round 60). `value` is the count.
-  | 'injured';
+  | 'injured'
+  // How many raid members there are to heal (round 61). `value` is the count.
+  | 'raidSize';
 
 /** Which weapon's swing timer a `swing` clause reads. */
 export type SwingSlot = 'mainHand' | 'offHand' | 'ranged';
@@ -319,7 +321,7 @@ export type FightUnit = 'percentLeft' | 'secondsLeft' | 'secondsElapsed';
 export interface Clause {
   readonly kind: ClauseKind;
   /** buff: whose, and which. `pet` can only be asked `up` or `absent`. */
-  readonly on?: 'self' | 'target' | 'pet';
+  readonly on?: 'self' | 'target' | 'pet' | 'raid';
   readonly auraId?: string;
   readonly test?: BuffTest;
   /** resource: which pool. `combo` is combo points, which are not a pool. */
@@ -348,7 +350,7 @@ export interface Clause {
 }
 
 /** Whose health a `health` clause reads. See `Clause.who`. */
-export type HealthOf = 'self' | 'target' | 'tank' | 'party' | 'raid';
+export type HealthOf = 'self' | 'target' | 'tank' | 'party' | 'raid' | 'lowestParty';
 
 /**
  * A condition as a TREE the panel can walk.
@@ -644,6 +646,15 @@ function toClause(condition: AplCondition): Clause | undefined {
       };
     case 'targetCount':
       return { kind: 'targets', compare: condition.compare, value: condition.count };
+    case 'raidSize':
+      return { kind: 'raidSize', compare: condition.compare, value: condition.count };
+    case 'raidAura':
+      return {
+        kind: 'buff',
+        on: 'raid',
+        auraId: condition.auraId,
+        test: condition.present ? 'up' : 'absent',
+      };
     case 'injuredCount':
       return {
         kind: 'injured',
@@ -705,8 +716,10 @@ export function fromClause(clause: Clause): AplCondition {
   const value = clause.value ?? 0;
   switch (clause.kind) {
     case 'buff': {
-      const on = clause.on ?? 'self';
       const auraId = clause.auraId ?? '';
+      // Anybody in the raid carrying YOUR aura (round 61): up, or not up.
+      if (clause.on === 'raid') return { kind: 'raidAura', auraId, present: clause.test === 'up' };
+      const on = clause.on ?? 'self';
       if (clause.test === 'up') return { kind: 'aura', on, auraId, present: true };
       if (clause.test === 'absent') return { kind: 'aura', on, auraId, present: false };
       /*
@@ -765,6 +778,8 @@ export function fromClause(clause: Clause): AplCondition {
       };
     case 'targets':
       return { kind: 'targetCount', compare, count: value };
+    case 'raidSize':
+      return { kind: 'raidSize', compare, count: value };
     case 'injured':
       return {
         kind: 'injuredCount',
@@ -842,6 +857,9 @@ export function blankClause(kind: ClauseKind): Clause {
       return { kind: 'targets', compare: 'atLeast', value: 3 };
     case 'injured':
       return { kind: 'injured', injuredOf: 'targetParty', belowPercent: 90, compare: 'atLeast', value: 2 };
+    case 'raidSize':
+      // "At least six": more than one party, which is the raid healer fight.
+      return { kind: 'raidSize', compare: 'atLeast', value: 6 };
   }
 }
 

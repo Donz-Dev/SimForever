@@ -19,12 +19,17 @@ for (const fight of ['tank', 'raid'] as const) {
     `\n${fight.toUpperCase()} HEALER  HPS ${batch.hps.mean.toFixed(1)} +/- ${batch.hps.standardDeviation.toFixed(1)}` +
       `  TPS ${batch.tps.mean.toFixed(1)}  healing power ${batch.stats?.healingPower.toFixed(0)}` +
       `  haste ${(((batch.stats?.hasteMultiplier ?? 1) - 1) * 100).toFixed(2)}%` +
-      `  allied deaths ${batch.alliedDeaths.toFixed(2)}  mana gained ${mana.totalGained.toFixed(0)} spent ${mana.totalSpent.toFixed(0)}`,
+      `  allied deaths ${batch.alliedDeaths.toFixed(2)}  tank deaths ${(batch.tankDeaths ?? 0).toFixed(2)}` +
+      `  mana gained ${mana.totalGained.toFixed(0)} spent ${mana.totalSpent.toFixed(0)}`,
   );
   for (const row of batch.healing) {
     console.log(
       `  ${row.abilityName.padEnd(16)} ${row.uses.toFixed(1).padStart(6)} casts  ${row.healing.toFixed(0).padStart(7)} healed` +
         `  ${(100 * row.share).toFixed(1).padStart(5)}%  crit ${(100 * row.critRate).toFixed(1)}%  overheal ${(100 * row.overhealRate).toFixed(1)}%`,
     );
+  }
+  // What the people healed carried, averaged across them (round 60).
+  for (const row of batch.healedBuffUptime) {
+    console.log(`  on those healed: ${row.auraName.padEnd(18)} ${(100 * row.uptime).toFixed(1)}%`);
   }
 }

@@ -560,15 +560,73 @@ export const PALADIN_HOLY: AplList = {
      */
     ...RACIAL_COOLDOWNS,
     ...CONSUMABLE_COOLDOWNS,
+    /*
+     * ========================================================================
+     * THE LIGHT'S VIGIL CHAIN (round 61), RAID HEALER ONLY -- the owner's:
+     * "Use Light's Vigil on the tank (party 1) and hold your Holy Shock. When
+     * the raid damage event happens then use a Holy Shock on the tank/party 1,
+     * then use Light's Vigil on party 2 and Holy Shock again. Then 6 seconds
+     * later use Light's Vigil on party 3 and the next Holy Shock on that party."
+     *
+     * TWO ENTRIES MAKE THAT CHAIN. Holy Shock goes to whoever carries the
+     * Vigil once that party's average falls under 80%, which the tank alone
+     * cannot pull it to -- so it is HELD until the raid pulse. Spending the
+     * Vigil gives Holy Shock its cooldown back. Light's Vigil goes out whenever
+     * none of yours is up, on the lowest member of the lowest party: party one
+     * at the pull, where every party is full and the tie goes to the tank, and
+     * then the next-lowest party once the shock has spent it.
+     *
+     * "RAID HEALER ONLY" IS "AT LEAST 6 RAID MEMBERS TO HEAL" -- one party's
+     * worth and more, which the tank fight's single tank never reaches.
+     *
+     * THE 80% IS OURS, not the owner's: the point at which a party "needs" the
+     * shock. Editable in the panel like every other figure here.
+     * ========================================================================
+     */
+    {
+      abilityId: 'holy_shock',
+      target: { kind: 'withAura', auraId: 'lights_vigil' },
+      condition: {
+        kind: 'all',
+        of: [
+          { kind: 'raidSize', compare: 'atLeast', count: 6 },
+          { kind: 'friendlyHealth', of: 'party', compare: 'below', fraction: 0.8 },
+        ],
+      },
+      note: "Raid healer: on your Light's Vigil target, once its party is under 80%.",
+    },
+    {
+      abilityId: 'lights_vigil',
+      target: { kind: 'lowestParty', withoutAura: 'lights_vigil' },
+      condition: {
+        kind: 'all',
+        of: [
+          { kind: 'raidSize', compare: 'atLeast', count: 6 },
+          { kind: 'raidAura', auraId: 'lights_vigil', present: false },
+        ],
+      },
+      note: "Raid healer: on the lowest party, whenever none of your Light's Vigils is up.",
+    },
     {
       abilityId: 'holy_light',
       target: { kind: 'tank' },
       condition: { kind: 'health', on: 'target', compare: 'below', fraction: 0.65 },
     },
     {
+      /*
+       * THE TANK FIGHT'S HOLY SHOCK, and only there (round 61): in the raid
+       * fight the shock is HELD for the Vigil chain above, and a shock spent
+       * here would put it on a ten second cooldown and break the chain.
+       */
       abilityId: 'holy_shock',
       target: { kind: 'tank' },
-      condition: { kind: 'health', on: 'target', compare: 'below', fraction: 0.3 },
+      condition: {
+        kind: 'all',
+        of: [
+          { kind: 'raidSize', compare: 'below', count: 6 },
+          { kind: 'health', on: 'target', compare: 'below', fraction: 0.3 },
+        ],
+      },
     },
     {
       abilityId: 'flash_of_light',

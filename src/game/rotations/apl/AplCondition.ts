@@ -154,10 +154,14 @@ export type AplCondition =
    * mean of the entry target's party, or the mean of the whole raid. The
    * entry's own target is `health` with `on: 'target'`, which already existed.
    * With no raid in the fight every subject reads full.
+   *
+   * `lowestParty` (round 61) is the mean of whichever party has the LOWEST
+   * mean -- the owner's "average party hit points %, where lowest can be
+   * selected", for the Holy Pal's Light's Vigil chain.
    */
   | {
       readonly kind: 'friendlyHealth';
-      readonly of: 'tank' | 'party' | 'raid';
+      readonly of: 'tank' | 'party' | 'raid' | 'lowestParty';
       readonly compare: AplCompare;
       readonly fraction: number;
     }
@@ -174,6 +178,19 @@ export type AplCondition =
       readonly compare: AplCompare;
       readonly count: number;
     }
+  /**
+   * HOW MANY THERE ARE TO HEAL (round 61): the raid members in the fight, the
+   * tank included and the healer not. One in the tank healer fight, twenty in
+   * the raid healer fight and none in a damage fight -- so "at least 6" is the
+   * owner's "only used for Raid Healer", said as a number a panel can edit.
+   */
+  | { readonly kind: 'raidSize'; readonly compare: AplCompare; readonly count: number }
+  /**
+   * Whether ANY raid member carries one of YOUR auras (round 61). The Holy
+   * Pal's Light's Vigil goes out only when none of its own is up, which is
+   * what makes the owner's chain one party at a time.
+   */
+  | { readonly kind: 'raidAura'; readonly auraId: string; readonly present: boolean }
   /** Milliseconds until a weapon swings again. Zero when the slot is idle. */
   | {
       readonly kind: 'swingIn';
@@ -239,7 +256,14 @@ export type AplTarget =
    * of them when several do. The Piss Beam list's Chain Heal "on the target
    * that has Riptide". Nobody, when nobody carries it, so the entry waits.
    */
-  | { readonly kind: 'withAura'; readonly auraId: string };
+  | { readonly kind: 'withAura'; readonly auraId: string }
+  /**
+   * The lowest-health member of the party with the lowest AVERAGE health
+   * (round 61), optionally skipping any party where a member already carries
+   * one of YOUR `withoutAura` -- Light's Vigil's one-per-party rule. Ties go to
+   * the lower party, so at full health it is the tank in party one.
+   */
+  | { readonly kind: 'lowestParty'; readonly withoutAura?: string };
 
 /** When to ask whether to cancel a cast, and what to ask. See `AplEntry.cancel`. */
 export interface AplCastCancel {

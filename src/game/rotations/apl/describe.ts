@@ -149,9 +149,17 @@ export function describeCondition(condition: AplCondition, names: DescribeNames 
           ? "the tank's health"
           : condition.of === 'party'
             ? "the target's party's average health"
-            : "the raid's average health";
+            : condition.of === 'lowestParty'
+              ? "the lowest party's average health"
+              : "the raid's average health";
       return `${who} is ${comparison(condition.compare)} ${Math.round(condition.fraction * 100)}%`;
     }
+
+    case 'raidSize':
+      return `${comparison(condition.compare)} ${condition.count} raid member${condition.count === 1 ? '' : 's'} to heal`;
+
+    case 'raidAura':
+      return `your ${condition.auraId.replace(/_/g, ' ')} is ${condition.present ? 'on someone in the raid' : 'on nobody in the raid'}`;
 
     case 'swingIn':
       return `your ${slotWord(condition.slot)} swing is ${comparison(condition.compare)} ${condition.milliseconds}ms away`;

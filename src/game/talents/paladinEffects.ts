@@ -268,18 +268,10 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   /*
-   * A LIVE GAP SINCE ROUND 52, no longer a ruling: healing is a feature, and
-   * the party heal off a Holy Shock is expressible -- it is simply not built,
-   * and the owner's Holy Pal list does not cast it.
+   * DECLARED IN ROUND 61, when the owner asked the Holy Pal to cast it. The
+   * spell and its Holy Shock half are `LIGHTS_VIGIL_ABILITY`.
    */
-  light_s_vigil: [
-    {
-      kind: 'unmodelled',
-      reason:
-        "Light's Vigil is not declared: a party heal off the next Holy Shock, and " +
-        'the Holy Pal list does not cast it.',
-    },
-  ],
+  light_s_vigil: [{ kind: 'grantAbility', abilityId: 'lights_vigil' }],
 
   // --- Protection ----------------------------------------------------------
 
