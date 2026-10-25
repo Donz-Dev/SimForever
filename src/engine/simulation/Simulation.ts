@@ -842,6 +842,8 @@ export class Simulation implements SimulationContext {
       finalHealth: actor.health.current,
       isAlive: actor.isAlive,
       rotation: actor.rotation?.name,
+      ...(actor.party !== undefined ? { party: actor.party } : {}),
+      ...(actor.raidRole !== undefined ? { raidRole: actor.raidRole } : {}),
     }));
 
     return {

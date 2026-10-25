@@ -24,6 +24,9 @@ export interface ActorResult {
   readonly damageDone: number;
   readonly dps: number;
   readonly healingDone: number;
+  /** A healer fight's raid party and role (round 62); absent otherwise. */
+  readonly party?: number;
+  readonly raidRole?: 'tank';
 }
 
 /**
@@ -79,6 +82,8 @@ export function buildSimulationResult(run: SimulationRun): SimulationResult {
     damageDone: damageByActor.get(actor.id)?.total ?? 0,
     dps: damageByActor.get(actor.id)?.dps ?? 0,
     healingDone: healingByActor.get(actor.id)?.total ?? 0,
+    ...(actor.party !== undefined ? { party: actor.party } : {}),
+    ...(actor.raidRole !== undefined ? { raidRole: actor.raidRole } : {}),
   }));
 
   const nameOf = new Map(run.actors.map((actor) => [actor.id, actor.name]));

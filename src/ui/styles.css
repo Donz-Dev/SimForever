@@ -256,6 +256,16 @@
   --class-warlock: #9482c9;
   --class-druid: #ff7d0a;
 
+  /*
+   * Raid frames (round 62), fixed across themes like the series: red is the
+   * health a member has left and grey the health it is missing -- the owner's
+   * own picture -- so two frames compare by eye whatever the chrome is.
+   */
+  --raid-health: #d9262e;
+  --raid-missing: #b9b9bd;
+  --raid-frame: #7d7d82;
+  --raid-ink: #111111;
+
   /* One ink for every filled pill. All nine class colours are light or mid, so
      a single dark text colour clears 4.5:1 on all of them -- checked, not
      assumed, and the shaman blue is the tightest at about 5.4:1. */
@@ -3174,3 +3184,83 @@ button:disabled {
   }
 }
 
+
+/*
+ * RAID FRAMES (round 62): the raid's health every few seconds, one column a
+ * party. Red is health left and grey is health missing, the owner's own
+ * picture of it, kept fixed across the themes so frames compare by eye.
+ */
+.raid-frames-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.raid-frames-controls input[type='range'] {
+  flex: 1 1 160px;
+}
+.raid-frame {
+  margin: 0;
+}
+.raid-frame figcaption {
+  color: var(--text-muted);
+  font-size: 0.85em;
+  margin-bottom: 4px;
+}
+.raid-frame-grid {
+  display: grid;
+  gap: 4px;
+}
+.raid-party {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.raid-cell {
+  position: relative;
+  height: 40px;
+  background: var(--raid-missing);
+  border: 2px solid var(--raid-frame);
+  overflow: hidden;
+}
+.raid-cell-died {
+  border-color: var(--accent-strong);
+}
+.raid-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--raid-health);
+}
+.raid-label {
+  position: relative;
+  display: block;
+  text-align: center;
+  line-height: 36px;
+  font-weight: 600;
+  color: var(--raid-ink);
+}
+.raid-died {
+  font-size: 0.8em;
+}
+.raid-auras {
+  position: absolute;
+  left: 2px;
+  bottom: 0;
+  font-size: 0.65em;
+  color: var(--raid-ink);
+  white-space: nowrap;
+}
+.raid-frames-all {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.raid-frame-small .raid-cell {
+  height: 18px;
+  border-width: 1px;
+}
+.raid-frame-small .raid-label {
+  line-height: 16px;
+  font-size: 0.7em;
+}

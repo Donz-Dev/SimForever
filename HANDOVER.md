@@ -107,6 +107,30 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 62: raid frames, a diagnostic for the raid healer
+
+The owner's ask: "a snapshot of all 20 players' hit points as the fight
+progresses", to troubleshoot the Raid Healer simulation. It is a **Raid frames**
+section under Healing done, shown in the raid healer fight only:
+
+- **One frame every 2 or 3 seconds** through the representative fight. Each
+  frame is one column per party with the tank first, red for health left and
+  grey for health missing -- the owner's own picture.
+- **A slider with Prev and Next** steps through the frames, and **"every frame"**
+  lays all of them out in order to compare side by side.
+- **"(Died)" marks a death since the previous frame.** The healer fights revive
+  a member the instant it dies, so a death is never a state a snapshot could
+  catch.
+- **The healer's own auras are named on each member** -- a Light's Vigil, a
+  Riptide -- because who a heal was aimed at is most of what a raid healer list
+  decides.
+
+**READ OFF THE EVENT STREAM**, the way the tank health chart is: every damage
+and heal carries its target's health afterwards. To lay out the parties, each
+actor in a fight's result now carries its `party` and `raidRole`. Both are
+absent outside the healer fights, so nothing else changed. The replay is
+`ui/charts/raidFrameSnapshots.ts`.
+
 ## Round 61: Light's Vigil, and a raid pulse every 20 seconds
 
 Two owner asks, measured separately because they move the same figure:
