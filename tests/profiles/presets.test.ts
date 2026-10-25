@@ -81,6 +81,7 @@ describe('the preset catalogue', () => {
       'warlock_demonology',
       'shadow_priest',
       'holy_pal',
+      'mage_frost',
     ]);
     expect(PROFILE_PRESETS.map((preset) => preset.label)).toEqual([
       '2H Arms',
@@ -115,6 +116,7 @@ describe('the preset catalogue', () => {
       'Fire Demo',
       'Shadow',
       'Holy Pal',
+      'Frost Mage',
     ]);
   });
 
@@ -163,6 +165,7 @@ describe('the preset catalogue', () => {
       warlock_demonology: 'warlock',
       shadow_priest: 'priest',
       holy_pal: 'paladin',
+      mage_frost: 'mage',
     };
 
     expect(Object.keys(expected)).toHaveLength(PROFILE_PRESETS.length);

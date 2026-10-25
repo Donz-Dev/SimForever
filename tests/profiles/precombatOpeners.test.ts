@@ -230,6 +230,12 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
   ],
   // Round 52's healer: the owner gave a list and no opener.
   holy_pal: [],
+  // Round 59: the owner's saved Frost build.
+  mage_frost: [
+    [60, 'mage_armor'],
+    [3.5, 'ice_barrier'],
+    [2, 'frostbolt'],
+  ],
 };
 
 /** Every cast a fight recorded, with the moment it happened. */

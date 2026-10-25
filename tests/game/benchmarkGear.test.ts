@@ -410,6 +410,7 @@ describe('a caster weapon trades melee damage for a stated spell power', () => {
       'Fire',
       'Fire Demo',
       'Firelock',
+      'Frost Mage',
       'Frostfire',
       'Holy Pal',
       'Moonkin',

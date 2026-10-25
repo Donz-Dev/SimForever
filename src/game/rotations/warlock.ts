@@ -16,6 +16,7 @@ import {
   selfHas,
   targetExpired,
   targetMissing,
+  targetCount,
   targetTime,
 } from './apl';
 import type { TalentAllocation } from '../talents/Talent';
@@ -360,6 +361,13 @@ export const WARLOCK_DESTRUCTION: AplList = {
    */
   ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
   ...CONSUMABLE_HEALS,
+  /*
+   * BANE OF HAVOC WITH A SECOND TARGET, AND NEVER WITHOUT ONE (round 59): the
+   * ability puts it on enemy #2 itself and refuses at one target, so this
+   * entry is inert in every single-target fight. Cast once -- the curse lasts
+   * five minutes -- so 15% of the main target's damage is copied from then on.
+   */
+  { abilityId: 'bane_of_havoc', condition: targetCount('atLeast', 2) },
   /*
    * NO CORRUPTION, by the ruleset owner's instruction. It was 10.3% of this
    * profile's damage and it is out: a 2-second cast and a global cooldown spent

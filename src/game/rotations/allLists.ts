@@ -7,7 +7,7 @@ import {
   HUNTER_LONE_WOLF_MELEE,
   HUNTER_LONE_WOLF_RANGED,
 } from './hunter';
-import { MAGE_ARCANE, MAGE_FIRE, MAGE_FROSTFIRE } from './mage';
+import { MAGE_ARCANE, MAGE_FIRE, MAGE_FROST, MAGE_FROSTFIRE } from './mage';
 import {
   PALADIN_HOLY,
   PALADIN_PROTECTION,
@@ -249,6 +249,12 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     owner: 'mage',
     list: MAGE_FROSTFIRE,
     profiles: ['mage_frostfire'],
+  },
+  {
+    name: 'MAGE_FROST',
+    owner: 'mage',
+    list: MAGE_FROST,
+    profiles: ['mage_frost'],
   },
   {
     name: 'MAGE_ARCANE',

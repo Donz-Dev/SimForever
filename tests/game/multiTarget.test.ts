@@ -392,16 +392,28 @@ describe('Multi-DoT', () => {
     expect(validateProfile(profile).ok).toBe(true);
   });
 
-  it('puts Bane of Havoc on one target only', () => {
+  it('puts Bane of Havoc on target #2 whatever it is cast at, and only there', () => {
+    /*
+     * THE OWNER'S RULING (round 59): "on >1 target Bane of Havoc should be
+     * hardcoded to cast on target #2". It used to go wherever the entry aimed
+     * it -- this test cast it at #2 and then #3 and expected #3.
+     */
     const run = fight(3, { abilities: [BANE_OF_HAVOC_ABILITY], stats: { hitChance: 100 } });
     run.simulation.advanceTo(0);
     const havoc = run.caster.abilities.get('bane_of_havoc')!;
-    castAbility(run.simulation, run.caster, havoc, run.enemies[1]);
-    run.simulation.advanceTo(seconds(2));
     castAbility(run.simulation, run.caster, havoc, run.enemies[2]);
     const carriers = run.enemies.filter((e) => e.auras.has(BANE_OF_HAVOC.id)).map((e) => e.id);
-    expect(carriers.length).toBeLessThanOrEqual(1);
-    if (carriers.length === 1) expect(carriers).toEqual(['dummy_3']);
+    expect(carriers).toEqual(['dummy_2']);
+    // And it is refused while it is up there.
+    run.simulation.advanceTo(seconds(2));
+    expect(castAbility(run.simulation, run.caster, havoc, run.enemies[0]).ok).toBe(false);
+  });
+
+  it('refuses Bane of Havoc on a single target, where it copies nothing', () => {
+    const run = fight(1, { abilities: [BANE_OF_HAVOC_ABILITY], stats: { hitChance: 100 } });
+    run.simulation.advanceTo(0);
+    const havoc = run.caster.abilities.get('bane_of_havoc')!;
+    expect(castAbility(run.simulation, run.caster, havoc, run.enemies[0]).ok).toBe(false);
   });
 });
 
