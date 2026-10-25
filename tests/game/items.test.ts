@@ -817,9 +817,12 @@ describe('equipping', () => {
     expect(live.mainHand).toBeDefined();
     expect(live.offHand).toBeDefined();
 
-    // Neither swings, which is what this test is actually about.
+    // Both count, which is what this test is actually about. The main hand is
+    // also a WEAPON since round 65 -- swung only if a Start Auto-attack runs --
+    // and the tome, which is no weapon, is not.
     expect(statsForStyle(caster, 'caster').spellPower).toBe(59 + 18);
-    expect(weaponsForEquipment(caster, 'caster')).toEqual({});
+    expect(weaponsForEquipment(caster, 'caster').mainHand).toBeDefined();
+    expect(weaponsForEquipment(caster, 'caster').offHand).toBeUndefined();
 
     // A style that fills the off hand with a WEAPON still keeps it, and a
     // two-hand style drops both hands.
@@ -880,8 +883,13 @@ describe('equipping', () => {
       expect(statsForStyle(twoHandOnly, style).strength, style).toBe(26);
 
       /*
-       * HELD, AND NEVER SWUNG -- neither kind produces a weapon.
+       * HELD, AND SWUNG ONLY WHEN STARTED (round 65): both kinds produce a
+       * weapon now, because Start Auto-attack lets a caster weave melee and a
+       * Hunter melee weave -- and the style's AUTO-ATTACK is still none or the
+       * bow, so nothing swings it until a start does. A Druid FORM is the case
+       * the paragraph below is about and still produces none, its paw stands.
        *
+       * The history, kept because it is why the forms are excluded:
        * An earlier version of this test asserted the OPPOSITE, on the
        * reasoning that `mainHand` was never stripped from a stat-stick style
        * so a held one-hander had always produced a weapon profile here, and
@@ -889,8 +897,11 @@ describe('equipping', () => {
        * agreeing on the wrong answer: `createPlayer` merges these OVER the
        * style's own weapons, so a profile returned here replaces a Cat's paw.
        */
+      expect(weaponsForEquipment(oneHandOnly, style).mainHand, style).toBeDefined();
+      expect(weaponsForEquipment(twoHandOnly, style).mainHand, style).toBeDefined();
+    }
+    for (const style of ['cat', 'bear', 'moonkin'] as const) {
       expect(weaponsForEquipment(oneHandOnly, style).mainHand, style).toBeUndefined();
-      expect(weaponsForEquipment(twoHandOnly, style).mainHand, style).toBeUndefined();
     }
 
     // A swinging style is unchanged: it still picks one hand or the other.

@@ -25,7 +25,9 @@ export {
   AUTO_ATTACK_RESOURCE_SOURCES,
   autoAttackName,
   extraAttack,
+  slotsForMode,
   startAutoAttack,
+  startAutoAttackMode,
   swingingSlots,
 } from './combat/autoAttack';
 export * from './rotation';

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { isStartAutoAttack } from '../../src/game/abilities/autoAttack';
 import { readFileSync, readdirSync } from 'node:fs';
 import type { TelemetryEvent } from '../../src/engine';
 import { Simulation, castAbility, seconds, startAutoAttack } from '../../src/engine';
@@ -247,7 +248,15 @@ describe('Premeditation, the one exception', () => {
      * "does not break stealth", so it is listed here the way Premeditation is
      * -- the exception list grew by one ruling, not by inference.
      */
+    /*
+     * AND START AUTO-ATTACK (round 65), which is not an action the ruling is
+     * about: it starts a swing timer and does nothing else, and the SWING it
+     * starts breaks stealth like any swing. Without the opt-out a Rogue's
+     * pre-combat start at T-0 would end its own opening stealth before the
+     * Ambush the list opens with.
+     */
     expect(filesDeclaring(/breaksActionAuras:\s*false/)).toEqual([
+      'src/game/abilities/autoAttack.ts',
       'src/game/abilities/druid.ts',
       'src/game/abilities/rogue.ts',
     ]);
@@ -331,7 +340,11 @@ describe('the Rogue opener, end to end', () => {
      * ==========================================================================
      */
     const profile = PRESETS_BY_ID.get('rogue_venom')!.build();
-    expect(profile.precombat ?? [], 'Venom opens on nothing').toEqual([]);
+    // Nothing but the Start Auto-attack every profile carries (round 65).
+    expect(
+      (profile.precombat ?? []).filter((action) => !isStartAutoAttack(action.abilityId)),
+      'Venom opens on nothing',
+    ).toEqual([]);
 
     const events: TelemetryEvent[] = [];
     const simulation = new Simulation(trainingDummyEncounter(profile, 4242), {

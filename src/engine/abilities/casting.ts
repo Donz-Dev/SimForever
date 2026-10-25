@@ -109,7 +109,7 @@ export function checkCast(
    * that the strike after it is not delayed -- and it still has to wait for
    * the current global cooldown to finish before it goes out.
    */
-  if (!options?.ignoreGcd && caster.isOnGcd(now)) {
+  if (!options?.ignoreGcd && !ability.ignoresGcd && caster.isOnGcd(now)) {
     return { ok: false, reason: 'on_gcd' };
   }
 
@@ -601,7 +601,7 @@ function runCast(
    */
   if (ability.breaksActionAuras !== false) caster.auras.breakOnAction(context);
 
-  if (caster.castReactions.length === 0) {
+  if (caster.castReactions.length === 0 || ability.firesCastReactions === false) {
     // Nothing is listening, so nothing needs measuring.
     ability.onCast(abilityContext);
     return;

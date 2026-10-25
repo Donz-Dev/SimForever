@@ -174,6 +174,20 @@ export interface Ability {
   readonly charges?: number;
   /** Whether using it starts the global cooldown. Defaults to true. */
   readonly triggersGcd?: boolean;
+  /**
+   * Whether a RUNNING global cooldown leaves it castable (round 65). Defaults
+   * to false: being off the global cooldown means not STARTING one, and a
+   * running one still blocks. Start Auto-attack is the owner's exception --
+   * "not impacted if you're on a global cooldown".
+   */
+  readonly ignoresGcd?: boolean;
+  /**
+   * Whether its cast reaches CAST REACTIONS (round 65). Defaults to true. Start
+   * Auto-attack and the Melee Weave's moves are not spells or attacks, and a
+   * reaction that rolls a chance on every cast would otherwise spend random
+   * numbers on them and change every fight that never asked for anything new.
+   */
+  readonly firesCastReactions?: boolean;
   /** Override the global cooldown length. Defaults to the caster's own. */
   readonly gcdMs?: Milliseconds;
   /** Whether haste shortens the cast time and GCD. Defaults to true. */

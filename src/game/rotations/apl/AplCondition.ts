@@ -276,6 +276,13 @@ export interface AplCastCancel {
 export interface AplEntry {
   readonly abilityId: string;
   readonly condition?: AplCondition;
+  /**
+   * A MELEE WEAVE's actions (round 65): what the Hunter does in melee before it
+   * runs back, in order, and also the weave's gate -- it begins only when every
+   * one of them can be cast. Absent is the owner's three. Only meaningful on a
+   * `melee_weave` entry. See `abilities/meleeWeave.ts`.
+   */
+  readonly weave?: readonly string[];
   /** Who it is cast at. Absent is the default enemy. */
   readonly target?: AplTarget;
   /**

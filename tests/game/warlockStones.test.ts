@@ -285,8 +285,8 @@ describe('the profile field', () => {
      * Target list.
      * ------------------------------------------------------------------------
      */
-    expect(CURRENT_PROFILE_VERSION).toBe(18);
-    expect(createDefaultProfile().version).toBe(18);
+    expect(CURRENT_PROFILE_VERSION).toBe(19);
+    expect(createDefaultProfile().version).toBe(19);
     // And a version 10 file still gains a stone, which is the test below.
   });
 

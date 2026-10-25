@@ -50,6 +50,21 @@ export type WeaponSlot = 'mainHand' | 'offHand' | 'ranged';
 export type AutoAttackMode = 'none' | 'main-hand' | 'dual-wield' | 'ranged';
 
 /**
+ * A SUB-ROUTINE THAT OWNS AN ACTOR'S DECISIONS until it finishes (round 65) --
+ * the Hunter's Melee Weave, which is a packaged run of actions the rest of the
+ * priority list must not interrupt. Asked on every decision before the
+ * rotation: the next action to cast, `wait` to be asked again shortly, or
+ * `done`, which hands the actor back to its list.
+ */
+export interface Subroutine {
+  readonly name: string;
+  next(
+    context: import('../simulation/SimulationContext').SimulationContext,
+    actor: Combatant,
+  ): { readonly ability: Ability; readonly target: Combatant | undefined } | 'wait' | 'done';
+}
+
+/**
  * The two fractions parry haste is stated in, both of a full swing.
  *
  * BOTH OF THE SWING, NOT ONE OF THE SWING AND ONE OF WHAT IS LEFT. "Reduces
@@ -307,6 +322,13 @@ export interface CombatantOptions {
   readonly parryHaste?: ParryHaste;
   /** Defaults to `none`: a combatant with no declared mode does not swing. */
   readonly autoAttack?: AutoAttackMode;
+  /**
+   * Whether it starts swinging BY ITSELF at the pull (round 65). Defaults to
+   * true, which is every enemy and pet. A PLAYER passes false: the owner's
+   * "Start Auto-attack" is an action in its priority list -- pre-combat or in
+   * combat -- and nothing swings until one runs.
+   */
+  readonly autoAttackOnPull?: boolean;
   /** Resources that refill on a timer. */
   readonly regeneration?: readonly ResourceRegen[];
   /**
@@ -481,7 +503,18 @@ export class Combatant {
   readonly weapons: Partial<Record<WeaponSlot, WeaponProfile>>;
   readonly hitBonusBySlot: Partial<Record<WeaponSlot, number>>;
   readonly baseGcdMs: Milliseconds;
+  /** The mode its STYLE gives it -- what it would swing. See `activeAutoAttack`. */
   readonly autoAttack: AutoAttackMode;
+  /**
+   * The mode it IS swinging in (round 65). The style's at the pull for an
+   * enemy or a pet; `none` for a player until a Start Auto-attack runs, and
+   * whatever that last started afterwards. See `startAutoAttackMode`.
+   */
+  activeAutoAttack: AutoAttackMode;
+  /** Whether combat has begun scheduling swings. Before it, a start just sets the mode. */
+  swingsBegun = false;
+  /** The sub-routine running its decisions, if any (round 65). See `Subroutine`. */
+  subroutine: Subroutine | null = null;
   readonly costRefundOnMiss?: CostRefundRule;
   /** What a critical swing multiplies a flat resource award by. See the option. */
   readonly critResourceMultiplier: number;
@@ -697,6 +730,7 @@ export class Combatant {
     this.hitBonusBySlot = options.hitBonusBySlot ?? {};
     this.baseGcdMs = options.baseGcdMs ?? DEFAULT_GCD_MS;
     this.autoAttack = options.autoAttack ?? 'none';
+    this.activeAutoAttack = options.autoAttackOnPull === false ? 'none' : this.autoAttack;
     this.costRefundOnMiss = options.costRefundOnMiss;
     this.critResourceMultiplier = options.critResourceMultiplier ?? 1;
     this.parryHaste = options.parryHaste;

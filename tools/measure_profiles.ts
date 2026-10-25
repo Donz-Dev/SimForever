@@ -47,6 +47,7 @@
  * runs. A difference smaller than the printed interval is NOT A DIFFERENCE.
  * ============================================================================
  */
+import { START_AUTO_ATTACK_ABILITIES } from '../src/game/abilities/autoAttack';
 import { writeFileSync, readFileSync } from 'node:fs';
 import { runProfileBatch } from '../src/simulator';
 import { PROFILE_PRESETS } from '../src/profiles';
@@ -146,6 +147,8 @@ const ABILITY_NAMES: ReadonlyMap<string, string> = new Map(
     PET_ABILITIES,
     // Learned by a RACE rather than a class, and named by every list.
     Object.values(RACIAL_ABILITIES),
+    // Start Auto-attack, which every character has (round 65).
+    START_AUTO_ATTACK_ABILITIES,
     /*
      * AND LEARNED BY DRINKING ONE, which is the same omission one category
      * along -- and the note above is what says to add it here rather than

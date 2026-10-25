@@ -209,7 +209,10 @@ describe("a Hunter's cast shots and the bow", () => {
    * swings a melee weapon and a bow at once. `swingingSlots` returns the ranged
    * slot alone for a ranged style and never includes it for any other, so "the
    * ranged auto-attack continues" and "the auto-attack continues" are the same
-   * set -- and a per-slot gate would be unreachable code.
+   * set -- and a per-slot gate would be unreachable code. Since round 65 the
+   * slots follow the ACTIVE kind of auto-attack rather than the style, and
+   * Start Auto-attack runs one kind at a time, which keeps it true for a
+   * Hunter that melee weaves.
    *
    * ASSERTED RATHER THAN BUILT, which is the arrangement `positioning.test.ts`
    * uses for the behind-the-target exception: the day a style swings both, this
@@ -218,7 +221,7 @@ describe("a Hunter's cast shots and the bow", () => {
   it('has no combatant that swings a melee weapon and the bow at once', () => {
     const styles = ['none', 'main-hand', 'dual-wield', 'ranged'] as const;
     for (const autoAttack of styles) {
-      const slots = swingingSlots({ autoAttack } as Combatant);
+      const slots = swingingSlots({ activeAutoAttack: autoAttack } as unknown as Combatant);
       const ranged = slots.includes('ranged');
       const melee = slots.some((slot) => slot === 'mainHand' || slot === 'offHand');
       expect(ranged && melee, autoAttack).toBe(false);

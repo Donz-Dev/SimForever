@@ -6,6 +6,14 @@ import { withoutUnselectedConsumables } from '../game/rotations/consumableCooldo
 import type { AplList } from '../game/rotations/apl';
 import type { CharacterProfile, StoredRotation } from './CharacterProfile';
 import { setSection, withSection } from './aplSections';
+import { slotsForMode } from '../engine';
+import { autoAttackModeForStyle } from '../game/actors/weapons';
+import {
+  START_AUTO_ATTACK_IDS,
+  defaultStartAutoAttackMode,
+  isStartAutoAttack,
+  startAutoAttackModeOf,
+} from '../game/abilities/autoAttack';
 
 /**
  * Keeping a profile's stored priority list honest about the build it belongs
@@ -126,14 +134,68 @@ export function syncDefaultRotation(profile: CharacterProfile): CharacterProfile
    * gets a copy of the synced Single Target one, which is what a fresh
    * character and a preset start with. Unchanged returns the SAME object.
    */
-  const single = syncOneRotation(profile);
+  const single = withStartAutoAttack(syncOneRotation(profile));
   const multiView = profile.multiTarget
-    ? syncOneRotation(withSection(profile, 'multi'))
+    ? withStartAutoAttack(syncOneRotation(withSection(profile, 'multi')))
     : withSection(single, 'single');
-  if (profile.multiTarget && single === profile && multiView.rotation === profile.multiTarget.rotation) {
+  if (
+    profile.multiTarget &&
+    single === profile &&
+    multiView.rotation === profile.multiTarget.rotation &&
+    multiView.precombat === profile.multiTarget.precombat
+  ) {
     return profile;
   }
   return setSection(single, 'multi', multiView);
+}
+
+/**
+ * START AUTO-ATTACK, PRE-POPULATED (round 65), on the list at the ROOT.
+ *
+ * ============================================================================
+ * The owner: "by default the appropriate one should be identified and
+ * pre-populated for the user." So a build whose style swings, and whose
+ * pre-combat AND combat lists name no Start Auto-attack at all, gets its own
+ * kind at the end of its pre-combat list -- ready to swing at T-0, which is
+ * where every character swung before this existed. A caster's style swings
+ * nothing and is given nothing; its melee is a choice.
+ *
+ * AND A KIND THE WEAPONS CANNOT FILL IS SWAPPED for the build's own -- Dual
+ * Wield after the off hand became a shield, Ranged after the class changed --
+ * because a refused start swings nothing all fight, quietly. A kind the
+ * weapons CAN fill is the user's choice and is left alone.
+ *
+ * Unchanged returns the SAME object.
+ * ============================================================================
+ */
+export function withStartAutoAttack(profile: CharacterProfile): CharacterProfile {
+  const style = resolveCombatStyle(profile.character.characterClass, profile.character.combatStyle);
+  const natural = autoAttackModeForStyle(style);
+  const preferred = defaultStartAutoAttackMode(style);
+  const weapons = weaponsFor(profile.equipment, style);
+  const fillable = (abilityId: string) => {
+    const mode = startAutoAttackModeOf(abilityId);
+    return mode !== undefined && slotsForMode(mode).every((slot) => weapons[slot] !== undefined);
+  };
+  const precombat = profile.precombat ?? [];
+  const named = [...precombat.map((a) => a.abilityId), ...profile.rotation.entries.map((e) => e.abilityId)].filter(
+    isStartAutoAttack,
+  );
+
+  let next = precombat;
+  if (named.length === 0) {
+    if (natural === 'none') return profile;
+    next = [...precombat, { abilityId: START_AUTO_ATTACK_IDS[preferred], secondsBefore: 0 }];
+  } else if (precombat.some((a) => isStartAutoAttack(a.abilityId) && !fillable(a.abilityId))) {
+    next = precombat.map((a) =>
+      isStartAutoAttack(a.abilityId) && !fillable(a.abilityId)
+        ? { ...a, abilityId: START_AUTO_ATTACK_IDS[preferred] }
+        : a,
+    );
+  } else {
+    return profile;
+  }
+  return { ...profile, precombat: next };
 }
 
 /** Sync the list at the ROOT -- one section. See `syncDefaultRotation`. */

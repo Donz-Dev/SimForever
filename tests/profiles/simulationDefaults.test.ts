@@ -49,8 +49,8 @@ describe('a new profile', () => {
      * The typechecker found that one (TS1117); this is what says which version
      * the surviving field belongs to.
      */
-    expect(CURRENT_PROFILE_VERSION).toBe(18);
-    expect(createDefaultProfile().version).toBe(18);
+    expect(CURRENT_PROFILE_VERSION).toBe(19);
+    expect(createDefaultProfile().version).toBe(19);
     expect(createDefaultProfile().encounter.numberOfTargets).toBe(1);
     /*
      * AND VERSION 16'S FIELD IS ABSENT ON A NEW PROFILE, not an empty array.

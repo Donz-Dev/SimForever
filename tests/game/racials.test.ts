@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { isStartAutoAttack } from '../../src/game/abilities/autoAttack';
 import { describe, expect, it } from 'vitest';
 import type { Ability, Combatant, RNG } from '../../src/engine';
 import { critMultiplierWith } from '../../src/engine';
@@ -1994,6 +1995,7 @@ function attemptCast(
   // from a swing reads as this ability's.
   (player as { rotation?: unknown }).rotation = undefined;
   (player as { autoAttack: string }).autoAttack = 'none';
+  (player as { activeAutoAttack: string }).activeAutoAttack = 'none';
 
   const target = makeTarget({ maxHealth: 1_000_000_000 });
   const recorder = new TelemetryRecorder();
@@ -2078,6 +2080,8 @@ describe('every damaging ability an Undead can cast takes a roll', () => {
   const rows: CoverageRow[] = [];
   for (const characterClass of UNDEAD_CLASSES) {
     for (const ability of createPlayer({ race: 'undead', characterClass }).abilities.all) {
+      // Start Auto-attack deals nothing itself -- the swings it starts are swings.
+      if (isStartAutoAttack(ability.id)) continue;
       rows.push(coverageFor(characterClass, ability));
     }
   }

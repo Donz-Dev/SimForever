@@ -660,6 +660,25 @@ export class Simulation implements SimulationContext {
           return;
         }
 
+        /*
+         * A SUB-ROUTINE RUNS FIRST AND OWNS THE DECISION UNTIL IT IS DONE (round
+         * 65): the Melee Weave's actions, which nothing in the list may cut in
+         * on. `wait` polls; `done` hands the actor back to its list at once.
+         */
+        if (actor.subroutine) {
+          const step = actor.subroutine.next(ctx, actor);
+          if (step === 'done') {
+            actor.subroutine = null;
+          } else if (step === 'wait') {
+            this.scheduleDecision(actor, this.nextDecisionTime(actor));
+            return;
+          } else {
+            const result = ctx.cast(actor, step.ability, step.target);
+            this.scheduleDecision(actor, this.nextDecisionTime(actor, result.ok ? step.ability : undefined));
+            return;
+          }
+        }
+
         const decision = actor.rotation.selectAction(ctx, actor);
         /*
          * WHAT WAS CAST IS PASSED ON, because "act again at once" is a question

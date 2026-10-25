@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { START_AUTO_ATTACK_IDS, isStartAutoAttack } from '../../src/game/abilities/autoAttack';
+import { autoAttackModeForStyle } from '../../src/game/actors/weapons';
+import { resolveCombatStyle } from '../../src/game/character';
 import type { TelemetryEvent } from '../../src/engine';
 import { Simulation } from '../../src/engine';
 import { PROFILE_PRESETS, PRESETS_BY_ID } from '../../src/profiles/presets';
@@ -256,7 +259,32 @@ function castsIn(presetId: string): readonly { id: string; at: number }[] {
     }));
 }
 
+/*
+ * THE START AUTO-ATTACK EVERY PROFILE CARRIES IS NOBODY'S OPENER LINE (round
+ * 65): `withStartAutoAttack` appends it when a list names none, so it is read
+ * out before the transcription is compared, and pinned on its own below.
+ */
+function precombatOf(id: string) {
+  return (PRESETS_BY_ID.get(id)!.build().precombat ?? []).filter(
+    (action) => !isStartAutoAttack(action.abilityId),
+  );
+}
+
 describe("the owner's openers are transcribed exactly", () => {
+  it('carries one Start Auto-attack per profile, at the pull, of its own kind', () => {
+    for (const preset of PROFILE_PRESETS) {
+      const profile = preset.build();
+      const starts = (profile.precombat ?? []).filter((action) => isStartAutoAttack(action.abilityId));
+      const style = resolveCombatStyle(profile.character.characterClass, profile.character.combatStyle);
+      const mode = autoAttackModeForStyle(style);
+      if (mode === 'none') {
+        expect(starts, preset.id).toEqual([]);
+      } else {
+        expect(starts, preset.id).toEqual([{ abilityId: START_AUTO_ATTACK_IDS[mode], secondsBefore: 0 }]);
+      }
+    }
+  });
+
   it('declares one for every profile, and only Venom and Holy Pal declare none', () => {
     expect(Object.keys(OWNER_OPENERS).sort()).toEqual(
       PROFILE_PRESETS.map((preset) => preset.id).sort(),
@@ -273,12 +301,12 @@ describe("the owner's openers are transcribed exactly", () => {
      * and Cat Form was thought not worth listing. Both readings were wrong.
      */
     for (const [id, opener] of Object.entries(OWNER_OPENERS)) {
-      const declared = PRESETS_BY_ID.get(id)!.build().precombat;
+      const declared = precombatOf(id);
       // Demonology: the owner wrote nothing and the optimisation added both lines.
       if (opener.length === 0 && (OPTIMISATION_ADDITIONS[id] ?? []).length === 0) {
-        expect(declared, `${id} declares none`).toBeUndefined();
+        expect(declared, `${id} declares none`).toEqual([]);
       } else {
-        expect(declared, `${id} declares one`).toBeDefined();
+        expect(declared.length, `${id} declares one`).toBeGreaterThan(0);
       }
     }
   });
@@ -403,9 +431,7 @@ describe("the owner's openers are transcribed exactly", () => {
 
   it('keeps every owner line, at its stated lead and in its stated order', () => {
     for (const [id, opener] of Object.entries(OWNER_OPENERS)) {
-      const declared = (PRESETS_BY_ID.get(id)!.build().precombat ?? []).map(
-        (action) => [action.secondsBefore, action.abilityId] as const,
-      );
+      const declared = precombatOf(id).map((action) => [action.secondsBefore, action.abilityId] as const);
       const added = new Set(
         (OPTIMISATION_ADDITIONS[id] ?? []).map(([seconds, ability]) => `${seconds}:${ability}`),
       );
@@ -425,9 +451,7 @@ describe("the owner's openers are transcribed exactly", () => {
 
   it('adds exactly what the optimisation pass measured, and nothing else', () => {
     for (const preset of PROFILE_PRESETS) {
-      const declared = (PRESETS_BY_ID.get(preset.id)!.build().precombat ?? []).map(
-        (action) => `${action.secondsBefore}:${action.abilityId}`,
-      );
+      const declared = precombatOf(preset.id).map((action) => `${action.secondsBefore}:${action.abilityId}`);
       const owner = new Set(
         (OWNER_OPENERS[preset.id] ?? []).map(([seconds, ability]) => `${seconds}:${ability}`),
       );
