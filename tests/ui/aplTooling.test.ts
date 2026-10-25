@@ -229,13 +229,13 @@ describe('the panel offers both', () => {
     expect(markup).not.toContain('apl-duplicate');
   });
 
-  it('still names the list in the badge', () => {
-    // The panel's header renders while the body is shut, which is what this
-    // one is for -- the cheapest guard against a build running another spec's
-    // list.
+  it('no longer names the list in the header (round 66)', () => {
+    // The owner's declutter took the list name, the fights it runs in and the
+    // entry count off the header.
     const markup = renderToStaticMarkup(
       createElement(AplPanel, { profile: arms(), section: 'single', onChange: () => undefined }),
     );
-    expect(markup).toContain('Warrior (Two-Hander, Battle)');
+    expect(markup).not.toContain('Warrior (Two-Hander, Battle)');
+    expect(markup).not.toContain('entries');
   });
 });

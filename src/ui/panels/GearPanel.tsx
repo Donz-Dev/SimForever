@@ -153,7 +153,6 @@ export function GearPanel({ profile, onChange }: GearPanelProps) {
     <Panel
       title="Gear"
       collapsible
-      badge={`${equipped} equipped`}
       actions={
         hasStartingEquipment(profile.character.characterClass) || template ? (
           <>

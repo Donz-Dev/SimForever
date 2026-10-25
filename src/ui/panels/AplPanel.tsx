@@ -62,14 +62,13 @@ interface AplPanelProps {
   readonly section: AplSection;
 }
 
-/** Each section's title, and which fights run it, for the panel header. */
+/**
+ * Each section's title. Single Target runs DPS and tank fights at one target
+ * and the tank healer; Multi Target runs them at 2+ targets and the raid healer.
+ */
 const SECTION_TITLE: Record<AplSection, string> = {
   single: 'APL: Single Target',
   multi: 'APL: Multi Target',
-};
-const SECTION_RUNS: Record<AplSection, string> = {
-  single: 'DPS and tank at one target, and the tank healer',
-  multi: 'DPS and tank at 2+ targets, and the raid healer',
 };
 
 /** What a list looks like to this panel: the stored shape, or a stock one. */
@@ -158,18 +157,8 @@ export function AplPanel({ profile: whole, onChange: change, section }: AplPanel
   return (
     <Panel
       title={SECTION_TITLE[section]}
-      /*
-       * THE LIST'S OWN NAME AS THE BADGE, which shows while the panel is SHUT.
-       * It is the cheapest guard against a build running a list meant for
-       * another spec -- a failure that produces an ordinary DPS figure and
-       * nothing that looks wrong.
-       */
-      badge={list.name || 'none'}
-      subtitle={`${SECTION_RUNS[section]} · ${
-        list.entries.length > 0
-          ? `${list.entries.length} entries${list.source === 'custom' ? ', edited' : ''}`
-          : 'no list: auto attacks only'
-      }`}
+      // The list's name, which fights run it and its entry count are gone from
+      // the header (round 66, the owner's declutter).
       actions={
         list.source === 'custom' ? (
           <button type="button" onClick={reset} title="Go back to the stock list for this build">

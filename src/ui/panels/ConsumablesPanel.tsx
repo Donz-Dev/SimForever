@@ -96,11 +96,6 @@ export function ConsumablesPanel({ profile, onChange }: ConsumablesPanelProps) {
     <Panel
       title="Consumables"
       collapsible
-      subtitle={
-        chosen.length === 0
-          ? 'None'
-          : `${chosen.length} of ${CONSUMABLE_CATEGORIES.length} categories`
-      }
       actions={
         chosen.length > 0 ? (
           <button

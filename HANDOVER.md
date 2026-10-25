@@ -107,6 +107,38 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 66: a GUI declutter, and the profile rail by role
+
+The owner marked up a screenshot. Every circled summary is gone:
+
+| | what went |
+| --- | --- |
+| character card | the race, class, style and stance line under the name |
+| Encounter | the target and level badge |
+| Gear | "16 equipped" |
+| APL: Single Target and APL: Multi Target | the list name, which fights each section runs in, and the entry count |
+| Raid buffs | "24 of 28 selected" |
+| Consumables | "11 of 15 categories" |
+
+The Talents header ("39/10/2", "0 points left") was not circled and stays.
+
+**THE PROFILE RAIL IS THREE GROUPS NOW**: DPS Profiles, then Tank Profiles
+(Bear, Prot Warr, Prot Pally, Fury Prot), then Healer Profiles (Piss Beam,
+Holy Pal). Each group stays in class order. The tank and healer lists are
+NAMED in `ProfileRail.tsx` rather than derived, because a role is the owner's
+assignment and Fury Prot is a dual-wielding tank that `isTankBuild` would not
+recognise. Any preset in neither list shows under DPS, so a new profile still
+appears; `tests/ui/profileRail.test.ts` pins that.
+
+**THE APL BADGE WAS A GUARD AND IS GONE WITH THE REST.** It showed a list's
+name while the panel was shut, so a build running another spec's list was
+visible at a glance. Two tests pinned it and now assert its absence.
+`syncDefaultRotation` and the stored list's `source` still keep a default list
+matched to its build. What is gone is only the at-a-glance check on a CUSTOM
+list.
+
+No engine, game or profile code changed, so no figure can move.
+
 ## Round 65: Start Auto-attack, and the Hunter's Melee Weave
 
 Two features from the owner, in one round because the second is built on the

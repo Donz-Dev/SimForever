@@ -2047,6 +2047,11 @@ button:disabled {
   margin-bottom: 3px;
 }
 
+/* The Tank and Healer headings, set apart from the group above (round 66). */
+.profile-rail .field-label ~ .field-label {
+  margin-top: 10px;
+}
+
 /*
  * WRAPPED, once the rail is a full-width row under the config column.
  *

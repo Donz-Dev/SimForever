@@ -43,13 +43,6 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
     <Panel
       title="Encounter"
       collapsible
-      // What the fight is against, so a shut panel still answers the question
-      // someone opens it to check.
-      badge={`${profile.encounter.targetName} · level ${profile.encounter.targetLevel}${
-        (profile.encounter.numberOfTargets ?? 1) > 1
-          ? ` · ${profile.encounter.numberOfTargets} targets`
-          : ''
-      }${profile.encounter.targetAttacks ? ' · swings back' : ''}`}
     >
       <TextField
         label="Target"
