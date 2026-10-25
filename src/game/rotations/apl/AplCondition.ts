@@ -277,9 +277,10 @@ export interface AplEntry {
   readonly abilityId: string;
   readonly condition?: AplCondition;
   /**
-   * A MELEE WEAVE's actions (round 65): what the Hunter does in melee before it
-   * runs back, in order, and also the weave's gate -- it begins only when every
-   * one of them can be cast. Absent is the owner's three. Only meaningful on a
+   * A MELEE WEAVE's options (round 68): the global-cooldown abilities it may
+   * cast in melee, the first ready one used, plus Raptor Strike if ready. Also
+   * the gate -- it begins only when ANY ONE of them can be cast (round 65 asked
+   * for every one). Absent is the owner's three. Only meaningful on a
    * `melee_weave` entry. See `abilities/meleeWeave.ts`.
    */
   readonly weave?: readonly string[];

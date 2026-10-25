@@ -670,11 +670,11 @@ export class Simulation implements SimulationContext {
           if (step === 'done') {
             actor.subroutine = null;
           } else if (step === 'wait') {
-            this.scheduleDecision(actor, this.nextDecisionTime(actor));
+            this.scheduleDecision(actor, this.subroutineDecisionTime(actor));
             return;
           } else {
             const result = ctx.cast(actor, step.ability, step.target);
-            this.scheduleDecision(actor, this.nextDecisionTime(actor, result.ok ? step.ability : undefined));
+            this.scheduleDecision(actor, this.subroutineDecisionTime(actor, result.ok));
             return;
           }
         }
@@ -754,6 +754,26 @@ export class Simulation implements SimulationContext {
    * If it is busy, that is the moment it stops being busy. If it is free and
    * simply had nothing to do, it polls; see ROTATION_POLL_MS.
    */
+  /**
+   * WHEN A SUB-ROUTINE IS ASKED AGAIN (round 68): when the cast in progress
+   * ends, else a poll -- and NOT at the end of a global cooldown, which is
+   * where `nextDecisionTime` sleeps a free actor. The Melee Weave's next step
+   * after a global-cooldown ability is the run back, which takes no global
+   * cooldown: sleeping to the end of the one Wing Clip started held the Hunter
+   * in melee half a second longer than the owner's "~1 second" each way.
+   *
+   * A CAST THAT WENT OUT AND LEFT THE ACTOR FREE IS ASKED AGAIN AT ONCE, the
+   * rule `nextDecisionTime` keeps for an off-GCD cast: the run back starts the
+   * moment Wing Clip lands, not a poll later. That terminates because each step
+   * a sub-routine returns moves it on; a cast that FAILED would not, so a
+   * failure polls instead.
+   */
+  private subroutineDecisionTime(actor: Combatant, castWentOut = false): Milliseconds {
+    const now = this.clock.now();
+    if (actor.isCasting(now)) return actor.castEndsAt;
+    return castWentOut ? now : now + ROTATION_POLL_MS;
+  }
+
   private nextDecisionTime(actor: Combatant, justCast?: Ability): Milliseconds {
     const now = this.clock.now();
     /*

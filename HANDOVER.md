@@ -107,6 +107,52 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 68: the Melee Weave, revised
+
+The owner revised round 65's weave:
+
+| | round 65 | round 68 |
+| --- | --- | --- |
+| the gate | the bow fired in the last 0.5s and EVERY action is castable | the bow fired in the last 0.5s and ANY ONE option is castable |
+| in melee | every action, in order | the FIRST castable option, plus Raptor Strike if ready |
+| the default options | Raptor Strike, Mongoose Bite, Strider Kick | Immolation Trap, Strider Kick, Mongoose Bite |
+| the ranged restart | a full hasted swing plus 0.5s after the run back | 0.5s after the run back, or when the bow's own timer runs out if later |
+| the run back | at the next decision, a global cooldown later | the instant the option and any Raptor Strike are done |
+
+**BOTH SWING TIMERS COOL DOWN WHILE THE OTHER KIND RUNS.** Each kind's next
+swing is due a full swing after its OWN last one. `startAutoAttackMode` already
+works that way for melee, so the run in needed nothing. Only the ranged restart
+changed: it now asks the same rule, with half a second as the floor.
+
+**THE RUN BACK NO LONGER WAITS OUT A GLOBAL COOLDOWN.** A subroutine's next
+decision used to go through `nextDecisionTime`, which sleeps a free actor until
+its GCD ends. So after Wing Clip the Hunter stood in melee 1.5s before running
+back. `Simulation.subroutineDecisionTime` now picks the next step at the end of
+a cast in progress, at once after a cast that went out, and otherwise on a
+100ms poll. **One residue**: a Raptor Strike waiting on a melee swing is
+noticed on the next poll, so the run back can trail its delivery by up to
+100ms.
+
+**IT IS NOW A GAIN, WHICH ROUND 65'S WAS NOT.** LW Ranged, 300 paired fights
+at 60s, with the owner's three options (this build knows only Immolation Trap):
+
+| | DPS | against the stock list |
+| --- | --- | --- |
+| stock list | 1,075.2 | |
+| weave at the bottom | 1,123.7 | **+48.5 ± 8.4** |
+| weave at the top | 1,141.5 | **+66.3 ± 9.6** |
+
+Round 65's version cost about 54 on the same build. Not added to any stock
+list; whether it goes in, and where, is the owner's call. Not measured at a
+longer fight.
+
+**NO PUBLISHED FIGURE MOVED**: all 34 combat-log hashes match `main`, because
+no stock list holds a Melee Weave.
+
+`AplEntry.weave` keeps its shape, and its meaning is now "the options".
+Raptor Strike is never an option, since it comes if ready anyway; one in a
+saved list is ignored.
+
 ## Round 67: Multi-DoT only on an ability with a DoT
 
 The owner's: "if an ability doesn't have a DoT effect then it should not have
