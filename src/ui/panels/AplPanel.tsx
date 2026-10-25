@@ -2025,14 +2025,23 @@ function EntryTarget({
             ? target.withoutAura === undefined
               ? 'lowestParty'
               : `lowestPartyWithout:${target.withoutAura}`
-            : target.excludeTank
-              ? 'lowestNotTank'
-              : 'lowest';
+            : target.withoutAura !== undefined
+              ? `lowestWithout:${target.withoutAura}`
+              : target.excludeTank
+                ? 'lowestNotTank'
+                : 'lowest';
   const label: Record<string, string> = {
     default: 'at the default target',
     tank: 'on the tank',
     lowest: 'on the lowest health member',
     lowestNotTank: 'on the lowest health member, not the tank',
+    // Round 71: the lowest member not already carrying one of your auras.
+    ...Object.fromEntries(
+      FRIENDLY_TARGET_AURAS.map((aura) => [
+        `lowestWithout:${aura.auraId}`,
+        `on the lowest health member without your ${aura.name}`,
+      ]),
+    ),
     // Round 61: the lowest member of the party with the lowest average health.
     lowestParty: 'in the lowest party',
     ...Object.fromEntries(
@@ -2054,6 +2063,9 @@ function EntryTarget({
   if (!(value in label)) {
     if (target?.kind === 'withAura') label[value] = `on whoever has your ${target.auraId}`;
     if (target?.kind === 'lowestParty') label[value] = `in the lowest party without your ${target.withoutAura}`;
+    if (target?.kind === 'lowestHealth' && target.withoutAura !== undefined) {
+      label[value] = `on the lowest health member without your ${target.withoutAura}`;
+    }
   }
   if (!onChange) return <span className="apl-target">{label[value]}</span>;
   return (
@@ -2074,9 +2086,11 @@ function EntryTarget({
                   ? { kind: 'lowestParty' }
                   : next.startsWith('lowestPartyWithout:')
                     ? { kind: 'lowestParty', withoutAura: next.slice('lowestPartyWithout:'.length) }
-                    : next === 'lowest'
-                  ? { kind: 'lowestHealth' }
-                  : { kind: 'lowestHealth', excludeTank: true },
+                    : next.startsWith('lowestWithout:')
+                      ? { kind: 'lowestHealth', withoutAura: next.slice('lowestWithout:'.length) }
+                      : next === 'lowest'
+                        ? { kind: 'lowestHealth' }
+                        : { kind: 'lowestHealth', excludeTank: true },
         );
       }}
     >
@@ -2093,4 +2107,8 @@ function EntryTarget({
 const FRIENDLY_TARGET_AURAS: readonly { readonly auraId: string; readonly name: string }[] = [
   { auraId: 'riptide', name: 'Riptide' },
   { auraId: 'lights_vigil', name: "Light's Vigil" },
+  // The Resto Drood's (round 71).
+  { auraId: 'rejuvenation', name: 'Rejuvenation' },
+  { auraId: 'regrowth', name: 'Regrowth' },
+  { auraId: 'wild_growth', name: 'Wild Growth' },
 ];

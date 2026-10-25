@@ -85,6 +85,8 @@ function smartTargeted(entry: AplEntry): AplEntry {
   if (entry.target?.kind === 'withAura') return entry;
   // Nor a `lowestParty` one (round 61): the party is the choice there.
   if (entry.target?.kind === 'lowestParty') return entry;
+  // Nor "the lowest without your X" (round 71): who it is NOT on is the choice.
+  if (entry.target?.kind === 'lowestHealth' && entry.target.withoutAura !== undefined) return entry;
   return entry.target ? { ...entry, target: { kind: 'lowestHealth' } } : entry;
 }
 
@@ -133,7 +135,8 @@ function compileTarget(
       return (context, actor) => tankOf(context, actor);
     case 'lowestHealth': {
       const excludeTank = target.excludeTank === true;
-      return (context, actor) => lowestHealth(context, actor, { excludeTank });
+      const { withoutAura } = target;
+      return (context, actor) => lowestHealth(context, actor, { excludeTank, withoutAura });
     }
     case 'withAura': {
       const { auraId } = target;

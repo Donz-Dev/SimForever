@@ -1,6 +1,6 @@
-import type { Ability } from '../../engine';
+import type { Ability, Combatant, SimulationContext } from '../../engine';
 import { DEMORALIZING_ROAR_FLAT_THREAT, FAERIE_FIRE_THREAT_PER_LEVEL } from '../combat/threat';
-import { dealDamage, seconds, selectTargets } from '../../engine';
+import { applyHealing, dealDamage, seconds, selectTargets } from '../../engine';
 import { areaTargets } from '../combat/multiTarget';
 import { HURRICANE_TICK_SP_COEFFICIENT } from '../combat/coefficients';
 import {
@@ -28,6 +28,14 @@ import {
   berserkAura,
   lengthened,
   ripAura,
+  INNERVATE_AURA,
+  REGROWTH_HOT,
+  REGROWTH_TICK,
+  REJUVENATION_HOT,
+  REJUVENATION_TICK,
+  REJUVENATION_TICK_INTERVAL_MS,
+  REGROWTH_TICK_INTERVAL_MS,
+  WILD_GROWTH_HOT,
 } from '../auras/druid';
 import { baseManaFor } from '../character/baseStatLookup';
 import { awardComboPoint, hasComboPoints, spendComboPoints } from '../combat/comboPoints';
@@ -37,6 +45,10 @@ import {
   STARFIRE_SP_COEFFICIENT,
   SWIPE_AP_COEFFICIENT,
   WRATH_SP_COEFFICIENT,
+  HEALING_TOUCH_HEAL_COEFFICIENT,
+  REGROWTH_HEAL_COEFFICIENT,
+  REGROWTH_TICK_HEAL_COEFFICIENT,
+  REJUVENATION_TICK_HEAL_COEFFICIENT,
 } from '../combat/coefficients';
 
 /**
@@ -917,9 +929,179 @@ export const NATURES_SWIFTNESS_ABILITY: Ability = {
   id: 'natures_swiftness',
   name: "Nature's Swiftness",
   cooldownMs: NATURES_SWIFTNESS_COOLDOWN_MS,
+  /*
+   * OFF THE GLOBAL COOLDOWN (round 71), as the Shaman's talent of the same name
+   * is: on it, the instant Healing Touch it buys waits out a global cooldown
+   * the button itself started. No profile took it before the Resto Drood.
+   */
+  triggersGcd: false,
   requiresTarget: false,
   onCast: ({ simulation, caster }) => {
     simulation.applyAura(caster, NATURES_SWIFTNESS, caster.id);
+  },
+};
+
+/* -------------------------------------------------------------------------- */
+/* Restoration (round 71): the Resto Drood profile's spells                   */
+/* -------------------------------------------------------------------------- */
+
+const isFriendly = (caster: Combatant, target: Combatant | undefined): target is Combatant =>
+  target !== undefined && !target.isHostileTo(caster);
+
+/** A Druid's direct heal. Threatens, as every heal here does. */
+function druidHeal(
+  simulation: SimulationContext,
+  caster: Combatant,
+  target: Combatant,
+  ability: Ability,
+  amount: number,
+  coefficient: number,
+): void {
+  applyHealing(simulation, {
+    source: caster,
+    target,
+    abilityId: ability.id,
+    abilityName: ability.name,
+    baseAmount: amount,
+    powerCoefficient: coefficient,
+    threatens: true,
+  });
+}
+
+/** Healing Touch, rank 11: "Heals a friendly target for 2,139 to 2,525." 840 mana, 3.5s. */
+export const HEALING_TOUCH_HEAL = midpoint(2139, 2525);
+
+export const HEALING_TOUCH: Ability = {
+  id: 'healing_touch',
+  name: 'Healing Touch',
+  heals: true,
+  cost: { resource: 'mana', amount: 840 },
+  castTimeMs: seconds(3.5),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!isFriendly(caster, target)) return;
+    druidHeal(simulation, caster, target, ability, HEALING_TOUCH_HEAL, HEALING_TOUCH_HEAL_COEFFICIENT);
+  },
+};
+
+/** Rejuvenation, rank 11: 360 mana, instant. The heal is `REJUVENATION_HOT`. */
+export const REJUVENATION: Ability = {
+  id: 'rejuvenation',
+  name: 'Rejuvenation',
+  heals: true,
+  cost: { resource: 'mana', amount: 360 },
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!isFriendly(caster, target)) return;
+    const extra = ability.bonuses?.[AURA_DURATION_BONUS] ?? 0;
+    simulation.applyAura(target, lengthened(REJUVENATION_HOT, extra), caster.id);
+  },
+};
+
+/**
+ * Regrowth, rank 9: "Heals a friendly target for 965 to 1,077 and another 994
+ * over 21 sec." 525 mana, 2s. 28.6% of healing power on the hit; the heal over
+ * time is `REGROWTH_HOT`.
+ */
+export const REGROWTH_HEAL = midpoint(965, 1077);
+
+export const REGROWTH: Ability = {
+  id: 'regrowth',
+  name: 'Regrowth',
+  heals: true,
+  cost: { resource: 'mana', amount: 525 },
+  castTimeMs: seconds(2),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!isFriendly(caster, target)) return;
+    druidHeal(simulation, caster, target, ability, REGROWTH_HEAL, REGROWTH_HEAL_COEFFICIENT);
+    const extra = ability.bonuses?.[AURA_DURATION_BONUS] ?? 0;
+    simulation.applyAura(target, lengthened(REGROWTH_HOT, extra), caster.id);
+  },
+};
+
+/**
+ * Wild Growth, rank 3, granted by the Restoration capstone: 1,050 mana,
+ * instant, a 6 second cooldown. "Heals the target AND THEIR PARTY" -- everyone
+ * alive in the target's party, the target included; a target with no party
+ * (the tank healer fight's lone tank) is healed alone. The falloff is
+ * `WILD_GROWTH_HOT`.
+ */
+export const WILD_GROWTH: Ability = {
+  id: 'wild_growth',
+  name: 'Wild Growth',
+  heals: true,
+  cost: { resource: 'mana', amount: 1050 },
+  cooldownMs: seconds(6),
+  onCast: ({ simulation, caster, target }) => {
+    if (!isFriendly(caster, target)) return;
+    const party =
+      target.party === undefined
+        ? [target]
+        : simulation.combatants.filter(
+            (member) => member.party === target.party && member.isAlive && !member.isHostileTo(caster),
+          );
+    for (const member of party) simulation.applyAura(member, WILD_GROWTH_HOT, caster.id);
+  },
+};
+
+/**
+ * Swiftmend, granted by the talent: "Instantly heals a target with an active
+ * Rejuvenation or Regrowth effect for an amount equal to the full duration of
+ * the periodic effect of one of those spells." 20% of base mana, instant, a 15
+ * second cooldown.
+ *
+ * ============================================================================
+ * TWO READINGS, BOTH OURS AND BOTH FLAGGED IN HANDOVER:
+ *
+ *   IT DOES NOT CONSUME. Classic's says "Consumes a Rejuvenation or Regrowth
+ *   effect"; Forever's tooltip dropped the word, so the heal over time stays.
+ *
+ *   "ONE OF THOSE SPELLS" IS REJUVENATION WHEN YOURS IS UP, else Regrowth --
+ *   the tooltip's own order.
+ *
+ * "THE FULL DURATION" is every tick of the effect as it was applied, Nature's
+ * Splendor's included, at the effect's own size: its base and coefficient
+ * times its tick count, then the HoT's own healing modifiers (Gift of Nature,
+ * Improved Rejuvenation) and Genesis, since it heals "an amount equal to" that
+ * effect. Swiftmend itself carries none of those, so nothing counts twice.
+ * ============================================================================
+ */
+export const SWIFTMEND: Ability = {
+  id: 'swiftmend',
+  name: 'Swiftmend',
+  heals: true,
+  cost: { resource: 'mana', amount: Math.round(DRUID_BASE_MANA * 0.2) },
+  cooldownMs: seconds(15),
+  canCast: ({ caster, target }) =>
+    target !== undefined &&
+    (target.auras.get(REJUVENATION_HOT.id)?.sourceId === caster.id ||
+      target.auras.get(REGROWTH_HOT.id)?.sourceId === caster.id),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!isFriendly(caster, target)) return;
+    const rejuvenation = target.auras.get(REJUVENATION_HOT.id);
+    const useRejuvenation = rejuvenation?.sourceId === caster.id;
+    const hot = useRejuvenation ? rejuvenation : target.auras.get(REGROWTH_HOT.id);
+    if (!hot) return;
+    const interval = useRejuvenation ? REJUVENATION_TICK_INTERVAL_MS : REGROWTH_TICK_INTERVAL_MS;
+    const ticks = Math.round(hot.definition.durationMs / interval);
+    const perTick = useRejuvenation ? REJUVENATION_TICK : REGROWTH_TICK;
+    const perTickCoefficient = useRejuvenation ? REJUVENATION_TICK_HEAL_COEFFICIENT : REGROWTH_TICK_HEAL_COEFFICIENT;
+    const hotModifier = caster.abilityModifierFor(hot.definition.id);
+    const scale = (hotModifier?.healingMultiplier ?? 1) * caster.periodicHealingMultiplier;
+    druidHeal(simulation, caster, target, ability, perTick * ticks * scale, perTickCoefficient * ticks * scale);
+  },
+};
+
+/**
+ * Innervate: 5% of base mana, instant, six minutes. On the Druid itself; the
+ * window is `INNERVATE_AURA`.
+ */
+export const INNERVATE: Ability = {
+  id: 'innervate',
+  name: 'Innervate',
+  cost: { resource: 'mana', amount: Math.round(DRUID_BASE_MANA * 0.05) },
+  cooldownMs: seconds(360),
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, INNERVATE_AURA, caster.id);
   },
 };
 
@@ -1011,9 +1193,16 @@ export const DRUID_ABILITIES: readonly Ability[] = [
   BARKSKIN_ABILITY,
   ENRAGE_ABILITY,
   FRENZIED_REGENERATION_ABILITY,
+  // The Restoration trainer spells (round 71).
+  HEALING_TOUCH,
+  REJUVENATION,
+  REGROWTH,
+  INNERVATE,
   // Talent-granted: in the catalogue so the book can find them, and in no
   // character's book without the point spent.
   BERSERK,
   NATURES_SWIFTNESS_ABILITY,
   SHIFTING_POWER,
+  SWIFTMEND,
+  WILD_GROWTH,
 ];

@@ -33,6 +33,8 @@ describe('the abilities that apply a DoT', () => {
       .sort();
     expect(refused).toEqual([
       'druid/prowl',
+      // Needs one of your heals over time on a friendly target (round 71).
+      'druid/swiftmend',
       'hunter/hunters_mark',
       'mage/mage_armor',
       'paladin/hammer_of_wrath',

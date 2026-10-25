@@ -107,6 +107,72 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 71: Resto Drood, a Druid healer
+
+The owner's 35th profile: an 11/0/40 Restoration Druid from their talent URL,
+their spells, coefficients, falloff rule and two lists. It runs both healer
+fights, and the rail lists it under Healer Profiles.
+
+| | what changed |
+| --- | --- |
+| spells | Healing Touch (100% of healing power), Rejuvenation (20% a 3s tick), Regrowth (28.6% on the hit, 7.1% a 3s tick), Wild Growth (3.3% a 1s tick), Swiftmend, Innervate. Ranks and costs from the spellbook capture, every figure checked against foreverchanges.pro at build 1.60.1.70532 |
+| Wild Growth | heals the target's whole party, seven ticks at the owner's **falloff**: 1.06 on the first tick, 1.04, 1.02 ... 0.94, which sums to seven, so the total is unchanged and the healing comes earlier. A target with no party is healed alone |
+| HoTs | every tick can crit, the owner's. A tick carries its ability's id, so per-ability talents reach it, and it reports on the same row as the cast |
+| talents | Gift of Nature (+10% on every heal but Swiftmend), Improved Rejuvenation (+15%), Improved Regrowth (+50% crit), Naturalist (-0.5s on Healing Touch), Nature's Splendor (+3s Rejuvenation, +6s Regrowth, one and two more ticks), Gift of the Earthmother (a 1s global cooldown on Rejuvenation, Swiftmend and Wild Growth; its 0.5 is hand-filled), Tranquil Spirit (-8% Healing Touch cost), and **Genesis's healing half**, a new `periodicHealing` effect beside its damage one |
+| APL | **one list for both fights**, as Holy Pal's and Piss Beam's are. Wild Growth is gated on "at least 6 raid members". The `lowestHealth` target gains `withoutAura` for "Rejuvenation on anyone under 100% who does not have it", editable in the panel |
+
+Measured over 200 fights per fight type:
+
+| | HPS | deaths |
+| --- | --- | --- |
+| **tank healer** | 644.8 ± 91.7 | 1.83 tank deaths |
+| **raid healer** | 1,843.8 ± 75.1 | 8.06 allied, 0.94 tank |
+
+In the tank fight Rejuvenation is up on the tank 94% of the time and Regrowth
+88%. Healing Touch is 62% of the healing, about 11 of its 20 casts are
+pre-casts cancelled above 75%, and Innervate fires once a fight. In the raid
+fight Rejuvenation is 56% and Wild Growth 28%, cast six times a fight. The
+Druid spends about all the mana it gains.
+
+**HOLY PAL AND PISS BEAM ARE IDENTICAL TO `main` IN BOTH FIGHTS, AND SO ARE
+ALL 34 COMBAT LOGS BUT THE BEAR'S.** The Bear takes Genesis 5/5, so its
+Frenzied Regeneration ticks now heal 5% more, which the tooltip says they
+should ("periodic damage and healing"). Its DPS, deaths, damage taken and rage
+reproduce to the decimal.
+
+**NATURE'S SWIFTNESS IS OFF THE GLOBAL COOLDOWN NOW**, as the Shaman's is. On
+it, the instant Healing Touch it buys waited out a GCD the button itself
+started. No profile took the Druid's before.
+
+**THESE CHOICES ARE OURS, NOT THE OWNER'S, AND ALL OF THEM CAN BE EDITED:**
+
+- the race is Night Elf, since the owner named none and no Druid race has a
+  healing trait the engine reads;
+- Innervate goes at 50% mana;
+- Nature's Swiftness, and the instant Healing Touch it buys, when the tank is
+  under 35%;
+- Swiftmend on the tank under 50%;
+- the Healing Touch pre-cast is checked at 80% of the cast, Holy Pal's figure;
+- the benchmark set is the healer template in Leather with a caster staff, and
+  the enchants are Holy Pal's without the shield.
+
+**AND FOUR READINGS ARE QUESTIONS FOR THE OWNER:**
+
+- **Swiftmend does not consume** the heal over time. Classic's said
+  "Consumes"; Forever's tooltip dropped the word.
+- **Swiftmend heals Rejuvenation's full effect when yours is up**, else
+  Regrowth's, the tooltip's order for "one of those spells". The amount
+  includes that effect's own modifiers and Nature's Splendor's extra ticks.
+- **Improved Regrowth's +50% crit reaches the ticks too**, because they are
+  part of the spell. That is why Regrowth crits about 80%.
+- **Omen of Clarity does nothing for a healer.** Its proc reads damage dealt,
+  and Clearcasting is spent only by an ability with an attack table, so a heal
+  can neither proc nor spend it. The tooltip says "damage or healing spell";
+  whether heals should proc and spend it is the owner's call.
+
+**NOT MODELLED**: Tranquility, which Tranquil Spirit also names and no list
+casts.
+
 ## Round 70: the raid pulse at 5 seconds, then every 30 to 36
 
 The owner changed the raid healer fight's raid-wide damage again: the first

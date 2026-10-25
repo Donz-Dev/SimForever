@@ -55,7 +55,8 @@ export function rotationFor(
   if (characterClass === 'rogue') return rogueRotation(talents ?? {}, mainHandWeapon);
   // A Druid's form IS its combat style, so the style selects the list -- the
   // Warrior's arrangement rather than the Rogue's.
-  if (characterClass === 'druid') return druidRotation(style);
+  // AND ITS TALENTS PICK THE HEALER (round 71): a build with Wild Growth heals.
+  if (characterClass === 'druid') return druidRotation(style, talents ?? {});
   // A Shaman's two specs are a caster and a two-hander, which the style
   // already separates -- so the style selects the list here too.
   // AND ITS TALENTS PICK THE HEALER (round 60): a build with Riptide heals.

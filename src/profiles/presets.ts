@@ -1112,6 +1112,33 @@ const SHAMAN_RESTORATION_TALENTS: TalentAllocation = {
   riptide: 1,
 };
 
+/**
+ * The Resto Drood's 11/0/40 (round 71), decoded from the owner's URL:
+ * https://talentsforever.com/druid/60/05022101--5053035143113051-kmpq2ruqwvtyzBEDFHns-8?b=70425h&d=261025
+ */
+const DRUID_RESTORATION_TALENTS: TalentAllocation = {
+  // Balance, 11
+  genesis: 5,
+  improved_moonfire: 2,
+  nature_s_majesty: 2,
+  nature_s_reach: 1,
+  nature_s_splendor: 1,
+  // Restoration, 40
+  nature_s_focus: 5,
+  naturalist: 5,
+  subtlety: 3,
+  reflection: 3,
+  gift_of_nature: 5,
+  gift_of_the_earthmother: 1,
+  tranquil_spirit: 4,
+  improved_rejuvenation: 3,
+  swiftmend: 1,
+  nature_s_swiftness: 1,
+  living_spirit: 3,
+  improved_regrowth: 5,
+  wild_growth: 1,
+};
+
 const MAGE_FROSTFIRE_TALENTS: TalentAllocation = {
   /*
    * ==========================================================================
@@ -4173,6 +4200,42 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         other: 'demonic_rune',
       },
       precombat: [...before(3, 'water_shield')],
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    /*
+     * ==================================================================
+     * RESTO DROOD, THE DRUID HEALER (round 71): the owner's talents,
+     * spells, coefficients and two lists, Holy Pal's gear rules in Leather
+     * with a caster staff. THE RACE IS OURS -- the owner named none, and no
+     * Druid race has a healing trait the engine reads -- so it is the first
+     * thing to change if the owner meant another.
+     * ==================================================================
+     */
+    id: 'druid_resto',
+    label: 'Resto Drood',
+    detail: 'Night Elf, caster staff, a healer. 11 Balance / 40 Restoration',
+    characterClass: 'druid',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Resto Drood',
+        race: 'night_elf',
+        characterClass: 'druid',
+        level: 60,
+        combatStyle: 'caster',
+        stance: 'battle',
+      },
+      talents: { ...DRUID_RESTORATION_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: {
+        ...casterConsumables('school_nature'),
+        flask: 'flask_spell_power',
+        food: 'food_healing_power',
+        potion: 'major_mana_potion',
+        other: 'demonic_rune',
+      },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },

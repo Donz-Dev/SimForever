@@ -241,6 +241,8 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
   ],
   // Round 60: the owner's "Pre-combat APL: Water Shield". The lead is ours.
   shaman_resto: [[3, 'water_shield']],
+  // Round 71: the owner gave the Resto Drood two lists and no opener.
+  druid_resto: [],
 };
 
 /** Every cast a fight recorded, with the moment it happened. */

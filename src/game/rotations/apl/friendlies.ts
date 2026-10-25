@@ -40,12 +40,14 @@ export function healthFraction(combatant: Combatant): number {
 export function lowestHealth(
   context: SimulationContext,
   actor: Combatant,
-  options: { readonly excludeTank?: boolean } = {},
+  options: { readonly excludeTank?: boolean; readonly withoutAura?: string } = {},
 ): Combatant | undefined {
   let best: Combatant | undefined;
   let bestFraction = Infinity;
   for (const member of raidMembers(context, actor)) {
     if (options.excludeTank && member.raidRole === 'tank') continue;
+    // Round 71: not anyone already carrying this actor's aura.
+    if (options.withoutAura !== undefined && member.auras.get(options.withoutAura)?.sourceId === actor.id) continue;
     const fraction = healthFraction(member);
     if (fraction < bestFraction) {
       best = member;

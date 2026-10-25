@@ -153,6 +153,21 @@ export const HEALING_WAVE_HEAL_COEFFICIENT = 3 / 3.5;
 export const CHAIN_HEAL_HEAL_COEFFICIENT = 2.5 / 3.5;
 export const RIPTIDE_HEAL_COEFFICIENT = 0.214;
 export const RIPTIDE_TICK_HEAL_COEFFICIENT = 0.1;
+
+/**
+ * THE DRUID'S HEALS, THE OWNER'S FIGURES (round 71), given with the Resto
+ * Drood profile:
+ *
+ *   Healing Touch     100% of healing power
+ *   Regrowth          28.6% on the hit, 7.1% on each 3-second tick
+ *   Rejuvenation      20% on each 3-second tick
+ *   Wild Growth       3.3% on each 1-second tick, before its falloff
+ */
+export const HEALING_TOUCH_HEAL_COEFFICIENT = 1;
+export const REGROWTH_HEAL_COEFFICIENT = 0.286;
+export const REGROWTH_TICK_HEAL_COEFFICIENT = 0.071;
+export const REJUVENATION_TICK_HEAL_COEFFICIENT = 0.2;
+export const WILD_GROWTH_TICK_HEAL_COEFFICIENT = 0.033;
 /** Flash of Light, a 1.5 second cast: 1.5 / 3.5. Classic's rule, unconfirmed. */
 export const PLACEHOLDER_FLASH_OF_LIGHT_HEAL_COEFFICIENT = 1.5 / 3.5;
 /**

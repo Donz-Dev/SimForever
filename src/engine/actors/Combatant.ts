@@ -403,6 +403,12 @@ export interface CombatantOptions {
    */
   readonly periodicDamageMultiplier?: number;
   /**
+   * The same for periodic HEALING (round 71): Genesis's "the periodic damage
+   * AND HEALING done by your spells and abilities". A heal tick is
+   * `HealRequest.periodic`, as a damage tick is `DamageRequest.periodic`.
+   */
+  readonly periodicHealingMultiplier?: number;
+  /**
    * A permanent multiplier on every point of damage this combatant deals,
    * multiplied together with whatever auras contribute.
    *
@@ -552,6 +558,8 @@ export class Combatant {
   readonly baseDamageMultiplier: number;
   /** Multiplies periodic damage only. See the option. */
   readonly periodicDamageMultiplier: number;
+  /** Multiplies periodic healing only. See the option. */
+  readonly periodicHealingMultiplier: number;
   readonly survivesLethalDamage: boolean;
   readonly revivesOnDeath: boolean;
   readonly namesOwnSwings: boolean;
@@ -746,6 +754,7 @@ export class Combatant {
     this.schoolDamagePerTargetEffect = options.schoolDamagePerTargetEffect ?? new Map();
     this.baseDamageMultiplier = options.damageMultiplier ?? 1;
     this.periodicDamageMultiplier = options.periodicDamageMultiplier ?? 1;
+    this.periodicHealingMultiplier = options.periodicHealingMultiplier ?? 1;
     this.survivesLethalDamage = options.survivesLethalDamage ?? false;
     this.revivesOnDeath = options.revivesOnDeath ?? false;
     this.namesOwnSwings = options.namesOwnSwings ?? false;

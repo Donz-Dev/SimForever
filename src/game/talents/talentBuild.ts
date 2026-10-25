@@ -289,6 +289,8 @@ export interface TalentBuild {
    * apply it unconditionally.
    */
   readonly periodicDamageMultiplier: number;
+  /** The same, for periodic healing (round 71). */
+  readonly periodicHealingMultiplier: number;
   /** Reactions the talents grant, added to the ones every character has. */
   readonly reactions: readonly Reaction[];
   /** Procs that fire when an ability is USED. See `castReaction`. */
@@ -369,6 +371,7 @@ const EMPTY: TalentBuild = {
   bleedingTargetModifiers: new AttackTableModifiers(),
   schoolDamagePerTargetEffect: new Map(),
   periodicDamageMultiplier: 1,
+  periodicHealingMultiplier: 1,
   pet: NO_PET_MODIFIERS,
   reactions: [],
   damageMultiplier: 1,
@@ -682,6 +685,7 @@ export function talentBuild(
   const bleedingTargetModifiers = new AttackTableModifiers();
   const schoolDamagePerTargetEffect = new Map<DamageSchool, PerTargetEffectDamage>();
   let periodicDamageBonusPct = 0;
+  let periodicHealingBonusPct = 0;
 
   // What the talents do to a PET. Percentages while they accumulate; turned
   // into multipliers once, at the end, so two ranks of the same talent add
@@ -923,6 +927,9 @@ export function talentBuild(
          */
         case 'periodicDamage':
           periodicDamageBonusPct += value;
+          break;
+        case 'periodicHealing':
+          periodicHealingBonusPct += value;
           break;
         /*
          * TABLE-SCOPED AND CONDITIONAL ON THE VICTIM. Registered apart from
@@ -1422,6 +1429,7 @@ export function talentBuild(
     bleedingTargetModifiers,
     schoolDamagePerTargetEffect,
     periodicDamageMultiplier: 1 + periodicDamageBonusPct / 100,
+    periodicHealingMultiplier: 1 + periodicHealingBonusPct / 100,
     abilityCooldownPercent,
     pet: {
       damageMultiplier: (1 + petDamagePct / 100) * petDamageFactor,

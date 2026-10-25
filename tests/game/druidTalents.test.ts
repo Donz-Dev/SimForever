@@ -798,7 +798,8 @@ describe("Nature's Swiftness, the second caller of the one-shot cast rule", () =
   it('names Nature spells only, so Starfire and Moonfire are untouched', () => {
     // Both are ARCANE. Reaching them would shorten the Moonkin's main nuke,
     // which is a much bigger talent than this one.
-    expect(NATURE_SPELLS).toEqual(['wrath', 'insect_swarm']);
+    // And the two Nature heals with a cast time since round 71.
+    expect(NATURE_SPELLS).toEqual(['wrath', 'insect_swarm', 'healing_touch', 'regrowth']);
     expect(WRATH.id).toBe('wrath');
     const moonkin = druid('druid_moonkin', 'moonkin');
     const simulation = buildSimulation([moonkin, makeTarget()]);
