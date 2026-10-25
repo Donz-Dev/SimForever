@@ -107,6 +107,33 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 67: Multi-DoT only on an ability with a DoT
+
+The owner's: "if an ability doesn't have a DoT effect then it should not have
+the multi-dot GUI element". The APL panel now offers Multi-DoT only on the 27
+abilities in `game/abilities/dots.ts`. A count already stored on any other
+entry is still shown, so it can be cleared.
+
+**WRITTEN OUT, AND CHECKED BY CASTING.** Whether an ability applies a DoT is
+decided inside its `onCast`, so nothing on its declaration can say.
+`tests/game/dotAbilities.test.ts` casts every ability in every class's
+catalogue (`classAbilityCatalog`, base and talent-granted) on a preset of that
+class, and requires the abilities whose own ticks land to be exactly the list.
+
+**"ITS OWN TICKS" IS THE HALF THAT MATTERS.** The probe forces every roll to
+land, so the first version read Heroic Strike, Mutilate and Mortal Strike as
+DoTs: they had procced Deep Wounds and the poisons. A tick counts only if it
+carries the ability's id or name. Bane of Doom deals its one blow a minute
+after the cast, so the probe watches for 65 seconds.
+
+The list includes a direct spell with a burn (Fireball, Pyroblast, Frostfire
+Bolt), ground effects (Consecration, Flamestrike), the totems and traps that
+tick, and Summon Hawk, which is modelled as a debuff that ticks. Twelve
+abilities need a fight state the probe cannot build, and none is a DoT. They
+are listed by name, so a new one fails until somebody checks it.
+
+No engine or profile code changed, so no figure can move.
+
 ## Round 66: a GUI declutter, and the profile rail by role
 
 The owner marked up a screenshot. Every circled summary is gone:

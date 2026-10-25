@@ -96,6 +96,15 @@ function grantsByAbility(
   return map;
 }
 
+/**
+ * Every ability a class can ever know, base and talent-granted, ungated by
+ * style or talents. For a check that has to reach all of them, such as which
+ * apply a damage-over-time effect (`abilities/dots.ts`).
+ */
+export function classAbilityCatalog(characterClass: ClassId): readonly Ability[] {
+  return CLASS_ABILITIES[characterClass] ?? [];
+}
+
 /** The talent id that grants an ability, if a talent grants it at all. */
 export function talentGranting(
   characterClass: ClassId,

@@ -10,6 +10,7 @@ import { resolveCombatStyle } from '../../game/character';
 import type { Ability, PrecombatAction } from '../../engine';
 import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
 import { precombatStateFor } from '../../game/abilities/precombatStates';
+import { appliesDot } from '../../game/abilities/dots';
 import {
   START_AUTO_ATTACK_ABILITIES,
   START_AUTO_ATTACK_IDS,
@@ -750,7 +751,11 @@ export function AplEntries({
               * has adds, and always shown where it is already set, so a stored
               * count can be seen and cleared at one target.
               */}
-            {multiTarget && !entry.target ? (
+            {/*
+              * AND ONLY ON AN ABILITY THAT HAS A DoT (round 67, the owner's),
+              * still shown where a count is already stored so it can be cleared.
+              */}
+            {multiTarget && !entry.target && (appliesDot(entry.abilityId) || entry.multiDot !== undefined) ? (
               <EntryMultiDot
                 multiDot={entry.multiDot}
                 onChange={
