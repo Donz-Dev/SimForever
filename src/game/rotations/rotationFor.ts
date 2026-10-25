@@ -58,7 +58,8 @@ export function rotationFor(
   if (characterClass === 'druid') return druidRotation(style);
   // A Shaman's two specs are a caster and a two-hander, which the style
   // already separates -- so the style selects the list here too.
-  if (characterClass === 'shaman') return shamanRotation(style);
+  // AND ITS TALENTS PICK THE HEALER (round 60): a build with Riptide heals.
+  if (characterClass === 'shaman') return shamanRotation(style, talents ?? {});
   // AND TALENTS SELECT ONE FOR THE MAGE TOO, but by POINTS SPENT rather than
   // by a capstone: all three builds are `caster`, and the Frostfire one is
   // 0/29/22 with no 31-point talent for the Rogue's test to find.

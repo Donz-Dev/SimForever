@@ -69,3 +69,30 @@ export function partyMembers(
 ): readonly Combatant[] {
   return raidMembers(context, actor).filter((member) => member.party === party);
 }
+
+/**
+ * The raid member carrying this actor's aura, the lowest health of them when
+ * several do (round 60). Ties go to party order, like `lowestHealth`.
+ */
+export function withAuraFrom(
+  context: SimulationContext,
+  actor: Combatant,
+  auraId: string,
+): Combatant | undefined {
+  let best: Combatant | undefined;
+  let bestFraction = Infinity;
+  for (const member of raidMembers(context, actor)) {
+    if (member.auras.get(auraId)?.sourceId !== actor.id) continue;
+    const fraction = healthFraction(member);
+    if (fraction < bestFraction) {
+      best = member;
+      bestFraction = fraction;
+    }
+  }
+  return best;
+}
+
+/** How many of these members are below a share of their health (round 60). */
+export function injuredCount(members: readonly Combatant[], below: number): number {
+  return members.filter((member) => healthFraction(member) < below).length;
+}

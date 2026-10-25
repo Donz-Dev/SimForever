@@ -1,5 +1,5 @@
 import type { Ability, Combatant, SimulationContext } from '../../engine';
-import { dealDamage, seconds } from '../../engine';
+import { applyHealing, dealDamage, seconds } from '../../engine';
 import { areaTargets } from '../combat/multiTarget';
 import {
   ELEMENTAL_MASTERY_AURA,
@@ -16,6 +16,13 @@ import {
   FLAMETONGUE_WEAPON_IMBUE,
   MAIN_HAND_IMBUE_IDS,
   rockbiterWeaponImbue,
+  ANCESTRAL_HEALING,
+  MANA_TIDE,
+  NATURES_SWIFTNESS,
+  RIPTIDE_CHAIN_HEAL_BONUS,
+  RIPTIDE_HOT,
+  WATER_SHIELD,
+  WATER_SHIELD_MANA_FRACTION,
 } from '../auras/shaman';
 import {
   CHAIN_LIGHTNING_SP_COEFFICIENT,
@@ -24,6 +31,10 @@ import {
   FROST_SHOCK_SP_COEFFICIENT,
   LAVA_BURST_SP_COEFFICIENT,
   LIGHTNING_BOLT_SP_COEFFICIENT,
+  CHAIN_HEAL_HEAL_COEFFICIENT,
+  HEALING_WAVE_HEAL_COEFFICIENT,
+  LESSER_HEALING_WAVE_HEAL_COEFFICIENT,
+  RIPTIDE_HEAL_COEFFICIENT,
 } from '../combat/coefficients';
 import { baseManaFor } from '../character';
 
@@ -792,6 +803,216 @@ export const MAGMA_TOTEM: Ability = {
   unmodelled: 'The totem is not an entity and cannot be killed.',
 };
 
+/* -------------------------------------------------------------------------- */
+/* Restoration (round 60): the Piss Beam profile's spells                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The key an Ancestral Healing rank is carried under, on each heal it reaches.
+ * Set by the talent; read by `shamanHeal`.
+ */
+export const ANCESTRAL_HEALING_KEY = 'ancestralHealing';
+
+/**
+ * Every Shaman heal goes through here, so its two crit riders cannot be
+ * forgotten by one of them:
+ *
+ *   WATER SHIELD   2% of maximum mana on a HEALING SPELL crit -- the owner's,
+ *                  and "not Riptide HoT effect", so only a DIRECT heal counts
+ *   ANCESTRAL      the healed target carries Ancestral Healing for 15 seconds
+ *   HEALING        after a direct crit, when the talent is taken -- tracked as
+ *                  an uptime on its own, by the owner's instruction
+ *
+ * Each crit is its own: a Chain Heal that crits on two of its three targets
+ * restores mana twice. The client's "only one globe every few seconds" is not
+ * in the owner's statement.
+ */
+export function shamanHeal(
+  simulation: SimulationContext,
+  caster: Combatant,
+  target: Combatant,
+  ability: Ability,
+  amount: number,
+  coefficient: number,
+): void {
+  const result = applyHealing(simulation, {
+    source: caster,
+    target,
+    abilityId: ability.id,
+    abilityName: ability.name,
+    baseAmount: amount,
+    powerCoefficient: coefficient,
+    threatens: true,
+  });
+  if (!result.critical) return;
+  if (caster.auras.has(WATER_SHIELD.id)) {
+    const mana = caster.resources.get('mana');
+    if (mana) {
+      simulation.grantResource(caster, 'mana', mana.maximum * WATER_SHIELD_MANA_FRACTION, {
+        id: WATER_SHIELD.id,
+        name: WATER_SHIELD.name,
+      });
+    }
+  }
+  if ((ability.bonuses?.[ANCESTRAL_HEALING_KEY] ?? 0) > 0) {
+    simulation.applyAura(target, ANCESTRAL_HEALING, caster.id);
+  }
+}
+
+const isFriendly = (caster: Combatant, target: Combatant | undefined): target is Combatant =>
+  target !== undefined && !target.isHostileTo(caster);
+
+/** Lesser Healing Wave, rank 6: "Heals a friendly target for 775 to 865." 380 mana, 1.5s. */
+export const LESSER_HEALING_WAVE_HEAL = midpoint(775, 865);
+
+export const LESSER_HEALING_WAVE: Ability = {
+  id: 'lesser_healing_wave',
+  name: 'Lesser Healing Wave',
+  heals: true,
+  cost: { resource: 'mana', amount: 380 },
+  castTimeMs: seconds(1.5),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!isFriendly(caster, target)) return;
+    shamanHeal(simulation, caster, target, ability, LESSER_HEALING_WAVE_HEAL, LESSER_HEALING_WAVE_HEAL_COEFFICIENT);
+  },
+};
+
+/** Healing Wave, rank 10: "Heals a friendly target for 1,508 to 1,722." 620 mana, 3s. */
+export const HEALING_WAVE_HEAL = midpoint(1508, 1722);
+
+export const HEALING_WAVE: Ability = {
+  id: 'healing_wave',
+  name: 'Healing Wave',
+  heals: true,
+  cost: { resource: 'mana', amount: 620 },
+  castTimeMs: seconds(3),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!isFriendly(caster, target)) return;
+    shamanHeal(simulation, caster, target, ability, HEALING_WAVE_HEAL, HEALING_WAVE_HEAL_COEFFICIENT);
+  },
+};
+
+/**
+ * Chain Heal, rank 3: "Heals the friendly target for 474 to 538, then jumps to
+ * heal additional nearby targets. If cast on a party member, the heal will only
+ * jump to other party members. Each jump is 50% as effective as the previous
+ * target. Heals 3 total targets." 405 mana, 2.5s.
+ *
+ * ============================================================================
+ * THE JUMPS ARE THE OWNER'S RULE (round 60): to the LOWEST health percentage
+ * among the INJURED members of the target's party, one at a time -- "if there
+ * are not 3 injured targets in the party, then it will only jump once or not at
+ * all." A member at full is never jumped to, and nobody is healed twice.
+ *
+ * +25% ON A RIPTIDE TARGET, and only on the target it is cast at: Riptide
+ * improves "your Chain Heal casts DIRECTLY on that target". The jumps start
+ * from that figure and halve it, so they collect the bonus too -- each jump is
+ * 50% of the PREVIOUS target's heal.
+ * ============================================================================
+ */
+export const CHAIN_HEAL_HEAL = midpoint(474, 538);
+export const CHAIN_HEAL_TARGETS = 3;
+export const CHAIN_HEAL_JUMP_FACTOR = 0.5;
+
+export const CHAIN_HEAL: Ability = {
+  id: 'chain_heal',
+  name: 'Chain Heal',
+  heals: true,
+  cost: { resource: 'mana', amount: 405 },
+  castTimeMs: seconds(2.5),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!isFriendly(caster, target)) return;
+    const riptide = target.auras.get(RIPTIDE_HOT.id)?.sourceId === caster.id;
+    let factor = riptide ? RIPTIDE_CHAIN_HEAL_BONUS : 1;
+    const healed = new Set<string>([target.id]);
+    shamanHeal(simulation, caster, target, ability, CHAIN_HEAL_HEAL * factor, CHAIN_HEAL_HEAL_COEFFICIENT * factor);
+    if (target.party === undefined) return;
+    for (let jump = 1; jump < CHAIN_HEAL_TARGETS; jump++) {
+      const next = simulation.combatants
+        .filter(
+          (other) =>
+            other !== caster &&
+            !healed.has(other.id) &&
+            other.party === target.party &&
+            other.isAlive &&
+            !other.isHostileTo(caster) &&
+            other.health.current < other.health.maximum,
+        )
+        .reduce<Combatant | undefined>(
+          (lowest, other) =>
+            lowest === undefined ||
+            other.health.current / other.health.maximum < lowest.health.current / lowest.health.maximum
+              ? other
+              : lowest,
+          undefined,
+        );
+      if (!next) return;
+      factor *= CHAIN_HEAL_JUMP_FACTOR;
+      healed.add(next.id);
+      shamanHeal(simulation, caster, next, ability, CHAIN_HEAL_HEAL * factor, CHAIN_HEAL_HEAL_COEFFICIENT * factor);
+    }
+  },
+};
+
+/**
+ * Riptide, rank 3, granted by the Restoration talent: "Heals a friendly target
+ * for 799 to 883, an additional 805 over 15 sec, and increases the
+ * effectiveness of your Chain Heal casts directly on that target by 25%." 385
+ * mana, instant, a 6 second cooldown. 21.4% of healing power on the hit, the
+ * owner's; the heal over time is `RIPTIDE_HOT`.
+ */
+export const RIPTIDE_HEAL = midpoint(799, 883);
+
+export const RIPTIDE: Ability = {
+  id: 'riptide',
+  name: 'Riptide',
+  heals: true,
+  cost: { resource: 'mana', amount: 385 },
+  cooldownMs: seconds(6),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!isFriendly(caster, target)) return;
+    shamanHeal(simulation, caster, target, ability, RIPTIDE_HEAL, RIPTIDE_HEAL_COEFFICIENT);
+    simulation.applyAura(target, RIPTIDE_HOT, caster.id);
+  },
+};
+
+/** Mana Tide Totem, rank 4, granted by the talent: 60 mana, instant, 5 minutes. */
+export const MANA_TIDE_TOTEM: Ability = {
+  id: 'mana_tide_totem',
+  name: 'Mana Tide Totem',
+  cost: { resource: 'mana', amount: 60 },
+  cooldownMs: seconds(300),
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, MANA_TIDE, caster.id);
+  },
+};
+
+/**
+ * Nature's Swiftness, granted by the talent: instant, off the global cooldown,
+ * three minutes. Its charge is the aura's -- see `NATURES_SWIFTNESS`.
+ */
+export const NATURES_SWIFTNESS_ABILITY: Ability = {
+  id: 'nature_s_swiftness',
+  name: "Nature's Swiftness",
+  cooldownMs: seconds(180),
+  triggersGcd: false,
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, NATURES_SWIFTNESS, caster.id);
+  },
+};
+
+/** Water Shield, granted by the talent: instant, ten minutes, cast before the pull. */
+export const WATER_SHIELD_ABILITY: Ability = {
+  id: 'water_shield',
+  name: 'Water Shield',
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, WATER_SHIELD, caster.id);
+  },
+};
+
 export const SHAMAN_ABILITIES: readonly Ability[] = [
   MAGMA_TOTEM,
   LIGHTNING_BOLT,
@@ -808,4 +1029,11 @@ export const SHAMAN_ABILITIES: readonly Ability[] = [
   ROCKBITER_WEAPON,
   RAGE_OF_THE_FARSEER_ABILITY,
   SEARING_TOTEM,
+  LESSER_HEALING_WAVE,
+  HEALING_WAVE,
+  CHAIN_HEAL,
+  RIPTIDE,
+  MANA_TIDE_TOTEM,
+  NATURES_SWIFTNESS_ABILITY,
+  WATER_SHIELD_ABILITY,
 ];

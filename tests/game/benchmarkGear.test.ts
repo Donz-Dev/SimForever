@@ -414,6 +414,7 @@ describe('a caster weapon trades melee damage for a stated spell power', () => {
       'Frostfire',
       'Holy Pal',
       'Moonkin',
+      'Piss Beam',
       'Prot Pally',
       'SM/DS',
       'Sbolt Spam',

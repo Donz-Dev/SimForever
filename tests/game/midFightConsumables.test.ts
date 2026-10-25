@@ -434,7 +434,7 @@ describe('what selecting one does to the priority list', () => {
       expect(consumables.potion, `${preset.id} potion`).toBeDefined();
       expect(consumables.other, `${preset.id} other`).toBeDefined();
     }
-    expect(PROFILE_PRESETS).toHaveLength(33);
+    expect(PROFILE_PRESETS).toHaveLength(34);
   });
 
   it("partitions `other` by pool, exactly as the owner's ruling does", () => {
@@ -500,6 +500,8 @@ describe('what selecting one does to the priority list', () => {
       holy_pal: 'demonic_rune',
       // Round 59's Frost Mage, a pure mana user.
       mage_frost: 'demonic_rune',
+      // Round 60's Shaman healer, a pure mana user.
+      shaman_resto: 'demonic_rune',
     };
 
     // EXHAUSTIVE, so a new preset has to be classified rather than defaulting.

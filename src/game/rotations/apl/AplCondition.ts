@@ -161,6 +161,19 @@ export type AplCondition =
       readonly compare: AplCompare;
       readonly fraction: number;
     }
+  /**
+   * HOW MANY NEED HEALING (round 60): members of the entry target's PARTY, or
+   * of the whole raid, below `below` of their health. The Piss Beam list's
+   * "if 2+ people need healing in a group" -- and the party is the TARGET's,
+   * because that is the group a Chain Heal on that target can jump through.
+   */
+  | {
+      readonly kind: 'injuredCount';
+      readonly of: 'targetParty' | 'raid';
+      readonly below: number;
+      readonly compare: AplCompare;
+      readonly count: number;
+    }
   /** Milliseconds until a weapon swings again. Zero when the slot is idle. */
   | {
       readonly kind: 'swingIn';
@@ -220,7 +233,13 @@ export type AplCondition =
  */
 export type AplTarget =
   | { readonly kind: 'tank' }
-  | { readonly kind: 'lowestHealth'; readonly excludeTank?: boolean };
+  | { readonly kind: 'lowestHealth'; readonly excludeTank?: boolean }
+  /**
+   * The raid member carrying one of YOUR auras (round 60) -- the lowest health
+   * of them when several do. The Piss Beam list's Chain Heal "on the target
+   * that has Riptide". Nobody, when nobody carries it, so the entry waits.
+   */
+  | { readonly kind: 'withAura'; readonly auraId: string };
 
 /** When to ask whether to cancel a cast, and what to ask. See `AplEntry.cancel`. */
 export interface AplCastCancel {

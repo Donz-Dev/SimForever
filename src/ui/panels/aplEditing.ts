@@ -268,7 +268,9 @@ export type ClauseKind =
   | 'health'
   | 'swing'
   // How many targets the fight holds (round 57). `value` is the count.
-  | 'targets';
+  | 'targets'
+  // How many friendlies need healing (round 60). `value` is the count.
+  | 'injured';
 
 /** Which weapon's swing timer a `swing` clause reads. */
 export type SwingSlot = 'mainHand' | 'offHand' | 'ranged';
@@ -340,6 +342,9 @@ export interface Clause {
    * `self`, which is every list written before healing existed.
    */
   readonly who?: HealthOf;
+  /** injured: whose group, and the health share under which a member counts. */
+  readonly injuredOf?: 'targetParty' | 'raid';
+  readonly belowPercent?: number;
 }
 
 /** Whose health a `health` clause reads. See `Clause.who`. */
@@ -639,6 +644,14 @@ function toClause(condition: AplCondition): Clause | undefined {
       };
     case 'targetCount':
       return { kind: 'targets', compare: condition.compare, value: condition.count };
+    case 'injuredCount':
+      return {
+        kind: 'injured',
+        injuredOf: condition.of,
+        belowPercent: percentOf(condition.below),
+        compare: condition.compare,
+        value: condition.count,
+      };
     case 'health':
       /*
        * YOURS OR THE TARGET'S (round 55). It was self only, on the argument
@@ -752,6 +765,14 @@ export function fromClause(clause: Clause): AplCondition {
       };
     case 'targets':
       return { kind: 'targetCount', compare, count: value };
+    case 'injured':
+      return {
+        kind: 'injuredCount',
+        of: clause.injuredOf ?? 'targetParty',
+        below: (clause.belowPercent ?? 90) / 100,
+        compare,
+        count: value,
+      };
   }
 }
 
@@ -819,6 +840,8 @@ export function blankClause(kind: ClauseKind): Clause {
     case 'targets':
       // "Three or more targets": the AoE pull the condition exists for.
       return { kind: 'targets', compare: 'atLeast', value: 3 };
+    case 'injured':
+      return { kind: 'injured', injuredOf: 'targetParty', belowPercent: 90, compare: 'atLeast', value: 2 };
   }
 }
 

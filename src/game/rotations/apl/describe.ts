@@ -138,6 +138,11 @@ export function describeCondition(condition: AplCondition, names: DescribeNames 
     case 'health':
       return `${subjectWord(condition.on).replace(' have', '').replace(' has', '')} health is ${comparison(condition.compare)} ${Math.round(condition.fraction * 100)}%`;
 
+    case 'injuredCount': {
+      const where = condition.of === 'targetParty' ? "in the target's party" : 'in the raid';
+      return `${comparison(condition.compare)} ${condition.count} ${where} are under ${Math.round(condition.below * 100)}% health`;
+    }
+
     case 'friendlyHealth': {
       const who =
         condition.of === 'tank'

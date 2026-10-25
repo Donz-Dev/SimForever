@@ -1346,11 +1346,12 @@ describe('what is left, which is the claim this deep dive makes', () => {
        * Mastery's Chain Lightning clause is Berserk's `suppressesCooldownOf`.
        * What is left is the encounter (Improved Stormstrike), healing (Tidal
        * Focus) and Elemental Weapons.
+       *
+       * AND ROUND 60 TOOK TIDAL FOCUS: its mana half reaches the heals the
+       * Piss Beam profile declared, so the Elemental build has none left.
        */
       expect(partly, preset).toEqual(
-        preset === 'shaman_enhancement'
-          ? ['elemental_weapons', 'improved_stormstrike']
-          : ['tidal_focus'],
+        preset === 'shaman_enhancement' ? ['elemental_weapons', 'improved_stormstrike'] : [],
       );
     }
   });
@@ -1372,10 +1373,10 @@ describe('what is left, which is the claim this deep dive makes', () => {
      * covers totems that BUFF or HEAL -- and Magma Totem is a damage totem,
      * declared now. The four left are totems and nothing but totems.
      */
+    // And Mana Tide left it too (round 60): a window of mana on the caster.
     expect(scopes.get('totemEntities')?.sort()).toEqual([
       'earth_s_grasp',
       'guardian_totems',
-      'mana_tide_totem',
       'restorative_totems',
     ]);
   });

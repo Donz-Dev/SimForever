@@ -9,12 +9,14 @@ import {
 } from './consumableCooldowns';
 import {
   compileRotation,
+  resourceFraction,
   selfStacks,
   targetExpired,
   targetHas,
   targetTime,
 } from './apl';
 import type { CombatStyleId } from '../character';
+import type { TalentAllocation } from '../talents/Talent';
 import { MAELSTROM_WEAPON_MAX_STACKS } from '../auras/shaman';
 
 /**
@@ -413,8 +415,68 @@ export const SHAMAN_ENHANCEMENT: AplList = {
 export const SHAMAN_ELEMENTAL_ROTATION: Rotation = compileRotation(SHAMAN_ELEMENTAL);
 export const SHAMAN_ENHANCEMENT_ROTATION: Rotation = compileRotation(SHAMAN_ENHANCEMENT);
 
+/**
+ * RESTORATION -- the Piss Beam profile's list (round 60), the owner's design:
+ * "Keep up Riptide, if 2+ people need healing in a group use chain heal on the
+ * target that has Riptide. Otherwise spam Lesser Healing Wave based on target
+ * health % in a smart heal fashion like Holy Pal does."
+ *
+ * ============================================================================
+ * SMART HEALING ON, as Holy Pal's list is: every heal aimed at a friendly goes
+ * to whoever has the lowest health percentage -- except Chain Heal, which is
+ * aimed at the member carrying YOUR Riptide and is left alone by smart healing.
+ *
+ * THREE FIGURES HERE ARE OURS, NOT THE OWNER'S, and every one is editable in
+ * the panel: "need healing" is under 90% health, Mana Tide goes down at 70%
+ * mana, and Nature's Swiftness is spent when the tank drops under 35%. The
+ * owner named the spells and not their gates.
+ * ============================================================================
+ */
+export const SHAMAN_RESTORATION: AplList = {
+  name: 'Shaman (Restoration)',
+  smartHealing: true,
+  entries: [
+    ...RACIAL_COOLDOWNS,
+    ...CONSUMABLE_COOLDOWNS,
+    {
+      abilityId: 'mana_tide_totem',
+      condition: resourceFraction('atMost', 0.7, 'mana'),
+      note: 'Under 70% mana: a gate of ours, not the owner\'s.',
+    },
+    {
+      abilityId: 'nature_s_swiftness',
+      condition: { kind: 'friendlyHealth', of: 'tank', compare: 'below', fraction: 0.35 },
+      note: 'Makes the next heal instant when the tank is under 35%: a gate of ours.',
+    },
+    {
+      abilityId: 'riptide',
+      target: { kind: 'lowestHealth' },
+      condition: { kind: 'health', on: 'target', compare: 'below', fraction: 1 },
+      note: 'Kept up: on cooldown, on whoever is lowest.',
+    },
+    {
+      abilityId: 'chain_heal',
+      target: { kind: 'withAura', auraId: 'riptide' },
+      condition: { kind: 'injuredCount', of: 'targetParty', below: 0.9, compare: 'atLeast', count: 2 },
+      note: 'On the Riptide target, when 2 or more in its party are under 90%.',
+    },
+    {
+      abilityId: 'lesser_healing_wave',
+      target: { kind: 'lowestHealth' },
+      condition: { kind: 'health', on: 'target', compare: 'below', fraction: 1 },
+    },
+  ],
+};
+
+export const SHAMAN_RESTORATION_ROTATION: Rotation = compileRotation(SHAMAN_RESTORATION);
+
 /** Which list a Shaman runs, from its combat style. */
-export function shamanRotation(style: CombatStyleId): Rotation | undefined {
+export function shamanRotation(
+  style: CombatStyleId,
+  talents: TalentAllocation = {},
+): Rotation | undefined {
+  // Riptide is the Restoration capstone, so a build that takes it heals (round 60).
+  if ((talents.riptide ?? 0) > 0) return SHAMAN_RESTORATION_ROTATION;
   if (style === 'caster') return SHAMAN_ELEMENTAL_ROTATION;
   if (style === 'two_hander') return SHAMAN_ENHANCEMENT_ROTATION;
   return undefined;

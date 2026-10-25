@@ -3,7 +3,16 @@ import { PriorityRotation } from '../../../engine';
 import { comboPointsOn } from '../../combat/comboPoints';
 import type { AplCompare, AplCondition, AplEntry, AplList } from './AplCondition';
 import { builtinCondition } from './builtins';
-import { averageHealth, healthFraction, lowestHealth, partyMembers, raidMembers, tankOf } from './friendlies';
+import {
+  averageHealth,
+  healthFraction,
+  injuredCount,
+  lowestHealth,
+  partyMembers,
+  raidMembers,
+  tankOf,
+  withAuraFrom,
+} from './friendlies';
 import type { AplTarget } from './AplCondition';
 
 /** The shape `PriorityEntry.condition` has. */
@@ -64,6 +73,12 @@ export function compileRotation(list: AplList): PriorityRotation {
  * is the tank -- which keeps a pre-cast on the tank while nobody needs it.
  */
 function smartTargeted(entry: AplEntry): AplEntry {
+  /*
+   * NOT A `withAura` TARGET (round 60): "the member carrying my Riptide" is a
+   * choice of WHO, made for a reason, and smart healing is about the lowest
+   * health -- so it is left exactly as written.
+   */
+  if (entry.target?.kind === 'withAura') return entry;
   return entry.target ? { ...entry, target: { kind: 'lowestHealth' } } : entry;
 }
 
@@ -102,6 +117,10 @@ function compileTarget(
     case 'lowestHealth': {
       const excludeTank = target.excludeTank === true;
       return (context, actor) => lowestHealth(context, actor, { excludeTank });
+    }
+    case 'withAura': {
+      const { auraId } = target;
+      return (context, actor) => withAuraFrom(context, actor, auraId);
     }
   }
 }
@@ -291,6 +310,17 @@ export function compileCondition(condition: AplCondition): Condition {
         const subject = subjectOf(on, context, actor, target);
         if (!subject || subject.health.maximum <= 0) return false;
         return compare(subject.health.current / subject.health.maximum, how, fraction);
+      };
+    }
+
+    case 'injuredCount': {
+      const { of, below, compare: how, count } = condition;
+      return (context, actor, target) => {
+        if (of === 'targetParty') {
+          if (target?.party === undefined) return compare(0, how, count);
+          return compare(injuredCount(partyMembers(context, actor, target.party), below), how, count);
+        }
+        return compare(injuredCount(raidMembers(context, actor), below), how, count);
       };
     }
 
