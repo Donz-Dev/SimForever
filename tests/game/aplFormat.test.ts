@@ -210,13 +210,14 @@ describe('the panel shows the list the build runs', () => {
       }),
     );
 
-  it('names the list in the panel badge, which shows while it is shut', () => {
+  it('no longer names the list in the panel header', () => {
     /*
-     * THE BADGE IS THE CHEAPEST GUARD against the failure this project has had
-     * twice -- a build running a list meant for another spec, which produces a
-     * perfectly ordinary DPS figure and nothing that looks wrong.
+     * THE BADGE WAS A GUARD against a build running a list meant for another
+     * spec, which produces an ordinary DPS figure and nothing that looks wrong.
+     * The owner took it off in round 66's declutter; `syncDefaultRotation` and
+     * the `source` field are what still guard it.
      */
-    expect(renderPanel('two_hand_arms')).toContain('Warrior (Two-Hander, Battle)');
+    expect(renderPanel('two_hand_arms')).not.toContain('Warrior (Two-Hander, Battle)');
   });
 
   it('lists every ability, in priority order', () => {

@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import type { ChangeEvent, ReactNode } from 'react';
 import type { CharacterProfile, ValidationIssue } from '../../profiles';
 import { downloadProfile, readProfileFile } from '../profileFile';
-import type { CharacterSelection, CombatStyleId, RaceId } from '../../game/character';
+import type { CharacterSelection, RaceId } from '../../game/character';
 import { startingEquipmentFor } from '../../game/items/startingSets';
 import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
 import {
@@ -11,14 +11,12 @@ import {
   classesForRace,
   combatStylesFor,
   getClass,
-  getCombatStyle,
   getRace,
   racesForClass,
   racesForFaction,
   resolveCombatStyle,
   STANCES,
   defaultStanceFor,
-  getStance,
   isTankBuild,
   resolveStance,
 } from '../../game/character';
@@ -256,7 +254,6 @@ export function CharacterPanel({
     return (
       <ConfirmedCharacter
         profile={profile}
-        style={style}
         onEdit={clearingIssues(onEdit)}
         onSave={() => downloadProfile(profile)}
         onLoad={() => fileInput.current?.click()}
@@ -406,14 +403,10 @@ export function CharacterPanel({
 }
 
 /**
- * The confirmed character, as one line.
- *
- * Everything the choices above produced, in the order they were made, so the
- * summary reads back as a sentence rather than as a list of fields.
+ * The confirmed character: its name, its race, and Save and Load.
  */
 function ConfirmedCharacter({
   profile,
-  style,
   onEdit,
   onSave,
   onLoad,
@@ -422,7 +415,6 @@ function ConfirmedCharacter({
   issues,
 }: {
   readonly profile: CharacterProfile;
-  readonly style: CombatStyleId;
   readonly onEdit: () => void;
   readonly onSave: () => void;
   readonly onLoad: () => void;
@@ -433,29 +425,12 @@ function ConfirmedCharacter({
   /** Why a file did not load, when one did not. Built by the panel too. */
   readonly issues: ReactNode;
 }) {
-  const race = getRace(profile.character.race);
-  const classDefinition = getClass(profile.character.characterClass);
-  const styleDefinition = getCombatStyle(style);
-  /*
-   * The stance is on the summary line because it changes what the character
-   * can cast. A collapsed summary that omitted it would leave someone
-   * comparing two runs with no way to see that the stance differed.
-   */
-  const stanceDefinition =
-    profile.character.characterClass === 'warrior'
-      ? getStance(resolveStance(style, profile.character.stance))
-      : undefined;
-
   return (
     <section className="panel character-summary">
       <div className="character-summary-body">
         <div>
+          {/* The race, class, style and stance line is gone (round 66, the owner's declutter). */}
           <strong>{profile.character.name}</strong>
-          <span className="muted">
-            {race?.name} {classDefinition?.name}
-            {styleDefinition ? ` · ${styleDefinition.name}` : ''}
-            {stanceDefinition ? ` · ${stanceDefinition.name}` : ''}
-          </span>
           {/*
             * EVERY RACE THAT MAY PLAY THIS CLASS, BOTH FACTIONS. Faction is not a
             * property of the build here -- nothing in a fight reads it -- so a
