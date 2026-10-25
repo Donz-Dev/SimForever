@@ -107,6 +107,30 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 70: the raid pulse at 5 seconds, then every 30 to 36
+
+The owner changed the raid healer fight's raid-wide damage again: the first
+pulse lands **5 seconds in**, and each one after it a **random 30 to 36
+seconds** after the last. It was every 20 seconds from 20 (round 61), and
+every 15 from 15 before that.
+
+**DRAWN FROM THE FIGHT'S OWN RANDOM STREAM**, inclusive at both ends to the
+millisecond, so a seed reproduces the raid. Each pulse is the same as before:
+an opening hit of 25% of each member's health, then four ticks of 15% two
+seconds apart.
+
+**A 60-SECOND FIGHT STILL TAKES TWO PULSES**, at 5s and somewhere from 35 to
+41s, where it took them at 20 and 40. The first one is earlier, so more of the
+fight is spent healing it:
+
+| raid healer, 200 fights | HPS before | HPS after | allied deaths |
+| --- | --- | --- | --- |
+| Holy Pal | 661.0 ± 61.5 | **781.1 ± 72.9** | 21.41 -> 21.27 |
+| Piss Beam | 973.4 ± 45.9 | **1,160.8 ± 49.1** | 18.54 -> 17.05 |
+
+The tank healer fight has no pulse and is unchanged, and so is every DPS and
+tank profile.
+
 ## Round 69: Expose Prey on ranged attacks, and its real duration
 
 The owner: "Ensure that expose prey, the hunter talent, triggers when melee and

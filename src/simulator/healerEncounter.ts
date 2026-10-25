@@ -55,10 +55,10 @@ import { createDummyFor, createPlayerFor, trainingDummyEncounter } from './train
  * death is recorded first. That is `revivesOnDeath`, the mechanism a tank run
  * already uses.
  *
- * THE FIRST RAID PULSE LANDS AT 20 SECONDS, not at the pull: "every 20 seconds"
- * read as a period, so a sixty-second fight takes three. (15 until round 61,
- * when the owner eased the pressure.) A modelling choice the
- * owner stated no figure for, and the one constant to move if they meant t=0.
+ * THE FIRST RAID PULSE LANDS AT 5 SECONDS, and each after it a random 30 to 36
+ * seconds after the last (round 70, the owner's), drawn off the fight's own
+ * stream so a seed reproduces it. A sixty-second fight takes two. (Every 20
+ * seconds from 20 in round 61, every 15 from 15 before that.)
  * ==============================================================================
  */
 
@@ -91,9 +91,15 @@ export const PARTY_SIZE = 5;
 /** The tank's share of its health lost on each hit, and how often. */
 export const RAID_TANK_HIT_FRACTION = 0.1;
 export const RAID_TANK_HIT_PERIOD_MS = seconds(2);
-/** The raid-wide pulse: an opening hit, then ticks, every period. */
-export const RAID_PULSE_PERIOD_MS = seconds(20);
-export const RAID_PULSE_FIRST_MS = seconds(20);
+/**
+ * The raid-wide pulse: an opening hit, then ticks. The first lands 5 seconds
+ * in, and each one after a RANDOM 30 to 36 seconds after the last (round 70,
+ * the owner's). It was every 20 seconds from 20 (round 61), and every 15 from
+ * 15 before that.
+ */
+export const RAID_PULSE_FIRST_MS = seconds(5);
+export const RAID_PULSE_INTERVAL_MIN_MS = seconds(30);
+export const RAID_PULSE_INTERVAL_MAX_MS = seconds(36);
 export const RAID_PULSE_OPENING_FRACTION = 0.25;
 export const RAID_PULSE_TICK_FRACTION = 0.15;
 export const RAID_PULSE_TICK_PERIOD_MS = seconds(2);
@@ -286,7 +292,9 @@ function scheduleRaidDamage(context: SimulationContext): void {
         }),
       );
     }
-    ctx.schedule(RAID_PULSE_PERIOD_MS, createEvent('raid-pulse', EventPriority.AutoAttack, pulse));
+    // Inclusive at both ends, to the millisecond, off the fight's own stream.
+    const next = ctx.rng.nextInt(RAID_PULSE_INTERVAL_MIN_MS, RAID_PULSE_INTERVAL_MAX_MS);
+    ctx.schedule(next, createEvent('raid-pulse', EventPriority.AutoAttack, pulse));
   };
   context.schedule(RAID_PULSE_FIRST_MS, createEvent('raid-pulse', EventPriority.AutoAttack, pulse));
 }

@@ -87,7 +87,7 @@ describe('raid frames', () => {
     expect(frames[0].members).toHaveLength(20);
     expect(new Set(frames[0].members.map((m) => m.party)).size).toBe(4);
     expect(frames[0].members[0].label).toBe('T');
-    // Somebody is hurt after the first raid pulse at 20 seconds.
-    expect(frames[11].members.some((m) => m.health < 1)).toBe(true);
+    // Somebody is hurt after the first raid pulse at 5 seconds (round 70).
+    expect(frames[3].members.some((m) => m.health < 1)).toBe(true);
   });
 });
