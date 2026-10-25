@@ -84,6 +84,8 @@ describe('the preset catalogue', () => {
       'mage_frost',
       'shaman_resto',
       'druid_resto',
+      'priest_holy',
+      'priest_disc',
     ]);
     expect(PROFILE_PRESETS.map((preset) => preset.label)).toEqual([
       '2H Arms',
@@ -121,6 +123,8 @@ describe('the preset catalogue', () => {
       'Frost Mage',
       'Piss Beam',
       'Resto Drood',
+      'Holy Priest',
+      'Disc Priest',
     ]);
   });
 
@@ -172,6 +176,8 @@ describe('the preset catalogue', () => {
       mage_frost: 'mage',
       shaman_resto: 'shaman',
       druid_resto: 'druid',
+      priest_holy: 'priest',
+      priest_disc: 'priest',
     };
 
     expect(Object.keys(expected)).toHaveLength(PROFILE_PRESETS.length);

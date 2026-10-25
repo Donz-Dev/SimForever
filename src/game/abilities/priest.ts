@@ -1,7 +1,26 @@
-import type { Ability } from '../../engine';
-import { dealDamage, rollApplication, seconds } from '../../engine';
+import type { Ability, Combatant, SimulationContext } from '../../engine';
+import { applyHealing, dealDamage, rollApplication, seconds } from '../../engine';
 import { areaTargets } from '../combat/multiTarget';
-import { HOLY_NOVA_SP_COEFFICIENT } from '../combat/coefficients';
+import {
+  BINDING_HEAL_HEAL_COEFFICIENT,
+  FLASH_HEAL_HEAL_COEFFICIENT,
+  GREATER_HEAL_HEAL_COEFFICIENT,
+  HOLY_NOVA_SP_COEFFICIENT,
+  PENANCE_HEAL_COEFFICIENT,
+  POWER_WORD_SHIELD_ABSORB_COEFFICIENT,
+  PRAYER_OF_HEALING_HEAL_COEFFICIENT,
+  PRAYER_OF_MENDING_HEAL_COEFFICIENT,
+} from '../combat/coefficients';
+import {
+  DIVINE_AEGIS_CAP,
+  INSPIRATION,
+  RENEW_HOT,
+  WEAKENED_SOUL,
+  divineAegisAura,
+  powerWordShieldAura,
+  prayerOfMendingAura,
+  weakenedSoulAura,
+} from '../auras/priest';
 import { baseManaFor } from '../character/baseStatLookup';
 import {
   DEVOURING_PLAGUE,
@@ -545,6 +564,240 @@ export const HOLY_NOVA: Ability = {
     'the owner’s ruling.',
 };
 
+/* -------------------------------------------------------------------------- */
+/* The healers (round 73): the Holy and Disc Priest profiles' spells          */
+/* -------------------------------------------------------------------------- */
+
+/** The keys the healing talents carry on each heal they reach. */
+export const DIVINE_AEGIS_KEY = 'divineAegisPercent';
+export const INSPIRATION_KEY = 'inspirationPercent';
+export const RENEWED_HOPE_SECONDS_KEY = 'renewedHopeSeconds';
+export const RENEWED_HOPE_CRIT_KEY = 'renewedHopeCrit';
+
+const isFriendly = (caster: Combatant, target: Combatant | undefined): target is Combatant =>
+  target !== undefined && !target.isHostileTo(caster);
+
+/**
+ * Every Priest heal goes through here, so its three riders cannot be forgotten
+ * by one of them:
+ *
+ *   DIVINE AEGIS    a non-periodic crit tops up a shield on the target by the
+ *                   talent's share of the heal, to 1,200 at most
+ *   INSPIRATION     a non-periodic crit puts Inspiration on the target
+ *   RENEWED HOPE    the heal takes five seconds off a Weakened Soul of yours on
+ *                   the target, and off the target entirely if less is left
+ *
+ * The first two read the RAW heal -- what it would have healed, overhealing
+ * included -- because "the amount healed" by a crit on a full target would
+ * otherwise make no shield at all.
+ */
+export function priestHeal(
+  simulation: SimulationContext,
+  caster: Combatant,
+  target: Combatant,
+  ability: Ability,
+  amount: number,
+  coefficient: number,
+): void {
+  const bonuses = ability.bonuses ?? {};
+  const result = applyHealing(simulation, {
+    source: caster,
+    target,
+    abilityId: ability.id,
+    abilityName: ability.name,
+    baseAmount: amount,
+    powerCoefficient: coefficient,
+    threatens: true,
+  });
+  const cut = bonuses[RENEWED_HOPE_SECONDS_KEY] ?? 0;
+  const soul = target.auras.get(WEAKENED_SOUL.id);
+  if (cut > 0 && soul && soul.sourceId === caster.id) {
+    if (soul.expiresAt - simulation.clock.now() <= seconds(cut)) target.auras.remove(simulation, WEAKENED_SOUL.id);
+    else target.auras.rewindWindow(simulation, soul, seconds(cut));
+  }
+  if (!result.critical) return;
+  const aegis = bonuses[DIVINE_AEGIS_KEY] ?? 0;
+  if (aegis > 0) {
+    const existing = target.auras.get('divine_aegis');
+    const left = existing?.sourceId === caster.id ? existing.absorbRemaining : 0;
+    const shield = Math.min(DIVINE_AEGIS_CAP, left + (result.raw * aegis) / 100);
+    simulation.applyAura(target, divineAegisAura(shield), caster.id);
+  }
+  if ((bonuses[INSPIRATION_KEY] ?? 0) > 0) simulation.applyAura(target, INSPIRATION, caster.id);
+}
+
+/** Flash Heal, rank 7: "Heals a friendly target for 774 to 910." 380 mana, 1.5s. */
+export const FLASH_HEAL_HEAL = midpoint(774, 910);
+
+export const FLASH_HEAL: Ability = {
+  id: 'flash_heal',
+  name: 'Flash Heal',
+  heals: true,
+  cost: { resource: 'mana', amount: 380 },
+  castTimeMs: seconds(1.5),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!isFriendly(caster, target)) return;
+    priestHeal(simulation, caster, target, ability, FLASH_HEAL_HEAL, FLASH_HEAL_HEAL_COEFFICIENT);
+  },
+};
+
+/** Greater Heal, rank 5: "heals a single target for 1,853 to 2,067." 710 mana, 3s. */
+export const GREATER_HEAL_HEAL = midpoint(1853, 2067);
+
+export const GREATER_HEAL: Ability = {
+  id: 'greater_heal',
+  name: 'Greater Heal',
+  heals: true,
+  cost: { resource: 'mana', amount: 710 },
+  castTimeMs: seconds(3),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!isFriendly(caster, target)) return;
+    priestHeal(simulation, caster, target, ability, GREATER_HEAL_HEAL, GREATER_HEAL_HEAL_COEFFICIENT);
+  },
+};
+
+/**
+ * Binding Heal, rank 6, granted by the talent: "Heal yourself and a friendly
+ * target for 774 to 910." 380 mana, 1.5s. The full amount on each, 42.9% of
+ * healing power on each.
+ */
+export const BINDING_HEAL_HEAL = midpoint(774, 910);
+
+export const BINDING_HEAL: Ability = {
+  id: 'binding_heal',
+  name: 'Binding Heal',
+  heals: true,
+  cost: { resource: 'mana', amount: 380 },
+  castTimeMs: seconds(1.5),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!isFriendly(caster, target)) return;
+    priestHeal(simulation, caster, target, ability, BINDING_HEAL_HEAL, BINDING_HEAL_HEAL_COEFFICIENT);
+    if (target !== caster) {
+      priestHeal(simulation, caster, caster, ability, BINDING_HEAL_HEAL, BINDING_HEAL_HEAL_COEFFICIENT);
+    }
+  },
+};
+
+/**
+ * Prayer of Healing, rank 5: "heals the target and their party for 631 to
+ * 667." 1,070 mana, 3s. Every member gets the full amount, the owner's; a
+ * target with no party is healed alone.
+ */
+export const PRAYER_OF_HEALING_HEAL = midpoint(631, 667);
+
+export const PRAYER_OF_HEALING: Ability = {
+  id: 'prayer_of_healing',
+  name: 'Prayer of Healing',
+  heals: true,
+  cost: { resource: 'mana', amount: 1070 },
+  castTimeMs: seconds(3),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!isFriendly(caster, target)) return;
+    const party =
+      target.party === undefined
+        ? [target]
+        : simulation.combatants.filter(
+            (member) => member.party === target.party && member.isAlive && !member.isHostileTo(caster),
+          );
+    for (const member of party) {
+      priestHeal(simulation, caster, member, ability, PRAYER_OF_HEALING_HEAL, PRAYER_OF_HEALING_HEAL_COEFFICIENT);
+    }
+  },
+};
+
+/** Renew, rank 10: 410 mana, instant. The heal is `RENEW_HOT`. */
+export const RENEW: Ability = {
+  id: 'renew',
+  name: 'Renew',
+  heals: true,
+  cost: { resource: 'mana', amount: 410 },
+  onCast: ({ simulation, caster, target }) => {
+    if (!isFriendly(caster, target)) return;
+    simulation.applyAura(target, RENEW_HOT, caster.id);
+  },
+};
+
+/**
+ * Power Word: Shield, rank 10: 500 mana, instant, a 4 second cooldown (Soul
+ * Warding takes it off). Absorbs 928 plus 10% of healing power, times the
+ * shield's own modifiers -- Improved Power Word: Shield. REFUSED ON A TARGET
+ * WITH WEAKENED SOUL, which it then applies.
+ */
+export const POWER_WORD_SHIELD_ABSORB = 928;
+
+export const POWER_WORD_SHIELD: Ability = {
+  id: 'power_word_shield',
+  name: 'Power Word: Shield',
+  heals: true,
+  cost: { resource: 'mana', amount: 500 },
+  cooldownMs: seconds(4),
+  canCast: ({ target }) => target !== undefined && !target.auras.has(WEAKENED_SOUL.id),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!isFriendly(caster, target)) return;
+    const modifier = caster.abilityModifierFor(ability.id);
+    const amount =
+      (POWER_WORD_SHIELD_ABSORB + POWER_WORD_SHIELD_ABSORB_COEFFICIENT * caster.stats.get('healingPower')) *
+      (modifier?.healingMultiplier ?? 1);
+    simulation.applyAura(target, powerWordShieldAura(amount), caster.id);
+    simulation.applyAura(target, weakenedSoulAura(ability.bonuses?.[RENEWED_HOPE_CRIT_KEY] ?? 0), caster.id);
+  },
+};
+
+/**
+ * Prayer of Mending, rank 3, granted by the talent: 390 mana, instant, a 10
+ * second cooldown. ONE AT A TIME PER CASTER: casting it takes yours off whoever
+ * carries it, and the new one starts a fresh six heals. See `prayerOfMendingAura`.
+ */
+export const PRAYER_OF_MENDING_HEAL = 413;
+
+export const PRAYER_OF_MENDING: Ability = {
+  id: 'prayer_of_mending',
+  name: 'Prayer of Mending',
+  heals: true,
+  cost: { resource: 'mana', amount: 390 },
+  cooldownMs: seconds(10),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!isFriendly(caster, target)) return;
+    for (const other of simulation.combatants) {
+      if (other.auras.get('prayer_of_mending')?.sourceId === caster.id) other.auras.remove(simulation, 'prayer_of_mending');
+    }
+    const heal = (context: SimulationContext, from: Combatant, carrier: Combatant) =>
+      priestHeal(context, from, carrier, ability, PRAYER_OF_MENDING_HEAL, PRAYER_OF_MENDING_HEAL_COEFFICIENT);
+    simulation.applyAura(target, prayerOfMendingAura(heal), caster.id);
+  },
+};
+
+/**
+ * Penance, rank 4, granted by the Discipline capstone: "425 healing to an ally,
+ * instantly and every 1 sec for 2 sec." 385 mana, channelled, a 12 second
+ * cooldown.
+ *
+ * THREE HEALS: the first as the channel starts (`onCastStart`), then one at
+ * each second of a two-second channel of two ticks -- so the last lands as the
+ * channel ends, where Inner Focus's spender takes its charge. 85.7% of healing
+ * power across the three, the owner's, so a third each.
+ */
+export const PENANCE_HEAL = 425;
+export const PENANCE_TICKS = 3;
+
+export const PENANCE: Ability = {
+  id: 'penance',
+  name: 'Penance',
+  heals: true,
+  cost: { resource: 'mana', amount: 385 },
+  cooldownMs: seconds(12),
+  castTimeMs: seconds(2),
+  channelTicks: PENANCE_TICKS - 1,
+  onCastStart: ({ simulation, caster, target, ability }) => {
+    if (!isFriendly(caster, target)) return;
+    priestHeal(simulation, caster, target, ability, PENANCE_HEAL, PENANCE_HEAL_COEFFICIENT / PENANCE_TICKS);
+  },
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!isFriendly(caster, target)) return;
+    priestHeal(simulation, caster, target, ability, PENANCE_HEAL, PENANCE_HEAL_COEFFICIENT / PENANCE_TICKS);
+  },
+};
+
 export const PRIEST_ABILITIES: readonly Ability[] = [
   // Granted by the Holy talent; `grantsByAbility` gates it.
   HOLY_NOVA,
@@ -557,4 +810,14 @@ export const PRIEST_ABILITIES: readonly Ability[] = [
   VAMPIRIC_EMBRACE_ABILITY,
   INNER_FOCUS_ABILITY,
   POWER_INFUSION_ABILITY,
+  // The heals (round 73).
+  FLASH_HEAL,
+  GREATER_HEAL,
+  PRAYER_OF_HEALING,
+  RENEW,
+  POWER_WORD_SHIELD,
+  // Talent-granted.
+  BINDING_HEAL,
+  PRAYER_OF_MENDING,
+  PENANCE,
 ];

@@ -107,6 +107,72 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 73: the Holy Priest and the Disc Priest
+
+The owner's 36th and 37th profiles: a 17/34/0 Holy Priest and a 31/20/0 Disc
+Priest, from their talent URLs, spells, coefficients, mechanics and lists. Both
+run both healer fights and sit under Healer Profiles.
+
+| | what changed |
+| --- | --- |
+| spells | Flash Heal (42.9%), Greater Heal (85.7%), Prayer of Healing (28.6% on **every** party member), Binding Heal (42.9% on the target **and** the Priest), Renew (20% a 3s tick), Power Word: Shield (928 + 10% absorb), Prayer of Mending (42.9% a heal), Penance (85.7% across three heals). Ranks from the capture; Flash Heal and Binding Heal are foreverchanges.pro's 774 to 910, which wins a tie with the capture's 773 to 909 |
+| absorbs as healing | the owner's: "Absorbed damage counts as healing done". A shield that opts in (`AuraDefinition.absorbCountsAsHealing`) emits a `heal` event for its caster as it soaks. **Opt-in**, so Ice Barrier and the Paladin shields report as before |
+| Power Word: Shield | puts on **Weakened Soul** for 15s and is refused while it is up. Soul Warding takes its cooldown off |
+| Prayer of Mending | heals its carrier the first time they are hit, then **jumps to another raid member at random**, six heals in all, one per caster. Needed a new aura hook, `onCarrierDamaged`, because the raid fight's blows roll on no table and a `taken` reaction never sees them |
+| Penance | three heals: one at once, then one each second of a two-second channel |
+| Divine Aegis | 15% of each non-periodic crit as a shield that **adds up** to 1,200 and restarts its 12s, the owner's |
+| Renewed Hope | +10% crit on Flash Heal, Binding Heal, Greater Heal and Penance against a target with Weakened Soul, carried by the Weakened Soul (Winter's Chill's shape); and each of those heals takes 5s off it |
+| Inner Focus | now makes the heals free and gives the non-periodic ones +25% crit. Disc casts it with Penance as **one `sequence`**, so nothing spends it in between |
+| talents | Spiritual Healing, Holy Specialization's heal half, Improved Renew, Improved Power Word: Shield, Twin Disciplines on the instant heals, Improved Healing, Divine Fury on Greater Heal, Spiritual Guidance's healing half, Soul Warding (hand-filled 4s and 15%), Inspiration (an uptime only, as Ancestral Healing is), and the three granted spells |
+
+Two engine changes rode along, and both leave every existing profile
+byte-identical:
+
+- **A refreshed shield is sized by the definition being applied**, not the one
+  already on the carrier. Divine Aegis topping itself up exposed it, because
+  its amount lives in each cast's definition. Seal of Fury and Templar's Bulwark
+  size theirs from the carrier, so they come out the same.
+- **A `sequence` remembers its entry's target.** Steps after the first used to
+  aim at the default enemy, so an Inner Focus then Penance on the tank would
+  have cast the Penance at the boss.
+
+Measured over 200 fights per fight type:
+
+| | tank healer HPS | raid healer HPS | deaths (tank / raid) |
+| --- | --- | --- | --- |
+| **Holy Priest** | 555.0 ± 79.3 | 1,357.8 ± 70.3 | 2.19 / 15.48 allied |
+| **Disc Priest** | 578.8 ± 69.7 | 1,110.6 ± 53.7 | 2.10 / 20.07 allied |
+
+Holy's tank fight is 69% Flash Heal. Its raid fight is 68% Prayer of Healing
+and 18% Prayer of Mending, about 4.8 heals per Mending. Disc's tank fight is
+30% shield and 6% Divine Aegis: the shield goes out nine times a fight, because
+Renewed Hope cuts Weakened Soul short. Inner Focus goes out with Penance every
+time.
+
+**ALL 35 EXISTING COMBAT LOGS ARE IDENTICAL TO `main`**, the Shadow Priest and
+Prot Pally included. Holy Pal, Piss Beam and Resto Drood match to the decimal.
+
+**THESE CHOICES ARE OURS, NOT THE OWNER'S:**
+
+- both are Troll, Piss Beam's reason (Berserking is haste);
+- "spam" Flash Heal and Prayer of Healing means "while the target, or its
+  party, is below full";
+- Prayer of Mending goes on the tank whenever none of yours is out anywhere;
+- the gear is the healer template in Cloth with a caster staff, and the
+  enchants are Resto Drood's.
+
+**AND FOUR READINGS ARE QUESTIONS FOR THE OWNER:**
+
+- **Prayer of Mending moves on damage only.** The tooltip's "or receive
+  non-periodic healing" is not modelled, since the owner's mechanic names
+  damage.
+- **Divine Aegis takes 15% of the RAW heal**, overhealing included, so a crit on
+  a full target still makes a shield.
+- **Twin Disciplines and Spiritual Healing do not reach the shield**, which
+  absorbs rather than heals. Improved Power Word: Shield does.
+- **Inner Focus's crit reaches every Penance heal**, as it does every Mind Flay
+  tick, by the owner's earlier ruling on channels.
+
 ## Round 72: Swiftmend's coin flip, and Omen of Clarity on heals
 
 The owner ruled on two of round 71's four questions:

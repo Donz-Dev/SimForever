@@ -288,6 +288,147 @@ export const PRIEST_SHADOW_ROTATION: Rotation = compileRotation(PRIEST_SHADOW);
  * for any build is the Shadow list, whose abilities are all trainer spells bar
  * the capstone.
  */
-export function priestRotation(_talents: TalentAllocation): Rotation | undefined {
+/* -------------------------------------------------------------------------- */
+/* The healers (round 73)                                                     */
+/* -------------------------------------------------------------------------- */
+
+/** "At least 6 raid members to heal" -- the raid healer fight, as Holy Pal's list says it. */
+const RAID = { kind: 'raidSize', compare: 'atLeast', count: 6 } as const;
+const NOT_RAID = { kind: 'raidSize', compare: 'below', count: 6 } as const;
+
+/** Power Word: Shield on the tank whenever it can go on: no Weakened Soul there. */
+const SHIELD_THE_TANK = {
+  abilityId: 'power_word_shield',
+  target: { kind: 'tank' },
+  condition: { kind: 'aura', on: 'target', auraId: 'weakened_soul', present: false },
+  note: 'Kept up on the tank, whenever Weakened Soul allows.',
+} as const;
+
+const RENEW_ON_THE_TANK = {
+  abilityId: 'renew',
+  target: { kind: 'tank' },
+  condition: { kind: 'aura', on: 'target', auraId: 'renew', present: false },
+  note: 'Kept up on the tank.',
+} as const;
+
+/**
+ * HOLY -- the Holy Priest profile's list (round 73), the owner's design, one
+ * list for both healer fights as Holy Pal's, Piss Beam's and Resto Drood's are:
+ *
+ *   TANK HEALER  "Keep Renew up on the tank, Keep Power Word Shield up (if
+ *                weakened soul isn't active), spam Flash Heal"
+ *   RAID HEALER  "Keep Renew up on the tank, Keep Power Word Shield up on the
+ *                tank (if weakened soul isn't active), keep a Prayer of Mending
+ *                out, and spam Prayer of Healing on the lowest Hit Point %
+ *                groups."
+ *
+ * ============================================================================
+ * THE RAID LINES ARE GATED ON "AT LEAST 6 RAID MEMBERS" and Flash Heal on
+ * fewer, so each fight runs exactly the owner's lines. "Spam" is "whenever the
+ * one it is aimed at is below full" -- a heal on a full target is all overheal.
+ * Prayer of Mending goes on the tank whenever none of yours is out anywhere.
+ * SMART HEALING IS OFF: every entry names who it is for.
+ * ============================================================================
+ */
+export const PRIEST_HOLY: AplList = {
+  name: 'Priest (Holy)',
+  entries: [
+    ...RACIAL_COOLDOWNS,
+    ...CONSUMABLE_COOLDOWNS,
+    RENEW_ON_THE_TANK,
+    SHIELD_THE_TANK,
+    {
+      abilityId: 'prayer_of_mending',
+      target: { kind: 'tank' },
+      condition: {
+        kind: 'all',
+        of: [RAID, { kind: 'raidAura', auraId: 'prayer_of_mending', present: false }],
+      },
+      note: 'Raid healer: on the tank, whenever none of yours is out.',
+    },
+    {
+      abilityId: 'prayer_of_healing',
+      target: { kind: 'lowestParty' },
+      condition: { kind: 'all', of: [RAID, { kind: 'friendlyHealth', of: 'party', compare: 'below', fraction: 1 }] },
+      note: 'Raid healer: on the party with the lowest average health.',
+    },
+    {
+      abilityId: 'flash_heal',
+      target: { kind: 'tank' },
+      condition: { kind: 'all', of: [NOT_RAID, { kind: 'health', on: 'target', compare: 'below', fraction: 1 }] },
+      note: 'Tank healer: spammed on the tank.',
+    },
+  ],
+};
+
+/**
+ * DISCIPLINE -- the Disc Priest profile's list (round 73), the owner's design:
+ *
+ *   TANK HEALER  "Keep Penance on cooldown on the tank, Keep Power Word Shield
+ *                up on the tank (if weakened soul isn't active), Keep Renew up
+ *                on the tank, spam Flash Heal"
+ *   RAID HEALER  "Keep Penance on cooldown on the tank, Keep Power Word Shield
+ *                up on the tank (if weakened soul isn't active), and spam
+ *                Prayer of Healing on the lowest Hit Point % groups."
+ *   COOLDOWN     "Inner Focus (use on Penance)"
+ *
+ * ============================================================================
+ * INNER FOCUS AND PENANCE ARE ONE ACTION, a `sequence`, so nothing can be cast
+ * between them and spend the charge -- the arrangement "Cold Blood then
+ * Eviscerate" already has. Whenever Inner Focus is on cooldown the plain
+ * Penance entry under it takes over.
+ *
+ * Renew and Flash Heal are the tank healer's, gated on fewer than 6; Prayer of
+ * Healing the raid healer's, on at least 6.
+ * ============================================================================
+ */
+export const PRIEST_DISCIPLINE: AplList = {
+  name: 'Priest (Discipline)',
+  entries: [
+    ...RACIAL_COOLDOWNS,
+    ...CONSUMABLE_COOLDOWNS,
+    {
+      abilityId: 'inner_focus',
+      target: { kind: 'tank' },
+      sequence: ['penance'],
+      note: 'Inner Focus, then Penance on the tank at once.',
+    },
+    {
+      abilityId: 'penance',
+      target: { kind: 'tank' },
+      note: 'On cooldown, on the tank.',
+    },
+    SHIELD_THE_TANK,
+    {
+      ...RENEW_ON_THE_TANK,
+      condition: { kind: 'all', of: [NOT_RAID, RENEW_ON_THE_TANK.condition] },
+      note: 'Tank healer: kept up on the tank.',
+    },
+    {
+      abilityId: 'prayer_of_healing',
+      target: { kind: 'lowestParty' },
+      condition: { kind: 'all', of: [RAID, { kind: 'friendlyHealth', of: 'party', compare: 'below', fraction: 1 }] },
+      note: 'Raid healer: on the party with the lowest average health.',
+    },
+    {
+      abilityId: 'flash_heal',
+      target: { kind: 'tank' },
+      condition: { kind: 'all', of: [NOT_RAID, { kind: 'health', on: 'target', compare: 'below', fraction: 1 }] },
+      note: 'Tank healer: spammed on the tank.',
+    },
+  ],
+};
+
+export const PRIEST_HOLY_ROTATION: Rotation = compileRotation(PRIEST_HOLY);
+export const PRIEST_DISCIPLINE_ROTATION: Rotation = compileRotation(PRIEST_DISCIPLINE);
+
+/**
+ * Which list a Priest runs, from its talents: Penance is the Discipline
+ * capstone and Prayer of Mending the Holy one, so a build with either heals
+ * (round 73). Everything else is the Shadow list.
+ */
+export function priestRotation(talents: TalentAllocation): Rotation | undefined {
+  if ((talents.penance ?? 0) > 0) return PRIEST_DISCIPLINE_ROTATION;
+  if ((talents.prayer_of_mending ?? 0) > 0) return PRIEST_HOLY_ROTATION;
   return PRIEST_SHADOW_ROTATION;
 }

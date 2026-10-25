@@ -96,8 +96,6 @@ const MENTIONS_BUT_IS_A_LIVE_GAP: Record<string, string> = {
 
   'shaman.water_shield':
     'MANA RETURN, which is explicitly in scope. Inert because neither profile is attacked and neither heals -- the target, not the ruling.',
-  'priest.divine_fury':
-    'Names heals, but it also reaches Smite; inert because no Shadow list casts either -- the build, not the ruling.',
   'shaman.elemental_weapons':
     'Names a threat imbue, but the blocker is that Flametongue and Frostbrand scale off a coefficient the SOURCE does not state -- missing data, which asking could clear.',
   'rogue.riposte':
@@ -225,8 +223,9 @@ describe('the out-of-scope rulings are data, not prose', () => {
      * queue again.
      */
     // 196 since round 47, when thirteen threat reasons became threat effects;
-    // 176 since round 60, when the Shaman's Restoration talents were declared.
-    expect(reasons.length).toBeGreaterThan(160);
+    // 176 since round 60, when the Shaman's Restoration talents were declared;
+    // 154 since round 73, when the Priest's healing talents were.
+    expect(reasons.length).toBeGreaterThan(140);
     expect(ruled.length).toBeGreaterThan(80);
     expect(ruled.length).toBeLessThan(reasons.length);
   });

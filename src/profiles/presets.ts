@@ -1113,6 +1113,58 @@ const SHAMAN_RESTORATION_TALENTS: TalentAllocation = {
 };
 
 /**
+ * The Holy Priest's 17/34/0 (round 73), decoded from the owner's URL:
+ * https://talentsforever.com/priest/60/00500500033001-32505003230101531--USWZabfdghiCFJKNT-8?b=70425h&d=261025
+ */
+const PRIEST_HOLY_TALENTS: TalentAllocation = {
+  // Discipline, 17
+  twin_disciplines: 5,
+  mental_strength: 5,
+  improved_power_word_shield: 3,
+  meditation: 3,
+  soul_warding: 1,
+  // Holy, 34
+  twilight_focus: 3,
+  improved_renew: 2,
+  holy_specialization: 5,
+  divine_fury: 5,
+  inspiration: 3,
+  holy_reach: 2,
+  improved_healing: 3,
+  binding_heal: 1,
+  spirit_of_redemption: 1,
+  spiritual_guidance: 5,
+  spiritual_healing: 3,
+  prayer_of_mending: 1,
+};
+
+/**
+ * The Disc Priest's 31/20/0 (round 73), decoded from the owner's URL:
+ * https://talentsforever.com/priest/60/005305001330011531-33505103--CFJKNID2OPQDRUTSWZX-8?b=70425h&d=261025
+ */
+const PRIEST_DISCIPLINE_TALENTS: TalentAllocation = {
+  // Discipline, 31
+  twin_disciplines: 5,
+  silent_resolve: 3,
+  mental_strength: 5,
+  inner_focus: 1,
+  improved_power_word_shield: 3,
+  meditation: 3,
+  soul_warding: 1,
+  penance: 1,
+  renewed_hope: 5,
+  divine_aegis: 3,
+  power_infusion: 1,
+  // Holy, 20
+  twilight_focus: 3,
+  improved_renew: 3,
+  holy_specialization: 5,
+  divine_fury: 5,
+  holy_nova: 1,
+  inspiration: 3,
+};
+
+/**
  * The Resto Drood's 11/0/40 (round 71), decoded from the owner's URL:
  * https://talentsforever.com/druid/60/05022101--5053035143113051-kmpq2ruqwvtyzBEDFHns-8?b=70425h&d=261025
  */
@@ -4231,6 +4283,76 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: {
         ...casterConsumables('school_nature'),
+        flask: 'flask_spell_power',
+        food: 'food_healing_power',
+        potion: 'major_mana_potion',
+        other: 'demonic_rune',
+      },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    /*
+     * ==================================================================
+     * HOLY PRIEST, A PRIEST HEALER (round 73): the owner's talents, spells, coefficients and
+     * two lists, Holy Pal's gear rules in Cloth with a caster staff. THE
+     * RACE IS OURS -- the owner named none, and Troll's Berserking is haste
+     * on a caster, Piss Beam's reason -- so it is the first thing to change.
+     * ==================================================================
+     */
+    id: 'priest_holy',
+    label: 'Holy Priest',
+    detail: 'Troll, caster staff, a healer. 17 Discipline / 34 Holy',
+    characterClass: 'priest',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Holy Priest',
+        race: 'troll',
+        characterClass: 'priest',
+        level: 60,
+        combatStyle: 'caster',
+        stance: 'battle',
+      },
+      talents: { ...PRIEST_HOLY_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: {
+        ...casterConsumables('school_holy'),
+        flask: 'flask_spell_power',
+        food: 'food_healing_power',
+        potion: 'major_mana_potion',
+        other: 'demonic_rune',
+      },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    /*
+     * ==================================================================
+     * DISC PRIEST, THE OTHER PRIEST HEALER (round 73): the owner's talents, spells, coefficients and
+     * two lists, Holy Pal's gear rules in Cloth with a caster staff. THE
+     * RACE IS OURS -- the owner named none, and Troll's Berserking is haste
+     * on a caster, Piss Beam's reason -- so it is the first thing to change.
+     * ==================================================================
+     */
+    id: 'priest_disc',
+    label: 'Disc Priest',
+    detail: 'Troll, caster staff, a healer. 31 Discipline / 20 Holy',
+    characterClass: 'priest',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Disc Priest',
+        race: 'troll',
+        characterClass: 'priest',
+        level: 60,
+        combatStyle: 'caster',
+        stance: 'battle',
+      },
+      talents: { ...PRIEST_DISCIPLINE_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: {
+        ...casterConsumables('school_holy'),
         flask: 'flask_spell_power',
         food: 'food_healing_power',
         potion: 'major_mana_potion',

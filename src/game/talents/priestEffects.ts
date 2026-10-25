@@ -54,6 +54,17 @@ const NOT_ATTACKED =
   'profiles in other classes use it, so this is the ENCOUNTER rather than a ' +
   'missing capability.';
 
+/*
+ * THE HEALS (round 73), which the Holy and Disc Priest profiles cast. Named
+ * here because several healing talents reach "your heals" and a list is the
+ * only way to say which: a heal has no school, so no school-scoped effect can.
+ */
+const HEALS = ['flash_heal', 'greater_heal', 'binding_heal', 'prayer_of_healing', 'renew', 'prayer_of_mending', 'penance'] as const;
+/** The heals that land at once, which is what a "non-periodic critical heal" is. */
+const DIRECT_HEALS = ['flash_heal', 'greater_heal', 'binding_heal', 'prayer_of_healing', 'prayer_of_mending', 'penance'] as const;
+/** The instant ones, for Twin Disciplines. Penance is a channel and is not. */
+const INSTANT_HEALS = ['renew', 'prayer_of_mending'] as const;
+
 export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // --- Discipline ----------------------------------------------------------
 
@@ -76,6 +87,12 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'abilityDamage', abilityId: 'shadow_word_pain' },
     { kind: 'abilityDamage', abilityId: 'devouring_plague' },
     { kind: 'abilityDamage', abilityId: 'shadow_word_death' },
+    /*
+     * AND THE INSTANT HEALS (round 73): Renew and Prayer of Mending. Power Word:
+     * Shield is instant too and absorbs rather than heals -- whether "healing"
+     * reaches an absorb is flagged in HANDOVER round 73, and it is left out.
+     */
+    ...INSTANT_HEALS.map((abilityId) => ({ kind: 'abilityHealing' as const, abilityId })),
   ],
 
   /*
@@ -110,7 +127,8 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    */
   holy_precision: [{ kind: 'schoolHit', schools: ['holy'] }],
 
-  improved_power_word_shield: [{ kind: 'unmodelled', reason: NOT_ATTACKED }],
+  // The absorb, since round 73: `POWER_WORD_SHIELD` multiplies by its own modifier.
+  improved_power_word_shield: [{ kind: 'abilityHealing', abilityId: 'power_word_shield' }],
 
   martyrdom: [{ kind: 'unmodelled', reason: NOT_ATTACKED }],
 
@@ -185,11 +203,40 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   mental_strength: [{ kind: 'stat', stat: 'intellect', operation: 'percentAdd', scale: 0.01 }],
 
-  soul_warding: [{ kind: 'unmodelled', reason: NOT_ATTACKED }],
+  /*
+   * Power Word: Shield's four seconds of cooldown and 15% of its cost, since
+   * round 73; both figures hand-filled, a single-rank talent having no
+   * placeholder to match.
+   */
+  soul_warding: [
+    { kind: 'abilityCooldown', abilityId: 'power_word_shield', unit: 'seconds', valueIndex: 0 },
+    { kind: 'grantCastModifier', abilityIds: ['power_word_shield'], property: 'costFraction', valueIndex: 1 },
+  ],
   improved_mana_burn: [{ kind: 'unmodelled', reason: 'Mana Burn, which no damage list casts.' }],
-  penance: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
-  renewed_hope: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
-  divine_aegis: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
+  penance: [{ kind: 'grantAbility', abilityId: 'penance' }],
+  /*
+   * "+10% critical strike chance when cast on targets with Weakened Soul, and
+   * reduce the remaining duration of Weakened Soul on their target by 5 sec",
+   * for Flash Heal, Binding Heal, Greater Heal and Penance (round 73). The crit
+   * rides on the Weakened Soul the shield puts on (`weakenedSoulAura`); the
+   * five seconds on each of the four heals (`priestHeal`).
+   */
+  renewed_hope: [
+    { kind: 'abilityBonus', abilityId: 'power_word_shield', key: 'renewedHopeCrit', valueIndex: 0 },
+    ...(['flash_heal', 'binding_heal', 'greater_heal', 'penance'] as const).map((abilityId) => ({
+      kind: 'abilityBonus' as const,
+      abilityId,
+      key: 'renewedHopeSeconds',
+      valueIndex: 1,
+    })),
+  ],
+  // 15% of each non-periodic crit, as a shield that adds up. See `priestHeal`.
+  divine_aegis: DIRECT_HEALS.map((abilityId) => ({
+    kind: 'abilityBonus' as const,
+    abilityId,
+    key: 'divineAegisPercent',
+    valueIndex: 0,
+  })),
 
   /*
    * ITS OWN REASON SAID "Expressible -- and no Shadow build reaches it, so it
@@ -220,27 +267,46 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  improved_renew: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
+  improved_renew: [{ kind: 'abilityHealing', abilityId: 'renew' }],
 
-  holy_specialization: [{ kind: 'schoolCrit', schools: ['holy'] }],
+  holy_specialization: [
+    { kind: 'schoolCrit', schools: ['holy'] },
+    // And the heals, which are Holy spells and carry no school (round 73).
+    ...HEALS.map((abilityId) => ({ kind: 'abilityCrit' as const, abilityId })),
+  ],
 
   spell_warding: [{ kind: 'unmodelled', reason: NOT_ATTACKED }],
 
   divine_fury: [
     { kind: 'abilityCastTime', abilityId: 'smite' },
-    { kind: 'unmodelled', reason: 'Smite and the heals, none of which a Shadow list casts.' },
+    // Greater Heal since round 73; Heal and Holy Fire are not declared.
+    { kind: 'abilityCastTime', abilityId: 'greater_heal' },
   ],
 
   // The ability, which strikes every target in the fight (round 57).
   holy_nova: [{ kind: 'grantAbility', abilityId: 'holy_nova' }],
   blessed_recovery: [{ kind: 'unmodelled', reason: NOT_ATTACKED }],
-  inspiration: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
+  // Tracked as an uptime only, as Ancestral Healing is. See `INSPIRATION`.
+  inspiration: DIRECT_HEALS.map((abilityId) => ({
+    kind: 'abilityBonus' as const,
+    abilityId,
+    key: 'inspirationPercent',
+    valueIndex: 0,
+  })),
   holy_reach: [{ kind: 'unmodelled', scope: 'positioning', reason: 'Range, and nothing here has a position.' }],
-  improved_healing: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
+  // Greater Heal, Penance and Prayer of Mending since round 73; Lesser Heal and
+  // Heal are not declared.
+  improved_healing: [
+    {
+      kind: 'grantCastModifier',
+      abilityIds: ['greater_heal', 'penance', 'prayer_of_mending'],
+      property: 'costFraction',
+    },
+  ],
 
   searing_light: [{ kind: 'schoolDamage', schools: ['holy'] }],
 
-  binding_heal: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
+  binding_heal: [{ kind: 'grantAbility', abilityId: 'binding_heal' }],
   litany_of_light: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
 
   spirit_of_redemption: [
@@ -258,10 +324,12 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * half is not modelled because nothing here measures healing.
      */
     { kind: 'statFromStat', from: 'spirit', to: 'spellPower', valueIndex: 1 },
+    // And the healing half since round 73, when a Priest heals.
+    { kind: 'statFromStat', from: 'spirit', to: 'healingPower', valueIndex: 0 },
   ],
 
-  spiritual_healing: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
-  prayer_of_mending: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
+  spiritual_healing: HEALS.map((abilityId) => ({ kind: 'abilityHealing' as const, abilityId })),
+  prayer_of_mending: [{ kind: 'grantAbility', abilityId: 'prayer_of_mending' }],
 
   // --- Shadow --------------------------------------------------------------
 

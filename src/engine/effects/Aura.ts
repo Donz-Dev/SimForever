@@ -674,6 +674,24 @@ export interface AuraDefinition {
    * ----------------------------------------------------------------------------
    */
   readonly absorb?: (target: Combatant) => number;
+  /**
+   * DAMAGE THIS SHIELD SOAKS IS HEALING DONE BY ITS CASTER (round 73), the
+   * owner's: "Absorbed damage counts as healing done for the purposes of
+   * healing per second and total amount healed by the spell." Each draw on the
+   * shield emits a `heal` event credited to the aura's source, under the
+   * aura's id and name, with no overhealing -- a shield cannot soak more than
+   * the blow. OPT-IN, so Ice Barrier and the Paladin's shields report as they
+   * always have.
+   */
+  readonly absorbCountsAsHealing?: boolean;
+  /**
+   * WHEN THE CARRIER IS HIT (round 73): called after any damage that landed or
+   * was soaked, table or not, with the amount the carrier took including what
+   * a shield absorbed. Prayer of Mending's "the next time they take damage" --
+   * the raid healer fight's blows roll on no table, so a `taken` reaction,
+   * which only table damage reaches, never sees them.
+   */
+  readonly onCarrierDamaged?: (context: SimulationContext, aura: AuraInstance, taken: number) => void;
   /** Multiplies healing the carrier does. */
   readonly healingDoneMultiplier?: number;
   /**

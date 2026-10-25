@@ -406,6 +406,7 @@ describe('a caster weapon trades melee damage for a stated spell power', () => {
      */
     expect(casterTemplates.map((template) => template.label).sort()).toEqual([
       'Arcane',
+      'Disc Priest',
       'Ele Shaman',
       'Fire',
       'Fire Demo',
@@ -413,6 +414,7 @@ describe('a caster weapon trades melee damage for a stated spell power', () => {
       'Frost Mage',
       'Frostfire',
       'Holy Pal',
+      'Holy Priest',
       'Moonkin',
       'Piss Beam',
       'Prot Pally',

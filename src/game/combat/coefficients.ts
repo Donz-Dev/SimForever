@@ -168,6 +168,28 @@ export const REGROWTH_HEAL_COEFFICIENT = 0.286;
 export const REGROWTH_TICK_HEAL_COEFFICIENT = 0.071;
 export const REJUVENATION_TICK_HEAL_COEFFICIENT = 0.2;
 export const WILD_GROWTH_TICK_HEAL_COEFFICIENT = 0.033;
+
+/**
+ * THE PRIEST'S HEALS, THE OWNER'S FIGURES (round 73), given with the Holy and
+ * Disc Priest profiles:
+ *
+ *   Flash Heal            42.9%
+ *   Greater Heal          85.7%
+ *   Prayer of Healing     28.6%, the full amount on each target in the party
+ *   Binding Heal          42.9%, on the target and on the Priest
+ *   Renew                 20% on each 3-second tick
+ *   Power Word: Shield    10%, added to the absorb
+ *   Prayer of Mending     42.9% on each heal it makes
+ *   Penance               85.7% across its three ticks
+ */
+export const FLASH_HEAL_HEAL_COEFFICIENT = 0.429;
+export const GREATER_HEAL_HEAL_COEFFICIENT = 0.857;
+export const PRAYER_OF_HEALING_HEAL_COEFFICIENT = 0.286;
+export const BINDING_HEAL_HEAL_COEFFICIENT = 0.429;
+export const RENEW_TICK_HEAL_COEFFICIENT = 0.2;
+export const POWER_WORD_SHIELD_ABSORB_COEFFICIENT = 0.1;
+export const PRAYER_OF_MENDING_HEAL_COEFFICIENT = 0.429;
+export const PENANCE_HEAL_COEFFICIENT = 0.857;
 /** Flash of Light, a 1.5 second cast: 1.5 / 3.5. Classic's rule, unconfirmed. */
 export const PLACEHOLDER_FLASH_OF_LIGHT_HEAL_COEFFICIENT = 1.5 / 3.5;
 /**

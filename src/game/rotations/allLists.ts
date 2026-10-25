@@ -16,7 +16,7 @@ import {
 } from './paladin';
 import { PET_PRIORITY } from './pet';
 import { IMP_PRIORITY, SUCCUBUS_PRIORITY } from './demon';
-import { PRIEST_SHADOW } from './priest';
+import { PRIEST_DISCIPLINE, PRIEST_HOLY, PRIEST_SHADOW } from './priest';
 import {
   ROGUE_COMBAT,
   ROGUE_COMBAT_MUT,
@@ -353,12 +353,24 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     profiles: ['warlock_sbolt'],
   },
 
-  // Priest -- one profile, one list.
+  // Priest -- by talents: Penance heals as Disc, Prayer of Mending as Holy (round 73).
   {
     name: 'PRIEST_SHADOW',
     owner: 'priest',
     list: PRIEST_SHADOW,
     profiles: ['shadow_priest'],
+  },
+  {
+    name: 'PRIEST_HOLY',
+    owner: 'priest',
+    list: PRIEST_HOLY,
+    profiles: ['priest_holy'],
+  },
+  {
+    name: 'PRIEST_DISCIPLINE',
+    owner: 'priest',
+    list: PRIEST_DISCIPLINE,
+    profiles: ['priest_disc'],
   },
 
   /*

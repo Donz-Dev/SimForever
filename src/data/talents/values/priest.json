@@ -177,8 +177,13 @@
    "tree": "discipline",
    "ranks": 1,
    "text": "Reduces the cooldown on your Power Word: Shield spell by 4 sec and reduces its mana cost by 15%.",
-   "values": null,
-   "note": "single rank"
+   "values": [
+    [
+     4,
+     15
+    ]
+   ],
+   "note": "single rank; both figures filled in by hand per this directory README (round 73), in the order the sentence gives them: 4 seconds off the cooldown, 15% off the cost. The text states them literally rather than through placeholders, so there was nothing for the importer to match."
   },
   "penance": {
    "name": "Penance",

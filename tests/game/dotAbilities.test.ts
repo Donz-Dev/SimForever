@@ -39,7 +39,6 @@ describe('the abilities that apply a DoT', () => {
       'mage/mage_armor',
       'paladin/hammer_of_wrath',
       'paladin/swift_judgement',
-      'priest/shadowform',
       'shaman/fire_nova',
       'warlock/bane_of_havoc',
       'warlock/conflagrate',

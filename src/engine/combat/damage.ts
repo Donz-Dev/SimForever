@@ -1691,6 +1691,17 @@ export function dealDamage(
     ...(request.noThreat ? { noThreat: true } : {}),
   });
 
+  /*
+   * THE CARRIER WAS HIT (round 73): Prayer of Mending's trigger. A copy of the
+   * auras, because the hook removes the one it runs on.
+   */
+  const taken = resolution.amount + resolution.absorbed;
+  if (taken > 0 && target.isAlive) {
+    for (const aura of [...target.auras.activeIterable]) {
+      aura.definition.onCarrierDamaged?.(context, aura, taken);
+    }
+  }
+
   // Taking damage can generate resource: this is how a warrior builds rage
   // from being hit. Proportional to damage actually taken, so an avoided
   // attack generates nothing.

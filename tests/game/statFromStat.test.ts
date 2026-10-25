@@ -181,6 +181,8 @@ describe('a stat worth a percentage of another stat', () => {
      */
     expect(talentBuild('priest', { spiritual_guidance: 5 }).statConversions).toEqual([
       { from: 'spirit', to: 'spellPower', fraction: 0.08 },
+      // And the FIRST number to healing power, since round 73.
+      { from: 'spirit', to: 'healingPower', fraction: 0.25 },
     ]);
   });
 
@@ -373,7 +375,7 @@ describe('what it retired', () => {
       shaman: 2, // Mental Dexterity, Mental Quickness
       mage: 1, // Arcane Resilience
       paladin: 1, // Champion of the Light
-      priest: 1, // Spiritual Guidance
+      priest: 2, // Spiritual Guidance, both halves since round 73
     };
 
     for (const [characterClass, count] of Object.entries(expected)) {

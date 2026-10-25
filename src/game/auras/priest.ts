@@ -1,5 +1,6 @@
-import type { AuraDefinition } from '../../engine';
-import { percent, ALL_ABILITIES, dealDamage, seconds } from '../../engine';
+import type { AuraDefinition, AuraInstance, Combatant, SimulationContext } from '../../engine';
+import { percent, ALL_ABILITIES, applyHealing, dealDamage, seconds } from '../../engine';
+import { RENEW_TICK_HEAL_COEFFICIENT } from '../combat/coefficients';
 import {
   DEVOURING_PLAGUE_TICK_SP_COEFFICIENT,
   SHADOW_WORD_PAIN_TICK_SP_COEFFICIENT,
@@ -358,8 +359,34 @@ export const INNER_FOCUS_CRIT_BONUS = 25;
  */
 export const INNER_FOCUS_DURATION_MS = seconds(60);
 
-/** The spells a crit can happen to. The two damage-over-time casts cannot. */
-export const INNER_FOCUS_CRITTABLE = ['mind_blast', 'mind_flay', 'shadow_word_death'] as const;
+/**
+ * The spells a crit can happen to. The two damage-over-time casts cannot, and
+ * nor can Renew, Power Word: Shield or Prayer of Mending, whose heal lands
+ * later than the charge is spent. The non-periodic heals joined in round 73,
+ * for the Disc Priest's "Inner Focus (use on Penance)".
+ */
+export const INNER_FOCUS_CRITTABLE = [
+  'mind_blast',
+  'mind_flay',
+  'shadow_word_death',
+  'flash_heal',
+  'greater_heal',
+  'binding_heal',
+  'prayer_of_healing',
+  'penance',
+] as const;
+
+/** The Priest's heals (round 73), which Inner Focus also makes free. */
+export const PRIEST_HEALS = [
+  'flash_heal',
+  'greater_heal',
+  'binding_heal',
+  'prayer_of_healing',
+  'renew',
+  'power_word_shield',
+  'prayer_of_mending',
+  'penance',
+] as const;
 
 export const INNER_FOCUS: AuraDefinition = {
   id: 'inner_focus',
@@ -369,7 +396,7 @@ export const INNER_FOCUS: AuraDefinition = {
   castModifier: {
     // Every spell, because "your next spell" is every spell. The list is the
     // Priest's own book, for the reason `CastModifier` says: it selects by id.
-    abilityIds: [...SHADOW_SPELLS, 'shadowform'],
+    abilityIds: [...SHADOW_SPELLS, 'shadowform', ...PRIEST_HEALS],
     costFraction: 1,
   },
   abilityModifiers: Object.fromEntries(
@@ -436,7 +463,197 @@ export const POWER_INFUSION_UNMODELLED =
  * break it from a distance.
  * ----------------------------------------------------------------------------
  */
+
+/* -------------------------------------------------------------------------- */
+/* The healers (round 73): the Holy and Disc Priest profiles' auras           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Renew, rank 10: "Heals the target of 830 damage over 15 sec." Five ticks,
+ * one every three seconds, of a fifth each and 20% of healing power. A tick
+ * carries the ability's id, so Improved Renew, Spiritual Healing and Holy
+ * Specialization reach it, and it can crit.
+ */
+export const RENEW_TOTAL = 830;
+export const RENEW_DURATION_MS = seconds(15);
+export const RENEW_TICK_INTERVAL_MS = seconds(3);
+export const RENEW_TICK = RENEW_TOTAL / (RENEW_DURATION_MS / RENEW_TICK_INTERVAL_MS);
+
+export const RENEW_HOT: AuraDefinition = {
+  id: 'renew',
+  name: 'Renew',
+  durationMs: RENEW_DURATION_MS,
+  refreshBehaviour: 'reset',
+  periodic: {
+    intervalMs: RENEW_TICK_INTERVAL_MS,
+    onTick: (context, aura) => {
+      const source = context.combatant(aura.sourceId);
+      const target = context.combatant(aura.targetId);
+      if (!source || !target || !target.isAlive) return;
+      applyHealing(context, {
+        source,
+        target,
+        abilityId: aura.id,
+        abilityName: aura.name,
+        baseAmount: RENEW_TICK,
+        powerCoefficient: RENEW_TICK_HEAL_COEFFICIENT,
+        periodic: true,
+        threatens: true,
+      });
+    },
+  },
+};
+
+/**
+ * Weakened Soul: "Once shielded, the target cannot be shielded again for 15
+ * sec." On the person shielded, from the Priest that shielded them.
+ *
+ * RENEWED HOPE RIDES ON IT, and that is why it can be built two ways: "your
+ * heals from Flash Heal, Binding Heal, ... Greater Heal, and Penance gain 10%
+ * increased critical strike chance when cast on targets with Weakened Soul" is
+ * a crit the TARGET carries, the shape Winter's Chill already has -- so a
+ * Priest with the talent puts on a Weakened Soul carrying it.
+ */
+export const WEAKENED_SOUL_DURATION_MS = seconds(15);
+export const RENEWED_HOPE_HEALS = ['flash_heal', 'binding_heal', 'greater_heal', 'penance'] as const;
+
+export const WEAKENED_SOUL: AuraDefinition = {
+  id: 'weakened_soul',
+  name: 'Weakened Soul',
+  durationMs: WEAKENED_SOUL_DURATION_MS,
+  isDebuff: true,
+};
+
+/** Weakened Soul carrying Renewed Hope's crit, for a Priest with the talent. */
+export function weakenedSoulAura(renewedHopeCrit: number): AuraDefinition {
+  if (renewedHopeCrit <= 0) return WEAKENED_SOUL;
+  return {
+    ...WEAKENED_SOUL,
+    attackerAbilityModifiers: Object.fromEntries(
+      RENEWED_HOPE_HEALS.map((id) => [id, { critBonus: renewedHopeCrit }]),
+    ),
+  };
+}
+
+/**
+ * Power Word: Shield's absorb: "absorbing 928 damage. Lasts 30 sec." -- plus
+ * 10% of healing power, the owner's, sized when it is cast. ABSORBED DAMAGE IS
+ * THE PRIEST'S HEALING, the owner's, which is `absorbCountsAsHealing`.
+ */
+export const POWER_WORD_SHIELD_DURATION_MS = seconds(30);
+
+export function powerWordShieldAura(amount: number): AuraDefinition {
+  return {
+    id: 'power_word_shield',
+    name: 'Power Word: Shield',
+    durationMs: POWER_WORD_SHIELD_DURATION_MS,
+    refreshBehaviour: 'reset',
+    absorb: () => amount,
+    absorbCountsAsHealing: true,
+  };
+}
+
+/**
+ * Divine Aegis: "Your non-periodic critical heals create a protective shield on
+ * the target, absorbing 15% of the amount healed. Shields up to 1,200 damage
+ * and lasts 12 sec."
+ *
+ * IT ADDS UP, the owner's: "This adds up, rather than the effect refreshing when
+ * a new crit occurs." So a new crit tops the shield up -- what is left plus the
+ * new 15%, never past 1,200 -- and restarts its twelve seconds. Absorbed damage
+ * is the Priest's healing, as Power Word: Shield's is.
+ *
+ * THE CAP AND THE DURATION ARE WRITTEN HERE, because the values file reads the
+ * tooltip's "1,200" as two numbers, 1 and 200, at indices 1 and 2.
+ */
+export const DIVINE_AEGIS_CAP = 1200;
+export const DIVINE_AEGIS_DURATION_MS = seconds(12);
+
+export function divineAegisAura(amount: number): AuraDefinition {
+  return {
+    id: 'divine_aegis',
+    name: 'Divine Aegis',
+    durationMs: DIVINE_AEGIS_DURATION_MS,
+    refreshBehaviour: 'reset',
+    absorb: () => amount,
+    absorbCountsAsHealing: true,
+  };
+}
+
+/**
+ * Inspiration: "Your non-periodic critical heals increase your target's Armor
+ * by 25% for 15 sec." TRACKED AS AN UPTIME ONLY, as the Shaman's Ancestral
+ * Healing is, by the owner's instruction for that talent: the healer fights'
+ * tank has a STATED armor reduction, which an armor stat would quietly change.
+ */
+export const INSPIRATION: AuraDefinition = {
+  id: 'inspiration',
+  name: 'Inspiration',
+  durationMs: seconds(15),
+  refreshBehaviour: 'reset',
+};
+
+/**
+ * Prayer of Mending, rank 3: "Places a spell on the target that heals them for
+ * 413 the next time they take damage ... When the heal occurs, Prayer of
+ * Mending jumps to a party or raid member within 20 yds. Jumps up to 5 times
+ * and lasts 30 sec after each jump."
+ *
+ * ============================================================================
+ * THE OWNER'S: cast on the tank, and "when they take damage it jumps again. 5
+ * total jumps / 6 total heals". So each charge heals its carrier for 413 plus
+ * 42.9% of healing power the first time the carrier is hit -- `onCarrierDamaged`
+ * -- and then moves to ANOTHER raid member chosen at random, until six heals
+ * have been made or nobody is left to jump to.
+ *
+ * ONE PER CASTER, and the count travels with it: each cast builds its own
+ * definition around its own count, so a recast starts a fresh six.
+ *
+ * "OR RECEIVE NON-PERIODIC HEALING" IS NOT MODELLED: the owner's mechanic names
+ * damage, and only damage moves it here.
+ * ============================================================================
+ */
+export const PRAYER_OF_MENDING_HEALS = 6;
+export const PRAYER_OF_MENDING_DURATION_MS = seconds(30);
+
+/** How one charge heals; supplied by the ability, so talents reach it. */
+export type PrayerOfMendingHeal = (context: SimulationContext, caster: Combatant, carrier: Combatant) => void;
+
+export function prayerOfMendingAura(heal: PrayerOfMendingHeal, healsLeft: number = PRAYER_OF_MENDING_HEALS): AuraDefinition {
+  const definition: AuraDefinition = {
+    id: 'prayer_of_mending',
+    name: 'Prayer of Mending',
+    durationMs: PRAYER_OF_MENDING_DURATION_MS,
+    refreshBehaviour: 'reset',
+    onCarrierDamaged: (context: SimulationContext, aura: AuraInstance) => {
+      const caster = context.combatant(aura.sourceId);
+      const carrier = context.combatant(aura.targetId);
+      if (!caster || !carrier) return;
+      carrier.auras.remove(context, aura.definition.id);
+      heal(context, caster, carrier);
+      if (healsLeft <= 1) return;
+      const others = context.combatants.filter(
+        (other) =>
+          other !== carrier &&
+          other !== caster &&
+          other.party !== undefined &&
+          other.isAlive &&
+          !other.isHostileTo(caster),
+      );
+      if (others.length === 0) return;
+      const next = context.rng.pick(others);
+      if (!next) return;
+      context.applyAura(next, prayerOfMendingAura(heal, healsLeft - 1), caster.id);
+    },
+  };
+  return definition;
+}
+
 export const CATALOG_AURAS: readonly AuraDefinition[] = [
+  // The healers' factory-built auras (round 73), one representative each.
+  powerWordShieldAura(0),
+  divineAegisAura(0),
+  prayerOfMendingAura(() => undefined),
   /*
    * ADDED BY THE AURA-CATALOGUE AUDIT, which found these reachable ONLY through
    * `aurasForClass`'s stock-list safety net -- "anything a stock list names must

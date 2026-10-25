@@ -111,7 +111,14 @@ export function resolveHealing(
 
   // Healing does not miss, so it rolls crit directly rather than going through
   // a combat table.
-  const critChance = spellCritChanceFrom(source.stats.effective) + (modifier?.critBonus ?? 0) / 100;
+  /*
+   * AND THE TARGET'S, for crit (round 73): Renewed Hope's "+10% critical strike
+   * chance when cast on targets with Weakened Soul" is carried by the Weakened
+   * Soul on the target, the way Winter's Chill carries a Mage's crit on a boss.
+   */
+  const againstTarget = request.external || !request.abilityId ? 0 : request.target.abilityModifierAgainst(request.abilityId).critBonus ?? 0;
+  const critChance =
+    spellCritChanceFrom(source.stats.effective) + ((modifier?.critBonus ?? 0) + againstTarget) / 100;
   const critical = (request.canCrit ?? true) && rng.rollChance(Math.min(1, critChance));
   const afterCrit = critical ? scaled * HEALING_CRIT_MULTIPLIER : scaled;
 
