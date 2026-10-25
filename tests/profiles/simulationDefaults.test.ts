@@ -31,7 +31,7 @@ describe('a new profile', () => {
     expect(simulation.iterations).toBe(3000);
   });
 
-  it('is format 17, which added the Number of Targets', () => {
+  it('is format 18: 17 added the Number of Targets, 18 the Multi Target list', () => {
     /*
      * Version 9 added `raidBuffs`, 10 a Rogue's poisons, 11 the Warlock's
      * stone, 12 the consumables, 13 the priority list, 14 the gear-sorting
@@ -49,8 +49,8 @@ describe('a new profile', () => {
      * The typechecker found that one (TS1117); this is what says which version
      * the surviving field belongs to.
      */
-    expect(CURRENT_PROFILE_VERSION).toBe(17);
-    expect(createDefaultProfile().version).toBe(17);
+    expect(CURRENT_PROFILE_VERSION).toBe(18);
+    expect(createDefaultProfile().version).toBe(18);
     expect(createDefaultProfile().encounter.numberOfTargets).toBe(1);
     /*
      * AND VERSION 16'S FIELD IS ABSENT ON A NEW PROFILE, not an empty array.

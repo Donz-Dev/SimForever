@@ -11,6 +11,7 @@ import {
 } from '../engine';
 import type { CharacterProfile } from '../profiles';
 import { selectedRaidBuffs } from '../game/buffs/raidBuffs';
+import { fightSection, withSection } from '../profiles/aplSections';
 import { MAX_CHARACTER_LEVEL } from '../game/character';
 import { createDummyFor, createPlayerFor, trainingDummyEncounter } from './trainingDummyEncounter';
 
@@ -160,7 +161,12 @@ export function healerEncounter(
 ): SimulationConfig {
   // The healer is not attacked in either fight.
   const healer: CharacterProfile = {
-    ...profile,
+    /*
+     * AND RUNS ITS FIGHT'S APL SECTION (round 64): Single Target for the tank
+     * healer, Multi Target for the raid healer -- chosen here, before the
+     * ordinary encounter would choose by the target count.
+     */
+    ...withSection(profile, fightSection({ targets: 1, healer: fight })),
     encounter: { ...profile.encounter, targetAttacks: false },
   };
   const base = trainingDummyEncounter(healer, seed);

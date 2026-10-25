@@ -39,7 +39,11 @@ import { makeAttacker, makeTarget } from '../helpers/actors';
 function fight(fightKind: 'tank' | 'raid', seed = 4242, smartHealing = true) {
   const preset = PRESETS_BY_ID.get('holy_pal')!.build();
   const { smartHealing: _dropped, ...asWritten } = preset.rotation;
-  const profile = smartHealing ? preset : { ...preset, rotation: asWritten };
+  // Off in BOTH lists (round 64): the raid fight runs the Multi Target one.
+  const { smartHealing: _droppedToo, ...multiAsWritten } = preset.multiTarget!.rotation;
+  const profile = smartHealing
+    ? preset
+    : { ...preset, rotation: asWritten, multiTarget: { ...preset.multiTarget!, rotation: multiAsWritten } };
   const events: TelemetryEvent[] = [];
   const simulation = new Simulation(healerEncounter(profile, fightKind, seed), {
     emit: (event) => events.push(event),

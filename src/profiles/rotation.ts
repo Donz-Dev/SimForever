@@ -5,6 +5,7 @@ import { racialsForRace } from '../game/rotations/racialCooldowns';
 import { withoutUnselectedConsumables } from '../game/rotations/consumableCooldowns';
 import type { AplList } from '../game/rotations/apl';
 import type { CharacterProfile, StoredRotation } from './CharacterProfile';
+import { setSection, withSection } from './aplSections';
 
 /**
  * Keeping a profile's stored priority list honest about the build it belongs
@@ -119,6 +120,24 @@ export function stockListFor(profile: CharacterProfile): AplList | undefined {
  * correct until somebody adds a fifth thing and does not think of it.
  */
 export function syncDefaultRotation(profile: CharacterProfile): CharacterProfile {
+  /*
+   * BOTH SECTIONS (round 64): Single Target at the root, then Multi Target
+   * swapped into the root and back. A profile with no Multi Target list yet
+   * gets a copy of the synced Single Target one, which is what a fresh
+   * character and a preset start with. Unchanged returns the SAME object.
+   */
+  const single = syncOneRotation(profile);
+  const multiView = profile.multiTarget
+    ? syncOneRotation(withSection(profile, 'multi'))
+    : withSection(single, 'single');
+  if (profile.multiTarget && single === profile && multiView.rotation === profile.multiTarget.rotation) {
+    return profile;
+  }
+  return setSection(single, 'multi', multiView);
+}
+
+/** Sync the list at the ROOT -- one section. See `syncDefaultRotation`. */
+function syncOneRotation(profile: CharacterProfile): CharacterProfile {
   /*
    * A CUSTOM LIST IS NEVER RE-DERIVED -- AND ITS RACIAL ENTRIES STILL FOLLOW
    * THE RACE. Which racials a character can cast is a fact about the race and
