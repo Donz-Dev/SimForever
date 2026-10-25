@@ -12,6 +12,7 @@ import {
   compileRotation,
   fightRemaining,
   hasReaction,
+  onCooldown,
   resourceFraction,
   selfHas,
   selfMissing,
@@ -437,9 +438,11 @@ export const MAGE_FIRE: AplList = {
    * now that a sequence can express the pairing. Excluding it keeps every
    * other row of the shared block exactly where it was.
    */
+  // THE RUBY FIRST (round 59): it shares a cooldown with the Demonic Rune now,
+  // and the owner's order is the Ruby, then the Rune if the fight is long enough.
+  MANA_RUBY_ENTRY,
   ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
   ...CONSUMABLE_HEALS,
-  MANA_RUBY_ENTRY,
   { abilityId: 'evocation', condition: evocationFor(FIRE_EVOCATION_FIGHT_SECONDS) },
   { abilityId: 'scorch', condition: scorchNeededWithin(FIRE_SCORCH_REFRESH_SECONDS) },
   /*
@@ -674,9 +677,10 @@ export const MAGE_FROSTFIRE: AplList = {
    * ==========================================================================
    */
   { abilityId: 'eureka', condition: selfHas('fingers_of_frost') },
+  // The Ruby first (round 59): see the Fire list.
+  MANA_RUBY_ENTRY,
   ...CONSUMABLE_COOLDOWNS,
   ...CONSUMABLE_HEALS,
-  MANA_RUBY_ENTRY,
   /*
    * ICE BARRIER, RECAST WHEN IT FALLS OFF (round 55), the owner's: "it should
    * be cast when it falls off as well, high in the normal APL." The opener
@@ -884,6 +888,8 @@ export const MAGE_ARCANE: AplList = {
    * ==========================================================================
    */
   { abilityId: 'eureka', condition: selfHas('missile_barrage') },
+  // The Ruby first (round 59): see the Fire list.
+  MANA_RUBY_ENTRY,
   ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
   /*
    * AND THE SPELLBLASTING POTION HELD FOR PRESENCE OF MIND, which is the
@@ -908,7 +914,6 @@ export const MAGE_ARCANE: AplList = {
    * Druid, Shaman and Warlock lists.
    */
   ...CONSUMABLE_HEALS,
-  MANA_RUBY_ENTRY,
   { abilityId: 'evocation', condition: evocationFor(EVOCATION_FIGHT_SECONDS) },
   /*
    * ARCANE POWER ON A BARRAGE PROC ALONE, which is LOOSER than it was. The
@@ -1067,6 +1072,60 @@ export const MAGE_ARCANE: AplList = {
  */
 export const FROSTFIRE_FROST_THRESHOLD = 15;
 
+/**
+ * FROST -- the owner's list, from their saved "frost st 975" build (round 59).
+ *
+ * ============================================================================
+ * TRANSCRIBED AS THE OWNER WROTE IT, with one addition they asked for in the
+ * same message: the Mana Ruby, FIRST, ahead of the Demonic Rune it now shares
+ * a cooldown with -- "use mana ruby first, and the demonic runes later if the
+ * combat duration supports." So the Rune keeps the owner's 50% gate and also
+ * waits for the Ruby to have gone, and the shared two minutes then decide
+ * whether the fight is long enough for it.
+ *
+ * THE RACIALS ARE THE OWNER'S, DISABLED, which is how their saved list carried
+ * them. A Windshaper Skyborne learns none of them.
+ * ============================================================================
+ */
+export const MAGE_FROST: AplList = {
+  name: 'Mage (Frost)',
+  entries: [
+    // All four free racial cooldowns, as every list carries them -- switched off,
+    // which is how the owner's saved list held its three, with their Eureka gate.
+    ...RACIAL_COOLDOWNS.map((entry) =>
+      entry.abilityId === 'eureka'
+        ? { ...entry, condition: selfHas('fingers_of_frost'), disabled: true }
+        : { ...entry, disabled: true },
+    ),
+    MANA_RUBY_ENTRY,
+    {
+      abilityId: 'demonic_rune',
+      condition: all(resourceFraction('atMost', 0.5, 'mana'), onCooldown('mana_ruby')),
+      note: 'Under 50% mana, the owner\'s figure -- and only once the Mana Ruby has gone, which it shares a cooldown with (round 59).',
+    },
+    {
+      abilityId: 'major_spellblasting_potion',
+      note: '40 spell power for 30s. Ungated: a flat window with nothing in this encounter to line it up against.',
+    },
+    {
+      abilityId: 'evocation',
+      condition: all(resourceFraction('atMost', 0.1, 'mana'), fightRemaining('atLeast', 15)),
+    },
+    { abilityId: 'arcane_missiles', condition: selfHas('missile_barrage') },
+    {
+      abilityId: 'cone_of_cold',
+      condition: any(targetStacks('atLeast', 5, 'winters_chill'), fightRemaining('atMost', 1.5)),
+    },
+    { abilityId: 'ice_lance', condition: selfHas('fingers_of_frost') },
+    {
+      abilityId: 'ice_barrier',
+      condition: all(selfTime('atMost', 0, 'ice_barrier'), fightRemaining('atLeast', 20)),
+    },
+    { abilityId: 'frostbolt' },
+  ],
+};
+
+export const MAGE_FROST_ROTATION: Rotation = compileRotation(MAGE_FROST);
 export const MAGE_FIRE_ROTATION: Rotation = compileRotation(MAGE_FIRE);
 export const MAGE_FROSTFIRE_ROTATION: Rotation = compileRotation(MAGE_FROSTFIRE);
 export const MAGE_ARCANE_ROTATION: Rotation = compileRotation(MAGE_ARCANE);
@@ -1165,6 +1224,8 @@ export function mageRotation(talents: TalentAllocation): Rotation | undefined {
    * other class's list relies on.
    */
   if (arcane > fire && arcane > frost) return MAGE_ARCANE_ROTATION;
+  // A build that is mostly FROST is the Frost Mage (round 59).
+  if (frost > fire && frost > arcane) return MAGE_FROST_ROTATION;
   /*
    * FROST POINTS MAKE IT FROSTFIRE, not Frost. There is no pure Frost profile
    * in the owner's list, and the 0/29/22 build's Frost half exists to scale

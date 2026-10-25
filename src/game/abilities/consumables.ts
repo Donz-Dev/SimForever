@@ -408,10 +408,19 @@ export const DEMONIC_RUNE_COOLDOWN_MS = seconds(120);
  * stock entry's condition is where it is written.
  * ============================================================================
  */
+/**
+ * THE CONJURED-MANA COOLDOWN (round 59), the owner's: a Mage's Mana Ruby
+ * "SHARES a cooldown with demonic rune ... both need to go on cooldown when
+ * one is used." The Rune imposes its own two minutes on the group; the Ruby,
+ * once a fight itself, imposes the same two minutes -- see `MANA_RUBY`.
+ */
+export const MANA_GEM_COOLDOWN_GROUP = 'mana_gem';
+
 export const DEMONIC_RUNE_ABILITY: Ability = {
   id: 'demonic_rune',
   name: 'Demonic Rune',
   cooldownMs: DEMONIC_RUNE_COOLDOWN_MS,
+  cooldownGroup: MANA_GEM_COOLDOWN_GROUP,
   requiresTarget: false,
   triggersGcd: false,
   canCast: ({ caster }) => caster.health.current > DEMONIC_RUNE_MAXIMUM_HEALTH,

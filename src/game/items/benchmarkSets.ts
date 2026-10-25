@@ -420,6 +420,9 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * and keeps the stamina floor on the armour; intellect, spirit and crit
    * compete for the rest, in that order. idBlock 31; A NEW ROW TAKES 32.
    */
+  // Frost Mage (round 59): the Frostfire Mage's specification, which is what the
+  // owner's saved build wore, under its own name and id block.
+  { idBlock: 32, presetId: 'mage_frost', characterClass: 'mage', label: 'Frost Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   { idBlock: 31, presetId: 'holy_pal', characterClass: 'paladin', label: 'Holy Pal', hit: 0, expertise: 0, preferred: ['Intellect', 'Spirit', 'Crit'], armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true }, healer: true },
 ];
 

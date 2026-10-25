@@ -1061,6 +1061,31 @@ const SHAMAN_ENHANCEMENT_TALENTS: TalentAllocation = {
  * chosen by points spent rather than by a 31-point talent the way the Rogue's
  * is.
  */
+/** Frost Mage, 14 Arcane / 3 Fire / 34 Frost: the owner's saved build (round 59). */
+const MAGE_FROST_TALENTS: TalentAllocation = {
+  // Arcane, 14
+  arcane_focus: 5,
+  arcane_concentration: 5,
+  arcane_subtlety: 2,
+  missile_barrage: 2,
+  // Fire, 3
+  incineration: 3,
+  // Frost, 34
+  improved_frostbolt: 5,
+  elemental_precision: 3,
+  ice_shards: 5,
+  frost_channeling: 3,
+  ice_lance: 1,
+  improved_blizzard: 1,
+  ice_block: 1,
+  shatter: 3,
+  improved_cone_of_cold: 3,
+  cold_snap: 1,
+  fingers_of_frost: 2,
+  winter_s_chill: 5,
+  ice_barrier: 1,
+};
+
 const MAGE_FROSTFIRE_TALENTS: TalentAllocation = {
   /*
    * ==========================================================================
@@ -4037,6 +4062,54 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         potion: 'major_mana_potion',
         other: 'demonic_rune',
       },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    /*
+     * ==================================================================
+     * FROST MAGE, THE OWNER'S OWN BUILD (round 59) -- their saved
+     * "frost st 975" profile, transcribed: the race, the talents, the
+     * consumables, the opener and the list (`MAGE_FROST`, which adds the
+     * Mana Ruby they asked for). It wears the Frostfire template's gear, as
+     * the saved file did, through a template row of its own so the test-set
+     * buttons find it by this character's name.
+     * ==================================================================
+     */
+    id: 'mage_frost',
+    label: 'Frost Mage',
+    detail: 'Windshaper Skyborne, caster, standing target. 14 Arcane / 3 Fire / 34 Frost',
+    characterClass: 'mage',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Frost Mage',
+        race: 'windshaper_skyborne',
+        characterClass: 'mage',
+        level: 60,
+        combatStyle: 'caster',
+        stance: 'battle',
+      },
+      talents: { ...MAGE_FROST_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: {
+        flask: 'flask_spell_power',
+        weapon_effect_main_hand: 'weapon_spell_crit_main_hand',
+        blasted_lands: 'blasted_intellect',
+        mana_regen: 'mana_regen_12',
+        hit_points: 'hit_points_120',
+        armor: 'armor_450',
+        spell_power: 'spell_power_35',
+        food: 'food_spell_power',
+        school_spell_power: 'school_frost',
+        potion: 'major_spellblasting_potion',
+        other: 'demonic_rune',
+      },
+      precombat: [
+        ...before(60, 'mage_armor'),
+        ...before(3.5, 'ice_barrier'),
+        ...before(2, 'frostbolt'),
+      ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },

@@ -107,6 +107,28 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 59: the Frost Mage, a conjured-mana cooldown, and Bane of Havoc on #2
+
+Four items from the owner:
+
+| | what changed |
+| --- | --- |
+| Blizzard | makes Fingers of Frost (with Improved Blizzard, round 58) and now **never spends it** -- a cast reaction fires per channel tick, so a Blizzard would otherwise eat both charges in two seconds |
+| Mana Ruby / Demonic Rune | **one shared cooldown**, `MANA_GEM_COOLDOWN_GROUP`: the Rune imposes its two minutes, and the Ruby -- once a fight itself -- imposes the same two minutes. Every Mage list now puts the Ruby ABOVE the Rune, the owner's "mana ruby first, and the demonic runes later if the combat duration supports" |
+| Frost Mage | a 33rd profile, the owner's saved "frost st 975" build: Windshaper Skyborne, 14/3/34, their consumables, opener (Mage Armor 60s, Ice Barrier 3.5s, Frostbolt 2s) and list as `MAGE_FROST`, plus the Mana Ruby first and the Rune held until the Ruby has gone. The Frostfire template's gear, through a template row of its own (block 32) so the test-set buttons find it by name. A build mostly in Frost now picks this list |
+| Bane of Havoc | the owner's ruling: worth nothing on one target, so it is REFUSED there; with more than one, it always lands on **enemy #2**, whatever the entry aims at, so 15% of the main target's damage is copied. Refused while it is already up. The Firelock list casts it once, gated on two or more targets |
+
+Measured, 300 fights against `main`: Frostfire 1038.7 -> 1038.6, Arcane 1052.9
+-> 1052.8, Fire and Firelock identical. **Frost Mage: 970.0 +/- 8.8**, against
+the owner's saved file's 975 -- inside the interval, and the one difference is
+the owner's own: the Rune now waits for the Ruby, so it does not fire in a 60s
+fight. In a three-target Firelock fight Havoc is cast once and copies about 8,000
+damage onto enemy #2.
+
+**THE HAVOC CAST EVENT NAMES THE MAIN TARGET**, because the list chooses a
+target before the spell redirects itself to #2; the curse and the copies are on
+#2. Cosmetic, and recorded rather than fixed by changing how a cast picks.
+
 ## Round 58: Mage AoE -- Flamestrike, Blast Wave, and the Blizzard chill
 
 Three items from the owner:

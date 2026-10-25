@@ -638,6 +638,11 @@ const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     head: '+1% Haste', neck: '+6 Spell Power', cloak: '-2% Threat', chest: '+4 Stats',
     wrists: '+16 Spell Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: 'Minor Speed',
   },
+  // Round 59's Frost Mage: the owner's saved build, which is the Frostfire loadout.
+  mage_frost: {
+    head: '+1% Haste', neck: '+6 Spell Power', cloak: '-2% Threat', chest: '+4 Stats',
+    wrists: '+16 Spell Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: 'Minor Speed',
+  },
   // Round 52's healer, which has no owner row yet: chosen by the healer's stats.
   holy_pal: {
     head: '+1% Haste', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',

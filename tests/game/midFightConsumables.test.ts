@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { MANA_GEM_COOLDOWN_GROUP } from '../../src/game/abilities/consumables';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { createTrainingDummy } from '../../src/game/actors/createTrainingDummy';
 import { buildSimulation } from '../helpers/buildSimulation';
@@ -433,7 +434,7 @@ describe('what selecting one does to the priority list', () => {
       expect(consumables.potion, `${preset.id} potion`).toBeDefined();
       expect(consumables.other, `${preset.id} other`).toBeDefined();
     }
-    expect(PROFILE_PRESETS).toHaveLength(32);
+    expect(PROFILE_PRESETS).toHaveLength(33);
   });
 
   it("partitions `other` by pool, exactly as the owner's ruling does", () => {
@@ -497,6 +498,8 @@ describe('what selecting one does to the priority list', () => {
       shadow_priest: 'demonic_rune',
       // A pure mana user, so the owner's rule gives it the Rune.
       holy_pal: 'demonic_rune',
+      // Round 59's Frost Mage, a pure mana user.
+      mage_frost: 'demonic_rune',
     };
 
     // EXHAUSTIVE, so a new preset has to be classified rather than defaulting.
@@ -577,11 +580,14 @@ describe('the cooldowns', () => {
     expect(POTION_COOLDOWN_MS).toBe(120_000);
   });
 
-  it('gives each Other item its own cooldown and no group', () => {
+  it('gives each Other item its own cooldown, and only the Rune a group', () => {
     /*
      * THE OWNER STATES A COOLDOWN PER ITEM AND NO GROUP for these, so none is
      * declared. Reading the Potions' shared cooldown across by analogy is the
      * mistake Explosive Trap taught: a ruling covers what it says.
+     *
+     * AND THE OWNER HAS SINCE RULED THE ONE GROUP THERE IS (round 59): the
+     * Demonic Rune shares a cooldown with a Mage's Mana Ruby, and nothing else.
      */
     const other = CONSUMABLE_CATEGORIES_BY_ID.get('other')!;
     const expected: Record<string, number> = {
@@ -591,7 +597,9 @@ describe('the cooldowns', () => {
     };
     for (const option of other.options) {
       expect(option.ability?.cooldownMs, option.id).toBe(expected[option.id]);
-      expect(option.ability?.cooldownGroup, option.id).toBeUndefined();
+      expect(option.ability?.cooldownGroup, option.id).toBe(
+        option.id === 'demonic_rune' ? MANA_GEM_COOLDOWN_GROUP : undefined,
+      );
     }
     expect(THISTLE_TEA_COOLDOWN_MS).toBe(300_000);
   });

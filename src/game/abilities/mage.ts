@@ -6,6 +6,7 @@ import {
   FLAMESTRIKE_SP_COEFFICIENT,
 } from '../combat/coefficients';
 import { areaTargets } from '../combat/multiTarget';
+import { DEMONIC_RUNE_COOLDOWN_MS, MANA_GEM_COOLDOWN_GROUP } from './consumables';
 import { baseManaFor } from '../character/baseStatLookup';
 import {
   arcaneBlastAura,
@@ -912,6 +913,13 @@ export const MANA_RUBY: Ability = {
   id: 'mana_ruby',
   name: 'Mana Ruby',
   cooldownMs: MANA_RUBY_COOLDOWN_MS,
+  /*
+   * SHARED WITH THE DEMONIC RUNE (round 59), which overturns "a conjured gem
+   * shares no cooldown" above on the owner's ruling. The Ruby still comes back
+   * never; what it imposes on the Rune is the Rune's own two minutes.
+   */
+  cooldownGroup: MANA_GEM_COOLDOWN_GROUP,
+  cooldownGroupMs: DEMONIC_RUNE_COOLDOWN_MS,
   requiresTarget: false,
   triggersGcd: false,
   onCast: ({ simulation, caster, ability }) => {

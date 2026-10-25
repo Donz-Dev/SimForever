@@ -1030,12 +1030,38 @@ export const BANE_OF_HAVOC_COST = Math.round(baseManaFor('undead', 'warlock') * 
  * target there are no "other targets" and it copies nothing.
  * ----------------------------------------------------------------------------
  */
+/*
+ * ============================================================================
+ * ALWAYS TARGET #2 AND NEVER ON ONE TARGET (round 59), the owner's ruling,
+ * which replaces the entry's own choice above: "On single target Bane of Havoc
+ * doesn't provide any benefit. On >1 target Bane of Havoc should be hardcoded
+ * to cast on target #2, that way 15% of the damage is properly added to the
+ * main target." So the damage the Warlock deals the MAIN target -- the one
+ * every single-target spell hits, and the one an area spell hits first -- is
+ * what gets copied, onto the second enemy.
+ *
+ * REFUSED WHILE IT IS ALREADY UP on that enemy, from this Warlock: a five
+ * minute curse cast again would only spend a global cooldown.
+ * ============================================================================
+ */
+function havocTarget(
+  simulation: SimulationContext,
+  caster: Combatant,
+): Combatant | undefined {
+  return simulation.enemiesOf(caster)[1];
+}
+
 export const BANE_OF_HAVOC_ABILITY: Ability = {
   id: 'bane_of_havoc',
   name: 'Bane of Havoc',
   cost: { resource: 'mana', amount: BANE_OF_HAVOC_COST },
   attackTable: 'spell',
-  onCast: ({ simulation, caster, target, ability }) => {
+  canCast: ({ simulation, caster }) => {
+    const second = havocTarget(simulation, caster);
+    return second !== undefined && second.auras.get(BANE_OF_HAVOC.id)?.sourceId !== caster.id;
+  },
+  onCast: ({ simulation, caster, ability }) => {
+    const target = havocTarget(simulation, caster);
     if (!target) return;
     // A debuff with no damage of its own: the application rolls, as every
     // Bane's does.
