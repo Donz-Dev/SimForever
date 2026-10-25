@@ -18,7 +18,7 @@ import type { AplCondition } from '../../src/game/rotations/apl';
 import { lowestPartyMember } from '../../src/game/rotations/apl/friendlies';
 import { conditionOf, rootOf } from '../../src/ui/panels/aplEditing';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
-import { HEALER_ID, TANK_ID, healerEncounter } from '../../src/simulator/healerEncounter';
+import { HEALER_ID, RAID_PULSE_FIRST_MS, TANK_ID, healerEncounter } from '../../src/simulator/healerEncounter';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 
@@ -232,7 +232,8 @@ describe("the Holy Pal's raid healer chain", () => {
     expect(vigils[0].timestamp).toBe(0);
     expect(vigils[0].targetId).toBe(TANK_ID);
     expect(shocks.length).toBeGreaterThan(0);
-    expect(shocks[0].timestamp).toBeGreaterThanOrEqual(seconds(20));
+    // Held until the first raid pulse, wherever that is (5 seconds since round 70).
+    expect(shocks[0].timestamp).toBeGreaterThanOrEqual(RAID_PULSE_FIRST_MS);
     expect(shocks[0].targetId).toBe(TANK_ID);
   });
 

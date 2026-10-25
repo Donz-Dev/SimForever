@@ -194,12 +194,17 @@ describe('the healer encounters', () => {
     expect(strikes[0].amount).toBeCloseTo(RAID_TANK_HIT_FRACTION * HEALER_TANK_HEALTH, 6);
 
     const pulses = damage.filter((event) => event.abilityName === 'Raid Pulse');
-    // Every 20 seconds, the first at 20 (round 61; it was 15, "reducing the
-    // pressure slightly").
-    expect(RAID_PULSE_FIRST_MS).toBe(seconds(20));
-    expect(pulses[0].timestamp).toBe(seconds(20));
+    // The first at 5 seconds, then a random 30 to 36 seconds apart (round 70;
+    // it was every 20 from 20).
+    expect(RAID_PULSE_FIRST_MS).toBe(seconds(5));
+    expect(pulses[0].timestamp).toBe(seconds(5));
     const openings = [...new Set(pulses.map((event) => event.timestamp))];
-    expect(openings[1] - openings[0]).toBe(seconds(20));
+    expect(openings.length).toBeGreaterThan(1);
+    for (let index = 1; index < openings.length; index += 1) {
+      const gap = openings[index] - openings[index - 1];
+      expect(gap).toBeGreaterThanOrEqual(seconds(30));
+      expect(gap).toBeLessThanOrEqual(seconds(36));
+    }
     expect(pulses.filter((event) => event.timestamp === RAID_PULSE_FIRST_MS)).toHaveLength(RAID_SIZE);
     // Four ticks after each opening hit: at 2, 4, 6 and 8 seconds.
     const ticks = damage.filter(
