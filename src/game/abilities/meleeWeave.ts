@@ -1,37 +1,39 @@
 import type { Ability, Combatant, SimulationContext, Subroutine } from '../../engine';
-import { applyHaste, castAbility, hasteMultiplierFrom, startAutoAttackMode } from '../../engine';
+import { castAbility, startAutoAttackMode } from '../../engine';
 
 /**
- * THE HUNTER'S MELEE WEAVE (round 65), the owner's packaged sub-routine.
+ * THE HUNTER'S MELEE WEAVE (round 65, revised in round 68), the owner's
+ * packaged sub-routine.
  *
  * ============================================================================
- * "A 'Melee Weave' happens upon completion of a ranged attack (a ranged
- * auto-attack has happened in the last 0.5 seconds or less). The character
- * then cancels Ranged Auto-Attack, and initiates Melee Auto-Attack. Then the
- * user moves in to melee range ... Then once the user is in melee range a set
- * number of actions HAVE to occur ... Then the user moves back to Range (10
- * yards). This takes the full movement time AGAIN and then Ranged Auto-attack
- * is re-initiated taking the full ranged attack time interval PLUS a flat 0.5
- * seconds to trigger the first Ranged Auto-attack."
+ * THE PROCESS, in the owner's round 68 words: "End of a Ranged Attack -> Move
+ * in Event (~1 second) -> Use any 1 of the following GCD abilities (Immolation
+ * Trap, Strider Kick, Mongoose Bite) + Raptor Strike if ready -> Move out
+ * Event (~1 second) -> Ranged Restart (0.5 sec before Ranged Auto-Attack
+ * Resolves)".
  *
- * ONE LIST ENTRY RUNS THE WHOLE THING. Its melee actions -- Raptor Strike,
- * Mongoose Bite and Strider Kick unless the entry says otherwise -- are ALSO
- * its gate, by the owner's ruling: "a melee weave occurs when Mongoose Bite is
- * usable, Strider Kick is usable, Raptor Strike is usable". Then:
+ * ONE LIST ENTRY RUNS THE WHOLE THING:
  *
+ *   0. THE GATE: the bow fired in the last half second, and ANY ONE of the
+ *      entry's options can be cast -- "not every melee event needs to be ready
+ *      to go in a melee weave. You just need one of the listed abilities".
+ *      Round 65 asked for all of them, which is what the owner revised.
  *   1. RUN IN: `melee_weave` is a cast that lasts the run. Ranged auto-attack
- *      stops and melee starts as it begins, and a melee swing that comes due
- *      during the run waits for its end -- so the first swing lands no sooner
- *      than the run and no later than a melee swing interval, which is the
- *      owner's minimum and maximum.
- *   2. IN MELEE: a sub-routine owns the character's decisions and casts the
- *      actions in order, waiting on a global cooldown or a resource and skipping
- *      one that has stopped being castable. An on-next-swing action is done
- *      when its swing LANDS, so Raptor Strike keeps the character in melee
- *      until the melee swing delivers it.
- *   3. RUN OUT: `return_to_range` is a second cast that lasts the run. Melee
- *      stops as it begins; as it ends ranged starts, its first shot a full
- *      ranged swing plus half a second later.
+ *      stops and melee starts as it begins.
+ *   2. IN MELEE: a sub-routine owns the character's decisions. Raptor Strike
+ *      is queued the moment the run ends if it is ready, so it rides the
+ *      arrival swing; the FIRST castable option is cast; and the character
+ *      stays until both are done.
+ *   3. RUN OUT: `return_to_range` lasts the run too. Melee stops as it begins;
+ *      as it ends ranged starts again.
+ *
+ * BOTH SWING TIMERS COOL DOWN WHILE THE OTHER RUNS, the owner's: each kind's
+ * next swing is due a full (hasted) swing after ITS OWN last one, whatever the
+ * other kind did meanwhile. So the melee swing lands on arrival once the melee
+ * timer has run out at range, and the bow fires half a second after the run
+ * back -- "0.5 sec before Ranged Auto-Attack Resolves" -- or when its own timer
+ * runs out, if that is later. `startAutoAttackMode` keeps that rule for both.
+ * (Round 65 restarted the bow from zero: a full swing plus half a second.)
  *
  * THE RUN IS A KNOWN TIME, not a position -- the simulator has none: 7 yards
  * at 7 yards a second is one second, and Minor Speed on the boots makes it
@@ -42,15 +44,21 @@ import { applyHaste, castAbility, hasteMultiplierFrom, startAutoAttackMode } fro
 export const MELEE_WEAVE_ID = 'melee_weave';
 export const RETURN_TO_RANGE_ID = 'return_to_range';
 
-/** The owner's three, the entry's default. */
-export const DEFAULT_MELEE_WEAVE_ACTIONS: readonly string[] = ['raptor_strike', 'mongoose_bite', 'strider_kick'];
+/**
+ * The owner's three global-cooldown options, the entry's default: a weave
+ * casts the first that is ready.
+ */
+export const DEFAULT_MELEE_WEAVE_ACTIONS: readonly string[] = ['immolation_trap', 'strider_kick', 'mongoose_bite'];
+
+/** Raptor Strike rides the arrival swing "if ready", whatever the options. */
+export const MELEE_WEAVE_RAPTOR_STRIKE = 'raptor_strike';
 
 /** 10 yards to 3, at 7 yards a second. */
 export const MELEE_WEAVE_YARDS = 7;
 export const RUN_SPEED_YARDS_PER_SECOND = 7;
 /** Minor Speed on the boots: "Run speed increased slightly", which the owner states as 8%. */
 export const MINOR_SPEED_RUN_MULTIPLIER = 1.08;
-/** The flat half second before the first ranged shot after the run out. */
+/** The half second between the run back and the first ranged shot, at the soonest. */
 export const RANGED_RESTART_DELAY_MS = 500;
 /** How recently a ranged shot must have landed for a weave to begin. */
 export const MELEE_WEAVE_SHOT_WINDOW_MS = 500;
@@ -75,8 +83,8 @@ export function meleeWeaveRunMs(minorSpeed: boolean): number {
 const pendingActions = new WeakMap<Combatant, readonly string[]>();
 
 /**
- * THE GATE: the bow just fired, and every action the weave would run can be
- * cast -- ignoring the global cooldown and a cast in progress, which pass.
+ * THE GATE: the bow just fired, and any one of the weave's options can be cast
+ * -- ignoring the global cooldown and a cast in progress, which pass.
  */
 export function meleeWeaveReady(
   context: SimulationContext,
@@ -86,9 +94,12 @@ export function meleeWeaveReady(
   if (actor.activeAutoAttack !== 'ranged' || actor.subroutine) return false;
   if (!actor.swungWithin('ranged', context.clock.now(), MELEE_WEAVE_SHOT_WINDOW_MS)) return false;
   const target = context.defaultTargetFor(actor);
-  const known = actions.filter((id) => actor.abilities.get(id) !== undefined);
+  // Raptor Strike is never one of the options: it comes "if ready" anyway.
+  const known = actions.filter(
+    (id) => id !== MELEE_WEAVE_RAPTOR_STRIKE && actor.abilities.get(id) !== undefined,
+  );
   if (known.length === 0) return false;
-  const ready = known.every(
+  const ready = known.some(
     (id) =>
       context.castRejection(actor, actor.abilities.get(id)!, target, {
         ignoreGcd: true,
@@ -148,12 +159,11 @@ export function returnToRangeAbility(runMs: number): Ability {
     onCastStart: ({ simulation, caster }) => {
       startAutoAttackMode(simulation, caster, 'none');
     },
+    // The bow's own timer has been cooling down all along; the restart adds
+    // half a second at most.
     onCast: ({ simulation, caster }) => {
-      const bow = caster.weapons.ranged;
-      if (!bow) return;
-      const full = applyHaste(bow.swingTimerMs, hasteMultiplierFrom(caster.stats.effective));
       startAutoAttackMode(simulation, caster, 'ranged', {
-        firstSwingAtMs: simulation.clock.now() + full + RANGED_RESTART_DELAY_MS,
+        notBeforeMs: simulation.clock.now() + RANGED_RESTART_DELAY_MS,
       });
     },
   };
@@ -162,31 +172,37 @@ export function returnToRangeAbility(runMs: number): Ability {
 /** The weave once the character is in melee. See the file comment. */
 export class MeleeWeaveRoutine implements Subroutine {
   readonly name = 'Melee Weave';
-  private index = 0;
+  /** Whether the one option is settled: cast, or none could be. */
+  private optionSettled = false;
   private issuedAt: number | undefined;
   private returning = false;
 
   constructor(
-    private readonly actions: readonly string[],
+    private readonly options: readonly string[],
     private readonly arrivedAt: number,
   ) {}
 
   /*
-   * AN ON-NEXT-SWING ACTION IS QUEUED THE MOMENT THE RUN ENDS, before the
-   * melee swing that was waiting for the arrival lands -- so Raptor Strike
-   * rides that first swing, which is the owner's "minimum amount of time to
-   * melee attack is equal to movement time". Queued by the next decision, it
-   * missed that swing and waited a whole melee interval for the one after.
+   * RAPTOR STRIKE IS QUEUED THE MOMENT THE RUN ENDS, before the melee swing
+   * that was waiting for the arrival lands -- so it rides that first swing,
+   * the owner's "minimum amount of time to melee attack is equal to movement
+   * time". Queued by the next decision, it missed that swing and waited a whole
+   * melee interval for the one after.
    */
   armOnArrival(context: SimulationContext, actor: Combatant): void {
+    this.armRaptorStrike(context, actor);
+  }
+
+  private armRaptorStrike(context: SimulationContext, actor: Combatant): void {
+    const raptor = actor.abilities.get(MELEE_WEAVE_RAPTOR_STRIKE);
+    if (!raptor?.onNextSwing || actor.queuedSwing(raptor.onNextSwing) === raptor.id) return;
     const target = context.defaultTargetFor(actor);
-    for (const id of this.actions) {
-      const ability = actor.abilities.get(id);
-      if (!ability?.onNextSwing) continue;
-      if (context.castRejection(actor, ability, target) === undefined) {
-        castAbility(context, actor, ability, target);
-      }
-    }
+    if (context.castRejection(actor, raptor, target) === undefined) castAbility(context, actor, raptor, target);
+  }
+
+  private raptorArmed(actor: Combatant): boolean {
+    const raptor = actor.abilities.get(MELEE_WEAVE_RAPTOR_STRIKE);
+    return raptor?.onNextSwing !== undefined && actor.queuedSwing(raptor.onNextSwing) === raptor.id;
   }
 
   next(context: SimulationContext, actor: Combatant) {
@@ -194,40 +210,39 @@ export class MeleeWeaveRoutine implements Subroutine {
     const target = context.defaultTargetFor(actor);
     const stalled = context.clock.now() - this.arrivedAt > MELEE_WEAVE_STALL_MS;
 
-    while (!stalled && this.index < this.actions.length) {
-      const ability = actor.abilities.get(this.actions[this.index]);
-      if (!ability) {
-        this.index += 1;
-        continue;
-      }
-      // The last call cast it: armed for a swing, or a new cast recorded.
-      if (this.issuedAt !== undefined) {
-        const armed = ability.onNextSwing !== undefined && actor.queuedSwing(ability.onNextSwing) === ability.id;
-        if (armed || actor.castSequence > this.issuedAt) {
-          this.issuedAt = undefined;
-          this.index += 1;
-          continue;
-        }
-        this.issuedAt = undefined;
-      }
-      const rejection = context.castRejection(actor, ability, target);
-      if (rejection === undefined) {
-        this.issuedAt = actor.castSequence;
-        return { ability, target };
-      }
-      if (rejection === 'on_gcd' || rejection === 'not_enough_resource' || rejection === 'already_casting') {
-        return 'wait' as const;
-      }
-      // No longer castable -- a window that closed. It cannot happen now.
-      this.index += 1;
+    // The last call cast an option if a new cast was recorded since.
+    if (!this.optionSettled && this.issuedAt !== undefined) {
+      if (actor.castSequence > this.issuedAt) this.optionSettled = true;
+      this.issuedAt = undefined;
     }
 
-    // An on-next-swing action is done when its swing has landed.
-    const stillArmed = this.actions.some((id) => {
-      const ability = actor.abilities.get(id);
-      return ability?.onNextSwing !== undefined && actor.queuedSwing(ability.onNextSwing) === id;
-    });
-    if (stillArmed && !stalled) return 'wait' as const;
+    // ONE OPTION: the first that is castable, waiting out a GCD or a resource.
+    if (!this.optionSettled && !stalled) {
+      let wait = false;
+      for (const id of this.options) {
+        if (id === MELEE_WEAVE_RAPTOR_STRIKE) continue;
+        const ability = actor.abilities.get(id);
+        if (!ability) continue;
+        const rejection = context.castRejection(actor, ability, target);
+        if (rejection === undefined) {
+          this.issuedAt = actor.castSequence;
+          return { ability, target };
+        }
+        if (rejection === 'on_gcd' || rejection === 'already_casting' || rejection === 'not_enough_resource') {
+          wait = true;
+        }
+      }
+      if (wait) return 'wait' as const;
+      // None can be cast now -- a window that closed. The weave goes on without one.
+      this.optionSettled = true;
+    }
+
+    // "+ Raptor Strike if ready": queued if it came ready since, and delivered
+    // before the character leaves.
+    if (!stalled) {
+      this.armRaptorStrike(context, actor);
+      if (this.raptorArmed(actor)) return 'wait' as const;
+    }
 
     const back = actor.abilities.get(RETURN_TO_RANGE_ID);
     if (!back) return 'done' as const;

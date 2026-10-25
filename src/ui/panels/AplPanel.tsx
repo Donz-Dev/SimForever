@@ -22,6 +22,7 @@ import {
 import {
   DEFAULT_MELEE_WEAVE_ACTIONS,
   MELEE_WEAVE_ID,
+  MELEE_WEAVE_RAPTOR_STRIKE,
   meleeWeaveAbility,
   meleeWeaveRunMs,
 } from '../../game/abilities/meleeWeave';
@@ -496,9 +497,9 @@ function chosenId(previous: string, chosen: string): string {
 }
 
 /**
- * A MELEE WEAVE'S ACTIONS (round 65): what the Hunter does in melee before it
- * runs back, in order -- and the weave's gate, since it begins only when every
- * one can be cast.
+ * A MELEE WEAVE'S OPTIONS (round 68): the global-cooldown abilities it may
+ * cast in melee, the first ready one used -- and the weave's gate, since it
+ * begins when any one can be cast. Raptor Strike comes if ready either way.
  */
 function EntryWeave({
   actions,
@@ -513,14 +514,18 @@ function EntryWeave({
 }) {
   const shown = actions ?? DEFAULT_MELEE_WEAVE_ACTIONS;
   const offered = abilities.filter(
-    (ability) => ability.id !== MELEE_WEAVE_ID && !isStartAutoAttack(ability.id) && !shown.includes(ability.id),
+    (ability) =>
+      ability.id !== MELEE_WEAVE_ID &&
+      ability.id !== MELEE_WEAVE_RAPTOR_STRIKE &&
+      !isStartAutoAttack(ability.id) &&
+      !shown.includes(ability.id),
   );
   // Back to the default is DROPPED rather than stored, so the entry compares equal.
   const store = (next: readonly string[]) =>
     onChange?.(next.join('|') === DEFAULT_MELEE_WEAVE_ACTIONS.join('|') ? undefined : next);
   return (
     <span className="apl-weave">
-      <span className="apl-unit">in melee:</span>
+      <span className="apl-unit">in melee, one of:</span>
       {shown.map((abilityId, at) => (
         <span key={`${abilityId}-${at}`} className="apl-weave-step">
           {nameOf(abilityId)}
@@ -553,7 +558,7 @@ function EntryWeave({
           ))}
         </select>
       ) : null}
-      <span className="apl-unit">then back to range</span>
+      <span className="apl-unit">+ Raptor Strike if ready, then back to range</span>
     </span>
   );
 }

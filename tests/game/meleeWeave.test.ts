@@ -16,22 +16,24 @@ import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncount
 
 /*
  * ==============================================================================
- * THE HUNTER'S MELEE WEAVE (round 65), run end to end on the LW Ranged preset
- * with a list of two entries: the weave, and Arcane Shot under it -- so "nothing
- * else is cast while the weave runs" has something to refuse.
+ * THE HUNTER'S MELEE WEAVE (round 65, revised in round 68), end to end on the
+ * LW Ranged preset with a list of two entries: the weave, and Arcane Shot under
+ * it -- so "nothing else is cast while the weave runs" has something to refuse.
  *
- * Raptor Strike and Wing Clip are the weave's actions here rather than the
- * owner's default three, because Strider Kick is a Survival talent and Mongoose
- * Bite needs Expose Prey's window, and a Marksmanship build has neither: with
- * the default three it would never weave, which is the gate working (asserted
- * below). Wing Clip is the useful second action -- it is ON the global
- * cooldown where Raptor Strike rides a swing, so the routine has to wait.
+ * Round 68's process, the owner's: end of a ranged attack, run in, ANY ONE of
+ * the options plus Raptor Strike if ready, run out, ranged restart half a
+ * second before the shot -- with both swing timers cooling down while the
+ * other kind runs.
+ *
+ * LW Ranged is Marksmanship, so of the owner's three options it knows only
+ * Immolation Trap (a 30 second cooldown). Wing Clip, which has none, is what
+ * the tests use where they want a weave on every shot.
  * ==============================================================================
  */
 
-const ACTIONS = ['raptor_strike', 'wing_clip'] as const;
+const DURATION_SECONDS = 60;
 
-function weaving(actions?: readonly string[]): CharacterProfile {
+function weaving(options?: readonly string[]): CharacterProfile {
   const preset = PRESETS_BY_ID.get('lw_ranged')!.build();
   return {
     ...preset,
@@ -39,7 +41,7 @@ function weaving(actions?: readonly string[]): CharacterProfile {
       source: 'custom',
       name: 'Weave test',
       entries: [
-        { abilityId: MELEE_WEAVE_ID, ...(actions ? { weave: actions } : {}) },
+        { abilityId: MELEE_WEAVE_ID, ...(options ? { weave: options } : {}) },
         { abilityId: 'arcane_shot' },
       ],
     },
@@ -52,14 +54,14 @@ interface Run {
   readonly restartTimers: Map<number, number>;
 }
 
-function run(profile: CharacterProfile, durationSeconds = 30): Run {
+function run(profile: CharacterProfile): Run {
   const events: TelemetryEvent[] = [];
   const restartTimers = new Map<number, number>();
   const simulation = new Simulation(trainingDummyEncounter(profile, 4242), { emit: (event) => events.push(event) });
   simulation.begin();
   const player = simulation.combatants.find((actor) => actor.kind === 'player') as Combatant;
   const runMs = player.abilities.get(MELEE_WEAVE_ID)!.castTimeMs!;
-  for (let at = 0; at <= seconds(durationSeconds); at += 50) {
+  for (let at = 0; at <= seconds(DURATION_SECONDS); at += 50) {
     simulation.advanceTo(at);
     for (const event of events) {
       if (event.type !== 'cast' || event.abilityId !== RETURN_TO_RANGE_ID) continue;
@@ -80,14 +82,25 @@ const hits = (events: readonly TelemetryEvent[], name: string) =>
     .filter((event) => event.type === 'damage' && (event as { abilityName?: string }).abilityName === name)
     .map((event) => event.timestamp);
 
-describe('the Melee Weave', () => {
-  const { events, restartTimers } = run(weaving(ACTIONS));
-  const weaves = casts(events, MELEE_WEAVE_ID);
-  const returns = casts(events, RETURN_TO_RANGE_ID);
-  const shots = hits(events, 'Ranged Auto-Attack');
+/** Each weave that also ran back inside the fight: start, return and its end. */
+function weavesOf(events: readonly TelemetryEvent[]) {
   const runMs = meleeWeaveRunMs(false);
-  /** The weaves whose run back also finished inside the fight. */
-  const complete = weaves.filter((_start, index) => returns[index] !== undefined && returns[index]! + runMs < seconds(30));
+  const starts = casts(events, MELEE_WEAVE_ID);
+  const returns = casts(events, RETURN_TO_RANGE_ID);
+  return starts
+    .map((start, index) => ({ start, back: returns[index], end: (returns[index] ?? Infinity) + runMs }))
+    .filter((weave) => weave.back !== undefined && weave.end < seconds(DURATION_SECONDS));
+}
+
+/** The abilities cast between a weave's start and the end of its run back. */
+function castInside(events: readonly TelemetryEvent[], weave: { start: number; end: number }): string[] {
+  return events
+    .filter((event) => event.type === 'cast' && event.timestamp > weave.start && event.timestamp < weave.end)
+    .map((event) => (event as { abilityId: string }).abilityId);
+}
+
+describe('the Melee Weave', () => {
+  const runMs = meleeWeaveRunMs(false);
 
   it('runs in one second, or 1 / 1.08 of one with Minor Speed on the boots', () => {
     expect(meleeWeaveRunMs(false)).toBe(1000);
@@ -101,53 +114,97 @@ describe('the Melee Weave', () => {
     expect(fast.abilities.get(RETURN_TO_RANGE_ID)!.castTimeMs).toBe(926);
   });
 
-  it('happens, and only just after a ranged shot', () => {
-    expect(weaves.length).toBeGreaterThan(1);
-    for (const at of weaves) {
-      const last = shots.filter((shot) => shot <= at).at(-1);
-      expect(last, `weave at ${at}`).toBeDefined();
-      expect(at - last!, `weave at ${at}`).toBeLessThanOrEqual(MELEE_WEAVE_SHOT_WINDOW_MS);
-    }
-  });
+  describe("with the owner's three, of which this build knows Immolation Trap", () => {
+    const { events } = run(weaving());
+    const weaves = weavesOf(events);
+    const shots = hits(events, 'Ranged Auto-Attack');
 
-  it('delivers Raptor Strike on the swing that lands as the run ends', () => {
-    const raptors = hits(events, 'Raptor Strike');
-    for (const at of complete) expect(raptors, `weave at ${at}`).toContain(at + runMs);
-  });
+    it('begins once ANY ONE option is ready, and only just after a ranged shot', () => {
+      expect(weaves.length).toBeGreaterThan(0);
+      for (const { start } of weaves) {
+        const last = shots.filter((shot) => shot <= start).at(-1)!;
+        expect(start - last, `weave at ${start}`).toBeLessThanOrEqual(MELEE_WEAVE_SHOT_WINDOW_MS);
+      }
+    });
 
-  it('casts every action, then runs back, and nothing else is cast meanwhile', () => {
-    expect(returns.length).toBeGreaterThanOrEqual(weaves.length - 1);
-    weaves.forEach((start, index) => {
-      const back = returns[index];
-      if (back === undefined) return;
-      const inside = events.filter(
-        // After the cast that began it, so the pre-combat casts at 0 are not counted.
-        (event) => event.type === 'cast' && event.timestamp > start && event.timestamp < back + runMs,
-      );
-      const ids = inside.map((event) => (event as { abilityId: string }).abilityId);
-      expect(ids, `weave at ${start}`).toEqual(expect.arrayContaining([...ACTIONS]));
-      expect(ids, `weave at ${start}`).not.toContain('arcane_shot');
+    it('casts the option in melee and nothing else from the list', () => {
+      for (const weave of weaves) {
+        const ids = castInside(events, weave);
+        expect(ids, `weave at ${weave.start}`).toContain('immolation_trap');
+        expect(ids, `weave at ${weave.start}`).not.toContain('arcane_shot');
+      }
     });
   });
 
-  it('swings no melee weapon once back at range, and fires no shot while away', () => {
-    weaves.forEach((start, index) => {
-      const back = returns[index];
-      if (back === undefined) return;
-      const away = shots.filter((shot) => shot > start && shot < back + runMs);
-      expect(away, `weave at ${start}`).toEqual([]);
+  describe('with Wing Clip and Immolation Trap, both ready', () => {
+    const { events, restartTimers } = run(weaving(['wing_clip', 'immolation_trap']));
+    const weaves = weavesOf(events);
+    const shots = hits(events, 'Ranged Auto-Attack');
+
+    it('casts ONE option, the first that is ready', () => {
+      expect(weaves.length).toBeGreaterThan(2);
+      for (const weave of weaves) {
+        const ids = castInside(events, weave);
+        expect(ids.filter((id) => id === 'wing_clip'), `weave at ${weave.start}`).toHaveLength(1);
+        expect(ids, `weave at ${weave.start}`).not.toContain('immolation_trap');
+      }
+    });
+
+    it('delivers Raptor Strike on the arrival swing when it is ready', () => {
+      const raptors = hits(events, 'Raptor Strike');
+      expect(raptors).toContain(weaves[0]!.start + runMs);
+      // Only in melee: every one inside a weave that finished in the fight.
+      for (const at of raptors.filter((when) => when < weaves.at(-1)!.end)) {
+        expect(weaves.some((weave) => at >= weave.start + runMs && at < weave.end), `Raptor Strike at ${at}`).toBe(true);
+      }
+    });
+
+    it('runs back the instant the option and any Raptor Strike are done, not a global cooldown later', () => {
+      const raptors = hits(events, 'Raptor Strike');
+      const clips = casts(events, 'wing_clip');
+      for (const weave of weaves) {
+        const inside = (at: number) => at >= weave.start && at <= weave.back!;
+        const done = Math.max(...clips.filter(inside), ...raptors.filter(inside));
+        /*
+         * WITHIN ONE POLL: a Raptor Strike waiting on a swing that lands mid-poll
+         * is noticed at the next one, 100ms at most. A global cooldown would be
+         * 1,500.
+         */
+        expect(weave.back! - done, `weave at ${weave.start}`).toBeGreaterThanOrEqual(0);
+        expect(weave.back! - done, `weave at ${weave.start}`).toBeLessThan(100);
+      }
+    });
+
+    it('fires no ranged shot while away', () => {
+      for (const weave of weaves) {
+        expect(shots.filter((shot) => shot > weave.start && shot < weave.end), `weave at ${weave.start}`).toEqual([]);
+      }
+    });
+
+    it('restarts the bow half a second after the run back, or when its own timer has run out', () => {
+      expect(restartTimers.size).toBeGreaterThan(2);
+      for (const [end, timer] of restartTimers) {
+        const last = shots.filter((shot) => shot < end).at(-1)!;
+        const next = shots.find((shot) => shot >= end);
+        expect(next, `back at ${end}`).toBe(Math.max(end + RANGED_RESTART_DELAY_MS, last + timer));
+      }
+    });
+
+    it('is sooner than round 65 restart of a full swing plus half a second: the timer cooled while away', () => {
+      const early = [...restartTimers].filter(([end, timer]) => {
+        const next = shots.find((shot) => shot >= end)!;
+        return next < end + timer + RANGED_RESTART_DELAY_MS;
+      });
+      expect(early.length).toBeGreaterThan(0);
     });
   });
 
-  it('restarts the bow a full ranged swing plus half a second after the run back', () => {
-    expect(restartTimers.size).toBeGreaterThan(0);
-    for (const [end, timer] of restartTimers) {
-      const next = shots.find((shot) => shot >= end);
-      expect(next, `back at ${end}`).toBe(end + timer + RANGED_RESTART_DELAY_MS);
-    }
+  it('never begins when none of its options can be cast', () => {
+    // Mongoose Bite needs Expose Prey's window, which a Marksmanship build never opens.
+    expect(casts(run(weaving(['mongoose_bite'])).events, MELEE_WEAVE_ID)).toEqual([]);
   });
 
-  it("never begins with the owner's three on a build that cannot Mongoose Bite", () => {
-    expect(casts(run(weaving(), 20).events, MELEE_WEAVE_ID)).toEqual([]);
+  it('begins when one option is ready though another never is', () => {
+    expect(casts(run(weaving(['mongoose_bite', 'immolation_trap'])).events, MELEE_WEAVE_ID).length).toBeGreaterThan(0);
   });
 });
