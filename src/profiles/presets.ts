@@ -1086,6 +1086,32 @@ const MAGE_FROST_TALENTS: TalentAllocation = {
   ice_barrier: 1,
 };
 
+/**
+ * Piss Beam, 0 / 12 / 39 (round 60), decoded from the owner's URL:
+ * https://talentsforever.com/shaman/60/-055002-5333023315013151-RViknqportvuwxSlj-8?b=70425h&d=261024
+ */
+const SHAMAN_RESTORATION_TALENTS: TalentAllocation = {
+  // Enhancement, 12
+  thundering_strikes: 5,
+  ancestral_knowledge: 5,
+  improved_ghost_wolf: 2,
+  // Restoration, 39
+  improved_healing_wave: 5,
+  tidal_focus: 3,
+  mindfulness: 3,
+  natural_grace: 3,
+  improved_reincarnation: 2,
+  ancestral_healing: 3,
+  healing_focus: 3,
+  water_shield: 1,
+  tidal_mastery: 5,
+  mana_tide_totem: 1,
+  healing_way: 3,
+  nature_s_swiftness: 1,
+  purification: 5,
+  riptide: 1,
+};
+
 const MAGE_FROSTFIRE_TALENTS: TalentAllocation = {
   /*
    * ==========================================================================
@@ -4110,6 +4136,43 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         ...before(3.5, 'ice_barrier'),
         ...before(2, 'frostbolt'),
       ],
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    /*
+     * ==================================================================
+     * PISS BEAM, THE SHAMAN HEALER (round 60): the owner's talents and
+     * design, Holy Pal's gear rules in Mail, and Water Shield before the
+     * pull. THE RACE IS OURS -- the owner named none, and Troll's
+     * Berserking is haste on a caster -- so it is the first thing to change
+     * if the owner meant another.
+     * ==================================================================
+     */
+    id: 'shaman_resto',
+    label: 'Piss Beam',
+    detail: 'Troll, caster mace and shield, a healer. 12 Enhancement / 39 Restoration',
+    characterClass: 'shaman',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Piss Beam',
+        race: 'troll',
+        characterClass: 'shaman',
+        level: 60,
+        combatStyle: 'caster',
+        stance: 'battle',
+      },
+      talents: { ...SHAMAN_RESTORATION_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: {
+        ...casterConsumables('school_nature'),
+        flask: 'flask_spell_power',
+        food: 'food_healing_power',
+        potion: 'major_mana_potion',
+        other: 'demonic_rune',
+      },
+      precombat: [...before(3, 'water_shield')],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },

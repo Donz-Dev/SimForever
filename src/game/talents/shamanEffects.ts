@@ -76,7 +76,10 @@ const TOTEMS_NOT_MODELLED =
  */
 
 /** Said once; fourteen talents say it. */
-const NO_PROFILE_HEALS = 'Healing, and neither Shaman profile heals.';
+/** The Shaman's heals, round 60 -- which every healing talent below names. */
+const SHAMAN_HEALS: readonly string[] = ['lesser_healing_wave', 'healing_wave', 'chain_heal', 'riptide'];
+const eachHeal = <T extends object>(effect: (abilityId: string) => T): readonly T[] =>
+  SHAMAN_HEALS.map(effect);
 
 export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // --- Elemental -----------------------------------------------------------
@@ -533,7 +536,8 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   // --- Restoration ---------------------------------------------------------
 
-  improved_healing_wave: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
+  // Healing is simulated since round 52, and the Shaman heals since round 60.
+  improved_healing_wave: [{ kind: 'abilityCastTime', abilityId: 'healing_wave' }],
   /*
    * TOTEMIC FOCUS WAS NEVER BLOCKED BY THE TOTEM GAP AT ALL. "Reduces the Mana
    * cost of your totems and any spells that summon or move them by 25%" is a
@@ -625,7 +629,8 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * the wording caught it when that claim stopped being true elsewhere.
      */
     { kind: 'stat', stat: 'hitChance', operation: 'flat', valueIndex: 1 },
-    { kind: 'unmodelled', scope: 'healing', reason: `Its mana half is healing only. ${NO_PROFILE_HEALS}` },
+    // The mana half reaches the heals since round 60.
+    { kind: 'grantCastModifier', abilityIds: SHAMAN_HEALS, property: 'costFraction', valueIndex: 0 },
   ],
   /*
    * IMPROVED REINCARNATION, AND ITS REASON NAMED ONE CLAUSE OF THREE.
@@ -653,7 +658,20 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
         'out of combat.',
     },
   ],
-  ancestral_healing: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
+  /*
+   * A DIRECT HEAL'S CRIT puts Ancestral Healing on the target (round 60).
+   * Carried as a bonus on each heal and applied by `shamanHeal`; the armor it
+   * grants is not applied, by the owner's instruction -- it is tracked as an
+   * uptime. See `ANCESTRAL_HEALING`.
+   */
+  ancestral_healing: [
+    ...eachHeal((abilityId) => ({ kind: 'abilityBonus' as const, abilityId, key: 'ancestralHealing', valueIndex: 0 })),
+    {
+      kind: 'unmodelled',
+      reason:
+        'Its armor is not applied, by the owner\'s instruction: the healer fights\' tank has a stated 65% armor reduction. Tracked as an uptime.',
+    },
+  ],
   /*
    * HEALING FOCUS is "a 70% chance to avoid interruption caused by damage while
    * casting any HEALING spell" -- so it is doubly ruled out, by cast pushback and
@@ -670,28 +688,25 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
         'pushback is out of scope, and so is healing throughput.',
     },
   ],
+  // Round 60: the owner's "2% of Maximum Mana restored on HEALING spell crit".
   water_shield: [
+    { kind: 'grantAbility', abilityId: 'water_shield' },
     {
       kind: 'unmodelled',
       reason:
-        'Restores mana when the CARRIER is hit or when a heal crits. Neither ' +
-        'profile is attacked and neither heals.',
+        'Its mana on being HIT does nothing: no Shaman profile is attacked. The ' +
+        'globes and their few-second limit are not in the owner\'s statement.',
     },
   ],
-  tidal_mastery: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
+  // "+5% healing crit", the owner's -- on each heal.
+  tidal_mastery: eachHeal((abilityId) => ({ kind: 'abilityCrit' as const, abilityId })),
   restorative_totems: [{ kind: 'unmodelled', scope: 'totemEntities', reason: TOTEMS_NOT_MODELLED }],
-  mana_tide_totem: [{ kind: 'unmodelled', scope: 'totemEntities', reason: TOTEMS_NOT_MODELLED }],
-  healing_way: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
+  // A window of mana on the caster, round 60: the totem itself is not a combatant.
+  mana_tide_totem: [{ kind: 'grantAbility', abilityId: 'mana_tide_totem' }],
+  healing_way: [{ kind: 'abilityHealing', abilityId: 'healing_wave' }],
 
-  nature_s_swiftness: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Makes the NEXT Nature spell instant. A one-shot cast-time modifier, ' +
-        'the same rule Maelstrom Weapon wants and the Druid found first.',
-    },
-  ],
+  nature_s_swiftness: [{ kind: 'grantAbility', abilityId: 'nature_s_swiftness' }],
 
-  purification: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
-  riptide: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
+  purification: eachHeal((abilityId) => ({ kind: 'abilityHealing' as const, abilityId })),
+  riptide: [{ kind: 'grantAbility', abilityId: 'riptide' }],
 };

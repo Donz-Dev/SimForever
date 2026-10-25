@@ -231,6 +231,12 @@ export interface BatchResult {
   /** Aura uptime on the target, longest first. */
   readonly debuffUptime: readonly BatchAuraUptime[];
   /**
+   * The buffs on the people a healer heals, each as its MEAN uptime across them
+   * (round 60) -- Ancestral Healing and Riptide's heal over time. Empty outside
+   * a healer fight, where the report is about the player's own buffs.
+   */
+  readonly healedBuffUptime: readonly BatchAuraUptime[];
+  /**
    * Abilities the rotation actually cast that do less than they say.
    *
    * ----------------------------------------------------------------------------
@@ -468,6 +474,7 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
      * what "on the target" has always meant. At one target it is the same list.
      */
     debuffUptime: enemyIds.slice(0, 1).flatMap((id) => totals.auraUptime(id, 'debuff')),
+    healedBuffUptime: options.playerId ? meanUptime(alliedIds.map((id) => totals.auraUptime(id, 'buff'))) : [],
     castButNotSimulated: castButNotSimulated(caveats, abilities),
     // Present only when a pet was actually built, so a Lone Wolf hunter and a
     // sacrificed demon say nothing rather than carrying someone else's caveat.
@@ -552,4 +559,25 @@ function indexClosestTo(values: readonly number[], target: number): number {
     }
   }
   return bestIndex;
+}
+
+/**
+ * Several actors' uptime tables as one: each aura's uptime averaged across ALL
+ * of them, so a buff that sat on one of twenty for the whole fight reads 5%,
+ * and its applications summed (round 60).
+ */
+function meanUptime(tables: readonly (readonly BatchAuraUptime[])[]): readonly BatchAuraUptime[] {
+  if (tables.length === 0) return [];
+  const byId = new Map<string, { row: BatchAuraUptime; uptime: number; applications: number }>();
+  for (const table of tables) {
+    for (const row of table) {
+      const entry = byId.get(row.auraId) ?? { row, uptime: 0, applications: 0 };
+      entry.uptime += row.uptime;
+      entry.applications += row.applications;
+      byId.set(row.auraId, entry);
+    }
+  }
+  return [...byId.values()]
+    .map(({ row, uptime, applications }) => ({ ...row, uptime: uptime / tables.length, applications }))
+    .sort((a, b) => b.uptime - a.uptime);
 }

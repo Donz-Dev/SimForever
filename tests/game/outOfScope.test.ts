@@ -227,8 +227,9 @@ describe('the out-of-scope rulings are data, not prose', () => {
      * are rulings rather than gaps, so nobody reads the raw total as a work
      * queue again.
      */
-    // 196 since round 47, when thirteen threat reasons became threat effects.
-    expect(reasons.length).toBeGreaterThan(180);
+    // 196 since round 47, when thirteen threat reasons became threat effects;
+    // 176 since round 60, when the Shaman's Restoration talents were declared.
+    expect(reasons.length).toBeGreaterThan(160);
     expect(ruled.length).toBeGreaterThan(80);
     expect(ruled.length).toBeLessThan(reasons.length);
   });

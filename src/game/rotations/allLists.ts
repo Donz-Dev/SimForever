@@ -25,7 +25,7 @@ import {
   ROGUE_RUPTURE,
   ROGUE_VENOM,
 } from './rogue';
-import { SHAMAN_ELEMENTAL, SHAMAN_ENHANCEMENT } from './shaman';
+import { SHAMAN_ELEMENTAL, SHAMAN_ENHANCEMENT, SHAMAN_RESTORATION } from './shaman';
 import {
   WARLOCK_AFFLICTION,
   WARLOCK_DEMONOLOGY,
@@ -235,6 +235,12 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     owner: 'shaman',
     list: SHAMAN_ENHANCEMENT,
     profiles: ['shaman_enhancement'],
+  },
+  {
+    name: 'SHAMAN_RESTORATION',
+    owner: 'shaman',
+    list: SHAMAN_RESTORATION,
+    profiles: ['shaman_resto'],
   },
 
   // Mage -- by POINTS SPENT, because all three builds are `caster`.

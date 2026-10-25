@@ -236,6 +236,8 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
     [3.5, 'ice_barrier'],
     [2, 'frostbolt'],
   ],
+  // Round 60: the owner's "Pre-combat APL: Water Shield". The lead is ours.
+  shaman_resto: [[3, 'water_shield']],
 };
 
 /** Every cast a fight recorded, with the moment it happened. */

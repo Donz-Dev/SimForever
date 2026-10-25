@@ -1,6 +1,9 @@
 import type { AuraDefinition } from '../../engine';
-import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
-import { MAGMA_TOTEM_PULSE_SP_COEFFICIENT } from '../combat/coefficients';
+import { RATING_PER_PERCENT, applyHealing, dealDamage, flat, seconds } from '../../engine';
+import {
+  MAGMA_TOTEM_PULSE_SP_COEFFICIENT,
+  RIPTIDE_TICK_HEAL_COEFFICIENT,
+} from '../combat/coefficients';
 import {
   FLAME_SHOCK_SP_COEFFICIENT,
   FLAME_SHOCK_TICK_SP_COEFFICIENT,
@@ -748,3 +751,136 @@ export const CATALOG_AURAS: readonly AuraDefinition[] = [
   elementalDevastationAura(0),
   rockbiterWeaponImbue(0),
 ];
+
+
+/* -------------------------------------------------------------------------- */
+/* The Restoration Shaman's auras (round 60)                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Riptide's heal over time: "an additional 805 over 15 sec", which the owner
+ * states as five ticks, one every three seconds, at 10% of healing power each.
+ *
+ * ON THE PERSON HEALED, and it also MARKS them: "increases the effectiveness of
+ * your Chain Heal casts directly on that target by 25%", and the Chain Heal
+ * entry in the Piss Beam list aims at whoever carries it.
+ *
+ * A TICK CAN CRIT, as every periodic effect here can, at spell crit -- and is
+ * NOT a "healing spell crit" for Water Shield, which the owner excluded in so
+ * many words. See `shamanHeal`.
+ */
+export const RIPTIDE_HOT_TOTAL = 805;
+export const RIPTIDE_HOT_DURATION_MS = seconds(15);
+export const RIPTIDE_TICK_INTERVAL_MS = seconds(3);
+export const RIPTIDE_CHAIN_HEAL_BONUS = 1.25;
+
+export const RIPTIDE_HOT: AuraDefinition = {
+  id: 'riptide',
+  name: 'Riptide',
+  durationMs: RIPTIDE_HOT_DURATION_MS,
+  refreshBehaviour: 'reset',
+  periodic: {
+    intervalMs: RIPTIDE_TICK_INTERVAL_MS,
+    onTick: (context, aura) => {
+      const source = context.combatant(aura.sourceId);
+      const target = context.combatant(aura.targetId);
+      if (!source || !target || !target.isAlive) return;
+      applyHealing(context, {
+        source,
+        target,
+        abilityId: aura.id,
+        abilityName: aura.name,
+        baseAmount: RIPTIDE_HOT_TOTAL / (RIPTIDE_HOT_DURATION_MS / RIPTIDE_TICK_INTERVAL_MS),
+        powerCoefficient: RIPTIDE_TICK_HEAL_COEFFICIENT,
+        periodic: true,
+        threatens: true,
+      });
+    },
+  },
+};
+
+/**
+ * Ancestral Healing: "Increases your target's armor value by 25% for 15 sec
+ * after getting a critical effect from one of your healing spells."
+ *
+ * TRACKED AS AN UPTIME AND NOTHING ELSE (round 60), the owner's instruction:
+ * the healer fights' tank has a STATED 65% armor reduction, and raising its
+ * armor would quietly change a figure the owner fixed. So the aura carries no
+ * stat; whether it should is a question for the owner.
+ */
+export const ANCESTRAL_HEALING_DURATION_MS = seconds(15);
+
+export const ANCESTRAL_HEALING: AuraDefinition = {
+  id: 'ancestral_healing',
+  name: 'Ancestral Healing',
+  durationMs: ANCESTRAL_HEALING_DURATION_MS,
+  refreshBehaviour: 'reset',
+};
+
+/**
+ * Water Shield, the owner's mechanism (round 60): "2% of Maximum Mana restored
+ * on HEALING spell crit (not Riptide HoT effect)". Ten minutes, cast before the
+ * pull. The client's globes, and its "only one globe every few seconds", are
+ * not in the owner's statement and are not modelled -- a question for them.
+ */
+export const WATER_SHIELD_MANA_FRACTION = 0.02;
+export const WATER_SHIELD_DURATION_MS = seconds(600);
+
+export const WATER_SHIELD: AuraDefinition = {
+  id: 'water_shield',
+  name: 'Water Shield',
+  durationMs: WATER_SHIELD_DURATION_MS,
+};
+
+/**
+ * Mana Tide Totem: "restores 290 mana every 3 seconds" for 12 seconds -- four
+ * ticks, no coefficient, the owner's figures (round 60). Modelled as a window
+ * on the CASTER that ticks mana, which is the only member of its group this
+ * simulation has; the totem as a combatant is still out of scope.
+ */
+export const MANA_TIDE_MANA_PER_TICK = 290;
+export const MANA_TIDE_DURATION_MS = seconds(12);
+export const MANA_TIDE_TICK_INTERVAL_MS = seconds(3);
+
+export const MANA_TIDE: AuraDefinition = {
+  id: 'mana_tide_totem',
+  name: 'Mana Tide Totem',
+  durationMs: MANA_TIDE_DURATION_MS,
+  periodic: {
+    intervalMs: MANA_TIDE_TICK_INTERVAL_MS,
+    onTick: (context, aura) => {
+      const carrier = context.combatant(aura.targetId);
+      if (!carrier || !carrier.isAlive) return;
+      context.grantResource(carrier, 'mana', MANA_TIDE_MANA_PER_TICK, {
+        id: 'mana_tide_totem',
+        name: 'Mana Tide Totem',
+      });
+    },
+  },
+};
+
+/**
+ * Nature's Swiftness: "your next Nature spell with a casting time less than 10
+ * sec. becomes an instant cast spell". The Shaman's Nature spells with a cast
+ * are named -- a heal and a Lightning Bolt are both Nature -- and the charge is
+ * spent by the one it makes instant.
+ */
+export const NATURES_SWIFTNESS_SPELLS: readonly string[] = [
+  'lesser_healing_wave',
+  'healing_wave',
+  'chain_heal',
+  'lightning_bolt',
+  'chain_lightning',
+];
+
+export const NATURES_SWIFTNESS: AuraDefinition = {
+  id: 'nature_s_swiftness',
+  name: "Nature's Swiftness",
+  durationMs: 0,
+  castModifier: {
+    abilityIds: NATURES_SWIFTNESS_SPELLS,
+    castTimeFraction: 1,
+    consumedByCast: 'all',
+    requiresCastTime: true,
+  },
+};

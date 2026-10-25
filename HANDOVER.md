@@ -107,6 +107,45 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 60: Piss Beam, a Shaman healer
+
+The owner's 34th profile: a 0/12/39 Restoration Shaman from their talent URL,
+their spells, their coefficients and their list. It runs the same two healer
+fights Holy Pal does.
+
+| | what changed |
+| --- | --- |
+| spells | Lesser Healing Wave (1.5/3.5), Healing Wave (3/3.5), Chain Heal (2.5/3.5), Riptide (21.4% direct, then five 3-second ticks of 10%), Mana Tide Totem (290 mana every 3s, four ticks, no coefficient), Nature's Swiftness, Water Shield. Costs and ranks come from the spellbook capture |
+| Chain Heal | jumps to the **lowest-health injured member of the target's party**, excluding anyone already healed. Two jumps at most, and fewer when fewer of the party are hurt. Heals 25% more when the target carries the caster's Riptide (the Riptide tooltip) |
+| Water Shield | 2% of maximum mana on a healing crit. **A Riptide tick crit does not count**, by the owner's ruling |
+| Ancestral Healing | applied on a direct heal crit, with no stat attached, by the owner's instruction that it is tracked as an uptime |
+| talents | Tidal Mastery and Thundering Strikes give +5% heal crit each. Improved Healing Wave, Tidal Focus's mana half, Healing Way and Purification are declared. **Mana Tide left the `totemEntities` scope**: it is a window of mana on the caster, so it is modelled now |
+| APL | two new pieces, both editable in the panel: an `injuredCount` condition ("at least N in the target's party / the raid under X% health"), and a `withAura` target ("whoever carries your Riptide"). Smart healing leaves a `withAura` entry alone |
+| results | in healing mode, a table of **buffs on the people healed**, averaged across them. That is where Riptide and Ancestral Healing uptime show |
+
+Measured, 200 fights a fight type and then at 3,000 in the app. **Tank healer:
+about 544 HPS and 2.2 tank deaths**, Ancestral Healing up 83% on the tank and
+Riptide 98%. **Raid healer: about 1,012 HPS and 36 raid deaths**, with Chain
+Heal cast 14 times a fight. Ele and Enh Shaman are unchanged to the decimal
+against `main` (750.8 and 864.0).
+
+**THESE CHOICES ARE OURS, NOT THE OWNER'S, AND ALL OF THEM CAN BE EDITED:**
+
+- the race is Troll, because the owner named none;
+- "needs healing" means under 90% health;
+- Mana Tide goes down at 70% mana;
+- Nature's Swiftness is spent when the tank drops under 35%;
+- Water Shield is cast with a 3-second lead.
+
+**AND FOUR THINGS ARE NOT MODELLED:**
+
+- Water Shield's globes, its mana when hit, and any internal cooldown on the crit
+  return;
+- Ancestral Healing's armor;
+- Improved Reincarnation's health;
+- Riptide ticks **can** crit, under the project's every-DoT-crits rule. They
+  restore no mana, but whether they should crit at all is the owner's call.
+
 ## Round 59: the Frost Mage, a conjured-mana cooldown, and Bane of Havoc on #2
 
 Four items from the owner:

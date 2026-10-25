@@ -964,6 +964,7 @@ function GroupEditor({
             <option value="health">Health</option>
             <option value="swing">Swing timer</option>
             <option value="targets">Number of targets</option>
+            <option value="injured">Members needing healing</option>
           </select>
           {/*
             * A NESTED GROUP IS WHAT MAKES "a and (b or c)" SAYABLE, which is
@@ -1427,6 +1428,46 @@ function ClauseRow({
         * is the Encounter panel's Number of Targets. "At least 3" is an AoE
         * entry that a single-target fight never reaches.
         */}
+      {clause.kind === 'injured' ? (
+        <>
+          {/*
+            * HOW MANY NEED HEALING (round 60): "at least 2 in the target's party
+            * are under 90% health" -- every number editable.
+            */}
+          {compareField(false)}
+          <input
+            type="number"
+            step="1"
+            min="0"
+            max="20"
+            className="apl-number"
+            value={clause.value ?? 2}
+            aria-label="How many members"
+            onChange={(event) => set({ value: Math.round(Number(event.target.value)) })}
+          />
+          <select
+            value={clause.injuredOf ?? 'targetParty'}
+            aria-label="Whose group"
+            onChange={(e) => set({ injuredOf: e.target.value as Clause['injuredOf'] })}
+          >
+            <option value="targetParty">in the target&apos;s party</option>
+            <option value="raid">in the raid</option>
+          </select>
+          <span className="apl-unit">under</span>
+          <input
+            type="number"
+            step="5"
+            min="0"
+            max="100"
+            className="apl-number"
+            value={clause.belowPercent ?? 90}
+            aria-label="Health percent"
+            onChange={(event) => set({ belowPercent: Number(event.target.value) })}
+          />
+          <span className="apl-unit">% health</span>
+        </>
+      ) : null}
+
       {clause.kind === 'targets' ? (
         <>
           {/* One word, so the clause reads "targets >= 3" on one line. */}
@@ -1754,14 +1795,21 @@ function EntryTarget({
       ? 'default'
       : target.kind === 'tank'
         ? 'tank'
-        : target.excludeTank
-          ? 'lowestNotTank'
-          : 'lowest';
-  const label: Record<typeof value, string> = {
+        : target.kind === 'withAura'
+          ? `withAura:${target.auraId}`
+          : target.excludeTank
+            ? 'lowestNotTank'
+            : 'lowest';
+  const label: Record<string, string> = {
     default: 'at the default target',
     tank: 'on the tank',
     lowest: 'on the lowest health member',
     lowestNotTank: 'on the lowest health member, not the tank',
+    // Round 60: the member carrying one of your auras -- Riptide is the one.
+    ...Object.fromEntries(
+      FRIENDLY_TARGET_AURAS.map((aura) => [`withAura:${aura.auraId}`, `on whoever has your ${aura.name}`]),
+    ),
+    ...(target?.kind === 'withAura' ? { [value]: `on whoever has your ${target.auraId}` } : {}),
   };
   if (!onChange) return <span className="apl-target">{label[value]}</span>;
   return (
@@ -1770,19 +1818,21 @@ function EntryTarget({
       value={value}
       aria-label="Who it is cast at"
       onChange={(event) => {
-        const next = event.target.value as typeof value;
+        const next = event.target.value;
         onChange(
           next === 'default'
             ? undefined
             : next === 'tank'
               ? { kind: 'tank' }
-              : next === 'lowest'
-                ? { kind: 'lowestHealth' }
-                : { kind: 'lowestHealth', excludeTank: true },
+              : next.startsWith('withAura:')
+                ? { kind: 'withAura', auraId: next.slice('withAura:'.length) }
+                : next === 'lowest'
+                  ? { kind: 'lowestHealth' }
+                  : { kind: 'lowestHealth', excludeTank: true },
         );
       }}
     >
-      {(Object.keys(label) as (typeof value)[]).map((key) => (
+      {Object.keys(label).map((key) => (
         <option key={key} value={key}>
           {label[key]}
         </option>
@@ -1790,3 +1840,8 @@ function EntryTarget({
     </select>
   );
 }
+
+/** The auras an entry can be aimed by, "whoever has your X" (round 60). */
+const FRIENDLY_TARGET_AURAS: readonly { readonly auraId: string; readonly name: string }[] = [
+  { auraId: 'riptide', name: 'Riptide' },
+];

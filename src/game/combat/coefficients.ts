@@ -138,6 +138,21 @@ export const HOLY_SHOCK_SP_COEFFICIENT = 0.4285714285714286;
  */
 /** Holy Light, a 2.5 second cast: 2.5 / 3.5. Classic's rule, unconfirmed. */
 export const PLACEHOLDER_HOLY_LIGHT_HEAL_COEFFICIENT = 2.5 / 3.5;
+
+/**
+ * THE SHAMAN'S HEALS, THE OWNER'S FIGURES (round 60), given with the Piss Beam
+ * profile -- healing power coefficients, so these are not placeholders:
+ *
+ *   Lesser Healing Wave   1.5 / 3.5
+ *   Healing Wave          3 / 3.5
+ *   Chain Heal            2.5 / 3.5, on the first target; each jump is half
+ *   Riptide               21.4% on the hit, 10% on each of five ticks
+ */
+export const LESSER_HEALING_WAVE_HEAL_COEFFICIENT = 1.5 / 3.5;
+export const HEALING_WAVE_HEAL_COEFFICIENT = 3 / 3.5;
+export const CHAIN_HEAL_HEAL_COEFFICIENT = 2.5 / 3.5;
+export const RIPTIDE_HEAL_COEFFICIENT = 0.214;
+export const RIPTIDE_TICK_HEAL_COEFFICIENT = 0.1;
 /** Flash of Light, a 1.5 second cast: 1.5 / 3.5. Classic's rule, unconfirmed. */
 export const PLACEHOLDER_FLASH_OF_LIGHT_HEAL_COEFFICIENT = 1.5 / 3.5;
 /**

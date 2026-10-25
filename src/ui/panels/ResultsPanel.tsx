@@ -189,6 +189,17 @@ export function ResultsPanel({ batch, mode = 'damage', title = 'Results' }: Resu
         rows={batch.buffUptime.filter((row) => !forced.has(row.auraId))}
         empty="Nothing was buffing the character."
       />
+      {/*
+        * WHAT THE HEALER LEFT ON THE PEOPLE HEALED (round 60): Ancestral
+        * Healing and a heal over time, each averaged across everyone healed.
+        */}
+      {healing && (batch.healedBuffUptime?.length ?? 0) > 0 ? (
+        <UptimeBars
+          title="Buffs on those healed (average across them)"
+          rows={batch.healedBuffUptime}
+          empty="Nothing was on those healed."
+        />
+      ) : null}
       <UptimeBars
         title="Debuff uptime on the target"
         rows={batch.debuffUptime.filter((row) => !forced.has(row.auraId))}
