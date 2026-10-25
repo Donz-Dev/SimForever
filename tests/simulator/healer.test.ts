@@ -177,7 +177,7 @@ describe('the healer encounters', () => {
     expect(raidHealth(1)).toEqual(first);
   });
 
-  it("follows the owner's pattern: the tank every 2s for 30%, everybody every 15s", () => {
+  it("follows the owner's pattern: the tank every 2s for 30%, everybody every 20s", () => {
     const { simulation, events } = fight('raid');
     const tank = simulation.combatants.find((actor) => actor.raidRole === 'tank')!;
     const damage = events.filter((event): event is Damage => event.type === 'damage');
@@ -190,7 +190,12 @@ describe('the healer encounters', () => {
     expect(strikes[0].amount).toBeCloseTo(RAID_TANK_HIT_FRACTION * HEALER_TANK_HEALTH, 6);
 
     const pulses = damage.filter((event) => event.abilityName === 'Raid Pulse');
-    expect(pulses[0].timestamp).toBe(RAID_PULSE_FIRST_MS);
+    // Every 20 seconds, the first at 20 (round 61; it was 15, "reducing the
+    // pressure slightly").
+    expect(RAID_PULSE_FIRST_MS).toBe(seconds(20));
+    expect(pulses[0].timestamp).toBe(seconds(20));
+    const openings = [...new Set(pulses.map((event) => event.timestamp))];
+    expect(openings[1] - openings[0]).toBe(seconds(20));
     expect(pulses.filter((event) => event.timestamp === RAID_PULSE_FIRST_MS)).toHaveLength(RAID_SIZE);
     // Four ticks after each opening hit: at 2, 4, 6 and 8 seconds.
     const ticks = damage.filter(
@@ -219,11 +224,14 @@ describe('the healer encounters', () => {
 });
 
 describe("the Holy Pal's list", () => {
-  it("is the owner's four lines and the pre-cast, below the shared free entries", () => {
+  it("is the Light's Vigil chain, the owner's four lines and the pre-cast, below the shared free entries", () => {
     const owner = PALADIN_HOLY.entries.filter((entry) =>
-      ['holy_light', 'holy_shock', 'flash_of_light'].includes(entry.abilityId),
+      ['holy_light', 'holy_shock', 'flash_of_light', 'lights_vigil'].includes(entry.abilityId),
     );
     expect(owner.map((entry) => [entry.abilityId, entry.target?.kind])).toEqual([
+      // Round 61: the raid healer's Light's Vigil chain, above the four.
+      ['holy_shock', 'withAura'],
+      ['lights_vigil', 'lowestParty'],
       ['holy_light', 'tank'],
       ['holy_shock', 'tank'],
       ['flash_of_light', 'lowestHealth'],
@@ -284,7 +292,9 @@ describe("the Holy Pal's list", () => {
         .map((actor) => [actor.id, actor.health.maximum] as const),
     );
     const health = new Map(maximum);
-    const HEALS = new Set(['holy_light', 'flash_of_light', 'holy_shock']);
+    // Not Holy Shock (round 61): in the raid fight it goes to the Light's
+    // Vigil carrier, a choice smart healing leaves alone on purpose.
+    const HEALS = new Set(['holy_light', 'flash_of_light']);
     let checked = 0;
     for (const event of events) {
       if (event.type === 'cast' && event.sourceId === HEALER_ID && HEALS.has(event.abilityId) && event.targetId) {

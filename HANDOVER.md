@@ -107,6 +107,45 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 61: Light's Vigil, and a raid pulse every 20 seconds
+
+Two owner asks, measured separately because they move the same figure:
+
+| | what changed |
+| --- | --- |
+| Light's Vigil | **declared** -- it was an `unmodelled` gap. Rank 3 off the capture: 1,340 mana, a 1.5s cast, a 6s cooldown, 30s on the target. The caster's next Holy Shock on that target **triggers no cooldown** and also heals the target's **whole party** for 684-724 (an enemy instead takes 380-410 Holy and refunds 75% of the mana cost). One per party: casting it again in a party moves it |
+| the Holy Pal list | the owner's chain, **raid healer only**: Light's Vigil on the lowest member of the lowest party whenever none of yours is up -- the tank, at the pull -- and Holy Shock **held** for whoever carries it until that party's average falls under 80%. Once the shock spends it, the next Vigil goes to the next-lowest party. The tank fight's own Holy Shock is gated to the tank fight, so it cannot break the chain |
+| APL | three new readings, all editable in the panel: the **lowest party's** average health, **raid members to heal** (one in the tank fight, twenty in the raid, so "at least 6" is "raid healer only"), and **a raid member carries your** aura. A new target is **the lowest member of the lowest party**, optionally skipping a party that already carries your aura |
+| raid pulse | every **20 seconds**, the first at 20, for every healer fight (was 15) |
+
+Measured, 200 fights a fight, against `main`:
+
+| | raid HPS | raid deaths | tank deaths |
+| --- | --- | --- | --- |
+| Holy Pal, `main` | 574.0 | 38.82 | 3.67 |
+| Holy Pal, 20s pulse only | 662.1 | 21.15 | 2.35 |
+| **Holy Pal, 20s pulse and the chain** | **661.0** | **21.41** | **2.91** |
+| Piss Beam, `main` | 1,014.1 | 36.08 | 2.67 |
+| **Piss Beam, 20s pulse** | **973.4** | **18.54** | **1.46** |
+
+Both tank fights are identical to the decimal, which is the containment check:
+nothing here reaches them. **The chain is worth about nothing as it stands** --
+Light's Vigil is 32.8% of the raid healing at 4.5% overheal, but it is paid for
+out of Holy Light, and the build spends 14,869 of the 14,928 mana it gains. In
+one fight the chain runs Vigil -> shock four times and then stalls after the
+third pulse begins, out of mana.
+
+**THREE THINGS ARE OURS OR UNSOURCED, and the first moves the answer most:**
+
+- **The party heal has NO spell power coefficient** --
+  `PLACEHOLDER_LIGHTS_VIGIL_COEFFICIENT` is 0, because no source states one.
+  At 854 healing power, even a modest figure would change whether the chain
+  pays for itself.
+- **Wowhead's tooltip says 700-740** for the party heal, where the capture says
+  684-724. The capture is used.
+- **The 80% "needs the shock" gate is ours**, as is reading "only for Raid
+  Healer" as "at least 6 raid members to heal".
+
 ## Round 60: Piss Beam, a Shaman healer
 
 The owner's 34th profile: a 0/12/39 Restoration Shaman from their talent URL,

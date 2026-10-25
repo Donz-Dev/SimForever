@@ -10,6 +10,7 @@ import {
   ILLUMINATION_REFUND_KEY,
   IMPROVED_RIGHTEOUS_FURY_FLAG,
   INFUSION_OF_LIGHT_KEY,
+  LIGHTS_VIGIL,
   infusionOfLight,
   HOLY_SHIELD,
   JUDGEMENT_OF_THE_CRUSADER,
@@ -37,6 +38,7 @@ import {
   PLACEHOLDER_FLASH_OF_LIGHT_HEAL_COEFFICIENT,
   PLACEHOLDER_HOLY_LIGHT_HEAL_COEFFICIENT,
   PLACEHOLDER_HOLY_SHOCK_HEAL_COEFFICIENT,
+  PLACEHOLDER_LIGHTS_VIGIL_COEFFICIENT,
 } from '../combat/coefficients';
 
 /**
@@ -65,7 +67,8 @@ import {
  *
  *   EXORCISM       "to an Undead or Demon target", and the training dummy is
  *   HOLY WRATH     neither. Two spells that do literally nothing here.
- *   EVERY HEAL     Holy Light, Flash of Light, Light's Vigil. No profile heals.
+ *   (THE HEALS     Holy Light, Flash of Light and Light's Vigil were here until
+ *                  the Holy Pal healed, rounds 52 and 61.)
  *   BLESSINGS      Raid buffs, selected in the buff panel rather than cast.
  *   AURAS          Devotion, Retribution, Concentration and the resistances.
  *                  Retribution Aura is real damage for a Paladin that is struck
@@ -452,8 +455,10 @@ export const HOLY_SHOCK: Ability = {
      * to 362 Holy damage to an enemy, or 307 to 333 healing to an ally". Which
      * one is the target's side, so the entry that picked the target decides.
      */
+    const vigil = spendLightsVigil(simulation, caster, target);
     if (!target.isHostileTo(caster)) {
       paladinHeal(simulation, caster, target, ability, HOLY_SHOCK_HEAL, PLACEHOLDER_HOLY_SHOCK_HEAL_COEFFICIENT);
+      if (vigil) lightsVigilPartyHeal(simulation, caster, target);
       return;
     }
     dealDamage(simulation, {
@@ -466,8 +471,110 @@ export const HOLY_SHOCK: Ability = {
       powerCoefficient: HOLY_SHOCK_COEFFICIENT,
       attackTable: ability.attackTable,
     });
+    if (vigil) lightsVigilStrike(simulation, caster, target);
   },
 };
+
+/**
+ * Light's Vigil, the Holy capstone (round 61). Rank 3, the capture's: 1,340
+ * mana, a 1.5 second cast, a 6 second cooldown.
+ *
+ * ----------------------------------------------------------------------------
+ * "Applies Light's Vigil to the target for 30 sec. Your next Holy Shock cast on
+ * them triggers no cooldown and causes enemy targets to suffer 380 to 410 Holy
+ * damage and refund 75% of Light's Vigil's Mana cost, or allied targets to
+ * heal their party for 684 to 724. You may only have one Light's Vigil active
+ * per party."
+ *
+ * THE SHOCK IS ON TOP OF THE SHOCK. "Your next Holy Shock ... causes allied
+ * targets to heal their party" adds to what Holy Shock already does, so the
+ * target takes its own Holy Shock heal and then the party heal with everybody
+ * else in its party -- the target included, since it is in the party.
+ *
+ * "TRIGGERS NO COOLDOWN" IS A RESET AT THE CAST. Holy Shock is instant and its
+ * charge is spent before `onCast` runs, so giving the charge straight back is
+ * the cooldown never having started. The global cooldown is untouched.
+ *
+ * ONE PER PARTY: casting it on a member takes the caster's own Light's Vigil
+ * off anybody else in that party. A target with no party -- the enemy -- holds
+ * one of its own.
+ *
+ * WOWHEAD'S TOOLTIP SAYS 700 TO 740 for the party heal where the capture says
+ * 684 to 724; the capture is what is used, and the difference is recorded
+ * rather than resolved.
+ * ----------------------------------------------------------------------------
+ */
+export const LIGHTS_VIGIL_PARTY_HEAL = midpoint(684, 724);
+export const LIGHTS_VIGIL_DAMAGE = midpoint(380, 410);
+export const LIGHTS_VIGIL_MANA_COST = 1340;
+export const LIGHTS_VIGIL_REFUND_FRACTION = 0.75;
+
+export const LIGHTS_VIGIL_ABILITY: Ability = {
+  id: 'lights_vigil',
+  name: "Light's Vigil",
+  heals: true,
+  cost: { resource: 'mana', amount: LIGHTS_VIGIL_MANA_COST },
+  castTimeMs: seconds(1.5),
+  cooldownMs: seconds(6),
+  onCast: ({ simulation, caster, target }) => {
+    if (!target) return;
+    if (target.party !== undefined) {
+      for (const other of simulation.combatants) {
+        if (other === target || other.party !== target.party) continue;
+        if (other.auras.get(LIGHTS_VIGIL.id)?.sourceId === caster.id) {
+          other.auras.remove(simulation, LIGHTS_VIGIL.id);
+        }
+      }
+    }
+    simulation.applyAura(target, LIGHTS_VIGIL, caster.id);
+  },
+};
+
+/** Take the caster's Light's Vigil off a target, saying whether there was one. */
+function spendLightsVigil(simulation: SimulationContext, caster: Combatant, target: Combatant): boolean {
+  if (target.auras.get(LIGHTS_VIGIL.id)?.sourceId !== caster.id) return false;
+  target.auras.remove(simulation, LIGHTS_VIGIL.id);
+  caster.abilities.resetCooldown(HOLY_SHOCK.id);
+  return true;
+}
+
+/** "Allied targets ... heal their party for 684 to 724." */
+function lightsVigilPartyHeal(simulation: SimulationContext, caster: Combatant, target: Combatant): void {
+  const party =
+    target.party === undefined
+      ? [target]
+      : simulation.combatants.filter(
+          (member) => member.party === target.party && member.isAlive && !member.isHostileTo(caster),
+        );
+  for (const member of party) {
+    paladinHeal(
+      simulation,
+      caster,
+      member,
+      LIGHTS_VIGIL_ABILITY,
+      LIGHTS_VIGIL_PARTY_HEAL,
+      PLACEHOLDER_LIGHTS_VIGIL_COEFFICIENT,
+    );
+  }
+}
+
+/** "Enemy targets suffer 380 to 410 Holy damage and refund 75% of the cost." */
+function lightsVigilStrike(simulation: SimulationContext, caster: Combatant, target: Combatant): void {
+  dealDamage(simulation, {
+    source: caster,
+    target,
+    abilityId: LIGHTS_VIGIL_ABILITY.id,
+    abilityName: LIGHTS_VIGIL_ABILITY.name,
+    school: HOLY,
+    baseAmount: LIGHTS_VIGIL_DAMAGE,
+    powerCoefficient: PLACEHOLDER_LIGHTS_VIGIL_COEFFICIENT,
+    attackTable: 'spell',
+  });
+  simulation.grantResource(caster, 'mana', LIGHTS_VIGIL_MANA_COST * LIGHTS_VIGIL_REFUND_FRACTION, {
+    id: LIGHTS_VIGIL_ABILITY.id,
+    name: LIGHTS_VIGIL_ABILITY.name,
+  });
+}
 
 /** Holy Shock's heal: "307 to 333 healing to an ally". */
 export const HOLY_SHOCK_HEAL = midpoint(307, 333);
@@ -851,6 +958,7 @@ export const PALADIN_ABILITIES: readonly Ability[] = [
   SWIFT_JUDGEMENT,
   HOLY_STRIKE,
   HOLY_SHOCK,
+  LIGHTS_VIGIL_ABILITY,
   HOLY_LIGHT,
   FLASH_OF_LIGHT,
   DIVINE_FAVOR_ABILITY,

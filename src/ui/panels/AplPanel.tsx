@@ -965,6 +965,7 @@ function GroupEditor({
             <option value="swing">Swing timer</option>
             <option value="targets">Number of targets</option>
             <option value="injured">Members needing healing</option>
+            <option value="raidSize">Raid members to heal</option>
           </select>
           {/*
             * A NESTED GROUP IS WHAT MAKES "a and (b or c)" SAYABLE, which is
@@ -1239,6 +1240,8 @@ function ClauseRow({
             <option value="self">your</option>
             <option value="target">target&apos;s</option>
             <option value="pet">pet&apos;s</option>
+            {/* Round 61: YOUR aura on anybody in the raid -- up or not, nothing else. */}
+            <option value="raid">raid member with your</option>
           </select>
           <AuraChoice
             auraId={clause.auraId ?? ''}
@@ -1260,8 +1263,10 @@ function ClauseRow({
               * offering the clock for a pet would be a control whose value the
               * data model cannot hold.
               */}
-            {clause.on !== 'pet' ? <option value="expiring">seconds left</option> : null}
-            {clause.on !== 'pet' ? <option value="stacks">stacks</option> : null}
+            {clause.on !== 'pet' && clause.on !== 'raid' ? (
+              <option value="expiring">seconds left</option>
+            ) : null}
+            {clause.on !== 'pet' && clause.on !== 'raid' ? <option value="stacks">stacks</option> : null}
           </select>
           {clause.test === 'expiring' || clause.test === 'stacks' ? (
             <>
@@ -1384,8 +1389,10 @@ function ClauseRow({
             <option value="self">your health</option>
             <option value="target">the target&apos;s health</option>
             <option value="tank">the tank&apos;s health</option>
-            <option value="party">your party&apos;s average health</option>
+            {/* The TARGET's party, which is what it always read (relabelled round 61). */}
+            <option value="party">the target&apos;s party&apos;s average health</option>
             <option value="raid">the raid&apos;s average health</option>
+            <option value="lowestParty">the lowest party&apos;s average health</option>
           </select>
           {compareField(false)}
           {numberField(clause.value, '%')}
@@ -1465,6 +1472,27 @@ function ClauseRow({
             onChange={(event) => set({ belowPercent: Number(event.target.value) })}
           />
           <span className="apl-unit">% health</span>
+        </>
+      ) : null}
+
+      {clause.kind === 'raidSize' ? (
+        <>
+          {/*
+            * RAID MEMBERS TO HEAL (round 61): one in the tank healer fight,
+            * twenty in the raid healer fight, none in a damage fight.
+            */}
+          <span className="apl-unit">raid members</span>
+          {compareField(false)}
+          <input
+            type="number"
+            step="1"
+            min="0"
+            max="40"
+            className="apl-number"
+            value={clause.value ?? 6}
+            aria-label="Raid members"
+            onChange={(event) => set({ value: Math.round(Number(event.target.value)) })}
+          />
         </>
       ) : null}
 
@@ -1797,20 +1825,40 @@ function EntryTarget({
         ? 'tank'
         : target.kind === 'withAura'
           ? `withAura:${target.auraId}`
-          : target.excludeTank
-            ? 'lowestNotTank'
-            : 'lowest';
+          : target.kind === 'lowestParty'
+            ? target.withoutAura === undefined
+              ? 'lowestParty'
+              : `lowestPartyWithout:${target.withoutAura}`
+            : target.excludeTank
+              ? 'lowestNotTank'
+              : 'lowest';
   const label: Record<string, string> = {
     default: 'at the default target',
     tank: 'on the tank',
     lowest: 'on the lowest health member',
     lowestNotTank: 'on the lowest health member, not the tank',
+    // Round 61: the lowest member of the party with the lowest average health.
+    lowestParty: 'in the lowest party',
+    ...Object.fromEntries(
+      FRIENDLY_TARGET_AURAS.map((aura) => [
+        `lowestPartyWithout:${aura.auraId}`,
+        `in the lowest party without your ${aura.name}`,
+      ]),
+    ),
     // Round 60: the member carrying one of your auras -- Riptide is the one.
     ...Object.fromEntries(
       FRIENDLY_TARGET_AURAS.map((aura) => [`withAura:${aura.auraId}`, `on whoever has your ${aura.name}`]),
     ),
-    ...(target?.kind === 'withAura' ? { [value]: `on whoever has your ${target.auraId}` } : {}),
   };
+  /*
+   * AN AURA NOBODY LISTED STILL GETS AN OPTION, named by its id -- but only when
+   * it is missing (round 61). Spread after the named ones, it overwrote "your
+   * Light's Vigil" with "your lights_vigil" on the very entry it was naming.
+   */
+  if (!(value in label)) {
+    if (target?.kind === 'withAura') label[value] = `on whoever has your ${target.auraId}`;
+    if (target?.kind === 'lowestParty') label[value] = `in the lowest party without your ${target.withoutAura}`;
+  }
   if (!onChange) return <span className="apl-target">{label[value]}</span>;
   return (
     <select
@@ -1826,7 +1874,11 @@ function EntryTarget({
               ? { kind: 'tank' }
               : next.startsWith('withAura:')
                 ? { kind: 'withAura', auraId: next.slice('withAura:'.length) }
-                : next === 'lowest'
+                : next === 'lowestParty'
+                  ? { kind: 'lowestParty' }
+                  : next.startsWith('lowestPartyWithout:')
+                    ? { kind: 'lowestParty', withoutAura: next.slice('lowestPartyWithout:'.length) }
+                    : next === 'lowest'
                   ? { kind: 'lowestHealth' }
                   : { kind: 'lowestHealth', excludeTank: true },
         );
@@ -1844,4 +1896,5 @@ function EntryTarget({
 /** The auras an entry can be aimed by, "whoever has your X" (round 60). */
 const FRIENDLY_TARGET_AURAS: readonly { readonly auraId: string; readonly name: string }[] = [
   { auraId: 'riptide', name: 'Riptide' },
+  { auraId: 'lights_vigil', name: "Light's Vigil" },
 ];

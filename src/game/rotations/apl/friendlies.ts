@@ -96,3 +96,67 @@ export function withAuraFrom(
 export function injuredCount(members: readonly Combatant[], below: number): number {
   return members.filter((member) => healthFraction(member) < below).length;
 }
+
+/**
+ * The party with the lowest AVERAGE health (round 61), optionally skipping any
+ * party where a member already carries one of this actor's auras -- Light's
+ * Vigil's "you may only have one Light's Vigil active per party".
+ *
+ * TIES GO TO THE LOWER PARTY NUMBER, so at full health it is the tank's party,
+ * which is where the owner's chain starts.
+ */
+export function lowestParty(
+  context: SimulationContext,
+  actor: Combatant,
+  options: { readonly withoutAura?: string } = {},
+): number | undefined {
+  const members = raidMembers(context, actor);
+  const parties = [...new Set(members.map((member) => member.party as number))].sort((a, b) => a - b);
+  let best: number | undefined;
+  let bestFraction = Infinity;
+  for (const party of parties) {
+    const inParty = members.filter((member) => member.party === party);
+    const { withoutAura } = options;
+    if (
+      withoutAura !== undefined &&
+      inParty.some((member) => member.auras.get(withoutAura)?.sourceId === actor.id)
+    ) {
+      continue;
+    }
+    const fraction = averageHealth(inParty);
+    if (fraction < bestFraction) {
+      best = party;
+      bestFraction = fraction;
+    }
+  }
+  return best;
+}
+
+/**
+ * The lowest-health member of the lowest party (round 61). Ties go to party
+ * order, so a party at full health gives its first member -- the tank, in
+ * party one.
+ */
+export function lowestPartyMember(
+  context: SimulationContext,
+  actor: Combatant,
+  options: { readonly withoutAura?: string } = {},
+): Combatant | undefined {
+  const party = lowestParty(context, actor, options);
+  if (party === undefined) return undefined;
+  let best: Combatant | undefined;
+  let bestFraction = Infinity;
+  for (const member of partyMembers(context, actor, party)) {
+    const fraction = healthFraction(member);
+    if (fraction < bestFraction) {
+      best = member;
+      bestFraction = fraction;
+    }
+  }
+  return best;
+}
+
+/** Whether any raid member carries one of this actor's auras (round 61). */
+export function raidCarriesAura(context: SimulationContext, actor: Combatant, auraId: string): boolean {
+  return raidMembers(context, actor).some((member) => member.auras.get(auraId)?.sourceId === actor.id);
+}

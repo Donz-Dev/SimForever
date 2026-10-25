@@ -160,6 +160,13 @@ export const PLACEHOLDER_FLASH_OF_LIGHT_HEAL_COEFFICIENT = 1.5 / 3.5;
  * halves. Unconfirmed for the heal.
  */
 export const PLACEHOLDER_HOLY_SHOCK_HEAL_COEFFICIENT = HOLY_SHOCK_SP_COEFFICIENT;
+/**
+ * Light's Vigil's PARTY HEAL and its enemy damage, off the Holy Shock that
+ * spends it (round 61): ZERO, because no source states one. The capture and
+ * the client tooltip give the ranges and nothing about spell power, and the
+ * sheet predates the spell. A question for the owner, not a figure.
+ */
+export const PLACEHOLDER_LIGHTS_VIGIL_COEFFICIENT = 0;
 
 /**
  * Consecration: 4.2% spell power PER TICK.
