@@ -107,6 +107,36 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 69: Expose Prey on ranged attacks, and its real duration
+
+The owner: "Ensure that expose prey, the hunter talent, triggers when melee and
+RANGED attacks hit the target." The tooltip says the same: "your melee and
+ranged attacks".
+
+**RANGED ATTACKS ALREADY TRIGGERED IT, AND THAT WAS LUCK RATHER THAN A RULE.**
+The reaction fired on any landed, non-periodic hit. A ranged auto-shot and
+Arcane Shot both opened the window on `main`: the new tests for them pass
+against the old code. A SPELL-table hit would have opened it too. No Hunter
+deals one today, so nothing was wrong yet, but nothing said why. It now names
+its tables: `melee-auto`, `melee-special`, `ranged-auto`, `ranged-special`.
+A trap reaches none of them, because its blast has no table and its burn is
+periodic.
+
+**THE WINDOW WAS HALF ITS LENGTH.** "Lasts {1} sec." is 10 at both ranks, and
+`EXPOSE_PREY_DURATION_MS` was 5. That is the first number on the rank-1 row,
+which is the CHANCE. It's the wrong-index shape CLAUDE.md records under
+Talents, in a constant this time rather than in a `valueIndex`.
+`tests/game/exposePrey.test.ts` pins the duration against the values file.
+
+| | Mongoose Bite casts a fight | DPS |
+| --- | --- | --- |
+| LW Melee | 6.0 -> 6.5 | 901.8 -> 909.0 (+7.3, noise) |
+| Hawk Melee | 6.4 -> 7.3 | 962.3 -> 966.5 (+4.2, noise) |
+
+300 fights each. These are the two profiles that take the talent. The harness
+calls both noise, and the cast counts are what say the longer window is
+landing. No other profile takes Expose Prey, so no other figure can move.
+
 ## Round 68: the Melee Weave, revised
 
 The owner revised round 65's weave:

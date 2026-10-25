@@ -1280,6 +1280,8 @@ describe('Wing Clip is pressed for the procs, not the 50', () => {
       abilityName: 'Wing Clip',
       amount: WING_CLIP_DAMAGE,
       weaponSlot: 'mainHand' as const,
+      // Wing Clip's own table: Expose Prey names its tables since round 69.
+      attackTable: WING_CLIP.attackTable,
       critical: false,
     };
 

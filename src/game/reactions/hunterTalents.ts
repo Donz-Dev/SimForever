@@ -92,7 +92,26 @@ export const deadlyAspects: TalentReactionBuilder = (chancePercent) => ({
  * normal case.
  * ----------------------------------------------------------------------------
  */
-export const EXPOSE_PREY_DURATION_MS = seconds(5);
+/*
+ * TEN SECONDS, THE TOOLTIP'S {1} AT BOTH RANKS -- "Lasts {1} sec." with values
+ * [5, 10] and [10, 10]. It read 5 until round 69, which is the FIRST number on
+ * the rank-1 row: the chance, read as a duration.
+ */
+export const EXPOSE_PREY_DURATION_MS = seconds(10);
+
+/*
+ * "YOUR MELEE AND RANGED ATTACKS" (round 69, the owner's: "triggers when melee
+ * and RANGED attacks hit the target"). Named by TABLE, so a swing, a shot and
+ * a melee or ranged special all count, and a spell-table hit does not. A trap
+ * reaches neither: its blast has no table and its burn is periodic, and a
+ * `dealt` reaction sees neither of those.
+ */
+const EXPOSE_PREY_TABLES: ReadonlySet<AttackTableKind> = new Set([
+  'melee-auto',
+  'melee-special',
+  'ranged-auto',
+  'ranged-special',
+]);
 
 export const EXPOSE_PREY: AuraDefinition = {
   id: 'expose_prey',
@@ -112,7 +131,10 @@ export const exposePrey: TalentReactionBuilder = (chancePercent) => ({
   on: 'dealt',
   outcomes: ['hit', 'crit', 'glance', 'crush'],
   canTrigger: (context, _actor, attack) =>
-    attack.amount > 0 && context.rng.rollChance(chancePercent / 100),
+    attack.amount > 0 &&
+    attack.attackTable !== undefined &&
+    EXPOSE_PREY_TABLES.has(attack.attackTable) &&
+    context.rng.rollChance(chancePercent / 100),
   onTrigger: (context, actor) => {
     context.applyAura(actor, EXPOSE_PREY, actor.id);
   },
