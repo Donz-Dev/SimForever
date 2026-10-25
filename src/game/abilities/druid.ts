@@ -1054,8 +1054,10 @@ export const WILD_GROWTH: Ability = {
  *   IT DOES NOT CONSUME. Classic's says "Consumes a Rejuvenation or Regrowth
  *   effect"; Forever's tooltip dropped the word, so the heal over time stays.
  *
- *   "ONE OF THOSE SPELLS" IS REJUVENATION WHEN YOURS IS UP, else Regrowth --
- *   the tooltip's own order.
+ *   "ONE OF THOSE SPELLS" IS A COIN FLIP when both of yours are up (round 72,
+ *   the owner's "a 50/50 for which effect it uses"), and whichever one it is
+ *   when only one is -- no roll is drawn then. It was Rejuvenation first in
+ *   round 71.
  *
  * "THE FULL DURATION" is every tick of the effect as it was applied, Nature's
  * Splendor's included, at the effect's own size: its base and coefficient
@@ -1077,8 +1079,12 @@ export const SWIFTMEND: Ability = {
   onCast: ({ simulation, caster, target, ability }) => {
     if (!isFriendly(caster, target)) return;
     const rejuvenation = target.auras.get(REJUVENATION_HOT.id);
-    const useRejuvenation = rejuvenation?.sourceId === caster.id;
-    const hot = useRejuvenation ? rejuvenation : target.auras.get(REGROWTH_HOT.id);
+    const regrowth = target.auras.get(REGROWTH_HOT.id);
+    const hasRejuvenation = rejuvenation?.sourceId === caster.id;
+    const hasRegrowth = regrowth?.sourceId === caster.id;
+    const useRejuvenation =
+      hasRejuvenation && hasRegrowth ? simulation.rng.rollChance(0.5) : hasRejuvenation;
+    const hot = useRejuvenation ? rejuvenation : regrowth;
     if (!hot) return;
     const interval = useRejuvenation ? REJUVENATION_TICK_INTERVAL_MS : REGROWTH_TICK_INTERVAL_MS;
     const ticks = Math.round(hot.definition.durationMs / interval);

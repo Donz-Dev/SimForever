@@ -1,4 +1,4 @@
-import type { Reaction } from '../../engine';
+import type { CastReaction, Combatant, Reaction, SimulationContext } from '../../engine';
 import {
   CLEARCASTING,
   OMEN_OF_CLARITY_INTERNAL_COOLDOWN_MS,
@@ -73,25 +73,54 @@ import {
  * has one. A free damaging ability would need this reaction to ask.
  * ----------------------------------------------------------------------------
  */
-export function omenOfClarityReaction(chancePercent: number): Reaction {
-  let lastProcAt: number | null = null;
+/*
+ * THE INTERNAL COOLDOWN IS THE CHARACTER'S, shared by the damage half and the
+ * healing half (round 72) -- two reactions, built in two places, and one ten
+ * second window between them. Keyed by the combatant, so each character in a
+ * batch has its own: the per-character requirement a shared Windfury closure
+ * once broke.
+ */
+const omenLastProcAt = new WeakMap<Combatant, number>();
 
+/** Whether the shared window is open, and the roll, in that order. */
+function omenRolls(context: SimulationContext, actor: Combatant, chancePercent: number): boolean {
+  const last = omenLastProcAt.get(actor);
+  if (last !== undefined && context.clock.now() - last < OMEN_OF_CLARITY_INTERNAL_COOLDOWN_MS) return false;
+  return context.rng.rollChance(chancePercent / 100);
+}
+
+function omenProcs(context: SimulationContext, actor: Combatant): void {
+  omenLastProcAt.set(actor, context.clock.now());
+  context.applyAura(actor, CLEARCASTING, actor.id);
+}
+
+export function omenOfClarityReaction(chancePercent: number): Reaction {
   return {
     id: 'omen_of_clarity',
     on: 'dealt',
     // What connected. See the interpretation note above.
     outcomes: ['hit', 'crit', 'glance', 'crush', 'block'],
-    canTrigger: (context) => {
-      const now = context.clock.now();
-      if (lastProcAt !== null && now - lastProcAt < OMEN_OF_CLARITY_INTERNAL_COOLDOWN_MS) {
-        return false;
-      }
-      return context.rng.rollChance(chancePercent / 100);
-    },
-    onTrigger: (context, actor) => {
-      lastProcAt = context.clock.now();
-      context.applyAura(actor, CLEARCASTING, actor.id);
-    },
+    canTrigger: (context, actor) => omenRolls(context, actor, chancePercent),
+    onTrigger: (context, actor) => omenProcs(context, actor),
+  };
+}
+
+/**
+ * OMEN OF CLARITY ON A HEALING SPELL CAST (round 72), the owner's: "Make Omen
+ * of Clarity have a chance to proc on healing spell cast." A heal deals no
+ * damage, so the damage half above never sees one, and a Druid casting only
+ * heals never got the charge at all.
+ *
+ * ONCE PER CAST, on its last tick, at the same chance and behind the same
+ * internal cooldown as the damage half. A HEAL is an ability marked `heals`,
+ * which Healing Touch, Rejuvenation, Regrowth, Wild Growth and Swiftmend are.
+ */
+export function omenOfClarityHealReaction(chancePercent: number): CastReaction {
+  return {
+    id: 'omen_of_clarity_heal',
+    canTrigger: (context, actor, cast) =>
+      cast.final && cast.ability.heals === true && omenRolls(context, actor, chancePercent),
+    onTrigger: (context, actor) => omenProcs(context, actor),
   };
 }
 

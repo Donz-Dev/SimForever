@@ -149,9 +149,9 @@ describe('what Clearcasting pays for', () => {
     ).map((ability) => ability.id);
     /*
      * AND THE SIX RESTORATION SPELLS OF ROUND 71 -- five heals and Innervate.
-     * A heal rolls on no table, so none of them can spend Clearcasting; nor can
-     * a healer PROC it, since the proc reads damage dealt. Both halves of the
-     * tooltip's healing clause are a question for the owner, in HANDOVER.
+     * Since round 72 the five heals spend Clearcasting anyway, through
+     * `healsCount`, and a heal cast can proc it; Innervate, which heals
+     * nothing, still cannot spend it.
      */
     expect(costingWithoutTable.sort()).toEqual([
       'demoralizing_roar',

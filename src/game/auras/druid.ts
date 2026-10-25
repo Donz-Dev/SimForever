@@ -274,11 +274,11 @@ export const OMEN_OF_CLARITY_INTERNAL_COOLDOWN_MS = seconds(10);
  * leave the rest of the charge behind, which reads as a working effect worth
  * several times its value.
  *
- * ITS HEALING HALF IS NOT MODELLED -- a heal has no attack table, so
- * `requiresAttackTable` excludes one, and the proc reads damage dealt, so a
- * Druid casting only heals never gets the charge at all. The Resto Drood
- * (round 71) is the profile that would collect it, and whether heals should
- * proc and spend it is a question for the owner, recorded in HANDOVER.
+ * ITS HEALING HALF SINCE ROUND 72, the owner's: a healing spell cast can PROC
+ * it (`omenOfClarityHealReaction`), and a heal SPENDS it -- `healsCount` lets
+ * an ability marked `heals` past `requiresAttackTable`, which a heal, rolling
+ * on no table, would otherwise fail. Innervate costs mana and heals nothing,
+ * so it still cannot spend the charge.
  * ----------------------------------------------------------------------------
  */
 export const CLEARCASTING: AuraDefinition = {
@@ -291,6 +291,8 @@ export const CLEARCASTING: AuraDefinition = {
     exceptAbilityIds: ['wrath'],
     requiresCost: true,
     requiresAttackTable: true,
+    // "Damage or HEALING spell": a heal spends it too (round 72).
+    healsCount: true,
     costFraction: 1,
     /*
      * ONE CAST, because the tooltip says "your NEXT". Spending a stack where

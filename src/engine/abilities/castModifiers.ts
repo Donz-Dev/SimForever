@@ -74,7 +74,7 @@ function matches(caster: Combatant, instance: AuraInstance, ability: Ability): b
    * A Druid's Demoralizing Roar costs ten rage and rolls nothing, which is the
    * same reason Battle Shout is not offensive to Focused Rage.
    */
-  if (modifier.requiresAttackTable && !ability.attackTable) return false;
+  if (modifier.requiresAttackTable && !ability.attackTable && !(modifier.healsCount && ability.heals)) return false;
   /*
    * AND NOT WHILE THE CASTER CARRIES A NAMED AURA. Heating Up is "no longer
    * consumed if the Mage also had Presence of Mind active for the Pyroblast

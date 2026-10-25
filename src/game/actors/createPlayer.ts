@@ -76,6 +76,7 @@ import {
 } from '../items/equipment';
 import { formArmorMultiplier } from '../character/druidForms';
 import { castReactionsForEquipment, reactionsForEquipment } from '../items/procs';
+import { omenOfClarityChanceFor, omenOfClarityHealReaction } from '../reactions/druid';
 import {
   consumableAbilities,
   consumableEffects,
@@ -996,6 +997,9 @@ export function createPlayer(options: PlayerOptions): Combatant {
      */
     castReactions: [
       ...build.castReactions,
+      // Omen of Clarity's healing half (round 72), every Druid's, as its damage
+      // half is in `reactionsForClass`. The two share one internal cooldown.
+      ...(characterClass === 'druid' ? [omenOfClarityHealReaction(omenOfClarityChanceFor(style))] : []),
       // Touch of the Grave's cast half, which catches a pure damage-over-time
       // cast that emitted no damage event for the damage half to read.
       ...racials.castReactions,
