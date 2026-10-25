@@ -4,6 +4,7 @@ import type { AttackOutcome } from '../../engine';
 import { Panel } from '../components/Panel';
 import { DonutChart } from '../charts/DonutChart';
 import { UptimeBars } from '../charts/UptimeBars';
+import { RaidFrames } from '../charts/RaidFrames';
 import {
   ResourceTimeline,
   auraStackTimeline,
@@ -695,6 +696,8 @@ function HealingDone({ batch }: { readonly batch: BatchResult }) {
         <Stat label="Tank deaths" value={fixed(batch.tankDeaths ?? batch.alliedDeaths)} />
       </div>
       <HealthChart batch={batch} actorId={TANK_ID} title="Tank hit points %" />
+      {/* A diagnostic (round 62): the raid's health every 2 or 3 seconds. */}
+      {raid ? <RaidFrames batch={batch} /> : null}
       {batch.healing.length > 0 ? (
         <table className="breakdown">
           <thead>

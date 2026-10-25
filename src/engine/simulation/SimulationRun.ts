@@ -19,6 +19,9 @@ export interface ActorSnapshot {
    * look identical in every visible field can run different rotations.
    */
   readonly rotation?: string;
+  /** The raid party and role a healer fight gave this actor (round 62). */
+  readonly party?: number;
+  readonly raidRole?: 'tank';
 }
 
 /**
