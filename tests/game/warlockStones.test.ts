@@ -137,7 +137,8 @@ describe('the stone reaches the character', () => {
      */
     const before = hasteMultiplierFrom(base.stats.effective);
     const after = hasteMultiplierFrom(spell.stats.effective);
-    expect(after - before).toBeCloseTo(SPELLSTONE_SPELL_HASTE_PERCENT / 100, 6);
+    // One source of its own, so it MULTIPLIES what is there (round 63).
+    expect(after / before).toBeCloseTo(1 + SPELLSTONE_SPELL_HASTE_PERCENT / 100, 6);
 
     const power = (c: typeof base, school: 'fire' | 'shadow') =>
       c.schoolModifiers.for(school).spellPower ?? 0;

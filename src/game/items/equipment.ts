@@ -93,6 +93,32 @@ export function statsForStyle(equipment: Equipment, style: CombatStyleId): Parti
 }
 
 /**
+ * The equipment's HASTE, one source per item and one per enchant (round 63).
+ *
+ * The owner's ruling is that every haste effect is its own source and they
+ * multiply, so three "+1% Haste" enchants are 1.01 cubed rather than 1.03 --
+ * which only works if they reach the stat block apart. `statsForStyle` still
+ * counts them in its total; `createPlayer` takes them back out and adds each
+ * one as a modifier of its own. Off `live`, like the stats.
+ */
+export function hasteSourcesForStyle(
+  equipment: Equipment,
+  style: CombatStyleId,
+): readonly { readonly id: string; readonly rating: number }[] {
+  const sources: { id: string; rating: number }[] = [];
+  for (const [slot, equipped] of Object.entries(liveEquipment(equipment, style))) {
+    if (!equipped) continue;
+    const item = ITEMS_BY_ID.get(equipped.itemId);
+    const fromItem = (item?.stats.hasteRating ?? 0) + (item?.styleStats[style]?.hasteRating ?? 0);
+    if (fromItem !== 0) sources.push({ id: `item:${slot}`, rating: fromItem });
+    const enchant = equipped.enchantId !== undefined ? ENCHANTS_BY_ID.get(equipped.enchantId) : undefined;
+    const fromEnchant = enchant?.stats.hasteRating ?? 0;
+    if (fromEnchant !== 0) sources.push({ id: `enchant:${slot}`, rating: fromEnchant });
+  }
+  return sources;
+}
+
+/**
  * Spell power scoped to ONE SCHOOL, totalled across the equipped set.
  *
  * ----------------------------------------------------------------------------

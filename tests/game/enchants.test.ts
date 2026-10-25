@@ -864,11 +864,12 @@ describe('the enchants reach the built character', () => {
     expect(
       withEnchants.stats.get('spellPower') - without.stats.get('spellPower'),
     ).toBe(6 + 16 + 20);
-    // And the haste, which the same row carries on head and legs.
+    // And the haste, which the same row carries on head and legs -- two
+    // sources, so they MULTIPLY (round 63): 1.01 x 1.01, not 1.02.
     expect(
       hasteMultiplierFrom(withEnchants.stats.effective) /
         hasteMultiplierFrom(without.stats.effective),
-    ).toBeCloseTo(1.02, 6);
+    ).toBeCloseTo(1.01 * 1.01, 6);
   });
 
   it('puts the tank row on the table the boss actually rolls against', () => {

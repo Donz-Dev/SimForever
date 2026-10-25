@@ -66,6 +66,7 @@ import {
   threatModifiersForStyle,
   liveEquipment,
   schoolPowerForStyle,
+  hasteSourcesForStyle,
   statsForStyle,
   heldWeaponForForm,
   weaponsForEquipment,
@@ -602,6 +603,27 @@ export function createPlayer(options: PlayerOptions): Combatant {
     formArmorStats,
   );
 
+  /*
+   * EVERY HASTE SOURCE ON ITS OWN (round 63). The owner: "All Haste effects
+   * are treated as individual sources and are multiplied together." The stat
+   * block multiplies haste MODIFIERS one by one, so each item, each enchant,
+   * the stone and the race go in as a modifier of their own below, and the
+   * starting block keeps only whatever is left over -- nothing, today, since
+   * no talent or consumable grants haste as a stat.
+   */
+  const hasteSources = [
+    ...hasteSourcesForStyle(equipment, style),
+    { id: 'weapon_stone', rating: stone.stats.hasteRating ?? 0 },
+    { id: 'bonus', rating: options.bonusStats?.hasteRating ?? 0 },
+    { id: 'consumables', rating: consumables.stats.hasteRating ?? 0 },
+    { id: 'talents', rating: build.stats.hasteRating ?? 0 },
+    { id: 'racials', rating: racials.stats.hasteRating ?? 0 },
+  ].filter((source) => source.rating !== 0);
+  const blockStats = {
+    ...startingStats,
+    hasteRating: startingStats.hasteRating - hasteSources.reduce((sum, source) => sum + source.rating, 0),
+  };
+
   // Layer 3, for the resource maximums only. The stat block handles the rest.
   const conversions = conversionsFor(characterClass, style);
   /*
@@ -837,7 +859,7 @@ export function createPlayer(options: PlayerOptions): Combatant {
       ...threatModifiersForStyle(equipment, style),
     ],
     maxHealth: maximumHealth,
-    stats: startingStats,
+    stats: blockStats,
     /*
      * The class table, plus any talent that makes one stat out of another.
      *
@@ -1094,6 +1116,13 @@ export function createPlayer(options: PlayerOptions): Combatant {
    */
   if (racials.statModifiers.length > 0) {
     player.stats.addModifiers(bindModifiers(racials.statModifiers, RACIAL_MODIFIER_SOURCE));
+  }
+
+  // Each haste source a factor of its own (round 63). See `hasteSources`.
+  for (const source of hasteSources) {
+    player.stats.addModifiers([
+      { sourceId: `haste:${source.id}`, stat: 'hasteRating', operation: 'flat', value: source.rating },
+    ]);
   }
 
   return player;
