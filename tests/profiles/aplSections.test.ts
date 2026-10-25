@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { TelemetryEvent } from '../../src/engine';
 import { Simulation, seconds } from '../../src/engine';
+import { CURRENT_PROFILE_VERSION } from '../../src/profiles/CharacterProfile';
 import type { CharacterProfile, StoredRotation } from '../../src/profiles/CharacterProfile';
 import { fightSection, sectionOf, setSection, withSection } from '../../src/profiles/aplSections';
 import { syncDefaultRotation } from '../../src/profiles/rotation';
@@ -131,8 +132,10 @@ describe('a saved file', () => {
     const validated = validateProfile(result.value);
     expect(validated.ok).toBe(true);
     if (!validated.ok) return;
-    expect(validated.profile.version).toBe(18);
+    expect(validated.profile.version).toBe(CURRENT_PROFILE_VERSION);
     expect(validated.profile.multiTarget!.rotation).toEqual(preset.rotation);
+    // Version 18 to 19 then gives it the Start Auto-attack the preset already
+    // carries, so the copy and the original still agree.
     expect(validated.profile.multiTarget!.precombat).toEqual(preset.precombat);
   });
 

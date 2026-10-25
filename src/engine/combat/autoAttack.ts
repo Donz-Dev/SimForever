@@ -1,4 +1,4 @@
-import type { Combatant, WeaponProfile, WeaponSlot } from '../actors/Combatant';
+import type { AutoAttackMode, Combatant, WeaponProfile, WeaponSlot } from '../actors/Combatant';
 import { EventPriority, createEvent } from '../events';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import { dealDamage, grantGeneratedResource } from './damage';
@@ -17,11 +17,81 @@ import { applyHaste, hasteMultiplierFrom } from './ratings';
  * apart over a fight exactly as they do in game.
  */
 export function startAutoAttack(context: SimulationContext, attacker: Combatant): void {
+  attacker.swingsBegun = true;
   for (const slot of swingingSlots(attacker)) {
     const weapon = attacker.weapons[slot];
     if (!weapon) continue;
     scheduleSwing(context, attacker, slot, 0);
   }
+}
+
+/** The slots a mode swings. */
+export function slotsForMode(mode: AutoAttackMode): readonly WeaponSlot[] {
+  switch (mode) {
+    case 'none':
+      return [];
+    case 'main-hand':
+      return ['mainHand'];
+    case 'dual-wield':
+      return ['mainHand', 'offHand'];
+    case 'ranged':
+      return ['ranged'];
+  }
+}
+
+/**
+ * START AUTO-ATTACK IN A MODE (round 65), the owner's action. Returns false and
+ * changes nothing when that mode is already running -- so a list that asks on
+ * every decision never restarts a swing timer and starves the swing it is
+ * waiting for.
+ *
+ * ============================================================================
+ * ONE MODE AT A TIME, the owner's ruling: starting melee stops the ranged auto
+ * attack and starting ranged stops melee. A slot both modes share -- the main
+ * hand, from main hand to dual wield -- keeps swinging untouched.
+ *
+ * BEFORE THE PULL IT ONLY SETS THE MODE, and the pull starts every slot of it
+ * swinging at once, which is "as soon as combat starts at T-0 the weapons are
+ * ready to swing" and the moment every character swung before this existed.
+ *
+ * IN COMBAT A NEW SLOT SWINGS WHEN ITS TIMER IS READY: its last swing plus a
+ * full hasted swing, or at once if that has passed or it has never swung. That
+ * is the swing timer as a countdown the start begins rather than restarts, and
+ * it is what gives the Melee Weave its window -- the first melee swing lands
+ * no sooner than the run in and no later than a melee swing interval.
+ * `notBeforeMs` holds the first swing back to a moment (the run in);
+ * `firstSwingAtMs` names it outright (the return to range).
+ * ============================================================================
+ */
+export function startAutoAttackMode(
+  context: SimulationContext,
+  attacker: Combatant,
+  mode: AutoAttackMode,
+  options: { readonly notBeforeMs?: number; readonly firstSwingAtMs?: number } = {},
+): boolean {
+  const previous = attacker.activeAutoAttack;
+  if (previous === mode) return false;
+  const keep = slotsForMode(mode);
+  for (const slot of slotsForMode(previous)) {
+    if (keep.includes(slot)) continue;
+    context.events.cancel(attacker.pendingSwing(slot));
+    attacker.setPendingSwing(slot, null);
+  }
+  attacker.activeAutoAttack = mode;
+  if (!attacker.swingsBegun) return true;
+
+  const now = context.clock.now();
+  const haste = hasteMultiplierFrom(attacker.stats.effective);
+  for (const slot of keep) {
+    if (slotsForMode(previous).includes(slot)) continue;
+    const weapon = attacker.weapons[slot];
+    if (!weapon) continue;
+    const last = attacker.lastSwingAt(slot);
+    const ready = last === undefined ? now : last + applyHaste(weapon.swingTimerMs, haste);
+    const at = options.firstSwingAtMs ?? Math.max(now, ready, options.notBeforeMs ?? now);
+    scheduleSwing(context, attacker, slot, Math.max(0, at - now));
+  }
+  return true;
 }
 
 /**
@@ -91,16 +161,7 @@ export const AUTO_ATTACK_RESOURCE_SOURCES: Readonly<
 
 /** The weapon slots that auto-attack, given the combatant's mode. */
 export function swingingSlots(attacker: Combatant): readonly WeaponSlot[] {
-  switch (attacker.autoAttack) {
-    case 'none':
-      return [];
-    case 'main-hand':
-      return ['mainHand'];
-    case 'dual-wield':
-      return ['mainHand', 'offHand'];
-    case 'ranged':
-      return ['ranged'];
-  }
+  return slotsForMode(attacker.activeAutoAttack);
 }
 
 /**
@@ -125,6 +186,9 @@ export function extraAttack(
 ): void {
   const weapon = attacker.weapons[slot];
   if (!weapon) return;
+  // A slot not swinging in the current mode takes no extra attack (round 65):
+  // a melee proc while the bow is out must not start the melee hand swinging.
+  if (!swingingSlots(attacker).includes(slot)) return;
 
   context.events.schedule(
     context.clock.now(),
@@ -218,6 +282,8 @@ function scheduleSwing(
     context.clock.now() + delayMs,
     createEvent(`auto-attack:${attacker.id}:${slot}`, EventPriority.AutoAttack, (ctx) => {
       if (!attacker.isAlive || ctx.hasEnded) return;
+      // Stopped since it was scheduled (round 65): the slot swings no more.
+      if (!swingingSlots(attacker).includes(slot)) return;
 
       /*
        * A swing that comes due mid-cast is HELD, not lost: it waits for the

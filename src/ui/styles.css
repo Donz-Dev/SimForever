@@ -2712,6 +2712,57 @@ button:disabled {
 }
 
 /*
+ * START AUTO-ATTACK'S KIND and A MELEE WEAVE'S ACTIONS (round 65), both part of
+ * WHAT the entry does, so styled like the sequence beside the ability rather
+ * than like the condition controls under it.
+ */
+.apl-start-kind {
+  background: transparent;
+  border-color: transparent;
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 1px 2px;
+  max-width: 12rem;
+}
+
+.apl-start-kind:hover,
+.apl-start-kind:focus {
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.apl-weave {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+
+.apl-weave-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 600;
+  color: var(--accent-strong);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0 2px 0 6px;
+}
+
+.apl-weave-remove {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 11px;
+  padding: 0 3px;
+  cursor: pointer;
+}
+
+.apl-weave-remove:hover {
+  color: var(--text);
+}
+
+/*
  * BEFORE THE PULL, a small section above the priority list in the same panel.
  *
  * SET APART BY A RULE AND NOT A BOX, because it is part of the same panel and

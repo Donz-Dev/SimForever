@@ -372,9 +372,17 @@ export function weaponsForEquipment(
    * `liveEquipment`, not this -- so a stat stick goes on doing exactly what
    * its name says.
    */
+  /*
+   * EXCEPT A CASTER'S AND A RANGED BUILD'S, WHICH CAN BE SWUNG NOW (round 65).
+   * The owner's Start Auto-attack lets a caster weave melee swings between
+   * spells and a Hunter weave melee between shots, so their held melee weapon
+   * is a real weapon -- it simply does not swing until an action starts it.
+   * A Druid FORM is still a stat stick: its paw is the weapon, as above.
+   */
+  const heldSwings = style === 'caster' || style === 'ranged';
   const handIsStatStick = {
-    mainHand: definition?.mainHand === 'stat-stick',
-    offHand: definition?.offHand === 'stat-stick',
+    mainHand: definition?.mainHand === 'stat-stick' && !heldSwings,
+    offHand: definition?.offHand === 'stat-stick' && !heldSwings,
   };
 
   for (const [slotName, equipped] of Object.entries(live)) {

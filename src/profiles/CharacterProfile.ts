@@ -21,7 +21,7 @@ import type { AplEntry } from '../game/rotations/apl';
  * moves on. Getting this in before anyone has saved anything is much cheaper
  * than retrofitting it later.
  */
-export const CURRENT_PROFILE_VERSION = 18;
+export const CURRENT_PROFILE_VERSION = 19;
 
 /** The most targets an encounter can hold: the Encounter panel's presets run 1 to 8. */
 export const MAX_ENCOUNTER_TARGETS = 8;

@@ -107,6 +107,92 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 65: Start Auto-attack, and the Hunter's Melee Weave
+
+Two features from the owner, in one round because the second is built on the
+first.
+
+**START AUTO-ATTACK** is an APL action for every character, in three kinds:
+**Main Hand Melee Weapon, Dual Wield and Ranged**. The panel shows it as one
+action, with a second dropdown for the kind, and fills in the build's own kind
+by default -- a caster gets Main Hand.
+
+| | |
+| --- | --- |
+| **nothing swings until one runs** | the owner's choice of "only via the action". Every profile carries one in its pre-combat list at 0s, so the weapons swing at T-0 as before |
+| **a kind that is already running is refused** | so a list that asks for it on every decision never restarts the timer and starves the swing it was waiting for |
+| **one kind at a time** | starting melee stops ranged, and the reverse |
+| **no global cooldown, and not blocked by one** | `Ability.ignoresGcd`, a new flag: the GCD check is skipped, and so is starting one |
+| **a mid-fight start** | swings at the later of now and the last swing plus a full timer |
+
+It fires no cast reaction and breaks no stealth: the swing it starts does both,
+like any swing. Without the stealth exception a Rogue's T-0 start would end its
+opening stealth before the Ambush.
+
+**A CASTER AND A RANGED HUNTER NOW HAVE A MELEE WEAPON TO SWING.**
+`weaponsForEquipment` used to give no weapon for a held stat stick, so a caster
+had nothing for a start to swing. It gives one now for the `caster` and `ranged`
+styles, and swings it only if a start runs. Druid forms still don't, because a
+form's paw is built from the held weapon and a weapon profile there would
+replace it.
+
+**PROFILE FORMAT 19.** Version 18 to 19 appends the style's start to each
+section's pre-combat list when neither list names one. `withStartAutoAttack`
+does the same for a hand-built profile when the fight is built, and
+`syncDefaultRotation` does it on in-app edits.
+
+**THE MELEE WEAVE** is one APL entry for Hunters that runs a whole sequence.
+It is built on a new engine `Subroutine` hook that owns an actor's decisions
+until it finishes:
+
+1. **The gate**: auto-attack is on Ranged, a ranged shot landed in the last
+   0.5s, and every action the weave would run can be cast (ignoring the GCD).
+   The owner tied the conditions to the actions: "a melee weave occurs when
+   Mongoose Bite is usable, Strider kick is usable, Raptor Strike is usable".
+2. **Run in**: `melee_weave` is a cast that lasts the run. Ranged stops and
+   melee starts as it begins, and a melee swing due during the run waits for it
+   to end. So the first swing lands no sooner than the run and no later than a
+   melee swing interval.
+3. **In melee**: the routine casts the actions in order. It waits on a GCD or a
+   resource, and skips an action that is unknown or stops being castable. An
+   on-next-swing action (Raptor Strike) is queued the moment the run ends, so
+   it rides the swing that lands on arrival, and the routine waits until that
+   swing delivers it.
+4. **Run out**: `return_to_range` lasts the run too. Melee stops as it begins.
+   When it ends, ranged restarts with its first shot a full hasted ranged swing
+   plus 0.5s later.
+
+The entry's actions are editable in the panel (`AplEntry.weave`). Leaving them
+blank gives the owner's three: Raptor Strike, Mongoose Bite, Strider Kick.
+
+**THE RUN IS 1,000ms, OR 926 WITH MINOR SPEED ON THE BOOTS**: 7 yards at 7
+yards a second, times 1.08 for the enchant, the owner's figures. Neither run is
+hasted.
+
+**THE OWNER'S THREE NEVER WEAVE ON A MARKSMANSHIP BUILD**, and that is the gate
+working. Strider Kick is a Survival talent and Mongoose Bite needs Expose
+Prey's window, also Survival. LW Ranged weaves with Raptor Strike alone, or
+with Raptor Strike and Wing Clip, which the tests use.
+
+**IT COSTS LW RANGED ABOUT 54 DPS, ON ONE 200-FIGHT RUN IN THE APP**: 1,074.0
+without the entry, 1,019.7 with Raptor Strike alone at the bottom of the list,
+about 4.9 weaves a fight. Not tuned and not a published figure; the owner's
+call whether a gate or a placement should change it.
+
+**NO FIGURE MOVED.** All 34 profiles reproduce `main` to the decimal under
+`measure_profiles.ts`, including every caster and both ranged Hunters, whose
+new weapon is never swung.
+
+Still open:
+
+- **`ignoresGcd` does not wake an actor that is asleep through a GCD.** The
+  start is castable during one, but a list only reads it at the next decision.
+  Nothing reaches this today: a start is in pre-combat, and the weave is gated
+  on a ranged shot.
+- **`MELEE_WEAVE_STALL_MS`, 10s, is a safety limit, not ruleset data.** If the
+  actions are still not done 10s after arriving (a melee swing that never
+  comes), the Hunter goes back to range instead of staying in melee all fight.
+
 ## Round 64: APL Single Target and APL Multi Target
 
 The owner split the Priority List into **two sections**, each collapsible on

@@ -3,6 +3,7 @@ import { PriorityRotation } from '../../../engine';
 import { comboPointsOn } from '../../combat/comboPoints';
 import type { AplCompare, AplCondition, AplEntry, AplList } from './AplCondition';
 import { builtinCondition } from './builtins';
+import { DEFAULT_MELEE_WEAVE_ACTIONS, MELEE_WEAVE_ID, meleeWeaveReady } from '../../abilities/meleeWeave';
 import {
   averageHealth,
   healthFraction,
@@ -88,9 +89,20 @@ function smartTargeted(entry: AplEntry): AplEntry {
 }
 
 export function compileEntry(entry: AplEntry): PriorityEntry {
+  const condition = entry.condition ? compileCondition(entry.condition) : undefined;
+  /*
+   * A MELEE WEAVE CARRIES ITS OWN GATE (round 65): the bow just fired and every
+   * action it would run is castable. Any condition the entry adds is asked
+   * first, so the gate's record of which actions to run is the chosen entry's.
+   */
+  const weaveActions = entry.abilityId === MELEE_WEAVE_ID ? (entry.weave ?? DEFAULT_MELEE_WEAVE_ACTIONS) : undefined;
+  const gated: PriorityEntry['condition'] = weaveActions
+    ? (context, actor, target) =>
+        (condition ? condition(context, actor, target) : true) && meleeWeaveReady(context, actor, weaveActions)
+    : condition;
   return {
     abilityId: entry.abilityId,
-    ...(entry.condition ? { condition: compileCondition(entry.condition) } : {}),
+    ...(gated ? { condition: gated } : {}),
     ...(entry.target ? { selectTarget: compileTarget(entry.target) } : {}),
     ...(entry.multiDot !== undefined && entry.multiDot > 1 ? { multiDot: entry.multiDot } : {}),
     ...(entry.interruptsChannel ? { interruptsChannel: true } : {}),

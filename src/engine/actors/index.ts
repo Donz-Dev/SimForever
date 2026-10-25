@@ -6,6 +6,7 @@ export type {
   CostRefundRule,
   Faction,
   ResourceGeneration,
+  Subroutine,
   WeaponProfile,
   WeaponType,
   WeaponSlot,

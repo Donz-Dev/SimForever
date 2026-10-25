@@ -58,6 +58,9 @@ import { STEALTH } from '../auras/rogue';
 import { EXTERNAL_HEALER } from '../encounters/externalHealer';
 import { talentBuild, talentContextFor } from '../talents/talentBuild';
 import { RACIAL_ABILITIES, racialBuild } from '../racials';
+import { START_AUTO_ATTACK_ABILITIES } from '../abilities/autoAttack';
+import { meleeWeaveAbility, meleeWeaveRunMs, returnToRangeAbility } from '../abilities/meleeWeave';
+import { foreverEnchantId } from '../items/foreverEnchants';
 import { legalAllocation } from '../talents/talentRules';
 import { talentsForClass } from '../talents/talentData';
 import {
@@ -134,6 +137,13 @@ export interface PlayerOptions {
    * Added to the base rather than replacing it.
    */
   readonly bonusStats?: PartialStats;
+  /**
+   * Whether the character starts swinging by itself at the pull (round 65).
+   * Defaults to true, for every test and tool that builds a character by
+   * hand. A PROFILE's character passes false: there, "Start Auto-attack" in the
+   * priority list is what starts the swinging. See `abilities/autoAttack.ts`.
+   */
+  readonly autoAttackOnPull?: boolean;
   /**
    * Overrides the dual-wield off-hand damage penalty. Defaults to
    * OFF_HAND_DAMAGE_MULTIPLIER; talents that change it pass a value here.
@@ -829,6 +839,18 @@ export function createPlayer(options: PlayerOptions): Combatant {
       .map((id) => RACIAL_ABILITIES[id])
       .filter((ability): ability is Ability => ability !== undefined),
     ...consumableAbilities(characterClass, options.consumables),
+    // Start Auto-attack, every kind, for every character (round 65).
+    ...START_AUTO_ATTACK_ABILITIES,
+    /*
+     * AND THE HUNTER'S MELEE WEAVE, with a run that Minor Speed on the boots
+     * shortens (round 65). See `abilities/meleeWeave.ts`.
+     */
+    ...(characterClass === 'hunter'
+      ? (() => {
+          const runMs = meleeWeaveRunMs(equipment.feet?.enchantId === foreverEnchantId('Minor Speed'));
+          return [meleeWeaveAbility(runMs), returnToRangeAbility(runMs)];
+        })()
+      : []),
   ];
   const rotation = options.rotation
     ? compileRotation(options.rotation)
@@ -1071,6 +1093,7 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // Off-hand-only hit, which no character-wide stat can express.
     hitBonusBySlot: build.offHandHitBonus > 0 ? { offHand: build.offHandHitBonus } : {},
     autoAttack: autoAttackModeForStyle(style),
+    autoAttackOnPull: options.autoAttackOnPull ?? true,
     // 1.5 seconds for everyone but a Rogue and a Cat-Form Druid, who get 1.0.
     baseGcdMs: globalCooldownFor(characterClass, style),
     // 80% of a rage or energy cost back when the attack does not connect.

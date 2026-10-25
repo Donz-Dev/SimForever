@@ -326,16 +326,21 @@ describe('a stat stick is held and never swung', () => {
     }
   });
 
-  it('gives a ranged Hunter its stat stick as stats and not as a weapon', () => {
+  it('gives a ranged Hunter its melee weapon as stats, swung only when melee is started', () => {
     const profile = PRESETS_BY_ID.get('lw_ranged')!.build();
     const style = profile.character.combatStyle as never;
     const actor = characterAtCombatStart(profile)!;
 
     // A two-hander is equipped in the two-hand slot...
     expect(profile.equipment.twoHand).toBeDefined();
-    // ...contributes no main-hand weapon...
-    expect(weaponsForEquipment(profile.equipment, style).mainHand).toBeUndefined();
-    expect(actor.weapons.mainHand).toBeUndefined();
+    /*
+     * ...is a main-hand weapon since round 65, so a Melee Weave or a Start
+     * Auto-attack (Main Hand) has something to swing -- and the auto-attack
+     * the profile STARTS is the bow, so nothing swings it until one does.
+     */
+    expect(weaponsForEquipment(profile.equipment, style).mainHand).toBeDefined();
+    expect(actor.weapons.mainHand).toBeDefined();
+    expect(actor.activeAutoAttack).toBe('ranged');
     // ...and the bow is what swings. (Named by its SET rather than by an item
     // id, because the Hunter sets are generated from the budget now.)
     expect(actor.weapons.ranged?.name).toMatch(/\(E65\)$/);

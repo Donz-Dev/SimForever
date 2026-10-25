@@ -1,4 +1,5 @@
 import { fightSection, withSection } from '../profiles/aplSections';
+import { withStartAutoAttack } from '../profiles/rotation';
 import type { AuraDefinition, Combatant, SimulationConfig } from '../engine';
 import { FOREVER_THREAT_RULES } from '../game/combat/threat';
 import { spellResistanceConstant } from '../game/combat/spellResistance';
@@ -57,9 +58,14 @@ export function trainingDummyEncounter(
    * so everything below reads the one that runs -- and idempotent, so the
    * healer fights, which choose their own first, are left as they chose.
    */
-  const profile = withSection(
-    given,
-    fightSection({ targets: Math.floor(given.encounter.numberOfTargets ?? 1) }),
+  /*
+   * AND THE BUILD'S OWN START AUTO-ATTACK WHERE ITS LISTS NAME NONE (round 65)
+   * -- the same pre-population the app writes into a profile, applied here too
+   * so a profile built by hand, by a tool or by a test swings as it always did.
+   * A list that names one, anywhere, runs exactly what it says.
+   */
+  const profile = withStartAutoAttack(
+    withSection(given, fightSection({ targets: Math.floor(given.encounter.numberOfTargets ?? 1) })),
   );
   /*
    * Resolved ONCE, outside the combatant factory, because the selection is the
@@ -323,6 +329,11 @@ export function createPlayerFor(
           },
         }
       : {}),
+    /*
+     * A PROFILE'S CHARACTER SWINGS ONLY WHEN ITS LIST SAYS SO (round 65): the
+     * owner's "Start Auto-attack", in the pre-combat list or the combat list.
+     */
+    autoAttackOnPull: false,
     bonusStats: profile.stats,
     equipment: profile.equipment,
     talents: profile.talents,

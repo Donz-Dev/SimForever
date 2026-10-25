@@ -175,6 +175,8 @@ describe('Mutilate can no longer reach four combo points', () => {
     pool.spend(pool.current);
     (rogue as Combatant).comboPointTargetId = target.id;
 
+    // The opener's Start Auto-attack is a cast too, so count from here.
+    const castsBefore = rogue.castSequence;
     castAbility(simulation as never, rogue, MUTILATE, target);
     const afterFirst = pool.current;
 
@@ -184,7 +186,7 @@ describe('Mutilate can no longer reach four combo points', () => {
     castAbility(simulation as never, rogue, MUTILATE, target);
 
     expect(afterFirst).toBe(3);
-    expect(rogue.castSequence).toBe(2);
+    expect(rogue.castSequence - castsBefore).toBe(2);
     expect(pool.current).toBe(3);
   });
 

@@ -281,8 +281,10 @@ describe('the starting set', () => {
       });
 
       if (style === 'caster') {
-        // Held, never swung: no weapon profile at all.
-        expect(player.weapons.mainHand, characterClass).toBeUndefined();
+        // Held, and swung only if a Start Auto-attack runs (round 65): the
+        // weapon is there and nothing is swinging it.
+        expect(player.weapons.mainHand, characterClass).toBeDefined();
+        expect(player.activeAutoAttack, characterClass).toBe('none');
       } else if (style === 'ranged') {
         /*
          * A RANGED HUNTER IS THE OTHER STAT-STICK STYLE: its melee weapon is
@@ -290,7 +292,7 @@ describe('the starting set', () => {
          * ranged one. Checking `mainHand` here is how this test first read a
          * correctly armed Hunter as unarmed.
          */
-        expect(player.weapons.mainHand, characterClass).toBeUndefined();
+        expect(player.activeAutoAttack, characterClass).toBe('ranged');
         expect(player.weapons.ranged?.name, characterClass).toMatch(/\(E65\)$/);
       } else if (characterClass === 'druid') {
         expect(player.weapons.mainHand?.name, characterClass).toBe('Cat Paw');

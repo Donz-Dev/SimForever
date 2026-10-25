@@ -10,6 +10,20 @@ import { resolveCombatStyle } from '../../game/character';
 import type { Ability, PrecombatAction } from '../../engine';
 import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
 import { precombatStateFor } from '../../game/abilities/precombatStates';
+import {
+  START_AUTO_ATTACK_ABILITIES,
+  START_AUTO_ATTACK_IDS,
+  START_AUTO_ATTACK_LABELS,
+  defaultStartAutoAttackMode,
+  isStartAutoAttack,
+  startAutoAttackModeOf,
+} from '../../game/abilities/autoAttack';
+import {
+  DEFAULT_MELEE_WEAVE_ACTIONS,
+  MELEE_WEAVE_ID,
+  meleeWeaveAbility,
+  meleeWeaveRunMs,
+} from '../../game/abilities/meleeWeave';
 import { RACIAL_ABILITIES, racialsFor } from '../../game/racials';
 import { consumableAbilities } from '../../game/buffs/consumables';
 import type { CatalogAura } from '../../game/auras/auraCatalog';
@@ -298,9 +312,11 @@ function PrecombatSection({
             <li key={`${action.abilityId}-${index}`} className="apl-precombat-row">
               <select
                 className="apl-ability apl-ability-choice"
-                value={action.abilityId}
+                value={choiceValue(action.abilityId, abilities)}
                 aria-label="Pre-combat ability"
-                onChange={(event) => replace(index, { ...action, abilityId: event.target.value })}
+                onChange={(event) =>
+                  replace(index, { ...action, abilityId: chosenId(action.abilityId, event.target.value) })
+                }
               >
                 {/* Kept so a loaded profile naming an ability this build does
                     not have SAYS so rather than silently showing another.
@@ -312,7 +328,7 @@ function PrecombatSection({
                     this build)" on a Druid that is in Cat Form. Exactly
                     backwards, and on the one row a reader is checking to see
                     that it IS. See `PRECOMBAT_STATES`. */}
-                {abilities.some((ability) => ability.id === action.abilityId) ? null : (
+                {abilities.some((ability) => ability.id === choiceValue(action.abilityId, abilities)) ? null : (
                   <option value={action.abilityId}>
                     {precombatStateFor(profile, action.abilityId)
                       ? `${precombatStateFor(profile, action.abilityId)!.name} (already in effect)`
@@ -325,6 +341,11 @@ function PrecombatSection({
                   </option>
                 ))}
               </select>
+
+              <StartKind
+                abilityId={action.abilityId}
+                onChange={(abilityId) => replace(index, { ...action, abilityId })}
+              />
 
               <span className="apl-precombat-at">
                 <input
@@ -422,9 +443,129 @@ export function interruptibleChannelsIn(
 export function abilityChoicesFor(
   profile: CharacterProfile,
 ): readonly { readonly id: string; readonly name: string }[] {
-  return abilityBookFor(profile)
-    .map((ability) => ({ id: ability.id, name: ability.name }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  /*
+   * START AUTO-ATTACK IS ONE ACTION WITH A KIND (round 65): the three abilities
+   * collapse into one choice, standing in as the build's own kind -- the owner's
+   * "by default the appropriate one should be identified and pre-populated" --
+   * and a second dropdown beside the entry picks the kind.
+   */
+  const startDefault = startDefaultFor(profile);
+  return [
+    ...abilityBookFor(profile)
+      .filter((ability) => !isStartAutoAttack(ability.id))
+      .map((ability) => ({ id: ability.id, name: ability.name })),
+    { id: startDefault, name: 'Start Auto-attack' },
+  ].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** The Start Auto-attack kind a build gets by default, as an ability id. */
+export function startDefaultFor(profile: CharacterProfile): string {
+  const style = resolveCombatStyle(profile.character.characterClass, profile.character.combatStyle);
+  return START_AUTO_ATTACK_IDS[defaultStartAutoAttackMode(style)];
+}
+
+/**
+ * THE KIND OF A START AUTO-ATTACK, beside it (round 65): Main Hand Melee
+ * Weapon, Dual Wield or Ranged.
+ */
+function StartKind({
+  abilityId,
+  onChange,
+}: {
+  readonly abilityId: string;
+  readonly onChange?: (abilityId: string) => void;
+}) {
+  const mode = startAutoAttackModeOf(abilityId);
+  if (!mode) return null;
+  if (!onChange) return <span className="apl-start-kind">{START_AUTO_ATTACK_LABELS[mode]}</span>;
+  return (
+    <select
+      className="apl-start-kind"
+      value={abilityId}
+      aria-label="Auto-attack kind"
+      onChange={(event) => onChange(event.target.value)}
+    >
+      {(Object.keys(START_AUTO_ATTACK_IDS) as (keyof typeof START_AUTO_ATTACK_IDS)[]).map((kind) => (
+        <option key={kind} value={START_AUTO_ATTACK_IDS[kind]}>
+          {START_AUTO_ATTACK_LABELS[kind]}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+/** The value an ability dropdown shows for an id: a start shows as the one action. */
+function choiceValue(abilityId: string, abilities: readonly { readonly id: string }[]): string {
+  if (!isStartAutoAttack(abilityId)) return abilityId;
+  return abilities.find((ability) => isStartAutoAttack(ability.id))?.id ?? abilityId;
+}
+
+/** A chosen dropdown value, keeping the kind of a start that was already there. */
+function chosenId(previous: string, chosen: string): string {
+  return isStartAutoAttack(previous) && isStartAutoAttack(chosen) ? previous : chosen;
+}
+
+/**
+ * A MELEE WEAVE'S ACTIONS (round 65): what the Hunter does in melee before it
+ * runs back, in order -- and the weave's gate, since it begins only when every
+ * one can be cast.
+ */
+function EntryWeave({
+  actions,
+  nameOf,
+  abilities,
+  onChange,
+}: {
+  readonly actions: readonly string[] | undefined;
+  readonly nameOf: (abilityId: string) => string;
+  readonly abilities: readonly { readonly id: string; readonly name: string }[];
+  readonly onChange?: (actions: readonly string[] | undefined) => void;
+}) {
+  const shown = actions ?? DEFAULT_MELEE_WEAVE_ACTIONS;
+  const offered = abilities.filter(
+    (ability) => ability.id !== MELEE_WEAVE_ID && !isStartAutoAttack(ability.id) && !shown.includes(ability.id),
+  );
+  // Back to the default is DROPPED rather than stored, so the entry compares equal.
+  const store = (next: readonly string[]) =>
+    onChange?.(next.join('|') === DEFAULT_MELEE_WEAVE_ACTIONS.join('|') ? undefined : next);
+  return (
+    <span className="apl-weave">
+      <span className="apl-unit">in melee:</span>
+      {shown.map((abilityId, at) => (
+        <span key={`${abilityId}-${at}`} className="apl-weave-step">
+          {nameOf(abilityId)}
+          {onChange ? (
+            <button
+              type="button"
+              className="apl-weave-remove"
+              title="Take this action out of the weave"
+              onClick={() => store(shown.filter((_, index) => index !== at))}
+            >
+              x
+            </button>
+          ) : null}
+        </span>
+      ))}
+      {onChange ? (
+        <select
+          className="apl-sequence-add"
+          value=""
+          aria-label="Add a melee action"
+          onChange={(event) => {
+            if (event.target.value) store([...shown, event.target.value]);
+          }}
+        >
+          <option value="">+ action</option>
+          {offered.map((ability) => (
+            <option key={ability.id} value={ability.id}>
+              {ability.name}
+            </option>
+          ))}
+        </select>
+      ) : null}
+      <span className="apl-unit">then back to range</span>
+    </span>
+  );
 }
 
 /**
@@ -476,6 +617,10 @@ export function abilityBookFor(profile: CharacterProfile): readonly Ability[] {
      * `consumableAbilities.test.ts` asserts the two agree.
      */
     ...consumableAbilities(profile.character.characterClass, profile.consumables),
+    // Start Auto-attack, every kind, and the Hunter's Melee Weave (round 65),
+    // as `createPlayer` adds them. The run time is only shown, never used here.
+    ...START_AUTO_ATTACK_ABILITIES,
+    ...(profile.character.characterClass === 'hunter' ? [meleeWeaveAbility(meleeWeaveRunMs(false))] : []),
   ];
 }
 
@@ -529,17 +674,42 @@ export function AplEntries({
               abilities={abilities ?? []}
               onChange={
                 onChange
-                  ? (abilityId) => onChange(setAbility(list.entries, index, abilityId))
+                  ? (abilityId) => onChange(setAbility(list.entries, index, chosenId(entry.abilityId, abilityId)))
                   : undefined
               }
             />
+            <StartKind
+              abilityId={entry.abilityId}
+              onChange={onChange ? (abilityId) => onChange(setAbility(list.entries, index, abilityId)) : undefined}
+            />
+            {entry.abilityId === MELEE_WEAVE_ID ? (
+              <EntryWeave
+                actions={entry.weave}
+                nameOf={nameOf}
+                abilities={abilities ?? []}
+                onChange={
+                  onChange
+                    ? (weave) =>
+                        onChange(
+                          list.entries.map((current, at) => {
+                            if (at !== index) return current;
+                            const { weave: _dropped, ...rest } = current;
+                            void _dropped;
+                            return weave ? { ...rest, weave } : rest;
+                          }),
+                        )
+                    : undefined
+                }
+              />
+            ) : null}
             {/*
               * BESIDE THE ABILITY AND BEFORE THE CONDITION, because the chain
               * is part of WHAT this entry does and the condition is WHEN. An
               * entry reading "Cold Blood then Eviscerate / if 5 combo points"
               * is the sentence the owner wrote.
               */}
-            <EntrySequence
+            {/* A weave is its own sequence, so it offers no "then". */}
+            {entry.abilityId === MELEE_WEAVE_ID ? null : <EntrySequence
               sequence={entry.sequence}
               nameOf={nameOf}
               abilities={abilities ?? []}
@@ -548,7 +718,7 @@ export function AplEntries({
                   ? (sequence) => onChange(setSequence(list.entries, index, sequence))
                   : undefined
               }
-            />
+            />}
             <EntryCondition
               condition={entry.condition}
               names={names}
@@ -725,11 +895,12 @@ function EntryAbility({
   if (!onChange || abilities.length === 0) {
     return <span className="apl-ability">{name}</span>;
   }
-  const unknown = !abilities.some((ability) => ability.id === abilityId);
+  const value = choiceValue(abilityId, abilities);
+  const unknown = !abilities.some((ability) => ability.id === value);
   return (
     <select
       className="apl-ability apl-ability-choice"
-      value={abilityId}
+      value={value}
       aria-label="Ability"
       onChange={(event) => onChange(event.target.value)}
     >

@@ -5,6 +5,7 @@ import { DEFAULT_POISON_LOADOUT } from '../game/reactions/poisons';
 import { DEFAULT_WARLOCK_STONE } from '../game/buffs/warlockStones';
 import { getCombatStyle } from '../game/character/combatStyles';
 import type { CombatStyleId } from '../game/character/ids';
+import { START_AUTO_ATTACK_IDS, isStartAutoAttack } from '../game/abilities/autoAttack';
 
 /** Transforms a profile one version forward. */
 type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
@@ -17,6 +18,37 @@ type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
  * files to the new shape.
  */
 const migrations: Record<number, Migration> = {
+  /**
+   * Version 19 made swinging an ACTION (round 65): nothing a player wields
+   * swings until a "Start Auto-attack" runs. A saved character swung from the
+   * pull in its style's mode, so each section whose lists name no Start
+   * Auto-attack gains one at the end of its pre-combat list, in that mode --
+   * and a style that swings nothing gains nothing. No result moves.
+   */
+  18: (profile) => {
+    const character = profile.character as Record<string, unknown> | undefined;
+    const style = typeof character?.combatStyle === 'string' ? character.combatStyle : undefined;
+    const mode = style ? getCombatStyle(style as CombatStyleId)?.autoAttack : undefined;
+    if (!mode || mode === 'none') return { ...profile };
+    const id = START_AUTO_ATTACK_IDS[mode];
+    const withStart = (section: Record<string, unknown>) => {
+      const precombat = Array.isArray(section.precombat) ? (section.precombat as { abilityId: string }[]) : [];
+      const rotation = section.rotation as { entries?: { abilityId: string }[] } | undefined;
+      const named = [...precombat, ...(rotation?.entries ?? [])].some((a) => isStartAutoAttack(a.abilityId));
+      return named ? section : { ...section, precombat: [...precombat, { abilityId: id, secondsBefore: 0 }] };
+    };
+    const single = withStart({ rotation: profile.rotation, precombat: profile.precombat });
+    const multi =
+      typeof profile.multiTarget === 'object' && profile.multiTarget !== null
+        ? withStart(profile.multiTarget as Record<string, unknown>)
+        : undefined;
+    return {
+      ...profile,
+      ...(single.precombat !== undefined ? { precombat: single.precombat } : {}),
+      ...(multi ? { multiTarget: multi } : {}),
+    };
+  },
+
   /**
    * Version 18 split the Priority List into SINGLE TARGET and MULTI TARGET
    * (round 64). A saved profile had one list and ran it in every fight, so
