@@ -649,6 +649,15 @@ const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: '+7 Agility',
     shield: '+9 Stamina',
   },
+  // Round 73's two Priest healers: the Resto Drood's loadout.
+  priest_holy: {
+    head: '+1% Haste', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',
+    wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: '+7 Agility',
+  },
+  priest_disc: {
+    head: '+1% Haste', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',
+    wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: '+7 Agility',
+  },
   // Round 71's Druid healer: Holy Pal's loadout, with a staff and no shield.
   druid_resto: {
     head: '+1% Haste', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',

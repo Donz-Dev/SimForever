@@ -30,6 +30,8 @@ const BLOCKS: Readonly<Record<string, number>> = {
   mage_frost: 32,
   shaman_resto: 33,
   druid_resto: 34,
+  priest_holy: 35,
+  priest_disc: 36,
 };
 
 describe('benchmark item ids', () => {

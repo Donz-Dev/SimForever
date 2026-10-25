@@ -181,6 +181,22 @@ export class AuraCollection {
       const taken = Math.min(instance.absorbRemaining, left);
       instance.absorbRemaining -= taken;
       left -= taken;
+      // A soak that counts as its caster's healing (round 73). See the field.
+      if (instance.definition.absorbCountsAsHealing && taken > 0) {
+        context.telemetry.emit({
+          type: 'heal',
+          timestamp: context.clock.now(),
+          sourceId: instance.sourceId,
+          targetId: this.owner.id,
+          abilityId: instance.definition.id,
+          abilityName: instance.definition.name,
+          amount: taken,
+          critical: false,
+          overhealing: 0,
+          targetHealth: this.owner.health.current,
+          periodic: false,
+        });
+      }
       /*
        * A SPENT SHIELD ENDS, which is what every absorb in the game does and
        * what stops an exhausted one sitting on the character reporting uptime
@@ -202,7 +218,7 @@ export class AuraCollection {
   ): AuraInstance {
     const existing = this.auras.get(definition.id);
     if (existing) {
-      return this.refresh(context, existing);
+      return this.refresh(context, existing, definition);
     }
 
     const instance = new AuraInstance(
@@ -490,7 +506,7 @@ export class AuraCollection {
     }
   }
 
-  private refresh(context: SimulationContext, instance: AuraInstance): AuraInstance {
+  private refresh(context: SimulationContext, instance: AuraInstance, incoming?: AuraDefinition): AuraInstance {
     const now = context.clock.now();
     const definition = instance.definition;
     const behaviour = definition.refreshBehaviour ?? 'reset';
@@ -528,8 +544,17 @@ export class AuraCollection {
      * thirty seconds. Skipped for `ignore`, which is the behaviour that says this
      * application does not count.
      */
-    if (behaviour !== 'ignore' && definition.absorb) {
-      instance.absorbRemaining = definition.absorb(this.owner);
+    /*
+     * SIZED BY THE DEFINITION BEING APPLIED (round 73), not the one already on
+     * the carrier: a shield made per cast -- Divine Aegis topping itself up, a
+     * Power Word: Shield -- carries its amount in its own definition, and the
+     * old one's would hand back the first shield's size forever. The two
+     * shields sized from the carrier's own stats, Seal of Fury and Templar's
+     * Bulwark, come out the same either way.
+     */
+    const absorb = incoming?.absorb ?? definition.absorb;
+    if (behaviour !== 'ignore' && absorb) {
+      instance.absorbRemaining = absorb(this.owner);
     }
 
     /*

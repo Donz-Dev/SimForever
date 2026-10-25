@@ -281,7 +281,11 @@ export class PriorityRotation implements Rotation {
         if (!this.sequenceIsAffordable(context, actor, entry.abilityId, entry.sequence, target)) {
           continue;
         }
-        actor.pendingSequence = { abilityIds: entry.sequence, index: 0 };
+        actor.pendingSequence = {
+          abilityIds: entry.sequence,
+          index: 0,
+          ...(entry.selectTarget && target ? { target } : {}),
+        };
       }
 
       return entry.cancelCast ? { ability, target, cancelCast: entry.cancelCast } : { ability, target };
@@ -332,7 +336,9 @@ export class PriorityRotation implements Rotation {
     }
 
     const ability = actor.abilities.get(pending.abilityIds[pending.index]);
-    const target = context.defaultTargetFor(actor);
+    // The entry's own target when it named one and they are still standing.
+    const target =
+      pending.target && pending.target.isAlive ? pending.target : context.defaultTargetFor(actor);
 
     if (ability && context.canCast(actor, ability, target)) {
       // Advance, and drop the pointer on the last step rather than leaving an

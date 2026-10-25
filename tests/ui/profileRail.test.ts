@@ -18,7 +18,8 @@ describe('the profile rail', () => {
   it('puts the four tanks and the two healers in their own groups', () => {
     expect([...labels(1)].sort()).toEqual(['Bear', 'Fury Prot', 'Prot Pally', 'Prot Warr']);
     // Resto Drood joined in round 71.
-    expect([...labels(2)].sort()).toEqual(['Holy Pal', 'Piss Beam', 'Resto Drood']);
+    // Resto Drood joined in round 71, and the two Priests in round 73.
+    expect([...labels(2)].sort()).toEqual(['Disc Priest', 'Holy Pal', 'Holy Priest', 'Piss Beam', 'Resto Drood']);
   });
 
   it('shows every preset exactly once, so a new one lands under DPS', () => {

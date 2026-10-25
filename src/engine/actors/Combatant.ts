@@ -1067,7 +1067,17 @@ export class Combatant {
    * reused cannot start a fight mid-sequence.
    * ============================================================================
    */
-  pendingSequence: { readonly abilityIds: readonly string[]; index: number } | null = null;
+  /**
+   * `target` is the ENTRY's (round 73): a sequence aimed at the tank -- Inner
+   * Focus then Penance -- casts its later steps at the tank too, not at the
+   * default enemy. Absent for an entry that names none, which is every
+   * sequence before it.
+   */
+  pendingSequence: {
+    readonly abilityIds: readonly string[];
+    index: number;
+    readonly target?: Combatant;
+  } | null = null;
 
   /**
    * The cancel check waiting on the cast in progress, if its entry carried one

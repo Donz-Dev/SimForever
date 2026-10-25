@@ -243,6 +243,9 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
   shaman_resto: [[3, 'water_shield']],
   // Round 71: the owner gave the Resto Drood two lists and no opener.
   druid_resto: [],
+  // Round 73: the owner gave the two Priest healers lists and no opener.
+  priest_holy: [],
+  priest_disc: [],
 };
 
 /** Every cast a fight recorded, with the moment it happened. */

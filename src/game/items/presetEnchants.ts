@@ -135,6 +135,8 @@ export const PRESET_ENCHANTS: Readonly<
   // (900010) and wrists (900020), which are stats since round 52.
   holy_pal: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900010, shield: 900030, wrists: 900020 },
   // Round 60: Holy Pal's healer loadout, for the Shaman healer.
+  priest_holy: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, neck: 900010, twoHand: 22749, wrists: 900020 },
+  priest_disc: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, neck: 900010, twoHand: 22749, wrists: 900020 },
   druid_resto: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, neck: 900010, twoHand: 22749, wrists: 900020 },
   shaman_resto: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900010, shield: 900030, wrists: 900020 },
 };

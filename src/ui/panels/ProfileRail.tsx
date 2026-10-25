@@ -58,7 +58,7 @@ interface ProfileRailProps {
  * ----------------------------------------------------------------------------
  */
 export const TANK_PROFILE_IDS: readonly string[] = ['druid_bear', 'prot_warr', 'prot_pally', 'fury_prot'];
-export const HEALER_PROFILE_IDS: readonly string[] = ['shaman_resto', 'holy_pal', 'druid_resto'];
+export const HEALER_PROFILE_IDS: readonly string[] = ['shaman_resto', 'holy_pal', 'druid_resto', 'priest_holy', 'priest_disc'];
 
 const BY_ID = new Map(PROFILE_PRESETS.map((preset) => [preset.id, preset]));
 
