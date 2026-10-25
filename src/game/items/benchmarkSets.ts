@@ -424,6 +424,7 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
   // owner's saved build wore, under its own name and id block.
   { idBlock: 32, presetId: 'mage_frost', characterClass: 'mage', label: 'Frost Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   // Piss Beam (round 60): Holy Pal's healer specification in Mail.
+  { idBlock: 34, presetId: 'druid_resto', characterClass: 'druid', label: 'Resto Drood', hit: 0, expertise: 0, preferred: ['Intellect', 'Spirit', 'Crit'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, healer: true },
   { idBlock: 33, presetId: 'shaman_resto', characterClass: 'shaman', label: 'Piss Beam', hit: 0, expertise: 0, preferred: ['Intellect', 'Spirit', 'Crit'], armour: 'Mail', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true }, healer: true },
   { idBlock: 31, presetId: 'holy_pal', characterClass: 'paladin', label: 'Holy Pal', hit: 0, expertise: 0, preferred: ['Intellect', 'Spirit', 'Crit'], armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true }, healer: true },
 ];

@@ -5,6 +5,7 @@ import {
   buffPotionCooldown,
   consumableCooldown,
   consumableCooldowns,
+  CONSUMABLE_COOLDOWNS,
   CONSUMABLE_HEALS,
   TIGHT_THISTLE_TEA_ENERGY_THRESHOLD,
 } from './consumableCooldowns';
@@ -23,6 +24,7 @@ import {
   targetHas,
 } from './apl';
 import type { CombatStyleId } from '../character';
+import type { TalentAllocation } from '../talents/Talent';
 import { MAX_COMBO_POINTS } from '../combat/comboPoints';
 
 /**
@@ -580,7 +582,100 @@ export const DRUID_CAT_ROTATION: Rotation = compileRotation(DRUID_CAT);
 export const DRUID_BEAR_ROTATION: Rotation = compileRotation(DRUID_BEAR);
 
 /** Which list a Druid runs, from the form it is in. */
-export function druidRotation(style: CombatStyleId): Rotation | undefined {
+/**
+ * RESTORATION -- the Resto Drood profile's list (round 71), the owner's design,
+ * one list for both healer fights as Holy Pal's and Piss Beam's are:
+ *
+ *   TANK HEALER  "Keep up Rejuv and Regrowth, and pre-cast Healing Touch
+ *                letting it land if the tank is <=75% hit points"
+ *   RAID HEALER  "Keep up Rejuv and Regrowth on the tank at all times. Use Wild
+ *                Growth on cooldown on the party that has the lowest average
+ *                hit point %. Use Rejuv on any player that has <100% Hit Points."
+ *
+ * ============================================================================
+ * WILD GROWTH IS THE RAID HEALER'S ALONE, gated on "at least 6 raid members"
+ * as Holy Pal's Light's Vigil chain is; "any player under 100%" needs no gate,
+ * because in the tank fight the only player already carries the Rejuvenation.
+ *
+ * "KEEP UP" IS "WHEN IT IS NOT UP", the reading CLAUDE.md records under
+ * Rotations: a refresh window clips what is left. SMART HEALING IS OFF -- every
+ * entry names who it is for.
+ *
+ * FOUR FIGURES HERE ARE OURS, NOT THE OWNER'S, and every one is editable in the
+ * panel: Innervate at 50% mana, Nature's Swiftness when the tank is under 35%
+ * (and the instant Healing Touch it buys), Swiftmend on the tank under 50%, and
+ * the pre-cast checked at 80% of the cast. The owner named the cooldowns and
+ * not their gates.
+ * ============================================================================
+ */
+export const DRUID_RESTORATION: AplList = {
+  name: 'Druid (Restoration)',
+  entries: [
+    ...RACIAL_COOLDOWNS,
+    ...CONSUMABLE_COOLDOWNS,
+    {
+      abilityId: 'innervate',
+      condition: { kind: 'resourceFraction', resource: 'mana', compare: 'atMost', fraction: 0.5 },
+      note: 'Under 50% mana: a gate of ours, not the owner\'s.',
+    },
+    {
+      abilityId: 'natures_swiftness',
+      condition: { kind: 'friendlyHealth', of: 'tank', compare: 'below', fraction: 0.35 },
+      note: 'When the tank is under 35%: a gate of ours.',
+    },
+    {
+      abilityId: 'healing_touch',
+      target: { kind: 'tank' },
+      condition: { kind: 'aura', on: 'self', auraId: 'natures_swiftness', present: true },
+      note: "The instant Healing Touch Nature's Swiftness buys.",
+    },
+    {
+      abilityId: 'swiftmend',
+      target: { kind: 'tank' },
+      condition: { kind: 'health', on: 'target', compare: 'below', fraction: 0.5 },
+      note: 'On the tank under 50%: a gate of ours.',
+    },
+    {
+      abilityId: 'wild_growth',
+      target: { kind: 'lowestParty' },
+      condition: { kind: 'raidSize', compare: 'atLeast', count: 6 },
+      note: 'Raid healer: on cooldown, on the party with the lowest average health.',
+    },
+    {
+      abilityId: 'rejuvenation',
+      target: { kind: 'tank' },
+      condition: { kind: 'aura', on: 'target', auraId: 'rejuvenation', present: false },
+      note: 'Kept up on the tank.',
+    },
+    {
+      abilityId: 'regrowth',
+      target: { kind: 'tank' },
+      condition: { kind: 'aura', on: 'target', auraId: 'regrowth', present: false },
+      note: 'Kept up on the tank.',
+    },
+    {
+      abilityId: 'rejuvenation',
+      target: { kind: 'lowestHealth', withoutAura: 'rejuvenation' },
+      condition: { kind: 'health', on: 'target', compare: 'below', fraction: 1 },
+      note: 'On anyone under 100% who does not have it.',
+    },
+    {
+      abilityId: 'healing_touch',
+      target: { kind: 'tank' },
+      cancel: {
+        atFraction: 0.8,
+        condition: { kind: 'health', on: 'target', compare: 'above', fraction: 0.75 },
+      },
+      note: 'Pre-cast: lands only if the tank is at 75% or under, checked at 80% of the cast.',
+    },
+  ],
+};
+
+export const DRUID_RESTORATION_ROTATION: Rotation = compileRotation(DRUID_RESTORATION);
+
+export function druidRotation(style: CombatStyleId, talents: TalentAllocation = {}): Rotation | undefined {
+  // Wild Growth is the Restoration capstone, so a build that takes it heals (round 71).
+  if ((talents.wild_growth ?? 0) > 0) return DRUID_RESTORATION_ROTATION;
   if (style === 'moonkin') return DRUID_MOONKIN_ROTATION;
   if (style === 'cat') return DRUID_CAT_ROTATION;
   if (style === 'bear') return DRUID_BEAR_ROTATION;

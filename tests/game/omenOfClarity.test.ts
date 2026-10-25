@@ -147,7 +147,22 @@ describe('what Clearcasting pays for', () => {
     const costingWithoutTable = DRUID_ABILITIES.filter(
       (ability) => (ability.cost?.amount ?? 0) > 0 && !ability.attackTable,
     ).map((ability) => ability.id);
-    expect(costingWithoutTable.sort()).toEqual(['demoralizing_roar', 'shifting_power']);
+    /*
+     * AND THE SIX RESTORATION SPELLS OF ROUND 71 -- five heals and Innervate.
+     * A heal rolls on no table, so none of them can spend Clearcasting; nor can
+     * a healer PROC it, since the proc reads damage dealt. Both halves of the
+     * tooltip's healing clause are a question for the owner, in HANDOVER.
+     */
+    expect(costingWithoutTable.sort()).toEqual([
+      'demoralizing_roar',
+      'healing_touch',
+      'innervate',
+      'regrowth',
+      'rejuvenation',
+      'shifting_power',
+      'swiftmend',
+      'wild_growth',
+    ]);
   });
 });
 

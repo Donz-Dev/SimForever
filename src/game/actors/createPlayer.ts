@@ -941,6 +941,8 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // Genesis: every tick and nothing else. It is neither a school, a table
     // nor an ability, and `DamageRequest.periodic` is what separates it.
     periodicDamageMultiplier: build.periodicDamageMultiplier,
+    // Genesis's healing half (round 71): every heal tick and nothing else.
+    periodicHealingMultiplier: build.periodicHealingMultiplier,
     // A talent conditional on the weapon held -- Two-Handed Weapon
     // Specialization -- multiplies everything including auto attacks, so it
     // cannot ride on `abilityModifiers`, which deliberately skips swings.

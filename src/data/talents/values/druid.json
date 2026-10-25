@@ -686,8 +686,10 @@
    "tree": "restoration",
    "ranks": 1,
    "text": "Reduces the global cooldown by 0.5 seconds on your Rejuvenation, Swiftmend, and Wild Growth spells.",
-   "values": null,
-   "note": "single rank"
+   "values": [
+    0.5
+   ],
+   "note": "single rank; the 0.5 filled in by hand per this directory README (round 71), for the abilityGcd effect the Resto Drood reads. The text states it literally rather than through a {0} placeholder, so there was nothing for the importer to match."
   },
   "tranquil_spirit": {
    "name": "Tranquil Spirit",

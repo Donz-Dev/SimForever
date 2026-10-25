@@ -250,7 +250,12 @@ export type AplCondition =
  */
 export type AplTarget =
   | { readonly kind: 'tank' }
-  | { readonly kind: 'lowestHealth'; readonly excludeTank?: boolean }
+  /**
+   * `withoutAura` (round 71) skips anyone carrying one of YOUR auras -- the
+   * Resto Drood's "Rejuv on any player that has <100% Hit Points", which goes
+   * to whoever is lowest among those it is not already on.
+   */
+  | { readonly kind: 'lowestHealth'; readonly excludeTank?: boolean; readonly withoutAura?: string }
   /**
    * The raid member carrying one of YOUR auras (round 60) -- the lowest health
    * of them when several do. The Piss Beam list's Chain Heal "on the target

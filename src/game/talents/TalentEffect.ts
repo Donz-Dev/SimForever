@@ -537,6 +537,9 @@ export type TalentEffect =
    */
   | { readonly kind: 'periodicDamage'; readonly valueIndex?: number }
 
+  /** Periodic HEALING only (round 71): Genesis's healing half. */
+  | { readonly kind: 'periodicHealing'; readonly valueIndex?: number }
+
   /**
    * Damage scoped to an attack TABLE, but only while the target is BLEEDING.
    *

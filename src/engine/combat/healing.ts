@@ -119,6 +119,7 @@ export function resolveHealing(
     ? afterCrit
     : afterCrit *
       (modifier?.healingMultiplier ?? 1) *
+      (request.periodic ? source.periodicHealingMultiplier : 1) *
       source.healingDoneMultiplier *
       versatilityMultiplierFrom(source.stats.effective);
 

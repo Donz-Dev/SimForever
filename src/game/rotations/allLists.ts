@@ -1,6 +1,6 @@
 import type { AplList } from './apl';
 import type { ClassId } from '../character';
-import { DRUID_BEAR, DRUID_CAT, DRUID_MOONKIN } from './druid';
+import { DRUID_BEAR, DRUID_CAT, DRUID_MOONKIN, DRUID_RESTORATION } from './druid';
 import {
   HUNTER_BEAST_MASTERY,
   HUNTER_HAWK_MELEE,
@@ -221,6 +221,12 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     owner: 'druid',
     list: DRUID_BEAR,
     profiles: ['druid_bear'],
+  },
+  {
+    name: 'DRUID_RESTORATION',
+    owner: 'druid',
+    list: DRUID_RESTORATION,
+    profiles: ['druid_resto'],
   },
 
   // Shaman -- by style, a caster against a two-hander.

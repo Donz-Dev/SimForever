@@ -12,6 +12,9 @@ import {
   INSECT_SWARM_TICK_SP_COEFFICIENT,
   MOONFIRE_SP_COEFFICIENT,
   MOONFIRE_TICK_SP_COEFFICIENT,
+  REGROWTH_TICK_HEAL_COEFFICIENT,
+  REJUVENATION_TICK_HEAL_COEFFICIENT,
+  WILD_GROWTH_TICK_HEAL_COEFFICIENT,
 } from '../combat/coefficients';
 import {
   LACERATE_TICK_WEAPON_FRACTION_PER_APPLICATION,
@@ -271,9 +274,11 @@ export const OMEN_OF_CLARITY_INTERNAL_COOLDOWN_MS = seconds(10);
  * leave the rest of the charge behind, which reads as a working effect worth
  * several times its value.
  *
- * ITS HEALING HALF IS OUT OF SCOPE like every healing clause -- a heal has no
- * attack table, so `requiresAttackTable` excludes one. No Druid profile heals,
- * so nothing is lost today, and the day one does this is the line to revisit.
+ * ITS HEALING HALF IS NOT MODELLED -- a heal has no attack table, so
+ * `requiresAttackTable` excludes one, and the proc reads damage dealt, so a
+ * Druid casting only heals never gets the charge at all. The Resto Drood
+ * (round 71) is the profile that would collect it, and whether heals should
+ * proc and spend it is a question for the owner, recorded in HANDOVER.
  * ----------------------------------------------------------------------------
  */
 export const CLEARCASTING: AuraDefinition = {
@@ -1034,18 +1039,19 @@ export function lengthened(aura: AuraDefinition, extraSeconds: number): AuraDefi
  *
  * WHICH SPELLS ARE NATURE. Wrath and Insect Swarm, off their own `school`
  * declarations; Starfire and Moonfire are ARCANE and are correctly not here,
- * which is what stops this shortening the Moonkin's main nuke. The healing
- * Nature spells the tooltip also covers are out of scope like every heal.
- *
- * NO DRUID PROFILE TAKES IT. That is a statement about the three builds and not
- * about this: the talent is real, tested on its mechanism, and worth nothing to
- * a Moonkin that spent its thirteen Restoration points elsewhere.
+ * which is what stops this shortening the Moonkin's main nuke. Healing Touch
+ * and Regrowth joined in round 71, when the Resto Drood took the talent.
  * ============================================================================
  */
 export const NATURES_SWIFTNESS_COOLDOWN_MS = seconds(180);
 
-/** The Druid's damaging NATURE spells, which is what the talent selects. */
-export const NATURE_SPELLS: readonly string[] = ['wrath', 'insect_swarm'];
+/**
+ * The Druid's NATURE spells, which is what the talent selects: Wrath and Insect
+ * Swarm, and since round 71 the two Nature HEALS with a cast time, Healing
+ * Touch and Regrowth. Rejuvenation and Wild Growth are Nature too, and instant,
+ * so `requiresCastTime` keeps them from spending the charge.
+ */
+export const NATURE_SPELLS: readonly string[] = ['wrath', 'insect_swarm', 'healing_touch', 'regrowth'];
 
 export const NATURES_SWIFTNESS: AuraDefinition = {
   id: 'natures_swiftness',
@@ -1107,6 +1113,153 @@ export const DRUID_AURAS: readonly AuraDefinition[] = [
  * break it from a distance.
  * ----------------------------------------------------------------------------
  */
+/* -------------------------------------------------------------------------- */
+/* Restoration (round 71): the Resto Drood profile's heals over time          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * One tick of a Druid heal over time: a share of the stated total plus the
+ * owner's per-tick coefficient, on the person carrying it.
+ *
+ * THE TICK CARRIES THE ABILITY'S OWN ID, so every per-ability modifier reaches
+ * it -- Gift of Nature, Improved Rejuvenation, Improved Regrowth's crit -- and
+ * it reports on the same row as the cast. A TICK CAN CRIT, the owner's: "All
+ * of the HoT effects can crit." `periodic` is what Genesis's healing half reads.
+ */
+function hotTick(
+  context: Parameters<NonNullable<AuraDefinition['periodic']>['onTick']>[0],
+  aura: Parameters<NonNullable<AuraDefinition['periodic']>['onTick']>[1],
+  baseAmount: number,
+  coefficient: number,
+): void {
+  const source = context.combatant(aura.sourceId);
+  const target = context.combatant(aura.targetId);
+  if (!source || !target || !target.isAlive) return;
+  applyHealing(context, {
+    source,
+    target,
+    abilityId: aura.id,
+    abilityName: aura.name,
+    baseAmount,
+    powerCoefficient: coefficient,
+    periodic: true,
+    threatens: true,
+  });
+}
+
+/**
+ * Rejuvenation, rank 11: "Heals the target for 776 over 12 sec." Four ticks,
+ * one every three seconds, of a quarter each and 20% of healing power.
+ *
+ * NATURE'S SPLENDOR'S +3 SECONDS IS ONE MORE TICK OF THE SAME SIZE, which is
+ * `lengthened` -- the per-tick figure is the BASE total over the BASE ticks,
+ * so a longer Rejuvenation heals more rather than spreading 776 thinner.
+ */
+export const REJUVENATION_TOTAL = 776;
+export const REJUVENATION_DURATION_MS = seconds(12);
+export const REJUVENATION_TICK_INTERVAL_MS = seconds(3);
+export const REJUVENATION_TICK = REJUVENATION_TOTAL / (REJUVENATION_DURATION_MS / REJUVENATION_TICK_INTERVAL_MS);
+
+export const REJUVENATION_HOT: AuraDefinition = {
+  id: 'rejuvenation',
+  name: 'Rejuvenation',
+  durationMs: REJUVENATION_DURATION_MS,
+  refreshBehaviour: 'reset',
+  periodic: {
+    intervalMs: REJUVENATION_TICK_INTERVAL_MS,
+    onTick: (context, aura) =>
+      hotTick(context, aura, REJUVENATION_TICK, REJUVENATION_TICK_HEAL_COEFFICIENT),
+  },
+};
+
+/**
+ * Regrowth's heal over time: "another 994 over 21 sec" -- seven ticks, one
+ * every three seconds, at 7.1% of healing power each. Nature's Splendor's +6
+ * seconds is two more of the same.
+ */
+export const REGROWTH_HOT_TOTAL = 994;
+export const REGROWTH_HOT_DURATION_MS = seconds(21);
+export const REGROWTH_TICK_INTERVAL_MS = seconds(3);
+export const REGROWTH_TICK = REGROWTH_HOT_TOTAL / (REGROWTH_HOT_DURATION_MS / REGROWTH_TICK_INTERVAL_MS);
+
+export const REGROWTH_HOT: AuraDefinition = {
+  id: 'regrowth',
+  name: 'Regrowth',
+  durationMs: REGROWTH_HOT_DURATION_MS,
+  refreshBehaviour: 'reset',
+  periodic: {
+    intervalMs: REGROWTH_TICK_INTERVAL_MS,
+    onTick: (context, aura) => hotTick(context, aura, REGROWTH_TICK, REGROWTH_TICK_HEAL_COEFFICIENT),
+  },
+};
+
+/**
+ * Wild Growth, rank 3: "Heals the target and their party for 679 over 7 sec.
+ * The amount healed is applied quickly at first, and slows down as Wild Growth
+ * reaches its full duration."
+ *
+ * ============================================================================
+ * THE FALLOFF IS THE OWNER'S: each tick is (679 / 7 + 3.3% of healing power)
+ * times 1.06 on the first tick, 1.04 on the second, 1.02 on the third and so
+ * on, two points less each tick -- 1.06 down to 0.94 over seven, which sums to
+ * exactly seven, so the falloff moves the healing EARLIER without changing the
+ * total.
+ *
+ * WHICH TICK THIS IS comes from the time left: the first lands with six
+ * seconds to go and the seventh as it expires (a tick due at the moment an aura
+ * falls off still lands). A recast resets the window and starts the falloff
+ * again.
+ * ============================================================================
+ */
+export const WILD_GROWTH_TOTAL = 679;
+export const WILD_GROWTH_TICKS = 7;
+export const WILD_GROWTH_TICK_INTERVAL_MS = seconds(1);
+export const WILD_GROWTH_FALLOFF_FIRST = 0.06;
+export const WILD_GROWTH_FALLOFF_STEP = 0.02;
+
+/** The falloff factor of a tick, counting from 0: 1.06, 1.04, ... 0.94. */
+export function wildGrowthFalloff(tickIndex: number): number {
+  return 1 + WILD_GROWTH_FALLOFF_FIRST - WILD_GROWTH_FALLOFF_STEP * tickIndex;
+}
+
+export const WILD_GROWTH_HOT: AuraDefinition = {
+  id: 'wild_growth',
+  name: 'Wild Growth',
+  durationMs: WILD_GROWTH_TICKS * WILD_GROWTH_TICK_INTERVAL_MS,
+  refreshBehaviour: 'reset',
+  periodic: {
+    intervalMs: WILD_GROWTH_TICK_INTERVAL_MS,
+    onTick: (context, aura) => {
+      const left = Math.round((aura.expiresAt - context.clock.now()) / WILD_GROWTH_TICK_INTERVAL_MS);
+      const factor = wildGrowthFalloff(WILD_GROWTH_TICKS - 1 - left);
+      hotTick(
+        context,
+        aura,
+        (WILD_GROWTH_TOTAL / WILD_GROWTH_TICKS) * factor,
+        WILD_GROWTH_TICK_HEAL_COEFFICIENT * factor,
+      );
+    },
+  },
+};
+
+/**
+ * Innervate: "Increases the target's Mana regeneration by 400% and allows 100%
+ * of the target's Mana regeneration to continue while casting. Lasts 20 sec."
+ * Evocation's two fields: 400% MORE is five times, and the bypass is full.
+ * Cast on the Druid itself -- the healer is the one whose mana runs out.
+ */
+export const INNERVATE_DURATION_MS = seconds(20);
+export const INNERVATE_REGEN_MULTIPLIER = 5;
+export const INNERVATE_REGEN_BYPASS = 100;
+
+export const INNERVATE_AURA: AuraDefinition = {
+  id: 'innervate',
+  name: 'Innervate',
+  durationMs: INNERVATE_DURATION_MS,
+  statModifiers: [flat('manaRegenBypass', INNERVATE_REGEN_BYPASS)],
+  resourceRegenMultiplier: { mana: INNERVATE_REGEN_MULTIPLIER },
+};
+
 export const CATALOG_AURAS: readonly AuraDefinition[] = [
   ripAura(0),
   berserkAura([]),
