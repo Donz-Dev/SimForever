@@ -107,6 +107,14 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 74: Sim History shows a healer run's HPS
+
+The owner: a healer run's Sim History row read 0.0, because it deals no damage.
+It now shows **tank healer HPS | raid healer HPS**, in the theme's `--success`
+green, for example `560.9 | 1104.8` on the Disc Priest. A DPS or tank run still
+shows its DPS in the usual accent colour. `historyFigure` in `ui/simHistory.ts`
+decides which; no simulation code changed.
+
 ## Round 73: the Holy Priest and the Disc Priest
 
 The owner's 36th and 37th profiles: a 17/34/0 Holy Priest and a 31/20/0 Disc

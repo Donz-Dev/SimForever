@@ -2992,6 +2992,10 @@ button:disabled {
   text-align: right;
 }
 
+.sim-history-hps {
+  color: var(--success);
+}
+
 .sim-history-meta,
 .sim-history-tps {
   font-family: var(--font-mono);

@@ -35,6 +35,21 @@ export interface SimHistoryEntry {
   readonly healer?: { readonly tank: BatchResult; readonly raid: BatchResult };
 }
 
+/**
+ * THE FIGURE A ROW SHOWS (round 74): a damage or tank run's DPS, and a healer
+ * run's two HPS, tank healer then raid healer -- the owner's "[Tank Healing
+ * HPS] | [Raid Healing HPS]". A healer deals no damage, so its DPS read 0.0.
+ */
+export function historyFigure(entry: SimHistoryEntry): { readonly text: string; readonly healing: boolean } {
+  if (entry.healer) {
+    return {
+      text: `${entry.healer.tank.hps.mean.toFixed(1)} | ${entry.healer.raid.hps.mean.toFixed(1)}`,
+      healing: true,
+    };
+  }
+  return { text: entry.batch.dps.mean.toFixed(1), healing: false };
+}
+
 /** The newest first, at most `SIM_HISTORY_LIMIT` long. */
 export function withRun(
   history: readonly SimHistoryEntry[],

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { SimHistoryEntry } from '../simHistory';
-import { SIM_HISTORY_LIMIT } from '../simHistory';
+import { SIM_HISTORY_LIMIT, historyFigure } from '../simHistory';
 import { Panel } from '../components/Panel';
 
 interface SimHistoryPanelProps {
@@ -31,6 +31,7 @@ export function SimHistoryPanel({ history, onRestore }: SimHistoryPanelProps) {
         <ul className="sim-history" role="listbox" aria-label="Recent runs">
           {history.map((entry) => {
             const { profile, batch } = entry;
+            const figure = historyFigure(entry);
             const time = new Date(entry.finishedAt).toLocaleTimeString([], {
               hour: '2-digit',
               minute: '2-digit',
@@ -54,7 +55,13 @@ export function SimHistoryPanel({ history, onRestore }: SimHistoryPanelProps) {
                 }}
               >
                 <span className="sim-history-name">{profile.character.name || 'Unnamed'}</span>
-                <span className="sim-history-dps">{batch.dps.mean.toFixed(1)}</span>
+                {/* A healer run's tank and raid HPS, in green (round 74). */}
+                <span
+                  className={figure.healing ? 'sim-history-dps sim-history-hps' : 'sim-history-dps'}
+                  title={figure.healing ? 'Tank healer HPS | Raid healer HPS' : 'DPS'}
+                >
+                  {figure.text}
+                </span>
                 <span className="sim-history-meta">
                   {`${time} · ${profile.simulation.durationSeconds}s · ${batch.iterations} runs`}
                 </span>
