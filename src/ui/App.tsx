@@ -394,7 +394,10 @@ export function App() {
             {/* BETWEEN THE GEAR AND THE RAID BUFFS, the owner's placement, and
                 it reads in the right order: what the character is holding, how
                 it fights, then what the raid gives it. */}
-            <AplPanel profile={profile} onChange={editProfile} />
+            {/* Two lists, each collapsible (round 64): Single Target and Multi
+                Target, each with its own pre-combat and combat list. */}
+            <AplPanel profile={profile} section="single" onChange={editProfile} />
+            <AplPanel profile={profile} section="multi" onChange={editProfile} />
             {/* After the gear, because it is the same kind of decision: what
                 the character walks in carrying. Set once and rarely touched. */}
             <RaidBuffsPanel profile={profile} onChange={editProfile} />

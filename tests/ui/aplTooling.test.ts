@@ -234,7 +234,7 @@ describe('the panel offers both', () => {
     // one is for -- the cheapest guard against a build running another spec's
     // list.
     const markup = renderToStaticMarkup(
-      createElement(AplPanel, { profile: arms(), onChange: () => undefined }),
+      createElement(AplPanel, { profile: arms(), section: 'single', onChange: () => undefined }),
     );
     expect(markup).toContain('Warrior (Two-Hander, Battle)');
   });

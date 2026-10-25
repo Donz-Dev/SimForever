@@ -1,3 +1,5 @@
+import type { AplSection } from '../../profiles/aplSections';
+import { setSection, withSection } from '../../profiles/aplSections';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import type { CharacterProfile } from '../../profiles';
@@ -42,7 +44,19 @@ import { Panel } from '../components/Panel';
 interface AplPanelProps {
   readonly profile: CharacterProfile;
   readonly onChange: (profile: CharacterProfile) => void;
+  /** Which of the two lists this panel edits (round 64). See `aplSections`. */
+  readonly section: AplSection;
 }
+
+/** Each section's title, and which fights run it, for the panel header. */
+const SECTION_TITLE: Record<AplSection, string> = {
+  single: 'APL: Single Target',
+  multi: 'APL: Multi Target',
+};
+const SECTION_RUNS: Record<AplSection, string> = {
+  single: 'DPS and tank at one target, and the tank healer',
+  multi: 'DPS and tank at 2+ targets, and the raid healer',
+};
 
 /** What a list looks like to this panel: the stored shape, or a stock one. */
 interface ShownList {
@@ -73,7 +87,15 @@ interface ShownList {
  * Fire Mage that ran the Arcane list and produced a perfectly ordinary number.
  * ============================================================================
  */
-export function AplPanel({ profile, onChange }: AplPanelProps) {
+export function AplPanel({ profile: whole, onChange: change, section }: AplPanelProps) {
+  /*
+   * ONE SECTION AT A TIME (round 64): the section's lists are swapped into the
+   * profile's root, everything below edits the root as it always did, and each
+   * edit is written back to that section. The Single Target lists ARE the root.
+   */
+  const profile = withSection(whole, section);
+  const onChange = (next: CharacterProfile) => change(setSection(whole, section, next));
+  const multi = section === 'multi';
   const list = profile.rotation;
   const { names, nameOf } = aplNamesFor(profile);
   const abilities = abilityChoicesFor(profile);
@@ -121,7 +143,7 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
 
   return (
     <Panel
-      title="Priority list"
+      title={SECTION_TITLE[section]}
       /*
        * THE LIST'S OWN NAME AS THE BADGE, which shows while the panel is SHUT.
        * It is the cheapest guard against a build running a list meant for
@@ -129,13 +151,11 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
        * nothing that looks wrong.
        */
       badge={list.name || 'none'}
-      subtitle={
+      subtitle={`${SECTION_RUNS[section]} · ${
         list.entries.length > 0
-          ? `${list.entries.length} entries${
-              list.source === 'custom' ? ' · edited' : ''
-            }`
-          : 'No list: this build fights with auto attacks only'
-      }
+          ? `${list.entries.length} entries${list.source === 'custom' ? ', edited' : ''}`
+          : 'no list: auto attacks only'
+      }`}
       actions={
         list.source === 'custom' ? (
           <button type="button" onClick={reset} title="Go back to the stock list for this build">
@@ -211,7 +231,10 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
         auras={auras}
         channels={channels}
         heals={heals}
-        multiTarget={(profile.encounter.numberOfTargets ?? 1) > 1}
+        // Round 64: the target controller and Multi-DoT are the MULTI TARGET
+        // list's, and the Single Target list shows neither.
+        multiTarget={multi}
+        targets={multi}
         onChange={update}
       />
 
@@ -473,6 +496,7 @@ export function AplEntries({
   channels,
   heals,
   multiTarget,
+  targets = true,
   onChange,
 }: {
   readonly list: ShownList;
@@ -484,8 +508,10 @@ export function AplEntries({
   readonly channels?: readonly { readonly id: string; readonly name: string }[];
   /** The heals in the book, and whether each has a cast bar. See `healsIn`. */
   readonly heals?: ReadonlyMap<string, { readonly castBar: boolean }>;
-  /** Whether the fight has adds, which is when Multi-DoT is offered (round 57). */
+  /** Whether Multi-DoT is offered: the Multi Target list's (round 64). */
   readonly multiTarget?: boolean;
+  /** Whether the target controller is shown: the Multi Target list's (round 64). */
+  readonly targets?: boolean;
   readonly onChange?: (entries: readonly AplEntry[]) => void;
 }) {
   return (
@@ -539,7 +565,7 @@ export function AplEntries({
               * that already names a target -- the last so a target can always
               * be seen and taken off again.
               */}
-            {heals?.has(entry.abilityId) || entry.target ? (
+            {targets && (heals?.has(entry.abilityId) || entry.target) ? (
               <EntryTarget
                 target={entry.target}
                 onChange={
@@ -565,7 +591,7 @@ export function AplEntries({
               * has adds, and always shown where it is already set, so a stored
               * count can be seen and cleared at one target.
               */}
-            {!entry.target && (multiTarget || entry.multiDot !== undefined) ? (
+            {multiTarget && !entry.target ? (
               <EntryMultiDot
                 multiDot={entry.multiDot}
                 onChange={

@@ -21,7 +21,7 @@ import type { AplEntry } from '../game/rotations/apl';
  * moves on. Getting this in before anyone has saved anything is much cheaper
  * than retrofitting it later.
  */
-export const CURRENT_PROFILE_VERSION = 17;
+export const CURRENT_PROFILE_VERSION = 18;
 
 /** The most targets an encounter can hold: the Encounter panel's presets run 1 to 8. */
 export const MAX_ENCOUNTER_TARGETS = 8;
@@ -366,6 +366,28 @@ export interface CharacterProfile {
    */
   readonly precombat?: readonly PrecombatAction[];
   /**
+   * THE MULTI TARGET LIST (round 64), the owner's split of the Priority List
+   * into "APL: Single Target" and "APL: Multi Target", each with its own
+   * pre-combat and combat list.
+   *
+   * ============================================================================
+   * `rotation` AND `precombat` ABOVE ARE THE SINGLE TARGET LIST, unchanged, so
+   * every reader that existed before goes on reading the list it always did.
+   * This is the second list, run instead of them by:
+   *
+   *   - a DPS or tank fight with more than one target, and
+   *   - the RAID HEALER fight, always. The tank healer fight is single target.
+   *
+   * `fightProfile` in `aplSections.ts` is the one place that choice is made.
+   *
+   * ABSENT MEANS "THE SAME AS SINGLE TARGET", so nothing can run an empty list
+   * by accident -- but the migration, the presets and the app all write it out
+   * in full, because a file is a complete description of the build.
+   * Arrived in format version 18.
+   * ============================================================================
+   */
+  readonly multiTarget?: StoredAplSection;
+  /**
    * What a point of each stat is worth to this character, for SORTING GEAR.
    *
    * ==========================================================================
@@ -450,6 +472,12 @@ export interface StoredRotation {
   readonly entries: readonly AplEntry[];
   /** Smart healing, list-wide (round 54). See `AplList.smartHealing`. */
   readonly smartHealing?: boolean;
+}
+
+/** One APL section: a combat list and what to do before the pull (round 64). */
+export interface StoredAplSection {
+  readonly rotation: StoredRotation;
+  readonly precombat?: readonly PrecombatAction[];
 }
 
 /** A sensible starting profile, matching the first-milestone prototype. */
@@ -566,5 +594,13 @@ export function cloneProfile(profile: CharacterProfile): CharacterProfile {
      * compares built profiles by value.
      */
     ...(profile.precombat ? { precombat: [...profile.precombat] } : {}),
+    ...(profile.multiTarget
+      ? {
+          multiTarget: {
+            rotation: { ...profile.multiTarget.rotation, entries: [...profile.multiTarget.rotation.entries] },
+            ...(profile.multiTarget.precombat ? { precombat: [...profile.multiTarget.precombat] } : {}),
+          },
+        }
+      : {}),
   };
 }

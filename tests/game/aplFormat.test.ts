@@ -205,6 +205,7 @@ describe('the panel shows the list the build runs', () => {
     renderToStaticMarkup(
       createElement(AplPanel, {
         profile: PRESETS_BY_ID.get(presetId)!.build(),
+        section: 'single',
         onChange: () => undefined,
       }),
     );

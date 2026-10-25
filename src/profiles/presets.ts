@@ -4182,7 +4182,16 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
 function withStockRotations(presets: readonly ProfilePreset[]): readonly ProfilePreset[] {
   return presets.map((preset) => ({
     ...preset,
-    build: () => syncDefaultRotation(withoutUnusedOffHandEffect(preset.build())),
+    build: () => {
+      /*
+       * THE MULTI TARGET LIST STARTS AS A COPY OF THIS PRESET'S OWN (round 64).
+       * A preset built from another one -- Fury Prot from Prot Warr -- would
+       * otherwise carry the other's Multi Target list and pre-combat.
+       */
+      const { multiTarget: _inherited, ...built } = withoutUnusedOffHandEffect(preset.build());
+      void _inherited;
+      return syncDefaultRotation(built);
+    },
   }));
 }
 

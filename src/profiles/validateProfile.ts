@@ -16,7 +16,7 @@ import { ENCHANTS_BY_ID, ITEMS_BY_ID } from '../game/items/itemData';
 import type { TalentAllocation } from '../game/talents/Talent';
 import { talentsForClass } from '../game/talents/talentData';
 import { isLegal } from '../game/talents/talentRules';
-import type { CharacterProfile } from './CharacterProfile';
+import type { CharacterProfile, StoredRotation } from './CharacterProfile';
 import { MAX_ENCOUNTER_TARGETS } from './CharacterProfile';
 import { DEFAULT_POISON_LOADOUT } from '../game/reactions/poisons';
 import {
@@ -365,48 +365,19 @@ export function validateProfile(value: unknown): ValidationResult {
    * load cleanly and then fail when the fight starts, which is the worst place
    * to find out. Checked here, the file is refused with a message instead.
    */
-  const rotation = value.rotation;
-  if (!isRecord(rotation)) {
-    issues.push({ path: 'rotation', message: 'Missing rotation section.' });
-  } else {
-    if (rotation.source !== 'default' && rotation.source !== 'custom') {
-      issues.push({ path: 'rotation.source', message: 'Must be "default" or "custom".' });
-    }
-    if (typeof rotation.name !== 'string') {
-      issues.push({ path: 'rotation.name', message: 'Must be a string.' });
-    }
-    if (!Array.isArray(rotation.entries)) {
-      issues.push({ path: 'rotation.entries', message: 'Must be a list of entries.' });
+  checkRotation(value.rotation, 'rotation', issues);
+  /*
+   * THE MULTI TARGET LIST (round 64), checked exactly as the single target one
+   * is. Optional: a file without it runs its one list in every fight.
+   */
+  if (value.multiTarget !== undefined) {
+    if (!isRecord(value.multiTarget)) {
+      issues.push({ path: 'multiTarget', message: 'Must be an APL section.' });
     } else {
-      rotation.entries.forEach((entry, index) => {
-        if (!isRecord(entry) || typeof entry.abilityId !== 'string' || entry.abilityId.length === 0) {
-          issues.push({
-            path: `rotation.entries.${index}`,
-            message: 'Each entry needs an abilityId.',
-          });
-          return;
-        }
-        if (
-          entry.multiDot !== undefined &&
-          (typeof entry.multiDot !== 'number' ||
-            !Number.isInteger(entry.multiDot) ||
-            entry.multiDot < 1)
-        ) {
-          issues.push({
-            path: `rotation.entries.${index}.multiDot`,
-            message: 'Multi-DoT must be a whole number of targets, 1 or more.',
-          });
-        }
-        if (entry.condition !== undefined) {
-          const unknown = unknownBuiltin(entry.condition);
-          if (unknown !== undefined) {
-            issues.push({
-              path: `rotation.entries.${index}.condition`,
-              message: `Unknown condition "${unknown}".`,
-            });
-          }
-        }
-      });
+      checkRotation(value.multiTarget.rotation, 'multiTarget.rotation', issues);
+      if (value.multiTarget.precombat !== undefined && !Array.isArray(value.multiTarget.precombat)) {
+        issues.push({ path: 'multiTarget.precombat', message: 'Must be a list of actions.' });
+      }
     }
   }
 
@@ -548,13 +519,7 @@ export function validateProfile(value: unknown): ValidationResult {
        * nothing, which is the loudest of the three and the only reason it
        * would be noticed quickly.
        */
-      rotation: {
-        source: validated.rotation.source === 'custom' ? 'custom' : 'default',
-        name: validated.rotation.name,
-        entries: validated.rotation.entries.map((entry) => ({ ...entry })),
-        // Named, or the rebuild drops it (round 54).
-        ...(validated.rotation.smartHealing === true ? { smartHealing: true } : {}),
-      },
+      rotation: cleanRotation(validated.rotation),
       /*
        * NAMED HERE, WHICH IS THE WHOLE POINT OF THE THREE COMMENTS BELOW.
        * This rebuild drops any field it does not mention, and has silently
@@ -567,6 +532,17 @@ export function validateProfile(value: unknown): ValidationResult {
        */
       ...(Array.isArray(validated.precombat)
         ? { precombat: validated.precombat.map((action) => ({ ...action })) }
+        : {}),
+      // The Multi Target list (round 64), named here or the rebuild drops it.
+      ...(validated.multiTarget !== undefined
+        ? {
+            multiTarget: {
+              rotation: cleanRotation(validated.multiTarget.rotation),
+              ...(Array.isArray(validated.multiTarget.precombat)
+                ? { precombat: validated.multiTarget.precombat.map((action) => ({ ...action })) }
+                : {}),
+            },
+          }
         : {}),
       /*
        * NAMED HERE FOR THE REASON THE THREE ABOVE ARE. This rebuild has now
@@ -720,4 +696,65 @@ function requireNonNegativeNumber(
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
     issues.push({ path, message: 'Must be zero or greater.' });
   }
+}
+
+/**
+ * Check one stored priority list, reporting under `path` -- `rotation`, or
+ * `multiTarget.rotation` (round 64, when a profile gained a second list).
+ */
+function checkRotation(rotation: unknown, path: string, issues: ValidationIssue[]): void {
+  if (!isRecord(rotation)) {
+    issues.push({ path, message: 'Missing rotation section.' });
+  } else {
+    if (rotation.source !== 'default' && rotation.source !== 'custom') {
+      issues.push({ path: `${path}.source`, message: 'Must be "default" or "custom".' });
+    }
+    if (typeof rotation.name !== 'string') {
+      issues.push({ path: `${path}.name`, message: 'Must be a string.' });
+    }
+    if (!Array.isArray(rotation.entries)) {
+      issues.push({ path: `${path}.entries`, message: 'Must be a list of entries.' });
+    } else {
+      rotation.entries.forEach((entry, index) => {
+        if (!isRecord(entry) || typeof entry.abilityId !== 'string' || entry.abilityId.length === 0) {
+          issues.push({
+            path: `${path}.entries.${index}`,
+            message: 'Each entry needs an abilityId.',
+          });
+          return;
+        }
+        if (
+          entry.multiDot !== undefined &&
+          (typeof entry.multiDot !== 'number' ||
+            !Number.isInteger(entry.multiDot) ||
+            entry.multiDot < 1)
+        ) {
+          issues.push({
+            path: `${path}.entries.${index}.multiDot`,
+            message: 'Multi-DoT must be a whole number of targets, 1 or more.',
+          });
+        }
+        if (entry.condition !== undefined) {
+          const unknown = unknownBuiltin(entry.condition);
+          if (unknown !== undefined) {
+            issues.push({
+              path: `${path}.entries.${index}.condition`,
+              message: `Unknown condition "${unknown}".`,
+            });
+          }
+        }
+      });
+    }
+  }
+}
+
+/** Rebuild one stored list, keeping only the fields a list has. */
+function cleanRotation(rotation: StoredRotation): StoredRotation {
+  return {
+    source: rotation.source === 'custom' ? 'custom' : 'default',
+    name: rotation.name,
+    entries: rotation.entries.map((entry) => ({ ...entry })),
+    // Named, or the rebuild drops it (round 54).
+    ...(rotation.smartHealing === true ? { smartHealing: true } : {}),
+  };
 }

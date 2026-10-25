@@ -1,3 +1,4 @@
+import { fightSection, withSection } from '../profiles/aplSections';
 import type { AuraDefinition, Combatant, SimulationConfig } from '../engine';
 import { FOREVER_THREAT_RULES } from '../game/combat/threat';
 import { spellResistanceConstant } from '../game/combat/spellResistance';
@@ -47,9 +48,19 @@ export const FIGHT_DURATION_VARIANCE = 0.05;
  * conventions meet.
  */
 export function trainingDummyEncounter(
-  profile: CharacterProfile,
-  seed: number = profile.simulation.seed,
+  given: CharacterProfile,
+  seed: number = given.simulation.seed,
 ): SimulationConfig {
+  /*
+   * WHICH APL SECTION THIS FIGHT RUNS (round 64): Multi Target with more than
+   * one target, Single Target otherwise. Swapped into the profile's root lists,
+   * so everything below reads the one that runs -- and idempotent, so the
+   * healer fights, which choose their own first, are left as they chose.
+   */
+  const profile = withSection(
+    given,
+    fightSection({ targets: Math.floor(given.encounter.numberOfTargets ?? 1) }),
+  );
   /*
    * Resolved ONCE, outside the combatant factory, because the selection is the
    * same for every iteration of a batch. The auras themselves are shared

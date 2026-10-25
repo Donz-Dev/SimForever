@@ -107,6 +107,36 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 64: APL Single Target and APL Multi Target
+
+The owner split the Priority List into **two sections**, each collapsible on
+its own and each with its own **pre-combat list and combat list**:
+
+| | runs in | shows |
+| --- | --- | --- |
+| **APL: Single Target** | DPS and tank fights at one target, and the **tank healer** fight | no target controller, no Multi-DoT |
+| **APL: Multi Target** | DPS and tank fights at **2+ targets**, and the **raid healer** fight, always | the target controller and Multi-DoT |
+
+The tank healer fight runs Single Target because it heals one target; the
+owner chose that when asked, since the request placed healer fights under both.
+
+**SINGLE TARGET IS THE LIST THAT ALREADY EXISTED** -- `rotation` and
+`precombat` on the profile root, unchanged -- so every reader that existed
+goes on reading the list it always did. Multi Target is the new
+`multiTarget` field. `profiles/aplSections.ts` is the one place a fight
+chooses (`fightSection`) and the one place a section is swapped into the root
+(`withSection`), for the panel that edits it and the fight that runs it.
+
+**NO FIGURE MOVED, AND THAT WAS CHECKED RATHER THAN ASSUMED.** A saved
+profile's Multi Target list is a copy of its one list (format version 18),
+and a preset's starts the same way. So all 34 combat-log hashes are identical
+to `main`, and both healers' tank and raid figures match to the decimal.
+
+**A PRESET BUILT FROM ANOTHER ONE WOULD HAVE INHERITED ITS MULTI TARGET
+LIST.** Fury Prot is built from Prot Warr, so it carried Prot Warr's pre-combat
+in its second list. The tests caught it, and a preset's second list now always
+starts from its own.
+
 ## Round 63: every haste source multiplies
 
 The owner's ruling: "All Haste effects are treated as individual sources and

@@ -18,6 +18,27 @@ type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
  */
 const migrations: Record<number, Migration> = {
   /**
+   * Version 18 split the Priority List into SINGLE TARGET and MULTI TARGET
+   * (round 64). A saved profile had one list and ran it in every fight, so
+   * its Multi Target list is a copy of it -- pre-combat included -- and no
+   * result moves.
+   */
+  17: (profile) => {
+    const rotation = profile.rotation;
+    if (typeof rotation !== 'object' || rotation === null) return { ...profile };
+    const copy = JSON.parse(JSON.stringify(rotation)) as unknown;
+    return {
+      ...profile,
+      multiTarget: {
+        rotation: copy,
+        ...(Array.isArray(profile.precombat)
+          ? { precombat: JSON.parse(JSON.stringify(profile.precombat)) as unknown }
+          : {}),
+      },
+    };
+  },
+
+  /**
    * Version 17 added `encounter.numberOfTargets` (round 57). A saved profile
    * fought ONE target, so it gets one and no result moves.
    */

@@ -54,6 +54,10 @@ describe('Flamestrike', () => {
       precombat: undefined,
       encounter: { ...preset.encounter, numberOfTargets: 3 },
       rotation: { source: 'custom' as const, name: 'probe', entries: [{ abilityId: 'flamestrike' }] },
+      // Three targets run the MULTI TARGET list (round 64), so the probe goes there too.
+      multiTarget: {
+        rotation: { source: 'custom' as const, name: 'probe', entries: [{ abilityId: 'flamestrike' }] },
+      },
     };
     const events: TelemetryEvent[] = [];
     const simulation = new Simulation(trainingDummyEncounter(profile, 5), { emit: (e) => events.push(e) });
