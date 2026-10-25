@@ -107,6 +107,43 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 63: every haste source multiplies
+
+The owner's ruling: "All Haste effects are treated as individual sources and
+are multiplied together." Their example, a Windshaper Skyborne Fury Warrior
+with "+1% Haste" on head, gloves and legs, in Flurry:
+
+    1.03 x 1.01 x 1.01 x 1.01 x 1.25 = 1.3265     (it read 1.31 before)
+
+**HASTE WAS ADDED FOR THE WHOLE PROJECT.** Every source was a `hasteRating`
+and the stat block summed them, so a 25% and a 3% made 28% rather than 28.75%.
+
+**THE STAT BLOCK MULTIPLIES NOW, FOR HASTE ONLY.** Each flat haste modifier is
+one source and so is the base, and the product is written back as the
+equivalent rating. Every reader that converts the rating into a multiplier
+gets the compounded figure unchanged: the swing timers, cast times, parry
+haste, the pre-cast lead and the character sheet.
+
+**SO EACH SOURCE HAS TO ARRIVE APART.** `createPlayer` used to fold the items,
+enchants, weapon stone and race into the starting stats as one number. It now
+takes their haste back out and adds each one as a modifier of its own --
+one per item, one per enchant, one each for the stone and the race. An aura
+(Flurry, Slice and Dice, Berserking, Seal of the Crusader, Thunder Clap's
+slow) was already its own modifier. A slow multiplies too: 25% haste under a
+10% slow is 1.25 x 0.9.
+
+Pinned by `tests/engine/hasteCompounds.test.ts`:
+- the owner's example, read off the built character, to ten decimal places;
+- a swing gap and a cast time, each measured against the compounded figure.
+5 of its 7 tests fail with the engine change reverted.
+
+Measured, 300 fights a profile against `main`: **12 rows up, 20 identical,
+none down**, mean 878.6 -> 879.9 over 32. Combining positive haste sources by
+multiplying can only add haste, so a profile that moved down would be the bug.
+The largest moves are LW Melee +11.6, Combat Mut +6.6, Enh Shaman +5.1 and LW
+Ranged +5.1, all inside their own intervals. DW Fury reads +0.0, because its
+only haste source is Flurry.
+
 ## Round 62: raid frames, a diagnostic for the raid healer
 
 The owner's ask: "a snapshot of all 20 players' hit points as the fight
