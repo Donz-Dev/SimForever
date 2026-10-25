@@ -28,6 +28,8 @@ import {
   WILD_GROWTH_TICK_HEAL_COEFFICIENT,
 } from '../../src/game/combat/coefficients';
 import { createPlayer } from '../../src/game/actors/createPlayer';
+import { CLEARCASTING } from '../../src/game/auras/druid';
+import { omenOfClarityHealReaction, omenOfClarityReaction } from '../../src/game/reactions/druid';
 import { DRUID_RESTORATION } from '../../src/game/rotations/druid';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { healerEncounter } from '../../src/simulator/healerEncounter';
@@ -198,6 +200,127 @@ describe('Swiftmend', () => {
     expect(swift).toHaveLength(1);
     expect(raw(swift[0]!)).toBeCloseTo(4 * (REJUVENATION_TICK + 0.2 * 1000), 6);
     expect(t.auras.has('rejuvenation')).toBe(true);
+  });
+
+  /*
+   * A 50/50 WHEN BOTH ARE UP (round 72), the owner's. Each side is forced
+   * through `rollChance`, so the test is decided by one cast rather than a
+   * sample -- and with only one of them up no roll is drawn at all.
+   */
+  function swiftmendWith(rolls: boolean | undefined, which: readonly ('rejuvenation' | 'regrowth')[]) {
+    const caster = druid(0, [REJUVENATION, REGROWTH, SWIFTMEND]);
+    const t = member('t', 1, 0.1);
+    const events: TelemetryEvent[] = [];
+    const simulation = buildSimulation([caster, t], { durationMs: seconds(60) }, { emit: (e) => events.push(e) });
+    simulation.begin();
+    for (const id of which) {
+      castAbility(simulation, caster, caster.abilities.get(id)!, t);
+      simulation.advanceTo(simulation.clock.now() + seconds(2.5));
+    }
+    let drawn = 0;
+    const real = simulation.rng;
+    (simulation as { rng: typeof real }).rng = {
+      ...real,
+      next: () => real.next(),
+      nextInt: (a: number, b: number) => real.nextInt(a, b),
+      nextFloat: (a: number, b: number) => real.nextFloat(a, b),
+      nextDuration: (a: number, b: number) => real.nextDuration(a, b),
+      pick: <T,>(items: readonly T[]) => real.pick(items),
+      rollChance: (chance: number) => {
+        if (chance === 0.5) drawn += 1;
+        return chance === 0.5 ? (rolls ?? true) : real.rollChance(chance);
+      },
+    };
+    castAbility(simulation, caster, caster.abilities.get('swiftmend')!, t);
+    const amount = raw(heals(events).find((e) => e.abilityId === 'swiftmend')!);
+    return { amount, drawn };
+  }
+
+  it('flips a coin between Rejuvenation and Regrowth when both are up', () => {
+    const rejuvenationWhole = 4 * REJUVENATION_TICK;
+    const regrowthWhole = 7 * REGROWTH_TICK;
+    const heads = swiftmendWith(true, ['rejuvenation', 'regrowth']);
+    const tails = swiftmendWith(false, ['rejuvenation', 'regrowth']);
+    expect(heads.amount).toBeCloseTo(rejuvenationWhole, 6);
+    expect(tails.amount).toBeCloseTo(regrowthWhole, 6);
+    expect([heads.drawn, tails.drawn]).toEqual([1, 1]);
+  });
+
+  it('uses the one that is up, with no roll, when only one is', () => {
+    const onlyRejuvenation = swiftmendWith(undefined, ['rejuvenation']);
+    const onlyRegrowth = swiftmendWith(undefined, ['regrowth']);
+    expect(onlyRejuvenation.amount).toBeCloseTo(4 * REJUVENATION_TICK, 6);
+    expect(onlyRegrowth.amount).toBeCloseTo(7 * REGROWTH_TICK, 6);
+    expect([onlyRejuvenation.drawn, onlyRegrowth.drawn]).toEqual([0, 0]);
+  });
+});
+
+describe('Omen of Clarity on a healing spell', () => {
+  /*
+   * ROUND 72, the owner's: "Make Omen of Clarity have a chance to proc on
+   * healing spell cast." At a 100% chance here, so each case is one cast.
+   */
+  function healer() {
+    return makeAttacker({
+      id: 'druid',
+      autoAttack: 'none',
+      abilities: [HEALING_TOUCH, REJUVENATION, INNERVATE],
+      resources: [{ type: 'mana', maximum: 100_000 }],
+      stats: { spellCritChance: -100, healingPower: 0 },
+      castReactions: [omenOfClarityHealReaction(100)],
+      reactions: [omenOfClarityReaction(100)],
+    });
+  }
+
+  it('procs Clearcasting off a heal cast, which deals no damage', () => {
+    const caster = healer();
+    const t = member('t', 1, 0.1);
+    const simulation = buildSimulation([caster, t]);
+    simulation.begin();
+    castAbility(simulation, caster, caster.abilities.get('rejuvenation')!, t);
+    expect(caster.auras.has(CLEARCASTING.id)).toBe(true);
+  });
+
+  it('is spent by a heal, which then costs nothing, and not by Innervate', () => {
+    const caster = healer();
+    const t = member('t', 1, 0.1);
+    const events: TelemetryEvent[] = [];
+    const simulation = buildSimulation([caster, t], {}, { emit: (e) => events.push(e) });
+    simulation.begin();
+    simulation.applyAura(caster, CLEARCASTING, caster.id);
+    castAbility(simulation, caster, caster.abilities.get('innervate')!, undefined);
+    expect(caster.auras.has(CLEARCASTING.id)).toBe(true);
+    simulation.advanceTo(seconds(2));
+    events.length = 0;
+    castAbility(simulation, caster, caster.abilities.get('healing_touch')!, t);
+    const spent = events.filter((e) => e.type === 'resource_spent' && e.resource === 'mana');
+    expect(spent.reduce((sum, e) => sum + (e as { amount: number }).amount, 0)).toBe(0);
+  });
+
+  it('shares one ten-second internal cooldown between the heal half and the damage half', () => {
+    const caster = healer();
+    const t = member('t', 1, 0.1);
+    const simulation = buildSimulation([caster, t], { durationMs: seconds(60) });
+    simulation.begin();
+    castAbility(simulation, caster, caster.abilities.get('rejuvenation')!, t);
+    expect(caster.auras.has(CLEARCASTING.id)).toBe(true);
+    caster.auras.remove(simulation, CLEARCASTING.id);
+    simulation.advanceTo(seconds(3));
+    // Inside the window: a second heal does not proc it again.
+    castAbility(simulation, caster, caster.abilities.get('rejuvenation')!, member('u', 1, 0.1));
+    expect(caster.auras.has(CLEARCASTING.id)).toBe(false);
+    // Nor does the damage half, whose window is the same one.
+    const reaction = omenOfClarityReaction(100);
+    expect(reaction.canTrigger!(simulation, caster, {} as never)).toBe(false);
+    simulation.advanceTo(seconds(11));
+    expect(reaction.canTrigger!(simulation, caster, {} as never)).toBe(true);
+  });
+
+  it('is on every Druid, built with the character', () => {
+    const profile = PRESETS_BY_ID.get('druid_resto')!.build();
+    const player = createPlayer({ ...profile.character, talents: profile.talents });
+    expect(player.castReactions.map((r) => r.id)).toContain('omen_of_clarity_heal');
+    expect(player.reactions.map((r) => r.id)).toContain('omen_of_clarity');
   });
 });
 

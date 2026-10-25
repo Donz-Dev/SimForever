@@ -203,6 +203,12 @@ export interface CastModifier {
    * ----------------------------------------------------------------------------
    */
   readonly requiresAttackTable?: boolean;
+  /**
+   * AND A HEAL COUNTS TOO (round 72): Clearcasting's "your next damage OR
+   * HEALING spell". A heal rolls on no table, so `requiresAttackTable` alone
+   * would refuse every one; this lets an ability marked `heals` through.
+   */
+  readonly healsCount?: boolean;
   /** Milliseconds taken off the cast, before haste. */
   readonly castTimeReductionMs?: Milliseconds;
   /**

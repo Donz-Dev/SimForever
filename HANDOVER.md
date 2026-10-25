@@ -107,6 +107,44 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 72: Swiftmend's coin flip, and Omen of Clarity on heals
+
+The owner ruled on two of round 71's four questions:
+
+| | round 71 | round 72 |
+| --- | --- | --- |
+| which effect Swiftmend uses | Rejuvenation when yours is up, else Regrowth | **a 50/50** when both of yours are up; the one that is up, with no roll drawn, when only one is |
+| Omen of Clarity on a healer | nothing: the proc read damage dealt, and a heal could not spend the charge | a **healing spell cast** can proc it, and a heal **spends** it |
+
+**THE PROC IS A CAST REACTION**, `omenOfClarityHealReaction`, on every Druid
+beside the damage half. It fires once per cast, on its last tick, for an
+ability marked `heals`, at the same chance (4%, doubled in Moonkin Form). **The
+two halves share one ten-second internal cooldown**, which now lives on the
+character rather than in each reaction's closure, so a heal and a damage hit
+cannot both proc inside the window.
+
+**SPENDING IT NEEDED ONE ENGINE FIELD.** Clearcasting is spent only by an
+ability with an attack table, the owner's definition of "offensive", and a
+heal rolls on none. The owner asked only for the proc, but a proc a pure healer
+could never spend would sit unused, and the tooltip says "your next damage **or
+healing** spell". `CastModifier.healsCount` lets an ability marked `heals` past
+`requiresAttackTable`. Innervate costs mana and heals nothing, so it still
+cannot spend the charge.
+
+Resto Drood, 200 fights per fight type:
+
+| | HPS | deaths | Clearcasting |
+| --- | --- | --- | --- |
+| tank healer | 644.8 -> **653.7** | 1.83 -> 1.66 | 0.59 a fight, 382 mana saved, mostly on Healing Touch |
+| raid healer | 1,843.8 -> **1,907.1** | 8.06 -> 6.57 allied | 1.19 a fight, 645 mana saved, mostly on Rejuvenation |
+
+**THE MOONKIN, CAT AND BEAR ARE UNCHANGED**: all 35 combat logs match `main`.
+None of them casts a heal, and moving the internal cooldown onto the character
+changes nothing else.
+
+Two of round 71's questions remain open: whether Swiftmend should consume the
+heal over time, and whether Improved Regrowth's crit reaches the ticks.
+
 ## Round 71: Resto Drood, a Druid healer
 
 The owner's 35th profile: an 11/0/40 Restoration Druid from their talent URL,
