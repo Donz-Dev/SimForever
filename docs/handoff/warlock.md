@@ -8,6 +8,93 @@ directory for what the census columns mean and how to reprint every figure below
 
 ---
 
+## Round 80 -- the second pass, under the owner's round 79 rules
+
+`tools/optimise/warlockVariants80.ts` (`w80*` groups, `FILE=` it). Talents,
+race, enchants, stones and stat consumables on `WEIGHTED=1` (49% 1T/120s, 17%
+each 3T/60s, 5T/60s, 8T/30s), 300 paired iterations a column; Single Target
+lists at 1T/120s and Multi Target lists at 5T/60s with 3T/60s and 8T/30s
+checked, 300-600 paired fights a row. **This is a round that can have a round
+after it** -- the figures below are this branch's, before any merge.
+
+### Before and after (`tools/full_report.ts`, 300 fights a cell)
+
+| | 1T 120s | 3T 60s | 5T 60s | 8T 30s | weighted |
+| --- | --- | --- | --- | --- | --- |
+| SM/DS | 808.1 -> **806.4** | 1338.1 -> **1324.3** | 1822.6 -> **1833.4** | 2458.8 -> **2537.2** | 1351.3 -> **1363.2** (+11.9) |
+| Firelock | 877.5 -> **873.5** | 1219.2 -> **1321.3** | 1816.9 -> **1863.1** | 2870.3 -> **3019.6** | 1434.1 -> **1482.7** (+48.6) |
+| Sbolt Spam | 834.5 -> **834.6** | 1142.1 -> **1142.1** | 1570.2 -> **1570.2** | 2270.0 -> **2270.0** | 1255.9 -> **1256.0** |
+| Fire Demo | 1021.6 -> **1013.9** | 1346.1 -> **1374.4** | 1890.5 -> **1922.3** | 2936.0 -> **3057.1** | 1549.9 -> **1577.0** (+27.0) |
+
+### What shipped
+
+| profile | change | figure |
+| --- | --- | --- |
+| SM/DS, Firelock, Fire Demo | **Troll** (Human is no longer allowed) | weighted +11.05 / +32.17 / +23.13 over Human; Orc +2.06 / -2.79 / +3.91, Undead -0.65 / -2.04 / -1.31. Troll costs 4-6 DPS at 1T and pays at 8T (Berserking under a 30s Hellfire fight) |
+| all four | the racial cooldowns in the **Multi Target** lists (they had none) | narrowed by race, so only Berserking reaches these builds |
+| all four | **Primary + Secondary Potion** (Spellblasting and Major Mana) with list logic | below |
+| Firelock | Multi Target Immolate walked over up to 4 targets at <= 4 | **+75.70 +/- 4.66 at 3T**, nothing at 5/8 |
+| Fire Demo | Multi Target Bane of Agony on the boss at <= 4 targets | +4.58 +/- 1.79 at 3T (-2.55 at 5T ungated) |
+
+**THE POTION PAIR.** The two share the two-minute cooldown, so in a 120s fight
+exactly one is drunk and the entries decide which:
+
+| profile | Single Target list | Multi Target list | figure |
+| --- | --- | --- | --- |
+| SM/DS | Spellblasting at the pull; mana potion under 30% | Spellblasting at the pull; mana under 50% after 60s | every mana logic lost at 120s (-1.6 to -5.9); mana-only -18.5 at 5T |
+| Firelock | mana under 30%, else Spellblasting in the last 30s | Spellblasting at the pull | ST identical fights (the build always dips under 30%); MT +5.38 +/- 0.02 |
+| Fire Demo | mana under 50% after 60s, else Spellblasting in the last 30s | Spellblasting at the pull | ST +4.52 +/- 3.09 (+3.39 at 600 fights); MT +4.66 |
+| Sbolt | the owner's sequence drinks Spellblasting at the pull; mana under 50% after 60s below it | the same | identical at 120s and under; reached only in a longer fight |
+
+**THE OWNER'S FIRELOCK POTION LINE GAINED A CONDITION** -- the Spellblasting
+entry that opens the list now waits for the last 30s -- on the owner's own
+round 79 instruction that the APL decides which potion is drunk when.
+
+**A CONSUMABLE CHANGE INSIDE `inMulti` IS THROWN AWAY.** `setSection` writes
+back the lists and nothing else, so a variant that selects a potion inside
+`inMulti` measures the old selection with the new entries. The first Multi
+Target potion sweep read identical fights on the Fire builds for that reason;
+`potionLogic` selects outside and edits inside.
+
+### Every dimension, with the rows that lost
+
+| dimension | SM/DS | Firelock | Sbolt | Fire Demo |
+| --- | --- | --- | --- | --- |
+| talents (weighted) | every alternative loses: ISB->Bane -9.20, IBoA->ILT -25.44, Imp Drains->ILT -29.42, Soul Siphon -45.24, Pandemic -64.47; Aegis->Energies identical | ILT->Imp Corr -7.07, Cataclysm -8.04, Aftermath -12.93, F&B -13.26 | Imp Voidwalker->Fel Vitality **+8.42 +/- 0.74 (owner's URL, not shipped)**; Agonizing->Cataclysm -26.06 | Aftermath->Cata3+Aft2 -4.74; Suppression->ILT -24.51; Embrace->Energies identical |
+| race | **Troll** | **Troll** | Orc kept (owner sequence); see Needs the owner | **Troll** |
+| opener | unchanged | Immolate pull (question) -2.55 noise | unchanged | Immolate pull (question) -4.80 |
+| ST APL | tap 3% -0.07, 8% -0.73, 12% -5.12; Siphon interrupts Wrack -9.33; no Siphon -8.43; SB above Wrack -7.79; Bane of Doom -16.25; Berserking timing all noise | tap 3% **-39.43**, 8% -1.61; Conflagrate held for Immolate at 12/9/6/3s -5.9/-6.7/-6.6/**-31.4**; Soul Fire -4.6 to -8.7; Searing Pain filler -59.8; Shadow Bolt in the S&F window **-114.3**; Corruption +4.44 to +5.05 (owner removed it); Bane of Doom +8.41 | owner taps 5% -18.26, 15% -6.26; Bane of Doom -13.25 | tap 3% -2.73, 10% -2.72; no Corruption -17.21; Soul Fire outside Decimation -7.91; SB in the Decimation phase -31.84; Immolate "if missing" -11.19; Bane of Doom +8.48 |
+| MT APL | Berserking above Hellfire +5.2 at 5T, -11.4 at 3T; DoTs interrupting Hellfire -179/-53/-55; DoTs on 3 not 5 -119 at 5T; DoTs spread at 8 -38; Siphon Life -22.6; tap 2000 -10.8; Rain of Fire at 3T **-271** | Immolate x4 **shipped**; plus Conflagrate held to 3s +4.0 more (noise); Bane walked x3 -612 at 3T; Corruption -55/-125; no Shadowburn -68; no Havoc -200/-347; Berserking above Hellfire -4 to -7 | DoTs interrupting Hellfire -89/-30/-118; DoTs on 3 -81 | Bane on the boss at <=4 **shipped**; Corruption -46/-103; Immolate at 5T -38; Berserking above Hellfire -5.7 at 3T |
+| potions | above | above | above | above |
+| other consumables (weighted) | Healthstone -4.26; Fire school -22.95 | Healthstone -5.85; Shadow school -12.63 | **Shadow school +22.77 (owner's, not shipped)**; Healthstone -8.37 | Healthstone -6.88; Shadow school -13.21 |
+| stone (weighted) | Firestone -13.86, none -32.55 | Spellstone -0.35, none -24.70 | **Spellstone +14.42 (owner's)**; none -20.20 | Spellstone -3.82, none -26.21 |
+| enchants (weighted, legal for the slot) | all hold: head/legs Int -7.52, Spirit -9.11; gloves Haste -3.75; weapon SP -24.13; Minor Speed->Stamina and Threat->Agility identical fights | Int -11.54; gloves Haste -0.37 noise | Int -9.69; gloves Haste -3.44 | Int -10.30; gloves Haste -1.69 noise |
+| demon | -- | -- | -- | Succubus out, Imp sacrificed **-251.0** |
+
+### Needs the owner
+
+1. **HELLFIRE AND RAIN OF FIRE ARE DESTRUCTION SPELLS IN THE CLIENT AND NOT IN
+   `WARLOCK_DESTRUCTION_SPELLS`.** The spellbook capture gives both the
+   Destruction tab; the list omits them, so Agonizing Flames, Ruin and
+   Cataclysm never reach the spell every Multi Target list is built on. Priced
+   by adding the two ids and reverting: Firelock weighted **1482.7 -> 1665.4**,
+   Sbolt **1256.0 -> 1364.1**, Fire Demo **1577.0 -> 1759.5**. Not shipped.
+2. Firelock **Corruption** above Life Tap: +4.44 to +5.05 at 1T/120s (two
+   seeds), against the owner's "no Corruption" instruction.
+3. **Bane of Doom** above Bane of Agony (61s+ left): Firelock +8.41, Fire Demo
+   +8.48, SM/DS -16.25, Sbolt -13.25 at 120s; with Corruption on the Firelock +17.58.
+4. **Sbolt Spam**: Troll with Berserking in the owner's sequence for Blood Fury
+   **+19.71** weighted (-8.7 at 1T; Undead -5.25); Shadow school + Spellstone +
+   Fel Vitality **+46.01**; all of them together **+63.17**.
+
+### Engine or data notes
+
+- Revelation's crit reaching DoT ticks (round 78's question) is still open and
+  nothing here builds on it.
+- Death Coil and Drain Life are in the spellbook capture and not declared.
+
+---
+
 ## Round 78 -- all four optimised for the full report, and a Multi Target list each
 
 **The objective changed under every earlier figure here.** The report measures

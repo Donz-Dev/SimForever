@@ -4109,15 +4109,16 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'warlock_smds',
     label: 'SM/DS',
-    detail: 'Human, caster, Imp sacrificed, standing target. 35 Affliction',
+    detail: 'Troll, caster, Imp sacrificed, standing target. 35 Affliction',
     characterClass: 'warlock',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'SM/DS',
-        // Round 78: Human's +2% crit over Touch of the Grave, by race swap on
-        // identical gear -- +5.9 at 120s and +14.9 at 5 targets.
-        race: 'human',
+        // Round 80: Troll, the best of the three Horde races a Warlock can be,
+        // on the weighted score -- +11.05 +/- 2.20 over the old Human (Orc
+        // +2.06, Undead -0.65); Berserking pays at 8 targets in 30s.
+        race: 'troll',
         characterClass: 'warlock',
         level: 60,
         combatStyle: 'caster',
@@ -4139,7 +4140,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        */
       warlockStone: 'spellstone',
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: casterConsumables('school_shadow'),
+      // Round 80: Spellblasting (Primary, at the pull) and the Major Mana
+      // Potion (Secondary) -- at 120s the Blast at the pull beats every mana
+      // logic tried (-1.6 to -5.9), so the mana potion is the long-fight row.
+      consumables: {
+        ...casterConsumables('school_shadow'),
+        potion_secondary: 'secondary_major_mana_potion',
+      },
       /*
        * 2.5 SECONDS IS SHADOW BOLT'S CAST TIME ON THIS BUILD AND NOT ON THE
        * ABILITY, which is the sharpest evidence for how `secondsBefore` reads:
@@ -4164,15 +4171,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'warlock_firelock',
     label: 'Firelock',
-    detail: 'Human, caster, Succubus sacrificed, standing target. 33 Destruction',
+    detail: 'Troll, caster, Succubus sacrificed, standing target. 33 Destruction',
     characterClass: 'warlock',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Firelock',
-        // Round 78: Human, by race swap on identical gear -- +6.9 at 120s
-        // beside the Major Mana Potion, +9.7 at 5 targets.
-        race: 'human',
+        // Round 80: Troll on the weighted score, +32.17 +/- 2.70 over the old
+        // Human (Undead -2.04, Orc -2.79).
+        race: 'troll',
         characterClass: 'warlock',
         level: 60,
         combatStyle: 'caster',
@@ -4201,7 +4208,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * Spellblasting entry is dropped by the selection; the mana potion's own
        * entry, drunk under 30% mana, takes its place.
        */
-      consumables: { ...casterConsumables('school_fire'), potion: 'major_mana_potion' },
+      // Round 80: the Major Mana Potion (Primary) and Spellblasting (Secondary),
+      // and the lists decide: mana under 30% at one target, else the Blast in
+      // the last 30s; the Blast at the pull on several targets.
+      consumables: {
+        ...casterConsumables('school_fire'),
+        potion: 'major_mana_potion',
+        potion_secondary: 'secondary_major_spellblasting_potion',
+      },
       /*
        * BANE OF AGONY AT 0s IS THIS ROUND'S ADDITION (round 42): a pure DoT
        * deals nothing before the pull, so it is free of Gate B and saves the
@@ -4235,7 +4249,9 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       // The Firelock's stone, consumables and raid, by the owner's instruction.
       warlockStone: 'firestone',
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: casterConsumables('school_fire'),
+      // Round 80: a Secondary Potion (the Major Mana Potion) below the owner's
+      // Spellblasting sequence; reached only past two minutes.
+      consumables: { ...casterConsumables('school_fire'), potion_secondary: 'secondary_major_mana_potion' },
       // Shadow Bolt is 3.0s and Bane takes it to 2.5: started at t-2.5, it is the pull.
       // Round 78 adds Corruption at 0s -- instant with Improved Corruption, a
       // pure DoT and so legal at that lead -- for the global cooldown it saves:
@@ -4251,15 +4267,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
     // The id keeps its first name, so a saved profile still finds it.
     id: 'warlock_demonology',
     label: 'Fire Demo',
-    detail: 'Human, caster, Imp summoned, Succubus sacrificed, standing target. 31 Demonology',
+    detail: 'Troll, caster, Imp summoned, Succubus sacrificed, standing target. 31 Demonology',
     characterClass: 'warlock',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Fire Demo',
-        // Round 78: Human, by race swap on identical gear -- +8.7 at 120s
-        // beside the Major Mana Potion, +9.8 at 5 targets.
-        race: 'human',
+        // Round 80: Troll on the weighted score, +23.13 +/- 2.49 over the old
+        // Human (Orc +3.91 -- Command's +5% Imp damage -- Undead -1.31).
+        race: 'troll',
         characterClass: 'warlock',
         level: 60,
         combatStyle: 'caster',
@@ -4274,7 +4290,12 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       // the Major Mana Potion: +14.41 +/- 3.29 here at 120s, -4.5 at 5 targets.
       warlockStone: 'firestone',
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: { ...casterConsumables('school_fire'), potion: 'major_mana_potion' },
+      // Round 80: Mana (Primary) and Spellblasting (Secondary); see the list.
+      consumables: {
+        ...casterConsumables('school_fire'),
+        potion: 'major_mana_potion',
+        potion_secondary: 'secondary_major_spellblasting_potion',
+      },
       /*
        * SEARING PAIN IS THE PULL AND BANE OF AGONY GOES OUT WITH IT. The Searing
        * Pain finishes at t=0 and brands the target, so the Imp's first Firebolt
