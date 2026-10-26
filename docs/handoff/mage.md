@@ -515,3 +515,97 @@ says whether it mattered.** It stays out.
    settled; this is the hard half and wants the owner.
 5. **Arcane Blast's ending confirmed.** The reading chosen is worth most of
    +58.3 to this class's best profile, and it is a reading.
+
+---
+
+## Round 78: the four presets optimised for the full report
+
+**Objectives**: Single Target is 1 target at 120s; Multi Target is 5 targets at
+60s, its list reused at 3 targets/60s and 8 targets/30s. Variant file:
+`tools/optimise/mageVariants.ts` (`FILE=` it into `tools/probe_build.ts`).
+Every figure below is a paired delta over 400 fights unless an iteration count
+is given.
+
+**THE FULL REPORT, BEFORE -> AFTER** (`tools/full_report.ts`, 300 fights a cell):
+
+| | 1 target 120s | 3 targets 60s | 5 targets 60s | 8 targets 30s |
+| --- | --- | --- | --- | --- |
+| Frostfire | 971.1 -> **991.8** | 1059.1 -> **1254.5** | 1059.1 -> **1767.6** | 1040.5 -> **2937.7** |
+| Arcane | 938.8 -> **951.5** | 1066.0 -> **1277.7** | 1066.0 -> **2168.9** | 1196.1 -> **3902.2** |
+| Fire | 1024.2 -> **1046.6** | 1131.0 -> **1391.7** | 1131.0 -> **2204.4** | 1213.8 -> **3557.2** |
+| Frost | 924.0 -> **949.8** | 983.7 -> **1117.8** | 983.7 -> **1866.2** | 996.5 -> **3044.4** |
+
+**NO MAGE HAD A MULTI TARGET LIST**, so every multi-target fight ran the
+Single Target list at the boss alone -- which is why 3 and 5 targets read
+identically before.
+
+### What shipped
+
+| dimension | Fire | Frostfire | Arcane | Frost |
+| --- | --- | --- | --- | --- |
+| Multi Target list | stack copy (>=5), FS on dot (>=3), FS (>=5) | FS on dot (>=3), FS (>=5) | PoM-Flamestrike stack, FS on dot, AE (all >=3) | FS on dot (>=3), Blizzard (>=5) |
+| Multi Target opener | Flamestrike pull, Fire Blast T-0 kept | Flamestrike pull | Flamestrike pull | Flamestrike pull |
+| talents | Burning Soul 2 + MoE 1 -> Improved Flamestrike 3 | -- | -- | -- |
+| race | High Order Skyborne | Human | High Order Skyborne | (Windshaper, unchanged) |
+| potion | (Spellblasting, unchanged) | Major Mana Potion | Major Mana Potion | Major Mana Potion |
+| Single Target APL | -- | Scorch window 3s -> 7s | potion-less stack entry added | mana potion entry added |
+| enchants | unchanged | unchanged | unchanged | unchanged |
+
+**FLAMESTRIKE IS THE AREA SPELL ON EVERY SPEC**, the Arcane build included: at 5
+targets it beats Arcane Explosion and Blizzard per second AND per mana. At 3
+targets recasting into a running burn loses to the Single Target filler, so the
+unconditional recast is gated at 5. **The Single Target cooldown stack is gated
+on single-target state** (five Fire Vulnerability stacks, four Arcane Blast
+stacks) that an area rotation never builds -- so the area lists copy it above
+the area entries gated on the count; the Arcane copy spends Presence of Mind on
+Flamestrike (+71.8 over Arcane Wrath at 5 targets).
+
+**THE POTION SWAP NEEDED A LIST CHANGE ON ARCANE**: the cooldown stack's id IS
+the Spellblasting potion, and `withoutUnselectedConsumables` drops the whole
+entry when the potion is not selected -- taking Arcane Power, Presence of Mind
+and the instant Arcane Wrath with it, silently. `MAGE_ARCANE` now carries the
+same stack without the potion beneath it. **The Fire list has the identical
+shape** (`major_spellblasting_potion` -> `combustion`) and no fallback, so a
+Fire build that swaps its potion loses Combustion; it keeps Spellblasting, so
+nothing is lost today.
+
+### Every dimension, including what lost
+
+| profile | dimension | result |
+| --- | --- | --- |
+| Fire | talents | Improved Flamestrike 2 from Burning Soul: ST **bit-identical**, T3 +29.6, T5 +131.7, T8 +189.4. Third rank from MoE: ST +1.15 +/- 2.97 (1500), T5 +193.7 total -- **shipped**. From Imp. Fire Blast -6.92, from Arcane Subtlety -11.97 |
+| Fire | race | High Order Skyborne +19.6 ST / +39.9 T5; Windshaper +17.0 / +39.7; Human +10.2 / +22.9; Orc, Troll, Undead noise |
+| Fire | potion | Major Mana Potion +0.5 noise ST, -15.9 T5 -- withheld |
+| Fire | ST APL | Scorch window 7s +3.3 noise, 3s -8.3; Arcane Missiles above Fire Blast -6.4 noise -- nothing shipped |
+| Fire | MT | FS spam +723 at T5 but only +15.6 at T3; FS on dot then ST +165 at T3; Fire Blast above FS -62 at T5 |
+| Frostfire | race | Human +7.19 +/- 5.64 (1000) ST / +14.7 T5; High Order +16.7 ST but **-19.2 T5** (the Gnome's 5% mana matters in the area list) |
+| Frostfire | potion | Major Mana Potion -12.13 +/- 5.14 (1000) ST, **+112.6 T5**, +58.2 T3, -43.8 T8 -- shipped, Multi Target clearly larger |
+| Frostfire | ST APL | Scorch window swept 4/5/6/7/8s: +13.7/+18.2/+24.7/+23.5/+23.3 (1000) -- 7 shipped. Fire Blast mana floor 20/35/50%: -5.6/-10.7/-15.4 |
+| Frostfire | talents | Frost Warding 2 is load-bearing tier tax (tiers 0-15 sum exactly 20 for Fingers of Frost); no live destination for the Fire tree -- not measured |
+| Arcane | race | High Order Skyborne +2.9 noise ST / **+48.9 T5**; Troll +24.4 T5 but -15.9 ST |
+| Arcane | potion | Major Mana Potion +11.30 +/- 3.40 (1000) ST, -6.2 T5, +46.6 T3, -63.6 T8 -- shipped on the ST rule. **Before the race change it was +15.6 ST / -19.5 T5 and withheld** |
+| Arcane | ST APL | capped Arcane Missiles needing 3s of Arcane Blast -18.4; Mana Ruby at 40% +0.6 noise |
+| Arcane | MT | keeping Arcane Blast at 4 stacks under AE spam -540 against not |
+| Frost | potion | Major Mana Potion +25.68 +/- 2.74 (1000) ST, -9.8 T5, -4.1 T3 noise, -30.8 T8 -- shipped |
+| Frost | race | every other race loses ST (High Order +1.1 noise, +0.3 T5) -- unchanged |
+| Frost | ST APL | Ice Lance above Cone of Cold -11.8; Mana Ruby at 40% -0.4 noise |
+| Frost | MT | Ice Lance on Fingers inside the area list -88, with interrupts -286 |
+| all | enchants | by arithmetic off `stat_weights.ts DURATION=120`: per 1% haste 10.4/7.7/7.7/7.4 (Fire/FF/Arc/Frost) against 20 SP at 13.7/14.8/11.0/10.4 on the gloves, and 8 Intellect at 2.7/2.5/4.7/3.8 on head and legs -- **every current enchant stays**; +25 Spirit loses to +25 Intellect on all four (fights: -0.2 to -10.7) |
+| all | other row | the Demonic Rune never fires in a 120s single target fight (bit-identical without it); kept as the owner's default for a mana user |
+| all | ST opener | no legal candidate left: one damaging action, a channel refused, and every non-damaging instant is already off the GCD (prior rounds' figures stand) |
+
+### Questions for the owner
+
+1. **Is a Multi Target opener that replaces the Single Target pull with
+   Flamestrike acceptable?** The owner's Single Target openers are untouched;
+   the area section's own copy swaps the one damaging line. Worth +22.8 to +54.8
+   at 5 targets and +90 to +213 at 8.
+2. **Cone of Cold strikes one target here.** The brief lists it among the Mage's
+   area spells and the client's is a cone; nothing has a position, so it could
+   strike every target the way Arcane Explosion does. Not changed (engine/rule).
+3. **The Arcane potion trades single target for 8 targets** (+11.3 at 120s,
+   -63.6 at 8 targets/30s, where no mana runs out). Shipped on the brief's
+   "prefer Single Target" rule.
+4. **Frost Mage is your saved build** -- its potion was changed to the Major Mana
+   Potion (+25.7 at 120s). Revert the one line in `presets.ts` if the saved
+   selection should stand.
