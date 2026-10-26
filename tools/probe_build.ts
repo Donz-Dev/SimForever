@@ -26,6 +26,7 @@ import type { IterationSamples } from '../src/simulator/iterationSamples';
 import { healerSamples, profileSamples } from '../src/simulator/iterationSamples';
 import type { HealerFight } from '../src/simulator/healerEncounter';
 import { HEALER_PROFILE_IDS } from '../src/profiles/presetRoles';
+import { COMBAT_COLUMNS, HEALER_COLUMNS } from './fullReportColumns';
 import { pairedDelta } from '../src/simulator/statWeights';
 import { syncDefaultRotation } from '../src/profiles/rotation';
 import { VARIANT_GROUPS as SHOCKADIN } from './shockadinVariants';
@@ -138,6 +139,82 @@ const slice = { from: 0, to: ITER };
 const samplesOf = (profile: CharacterProfile): IterationSamples =>
   HEALER ? healerSamples(profile, FIGHT, SEED, slice) : profileSamples(profile, SEED, slice);
 const metricOf = (samples: IterationSamples): number[] => samples[METRIC];
+
+/*
+ * ============================================================================
+ * WEIGHTED=1 (round 79): every row is the WEIGHTED SCORE across the report's
+ * own encounters, at their own clocks -- single target 120 s at 49% and 3, 5
+ * and 8 targets at 17% each, or the two healer fights at half each. Each
+ * encounter is paired on its own and the deltas are combined with the weights,
+ * the interval as independent columns. This is what a TALENT build is chosen
+ * on: one build has to serve every fight, where a list or a potion need not.
+ * DURATION, TARGETS and FIGHT are ignored in this mode.
+ * ============================================================================
+ */
+if (process.env.WEIGHTED === '1') {
+  const columns = HEALER ? HEALER_COLUMNS : COMBAT_COLUMNS;
+  const metric = (process.env.METRIC ?? (HEALER ? 'hps' : preset.encounter.targetAttacks ? 'tps' : 'dps')) as
+    | 'dps'
+    | 'tps'
+    | 'hps';
+  const atColumn = (profile: CharacterProfile, column: (typeof columns)[number]): number[] => {
+    const shaped: CharacterProfile = {
+      ...profile,
+      simulation: { ...profile.simulation, durationSeconds: column.seconds },
+      encounter: { ...profile.encounter, ...(column.targets ? { numberOfTargets: column.targets } : {}) },
+    };
+    const samples = column.fight
+      ? healerSamples(shaped, column.fight, SEED, slice)
+      : profileSamples(shaped, SEED, slice);
+    return samples[metric];
+  };
+  const baseByColumn = columns.map((column) => atColumn(preset, column));
+  const mean = (values: readonly number[]) => values.reduce((a, b) => a + b, 0) / values.length;
+  const baseScore = columns.reduce((sum, column, at) => sum + column.weight * mean(baseByColumn[at]), 0);
+  console.log(
+    `${PRESET}   baseline WEIGHTED ${metric.toUpperCase()} ${baseScore.toFixed(1)} over ${ITER} paired iterations a column (` +
+      columns.map((column, at) => `${column.id} ${mean(baseByColumn[at]).toFixed(1)}`).join(', ') +
+      ')\n',
+  );
+  for (const group of WANTED.includes('all') ? Object.keys(VARIANT_GROUPS) : WANTED) {
+    const variants = VARIANT_GROUPS[group];
+    if (!variants) {
+      console.log(`-- ${group}: no such group --`);
+      continue;
+    }
+    console.log(`== ${group} ==`);
+    const rows: { label: string; delta: number; interval: number; parts: string }[] = [];
+    for (const variant of variants) {
+      let profile;
+      try {
+        profile = syncDefaultRotation(variant.apply(preset));
+      } catch (error) {
+        console.log(`  ${variant.label.padEnd(46)} SKIPPED: ${(error as Error).message}`);
+        continue;
+      }
+      let delta = 0;
+      let variance = 0;
+      const parts: string[] = [];
+      columns.forEach((column, at) => {
+        const d = pairedDelta(baseByColumn[at], atColumn(profile, column));
+        delta += column.weight * d.delta;
+        variance += (column.weight * d.interval) ** 2;
+        parts.push(`${column.id} ${d.delta >= 0 ? '+' : ''}${d.delta.toFixed(1)}`);
+      });
+      rows.push({ label: variant.label, delta, interval: Math.sqrt(variance), parts: parts.join(' ') });
+    }
+    rows.sort((a, b) => b.delta - a.delta);
+    for (const row of rows) {
+      const verdict = Math.abs(row.delta) > row.interval ? 'real' : 'noise';
+      console.log(
+        `  ${row.label.padEnd(46)} ${row.delta >= 0 ? '+' : ''}${row.delta.toFixed(2)}`.padEnd(58) +
+          `+/- ${row.interval.toFixed(2)}  ${verdict}   [${row.parts}]`,
+      );
+    }
+    console.log('');
+  }
+  process.exit(0);
+}
 
 const baseline = samplesOf(base);
 const baseMean = metricOf(baseline).reduce((a, b) => a + b, 0) / ITER;

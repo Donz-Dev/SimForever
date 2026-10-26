@@ -17,7 +17,7 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import type { Report } from './fullReportColumns';
-import { COMBAT_COLUMNS, HEALER_COLUMNS } from './fullReportColumns';
+import { COMBAT_COLUMNS, HEALER_COLUMNS, WEIGHTED_CELL_ID } from './fullReportColumns';
 
 export interface ReportNotes {
   readonly build?: string;
@@ -26,7 +26,14 @@ export interface ReportNotes {
 }
 
 export function renderReportPage(report: Report, notes: ReportNotes = {}): string {
-  const data = JSON.stringify({ report, notes, combat: COMBAT_COLUMNS, healer: HEALER_COLUMNS }).replace(
+  /*
+   * THE WEIGHTED SCORE IS A COLUMN OF ITS OWN (round 79), first after the
+   * profile and the default sort, so the table opens ranked on it.
+   */
+  const weighted = (label: string) => ({ id: WEIGHTED_CELL_ID, label });
+  const combat = [weighted('Weighted (49/17/17/17)'), ...COMBAT_COLUMNS];
+  const healer = [weighted('Weighted (50/50)'), ...HEALER_COLUMNS];
+  const data = JSON.stringify({ report, notes, combat, healer }).replace(
     /</g,
     '\\u003c',
   );
@@ -127,7 +134,7 @@ const hasBefore = report.rows.some((r) => Object.values(r.cells).some((c) => c.b
 
 document.getElementById('meta').textContent =
   report.rows.length + ' profiles on their own E65 gear, raid buffs and consumables, each optimised for these encounters. ' +
-  report.iterations + ' fights a cell, mean with a 95% interval. More than one target runs the profile\\'s Multi Target list; a tank\\'s adds swing for 500 every 2 seconds.' +
+  report.iterations + ' fights a cell, mean with a 95% interval. Weighted is 49% single target and 17% each for 3, 5 and 8 targets (healers: half each fight). More than one target runs the profile\\'s Multi Target list; a tank\\'s adds swing for 500 every 2 seconds.' +
   (notes.build ? ' ' + notes.build : '');
 document.getElementById('legend').innerHTML =
   '<span><b>bar</b> against the best in its column</span>' +

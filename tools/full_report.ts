@@ -24,7 +24,7 @@ import type { CharacterProfile } from '../src/profiles';
 import { presetRole } from '../src/profiles/presetRoles';
 import { healerSamples, profileSamples } from '../src/simulator/iterationSamples';
 import type { Report, ReportCell, ReportColumn, ReportRow } from './fullReportColumns';
-import { COMBAT_COLUMNS, HEALER_COLUMNS } from './fullReportColumns';
+import { COMBAT_COLUMNS, HEALER_COLUMNS, WEIGHTED_CELL_ID, weightedOf } from './fullReportColumns';
 
 const ITER = Number(process.env.ITER ?? 300);
 const SEED = Number(process.env.SEED ?? 20261025);
@@ -78,6 +78,9 @@ function withEncounter(profile: CharacterProfile, column: ReportColumn): Charact
         `${column.id} ${cell.mean.toFixed(1)}` + (was === undefined ? '' : ` (${cell.mean - was >= 0 ? '+' : ''}${(cell.mean - was).toFixed(1)})`),
       );
     }
+    // The weighted score (round 79), sortable on the page.
+    cells[WEIGHTED_CELL_ID] = { ...weightedOf(columns, cells), deaths: 0 };
+    line.push(`weighted ${cells[WEIGHTED_CELL_ID].mean.toFixed(1)}`);
     rows.push({ id: preset.id, name: base.character.name, characterClass: preset.characterClass, role, metric, cells });
     console.log(`${base.character.name.padEnd(16)} ${metric.toUpperCase()}  ${line.join('  ')}`);
   }
