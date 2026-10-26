@@ -1114,23 +1114,31 @@ const SHAMAN_RESTORATION_TALENTS: TalentAllocation = {
 };
 
 /**
- * The Holy Priest's 17/34/0 (round 73), decoded from the owner's URL:
+ * The Holy Priest's 18/33/0 since round 78 -- the owner's 17/34/0 (round 73)
+ * with Holy Reach's two points moved, see below. The owner's URL:
  * https://talentsforever.com/priest/60/00500500033001-32505003230101531--USWZabfdghiCFJKNT-8?b=70425h&d=261025
  */
 const PRIEST_HOLY_TALENTS: TalentAllocation = {
-  // Discipline, 17
+  // Discipline, 18
   twin_disciplines: 5,
   mental_strength: 5,
   improved_power_word_shield: 3,
   meditation: 3,
   soul_warding: 1,
-  // Holy, 34
+  /*
+   * ROUND 78: Holy Reach's two points -- `positioning`, nothing here has a
+   * range -- buy Inner Focus here and Improved Renew 3/3 below: 18/33/0, Holy
+   * still the majority. The pair is +4.4 in the raid healer fight (Improved
+   * Renew alone) and Inner Focus then pays through its Multi Target entry,
+   * which casts it ahead of a Prayer of Healing: +83.8 with that entry.
+   */
+  inner_focus: 1,
+  // Holy, 33
   twilight_focus: 3,
-  improved_renew: 2,
+  improved_renew: 3,
   holy_specialization: 5,
   divine_fury: 5,
   inspiration: 3,
-  holy_reach: 2,
   improved_healing: 3,
   binding_heal: 1,
   spirit_of_redemption: 1,
@@ -1140,13 +1148,14 @@ const PRIEST_HOLY_TALENTS: TalentAllocation = {
 };
 
 /**
- * The Disc Priest's 31/20/0 (round 73), decoded from the owner's URL:
+ * The Disc Priest's 29/22/0 since round 78 -- the owner's 31/20/0 (round 73)
+ * with three dead points moved, see below. The owner's URL:
  * https://talentsforever.com/priest/60/005305001330011531-33505103--CFJKNID2OPQDRUTSWZX-8?b=70425h&d=261025
  */
 const PRIEST_DISCIPLINE_TALENTS: TalentAllocation = {
-  // Discipline, 31
+  // Discipline, 29
   twin_disciplines: 5,
-  silent_resolve: 3,
+  silent_resolve: 2,
   mental_strength: 5,
   inner_focus: 1,
   improved_power_word_shield: 3,
@@ -1155,14 +1164,22 @@ const PRIEST_DISCIPLINE_TALENTS: TalentAllocation = {
   penance: 1,
   renewed_hope: 5,
   divine_aegis: 3,
-  power_infusion: 1,
-  // Holy, 20
-  twilight_focus: 3,
+  /*
+   * ROUND 78: Power Infusion (its "and healing done" is not applied by the
+   * engine, so the point bought nothing on a healer), one Silent Resolve point
+   * (threat) and one Twilight Focus point (`castPushback`) buy Improved Healing
+   * 3/3 -- Penance 15% cheaper. 29/22/0, Discipline still the majority, with
+   * 20 points below Penance's tier and 26 below Divine Aegis's. +7.4 HPS in the
+   * tank healer fight at 120s and +11.3 in the raid healer fight.
+   */
+  // Holy, 22
+  twilight_focus: 2,
   improved_renew: 3,
   holy_specialization: 5,
   divine_fury: 5,
   holy_nova: 1,
   inspiration: 3,
+  improved_healing: 3,
 };
 
 /**
@@ -4073,13 +4090,18 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'shadow_priest',
     label: 'Shadow',
-    detail: 'Troll, caster, Shadowform, standing target. 35 Shadow',
+    detail: 'Human, caster, Shadowform, standing target. 35 Shadow',
     characterClass: 'priest',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Shadow Priest',
-        race: 'troll',
+        /*
+         * HUMAN SINCE ROUND 78, from Troll: Ruthless's +2% crit beats
+         * Berserking. +14.43 +/- 3.15 DPS at one target and 120s, +7.8 at five
+         * targets, +33 at three, -3.8 (noise) at eight over thirty seconds.
+         */
+        race: 'human',
         characterClass: 'priest',
         level: 60,
         combatStyle: 'caster',
@@ -4303,13 +4325,18 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
      */
     id: 'priest_holy',
     label: 'Holy Priest',
-    detail: 'Troll, caster staff, a healer. 17 Discipline / 34 Holy',
+    detail: 'Gnome, caster staff, a healer. 18 Discipline / 33 Holy',
     characterClass: 'priest',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Holy Priest',
-        race: 'troll',
+        /*
+         * GNOME SINCE ROUND 78, from Troll (which was ours, not the owner's):
+         * Expansive Mind's +5% maximum mana is the largest single thing a
+         * mana-bound healer can buy. See docs/handoff/priest.md, round 78.
+         */
+        race: 'gnome',
         characterClass: 'priest',
         level: 60,
         combatStyle: 'caster',
@@ -4338,13 +4365,18 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
      */
     id: 'priest_disc',
     label: 'Disc Priest',
-    detail: 'Troll, caster staff, a healer. 31 Discipline / 20 Holy',
+    detail: 'Gnome, caster staff, a healer. 29 Discipline / 22 Holy',
     characterClass: 'priest',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Disc Priest',
-        race: 'troll',
+        /*
+         * GNOME SINCE ROUND 78, from Troll (which was ours, not the owner's):
+         * Expansive Mind's +5% maximum mana is the largest single thing a
+         * mana-bound healer can buy. See docs/handoff/priest.md, round 78.
+         */
+        race: 'gnome',
         characterClass: 'priest',
         level: 60,
         combatStyle: 'caster',

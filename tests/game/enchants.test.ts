@@ -649,14 +649,16 @@ const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: '+7 Agility',
     shield: '+9 Stamina',
   },
-  // Round 73's two Priest healers: the Resto Drood's loadout.
+  // Round 73's two Priest healers: the Resto Drood's loadout -- with +8
+  // Intellect on head and legs since round 78, measured: both healer fights are
+  // mana-bound, so Intellect beats +1% Haste (+7.9 each in Holy's raid fight).
   priest_holy: {
-    head: '+1% Haste', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',
-    wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: '+7 Agility',
+    head: '+8 Intellect', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',
+    wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+8 Intellect', feet: '+7 Agility',
   },
   priest_disc: {
-    head: '+1% Haste', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',
-    wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: '+7 Agility',
+    head: '+8 Intellect', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',
+    wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+8 Intellect', feet: '+7 Agility',
   },
   // Round 71's Druid healer: Holy Pal's loadout, with a staff and no shield.
   druid_resto: {

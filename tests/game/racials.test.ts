@@ -1558,7 +1558,9 @@ describe('the racials are in the priority lists, or they never fire', () => {
       ['druid_cat', []],
       ['dw_fury', ['blood_fury']],
       ['mage_fire', ['eureka']],
-      ['shadow_priest', ['berserking']],
+      // Human since round 78: Ruthless and The Human Spirit are passives, so
+      // every racial entry in the list is switched off.
+      ['shadow_priest', []],
     ] as const) {
       const built = PRESETS_BY_ID.get(preset)!.build();
       /*
