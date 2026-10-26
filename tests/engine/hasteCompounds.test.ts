@@ -25,11 +25,17 @@ import { makeAttacker, makeTarget } from '../helpers/actors';
  * enchants, in Flurry:
  *
  *     1.03 x 1.01 x 1.01 x 1.01 x 1.25 = 1.3265, not an additive 1.31
+ *
+ * WIND BLESSED IS 2% SINCE ROUND 79, so the built character is 1.02, not 1.03.
+ * The arithmetic of the owner's example is kept as it was written; the built
+ * one follows the tuning.
  * ==============================================================================
  */
 
 const rating = (percent: number) => percent * RATING_PER_PERCENT.haste;
 const OWNER_EXAMPLE = 1.03 * 1.01 * 1.01 * 1.01 * 1.25;
+/** The same character built today: Wind Blessed is 2% since round 79. */
+const BUILT_EXAMPLE = 1.02 * 1.01 * 1.01 * 1.01 * 1.25;
 
 describe('the stat block', () => {
   it('multiplies each haste modifier rather than adding them', () => {
@@ -92,15 +98,15 @@ describe("the owner's example, built", () => {
    * ROUND 75: Flurry is swing speed, not haste, so it multiplies into the SWING
    * and leaves global haste -- casts and the global cooldown -- at 1.0612.
    */
-  it('reads 1.03 x 1.01^3 out of Flurry and swings at 1.3265 in it', () => {
+  it('reads 1.02 x 1.01^3 out of Flurry and swings at it times 1.25 in it', () => {
     const simulation = new Simulation(trainingDummyEncounter(ownerExample(), 1));
     const player = simulation.combatants.find((actor) => actor.kind === 'player')!;
-    const global = 1.03 * 1.01 * 1.01 * 1.01;
+    const global = 1.02 * 1.01 * 1.01 * 1.01;
     expect(hasteMultiplierFrom(player.stats.effective)).toBeCloseTo(global, 10);
     simulation.begin();
     simulation.applyAura(player, flurryAura(25), player.id);
     expect(hasteMultiplierFrom(player.stats.effective)).toBeCloseTo(global, 10);
-    expect(swingHasteMultiplierFrom(player.stats.effective)).toBeCloseTo(OWNER_EXAMPLE, 10);
+    expect(swingHasteMultiplierFrom(player.stats.effective)).toBeCloseTo(BUILT_EXAMPLE, 10);
   });
 
   it('swings at the compounded speed', () => {
@@ -127,7 +133,7 @@ describe("the owner's example, built", () => {
       )
       .map((event) => event.timestamp);
     const timer = player.weapons.offHand!.swingTimerMs;
-    const expected = applyHaste(timer, OWNER_EXAMPLE);
+    const expected = applyHaste(timer, BUILT_EXAMPLE);
     // From the third swing on, every one was scheduled under the aura.
     const gaps = swings.slice(2).map((at, index) => at - swings[index + 1]);
     expect(gaps.length).toBeGreaterThan(5);

@@ -36,8 +36,16 @@ import { makeAttacker, makeTarget } from '../helpers/actors';
  * ==============================================================================
  */
 
-function fight(fightKind: 'tank' | 'raid', seed = 4242, smartHealing = true) {
-  const preset = PRESETS_BY_ID.get('holy_pal')!.build();
+function fight(fightKind: 'tank' | 'raid', seed = 4242, smartHealing = true, idle = false) {
+  const built = PRESETS_BY_ID.get('holy_pal')!.build();
+  const preset = idle
+    ? {
+        ...built,
+        rotation: { ...built.rotation, source: 'custom' as const, entries: [{ abilityId: 'no_such_ability' }] },
+        precombat: [],
+        multiTarget: { rotation: { ...built.rotation, source: 'custom' as const, entries: [{ abilityId: 'no_such_ability' }] }, precombat: [] },
+      }
+    : built;
   const { smartHealing: _dropped, ...asWritten } = preset.rotation;
   // Off in BOTH lists (round 64): the raid fight runs the Multi Target one.
   const { smartHealing: _droppedToo, ...multiAsWritten } = preset.multiTarget!.rotation;
@@ -113,7 +121,12 @@ describe('the stated tank (round 53)', () => {
   });
 
   it('is stood back up at full the instant it dies, and the death is recorded', () => {
-    const { events } = fight('tank');
+    /*
+     * WITH A HEALER WHO CASTS NOTHING (round 79). The ramp stops at twice the
+     * base swing, and a working healer now keeps the tank up the whole fight,
+     * so the revive is driven by leaving the tank unhealed.
+     */
+    const { events } = fight('tank', 4242, true, true);
     const deaths = events.filter(
       (event): event is Extract<TelemetryEvent, { type: 'death' }> =>
         event.type === 'death' && event.actorId === TANK_ID,

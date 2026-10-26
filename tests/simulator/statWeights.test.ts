@@ -596,9 +596,16 @@ describe('deaths as a measurable quantity', () => {
      * tank table turns on.
      * ------------------------------------------------------------------------
      */
-    const tank = profileSamples(presetNamed('prot_warr'), SEED, { from: 0, to: 20 });
+    /*
+     * AND SINCE ROUND 79 IT IS A RARE EVENT AGAIN. The ramp stops at twice the
+     * base swing, so a geared tank under the assumed healer rarely falls -- a
+     * fraction of a death a fight rather than several. Still more than zero,
+     * which is what separates the two tables; a deaths weight is now a much
+     * weaker signal, recorded in HANDOVER round 79.
+     */
+    const tank = profileSamples(presetNamed('prot_warr'), SEED, { from: 0, to: 40 });
     const mean = tank.deaths.reduce((a, b) => a + b, 0) / tank.deaths.length;
-    expect(mean).toBeGreaterThan(1);
+    expect(mean).toBeGreaterThan(0);
 
     const standing = profileSamples(presetNamed('dw_fury'), SEED, { from: 0, to: 20 });
     expect(standing.deaths.every((count) => count === 0)).toBe(true);

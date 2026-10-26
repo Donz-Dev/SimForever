@@ -630,12 +630,13 @@ describe('what the items do that the simulator does not', () => {
      * is the first entry in that table that is a PROC -- `procs.ts` says what
      * it does, keyed by its id the way Crusader is keyed by 20034.
      */
+    // A one-hander offers +15 Agility since round 79; +25 Agility is two-handed only.
     expect(offered('mainHand'), 'mainHand').toEqual([
-      '+25 Agility',
+      '+15 Agility',
       ...scraped,
       'Revelation',
     ]);
-    expect(offered('offHand'), 'offHand').toEqual(['+25 Agility', ...scraped, 'Revelation']);
+    expect(offered('offHand'), 'offHand').toEqual(['+15 Agility', ...scraped, 'Revelation']);
     expect(offered('twoHand'), 'twoHand').toEqual([
       '+25 Agility',
       '+65 Spell Power',

@@ -131,7 +131,9 @@ describe('the two mid-fight categories', () => {
      * flask would put a Flask entry in every priority list.
      */
     for (const category of CONSUMABLE_CATEGORIES_BY_ID.values()) {
-      const midFight = category.id === 'potion' || category.id === 'other';
+      // Three since round 79: the Secondary Potion row is mid-fight too.
+      const midFight =
+        category.id === 'potion' || category.id === 'potion_secondary' || category.id === 'other';
       for (const option of category.options) {
         expect(option.ability !== undefined, `${category.id}/${option.id}`).toBe(midFight);
       }

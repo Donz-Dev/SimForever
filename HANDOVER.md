@@ -107,6 +107,49 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 79: racial tuning, a 2x ramp ceiling, two potions, the weighted score
+
+The owner's notes on round 78, and the changes they asked for before the next
+optimisation round. **NOTHING WAS RE-MEASURED**: the racials and the ramp cap
+move many figures, and the owner is directing the next optimisation round, which
+re-runs the full report.
+
+| | what changed |
+| --- | --- |
+| Human | Ruthless 1% crit (was 2%); the Human Spirit 10% spirit (was 5%) |
+| Dwarf | Earth Fury (2% crit damage and healing) removed; **Artisan's Precision** +1% hit with spells and attacks, as the character-wide `hitChance` |
+| Tauren | Endurance is 5% health and nothing else; Plainsrunning's text (2% a stack to 60%, no mounted speed), still `positioning` |
+| Orc | Savage removed; **Command** +5% damage for Warlock and Hunter pets: a new `petDamagePercent` racial effect, composed into the pet's one damage multiplier where the pet or demon is built (`petDamageMultiplierFor`) |
+| Skyborne | Wind Blessed 2% haste (was 3%). **Read Ley Line is an ability now**: a 2 s cast on a 2 min cooldown for x1.5 mana regeneration over 15 s, refused while Innervate is up, and removed when Innervate is cast. Its health half has no rate to raise. **Attuned** (100% at a Ley Line) and Skysight's **Charged** need a place and are `positioning`; whether a character arrives Attuned is a question below. Skysight's text is 15%/15 s |
+| enchants | **+25 Agility is a two-hand enchant only**; a one-handed weapon is offered **+15 Agility** (the gloves enchant, now also on both hands). The five presets that carried +25 Agility on an off hand -- Rupture, Hemo Dagger, Pure Hemo, LW Melee and Hawk Melee -- take +15 Agility, which beat Crusader there on four of the five at 120 s (600 paired fights) and tied on Rupture |
+| tank fights | **the boss ramp stops at twice the base swing.** At 10% a swing compounding that falls between the seventh and eighth stack, so it is a cap on the multiplier -- `AuraDefinition.maxStackedMultiplier` -- and not on the stack count. It covers a tank run's boss and the tank healer fight's |
+| consumables | a **Secondary Potion** row beside the Primary (the old Potion row, renamed; its id is unchanged). The same six potions with ids of their own; both rows share the two-minute potion cooldown, and the APL decides which is drunk when. A potion named on both rows is cast once |
+| weighted score | `WEIGHTED=1` on `probe_build.ts` pairs each report encounter at its own clock and combines them **49/17/17/17** (healers **50/50**). The full report stores it as a `weighted` cell and the page opens sorted on it |
+| the skill | `optimize-update-report` and `docs/profile-optimisation.md` carry the owner's five rules: one talent build chosen on the weighted score; play style and the two potions may differ by fight; races from **Orc, Undead, Troll, Tauren and Windshaper Skyborne** only; go deeper and outside the box (Melee Weave and Volley on the melee Hunters, Fire Blast into Heating Up into Pyroblast on Arcane were missed); ask the owner before changing a core feature |
+
+**THE RAMP CAP CHANGES WHAT A TANK FIGHT IS.** A tank under the assumed healer
+now falls a fraction of a time a fight (Prot Warr about 0.2 deaths at 60 s,
+where it was several), and a healer in the tank healer fight keeps the tank up
+-- a Holy Pal's 2-minute tank-healer HPS read about 403 in a short check against
+288 before. **Two consequences**: tank stat weights on deaths are now a weak
+signal, and a tank's figure of merit is almost purely TPS. Three tests that
+leaned on tanks dying were rewritten (the healer revive test now runs an idle
+healer; the deaths-weight test asserts more than zero; Shield Wall's talented
+build is asserted lower rather than 25% lower).
+
+**THE PRESETS STILL CARRY ALLIANCE RACES** -- 16 since round 78. The race rule
+applies to the next optimisation round, which will move them.
+
+**QUESTIONS FOR THE OWNER:**
+
+- Should a High Order Skyborne be able to arrive **Attuned** (an opening aura,
+  the way Stealth is), and a Windshaper **Charged**? Both last an hour and
+  persist through death; both need a place the engine does not model.
+- Read Ley Line is in no stock list: it is a 2 s cast, so where it belongs is an
+  APL decision for the next round.
+- Presence of Mind will make Read Ley Line instant on a Skyborne Mage ("your next
+  non-instant spell"), which the test now allows by name.
+
 ## Round 78: Optimize, Update, and Report all Profiles
 
 The owner's new procedure, run for the first time. Every preset (28 DPS, 4 tanks,
