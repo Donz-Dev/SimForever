@@ -1,8 +1,7 @@
 import type { Rotation } from '../../engine';
-import type { AplList } from './apl';
+import type { AplEntry, AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
 import {
-  buffPotionCooldown,
   consumableCooldowns,
   CONSUMABLE_COOLDOWNS,
   CONSUMABLE_HEALS,
@@ -10,6 +9,7 @@ import {
 import {
   all,
   compileRotation,
+  fightElapsed,
   fightRemaining,
   fightRemainingFraction,
   resourceFraction,
@@ -137,6 +137,46 @@ export const FIRELOCK_LIFE_TAP_MANA = 0.05;
 
 /** The mana SM/DS Life Taps at: a measured sweep at 120s, round 78. */
 export const SMDS_LIFE_TAP_MANA = 0.05;
+
+/*
+ * ============================================================================
+ * THE PRIMARY AND SECONDARY POTION (round 80), on the owner's round 79 rule:
+ * "a Primary / secondary potion identified and the logic for use is handled in
+ * the APL". Every Warlock carries the Major Mana Potion AND the Major
+ * Spellblasting Potion, and the two share the two-minute potion cooldown -- so
+ * in a two-minute fight exactly ONE is drunk, and these entries decide which.
+ *
+ * THE FIRE BUILDS DRINK THE MANA POTION WHEN THEY NEED IT AND THE BLAST
+ * OTHERWISE: Spellblasting is held to the last 30 seconds of the fight, which
+ * is the one window where it can no longer cost the mana potion its cooldown.
+ * Firelock at 120s: mana under 30%, identical fights to the old mana-only row
+ * (the build always dips under 30%). Fire Demo: mana under 50% once 60s have
+ * passed, +4.52 +/- 3.09 over mana-only at 120s, 400 paired fights.
+ * The Multi Target lists drink the Blast at the pull instead -- no Fire build
+ * reaches 30% mana in a 60s fight: +5.38 (Firelock) and +4.66 (Fire Demo).
+ * ============================================================================
+ */
+export const POTION_BLAST_LAST_SECONDS = 30;
+
+/** The Major Mana Potion under `fraction` mana, optionally only once `afterSeconds` have passed. */
+export const manaPotionEntry = (fraction: number, afterSeconds?: number): AplEntry => ({
+  abilityId: 'major_mana_potion',
+  condition:
+    afterSeconds === undefined
+      ? resourceFraction('below', fraction, 'mana')
+      : all(resourceFraction('below', fraction, 'mana'), fightElapsed('atLeast', afterSeconds)),
+  note:
+    `Primary Potion: under ${fraction * 100}% mana` +
+    (afterSeconds === undefined ? '' : ` once ${afterSeconds}s have passed`) +
+    '. It shares the potion cooldown with the Spellblasting Potion below.',
+});
+
+/** The Spellblasting Potion held to the last 30 seconds, where it cannot cost the mana potion its cooldown. */
+export const BLAST_POTION_LAST_30: AplEntry = {
+  abilityId: 'major_spellblasting_potion',
+  condition: fightRemaining('atMost', POTION_BLAST_LAST_SECONDS),
+  note: `Secondary Potion: 40 spell power for 30s, held to the last ${POTION_BLAST_LAST_SECONDS}s so the mana potion above keeps first call on the shared cooldown.`,
+};
 
 // ---------------------------------------------------------------------------
 
@@ -306,8 +346,14 @@ export const WARLOCK_DESTRUCTION: AplList = {
    * free off-GCD cast pushes the next decision one 100ms poll out, which is
    * what destroyed Charge at the top of a Warrior list; nothing here has a
    * one-instant window for that poll to miss.
+   *
+   * ROUND 80: THE OWNER'S POTION LINE IS NOW THE PAIR. The mana potion goes
+   * first and the Spellblasting Potion keeps the top of the list but waits
+   * for the last 30 seconds -- see `BLAST_POTION_LAST_30`. Identical fights to
+   * round 78's mana-only selection at 120s.
    */
-  buffPotionCooldown('major_spellblasting_potion'),
+  manaPotionEntry(0.3),
+  BLAST_POTION_LAST_30,
   /*
    * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
    *
@@ -367,7 +413,7 @@ export const WARLOCK_DESTRUCTION: AplList = {
    * Rune is the rung that costs no global cooldown. Putting them together is
    * what makes that legible on the panel.
    */
-  ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
+  ...consumableCooldowns({ exclude: ['major_spellblasting_potion', 'major_mana_potion'] }),
   ...CONSUMABLE_HEALS,
   /*
    * BANE OF HAVOC WITH A SECOND TARGET, AND NEVER WITHOUT ONE (round 59): the
@@ -468,7 +514,10 @@ export const DECIMATION_PHASE = fightRemainingFraction('atMost', DECIMATION_PHAS
 export const WARLOCK_DEMONOLOGY: AplList = {
   name: 'Warlock (Fire Demo)',
   entries: [
-  buffPotionCooldown('major_spellblasting_potion'),
+  // Round 80: the potion pair -- mana under 50% after the first minute, else
+  // the Spellblasting Potion in the last 30s. See `manaPotionEntry`.
+  manaPotionEntry(0.5, 60),
+  BLAST_POTION_LAST_30,
   ...RACIAL_COOLDOWNS,
   /*
    * SOUL FIRE WHILE DECIMATION IS UP, ON COOLDOWN. The buff -- 10 seconds,
@@ -493,7 +542,7 @@ export const WARLOCK_DEMONOLOGY: AplList = {
       fightRemaining('atLeast', BANE_OF_AGONY_FIGHT_FLOOR_SECONDS),
     ),
   },
-  ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
+  ...consumableCooldowns({ exclude: ['major_spellblasting_potion', 'major_mana_potion'] }),
   ...CONSUMABLE_HEALS,
   /*
    * CORRUPTION, round 41: kept up when it is not, with a floor one second past
@@ -544,6 +593,10 @@ export const WARLOCK_SBOLT: AplList = {
    * race; a stored list drops the ones its race cannot cast, so an Orc's panel
    * shows the owner's seven entries and nothing else.
    */
+  // Round 80: the Secondary Potion, below the owner's sequence -- which
+  // drinks the Spellblasting Potion at the pull, so this is only reached in a
+  // fight longer than two minutes.
+  manaPotionEntry(0.5, 60),
   ...RACIAL_COOLDOWNS.filter((entry) => entry.abilityId !== 'blood_fury'),
   // Nightfall's Shadow Trance: the next Shadow Bolt is instant.
   { abilityId: 'shadow_bolt', condition: actorHas('shadow_trance') },
