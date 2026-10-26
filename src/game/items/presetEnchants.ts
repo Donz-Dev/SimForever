@@ -63,10 +63,26 @@ export const PRESET_ENCHANTS: Readonly<
   // The Venom loadout exactly; see `benchmarkSets.ts` for why the two share.
   rogue_combat_mut: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
   rogue_combat: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
-  rogue_rupture: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
-  rogue_hemo: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
-  // The Hemo Dagger loadout exactly; only the main-hand ITEM differs.
-  rogue_pure_hemo: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
+  /*
+   * ROUND 78: THE OFF HAND TAKES +25 AGILITY FOR CRUSADER, AND HEAD AND LEGS
+   * TAKE +1% HASTE FOR +8 AGILITY. Stat weights at 120s over 1,500 iterations:
+   * 1% haste 4.73 +/- 1.27 against 8 agility 2.71, so +2.0 a slot. Paired with
+   * the off hand: +5.21 +/- 3.09 (1,200 fights, 120s), +8.80 +/- 6.02 at five
+   * targets. The off-hand dagger's Crusader procs about half as often as its
+   * steady 25 agility is worth (+3.16 +/- 2.96 alone).
+   */
+  rogue_rupture: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900002, legs: 900002, mainHand: 20034, neck: 900011, offHand: 900031, wrists: 900019 },
+  // Round 78, the Rupture reasoning: 1% haste 4.56 +/- 1.28 against 8 agility
+  // 2.93; with the off hand's +25 agility +3.45 on top of the talent change.
+  rogue_hemo: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900002, legs: 900002, mainHand: 20034, neck: 900011, offHand: 900031, wrists: 900019 },
+  /*
+   * THE OWNER'S HEMO DAGGER ROW, PLUS ROUND 78's OFF HAND: +25 agility for
+   * Crusader on the off-hand dagger, +7.15 +/- 3.12 (1,200 fights, 120s) and
+   * +8.14 +/- 6.27 at five targets. Head and legs stay agility here: haste
+   * weighs 5.16 +/- 1.35 against 8 agility's 3.83, an interval that reaches
+   * zero, so no measurement argues for leaving the owner's table.
+   */
+  rogue_pure_hemo: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 900031, wrists: 900019 },
   druid_moonkin: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   druid_cat: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, twoHand: 20034, wrists: 900019 },
   /*

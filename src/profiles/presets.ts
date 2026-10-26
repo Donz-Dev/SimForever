@@ -677,7 +677,8 @@ const ROGUE_RUPTURE_TALENTS: TalentAllocation = {
 };
 
 /**
- * Hemo -- Assassination 17 / Combat 3 / Subtlety 31. Hemorrhage without Backstab.
+ * Hemo -- Assassination 20 / Subtlety 31 (the owner's 17 / 3 / 31 until round 78).
+ * Hemorrhage without Backstab.
  *
  * ----------------------------------------------------------------------------
  * THE OWNER'S URL, decoded to 51 points:
@@ -726,8 +727,23 @@ const ROGUE_HEMO_TALENTS: TalentAllocation = {
    * thing being managed.
    */
   cold_blood: 1,
-  // Combat, 3
-  improved_eviscerate: 3,
+  /*
+   * IMPROVED POISONS 3, WHERE THE OWNER'S URL SPENT THREE POINTS IN COMBAT ON
+   * IMPROVED EVISCERATE -- round 78's optimisation.
+   *
+   * Eviscerate is about 2% of this build's damage (0.5 casts a minute, behind
+   * a five-point gate with two four-second floors), so +20% to it is worth
+   * almost nothing; three more ranks of poison application reach every swing
+   * of both daggers. Paired over 1,200 fights at 120s it is +14.06 +/- 2.86,
+   * +13.72 +/- 5.40 at five targets for 60s and +9.32 +/- 3.85 at 240s.
+   * Improved Slice and Dice 3 + Improved Poisons 2 measured the same (+14.04)
+   * and Vile Poisons 3 only +5.95. The owner's spread is `HEMO_TREE` in
+   * `tools/optimise/rogueVariants.ts`, one line to restore.
+   *
+   * ASSASSINATION 20 / COMBAT 0 / SUBTLETY 31 NOW. Improved Poisons is tier 15
+   * and the 17 points below it clear the gate.
+   */
+  improved_poisons: 3,
   /*
    * ==========================================================================
    * SUBTLETY IS UNCHANGED, ON THE OWNER'S INSTRUCTION, AND THEIR SCREENSHOT
@@ -2744,13 +2760,26 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'rogue_combat',
     label: 'Combat',
-    detail: 'Orc, dual-wield, standing target. 18 Assassination / 33 Combat',
+    detail: 'Gnome, dual-wield, standing target. 18 Assassination / 33 Combat',
     characterClass: 'rogue',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Combat',
-        race: 'orc',
+        /*
+         * GNOME, WHERE IT WAS ORC -- round 78's race swap, gear, talents,
+         * enchants and consumables held fixed. Eureka! (+10% non-periodic damage
+         * and -10% cost for 8s, two-minute cooldown) beats Blood Fury, and
+         * Expansive Mind's +5% energy rides along: +6.16 +/- 3.49 over 1,200
+         * fights at 120s, +13.55 +/- 5.59 at 60s. The racial cooldown entries
+         * follow the race on their own (`racialCooldowns.ts`).
+         *
+         * THE MULTI TARGET FIGURE IS NOT THE REASON AND IS INFLATED: +45.8 at
+         * five targets, but a Blade Flurry copy runs back through the
+         * attacker's `nonPeriodicDamageMultiplier`, so Eureka!'s 10% is paid
+         * twice on every copied hit. Reported as an engine question.
+         */
+        race: 'gnome',
         characterClass: 'rogue',
         level: 60,
         combatStyle: 'dual_wield',

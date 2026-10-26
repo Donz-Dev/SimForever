@@ -768,6 +768,18 @@ describe('what each of the 29 profiles opens with', () => {
     // 1.10 a point and agility at 0.74 -- +5.7 for the pair.
     'lw_ranged head': '+8 Intellect',
     'lw_ranged legs': '+8 Intellect',
+    /*
+     * ROUND 78, THE TWO SUBTLETY DAGGER ROGUES: +1% Haste for +8 Agility on
+     * head and legs. Stat weights at 120s over 1,500 iterations price 1% haste
+     * at 4.73 +/- 1.27 (Rupture) and 4.56 +/- 1.28 (Hemo Dagger) against 2.71
+     * and 2.93 for eight agility; paired, the pair of slots is +3.45 on Hemo
+     * Dagger. Pure Hemo, Combat, Venom and Combat Mut keep the table: their
+     * haste interval reaches zero.
+     */
+    'rogue_rupture head': '+1% Haste',
+    'rogue_rupture legs': '+1% Haste',
+    'rogue_hemo head': '+1% Haste',
+    'rogue_hemo legs': '+1% Haste',
   };
 
   it('matches the owner table row for row, bar the measured exceptions', () => {

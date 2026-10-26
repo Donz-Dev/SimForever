@@ -1012,3 +1012,84 @@ one; the Combat build still carries it uncast.
   argument for deleting one of them**, and that is the rule this entry now
   rests on rather than on the older "+30% to poisons loses to Eviscerate",
   which was true of a list where Eviscerate still fired.
+
+---
+
+## Round 78: the six presets optimised for the full report
+
+**THE BRIEF:** maximise DPS at one target for 120s and at five targets for 60s
+(reused at 3/60 and 8/30), over talents, opener, both APL sections, enchants,
+consumables and race. Every candidate is in `tools/optimise/rogueVariants.ts`,
+measured PAIRED by `tools/probe_build.ts` (400 iterations unless stated; 1,200
+for anything shipped). The owner's own list lines, opener lines and rulings were
+priced and never edited.
+
+### What shipped
+
+| preset | change | paired figure |
+| --- | --- | --- |
+| Hemo Dagger | **talents**: Improved Eviscerate 3 -> Improved Poisons 3 (17/3/31 -> 20/0/31) | +14.06 +/- 2.86 (1,200, 120s); +13.72 at 5 targets; +9.32 at 240s |
+| Hemo Dagger | **enchants**: off hand +25 Agility for Crusader; head and legs +1% Haste | with the talents +21.65 +/- 3.04 (1,200, 120s) |
+| Rupture | **enchants**: off hand +25 Agility; head and legs +1% Haste | +5.21 +/- 3.09 (1,200, 120s); +8.80 +/- 6.02 at 5 targets |
+| Pure Hemo | **enchants**: off hand +25 Agility | +7.15 +/- 3.12 (1,200, 120s); +8.14 +/- 6.27 at 5 targets |
+| Combat | **race**: Orc -> Gnome | +6.16 +/- 3.49 (1,200, 120s); +13.55 +/- 5.59 at 60s |
+| Combat | **Multi Target list**: the owner's list with Slice and Dice at 1 point | +17.22 +/- 9.65 at 3 and 5 targets, +21.69 +/- 16.24 at 8 |
+
+The haste enchants are the stat-weight arithmetic (120s, 1,500 iterations): 1%
+haste is 4.73 +/- 1.27 on Rupture and 4.56 +/- 1.28 on Hemo Dagger against 2.71
+and 2.93 for eight agility. On Pure Hemo (5.16 +/- 1.35 against 3.83), Combat
+(4.35 +/- 1.55 against 3.10) and Venom (3.36 +/- 2.45 against 2.40) the interval
+reaches zero, so those keep the owner's table. **Gloves stay +15 Agility
+everywhere** -- fifteen agility out-weighs 1% haste on all six.
+
+**THE OFF-HAND DAGGER'S CRUSADER IS WORTH LESS THAN A FLAT 25 AGILITY** on the
+three Subtlety daggers; on Venom (+1.74 +/- 3.64), Combat Mut (+0.95 +/- 3.63)
+and Combat (swords, Hack and Slash) it is noise, so they keep Crusader.
+
+### Every dimension, per preset (120s, one target unless stated)
+
+| | Venom | Combat Mut | Combat | Rupture | Hemo Dagger | Pure Hemo |
+| --- | --- | --- | --- | --- | --- | --- |
+| talents | all lose: dead points out -6.25, Opportunity out -3.55/-4.40 | **forced**: the 20 Combat points below Blade Flurry are tier gates; no legal move | **forced** below tier 15; Dual Wield Spec 4 + Vile 1 -3.19, + Imp Poisons 1 -1.80 | Combat 8 -> Lethality 5 + Vile 3 -22.73, + Imp Poisons 3 -13.82 | **shipped** above | Imp Poisons 1 -> Vile 1 -1.26; Combat 8 -> IP 5 / Vile 4 +2.55 +/- 3.12 (noise) |
+| opener | owner's (none) | owner's | owner's | owner's | owner's | owner's |
+| ST APL | owner lines priced (below) | owner lines priced | owner lines priced | Ghostly Strike added above Backstab +1.51 +/- 2.91 (1,200, noise, withheld) | owner lines priced | Ghostly Strike added +3.26 +/- 4.96 (noise, withheld) |
+| MT APL | no area effect | every edit noise or loss | **shipped** above | no area effect | no area effect | no area effect |
+| enchants | all noise | all noise | all noise | **shipped** | **shipped** | **shipped** |
+| consumables | poisons, stones, Healthstone all lose; +40 AP food +1.40 +/- 1.07 (owner food) | all lose; AP food +0.87 noise | AP food +3.09 +/- 0.26 (owner food) | AP food +2.19 +/- 0.28 (owner food) | agility food -2.25 | MH crit stone +4.00 +/- 0.55 (owner's Dense stone) |
+| race | nothing real; Skyborne +1.5 noise | Skyborne +3.5 noise | **Gnome shipped** | Skyborne +3.49 +/- 3.05 (1,200, marginal, withheld) | Skyborne +2.1 noise | Gnome +0.14, Skyborne +0.75 (1,200) |
+
+**POISONS ARE ALWAYS INSTANT MAIN / DEADLY OFF**, the owner's default, on all
+six: Deadly/Instant is noise everywhere (-13.08 on Venom), and doubling either
+poison loses 7 to 67.
+
+### The owner lines that measure as losses, kept
+
+| preset | line | price of keeping it |
+| --- | --- | --- |
+| Venom | Eviscerate's two 3-second floors | removing them +6.45 +/- 5.02 |
+| Combat Mut | Blade Flurry in the Single Target list | removing it +2.50 +/- 0.67 (swing speed only at one target) |
+| Combat | Blade Flurry in the Single Target list | removing it +2.31 +/- 0.75 |
+| Combat | Slice and Dice at 3 points | at 2: +6.89 +/- 5.95 |
+| Rupture | Rupture at 4 points | at 3: +7.43 +/- 4.15 |
+| Hemo Dagger | Eviscerate and Cold Blood at exactly 5 | at 4+: +3.10 +/- 2.20 |
+| Pure Hemo | Slice and Dice at 3 points | at 1: +9.84 +/- 5.56 |
+| Venom, Combat, Rupture | +20 Agility food | +40 Attack Power +1.40 / +3.09 / +2.19 |
+| Pure Hemo | Dense Sharpening Stone on the main hand (a sword here) | +2% crit stone +4.00 +/- 0.55 |
+
+### Questions for the owner, and two for the engine
+
+1. **A BLADE FLURRY COPY PAYS EUREKA! TWICE.** `extraOpponentReaction` deals the
+   copy with `ignoresAttackerDamageScaling`, which skips `damageDoneMultiplierFor`
+   and the school multiplier but NOT `nonPeriodicDamageMultiplier` (nor the
+   ability-modifier catch-all), so Eureka!'s +10% lands on the copied amount a
+   second time. It is why a Gnome Combat Rogue reads +45.8 at five targets where
+   one target says +6.2. The ship rests on the one-target figure; the
+   Multi Target figure is inflated by an unknown share of that.
+2. **ELUSIVENESS IS SCOPED `crowdControl`, "Shortens Vanish and Blind, neither
+   implemented" -- Vanish IS implemented.** Pure Hemo takes 2/2. At 120s it is
+   worth nothing either way (Preparation resets Vanish), so it is a stale reason
+   rather than a lost figure today.
+3. Are the haste head/legs and off-hand agility departures from the enchant
+   table acceptable? They are listed in `enchants.test.ts`'
+   `OPTIMISED_AWAY_FROM_THE_TABLE`.
+4. Combat Orc -> Gnome changes the preset's detail line.
