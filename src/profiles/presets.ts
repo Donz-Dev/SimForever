@@ -783,6 +783,12 @@ const ROGUE_HEMO_TALENTS: TalentAllocation = {
  * 180s, against **-6.2** at 60s. The owner's report measures 120s, and the
  * owner's rule is that rotations are built for longer than a minute.
  *
+ * AND ONCE INNERVATE (10%) AND SKYBORNE SHIPPED BESIDE IT, THE 120s ANSWER
+ * MOVED: Genesis 5 without Reflection is **+5.1 +/- 2.8** at 120s on the
+ * finished build, because Innervate now covers the mana -- and **-46.8** at
+ * 180s and **-97.2** at 300s. Reflection is kept on the owner's
+ * longer-than-a-minute rule; the 120s figure is the price, and a question.
+ *
  * WHAT FOLLOWS IS THE ROUND THAT WENT THE OTHER WAY, KEPT AS ITS RECORD:
  *
  * REFLECTION'S THREE POINTS BUY GENESIS 2 -> 5, worth **+5.7**. Reflection is

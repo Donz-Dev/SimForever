@@ -149,6 +149,8 @@ const RESTO_CORE = {
   wild_growth: 1,
 };
 
+const RESTO_INT: Apply = chain(enchant('head', 900006), enchant('legs', 900006));
+
 /* ------------------------------------------------- the Multi Target lists */
 
 /*
@@ -304,6 +306,18 @@ export const VARIANT_GROUPS: Readonly<Record<string, readonly Variant[]>> = {
       label: 'Reflection + Skyborne + Innervate at 10%',
       apply: chain(MOON_REFLECTION, race('high_order_skyborne'), addAbove({ abilityId: 'innervate', condition: manaAtMost(0.1) }, 'insect_swarm')),
     },
+  ],
+
+  /* The second pass, on the shipped Reflection / Skyborne / Innervate build. */
+  moon78Pass2: [
+    control('Moonkin (round 78)'),
+    { label: 'potion Major Mana (was Spellblasting)', apply: consumable('potion', 'major_mana_potion') },
+    { label: 'head and legs +8 Intellect (was +1% Haste)', apply: chain(enchant('head', 900006), enchant('legs', 900006)) },
+    { label: 'Genesis 5, no Reflection (the old tree)', apply: tree({ ...MOONKIN_BALANCE, genesis: 5, nature_s_focus: 5, naturalist: 5 }) },
+    { label: 'Genesis 4, Reflection 1', apply: tree({ ...MOONKIN_BALANCE, genesis: 4, nature_s_focus: 5, naturalist: 5, reflection: 1 }) },
+    { label: 'Genesis 3, Reflection 2', apply: tree({ ...MOONKIN_BALANCE, genesis: 3, nature_s_focus: 5, naturalist: 5, reflection: 2 }) },
+    { label: 'Moonfire below Starfire-on-3-eclipse', apply: moveAbove('starfire', 'moonfire') },
+    { label: 'Insect Swarm removed', apply: removeEntry('insect_swarm') },
   ],
 
   moon78Aoe2: [
@@ -515,6 +529,21 @@ export const VARIANT_GROUPS: Readonly<Record<string, readonly Variant[]>> = {
     control('race (Night Elf)'),
     { label: 'Tauren', apply: race('tauren') },
     { label: 'High Order Skyborne', apply: race('high_order_skyborne') },
+  ],
+
+  resto78Pass2: [
+    control('Resto'),
+    { label: 'head and legs +8 Intellect', apply: RESTO_INT },
+    ...[0.3, 0.7].map((f) => ({
+      label: `+Int, Innervate at mana <= ${f * 100}%`,
+      apply: chain(RESTO_INT, setCondition('innervate', manaAtMost(f))),
+    })),
+    ...[0.6, 0.7, 0.8].map((f) => ({
+      label: `+Int, Swiftmend on the tank under ${f * 100}%`,
+      apply: chain(RESTO_INT, setCondition('swiftmend', { kind: 'health', on: 'target', compare: 'below', fraction: f } as AplCondition)),
+    })),
+    { label: '+Int, blasted lands +25 Spirit', apply: chain(RESTO_INT, consumable('blasted_lands', 'blasted_spirit')) },
+    { label: '+Int, Subtlety -> Tranquil Spirit 5', apply: chain(RESTO_INT, tree({ ...RESTO_BALANCE, ...RESTO_CORE, tranquil_spirit: 5, natural_shapeshifter: 2 })) },
   ],
 
   resto78Raid: [
