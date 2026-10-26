@@ -2716,7 +2716,12 @@ describe('what round 28 did to the Fire list', () => {
    * identity, never assert the two are equal.
    * ==========================================================================
    */
-  it('asks for a WIDER Scorch window on Fire than on Frostfire', () => {
+  /*
+   * ROUND 78 SWEPT FROSTFIRE TOO, at 120s: 4s +13.69, 5s +18.16, 6s +24.72,
+   * 7s +23.46, 8s +23.30 over its old 3. So Frostfire's window is now the WIDER
+   * one -- still two separate facts, each pinned by identity.
+   */
+  it("asks for each list's own swept Scorch window", () => {
     const windowOf = (list: typeof MAGE_FIRE) => {
       const entry = list.entries.find((row) => row.abilityId === 'scorch')!;
       const json = JSON.stringify(entry.condition);
@@ -2727,7 +2732,7 @@ describe('what round 28 did to the Fire list', () => {
       return Number(match![1]);
     };
     expect(windowOf(MAGE_FIRE)).toBe(5);
-    expect(windowOf(MAGE_FROSTFIRE)).toBe(3);
+    expect(windowOf(MAGE_FROSTFIRE)).toBe(7);
   });
 });
 

@@ -208,14 +208,20 @@ const SCORCH_STACK_CAP = IMPROVED_SCORCH_MAX_STACKS;
  * A TWO-POINT COMPARISON AT 3s AND 1s WOULD HAVE CONCLUDED "KEEP 3" and been
  * confident about it, which is why this is a sweep.
  *
- * FROSTFIRE IS LEFT AT 3s ON PURPOSE. Its filler is faster and its Scorch
+ * FROSTFIRE WAS LEFT AT 3s ON PURPOSE (and has since been swept -- round 78, below). Its filler is faster and its Scorch
  * carries Ice Shards' crit damage, so nothing here transfers -- and a shared
  * constant serving two unswept answers is the Thistle Tea gate's documented
  * mistake. Whoever sweeps that list owns that number.
  * ============================================================================
  */
 const FIRE_SCORCH_REFRESH_SECONDS = 5;
-const FROSTFIRE_SCORCH_REFRESH_SECONDS = 3;
+/*
+ * ROUND 78: FROSTFIRE SWEPT, at a 120s fight over 1000 paired iterations, as a
+ * delta from 3s: 4s +13.69, 5s +18.16, 6s +24.72, 7s +23.46, 8s +23.30 (each
+ * +/- about 5.4). The same plateau shape as the Fire sweep above, one step to
+ * the right, and 7 is its middle.
+ */
+const FROSTFIRE_SCORCH_REFRESH_SECONDS = 7;
 
 /*
  * ----------------------------------------------------------------------------
@@ -1098,6 +1104,19 @@ export const MAGE_FROST: AplList = {
         : { ...entry, disabled: true },
     ),
     MANA_RUBY_ENTRY,
+    /*
+     * ROUND 78: THE MAJOR MANA POTION, which the preset now selects in place of
+     * Spellblasting -- +25.68 +/- 2.74 at a 120s single target fight over 1000
+     * paired fights, where this build runs short of mana. It costs -9.8 at 5
+     * targets/60s, which the single target figure outweighs. Skipped in silence
+     * when Spellblasting is selected instead, so the owner's saved list runs as
+     * it did for anybody who keeps that potion.
+     */
+    {
+      abilityId: 'major_mana_potion',
+      condition: resourceFraction('atMost', 0.3, 'mana'),
+      note: 'Under 30% mana (round 78).',
+    },
     {
       abilityId: 'demonic_rune',
       condition: all(resourceFraction('atMost', 0.5, 'mana'), onCooldown('mana_ruby')),

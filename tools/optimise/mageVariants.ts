@@ -52,8 +52,9 @@ import {
   targetTime,
 } from '../../src/game/rotations/apl';
 import { foreverEnchantId } from '../../src/game/items/foreverEnchants';
+import { setSection, withSection } from '../../src/profiles/aplSections';
 import type { Apply, Variant } from '../buildVariants';
-import { MAGE_TREE as tree, apl, chain, consumable, enchant, moveAbove, multiList } from '../buildVariants';
+import { MAGE_TREE as tree, apl, chain, consumable, enchant, inMulti, moveAbove, multiList } from '../buildVariants';
 
 const control: Variant = { label: 'the shipped profile -- the control', apply: (p) => p };
 
@@ -96,9 +97,7 @@ const MANA_POTION: AplEntry = {
 };
 
 /** Spellblasting out, the Major Mana Potion in at 30% mana, the cooldown stack kept. */
-const manaPotion: Apply = chain(
-  consumable('potion', 'major_mana_potion'),
-  apl((entries) => {
+const manaPotionApl: Apply = apl((entries) => {
     const out: AplEntry[] = [];
     for (const e of entries) {
       if (e.abilityId !== 'major_spellblasting_potion') {
@@ -114,12 +113,15 @@ const manaPotion: Apply = chain(
     const at = out.findIndex((e) => e.abilityId === 'demonic_rune');
     out.splice(at < 0 ? 0 : at, 0, MANA_POTION);
     return out;
-  }),
-);
+  });
+const manaPotion: Apply = chain(consumable('potion', 'major_mana_potion'), manaPotionApl);
+/** The same, applied to the Multi Target list as well. */
+const manaPotionBoth: Apply = chain(manaPotion, inMulti(manaPotionApl));
 
 const consGroup = (): Variant[] => [
   control,
   { label: 'potion: Major Mana Potion (30%)', apply: manaPotion },
+  { label: 'potion: Major Mana Potion, both lists', apply: manaPotionBoth },
   { label: 'blasted lands: +25 Spirit', apply: consumable('blasted_lands', 'blasted_spirit') },
   { label: 'other: none (no Demonic Rune)', apply: (p) => ({ ...p, consumables: { ...p.consumables, other: undefined } as never }) },
 ];
@@ -439,7 +441,7 @@ export const VARIANT_GROUPS: Record<string, readonly Variant[]> = {
     { label: 'FS on dot (>=3), Blizzard (>=5)', apply: mt('AoE', [FS_DOT(3), BLIZ(5)]) },
     { label: 'FS on dot, Blizzard (>=4)', apply: mt('AoE', [FS_DOT(4), BLIZ(4)]) },
   ],
-  ffApl: [
+  ffSt78: [
     control,
     { label: 'Fire Blast mana floor 10% -> 20%', apply: setCond('fire_blast', ffFireBlast(0.2)) },
     { label: 'Fire Blast mana floor 10% -> 35%', apply: setCond('fire_blast', ffFireBlast(0.35)) },
@@ -447,13 +449,17 @@ export const VARIANT_GROUPS: Record<string, readonly Variant[]> = {
     { label: 'Scorch window 3s -> 2s', apply: setCond('scorch', ffScorch(2)) },
     { label: 'Scorch window 3s -> 5s', apply: setCond('scorch', ffScorch(5)) },
   ],
-  fireApl: [
+  ffScorch78: [
+    control,
+    ...[4, 5, 6, 7, 8].map((n) => ({ label: `Scorch window 3s -> ${n}s`, apply: setCond('scorch', ffScorch(n)) })),
+  ],
+  fireSt78: [
     control,
     { label: 'Scorch window 5s -> 3s', apply: setCond('scorch', ffScorch(3)) },
     { label: 'Scorch window 5s -> 7s', apply: setCond('scorch', ffScorch(7)) },
     { label: 'Arcane Missiles (barrage) above Fire Blast', apply: moveAbove('arcane_missiles', 'fire_blast') },
   ],
-  arcApl: [
+  arcSt78: [
     control,
     {
       label: 'capped Arcane Missiles needs 3s of Arcane Blast (was 2s)',
@@ -461,17 +467,49 @@ export const VARIANT_GROUPS: Record<string, readonly Variant[]> = {
     },
     { label: 'Mana Ruby at 40% (was 25%)', apply: setCond('mana_ruby', resourceFraction('atMost', 0.4, 'mana')) },
   ],
-  frostApl: [
+  frostSt78: [
     control,
     { label: 'Ice Lance (Fingers) above Cone of Cold', apply: moveAbove('ice_lance', 'cone_of_cold') },
     { label: 'Mana Ruby at 40% (was 25%)', apply: setCond('mana_ruby', resourceFraction('atMost', 0.4, 'mana')) },
   ],
+  aoeOpener: [
+    control,
+    {
+      label: 'MT opener: pull with Flamestrike (3s) in place of the ST pull',
+      apply: (p) => {
+        const PULLS = new Set(['fireball', 'frostfire_bolt', 'arcane_blast', 'frostbolt', 'fire_blast']);
+        const multi = withSection(p, 'multi');
+        const pre = (multi.precombat ?? []).filter((a) => !PULLS.has(a.abilityId));
+        return setSection(p, 'multi', {
+          ...multi,
+          precombat: [...pre, { abilityId: 'flamestrike', secondsBefore: 3 }],
+        });
+      },
+    },
+    {
+      label: 'MT opener: Flamestrike pull, the Fire Blast at T-0 kept',
+      apply: (p) => {
+        const PULLS = new Set(['fireball', 'frostfire_bolt', 'arcane_blast', 'frostbolt']);
+        const multi = withSection(p, 'multi');
+        const all0 = multi.precombat ?? [];
+        const pre = all0.filter((a) => !PULLS.has(a.abilityId) && a.abilityId !== 'fire_blast');
+        const tail = all0.filter((a) => a.abilityId === 'fire_blast');
+        return setSection(p, 'multi', {
+          ...multi,
+          precombat: [...pre, { abilityId: 'flamestrike', secondsBefore: 3 }, ...tail],
+        });
+      },
+    },
+  ],
 
-  fireTalents: [
+  fireTal78: [
     control,
     { label: 'Burning Soul 2 -> Improved Flamestrike 2', apply: tree({ ...FIRE_SHIPPED, burning_soul: 0, improved_flamestrike: 2 }) },
+    { label: 'IFS 3: Burning Soul 2 + Imp Fire Blast 1', apply: tree({ ...FIRE_SHIPPED, burning_soul: 0, improved_fire_blast: 1, improved_flamestrike: 3 }) },
+    { label: 'IFS 3: Burning Soul 2 + Master of Elements 1', apply: tree({ ...FIRE_SHIPPED, burning_soul: 0, master_of_elements: 2, improved_flamestrike: 3 }) },
+    { label: 'IFS 3: Burning Soul 2 + Arcane Subtlety 1', apply: tree({ ...FIRE_SHIPPED, burning_soul: 0, arcane_subtlety: 1, improved_flamestrike: 3 }) },
   ],
-  ffTalents: [
+  ffTal78: [
     control,
     { label: 'Frost Warding 2 -> Improved Blizzard 2', apply: tree({ ...FF_SHIPPED, frost_warding: 0, improved_blizzard: 2 }) },
   ],

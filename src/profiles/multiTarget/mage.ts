@@ -95,7 +95,7 @@ const stackOf = (entries: readonly AplEntry[]): AplEntry => {
 };
 
 // --- Fire --------------------------------------------------------------------
-const FIRE_ST = narrowed(MAGE_FIRE, 'gnome', casterConsumables('school_fire'));
+const FIRE_ST = narrowed(MAGE_FIRE, 'high_order_skyborne', casterConsumables('school_fire'));
 const FIRE_AREA: readonly AplEntry[] = withArea(FIRE_ST, [
   {
     ...stackOf(FIRE_ST),
@@ -107,11 +107,11 @@ const FIRE_AREA: readonly AplEntry[] = withArea(FIRE_ST, [
 ]);
 
 // --- Frostfire ---------------------------------------------------------------
-const FROSTFIRE_ST = narrowed(MAGE_FROSTFIRE, 'gnome', casterConsumables('school_fire'));
+const FROSTFIRE_ST = narrowed(MAGE_FROSTFIRE, 'human', casterConsumables('school_fire'));
 const FROSTFIRE_AREA: readonly AplEntry[] = withArea(FROSTFIRE_ST, [flamestrikeOnDot(3), flamestrike(5)]);
 
 // --- Arcane ------------------------------------------------------------------
-const ARCANE_ST = narrowed(MAGE_ARCANE, 'gnome', casterConsumables('school_arcane'));
+const ARCANE_ST = narrowed(MAGE_ARCANE, 'high_order_skyborne', casterConsumables('school_arcane'));
 const ARCANE_AREA: readonly AplEntry[] = withArea(
   ARCANE_ST.filter((e) => !isStack(e)),
   [
@@ -138,15 +138,60 @@ const FROST_SELECTION: ConsumableSelection = {
   spell_power: 'spell_power_35',
   food: 'food_spell_power',
   school_spell_power: 'school_frost',
-  potion: 'major_spellblasting_potion',
+  potion: 'major_mana_potion',
   other: 'demonic_rune',
 };
 const FROST_ST = narrowed(MAGE_FROST, 'windshaper_skyborne', FROST_SELECTION);
 const FROST_AREA: readonly AplEntry[] = withArea(FROST_ST, [flamestrikeOnDot(3), blizzard(5)]);
 
+/*
+ * ==============================================================================
+ * AND THE AREA LIST OPENS WITH A FLAMESTRIKE. Each opener is the Single Target
+ * one with its damaging pull -- Fireball, Frostfire Bolt, Arcane Blast,
+ * Frostbolt -- replaced by Flamestrike, which is still ONE damaging action
+ * finishing at the pull (Gate B). The lead is 2.5s, under the hasted cast time
+ * on every build, so the cast lands exactly at t=0 and leans on no haste gap.
+ * The Fire opener keeps the owner's Fire Blast at T-0. Paired, 400 fights, at
+ * 3/5/8 targets (a lead of 3s when measured):
+ *
+ *   Fire       +5.7 noise   +54.8   +212.9
+ *   Frostfire  +11.7 noise  +22.8   +201.6
+ *   Arcane     -6.5 noise   +6.4 noise   +90.3
+ *   Frost      -2.2 noise   +54.1   +110.7
+ *
+ * THE OWNER'S SINGLE TARGET OPENERS ARE UNTOUCHED; this is the Multi Target
+ * section's own copy.
+ * ==============================================================================
+ */
+const pull = { abilityId: 'flamestrike', secondsBefore: 2.5 } as const;
+
 export const MAGE_MULTI_TARGET: MultiTargetDefaults = {
-  mage_fire: { name: 'Mage (Fire) -- AoE', entries: FIRE_AREA },
-  mage_frostfire: { name: 'Mage (Frostfire) -- AoE', entries: FROSTFIRE_AREA },
-  mage_arcane: { name: 'Mage (Arcane) -- AoE', entries: ARCANE_AREA },
-  mage_frost: { name: 'Mage (Frost) -- AoE', entries: FROST_AREA },
+  mage_fire: {
+    name: 'Mage (Fire) -- AoE',
+    entries: FIRE_AREA,
+    precombat: [{ abilityId: 'mage_armor', secondsBefore: 4.5 }, pull, { abilityId: 'fire_blast', secondsBefore: 0 }],
+  },
+  mage_frostfire: {
+    name: 'Mage (Frostfire) -- AoE',
+    entries: FROSTFIRE_AREA,
+    precombat: [
+      { abilityId: 'ice_barrier', secondsBefore: 10 },
+      { abilityId: 'mage_armor', secondsBefore: 4 },
+      pull,
+    ],
+  },
+  mage_arcane: {
+    name: 'Mage (Arcane) -- AoE',
+    entries: ARCANE_AREA,
+    precombat: [{ abilityId: 'mage_armor', secondsBefore: 3 }, pull],
+  },
+  mage_frost: {
+    name: 'Mage (Frost) -- AoE',
+    entries: FROST_AREA,
+    precombat: [
+      { abilityId: 'mage_armor', secondsBefore: 60 },
+      { abilityId: 'ice_barrier', secondsBefore: 3.5 },
+      pull,
+    ],
+  },
 };

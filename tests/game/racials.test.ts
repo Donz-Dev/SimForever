@@ -49,6 +49,17 @@ import {
 import { abilityChoicesFor, aplNamesFor } from '../../src/ui/panels/AplPanel';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { syncDefaultRotation } from '../../src/profiles/rotation';
+
+/*
+ * A GNOME MAGE PRESET. The Mage presets were this file's Gnomes until round 78
+ * moved Fire and Arcane to High Order Skyborne and Frostfire to Human, so the
+ * Eureka! tests take a Mage preset and make it a Gnome rather than depending on
+ * which race a preset happens to be.
+ */
+const gnomeMage = (presetId: string) => {
+  const built = PRESETS_BY_ID.get(presetId)!.build();
+  return syncDefaultRotation({ ...built, character: { ...built.character, race: 'gnome' as const } });
+};
 import { characterAtCombatStart } from '../../src/simulator';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import { makeAttacker, makeTarget } from '../helpers/actors';
@@ -806,7 +817,7 @@ describe('Eureka!', () => {
      * `runCastReactions` afterwards, and the latch being cleared in between.
      * ========================================================================
      */
-    const built = PRESETS_BY_ID.get('mage_arcane')!.build();
+    const built = gnomeMage('mage_arcane');
     const recorder = new TelemetryRecorder();
     const simulation = new Simulation(
       { ...trainingDummyEncounter(built), seed: 4242 },
@@ -1560,7 +1571,7 @@ describe('the racials are in the priority lists, or they never fire', () => {
       ['mage_fire', ['eureka']],
       ['shadow_priest', ['berserking']],
     ] as const) {
-      const built = PRESETS_BY_ID.get(preset)!.build();
+      const built = preset === 'mage_fire' ? gnomeMage(preset) : PRESETS_BY_ID.get(preset)!.build();
       /*
        * LIT, NOT STORED. Every racial entry is kept now and another race's is
        * switched off -- the owner's "invisible using the glyph feature" -- so
@@ -1820,7 +1831,7 @@ describe('the panel can name and offer a racial ability', () => {
      * two that differ rather than on all five.
      * ========================================================================
      */
-    const gnome = PRESETS_BY_ID.get('mage_fire')!.build();
+    const gnome = gnomeMage('mage_fire');
     expect(aplNamesFor(gnome).nameOf('eureka')).toBe('Eureka!');
 
     const nightElf = {
@@ -1836,7 +1847,7 @@ describe('the panel can name and offer a racial ability', () => {
      * one has to be able to add it back -- and the dropdown offers the build's
      * BOOK, which is exactly the set `PriorityRotation` will act on.
      */
-    const gnome = PRESETS_BY_ID.get('mage_fire')!.build();
+    const gnome = gnomeMage('mage_fire');
     const offered = new Set(abilityChoicesFor(gnome).map((choice) => choice.id));
     expect(offered.has('eureka')).toBe(true);
     expect(offered.has('blood_fury')).toBe(false);

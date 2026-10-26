@@ -1457,11 +1457,19 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
   incineration: 3,
   improved_fireball: 5,
   ignite: 5,
-  burning_soul: 2,
+  /*
+   * ROUND 78: BURNING SOUL 2 AND ONE MASTER OF ELEMENTS RANK BUY IMPROVED
+   * FLAMESTRIKE 3/3 -- Flamestrike is this build's area spell now (see
+   * `profiles/multiTarget/mage.ts`). Burning Soul is cast pushback and threat,
+   * worth nothing here (BIT-IDENTICAL single target fights), and Master of
+   * Elements 3 -> 2 is +1.15 +/- 2.97 at 120s single target over 1500 paired
+   * fights. At 5 targets/60s the package is +193.7 +/- 7.2.
+   */
   pyroblast: 1,
+  improved_flamestrike: 3,
   improved_scorch: 3,
   heating_up: 1,
-  master_of_elements: 3,
+  master_of_elements: 2,
   critical_mass: 5,
   fire_power: 3,
   combustion: 1,
@@ -3241,13 +3249,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'mage_frostfire',
     label: 'Frostfire',
-    detail: 'Gnome, caster, standing target. 29 Fire / 22 Frost',
+    detail: 'Human, caster, standing target. 29 Fire / 22 Frost',
     characterClass: 'mage',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Frostfire Mage',
-        race: 'gnome',
+        // Human (round 78): +7.19 +/- 5.64 at 120s single target (1000 paired fights) and +14.72 at 5 targets.
+        race: 'human',
         characterClass: 'mage',
         level: 60,
         combatStyle: 'caster',
@@ -3309,13 +3318,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'mage_arcane',
     label: 'Arcane',
-    detail: 'Gnome, caster, standing target. 35 Arcane / 11 Fire / 5 Frost',
+    detail: 'High Order Skyborne, caster, standing target. 48 Arcane / 3 Fire',
     characterClass: 'mage',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Arcane Mage',
-        race: 'gnome',
+        // High Order Skyborne (round 78): +2.85 +/- 5.84 at 120s single target and +48.92 +/- 4.54 at 5 targets.
+        race: 'high_order_skyborne',
         characterClass: 'mage',
         level: 60,
         combatStyle: 'caster',
@@ -3395,13 +3405,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'mage_fire',
     label: 'Fire',
-    detail: 'Gnome, caster, standing target. 15 Arcane / 31 Fire / 5 Frost',
+    detail: 'High Order Skyborne, caster, standing target. 14 Arcane / 34 Fire / 3 Frost',
     characterClass: 'mage',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Fire Mage',
-        race: 'gnome',
+        // High Order Skyborne (round 78): +19.61 +/- 7.40 at 120s single target and +39.91 +/- 6.52 at 5 targets.
+        race: 'high_order_skyborne',
         characterClass: 'mage',
         level: 60,
         combatStyle: 'caster',
@@ -4208,7 +4219,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         spell_power: 'spell_power_35',
         food: 'food_spell_power',
         school_spell_power: 'school_frost',
-        potion: 'major_spellblasting_potion',
+        potion: 'major_mana_potion',
         other: 'demonic_rune',
       },
       precombat: [
