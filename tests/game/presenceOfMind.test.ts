@@ -176,7 +176,12 @@ describe('Presence of Mind', () => {
    * the BUILT book, so racials and consumables are included.
    */
   it('finds no non-spell with a cast time in any built Mage book', () => {
-    const spells = new Set(MAGE_ABILITIES.map((ability) => ability.id));
+    /*
+     * READ LEY LINE IS A SPELL TOO (round 79): a High Order Skyborne's 2-second
+     * racial cast. Presence of Mind making it instant is the game's own reading
+     * of "your next non-instant spell", so it is allowed here by name.
+     */
+    const spells = new Set([...MAGE_ABILITIES.map((ability) => ability.id), 'read_ley_line']);
     for (const id of ['mage_arcane', 'mage_fire', 'mage_frostfire']) {
       const mage = characterAtCombatStart(PRESETS_BY_ID.get(id)!.build())!;
       for (const ability of mage.abilities.all) {

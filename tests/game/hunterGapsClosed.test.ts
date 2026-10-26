@@ -1013,11 +1013,11 @@ describe('the melee Hunter dual-wields', () => {
      * Season of Discovery stand-ins and went with the rest of them; the melee
      * Hunter wears the E65 benchmark set now. What this test was really about
      * survives: it dual-wields, and both hands are enchanted -- Crusader on the
-     * main hand, and since round 78 +25 Agility on the off hand (+8.0 alone,
-     * 1200 paired fights at 120s; both hands agility measured no better).
+     * main hand, and +15 Agility on the off hand since round 79 -- +25 Agility
+     * is two-handed only, and +15 beat Crusader there by 3.9 at 120 s.
      */
     expect(profile.equipment.mainHand?.enchantId).toBe(CRUSADER.id);
-    expect(ENCHANTS_BY_ID.get(profile.equipment.offHand!.enchantId!)?.name).toBe('+25 Agility');
+    expect(ENCHANTS_BY_ID.get(profile.equipment.offHand!.enchantId!)?.name).toBe('+15 Agility');
     // The two-hander is gone rather than carried alongside.
     expect(profile.equipment.twoHand).toBeUndefined();
   });

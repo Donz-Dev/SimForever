@@ -107,6 +107,16 @@ export const BOSS_SWING_DAMAGE_RAMP = 0.1;
  */
 export const BOSS_DAMAGE_RAMP_MAX_STACKS = 200;
 
+/**
+ * THE RAMP STOPS AT TWICE THE BASE SWING (round 79), the owner's: "a damage
+ * maximum of 2x what the base swing damage is set at". At ten percent a swing
+ * compounding that is reached between the seventh and eighth swing, so it is a
+ * cap on the MULTIPLIER (`maxStackedMultiplier`) and not on the stack count.
+ * It covers both fights that ramp: a tank run's boss and the tank healer
+ * fight's, which is the same boss swinging for 2,000. Adds never ramp.
+ */
+export const BOSS_DAMAGE_RAMP_MAX_MULTIPLIER = 2;
+
 /** Every outcome a swing can produce, avoided or not. */
 const EVERY_OUTCOME: readonly AttackOutcome[] = [
   'miss',
@@ -139,6 +149,7 @@ export const BOSS_DAMAGE_RAMP: AuraDefinition = {
   maxStacks: BOSS_DAMAGE_RAMP_MAX_STACKS,
   damageDoneMultiplier: 1 + BOSS_SWING_DAMAGE_RAMP,
   modifiersScaleWithStacks: true,
+  maxStackedMultiplier: BOSS_DAMAGE_RAMP_MAX_MULTIPLIER,
 };
 
 /**

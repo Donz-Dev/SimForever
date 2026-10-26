@@ -8,6 +8,9 @@ import {
   ELUNES_LIGHT_COOLDOWN_MS,
   EUREKA,
   EUREKA_COOLDOWN_MS,
+  READ_LEY_LINE,
+  READ_LEY_LINE_CAST_MS,
+  READ_LEY_LINE_COOLDOWN_MS,
   STONEFORM,
   STONEFORM_COOLDOWN_MS,
 } from './auras';
@@ -121,7 +124,33 @@ export const EUREKA_ABILITY: Ability = {
  * its aura because `TALENT_AURAS` never carried it and a missed lookup is not
  * an error.
  */
+/**
+ * Read Ley Line (round 79): a 2 second cast for fifteen seconds of mana
+ * regeneration at x1.5.
+ *
+ * "CANNOT BE USED WHILE INNERVATE IS ACTIVE, AND WILL BE REPLACED BY INNERVATE"
+ * is two rules and they live in two places: this `canCast` refuses while the
+ * `innervate` aura is up, and Innervate's own cast removes this aura. Read by
+ * aura ID, because only a Skyborne Druid holds both and neither file should
+ * import the other's definitions for one string.
+ *
+ * ON THE GLOBAL COOLDOWN, the default: it is a cast, not a free cooldown, so
+ * it is in no stock list -- where it belongs is an APL decision.
+ */
+export const READ_LEY_LINE_ABILITY: Ability = {
+  id: 'read_ley_line',
+  name: 'Read Ley Line',
+  castTimeMs: READ_LEY_LINE_CAST_MS,
+  cooldownMs: READ_LEY_LINE_COOLDOWN_MS,
+  requiresTarget: false,
+  canCast: ({ caster }) => !caster.auras.has('innervate'),
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, READ_LEY_LINE, caster.id);
+  },
+};
+
 export const RACIAL_ABILITIES: Readonly<Record<string, Ability>> = {
+  read_ley_line: READ_LEY_LINE_ABILITY,
   stoneform: STONEFORM_ABILITY,
   elunes_light: ELUNES_LIGHT_ABILITY,
   blood_fury: BLOOD_FURY_ABILITY,

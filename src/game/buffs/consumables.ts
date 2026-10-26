@@ -354,6 +354,48 @@ const WEAPON_EFFECTS: readonly {
   },
 ];
 
+/** The potions, offered on the Primary and Secondary Potion rows alike (round 79). */
+const POTION_OPTIONS: readonly Consumable[] = [
+      {
+        id: 'major_healing_potion',
+        name: 'Major Healing Potion',
+        ability: MAJOR_HEALING_POTION_ABILITY,
+      },
+      { id: 'major_mana_potion', name: 'Major Mana Potion', ability: MAJOR_MANA_POTION_ABILITY },
+      {
+        /*
+         * THE ONE POTION WITH A CLASS LIST, and the only one whose value is not
+         * guessable from its name: a Cat Druid drinks it for the sixty strength
+         * and the rage is worth nothing to it -- not because it has no rage pool
+         * (it has one; pools are per class, not per form) but because nothing
+         * ever fills or spends it. Measured. See the ability.
+         */
+        id: 'mighty_rage_potion',
+        name: 'Mighty Rage Potion',
+        classes: ['warrior', 'druid'],
+        ability: MIGHTY_RAGE_POTION_ABILITY,
+      },
+      { id: 'major_frenzy_potion', name: 'Major Frenzy Potion', ability: MAJOR_FRENZY_POTION_ABILITY },
+      {
+        /*
+         * SELECTABLE, CASTABLE AND WORTH NOTHING, and it says so where it is
+         * chosen. The panel prints every `unmodelled` consumable beside the
+         * dropdown, which is the discipline items, enchants and raid buffs all
+         * follow -- and the reason is shared with the ability rather than
+         * written twice, so the two cannot drift.
+         */
+        id: 'major_menders_potion',
+        name: "Major Mender's Potion",
+        ability: MAJOR_MENDERS_POTION_ABILITY,
+        unmodelled: MAJOR_MENDERS_POTION_UNMODELLED,
+      },
+      {
+        id: 'major_spellblasting_potion',
+        name: 'Major Spellblasting Potion',
+        ability: MAJOR_SPELLBLASTING_POTION_ABILITY,
+      },
+    ];
+
 /** One hand's worth of the table, with the hand in each id. */
 const weaponEffectsFor = (hand: 'main_hand' | 'off_hand'): readonly Consumable[] =>
   WEAPON_EFFECTS.map((entry) => ({
@@ -584,47 +626,32 @@ export const CONSUMABLE_CATEGORIES: readonly ConsumableCategory[] = [
    */
   {
     id: 'potion',
-    name: 'Potion',
-    options: [
-      {
-        id: 'major_healing_potion',
-        name: 'Major Healing Potion',
-        ability: MAJOR_HEALING_POTION_ABILITY,
-      },
-      { id: 'major_mana_potion', name: 'Major Mana Potion', ability: MAJOR_MANA_POTION_ABILITY },
-      {
-        /*
-         * THE ONE POTION WITH A CLASS LIST, and the only one whose value is not
-         * guessable from its name: a Cat Druid drinks it for the sixty strength
-         * and the rage is worth nothing to it -- not because it has no rage pool
-         * (it has one; pools are per class, not per form) but because nothing
-         * ever fills or spends it. Measured. See the ability.
-         */
-        id: 'mighty_rage_potion',
-        name: 'Mighty Rage Potion',
-        classes: ['warrior', 'druid'],
-        ability: MIGHTY_RAGE_POTION_ABILITY,
-      },
-      { id: 'major_frenzy_potion', name: 'Major Frenzy Potion', ability: MAJOR_FRENZY_POTION_ABILITY },
-      {
-        /*
-         * SELECTABLE, CASTABLE AND WORTH NOTHING, and it says so where it is
-         * chosen. The panel prints every `unmodelled` consumable beside the
-         * dropdown, which is the discipline items, enchants and raid buffs all
-         * follow -- and the reason is shared with the ability rather than
-         * written twice, so the two cannot drift.
-         */
-        id: 'major_menders_potion',
-        name: "Major Mender's Potion",
-        ability: MAJOR_MENDERS_POTION_ABILITY,
-        unmodelled: MAJOR_MENDERS_POTION_UNMODELLED,
-      },
-      {
-        id: 'major_spellblasting_potion',
-        name: 'Major Spellblasting Potion',
-        ability: MAJOR_SPELLBLASTING_POTION_ABILITY,
-      },
-    ],
+    /*
+     * "PRIMARY POTION" SINCE ROUND 79, beside a Secondary Potion row. The id
+     * stays `potion`, because every saved profile keys its selection by it.
+     */
+    name: 'Primary Potion',
+    options: POTION_OPTIONS,
+  },
+  /*
+   * ==========================================================================
+   * A SECOND POTION (round 79), the owner's: "a Primary / secondary potion
+   * identified and the logic for use is handled in the APL", for example a mana
+   * potion only under 50% mana and past the first minute, a damage potion
+   * otherwise. The SAME potions with ids of their own, because a selection
+   * names a consumable by id and the duplicate check at module load requires
+   * ids to be unique -- the arrangement the two weapon-effect rows use.
+   *
+   * THE TWO SHARE ONE COOLDOWN, which is what makes a second row honest: every
+   * potion ability declares `cooldownGroup: 'potion'`, so drinking either puts
+   * both on the two-minute cooldown. Which one is drunk when is the list's
+   * decision -- each potion keeps its own entry and condition there.
+   * ==========================================================================
+   */
+  {
+    id: 'potion_secondary',
+    name: 'Secondary Potion',
+    options: POTION_OPTIONS.map((option) => ({ ...option, id: `secondary_${option.id}` })),
   },
   {
     id: 'other',
@@ -966,9 +993,15 @@ export function consumableAbilities(
   characterClass: ClassId,
   selection: ConsumableSelection | undefined,
 ): readonly Ability[] {
+  /*
+   * ONCE PER ABILITY: the Primary and Secondary Potion rows can name the same
+   * potion, and a book holding one ability twice would cast it twice.
+   */
+  const seen = new Set<string>();
   return selectedConsumables(selection)
     .filter((consumable) => consumableAllowsClass(consumable, characterClass))
-    .flatMap((consumable) => (consumable.ability ? [consumable.ability] : []));
+    .flatMap((consumable) => (consumable.ability ? [consumable.ability] : []))
+    .filter((ability) => (seen.has(ability.id) ? false : (seen.add(ability.id), true)));
 }
 
 /**

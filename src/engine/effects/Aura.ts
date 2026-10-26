@@ -374,6 +374,14 @@ export interface AuraDefinition {
   /** Multiplies damage the carrier deals. 1.1 is +10%. */
   readonly damageDoneMultiplier?: number;
   /**
+   * THE MOST A STACKING MULTIPLIER MAY REACH (round 79), whatever the stack
+   * count. A compounding 1.1 a stack passes 2.0 between the seventh and eighth
+   * stack, so a cap expressed in STACKS cannot land on a stated multiple; this
+   * caps the product instead. Read by every damage multiplier `stackedMultiplier`
+   * produces for this aura. Absent means uncapped.
+   */
+  readonly maxStackedMultiplier?: number;
+  /**
    * Multiplies damage the carrier deals OF PARTICULAR SCHOOLS.
    *
    * ----------------------------------------------------------------------------

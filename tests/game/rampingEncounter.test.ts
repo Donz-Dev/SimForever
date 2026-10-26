@@ -5,6 +5,7 @@ import { createPlayer } from '../../src/game/actors/createPlayer';
 import { createTrainingDummy } from '../../src/game/actors/createTrainingDummy';
 import {
   BOSS_DAMAGE_RAMP,
+  BOSS_DAMAGE_RAMP_MAX_MULTIPLIER,
   BOSS_DAMAGE_RAMP_MAX_STACKS,
   BOSS_SWING_DAMAGE_RAMP,
   PLACEHOLDER_BOSS_SWING_DAMAGE,
@@ -143,6 +144,17 @@ describe('the damage ramp', () => {
       expect(boss.damageDoneMultiplier).toBeCloseTo(1.1 ** stacks, 10);
     }
     expect(boss.damageDoneMultiplier).toBeCloseTo(1.61051, 10);
+  });
+
+  it("stops at twice the base swing, the owner's maximum (round 79)", () => {
+    const boss = createTrainingDummy({ attacks: true });
+    const simulation = new Simulation({ durationMs: 1000, seed: 1, createCombatants: () => [boss] });
+    // Seven stacks are 1.1^7 = 1.9487, under the cap; the eighth would be 2.1436.
+    for (let stacks = 1; stacks <= 7; stacks++) simulation.applyAura(boss, BOSS_DAMAGE_RAMP, boss.id);
+    expect(boss.damageDoneMultiplier).toBeCloseTo(1.1 ** 7, 10);
+    for (let stacks = 8; stacks <= 30; stacks++) simulation.applyAura(boss, BOSS_DAMAGE_RAMP, boss.id);
+    expect(boss.damageDoneMultiplier).toBe(BOSS_DAMAGE_RAMP_MAX_MULTIPLIER);
+    expect(BOSS_DAMAGE_RAMP_MAX_MULTIPLIER).toBe(2);
   });
 
   it('adds exactly one stack per swing, avoided swings included', () => {

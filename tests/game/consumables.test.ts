@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { consumableAbilities as consumableAbilitiesForTest } from '../../src/game/buffs/consumables';
 import {
   CATEGORY_BY_CONSUMABLE_ID,
   CONSUMABLE_CATEGORIES,
@@ -90,7 +91,16 @@ const TABLE: Readonly<Record<string, readonly string[]>> = {
    * category". Exclusive within themselves and not with each other, which is
    * one map keyed by category and nothing to enforce.
    */
-  Potion: [
+  'Primary Potion': [
+    'Major Healing Potion',
+    'Major Mana Potion',
+    'Mighty Rage Potion',
+    'Major Frenzy Potion',
+    "Major Mender's Potion",
+    'Major Spellblasting Potion',
+  ],
+  // Round 79: the same six again, the second potion the APL can choose between.
+  'Secondary Potion': [
     'Major Healing Potion',
     'Major Mana Potion',
     'Mighty Rage Potion',
@@ -109,6 +119,7 @@ const TABLE: Readonly<Record<string, readonly string[]>> = {
  */
 const CLASS_RESTRICTED: Readonly<Record<string, readonly string[]>> = {
   mighty_rage_potion: ['warrior', 'druid'],
+  secondary_mighty_rage_potion: ['warrior', 'druid'],
   thistle_tea: ['rogue', 'druid'],
 };
 
@@ -327,7 +338,8 @@ describe('what a consumable is worth', () => {
     const inert = CONSUMABLE_CATEGORIES.flatMap((category) => category.options).filter(
       (option) => option.unmodelled !== undefined,
     );
-    expect(inert.map((option) => option.name)).toEqual(["Major Mender's Potion"]);
+    // Once on each potion row since round 79.
+    expect(inert.map((option) => option.name)).toEqual(["Major Mender's Potion", "Major Mender's Potion"]);
     for (const option of inert) expect(option.stats, option.name).toBeUndefined();
     expect(consumableEffects({ food: 'food_healing_power' }).stats).toEqual({ healingPower: 44 });
     expect(consumableEffects({ potion: 'major_menders_potion' }).unmodelled).toHaveLength(1);
@@ -1035,5 +1047,29 @@ describe('migrating a weapon effect from one row to two', () => {
     // And the rest of the selection survives, which is the `validateProfile`
     // field-by-field rebuild's own failure mode.
     expect(profile.consumables.flask).toBe('flask_hit_points');
+  });
+});
+
+describe('the secondary potion (round 79)', () => {
+  it('joins the book beside the primary, and the two share one cooldown', () => {
+    const abilities = consumableAbilitiesForTest('mage', {
+      potion: 'major_mana_potion',
+      potion_secondary: 'secondary_major_spellblasting_potion',
+    });
+    const ids = abilities.map((ability) => ability.id);
+    expect(ids).toContain('major_mana_potion');
+    expect(ids).toContain('major_spellblasting_potion');
+    const groups = new Set(
+      abilities.filter((ability) => ids.includes(ability.id)).map((ability) => ability.cooldownGroup),
+    );
+    expect([...groups]).toEqual(['potion']);
+  });
+
+  it('casts the same potion once when both rows name it', () => {
+    const ids = consumableAbilitiesForTest('mage', {
+      potion: 'major_mana_potion',
+      potion_secondary: 'secondary_major_mana_potion',
+    }).map((ability) => ability.id);
+    expect(ids.filter((id) => id === 'major_mana_potion')).toHaveLength(1);
   });
 });

@@ -28,6 +28,19 @@ is the order of one **pass**, and a pass is repeated until it ships nothing.
 
 ---
 
+## The owner's round 79 rules, which override anything below
+
+After the first all-profile run (round 78) the owner set five rules. They are the
+`optimize-update-report` skill's standing rules too; this is where a single-profile run meets them.
+
+| rule | what it means for a pass |
+| --- | --- |
+| **one talent build, on the weighted score** | talents are chosen with `WEIGHTED=1` on `probe_build.ts`: 49% single target (120 s) and 17% each for 3, 5 and 8 targets, or half each for a healer's two fights. Never a build per fight style |
+| **play style and potions can differ by fight** | the Single and Multi Target APLs are tuned separately; a **Primary** and a **Secondary Potion** share the potion cooldown, and the APL decides which is drunk when (e.g. a mana potion under 50% mana once 60 s have passed) |
+| **Horde and Windshaper Skyborne races only** | race candidates are Orc, Undead, Troll, Tauren and Windshaper Skyborne, whichever the class can be |
+| **go deeper, outside the box** | enumerate every castable ability and proc chain, try whole alternative rotations (a weave, an AoE spell in a melee list, a proc chain such as Fire Blast into Heating Up into Pyroblast), sweep every threshold. Round 78 missed Melee Weave and Volley on the melee Hunters and the Fire chain on Arcane |
+| **ask before changing a core feature** | a change to the theme, the weapon style, an owner line or an engine rule is a question for the owner, with its figure, never a ship |
+
 ## 0. The loop, in one page
 
 ```

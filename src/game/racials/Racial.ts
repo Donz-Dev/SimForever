@@ -128,6 +128,17 @@ export type RacialEffect =
    */
   | { readonly kind: 'critDamageBonus'; readonly percent: number }
 
+  /**
+   * A pet's damage, as a percentage (round 79: the Orc's Command). Composed
+   * into the pet's one damage multiplier, beside the talents' -- see
+   * `petDamageMultiplierFor`. `requires.classes` names whose pets.
+   */
+  | {
+      readonly kind: 'petDamagePercent';
+      readonly percent: number;
+      readonly requires?: RacialRequirement;
+    }
+
   /** An active ability the race grants. Its id must be in `RACIAL_ABILITIES`. */
   | { readonly kind: 'grantAbility'; readonly abilityId: string }
 

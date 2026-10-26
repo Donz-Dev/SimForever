@@ -28,6 +28,7 @@ import {
   BLOOD_FURY,
   ELUNES_LIGHT,
   EUREKA,
+  READ_LEY_LINE,
   STONEFORM,
 } from '../../src/game/racials/auras';
 import {
@@ -86,18 +87,20 @@ import { buildSimulation } from '../helpers/buildSimulation';
 
 // --- The owner's figures, by hand. -----------------------------------------
 /*
- * THE RACIAL PATCH REPLACED THE THREE WEAPON SPECIALIZATIONS. Ruthless and
- * Savage are the old sword and axe figures with the weapon condition dropped;
- * Earth Fury is a different KIND of effect at the Tauren's figure.
+ * ROUND 79's RACIAL TUNING: Ruthless 1% (was 2), the Human Spirit 10% (was 5),
+ * Dwarf Earth Fury replaced by Artisan's Precision (+1% hit), Tauren Endurance
+ * health only, Orc Savage replaced by Command (+5% Warlock and Hunter pet
+ * damage), Wind Blessed 2% (was 3), and Read Ley Line +50% regeneration.
  */
-const RUTHLESS = 2;
-const SAVAGE = 1;
-const CRIT_DAMAGE_RACIAL = 2;
-const HUMAN_SPIRIT = 0.05;
+const RUTHLESS = 1;
+const ARTISANS_PRECISION = 1;
+const COMMAND_PET_DAMAGE = 1.05;
+const HUMAN_SPIRIT = 0.1;
+const READ_LEY_LINE_REGEN = 1.5;
 const NIGHT_ELF_DODGE = 1;
 const TAUREN_HEALTH = 0.05;
 const GNOME_RESOURCE = 0.05;
-const SKYBORNE_HASTE = 3;
+const SKYBORNE_HASTE = 2;
 const BLOOD_FURY_POWER = 0.1;
 const BERSERKING_HASTE = 10;
 const ELUNES_LIGHT_CRIT = 10;
@@ -158,8 +161,9 @@ describe('every race is declared, and nothing it names is missing', () => {
       }
     }
     // The owner names five actives; nothing in the table is unreachable.
+    // And Read Ley Line since round 79.
     expect([...granted].sort()).toEqual(
-      ['berserking', 'blood_fury', 'elunes_light', 'eureka', 'stoneform'].sort(),
+      ['berserking', 'blood_fury', 'elunes_light', 'eureka', 'read_ley_line', 'stoneform'].sort(),
     );
     expect(Object.keys(RACIAL_ABILITIES).sort()).toEqual([...granted].sort());
   });
@@ -173,106 +177,36 @@ describe('every race is declared, and nothing it names is missing', () => {
   });
 });
 
-describe('the crit racials, which the racial patch made unconditional', () => {
+describe('the crit, hit and pet racials, after round 79', () => {
   /*
    * ==========================================================================
-   * THREE WEAPON SPECIALIZATIONS BECAME TWO FLAT CRIT TRAITS AND ONE CRIT
-   * DAMAGE TRAIT, AND THE CONDITION MECHANISM LOST EVERY CALLER IT HAD.
-   *
-   *   Human  Sword Specialization -> Ruthless     2% crit chance, no condition
-   *   Orc    Axe Specialization   -> Savage       1% crit chance, no condition
-   *   Dwarf  Mace Specialization  -> Earth Fury   2% crit DAMAGE, no condition
-   *
-   * So the tests that used to live here -- "reads what is EQUIPPED and not
-   * what swings", "counts either hand", "gives a Dwarf its mace and nobody
-   * else" -- were asserting a condition that no racial expresses any more.
-   * They are not loosened, they are gone, and what replaced them is the
-   * assertion that `weaponTypes` now reaches NOTHING: a condition with no
-   * caller reads exactly like one that is sometimes true, which is this
-   * project's own `isWeaponUseOf(attack, 'ranged')` lesson.
+   * ROUND 79 LEFT ONE CRIT RACIAL. Ruthless is 1% crit chance for a Human with
+   * no condition; Savage and Earth Fury are gone, replaced by Command (Orc pet
+   * damage) and Artisan's Precision (Dwarf hit). So no race carries a crit
+   * DAMAGE factor any more, and nothing asks about a weapon.
    * ==========================================================================
    */
 
-  it('grants BOTH crit stats, because "all spells and attacks" is two of them', () => {
-    /*
-     * `critChance` AND `spellCritChance` ARE READ BY SEPARATE TABLES, which is
-     * the reading sixty-two item lines saying the same words already take. It
-     * is not academic: the Shockadin's damage is almost entirely Holy spells,
-     * so the melee-only reading would be right about two Paladin builds and
-     * silently worth nothing to the third.
-     *
-     * NO SWORD IN HAND ANY MORE. This used to need High Warlord's Blade put
-     * into the character's hand, because the trait was conditional and the
-     * Shockadin's template holds a mace. Ruthless has no condition, so the
-     * assertion is now about the race alone -- which is the change.
-     */
-    const asHuman = racialBuild('human', {
-      characterClass: 'paladin',
-      equipment: {},
-      style: 'one_hand_shield',
-    });
-    const asUndead = racialBuild('undead', {
-      characterClass: 'paladin',
-      equipment: {},
-      style: 'one_hand_shield',
-    });
-
-    expect((asHuman.stats.critChance ?? 0) - (asUndead.stats.critChance ?? 0)).toBeCloseTo(
-      RUTHLESS,
-      9,
-    );
-    expect(
-      (asHuman.stats.spellCritChance ?? 0) - (asUndead.stats.spellCritChance ?? 0),
-    ).toBeCloseTo(RUTHLESS, 9);
+  it('grants a Human BOTH crit stats, because "all spells and attacks" is two of them', () => {
+    const asHuman = racialBuild('human', { characterClass: 'paladin', equipment: {}, style: 'one_hand_shield' });
+    const asUndead = racialBuild('undead', { characterClass: 'paladin', equipment: {}, style: 'one_hand_shield' });
+    expect((asHuman.stats.critChance ?? 0) - (asUndead.stats.critChance ?? 0)).toBeCloseTo(RUTHLESS, 9);
+    expect((asHuman.stats.spellCritChance ?? 0) - (asUndead.stats.spellCritChance ?? 0)).toBeCloseTo(RUTHLESS, 9);
   });
 
-  it('grants it whatever is in hand, which is the whole of the change', () => {
-    /*
-     * THE OLD TRAIT WAS WORTH NOTHING TO A BUILD HOLDING THE WRONG WEAPON, and
-     * the Combat Rogue was the worked example: it is the one Orc preset with no
-     * axe at all -- sword and dagger -- so Axe Specialization reached every
-     * other Orc build and not that one. Savage reaches it.
-     *
-     * Driven over an empty hand, a dagger and a sword, because "unconditional"
-     * is a claim about every case rather than about the one that used to fail.
-     */
-    const dagger = 21126;
-    const sword = 16345;
-    for (const equipment of [
-      {},
-      { mainHand: { itemId: dagger } },
-      { mainHand: { itemId: sword } },
-    ]) {
-      const orc = racialBuild('orc', { characterClass: 'rogue', equipment, style: 'dual_wield' });
-      expect(orc.stats.critChance, JSON.stringify(equipment)).toBe(SAVAGE);
-      expect(orc.stats.spellCritChance, JSON.stringify(equipment)).toBe(SAVAGE);
-    }
+  it('gives an Orc no crit at all now that Savage is gone', () => {
+    const orc = racialBuild('orc', { characterClass: 'rogue', equipment: {}, style: 'dual_wield' });
+    expect(orc.stats.critChance ?? 0).toBe(0);
+    expect(orc.stats.spellCritChance ?? 0).toBe(0);
+  });
 
-    // And the Combat Rogue, the build the old condition excluded, now collects.
-    // Built as an ORC: the preset is a Gnome since round 78, and this is a claim
-    // about the Orc trait on that build's sword and dagger.
-    expect(racialSpellCritDelta('rogue_combat', 'troll', 'orc')).toBeCloseTo(SAVAGE, 9);
+  it('gives a Dwarf a point of hit, character-wide, which every table reads', () => {
+    const dwarf = createPlayer({ race: 'dwarf', characterClass: 'warrior' });
+    const troll = createPlayer({ race: 'troll', characterClass: 'warrior' });
+    expect(dwarf.stats.get('hitChance') - troll.stats.get('hitChance')).toBe(ARTISANS_PRECISION);
   });
 
   it('leaves NO racial asking about a weapon, so the condition is unreachable', () => {
-    /*
-     * ========================================================================
-     * THE `EFFECT_RULES` GUARD, POINTED AT `RacialRequirement.weaponTypes`.
-     *
-     * `meets` still implements the condition and `RacialRequirement` still
-     * declares it, which is deliberate -- Forever had three weapon
-     * specializations last week and may have one again, and the field is six
-     * lines. What is NOT acceptable is leaving a predicate with no caller and
-     * nothing saying so: a rule that matches nothing reads exactly like one
-     * that sometimes matches, which is how "+N ranged Attack Power" went
-     * unparsed for the whole item database.
-     *
-     * SO THIS FAILS IN BOTH DIRECTIONS. It fails if a racial starts using
-     * `weaponTypes` again -- at which point the tests deleted above are what
-     * should come back -- and it fails if somebody deletes the field while
-     * this still names it.
-     * ========================================================================
-     */
     const withWeaponCondition: string[] = [];
     for (const race of RACE_IDS) {
       for (const trait of RACIALS[race].traits) {
@@ -289,156 +223,72 @@ describe('the crit racials, which the racial patch made unconditional', () => {
     expect(withWeaponCondition).toEqual([]);
   });
 
-  it('gives a Dwarf and a Tauren a crit DAMAGE FACTOR on every offensive table', () => {
-    /*
-     * ========================================================================
-     * THE WHOLE BASE, NOT THE BONUS HALF, by the owner's ruling: a 2% critical
-     * damage racial takes a spell crit's 1.5x to 1.53x and an attack's 2x to
-     * 2.04x. So it is ONE factor on every offensive table -- the per-table
-     * difference survives because it is 2% of each table's own multiplier --
-     * and it used to be 2% of the part above 1 (2.02x and 1.51x).
-     * ========================================================================
-     */
-    const factor = 1 + CRIT_DAMAGE_RACIAL / 100;
-    for (const race of ['dwarf', 'tauren'] as const) {
-      const built = racialBuild(race, {
-        characterClass: 'warrior',
-        equipment: {},
-        style: 'two_hander',
-      });
-      for (const table of [
-        'melee-auto',
-        'melee-special',
-        'ranged-auto',
-        'ranged-special',
-        'spell',
-      ] as const) {
-        const modifier = built.attackTableModifiers.for(table);
-        expect(modifier.critMultiplierFactor, `${race} ${table}`).toBeCloseTo(factor, 12);
-        expect(modifier.critMultiplierBonus ?? 0, `${race} ${table}`).toBe(0);
-      }
-      // NOT the attacks-RECEIVED table, which would raise what the boss crits
-      // a Tauren Warrior for.
-      expect(
-        built.attackTableModifiers.for('melee-received').critMultiplierFactor ?? 1,
-        `${race} melee-received`,
-      ).toBe(1);
-    }
-
-    // AND NO OTHER RACE CARRIES ONE.
-    for (const race of ['human', 'orc', 'troll', 'night_elf', 'gnome', 'undead'] as const) {
-      expect(
-        racialBuild(race, { characterClass: 'warrior', equipment: {}, style: 'two_hander' })
-          .attackTableModifiers.for('melee-auto').critMultiplierFactor ?? 1,
-        race,
-      ).toBe(1);
+  it('gives no race a crit DAMAGE factor any more', () => {
+    for (const race of RACE_IDS) {
+      const built = racialBuild(race, { characterClass: 'warrior', equipment: {}, style: 'two_hander' });
+      expect(built.attackTableModifiers.for('melee-special').critMultiplierFactor ?? 1, race).toBe(1);
+      expect(built.attackTableModifiers.for('spell').critMultiplierFactor ?? 1, race).toBe(1);
     }
   });
 
-  it("reproduces the owner's four worked cases", () => {
-    /*
-     * BY HAND, from the owner's message:
-     *
-     *   A  a spell, racial                     1.5 x 1.02            = 1.53
-     *   B  a spell, racial, +100% talent       (1.5 x 1.02 - 1) x 2 + 1 = 2.06
-     *   C  an attack, racial                   2 x 1.02              = 2.04
-     *   D  an attack, racial, +20% talent      see below
-     *
-     * A TALENT'S BONUS IS STORED AS AN ABSOLUTE SHARE OF THE BASE'S BONUS HALF
-     * -- Ruin's +100% on a spell is +0.5, Impale-shaped +20% on an attack is
-     * +0.2 -- which is what `talentBuild` writes.
-     *
-     * D WAS WRITTEN `(2 x 1.02 - 1) x 2.2 = 2.288`, AND THE OWNER HAS RULED IT
-     * 2.248. Taken as a rule, D's own formula gives an untalented attack 2.08
-     * where C says 2.04, so no one formula fit all four; the ruling is B's rule
-     * for everything -- scale the bonus half the racial leaves, then add the 1
-     * back: `(2.04 - 1) x 1.2 + 1 = 2.248`. The 2.288 assertion below is kept
-     * as a NEGATIVE so the alternative cannot creep back in.
-     */
-    expect(critMultiplierWith(1.5, 0, 1.02)).toBeCloseTo(1.53, 12);
-    expect(critMultiplierWith(1.5, 0.5, 1.02)).toBeCloseTo(2.06, 12);
-    expect(critMultiplierWith(2, 0, 1.02)).toBeCloseTo(2.04, 12);
-    expect(critMultiplierWith(2, 0.2, 1.02)).toBeCloseTo(2.248, 12);
-    expect(critMultiplierWith(2, 0.2, 1.02)).not.toBeCloseTo(2.288, 3);
-    // And with no racial it is exactly the old sum, which is why nothing moves.
+  it("keeps the owner's crit multiplier arithmetic for a talent alone", () => {
     expect(critMultiplierWith(1.5, 0.5, 1)).toBe(2);
     expect(critMultiplierWith(2, 0.2, 1)).toBe(2.2);
   });
 
-  it('makes a crit DAMAGE racial bigger on the hit, not more frequent', () => {
-    /*
-     * THROUGH `createPlayer`, which is the join that can be missing, and then
-     * through the real crit multiplier the engine rolls with.
-     */
-    const factorFor = (race: 'dwarf' | 'troll'): number => {
-      const player = createPlayer({ race, characterClass: 'warrior', combatStyle: 'two_hander' });
-      return player.attackTableModifiers.for('melee-special').critMultiplierFactor ?? 1;
-    };
-    expect(factorFor('dwarf')).toBeCloseTo(1 + CRIT_DAMAGE_RACIAL / 100, 12);
-    expect(factorFor('troll')).toBe(1);
-
-    // AND THE CHANCE IS UNTOUCHED: Earth Fury grants no crit chance at all.
-    const dwarfBuild = racialBuild('dwarf', {
-      characterClass: 'warrior',
-      equipment: {},
-      style: 'two_hander',
-    });
-    expect(dwarfBuild.stats.critChance ?? 0).toBe(0);
-    expect(dwarfBuild.stats.spellCritChance ?? 0).toBe(0);
-  });
-
-  it("reaches the PET with crit CHANCE, which is the owner's own clause", () => {
-    /*
-     * "This includes +2% for pet crit chance."
-     *
-     * `createPet` reads `owner.stats.effective.critChance` and inherits all of
-     * it, so a STAT on the Hunter is already on the pet -- which is why these
-     * traits grant a stat and not `attackTableModifiers`. The bow enchant's
-     * "+2% Crit Chance" points the opposite way: the owner ruled it must NOT
-     * reach the pet, and it is a table modifier for exactly that reason.
-     *
-     * THE CLAUSE SURVIVED THE PATCH UNCHANGED, which is worth checking rather
-     * than assuming: the owner's sentence was about a weapon specialization,
-     * and what carried it to the pet was never the WEAPON -- it followed from
-     * the effect being a stat. Savage is still a stat, so it still arrives.
-     *
-     * AND CRIT DAMAGE DOES NOT, which is the other half and is NOT a ruling:
-     * `attackTableModifiers` is per-character and `createPet` builds its own
-     * combatant, so Earth Fury and Endurance stop at their owner. The patch
-     * note says nothing either way -- see `RacialEffect`, which records it as
-     * a question rather than as a decision.
-     */
-    const axe = itemIdIn('bm_hunter', 'twoHand');
+  it("reaches the PET with Ruthless's crit, which is a stat the pet inherits", () => {
     expect(
-      racialBuild('orc', {
-        characterClass: 'hunter',
-        equipment: { twoHand: { itemId: axe } },
-        style: 'ranged',
-      }).stats.critChance,
-    ).toBe(SAVAGE);
-
-    // And the pet inherits a crit stat in FULL, isolated by moving the owner's
-    // crit by a known amount and holding everything else fixed.
+      racialBuild('human', { characterClass: 'hunter', equipment: {}, style: 'ranged' }).stats.critChance,
+    ).toBe(RUTHLESS);
     const petCritWith = (bonus: number): number => {
       const built = PRESETS_BY_ID.get('bm_hunter')!.build();
       const simulation = new Simulation(
-        trainingDummyEncounter({
-          ...built,
-          stats: { ...built.stats, critChance: bonus },
-        }),
+        trainingDummyEncounter({ ...built, stats: { ...built.stats, critChance: bonus } }),
       );
       simulation.begin();
       const pet = simulation.combatants.find((actor) => actor.kind === 'pet');
       expect(pet).toBeDefined();
       return pet!.stats.effective.critChance;
     };
-
     expect(petCritWith(10) - petCritWith(0)).toBeCloseTo(10, 6);
+  });
+
+  it("raises an Orc's Hunter pet and Warlock demon damage by 5%, and no one else's", () => {
+    const petMultiplier = (presetId: string, race: 'orc' | 'troll'): number => {
+      const built = PRESETS_BY_ID.get(presetId)!.build();
+      const simulation = new Simulation(
+        trainingDummyEncounter({ ...built, character: { ...built.character, race } }),
+      );
+      simulation.begin();
+      const pet = simulation.combatants.find((actor) => actor.kind === 'pet');
+      expect(pet, presetId).toBeDefined();
+      return pet!.baseDamageMultiplier;
+    };
+    expect(petMultiplier('bm_hunter', 'orc') / petMultiplier('bm_hunter', 'troll')).toBeCloseTo(
+      COMMAND_PET_DAMAGE,
+      12,
+    );
+    // A Warlock with a demon out: Sbolt Spam summons none, so build one in.
+    const withImp = (race: 'orc' | 'troll') => {
+      const built = PRESETS_BY_ID.get('warlock_sbolt')!.build();
+      const simulation = new Simulation(
+        trainingDummyEncounter({
+          ...built,
+          character: { ...built.character, race, summonedDemon: 'imp' },
+        }),
+      );
+      simulation.begin();
+      return simulation.combatants.find((actor) => actor.kind === 'pet');
+    };
+    const orcImp = withImp('orc');
+    const trollImp = withImp('troll');
+    expect(orcImp, 'an Imp is built').toBeDefined();
+    expect(orcImp!.baseDamageMultiplier / trollImp!.baseDamageMultiplier).toBeCloseTo(COMMAND_PET_DAMAGE, 12);
   });
 });
 
 describe('the passive racials', () => {
-  it('gives a Human 5% more spirit, as a modifier that follows a buff', () => {
+  it('gives a Human 10% more spirit, as a modifier that follows a buff', () => {
     /*
      * A MODIFIER AND NOT A FLAT NUMBER. A percentage resolved at build time
      * freezes against the unbuffed stat, so the check is that it tracks: a
@@ -473,35 +323,14 @@ describe('the passive racials', () => {
     expect(elf.stats.dodgeChance).toBe(NIGHT_ELF_DODGE);
   });
 
-  it('gives a Tauren 5% health and a point of hit on all three tables', () => {
-    /*
-     * AGAINST THE TAUREN'S OWN UNRACIALLED POOL, which is the base hit points
-     * for its row plus ten a point of stamina. Comparing to another race was
-     * wrong for the same reason the spirit check was: base stamina differs.
-     */
+  it('gives a Tauren 5% health and nothing else', () => {
     const tauren = createPlayer({ race: 'tauren', characterClass: 'warrior' });
     const unracialled =
       baseHitPointsFor('tauren', 'warrior') + baseStatsFor('tauren', 'warrior')!.stamina * 10;
     expect(tauren.health.maximum).toBe(Math.round(unracialled * (1 + TAUREN_HEALTH)));
-
-    /*
-     * AND THE HIT CLAUSE IS GONE, REPLACED BY CRIT DAMAGE.
-     *
-     * "Endurance: Now grants 2% increased critical damage and healing (instead
-     * of 1% hit chance)". Both halves are asserted, because the one that would
-     * go unnoticed is the REMOVAL: a stat left behind grants a silent point of
-     * hit that nothing reports, and `hitChance` is a stat whose extra point is
-     * worth exactly nothing to three of the four Tauren presets anyway -- they
-     * sit on the 8 cap -- so no figure would have moved to flag it.
-     */
-    const troll = createPlayer({ race: 'troll', characterClass: 'warrior' });
-    expect(troll.stats.get('hitChance')).toBe(0);
+    // Round 79: "no hit chance or critical damage modifiers".
     expect(tauren.stats.get('hitChance')).toBe(0);
-    expect(tauren.attackTableModifiers.for('melee-special').critMultiplierFactor).toBeCloseTo(
-      1 + CRIT_DAMAGE_RACIAL / 100,
-      12,
-    );
-    expect(troll.attackTableModifiers.for('melee-special').critMultiplierFactor ?? 1).toBe(1);
+    expect(tauren.attackTableModifiers.for('melee-special').critMultiplierFactor ?? 1).toBe(1);
   });
 
   it('gives a Gnome 5% of the pool its class uses, and nothing else', () => {
@@ -540,7 +369,7 @@ describe('the passive racials', () => {
     );
   });
 
-  it('gives both Skyborne races exactly three percent of haste', () => {
+  it('gives both Skyborne races exactly two percent of haste', () => {
     /*
      * ASSERTED AS A MULTIPLIER AND NOT AS A RATING, which is the whole reason
      * the trait goes through `RATING_PER_PERCENT.haste`: three percent in is
@@ -562,8 +391,39 @@ describe('the passive racials', () => {
       });
       expect(build.stats.hasteRating, race).toBe(SKYBORNE_HASTE * RATING_PER_PERCENT.haste);
       const player = createPlayer({ race, characterClass: 'warrior' });
-      expect(hasteMultiplierFrom(player.stats.effective), race).toBeCloseTo(1.03, 9);
+      expect(hasteMultiplierFrom(player.stats.effective), race).toBeCloseTo(1.02, 9);
     }
+  });
+});
+
+describe('Read Ley Line', () => {
+  it('multiplies mana regeneration by 1.5 for fifteen seconds', () => {
+    expect(READ_LEY_LINE.resourceRegenMultiplier?.mana).toBe(READ_LEY_LINE_REGEN);
+    expect(READ_LEY_LINE.durationMs).toBe(seconds(15));
+  });
+
+  it('is a two-second cast, and refused while Innervate is up', () => {
+    const ability = RACIAL_ABILITIES.read_ley_line;
+    expect(ability.castTimeMs).toBe(seconds(2));
+    const druid = createPlayer({ race: 'high_order_skyborne', characterClass: 'druid' });
+    const simulation = buildSimulation([druid, makeTarget()]);
+    simulation.begin();
+    expect(ability.canCast?.({ simulation, caster: druid, ability } as never) ?? true).toBe(true);
+    simulation.applyAura(druid, { id: 'innervate', name: 'Innervate', durationMs: seconds(20) }, druid.id);
+    expect(ability.canCast?.({ simulation, caster: druid, ability } as never)).toBe(false);
+  });
+
+  it('is replaced by Innervate', () => {
+    const druid = createPlayer({ race: 'high_order_skyborne', characterClass: 'druid' });
+    const simulation = buildSimulation([druid, makeTarget()]);
+    simulation.begin();
+    simulation.applyAura(druid, READ_LEY_LINE, druid.id);
+    expect(druid.auras.has('read_ley_line')).toBe(true);
+    const innervate = druid.abilities.get('innervate');
+    expect(innervate).toBeDefined();
+    innervate!.onCast({ simulation, caster: druid, target: undefined, ability: innervate! } as never);
+    expect(druid.auras.has('read_ley_line')).toBe(false);
+    expect(druid.auras.has('innervate')).toBe(true);
   });
 });
 
@@ -1721,7 +1581,8 @@ describe('what is NOT modelled says so, in the owner\'s own words', () => {
      * rather than increment -- two branches that each move a count by one from
      * the same base both write the same number and git merges them cleanly.
      */
-    expect(modelled).toBe(15);
+    // 16 since round 79: Read Ley Line's mana half is modelled.
+    expect(modelled).toBe(16);
     /*
      * TWENTY-TWO, UP FROM TWENTY, AND BOTH NEW ENTRIES ARE THE SAME CLAUSE.
      *
@@ -1741,7 +1602,11 @@ describe('what is NOT modelled says so, in the owner\'s own words', () => {
      * `threat`, and that member is repealed -- threat is tracked now -- so it
      * is a live gap whose reason is that no list casts Shadowmeld in a fight.
      */
-    expect(ruledOut).toBe(21);
+    /*
+     * 20 SINCE ROUND 79: Earth Fury and Endurance's two healing halves went with
+     * the crit damage, and Read Ley Line's Attuned (a place) came in.
+     */
+    expect(ruledOut).toBe(20);
     expect(liveGaps).toBe(12);
   });
 
@@ -1796,42 +1661,6 @@ describe('what is NOT modelled says so, in the owner\'s own words', () => {
 });
 
 // --- helpers ---------------------------------------------------------------
-
-/** The spell crit a preset's race grants, isolated by swapping the race. */
-function racialSpellCritDelta(
-  presetId: string,
-  otherRace: 'troll' | 'tauren' | 'undead',
-  /** The race to build the preset as, when it is not the preset's own. */
-  asRace?: 'orc',
-): number {
-  /*
-   * SWAPPING THE RACE ON IDENTICAL GEAR, which is the only honest isolation.
-   * The first version of this probe took the WEAPON off instead and was
-   * useless: Obsidian Edged Blade and Azuresong Mageblade both carry "+1% crit
-   * with all spells and attacks", so the deltas came back 1.000 and 3.269 where
-   * the racial is 0 and 2, with the item's own line in both columns.
-   *
-   * `spellCritChance` IS THE CLEAN COLUMN under a race swap too, because no
-   * race differs from another in BASE spell crit -- where they do differ in base
-   * agility, which feeds melee crit.
-   */
-  const preset = PRESETS_BY_ID.get(presetId)!.build();
-  const built = asRace ? { ...preset, character: { ...preset.character, race: asRace } } : preset;
-  const mine = characterAtCombatStart(built)!;
-  const theirs = characterAtCombatStart({
-    ...built,
-    character: { ...built.character, race: otherRace },
-  })!;
-  return mine.stats.effective.spellCritChance - theirs.stats.effective.spellCritChance;
-}
-
-/** The item id a preset carries in one slot, for building a context by hand. */
-function itemIdIn(presetId: string, slot: 'mainHand' | 'offHand' | 'twoHand'): number {
-  const built = PRESETS_BY_ID.get(presetId)!.build();
-  const equipped = built.equipment?.[slot];
-  expect(equipped, `${presetId} ${slot}`).toBeDefined();
-  return equipped!.itemId;
-}
 
 describe('the panel can name and offer a racial ability', () => {
   it('names all five properly, rather than prettifying the id', () => {

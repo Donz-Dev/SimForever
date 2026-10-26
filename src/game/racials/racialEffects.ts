@@ -65,13 +65,16 @@ import type { RacialDefinition, RacialTrait } from './Racial';
 /**
  * "Increases your spellcasting, melee, and ranged Haste by 3%" for a Skyborne.
  *
+ * TWO SINCE ROUND 79's racial tuning: "Wind-Blessed Haste bonus reduced to 2%
+ * (was 3%)".
+ *
  * WAS 1 UNTIL THE RACIAL PATCH, which raised it to 3 with nothing else about
  * the trait changing: "Wind Blessed: Haste bonus increased to 3% (was 1%)".
  * The client's own tooltip still reads 1% at build 1.60.1.70291, so the NOTE
  * is the later statement and wins -- the same reading Swipe's 3% attack power
  * coefficient already takes against a sheet that says 10%.
  */
-export const SKYBORNE_HASTE_PERCENT = 3;
+export const SKYBORNE_HASTE_PERCENT = 2;
 /**
  * The same, in rating.
  *
@@ -83,10 +86,14 @@ export const SKYBORNE_HASTE_PERCENT = 3;
  */
 const SKYBORNE_HASTE_RATING = SKYBORNE_HASTE_PERCENT * RATING_PER_PERCENT.haste;
 
-/** "+5% Spirit" for a Human. */
-export const HUMAN_SPIRIT_PERCENT = 0.05;
+/** "+10% Spirit" for a Human. It was 5% until round 79: "Human Spirit now increases Spirit by 10%". */
+export const HUMAN_SPIRIT_PERCENT = 0.1;
 /**
- * "Ruthless: 2% increased critical strike chance" for a Human.
+ * "Ruthless: 1% increased critical strike chance" for a Human.
+ *
+ * ONE SINCE ROUND 79's racial tuning, "Ruthless now increases critical chance
+ * by 1% (was 2%)". The paragraphs below are about the condition it lost, and
+ * hold whatever the number.
  *
  * ---------------------------------------------------------------------------
  * IT REPLACED SWORD SPECIALIZATION, AND WHAT WENT IS THE CONDITION RATHER
@@ -101,42 +108,31 @@ export const HUMAN_SPIRIT_PERCENT = 0.05;
  * cannot take that away.
  * ---------------------------------------------------------------------------
  */
-export const RUTHLESS_CRIT = 2;
+export const RUTHLESS_CRIT = 1;
 /**
- * "Savage: 1% increased critical strike chance" for an Orc.
+ * "Command": Warlock and Hunter pet damage increased by 5%, for an Orc.
  *
- * Replaced Axe Specialization, the same way and with the same number it had.
+ * RE-ADDED AT ROUND 79, replacing Savage (1% crit chance), which the tuning
+ * removed. A pet's damage is one multiplier composed once in `createPet` and
+ * `createDemon`, so this rides on the talents' pet multiplier there.
  */
-export const SAVAGE_CRIT = 1;
+export const COMMAND_PET_DAMAGE_PERCENT = 5;
+
 /**
- * "2% increased critical damage and healing", which Dwarf EARTH FURY and
- * Tauren ENDURANCE both grant.
+ * "Artisan's Precision": hit chance with spells and attacks increased by 1%,
+ * for a Dwarf. Added at round 79 in place of Earth Fury.
  *
- * ---------------------------------------------------------------------------
- * ONE CONSTANT FOR TWO RACES, because the patch note states the identical
- * clause for each -- the arrangement `PARTY_CRIT_AURA_PERCENT` already uses
- * for a figure two sources share. Two copies would be two places to drift.
- *
- * EARTH FURY REPLACED MACE SPECIALIZATION AND IS A DIFFERENT KIND OF EFFECT,
- * which is the thing to notice rather than the number: the old trait was crit
- * CHANCE conditional on holding a mace, and this is crit DAMAGE
- * unconditionally. So a Dwarf holding a mace now carries less crit chance and
- * some crit damage where it used to carry only the first, and the effect kind
- * changed from `stat` to `critDamageBonus`.
- *
- * ENDURANCE'S 1% HIT IS GONE AND ITS HEALTH IS NOT. The note reads "Now grants
- * 2% increased critical damage and healing (instead of 1% hit chance)", which
- * names the hit clause as the thing replaced and says nothing at all about the
- * +5% total health -- so that half stays, and the trait is now a health
- * multiplier and a crit damage bonus.
- *
- * THE HEALING HALF IS RULED OUT on both, which has to be DECLARED rather than
- * left absent: a trait with one clause modelled and one clause silently
- * missing reads as fully modelled, and the census's `Fully` column is the one
- * nothing re-reads.
- * ---------------------------------------------------------------------------
+ * `hitChance` IS BOTH HALVES: it is the character-wide stat, which the melee,
+ * ranged and spell tables all fold in -- "spells and attacks" needs no second
+ * stat the way crit does.
  */
-export const CRIT_DAMAGE_RACIAL_PERCENT = 2;
+export const ARTISANS_PRECISION_HIT = 1;
+/*
+ * EARTH FURY AND ENDURANCE'S CRIT DAMAGE ARE GONE (round 79). Both carried
+ * "2% increased critical damage and healing" through one shared constant; the
+ * tuning removed Earth Fury outright and took Endurance back to its health
+ * alone, so the `critDamageBonus` effect kind has no racial caller now.
+ */
 
 /** "+1% Chance to Dodge" for a Night Elf. */
 export const QUICKNESS_DODGE = 1;
@@ -199,12 +195,12 @@ const ELEMENTAL_INSIGHT: RacialTrait = {
 const WIND_BLESSED: RacialTrait = {
   id: 'wind_blessed',
   name: 'Wind Blessed',
-  text: 'Increases your spellcasting, melee, and ranged Haste by 3%.',
+  text: 'Increases your spellcasting, melee, and ranged Haste by 2%.',
   effects: [
     {
       kind: 'stat',
       /*
-       * THREE POINTS OF HASTE, AND IT REACHES ALL THREE THINGS THE TOOLTIP
+       * TWO POINTS OF HASTE (three until round 79), AND IT REACHES ALL THREE THINGS THE TOOLTIP
        * NAMES WITHOUT ANY CODE SAYING SO.
        *
        * WAS ONE POINT until the racial patch raised it. Only the number moved;
@@ -266,13 +262,13 @@ const HUMAN: RacialDefinition = {
     unconditionalCrit(
       'ruthless',
       'Ruthless',
-      'Increases your critical strike chance with all spells and attacks by 2%.',
+      'Increases your critical strike chance with all spells and attacks by 1%.',
       RUTHLESS_CRIT,
     ),
     {
       id: 'the_human_spirit',
       name: 'The Human Spirit',
-      text: 'Spirit increased by 5%.',
+      text: 'Spirit increased by 10%.',
       effects: [
         {
           kind: 'statPercent',
@@ -281,7 +277,7 @@ const HUMAN: RacialDefinition = {
            * percentage talent is one: stats are base plus modifiers and derived
            * values are a function over them, so a percentage folded into a flat
            * figure at build time freezes against the unbuffed stat. A Human
-           * drinking an Elixir of Spirit should get 5% of the bigger number.
+           * drinking an Elixir of Spirit should get 10% of the bigger number.
            */
           modifiers: [percent('spirit', HUMAN_SPIRIT_PERCENT)],
         },
@@ -368,24 +364,10 @@ const DWARF: RacialDefinition = {
       ],
     },
     {
-      id: 'earth_fury',
-      name: 'Earth Fury',
-      text: 'Increases your critical damage and healing by 2%.',
-      effects: [
-        { kind: 'critDamageBonus', percent: CRIT_DAMAGE_RACIAL_PERCENT },
-        {
-          kind: 'unmodelled',
-          text: 'Increases your critical healing by 2%.',
-          /*
-           * DECLARED RATHER THAN LEFT ABSENT. The damage half is modelled, so
-           * a missing healing entry would put this trait in the census's
-           * `Fully` column -- the one column nothing re-reads. The same
-           * sentence and the same ruling as Tauren Endurance's healing half.
-           */
-          reason: 'Critical healing is healing throughput.',
-          scope: 'healing',
-        },
-      ],
+      id: 'artisans_precision',
+      name: "Artisan's Precision",
+      text: 'Increases hit chance with spells and attacks by 1%.',
+      effects: [{ kind: 'stat', stats: { hitChance: ARTISANS_PRECISION_HIT } }],
     },
     {
       id: 'big_game_hunter',
@@ -559,28 +541,36 @@ const HIGH_ORDER_SKYBORNE: RacialDefinition = {
       id: 'read_ley_line',
       name: 'Read Ley Line',
       text:
-        '2 sec cast, 2 min cooldown. Attempt to tap into the power of a nearby ley ' +
-        'line, increasing your Health and Mana regeneration by 100%. Lasts 15 sec if ' +
-        'no ley line is nearby, and 15 min if one is found.',
+        '2 sec cast, 2 min cooldown. Increases your Health and Mana regeneration by 50% ' +
+        'for 15 sec. Cannot be used while Innervate is active, and is replaced by ' +
+        'Innervate. Used at a Ley Line it also grants Attuned for 1 hour, which raises ' +
+        'the bonus to 100% and persists through death.',
       effects: [
+        { kind: 'grantAbility', abilityId: 'read_ley_line' },
         {
           kind: 'unmodelled',
-          text: 'Increasing your Health and Mana regeneration by 100% for 15 sec.',
+          text: 'Increases your Health regeneration by 50%.',
           /*
-           * A LIVE GAP AND NOT A RULING, and the distinction is this project's
-           * own: mana RETURN is explicitly not out of scope, because it changes
-           * a damage profile's sustain. `resourceRegenMultiplier` would express
-           * it exactly -- all three regeneration rules go through
-           * `regenMultiplierFor` now.
-           *
-           * It is here rather than built because the owner ruled their list is
-           * the scope, so this entry is where the question lives. No preset is
-           * Skyborne, so it is worth 0.0 either way today.
+           * THE MANA HALF IS MODELLED (round 79) and this is the other one.
+           * Nothing regenerates health outside the assumed healer -- the same
+           * reason Troll Regeneration gives -- so there is no rate to raise.
+           */
+          reason: 'Nothing regenerates health outside the assumed healer, so there is no rate to raise.',
+        },
+        {
+          kind: 'unmodelled',
+          text: 'Used at a Ley Line, grants Attuned for 1 hour: the bonus becomes 100%.',
+          /*
+           * A QUESTION FOR THE OWNER RATHER THAN A SETTLED RULING. Being at a
+           * Ley Line is a place, and there is no position model -- but Attuned
+           * lasts an hour and persists through death, so "Attuned before the
+           * pull" would be expressible as an opening aura the way Stealth is.
+           * Whether a character arrives Attuned is the owner's to say.
            */
           reason:
-            'Mana return is not out of scope and `resourceRegenMultiplier` would ' +
-            'express it. Omitted from the owner\'s list of combat-relevant racials, ' +
-            'so it is a question for them rather than an engine gap.',
+            'Needs a Ley Line, which is a place. An hour-long buff that survives death could ' +
+            'be an opening aura, so whether a character arrives Attuned is a question for the owner.',
+          scope: 'positioning',
         },
       ],
     },
@@ -616,12 +606,18 @@ const ORC: RacialDefinition = {
         },
       ],
     },
-    unconditionalCrit(
-      'savage',
-      'Savage',
-      'Increases your critical strike chance with all spells and attacks by 1%.',
-      SAVAGE_CRIT,
-    ),
+    {
+      id: 'command',
+      name: 'Command',
+      text: 'Damage dealt by Warlock and Hunter pets increased by 5%.',
+      effects: [
+        {
+          kind: 'petDamagePercent',
+          percent: COMMAND_PET_DAMAGE_PERCENT,
+          requires: { classes: ['hunter', 'warlock'] },
+        },
+      ],
+    },
     {
       id: 'shatter_curse',
       name: 'Shatter Curse',
@@ -759,37 +755,14 @@ const TAUREN: RacialDefinition = {
     {
       id: 'endurance',
       name: 'Endurance',
-      text: 'Total Health increased by 5% and critical damage and healing increased by 2%.',
-      effects: [
-        { kind: 'healthPercent', percent: ENDURANCE_HEALTH_PERCENT },
-        /*
-         * ========================================================================
-         * THE HIT CLAUSE IS GONE, AND THE HEALTH CLAUSE IS NOT.
-         *
-         * "Endurance: Now grants 2% increased critical damage and healing
-         * (instead of 1% hit chance)" -- the note names the hit half as the
-         * thing replaced and is silent about the +5% total health, so that
-         * half stays. A note is a later statement than the client, whose
-         * tooltip still reads the old wording at build 1.60.1.70291.
-         *
-         * WHAT IT IS WORTH CHANGED SHAPE AS WELL AS SIZE, which is the part a
-         * DPS figure will show. The old 1% hit was worth NOTHING to most
-         * Tauren presets and correctly so -- the usable melee and ranged hit
-         * cap is 8, there is no miss floor, and the Prot Warrior, the Cat and
-         * the Bear all sit at it. Crit damage has no cap and no floor, so this
-         * trait goes from inert on three of its builds to live on all of them,
-         * and a Tauren row moving where it never used to is the expected
-         * consequence rather than a bug.
-         * ========================================================================
-         */
-        { kind: 'critDamageBonus', percent: CRIT_DAMAGE_RACIAL_PERCENT },
-        {
-          kind: 'unmodelled',
-          text: 'Increases your critical healing by 2%.',
-          reason: 'Critical healing is healing throughput.',
-          scope: 'healing',
-        },
-      ],
+      text: 'Total Health increased by 5%.',
+      /*
+       * THE HEALTH AND NOTHING ELSE SINCE ROUND 79: "Endurance no longer
+       * provides any modifiers beyond 5% increased Health (no hit chance or
+       * critical damage modifiers)". The 2% critical damage and healing it
+       * carried before is gone, with its `healing`-scoped half.
+       */
+      effects: [{ kind: 'healthPercent', percent: ENDURANCE_HEALTH_PERCENT }],
     },
     {
       id: 'cultivation',
@@ -812,12 +785,13 @@ const TAUREN: RacialDefinition = {
       id: 'plainsrunning',
       name: 'Plainsrunning',
       text:
-        'Gain 1% increased movement speed every 5 sec spent moving, up to a maximum of ' +
-        '30% increase. Taking damage or standing still will reduce this effect.',
+        'Gain 2% increased movement speed every 5 sec spent moving, up to a maximum of ' +
+        '60% increase. Does not increase mounted movement speed. Taking damage or ' +
+        'standing still will reduce this effect.',
       effects: [
         {
           kind: 'unmodelled',
-          text: 'Gain 1% increased movement speed every 5 sec spent moving, up to 30%.',
+          text: 'Gain 2% increased movement speed every 5 sec spent moving, up to 60%.',
           reason: 'Movement, and there is no position model.',
           scope: 'positioning',
         },
@@ -908,14 +882,13 @@ const WINDSHAPER_SKYBORNE: RacialDefinition = {
       id: 'skysight',
       name: 'Skysight',
       text:
-        '0.5 sec cast, 2 min cooldown. Attempt to draw power from a convergence of ' +
-        'elements and receive its blessing, increasing your movement and mounted ' +
-        'movement speeds by 10%. Lasts 30 sec if no elemental convergence is nearby, ' +
-        'and 15 min if one is found.',
+        '0.5 sec cast, 2 min cooldown. Increases your movement speed by 15% for 15 sec. ' +
+        'Used at an elemental convergence it also grants Charged for 1 hour, which ' +
+        'raises the bonus to 30% and persists through death.',
       effects: [
         {
           kind: 'unmodelled',
-          text: 'Increasing your movement and mounted movement speeds by 10%.',
+          text: 'Increases your movement speed by 15% for 15 sec (30% while Charged).',
           reason: 'Movement, and there is no position model.',
           scope: 'positioning',
         },

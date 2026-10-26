@@ -81,8 +81,9 @@ import { AttackTableModifiers } from '../../src/engine';
  */
 const COLUMNS: Readonly<Record<string, readonly string[]>> = {
   twoHand: ['+65 Spell Power', '+25 Agility', 'Revelation'],
-  mainHand: ['+25 Agility', 'Revelation'],
-  offHand: ['+25 Agility', 'Revelation'],
+  // Round 79: +25 Agility is two-handed only; a one-hander is offered +15.
+  mainHand: ['+15 Agility', 'Revelation'],
+  offHand: ['+15 Agility', 'Revelation'],
   shield: ['+9 Stamina'],
   head: [
     '+1% Dodge',
@@ -838,6 +839,8 @@ describe('what each of the 29 profiles opens with', () => {
       .map((id) => ENCHANTS_BY_ID.get(id)?.name)
       .sort((a, b) => String(a).localeCompare(String(b)));
     expect(names).toEqual([
+      // A one-hander's agility enchant since round 79.
+      '+15 Agility',
       '+25 Agility',
       '+65 Spell Power',
       '+9 Stamina',

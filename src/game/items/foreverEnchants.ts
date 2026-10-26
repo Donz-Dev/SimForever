@@ -161,7 +161,12 @@ const DECLARED: readonly Declared[] = [
 
   // ---- Gloves -------------------------------------------------------------
   { name: '+15 Strength', slots: ['gloves'], stats: { strength: 15 } },
-  { name: '+15 Agility', slots: ['gloves'], stats: { agility: 15 } },
+  /*
+   * AND THE ONE-HANDED WEAPON AGILITY ENCHANT (round 79): "+15 agi (or
+   * Crusader) NOT +25 agi" on a one-hander, the owner's. One enchant, two kinds
+   * of slot, which is "+8 Strength" on a helmet and legs again.
+   */
+  { name: '+15 Agility', slots: ['gloves', 'mainHand', 'offHand'], stats: { agility: 15 } },
   { name: '+20 Spell Power', slots: ['gloves'], stats: { spellPower: 20, healingPower: 20 } },
   {
     name: '+2% Threat',
@@ -236,7 +241,8 @@ const DECLARED: readonly Declared[] = [
    * ========================================================================== */
   { name: '+65 Spell Power', slots: ['twoHand'], stats: { spellPower: 65, healingPower: 65 } },
   { name: '+9 Stamina', slots: ['shield'], stats: { stamina: 9 } },
-  { name: '+25 Agility', slots: ['mainHand', 'offHand', 'twoHand'], stats: { agility: 25 } },
+  // TWO-HANDED ONLY (round 79): a one-hander takes +15 Agility or Crusader.
+  { name: '+25 Agility', slots: ['twoHand'], stats: { agility: 25 } },
 
   /*
    * ==========================================================================
