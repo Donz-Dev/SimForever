@@ -719,9 +719,13 @@ describe('what each of the 29 profiles opens with', () => {
    */
   const OPTIMISED_AWAY_FROM_THE_TABLE: Readonly<Record<string, string>> = {
     'shaman_enhancement feet': '+7 Agility',
+    // Round 78: mana-bound at a 120 second fight, LW Ranged weighs intellect at
+    // 1.10 a point and agility at 0.74 -- +5.7 for the pair.
+    'lw_ranged head': '+8 Intellect',
+    'lw_ranged legs': '+8 Intellect',
   };
 
-  it('matches the owner table row for row, bar one measured exception', () => {
+  it('matches the owner table row for row, bar the measured exceptions', () => {
     for (const preset of PROFILE_PRESETS) {
       const equipment = preset.build().equipment;
       const expected = LOADOUTS[preset.id];

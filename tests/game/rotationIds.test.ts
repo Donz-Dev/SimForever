@@ -2,6 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { DRUID_ABILITIES } from '../../src/game/abilities/druid';
 import { HUNTER_ABILITIES } from '../../src/game/abilities/hunter';
+import { MELEE_WEAVE_ID, RETURN_TO_RANGE_ID } from '../../src/game/abilities/meleeWeave';
 import { MAGE_ABILITIES } from '../../src/game/abilities/mage';
 import { PALADIN_ABILITIES } from '../../src/game/abilities/paladin';
 import { PET_ABILITIES } from '../../src/game/abilities/pet';
@@ -111,7 +112,9 @@ const OWNER_ABILITIES: Readonly<Record<string, ReadonlySet<string>>> = {
   shaman: withSharedAbilities(SHAMAN_ABILITIES),
   mage: withSharedAbilities(MAGE_ABILITIES),
   paladin: withSharedAbilities(PALADIN_ABILITIES),
-  hunter: withSharedAbilities(HUNTER_ABILITIES),
+  // The Melee Weave is built per character (its run time reads the boots), so
+  // it is not in HUNTER_ABILITIES; both ranged lists carry it since round 78.
+  hunter: withSharedAbilities([...HUNTER_ABILITIES, { id: MELEE_WEAVE_ID }, { id: RETURN_TO_RANGE_ID }]),
   warlock: withSharedAbilities(WARLOCK_ABILITIES),
   priest: withSharedAbilities(PRIEST_ABILITIES),
   // A pet's three, which belong to no class: a Hunter cannot cast Claw, and a

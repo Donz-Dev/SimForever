@@ -1073,3 +1073,86 @@ it cannot, or carries a scope the owner ruled.
   single-source and all now load-bearing.
 - **Explosive Trap**, if the owner ever extends the Immolation ruling to it. 208–264
   plus 330 over 20 seconds, and Clever Traps names it.
+
+---
+
+## Round 78: the four Hunters optimised for the full report
+
+**THE OBJECTIVE MOVED FROM 60 SECONDS TO 120, AND BOTH RANGED BUILDS CHANGED
+REGIME.** At 60s BM Hunter ends with 17.5% of its mana spare and LW Ranged 11.9%;
+at 120s it is **1.1% and 0.8%**, and LW Ranged's Serpent Sting uptime falls from
+97.9% to 79.7%. So the ranged half of this round is a damage-per-mana round, and
+the two melee builds (34.7% and 47.8% spare at 120s) are not. Variants are
+`tools/optimise/hunterVariants.ts`, every group with a control; ST at 120s/1
+target, AoE at 60s/5 targets, 400 paired fights unless stated.
+
+`ITER=300 tools/full_report.ts`, before -> after:
+
+| | 1 target 120s | 3 targets 60s | 5 targets 60s | 8 targets 30s |
+| --- | --- | --- | --- | --- |
+| BM Hunter | 958.6 ±3.9 -> **1024.4** ±4.1 | 1021.0 -> **1429.3** | 1021.0 -> **1682.7** | 1088.8 -> **2625.9** |
+| LW Ranged | 933.3 ±5.4 -> **1045.6** ±5.0 | 1085.3 -> **1438.2** | 1085.3 -> **1872.5** | 1177.2 -> **3045.3** |
+| LW Melee | 868.4 ±6.3 -> **889.9** ±6.7 | 907.7 -> **1061.2** | 907.7 -> **1190.5** | 985.9 -> **1488.0** |
+| Hawk Melee | 927.4 ±5.7 -> **956.1** ±5.6 | 960.4 -> **1102.6** | 960.4 -> **1237.2** | 1025.9 -> **1543.9** |
+
+### What shipped
+
+| | BM Hunter | LW Ranged | LW Melee | Hawk Melee |
+| --- | --- | --- | --- | --- |
+| talents | Hawk Eye 3 -> Efficiency 3, **+21.7** | Efficiency 4 -> Rapid Killing 2 + Rapid Recuperation 2, Hawk Eye 3 -> Efficiency 3, **+56.3** | Survivalist's Discipline 2 -> Clever Traps 2, **+17.9** | Survivalist 5 -> 3 + Clever Traps 2, **+17.4** |
+| ST list | Melee Weave (Immolation Trap) above Serpent Sting, **+22.0** | the same Weave, **+23.6**; Arcane Shot above Aimed Shot, **+9.2** in the combination | -- | -- |
+| Multi Target | Multi-Shot over Aimed, Weave(Explosive Trap), Sting Multi-DoT 3 up to five targets, Volley last; Volley above the sting from six | the same pieces, Volley above Aimed Shot | Explosive Trap in Immolation Trap's place, above Raptor Strike | the same |
+| enchants | -- | head + legs +8 Intellect, **+5.7** | off hand +25 Agility, **+8.0** | off hand +25 Agility |
+| consumables | -- | Blasted Lands +25 Intellect, **+9.0** | -- | -- |
+| race | **High Order Skyborne**, +11.4 ST / +24.6 at 5 | **High Order Skyborne**, +10.3 / +26.7 | -- | -- |
+
+**RAPID KILLING IS A PREREQUISITE, NOT A TALENT, ON LW RANGED.** Its own clause
+(Rapid Fire 5 min -> 3) is worth nothing at 120s; Rapid Recuperation needs it at
+2/2, and Rapid Recuperation is mana regeneration while casting on a build that
+is mana-bound. **Rapid Recuperation is declared as a flat `manaRegenBypass`**,
+not gated on Serpent Sting being up as its tooltip says -- the sting is up 80-98%
+of the fight, so the generosity is small, but it is a reading.
+
+**HIGH ORDER SKYBORNE IS BASE STATS AND WIND BLESSED, NOT READ LEY LINE.** That
+racial is `unmodelled` and in no list. What pays is 3% haste and Night-Elf-shaped
+base stats (+8 agility, +3 intellect over the Orc) against Blood Fury and Savage.
+
+**INTELLECT BEATS AGILITY ON LW RANGED AT 120s** -- 1.097 a point against 0.736
+(stat_weights, 800 iterations) -- because it is mana AND, through Careful Aim,
+attack power. On BM it is 0.703 against 0.638 and the pair measured +1.9, noise:
+not shipped.
+
+**VOLLEY HAS NO COOLDOWN, SO IT IS A FLOOR WHEREVER IT SITS.** The first LW
+Ranged AoE pass ran six variants that differed only BELOW a Volley and all six
+came back identical to the decimal -- the third reading of `IDENTICAL FIGHTS`,
+a patch that applied where nothing could reach it.
+
+**THE MELEE WEAVE PRINTS `<-- NEVER FIRED` IN `USES=1` AND FIRES ABOUT TWICE A
+MINUTE**: the Immolation Trap and Raptor Strike it casts show under "not in the
+list". The reporting gap is in `printUses`, not in the list.
+
+### Priced and not shipped
+
+| | figure | why not |
+| --- | --- | --- |
+| Major Mana Potion over Frenzy (ranged, stack re-led by a cooldown) | BM -1.5, LWR -3.0 | loses; the Demonic Rune already covers mana (Healthstone instead of the Rune: -39.2 / -58.5) |
+| BM intellect enchants + Blasted Lands | +0.1 on the combination | noise |
+| Serpent Sting / Immolation Trap pre-cast at 0s | BM -2.1/+4.0, LWR +1.8/+7.4, melee +2.9/+4.7 | noise, or (LWR trap) -7.2 in the combination |
+| LWR mana floors on the shots; "wait for the sting" | +0.0 to -7.7; +7.4 alone, +0.3 in the combination | nothing left once Rapid Recuperation shipped |
+| both melee weapons +25 Agility | inside the off-hand-only figure | off hand alone is the smaller edit |
+| **Summon Hawk above Raptor Strike (Hawk Melee)** | **+7.0** over the talent (1200 fights) | the owner placed it "above Wing Clip"; a question |
+| **both Fire traps in one melee AoE list** | +243.7 / +229.5 at five | "one Fire trap at a time" is not enforced by the engine; a question |
+| **Volley in a melee AoE list** | **+655.5 / +512.2** at five | a ranged channel on a melee build whose owner list shoots nothing; a question |
+| every other race | -11.7 to +5.8 | see the variant file |
+| food, Blasted Lands, Dense Sharpening Stone (melee) | -13.2 to +0.1 | lose |
+
+### Questions for the owner
+
+1. **High Order Skyborne for both ranged Hunters** -- a race swap the brief
+   allows, worth +10 to +11 on one target and +25 to +27 at five.
+2. **Volley on the melee Hunters at several targets**, +512 to +655 at five.
+3. **Summon Hawk above Raptor Strike** on Hawk Melee, +7.0.
+4. **Should Explosive and Immolation Trap share a cooldown?** A melee list
+   casting both gains ~+235 at five targets on that gap alone.
+5. **Rapid Recuperation's condition** (only while Serpent Sting is on the
+   target) is not modelled; it is now load-bearing on LW Ranged.

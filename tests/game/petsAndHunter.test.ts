@@ -646,7 +646,9 @@ describe("Hunter's Mark", () => {
      * claim is about the ability, not about what the preset opens with.
      */
     const base = PRESETS_BY_ID.get('bm_hunter')!.build();
-    const profile = { ...base, precombat: [] };
+    // HELD AN ORC: round 78 made the preset a High Order Skyborne, and the
+    // expectation below names Blood Fury, which is the Orc's racial.
+    const profile = { ...base, precombat: [], character: { ...base.character, race: 'orc' as const } };
     const atPull = characterAtCombatStart(profile)!;
     expect(atPull.auras.has('hunters_mark')).toBe(false);
     const before = atPull.stats.get('rangedAttackPower');
@@ -1155,6 +1157,10 @@ describe('Hawk Melee takes BOTH Lone Wolf and Summon Hawk', () => {
      * Written out by hand from the owner's URL rather than read off the
      * preset, for the usual reason: reading both sides off the same object
      * passes whatever the object says. The URL decodes to 16/11/24.
+     *
+     * ROUND 78 MOVED TWO OF ITS POINTS, so this is the owner's build with one
+     * edit: Survivalist 5 -> 3 and Clever Traps 2, +17.4 at a 120 second fight
+     * (+30% to the trap; Survivalist is health on a profile nothing attacks).
      */
     const profile = PRESETS_BY_ID.get('hawk_melee')!.build();
     expect(profile.talents).toEqual({
@@ -1168,7 +1174,8 @@ describe('Hawk Melee takes BOTH Lone Wolf and Summon Hawk', () => {
       lone_wolf: 1,
       improved_tracking: 5,
       savage_strikes: 2,
-      survivalist: 5,
+      survivalist: 3,
+      clever_traps: 2,
       surefooted: 3,
       predator_s_edge: 5,
       resourcefulness: 1,
