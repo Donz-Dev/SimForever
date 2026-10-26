@@ -5,6 +5,7 @@ import { createPlayer } from '../../src/game/actors/createPlayer';
 import { createTrainingDummy } from '../../src/game/actors/createTrainingDummy';
 import {
   BOSS_DAMAGE_RAMP,
+  BOSS_DAMAGE_RAMP_MAX_MULTIPLIER,
   BOSS_DAMAGE_RAMP_MAX_STACKS,
   BOSS_SWING_DAMAGE_RAMP,
   PLACEHOLDER_BOSS_SWING_DAMAGE,

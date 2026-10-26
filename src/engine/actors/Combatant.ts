@@ -1267,10 +1267,13 @@ export class Combatant {
       const byTable = aura.definition.damageDoneByTable;
       const value = byTable?.[table];
       if (value === undefined) continue;
-      product *= stackedMultiplier(
-        value,
-        aura.definition.modifiersScaleWithStacks ? aura.stacks : 1,
-        aura.definition.additiveDamageStacks,
+      product *= capped(
+        stackedMultiplier(
+          value,
+          aura.definition.modifiersScaleWithStacks ? aura.stacks : 1,
+          aura.definition.additiveDamageStacks,
+        ),
+        aura.definition.maxStackedMultiplier,
       );
     }
     return product;
@@ -1287,13 +1290,21 @@ export class Combatant {
     for (const aura of this.auras.active) {
       const value = aura.definition[key];
       if (value !== undefined) {
-        product *= stackedMultiplier(
-          value,
-          aura.definition.modifiersScaleWithStacks ? aura.stacks : 1,
-          aura.definition.additiveDamageStacks,
+        product *= capped(
+          stackedMultiplier(
+            value,
+            aura.definition.modifiersScaleWithStacks ? aura.stacks : 1,
+            aura.definition.additiveDamageStacks,
+          ),
+          aura.definition.maxStackedMultiplier,
         );
       }
     }
     return product;
   }
+}
+
+/** A stacked multiplier held at an aura's stated maximum, when it has one. */
+function capped(multiplier: number, maximum: number | undefined): number {
+  return maximum === undefined ? multiplier : Math.min(multiplier, maximum);
 }
