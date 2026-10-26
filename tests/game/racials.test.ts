@@ -238,7 +238,9 @@ describe('the crit racials, which the racial patch made unconditional', () => {
     }
 
     // And the Combat Rogue, the build the old condition excluded, now collects.
-    expect(racialSpellCritDelta('rogue_combat', 'troll')).toBeCloseTo(SAVAGE, 9);
+    // Built as an ORC: the preset is a Gnome since round 78, and this is a claim
+    // about the Orc trait on that build's sword and dagger.
+    expect(racialSpellCritDelta('rogue_combat', 'troll', 'orc')).toBeCloseTo(SAVAGE, 9);
   });
 
   it('leaves NO racial asking about a weapon, so the condition is unreachable', () => {
@@ -1777,7 +1779,12 @@ describe('what is NOT modelled says so, in the owner\'s own words', () => {
 // --- helpers ---------------------------------------------------------------
 
 /** The spell crit a preset's race grants, isolated by swapping the race. */
-function racialSpellCritDelta(presetId: string, otherRace: 'troll' | 'tauren' | 'undead'): number {
+function racialSpellCritDelta(
+  presetId: string,
+  otherRace: 'troll' | 'tauren' | 'undead',
+  /** The race to build the preset as, when it is not the preset's own. */
+  asRace?: 'orc',
+): number {
   /*
    * SWAPPING THE RACE ON IDENTICAL GEAR, which is the only honest isolation.
    * The first version of this probe took the WEAPON off instead and was
@@ -1789,7 +1796,8 @@ function racialSpellCritDelta(presetId: string, otherRace: 'troll' | 'tauren' | 
    * race differs from another in BASE spell crit -- where they do differ in base
    * agility, which feeds melee crit.
    */
-  const built = PRESETS_BY_ID.get(presetId)!.build();
+  const preset = PRESETS_BY_ID.get(presetId)!.build();
+  const built = asRace ? { ...preset, character: { ...preset.character, race: asRace } } : preset;
   const mine = characterAtCombatStart(built)!;
   const theirs = characterAtCombatStart({
     ...built,

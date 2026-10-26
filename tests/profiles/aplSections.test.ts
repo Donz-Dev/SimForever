@@ -8,6 +8,7 @@ import { syncDefaultRotation } from '../../src/profiles/rotation';
 import { migrateProfile } from '../../src/profiles/migrateProfile';
 import { validateProfile } from '../../src/profiles/validateProfile';
 import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
+import { MULTI_TARGET_DEFAULTS } from '../../src/profiles/multiTarget';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import { HEALER_ID, healerEncounter } from '../../src/simulator/healerEncounter';
 
@@ -90,6 +91,20 @@ describe('the presets', () => {
     for (const preset of PROFILE_PRESETS) {
       const profile = preset.build();
       expect(profile.multiTarget, preset.id).toBeDefined();
+      /*
+       * EXCEPT A PRESET WITH ITS OWN OPTIMISED MULTI TARGET LIST (round 78),
+       * which carries that list as a custom one instead.
+       */
+      const own = MULTI_TARGET_DEFAULTS[preset.id];
+      if (own) {
+        expect(profile.multiTarget!.rotation, preset.id).toEqual({
+          source: 'custom',
+          name: own.name,
+          entries: own.entries,
+        });
+        expect(profile.multiTarget!.precombat, preset.id).toEqual(own.precombat ?? profile.precombat);
+        continue;
+      }
       expect(profile.multiTarget!.rotation, preset.id).toEqual(profile.rotation);
       expect(profile.multiTarget!.precombat, preset.id).toEqual(profile.precombat);
     }

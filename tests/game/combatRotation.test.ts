@@ -45,7 +45,8 @@ const OWNER_ORDER = [
 /** The nine an ORC drinking Thistle Tea and a Frenzy Potion actually runs. */
 const COMBAT_ORDER = [
   'thistle_tea',
-  'blood_fury',
+  // Gnome since round 78, so Eureka! is the racial lit where Blood Fury was.
+  'eureka',
   'major_frenzy_potion',
   'adrenaline_rush',
   'blade_flurry',
@@ -165,7 +166,7 @@ describe('the Combat list', () => {
       batch.abilities.find((row) => row.abilityName === name)?.uses ?? 0;
     for (const name of [
       'Thistle Tea',
-      'Blood Fury',
+      'Eureka!',
       'Adrenaline Rush',
       'Blade Flurry',
       'Slice and Dice',
