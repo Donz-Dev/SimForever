@@ -1514,7 +1514,9 @@ const PALADIN_RETRIBUTION_TALENTS: TalentAllocation = {
   divine_intellect: 5,
   improved_seals: 3,
   // Unyielding Faith's two points moved to Reverence, by the owner (round 37).
-  reverence: 2,
+  // Round 78: a third, out of Pursuit of Justice (movement speed, dead here).
+  // At 120 s this build is mana-bound, and 3/3 measured +12.51 +/- 4.86.
+  reverence: 3,
   benediction: 5,
   improved_judgement: 2,
   holy_conduit: 2,
@@ -1522,7 +1524,7 @@ const PALADIN_RETRIBUTION_TALENTS: TalentAllocation = {
   vindication: 3,
   sanctified_judgement: 3,
   seal_of_command: 1,
-  pursuit_of_justice: 2,
+  pursuit_of_justice: 1,
   sacred_arbiter: 1,
   two_handed_weapon_specialization: 3,
   vengeance: 3,
@@ -3558,6 +3560,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         }),
         flask: 'flask_spell_power',
         food: 'food_spell_power',
+        /*
+         * THE MAJOR MANA POTION, NOT SPELLBLASTING (round 78). At 120 s this
+         * build ends the fight with 0.8% of its mana spare -- Consecration and
+         * the twist's two seals are its three biggest bills -- so 2,250 mana
+         * buys more than forty spell power for fifteen seconds: +42.45 +/-
+         * 6.18 at 120 s, and +0.96 +/- 3.81 (noise) at 5 targets / 60 s.
+         */
+        potion: 'major_mana_potion',
       },
       /*
        * TWO SEALS IN SEQUENCE, WHICH IS THE SEAL TWIST OPENED BEFORE THE PULL.
@@ -3751,6 +3761,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         }),
         food: 'food_spell_power',
         other: 'healthstone',
+        /*
+         * ROUND 78: THIS TANK IS MANA-BOUND AT 120 s, so the mana potion
+         * (+62.31 +/- 5.93 TPS, deaths -0.16) and +25 Intellect (+22.63 +/-
+         * 4.96, deaths -0.11) both buy threat without costing survival.
+         */
+        potion: 'major_mana_potion',
+        blasted_lands: 'blasted_intellect',
       },
       precombat: [
         ...before(4.5, 'righteous_fury'),

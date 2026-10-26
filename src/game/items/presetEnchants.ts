@@ -102,7 +102,8 @@ export const PRESET_ENCHANTS: Readonly<
   mage_arcane: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   mage_fire: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   // +65 Spell Power on the two-hander in place of Crusader, by the owner (round 37).
-  pally_ret: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900002, head: 900002, legs: 900002, neck: 900008, twoHand: 900029, wrists: 900017 },
+  // Round 78: wrists +16 Spell Power (was +9 Strength), +0.62 +/- 0.03 at 120 s.
+  pally_ret: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900002, head: 900002, legs: 900002, neck: 900008, twoHand: 900029, wrists: 900018 },
   /*
    * THE TWO SHOCKADINS SHARE EIGHT SLOTS AND DIFFER ONLY IN THE HANDS, which is
    * what their being two profiles on one gear shape means: the only difference
@@ -128,7 +129,10 @@ export const PRESET_ENCHANTS: Readonly<
    */
   pally_shockadin: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900009, shield: 900030, wrists: 900018 },
   pally_shockadin_2h: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
-  prot_pally: { chest: 900015, cloak: 900001, feet: 900027, gloves: 900023, head: 900001, legs: 900001, mainHand: 22749, neck: 900012, shield: 900030, wrists: 900016 },
+  // Round 78: gloves +2% Threat (was +20 Spell Power, +10.65 TPS, deaths 0.00)
+  // and wrists +16 Spell Power (was +4 Defense, +9.2 TPS on top, deaths +0.13
+  // noise) -- this tank is mana- and spell-power-bound at 120 s.
+  prot_pally: { chest: 900015, cloak: 900001, feet: 900027, gloves: 900024, head: 900001, legs: 900001, mainHand: 22749, neck: 900012, shield: 900030, wrists: 900018 },
   bm_hunter: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },
   lw_ranged: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },
   lw_melee: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
@@ -140,7 +144,10 @@ export const PRESET_ENCHANTS: Readonly<
   shadow_priest: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   // The Shockadin's caster row with the two Healing Power enchants on the neck
   // (900010) and wrists (900020), which are stats since round 52.
-  holy_pal: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900010, shield: 900030, wrists: 900020 },
+  // Round 78: head and legs +8 Intellect (was 1% Haste): the raid healer
+  // fight is mana-bound, +48.84 +/- 7.17 HPS there and -1.57 +/- 4.87 (noise)
+  // in the tank healer fight.
+  holy_pal: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900006, legs: 900006, mainHand: 22749, neck: 900010, shield: 900030, wrists: 900020 },
   // Round 60: Holy Pal's healer loadout, for the Shaman healer.
   priest_holy: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, neck: 900010, twoHand: 22749, wrists: 900020 },
   priest_disc: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, neck: 900010, twoHand: 22749, wrists: 900020 },

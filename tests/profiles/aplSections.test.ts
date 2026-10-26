@@ -1,4 +1,3 @@
-import { MULTI_TARGET_DEFAULTS } from '../../src/profiles/multiTarget';
 import { describe, expect, it } from 'vitest';
 import type { TelemetryEvent } from '../../src/engine';
 import { Simulation, seconds } from '../../src/engine';
@@ -9,6 +8,7 @@ import { syncDefaultRotation } from '../../src/profiles/rotation';
 import { migrateProfile } from '../../src/profiles/migrateProfile';
 import { validateProfile } from '../../src/profiles/validateProfile';
 import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
+import { MULTI_TARGET_DEFAULTS } from '../../src/profiles/multiTarget';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import { HEALER_ID, healerEncounter } from '../../src/simulator/healerEncounter';
 
@@ -87,17 +87,21 @@ describe('which section a fight runs', () => {
 });
 
 describe('the presets', () => {
-  it('carry both lists, starting identical unless the preset has its own Multi Target default', () => {
+  it('carry both lists, starting identical, so no figure moves', () => {
     for (const preset of PROFILE_PRESETS) {
       const profile = preset.build();
       expect(profile.multiTarget, preset.id).toBeDefined();
+      /*
+       * Round 78: a preset with an optimised Multi Target list carries THAT, as
+       * a custom list; every other preset still starts with an identical copy.
+       */
       const own = MULTI_TARGET_DEFAULTS[preset.id];
       if (own) {
-        // Round 78: an optimised Multi Target list, stored as written.
         expect(profile.multiTarget!.rotation, preset.id).toEqual({
           source: 'custom',
           name: own.name,
           entries: own.entries,
+          ...(own.smartHealing ? { smartHealing: true } : {}),
         });
         expect(profile.multiTarget!.precombat, preset.id).toEqual(own.precombat ?? profile.precombat);
         continue;
