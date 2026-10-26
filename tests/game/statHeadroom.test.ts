@@ -321,7 +321,8 @@ describe('hit headroom', () => {
       'shaman_enhancement': 'melee-special',
       'druid_cat': 'melee-special',
       'druid_bear': 'melee-special',
-      'druid_moonkin': 'spell',
+      // The Moonkin left this table in round 78, when it became High Order
+      // Skyborne; its template still aims at the spell cap through Nature's Reach.
     };
 
     /*

@@ -62,7 +62,14 @@ export const PRESET_ENCHANTS: Readonly<
   rogue_pure_hemo: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
   druid_moonkin: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   druid_cat: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, twoHand: 20034, wrists: 900019 },
-  druid_bear: { chest: 900015, cloak: 900001, feet: 900025, gloves: 900022, head: 900001, legs: 900001, neck: 900011, twoHand: 20034, wrists: 900019 },
+  /*
+   * ROUND 78: GLOVES +2% THREAT (was +15 Agility) and FEET +7 AGILITY (was Minor
+   * Speed, which does nothing). The gloves are +19.8 +/- 9.8 TPS at 120s for
+   * +0.33 +/- 0.33 deaths of 18.75; the feet +2.4 TPS (noise) and -0.19 deaths.
+   * Head and legs stay +1% Dodge: +8 Strength there is +19.8 TPS for +0.87
+   * deaths, which is buying threat with deaths.
+   */
+  druid_bear: { chest: 900015, cloak: 900001, feet: 900026, gloves: 900024, head: 900001, legs: 900001, neck: 900011, twoHand: 20034, wrists: 900019 },
   shaman_elemental: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900009, shield: 900030, wrists: 900018 },
   /*
    * ==========================================================================
@@ -137,6 +144,10 @@ export const PRESET_ENCHANTS: Readonly<
   // Round 60: Holy Pal's healer loadout, for the Shaman healer.
   priest_holy: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, neck: 900010, twoHand: 22749, wrists: 900020 },
   priest_disc: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, neck: 900010, twoHand: 22749, wrists: 900020 },
-  druid_resto: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, neck: 900010, twoHand: 22749, wrists: 900020 },
+  /*
+   * ROUND 78: HEAD AND LEGS +8 INTELLECT (was +1% Haste). The raid healer fight
+   * is mana-bound: +76.1 +/- 10.7 HPS there, and +5.9 (noise) in the tank fight.
+   */
+  druid_resto: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900006, legs: 900006, neck: 900010, twoHand: 22749, wrists: 900020 },
   shaman_resto: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900010, shield: 900030, wrists: 900020 },
 };

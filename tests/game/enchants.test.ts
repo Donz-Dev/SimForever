@@ -719,6 +719,15 @@ describe('what each of the 29 profiles opens with', () => {
    */
   const OPTIMISED_AWAY_FROM_THE_TABLE: Readonly<Record<string, string>> = {
     'shaman_enhancement feet': '+7 Agility',
+    /*
+     * ROUND 78. The Bear's gloves: +19.8 +/- 9.8 TPS at 120s for +0.33 deaths of
+     * 18.75. Its boots replace a dead Minor Speed (+2.4 TPS, -0.19 deaths). The
+     * Resto Drood's head and legs: +76.1 HPS in the mana-bound raid fight.
+     */
+    'druid_bear gloves': '+2% Threat',
+    'druid_bear feet': '+7 Agility',
+    'druid_resto head': '+8 Intellect',
+    'druid_resto legs': '+8 Intellect',
   };
 
   it('matches the owner table row for row, bar one measured exception', () => {
