@@ -17,6 +17,7 @@ import {
   onCooldown,
   ready,
   resource,
+  resourceFraction,
   selfHas,
   selfHealth,
   selfStacks,
@@ -234,6 +235,14 @@ export const DRUID_MOONKIN: AplList = {
    * cost a global cooldown reorders every later cast and the fights decorrelate.
    * ==========================================================================
    */
+  /*
+   * INNERVATE AT 10% MANA, ADDED IN ROUND 78. On the GCD, so it costs a cast:
+   * -4.3 at 120s against the same Skyborne Reflection build without it (inside
+   * the ~6.3 combined interval of the two rows), and +29.9 at 180s, where the
+   * build runs dry. Bit-identical at 60s, where it never fires. 5% and 20%
+   * measured within a few DPS of 10% at both longer lengths.
+   */
+  { abilityId: 'innervate', condition: resourceFraction('atMost', 0.1, 'mana') },
   { abilityId: 'insect_swarm', condition: expired('insect_swarm') },
   { abilityId: 'moonfire', condition: expired('moonfire') },
   /*

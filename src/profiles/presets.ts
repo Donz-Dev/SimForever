@@ -774,7 +774,16 @@ const ROGUE_HEMO_TALENTS: TalentAllocation = {
  */
 /*
  * ============================================================================
- * MOONKIN -- 41 Balance / 10 Restoration, was 38/0/13.
+ * MOONKIN -- 38 Balance / 13 Restoration (round 78), was 41/0/10.
+ *
+ * ROUND 78 PUT REFLECTION BACK, AND THE CLOCK IS WHY. The paragraph below
+ * priced Genesis over Reflection at **60s**, where this build ends with ~20% of
+ * its mana spare. At **120s** it ends with 0.8% spare, and Genesis 5 -> 2 plus
+ * Reflection 3 measures **+41.3 +/- 3.7** at 120s and **+100.3 +/- 4.2** at
+ * 180s, against **-6.2** at 60s. The owner's report measures 120s, and the
+ * owner's rule is that rotations are built for longer than a minute.
+ *
+ * WHAT FOLLOWS IS THE ROUND THAT WENT THE OTHER WAY, KEPT AS ITS RECORD:
  *
  * REFLECTION'S THREE POINTS BUY GENESIS 2 -> 5, worth **+5.7**. Reflection is
  * "50% of your Mana regeneration continues while casting" and this build ends a
@@ -799,7 +808,7 @@ const ROGUE_HEMO_TALENTS: TalentAllocation = {
  */
 const DRUID_MOONKIN_TALENTS: TalentAllocation = {
   improved_wrath: 5,
-  genesis: 5,
+  genesis: 2,
   moonglow: 3,
   improved_moonfire: 2,
   nature_s_majesty: 2,
@@ -814,6 +823,7 @@ const DRUID_MOONKIN_TALENTS: TalentAllocation = {
   moonkin_form: 1,
   nature_s_focus: 5,
   naturalist: 5,
+  reflection: 3,
 };
 
 const DRUID_CAT_TALENTS: TalentAllocation = {
@@ -2837,13 +2847,19 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'druid_moonkin',
     label: 'Moonkin',
-    detail: 'Tauren, Moonkin Form, standing target. 38 Balance / 13 Restoration',
+    detail: 'High Order Skyborne, Moonkin Form, standing target. 38 Balance / 13 Restoration',
     characterClass: 'druid',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Moonkin',
-        race: 'tauren',
+        /*
+         * HIGH ORDER SKYBORNE SINCE ROUND 78, was Tauren: Wind Blessed's 3%
+         * haste beside Reflection is **+8.4** over Reflection alone at 120s
+         * (+49.6 against +41.3, both paired against the Tauren build). Tauren's
+         * 2% crit damage and 5% health are worth less to a caster nothing hits.
+         */
+        race: 'high_order_skyborne',
         characterClass: 'druid',
         level: 60,
         combatStyle: 'moonkin',
