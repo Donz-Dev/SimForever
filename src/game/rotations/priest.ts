@@ -358,6 +358,26 @@ export const PRIEST_HOLY: AplList = {
       condition: { kind: 'all', of: [NOT_RAID, { kind: 'health', on: 'target', compare: 'below', fraction: 1 }] },
       note: 'Tank healer: spammed on the tank.',
     },
+    /*
+     * ROUND 78, AN ADDITION TO THE OWNER'S TANK HEALER LINES: Prayer of
+     * Mending on the tank whenever none of yours is out, at the BOTTOM -- so
+     * it is cast only when Flash Heal has nothing to do, the tank at full.
+     * **+10.45 HPS** at 120s over 1000 paired iterations (+17.51 against
+     * +7.06 for the rest of the round's changes). After about 65 seconds the
+     * boss's ramp kills the tank from full with every blow, so nothing but an
+     * absorb or a heal already sitting on the tank can count; Prayer of
+     * Mending is the second. Above Flash Heal it is worth less (+3.5), because
+     * it then takes global cooldowns Flash Heal had a use for.
+     */
+    {
+      abilityId: 'prayer_of_mending',
+      target: { kind: 'tank' },
+      condition: {
+        kind: 'all',
+        of: [NOT_RAID, { kind: 'raidAura', auraId: 'prayer_of_mending', present: false }],
+      },
+      note: 'Tank healer: on the tank whenever none of yours is out and Flash Heal has nothing to do.',
+    },
   ],
 };
 

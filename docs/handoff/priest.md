@@ -1,7 +1,7 @@
 # PRIEST DEEP DIVE
 
 **Class:** Priest
-**Profiles:** Shadow
+**Profiles:** Shadow, Holy Priest and Disc Priest (the healers since round 73)
 
 Read [CLAUDE.md](../../CLAUDE.md) first, then [README.md](README.md) in this
 directory for what the census columns mean and how to reprint every figure below.
@@ -466,3 +466,103 @@ shape, and this class is not the only place it can live.** A `valueIndex` into a
 multi-number row is silent when wrong, the census cannot see it, and the
 plausible wrong value is usually another rank's right one. Every class's values
 file has rows with two and three numbers in them. **Nothing has swept them.**
+
+---
+
+## Round 78: all three presets optimised for the full report
+
+**THE OBJECTIVES** were the brief's: Shadow -- DPS at one target over 120s, and
+at five targets over 60s for the Multi Target list (reused at 3/60s and 8/30s).
+The two healers -- HPS in the tank healer fight at 120s (Single Target section)
+and in the raid healer fight at 60s (Multi Target section). Every figure below
+is a paired delta from `probe_build.ts`, 400 iterations unless stated, and the
+variant file is `tools/optimise/priestVariants.ts`.
+
+### Before and after, `full_report.ts` at 300 fights a cell
+
+| | before | after |
+| --- | --- | --- |
+| Shadow, 1 target 120s | 930.6 +/- 3.0 | **949.4 +/- 3.0** |
+| Shadow, 3 targets 60s | 935.9 +/- 4.7 | **1107.1 +/- 4.5** |
+| Shadow, 5 targets 60s | 935.9 +/- 4.7 | **1285.0 +/- 5.1** |
+| Shadow, 8 targets 30s | 958.3 +/- 7.0 | **1480.2 +/- 6.6** |
+| Holy, tank healer 120s | 338.0 +/- 4.7 | **354.9 +/- 5.2** |
+| Holy, raid healer 60s | 1354.1 +/- 7.5 | **1555.0 +/- 8.5** |
+| Disc, tank healer 120s | 348.1 +/- 4.0 | **371.9 +/- 4.5** |
+| Disc, raid healer 60s | 1111.0 +/- 5.9 | **1195.9 +/- 6.8** |
+
+### THE TANK HEALER FIGHT AT 120s IS DECIDED BY THE RAMP, NOT BY THE HEALER
+
+Read this before tuning either healer's Single Target list. The boss ramps 10%
+a swing, and by about 65 seconds every landed blow kills the 8,500-health tank
+from full (tank deaths 2.1 at 60s, 19.3 at 120s). From then on no heal can
+count -- the tank is revived at full and never sits below it -- and the only
+healing that lands is an absorb or a heal already sitting on the tank. Per 10s
+bucket, Holy healed 6-9k in the first minute and under 1k after it, nearly all
+of that Power Word: Shield. **So the 120s figure is roughly the 60s healing
+halved, and almost nothing a list does moves it**: race, enchants and Greater
+Heal all measured noise or losses there.
+
+### Shadow
+
+| dimension | result |
+| --- | --- |
+| talents | 14/2/35 is forced (round 26). The one alternative, a **Holy Nova build** (5/11/35), is -10.51 +/- 3.39 at one target and about +35 / +235 at five / eight targets with Holy Nova over 40% mana -- **withheld**, because it costs Inner Focus and the owner's Inner Focus / Mind Flay pairing would go silent. A question |
+| opener | nothing legal to add: + Inner Focus at 0s is -3.38 +/- 3.45 (noise). The owner's lines kept |
+| Single Target APL | every alternative loses at 120s: Shadow Word: Death above Mind Blast -11.79, Mind Blast above Shadow Word: Pain -9.39, Devouring Plague above Shadow Word: Pain -0.89 |
+| Multi Target APL | **shipped**: Shadow Word: Pain multi-dot 8 while 6s+ of the fight is left, above the Inner Focus sequence. +338.4 at 5/60s, +159.7 at 3/60s, +462.1 at 8/30s before the move above Inner Focus, which adds +60.9 at 8/30s and is noise at 5 and 3. Gate swept 3s / 6s / 9s: -21.4 / 0 / -2.7. Devouring Plague multi-dot changes nothing (its cooldown is its duration) |
+| enchants | the shipped loadout wins: +8 Intellect on head or legs -7.31, +8 Spirit on head -8.52, gloves +1% Haste -2.13 (after Human) |
+| consumables | the shipped row wins: Major Mana Potion -5.52 (the build is GCD-bound at 120s, 26% mana spare even at 180s), Blasted Lands Spirit -3.83, Healthstone identical (the Rune never fires at 10%) |
+| race | **shipped Human** (from Troll): +14.43 +/- 3.15 at 1 target, +7.8 at 5, +33 at 3, -3.8 (noise) at 8. Night Elf +9.5, Dwarf +7.6, Undead +6.7, Gnome +3.8 at one target |
+
+### Holy Priest
+
+| dimension | result |
+| --- | --- |
+| talents | **shipped 18/33/0**: Holy Reach's two `positioning` points buy Inner Focus and Improved Renew 3/3. Improved Renew alone +4.42 raid / +0.84 tank; Inner Focus pays through its raid entry (below). Only three Holy points can leave without stranding Prayer of Mending, and nothing else live is reachable: Mental Agility does not reach the heals, Litany of Light is unmodelled |
+| opener | none: a pre-combat heal would be aimed at the boss (`runPrecombat` casts at the default target), so there is nothing to price |
+| Single Target APL (tank 120s) | **shipped**: + Prayer of Mending on the tank at the BOTTOM, +10.45 over 1000 iterations (above Flash Heal +3.5, above Renew +5.4). Greater Heal on the tank below 30 / 50 / 70 / 100% loses at every threshold: -11.4 / -17.0 / -18.1 / -10.6 |
+| Multi Target APL (raid 60s) | **shipped** a raid list: the owner's four lines plus Inner Focus -> Prayer of Healing (+83.8 with the talent) and **Prayer of Mending moved first** (+44.9). Gating the Inner Focus on the lowest party below 70% or 50% is noise. Priced and kept as owner lines: without the shield line +71.2, without Renew +4.8 |
+| enchants | **shipped** the staff's +65 Spell Power (the shipped Enchant Weapon - Spell Power is +30 spell power and NO healing power): +31.4 raid, +5.0 tank. **Shipped** +8 Intellect on head and legs: +7.9 each in the raid fight, noise in the tank fight. +8 Spirit and gloves +1% Haste lose |
+| consumables | the shipped row wins: Spellblasting -133.5 raid / -7.7 tank (spell power, not healing power), Healthstone for the Rune -86.9 / -3.9, Blasted Lands Spirit -29.4 / -2.2, +28 Spell Power food -7.1 / -0.6 |
+| race | **shipped Gnome** (from Troll, which was ours): +54.1 raid, +1.0 tank (noise). Human +19.9 / +1.4, Night Elf +18.8 / -0.6; Undead and Dwarf noise or worse |
+
+### Disc Priest
+
+| dimension | result |
+| --- | --- |
+| talents | **shipped 29/22/0**: Power Infusion (its healing half is not applied), one Silent Resolve point and one Twilight Focus point buy Improved Healing 3/3 -- +7.42 tank, +11.27 raid. Spiritual Guidance 5/5 (Divine Aegis out) loses, -6.19 / -8.53. Silent Resolve can give up only one point: Penance needs 20 below its tier |
+| opener | none, for Holy's reason |
+| Single Target APL (tank 120s) | every alternative loses: Greater Heal on the tank below 30 / 50 / 70 / 100% is -8.2 / -15.0 / -12.6 / -13.3 |
+| Multi Target APL (raid 60s) | shipped the owner's raid lines as their own list. **Priced and withheld as owner lines**: Inner Focus spent on Prayer of Healing instead of Penance +42.3; that and no Penance line +60.5; without the shield line +31.8 (so the shield is worth +10.5 here). Renew on the tank above Prayer of Healing -10.9 |
+| enchants | **shipped** the staff's +65 Spell Power, +22.8 raid / +5.7 tank, and +8 Intellect on head and legs (+16.8 raid / +3.4 tank together, in the Combined group). Spirit and Haste lose |
+| consumables | the shipped row wins: Spellblasting -96.9 / -31.9, Healthstone -59.4 / -21.6, Blasted Lands Spirit -17.6 / -5.5, Spell Power food -5.4 / -0.6 |
+| race | **shipped Gnome**: +32.6 raid, +10.6 tank. Human +14.6 / +6.1 |
+
+### Combined, and the second pass
+
+Measured together against the shipped presets: Holy +6.7 tank (+17.5 with the
+Prayer of Mending entry) and +205.4 raid; Disc +23.2 tank and +82.2 raid;
+Shadow +14.4 / +338.6 / +192.6 / +458.3 at 1, 5, 3 and 8 targets. A second pass
+on the new baselines -- every race again, every enchant again, Shadow's
+consumables again -- shipped nothing.
+
+### Questions for the owner
+
+1. **Holy Nova on the Shadow Priest.** About +35 at 5 targets and +235 at 8 over
+   30s, for -10.5 at one target -- but it needs eleven Holy points, which costs
+   Inner Focus, and the Inner Focus / Mind Flay pairing would go silent.
+2. **Disc: Inner Focus on Prayer of Healing in the raid fight** is +42.3 over
+   "use on Penance". Should the raid list spend it there?
+3. **Power Word: Shield in both raid lists, and Penance in Disc's**, are the
+   owner's and are kept. The shield costs Holy 71 HPS in the raid fight (about
+   2.6 healing a mana against Prayer of Healing's 4.25).
+4. **Prayer of Mending first** in Holy's raid list is a reordering of the four
+   owner lines rather than an addition (+44.9). Kept unless ruled otherwise.
+5. **Data, not changed here**: Power Infusion's "and healing done" is not
+   applied (`POWER_INFUSION_UNMODELLED` still says nothing measures healing);
+   Mental Agility names only Shadow spells, so it reaches no instant heal;
+   Litany of Light is `unmodelled` under `healing`; Major Mender's Potion is
+   still inert on the grounds that healing power is not a stat, which it now
+   is. And **Resto Drood carries the same Enchant Weapon - Spell Power staff**,
+   which gives a healer nothing.
