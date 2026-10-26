@@ -1,7 +1,7 @@
 import type { MultiTargetDefaults } from './types';
 import type { AplEntry } from '../../game/rotations/apl';
-import { targetCount } from '../../game/rotations/apl';
-import { DRUID_MOONKIN } from '../../game/rotations/druid';
+import { selfHas, targetCount } from '../../game/rotations/apl';
+import { DRUID_BEAR, DRUID_MOONKIN } from '../../game/rotations/druid';
 
 /** `entries` with `added` inserted immediately above the first entry casting `beforeId`. */
 function insertAbove(entries: readonly AplEntry[], beforeId: string, added: readonly AplEntry[]): AplEntry[] {
@@ -28,6 +28,21 @@ export const DRUID_MULTI_TARGET: MultiTargetDefaults = {
     name: 'Druid (Moonkin, Multi Target)',
     entries: insertAbove(DRUID_MOONKIN.entries, 'innervate', [
       { abilityId: 'hurricane', condition: targetCount('atLeast', 4) },
+    ]),
+  },
+  /*
+   * THE BEAR: PRIMAL BITE WHILE BERSERK IS UP, THEN SWIPE, ABOVE THE ORDINARY
+   * PRIMAL BITE. Berserk makes Primal Bite strike three targets with no
+   * cooldown, so it goes first while that lasts; outside it Swipe's three
+   * targets beat the single Primal Bite. Maul stays above both. Paired TPS:
+   * +196.6 at 5 targets/60s, +212.4 at 3/60s and +195.7 at 8/30s, for +0.3 to
+   * +0.44 deaths. Swipe ABOVE Maul is -393: it starves the Maul.
+   */
+  druid_bear: {
+    name: 'Druid (Bear, Multi Target)',
+    entries: insertAbove(DRUID_BEAR.entries, 'mangle', [
+      { abilityId: 'mangle', condition: selfHas('berserk') },
+      { abilityId: 'swipe', condition: targetCount('atLeast', 2) },
     ]),
   },
 };

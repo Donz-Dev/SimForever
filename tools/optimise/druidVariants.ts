@@ -166,6 +166,11 @@ const MOON_REFLECTION: Apply = tree({ ...MOONKIN_BALANCE, genesis: 2, nature_s_f
 const MOON_INNERVATE: Apply = addAbove({ abilityId: 'innervate', condition: manaAtMost(0.35) }, 'insect_swarm');
 
 const BEAR_SWIPE: AplEntry = { abilityId: 'swipe', condition: targetCount('atLeast', 2) };
+/** The Bear's AoE shape: Primal Bite first while Berserk is up, Swipe above Lacerate. */
+const BEAR_AOE: readonly Apply[] = [
+  addAbove(BEAR_SWIPE, 'lacerate'),
+  addAbove({ abilityId: 'mangle', condition: selfHas('berserk') }, 'mangle'),
+];
 
 /* ------------------------------------------------------------ the groups */
 
@@ -334,6 +339,11 @@ export const VARIANT_GROUPS: Readonly<Record<string, readonly Variant[]>> = {
     { label: '+ Ferocious Bite at 5 points, at the bottom', apply: addEntry({ abilityId: 'ferocious_bite', condition: comboPoints('atLeast', 5) }) },
   ],
 
+  cat78Precombat: [
+    control('opener (owner: Cat Form 2s, Prowl 1s, Berserk + Ravage 0s)'),
+    { label: '+ Shifting Power at 0s, after Ravage', apply: addPrecombat(0, 'shifting_power') },
+  ],
+
   cat78Cons: [
     control('consumables (Frenzy, Thistle Tea -- both the owner\'s)'),
     { label: 'potion Major Mana (was Frenzy) -- for Shifting Power', apply: consumable('potion', 'major_mana_potion') },
@@ -436,6 +446,27 @@ export const VARIANT_GROUPS: Readonly<Record<string, readonly Variant[]>> = {
         addAbove(BEAR_SWIPE, 'mangle'),
         addAbove({ abilityId: 'mangle', condition: selfHas('berserk') }, 'swipe'),
       ),
+    },
+  ],
+
+  bear78Aoe2: [
+    control('Multi Target section'),
+    { label: 'Berserk Primal Bite first, Swipe above Lacerate', apply: inMulti(...BEAR_AOE) },
+    {
+      label: 'Berserk Primal Bite first, Swipe above Primal Bite',
+      apply: inMulti(addAbove(BEAR_SWIPE, 'mangle'), addAbove({ abilityId: 'mangle', condition: selfHas('berserk') }, 'swipe')),
+    },
+    {
+      label: 'BEAR_AOE + Lacerate multi-DoT 3',
+      apply: inMulti(...BEAR_AOE, apl((e) => e.map((x) => (x.abilityId === 'lacerate' ? { ...x, multiDot: 3 } : x)))),
+    },
+    ...[30, 60].map((r) => ({
+      label: `BEAR_AOE + Maul at rage >= ${r}`,
+      apply: inMulti(...BEAR_AOE, setCondition('maul', resource('atLeast', r, 'rage'))),
+    })),
+    {
+      label: 'BEAR_AOE, Berserk moved above Enrage',
+      apply: inMulti(...BEAR_AOE, moveAbove('berserk', 'enrage')),
     },
   ],
 
