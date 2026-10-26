@@ -22,61 +22,15 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { PROFILE_PRESETS } from '../src/profiles';
 import type { CharacterProfile } from '../src/profiles';
 import { presetRole } from '../src/profiles/presetRoles';
-import type { PresetRole } from '../src/profiles/presetRoles';
 import { healerSamples, profileSamples } from '../src/simulator/iterationSamples';
-import type { HealerFight } from '../src/simulator/healerEncounter';
+import type { Report, ReportCell, ReportColumn, ReportRow } from './fullReportColumns';
+import { COMBAT_COLUMNS, HEALER_COLUMNS } from './fullReportColumns';
 
 const ITER = Number(process.env.ITER ?? 300);
 const SEED = Number(process.env.SEED ?? 20261025);
 const WANTED = process.env.PROFILES?.split(',').map((s) => s.trim());
 const OUT = process.env.OUT;
 const BEFORE = process.env.BEFORE;
-
-/** A column of the report: an encounter and the figure read off it. */
-export interface ReportColumn {
-  readonly id: string;
-  readonly label: string;
-  readonly seconds: number;
-  readonly targets?: number;
-  readonly fight?: HealerFight;
-}
-
-export const COMBAT_COLUMNS: readonly ReportColumn[] = [
-  { id: 't1', label: 'Single Target (2 min)', seconds: 120, targets: 1 },
-  { id: 't3', label: '3 Targets (1 min)', seconds: 60, targets: 3 },
-  { id: 't5', label: '5 Targets (1 min)', seconds: 60, targets: 5 },
-  { id: 't8', label: '8 Targets (30 sec)', seconds: 30, targets: 8 },
-];
-export const HEALER_COLUMNS: readonly ReportColumn[] = [
-  { id: 'tank', label: 'Tank Healer (2 min)', seconds: 120, fight: 'tank' },
-  { id: 'raid', label: 'Raid Healer (1 min)', seconds: 60, fight: 'raid' },
-];
-
-export interface ReportCell {
-  readonly mean: number;
-  /** Half-width of the 95% interval on the mean. */
-  readonly interval: number;
-  /** Mean deaths of the player -- a tank's secondary figure. */
-  readonly deaths: number;
-  /** The figure before this round's optimisation, when BEFORE= was given. */
-  readonly before?: number;
-}
-
-export interface ReportRow {
-  readonly id: string;
-  readonly name: string;
-  readonly characterClass: string;
-  readonly role: PresetRole;
-  readonly metric: 'dps' | 'tps' | 'hps';
-  readonly cells: Readonly<Record<string, ReportCell>>;
-}
-
-export interface Report {
-  readonly iterations: number;
-  readonly seed: number;
-  readonly generated: string;
-  readonly rows: readonly ReportRow[];
-}
 
 function cellOf(values: readonly number[], deaths: readonly number[]): ReportCell {
   const n = values.length;
@@ -97,7 +51,7 @@ function withEncounter(profile: CharacterProfile, column: ReportColumn): Charact
   };
 }
 
-// The run. `full_report_page.ts` imports only this file's types, which erase.
+// The run.
 {
   const before: Report | undefined = BEFORE ? JSON.parse(readFileSync(BEFORE, 'utf8')) : undefined;
   const slice = { from: 0, to: ITER };
