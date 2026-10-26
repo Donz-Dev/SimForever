@@ -353,12 +353,13 @@ describe('Genesis, which is periodic damage and nothing else', () => {
      * asserted apart from the builds: a profile's allocation is a DECISION and
      * moves, where "rank three is 3%" is the talent.
      */
-    for (const [preset, style] of [
-      ['druid_cat', 'cat'],
-      ['druid_bear', 'bear'],
-      ['druid_moonkin', 'moonkin'],
+    // The Moonkin went back to Genesis 2 in round 78, for Reflection 3.
+    for (const [preset, style, multiplier] of [
+      ['druid_cat', 'cat', 1.05],
+      ['druid_bear', 'bear', 1.05],
+      ['druid_moonkin', 'moonkin', 1.02],
     ] as const) {
-      expect(buildIn(preset, style).periodicDamageMultiplier, preset).toBeCloseTo(1.05, 10);
+      expect(buildIn(preset, style).periodicDamageMultiplier, preset).toBeCloseTo(multiplier, 10);
     }
   });
 });

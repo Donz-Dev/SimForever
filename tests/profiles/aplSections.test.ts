@@ -1,3 +1,4 @@
+import { MULTI_TARGET_DEFAULTS } from '../../src/profiles/multiTarget';
 import { describe, expect, it } from 'vitest';
 import type { TelemetryEvent } from '../../src/engine';
 import { Simulation, seconds } from '../../src/engine';
@@ -86,10 +87,21 @@ describe('which section a fight runs', () => {
 });
 
 describe('the presets', () => {
-  it('carry both lists, starting identical, so no figure moves', () => {
+  it('carry both lists, starting identical unless the preset has its own Multi Target default', () => {
     for (const preset of PROFILE_PRESETS) {
       const profile = preset.build();
       expect(profile.multiTarget, preset.id).toBeDefined();
+      const own = MULTI_TARGET_DEFAULTS[preset.id];
+      if (own) {
+        // Round 78: an optimised Multi Target list, stored as written.
+        expect(profile.multiTarget!.rotation, preset.id).toEqual({
+          source: 'custom',
+          name: own.name,
+          entries: own.entries,
+        });
+        expect(profile.multiTarget!.precombat, preset.id).toEqual(own.precombat ?? profile.precombat);
+        continue;
+      }
       expect(profile.multiTarget!.rotation, preset.id).toEqual(profile.rotation);
       expect(profile.multiTarget!.precombat, preset.id).toEqual(profile.precombat);
     }
