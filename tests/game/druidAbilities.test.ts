@@ -750,19 +750,19 @@ describe("Nature's Grace, whose two clauses are two effects", () => {
     expect(NATURES_GRACE_DURATION_MS).toBe(seconds(3));
   });
 
-  it('shortens the global cooldown, which haste deliberately does not', () => {
+  it('shortens the global cooldown through its haste, and not a second time', () => {
     /*
-     * Two effects in one sentence, and folding the second into a haste rating
-     * would make EVERY haste source shorten the global cooldown -- a much
-     * larger change wearing this talent's name.
+     * ROUND 75: haste shortens the global cooldown now, the owner's ruling, so
+     * "increasing your spellcasting speed and reducing your global cooldown by
+     * 10%" is one effect said twice. The separate 10% GCD cut is gone -- with
+     * both, the cooldown would be 1.5 / 1.1 x 0.9.
      */
     const actor = makeAttacker({ autoAttack: 'none' });
     const simulation = buildSimulation([actor, makeTarget()]);
     simulation.begin();
 
-    expect(actor.auras.gcdMultiplier()).toBe(1);
     simulation.applyAura(actor, naturesGraceAura(NATURES_GRACE_PERCENT), actor.id);
-    expect(actor.auras.gcdMultiplier()).toBeCloseTo(0.9, 6);
+    expect(actor.auras.gcdMultiplier()).toBe(1);
 
     // And the haste half is a RATING, converted with the same constant the
     // haste multiplier divides by, so the round trip is exact.

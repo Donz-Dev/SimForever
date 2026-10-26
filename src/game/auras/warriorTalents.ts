@@ -246,9 +246,11 @@ export function flurryAura(hastePercent: number): AuraDefinition {
      *
      * so the result is p% more attack speed whatever that constant is set to.
      */
+    // Swing speed only, not haste (round 75): "attack speed" reaches no cast
+    // and no global cooldown, so Slam's cast is not shortened by it.
     statModifiers: [
       {
-        stat: 'hasteRating',
+        stat: 'attackSpeedRating',
         operation: 'flat',
         value: hastePercent * RATING_PER_PERCENT.haste,
       },

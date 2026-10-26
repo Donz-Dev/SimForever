@@ -25,6 +25,14 @@ export const DEFAULT_GCD_MS = 1500;
  */
 export const MINIMUM_GCD_MS = 750;
 
+/**
+ * HASTE SHORTENS THE GLOBAL COOLDOWN TO NO LESS THAN THIS (round 75), the
+ * owner's: "Haste can reduce the global cooldown from 1.5 sec to a floor of 1.0
+ * seconds." A floor for HASTE alone: a global cooldown already shorter than a
+ * second -- none is today -- is left as it is.
+ */
+export const HASTED_GCD_FLOOR_MS = 1000;
+
 /** What an ability costs to use. */
 export interface AbilityCost {
   readonly resource: ResourceType;

@@ -145,6 +145,24 @@ export function hasteMultiplierFrom(stats: Stats): number {
   return 1 + stats.hasteRating / RATING_PER_PERCENT.haste / 100;
 }
 
+/**
+ * WEAPON SWING SPEED ONLY (round 75): `attackSpeedRating` as a multiplier, on
+ * haste's scale. See the stat.
+ */
+export function attackSpeedMultiplierFrom(stats: Stats): number {
+  return 1 + stats.attackSpeedRating / RATING_PER_PERCENT.haste / 100;
+}
+
+/**
+ * WHAT A SWING TIMER IS DIVIDED BY (round 75): global haste times swing speed.
+ * Each is already a product of its own sources, so the two multiply too -- the
+ * owner's "all Haste effects are treated as individual sources and are
+ * multiplied together", carried across the split.
+ */
+export function swingHasteMultiplierFrom(stats: Stats): number {
+  return hasteMultiplierFrom(stats) * attackSpeedMultiplierFrom(stats);
+}
+
 /** Versatility as a damage-done multiplier. */
 export function versatilityMultiplierFrom(stats: Stats): number {
   return 1 + stats.versatilityRating / RATING_PER_PERCENT.versatility / 100;

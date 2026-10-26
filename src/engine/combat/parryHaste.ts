@@ -1,7 +1,7 @@
 import type { Combatant, WeaponSlot } from '../actors/Combatant';
 import { EventPriority, createEvent } from '../events';
 import type { SimulationContext } from '../simulation/SimulationContext';
-import { applyHaste, hasteMultiplierFrom } from './ratings';
+import { applyHaste, swingHasteMultiplierFrom } from './ratings';
 
 /**
  * PARRY HASTE: parrying an attack hurries the PARRIER's own next swing.
@@ -126,7 +126,7 @@ function hurry(
   const remaining = pending.timestamp - now;
   if (remaining <= 0) return;
 
-  const full = applyHaste(weapon.swingTimerMs, hasteMultiplierFrom(parrier.stats.effective));
+  const full = applyHaste(weapon.swingTimerMs, swingHasteMultiplierFrom(parrier.stats.effective));
   const hurried = Math.max(full * floorFraction, remaining - full * reductionFraction);
 
   /*

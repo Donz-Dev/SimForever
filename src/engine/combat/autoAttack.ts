@@ -2,7 +2,7 @@ import type { AutoAttackMode, Combatant, WeaponProfile, WeaponSlot } from '../ac
 import { EventPriority, createEvent } from '../events';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import { dealDamage, grantGeneratedResource } from './damage';
-import { applyHaste, hasteMultiplierFrom } from './ratings';
+import { applyHaste, swingHasteMultiplierFrom } from './ratings';
 
 /**
  * Auto attacks: off-GCD swings that repeat on their own timers.
@@ -81,7 +81,7 @@ export function startAutoAttackMode(
   if (!attacker.swingsBegun) return true;
 
   const now = context.clock.now();
-  const haste = hasteMultiplierFrom(attacker.stats.effective);
+  const haste = swingHasteMultiplierFrom(attacker.stats.effective);
   for (const slot of keep) {
     if (slotsForMode(previous).includes(slot)) continue;
     const weapon = attacker.weapons[slot];
@@ -200,7 +200,7 @@ export function extraAttack(
         swing(ctx, attacker, weapon, slot);
       }
 
-      const haste = hasteMultiplierFrom(attacker.stats.effective);
+      const haste = swingHasteMultiplierFrom(attacker.stats.effective);
       scheduleSwing(ctx, attacker, slot, applyHaste(weapon.swingTimerMs, haste));
     }),
   );
@@ -239,7 +239,7 @@ export function resetSwingTimers(
     const weapon = attacker.weapons[slot];
     if (!weapon) continue;
     if (afterMs <= 0) {
-      const haste = hasteMultiplierFrom(attacker.stats.effective);
+      const haste = swingHasteMultiplierFrom(attacker.stats.effective);
       scheduleSwing(context, attacker, slot, applyHaste(weapon.swingTimerMs, haste));
       continue;
     }
@@ -248,7 +248,7 @@ export function resetSwingTimers(
       context.clock.now() + afterMs,
       createEvent(`swing-timer-start:${attacker.id}:${slot}`, EventPriority.AutoAttack, (ctx) => {
         if (!attacker.isAlive || ctx.hasEnded) return;
-        const haste = hasteMultiplierFrom(attacker.stats.effective);
+        const haste = swingHasteMultiplierFrom(attacker.stats.effective);
         scheduleSwing(ctx, attacker, slot, applyHaste(weapon.swingTimerMs, haste));
       }),
     );
@@ -326,7 +326,7 @@ function scheduleSwing(
 
       // The timer keeps running even with no valid target, so that switching
       // targets mid-fight does not hand out a free reset.
-      const haste = hasteMultiplierFrom(attacker.stats.effective);
+      const haste = swingHasteMultiplierFrom(attacker.stats.effective);
       scheduleSwing(ctx, attacker, slot, applyHaste(weapon.swingTimerMs, haste));
     }),
   );

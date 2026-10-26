@@ -79,18 +79,19 @@ describe('Deep Wounds', () => {
 describe('Flurry', () => {
   it('converts its percentage into exactly that much haste', () => {
     /*
-     * The talent states a flat percentage and the engine derives haste from
-     * `hasteRating`. The conversion has to round-trip: 25% must come out as a
-     * 1.25 multiplier, whatever the rating constant happens to be.
+     * The talent states a flat percentage and the engine derives swing speed
+     * from `attackSpeedRating` -- swing speed and not haste since round 75, so
+     * it reaches no cast and no global cooldown. The conversion has to
+     * round-trip: 25% must come out as a 1.25 multiplier.
      */
     const aura = flurryAura(25);
     const modifier = aura.statModifiers?.[0];
-    expect(modifier?.stat).toBe('hasteRating');
+    expect(modifier?.stat).toBe('attackSpeedRating');
 
     const player = warrior();
-    const before = player.stats.effective.hasteRating;
+    const before = player.stats.effective.attackSpeedRating;
     player.stats.addModifiers([{ ...modifier!, sourceId: 'test' }]);
-    const after = player.stats.effective.hasteRating;
+    const after = player.stats.effective.attackSpeedRating;
     // 25% of haste, expressed as rating, is what was added.
     expect(after - before).toBeCloseTo(modifier!.value, 6);
   });

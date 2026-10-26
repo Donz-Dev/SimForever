@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AttackEvent, Combatant, WeaponSlot } from '../../src/engine';
-import { Simulation, applyHaste, hasteMultiplierFrom } from '../../src/engine';
+import { Simulation, applyHaste, hasteMultiplierFrom, swingHasteMultiplierFrom } from '../../src/engine';
 import {
   GIFT_OF_ARTHAS_DAMAGE,
   RAID_BUFFS,
@@ -337,7 +337,7 @@ describe('debuffs on the target', () => {
     expect(THUNDER_CLAP_SWING_TIME_MULTIPLIER).toBe(1.2);
 
     const { target } = opened(['thunder_clap'], true);
-    const multiplier = hasteMultiplierFrom(target.stats.effective);
+    const multiplier = swingHasteMultiplierFrom(target.stats.effective);
     expect(applyHaste(2000, multiplier)).toBe(2400);
     // And a swing of any other length, since the mechanic is a multiplier.
     expect(applyHaste(2500, multiplier)).toBe(3000);

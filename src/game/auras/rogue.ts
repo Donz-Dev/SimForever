@@ -130,7 +130,8 @@ export function sliceAndDiceAura(
     ),
     // Recasting replaces rather than extends: one buff, whatever its length.
     refreshBehaviour: 'reset',
-    statModifiers: [flat('hasteRating', SLICE_AND_DICE_HASTE_RATING)],
+    // Swing speed only, not haste (round 75): it reaches no cast and no global cooldown.
+    statModifiers: [flat('attackSpeedRating', SLICE_AND_DICE_HASTE_RATING)],
   };
 }
 
@@ -421,7 +422,8 @@ export const BLADE_FLURRY: AuraDefinition = {
   name: 'Blade Flurry',
   durationMs: BLADE_FLURRY_DURATION_MS,
   statModifiers: [
-    flat('hasteRating', BLADE_FLURRY_ATTACK_SPEED * 100 * RATING_PER_PERCENT.haste),
+    // Swing speed only, not haste (round 75): it reaches no cast and no global cooldown.
+    flat('attackSpeedRating', BLADE_FLURRY_ATTACK_SPEED * 100 * RATING_PER_PERCENT.haste),
   ],
 };
 

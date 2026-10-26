@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Simulation, applyHaste, hasteMultiplierFrom, toSeconds } from '../../src/engine';
+import { Simulation, applyHaste, swingHasteMultiplierFrom, toSeconds } from '../../src/engine';
 import type { TelemetryEvent } from '../../src/engine';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { characterAtCombatStart } from '../../src/simulator';
@@ -292,9 +292,9 @@ describe('Deadly Aspects fires from Auto Shot', () => {
     const simulation = buildSimulation([hunter, makeTarget()]);
     simulation.begin();
 
-    const before = applyHaste(bow.swingTimerMs, hasteMultiplierFrom(hunter.stats.effective));
+    const before = applyHaste(bow.swingTimerMs, swingHasteMultiplierFrom(hunter.stats.effective));
     simulation.applyAura(hunter, DEADLY_ASPECTS, hunter.id);
-    const after = applyHaste(bow.swingTimerMs, hasteMultiplierFrom(hunter.stats.effective));
+    const after = applyHaste(bow.swingTimerMs, swingHasteMultiplierFrom(hunter.stats.effective));
 
     expect(hunter.auras.has('deadly_aspects')).toBe(true);
     expect(DEADLY_ASPECTS_HASTE_PERCENT).toBe(30);

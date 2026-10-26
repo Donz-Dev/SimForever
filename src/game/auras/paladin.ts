@@ -239,7 +239,8 @@ export const SEAL_OF_THE_CRUSADER: AuraDefinition = {
   refreshBehaviour: 'reset',
   statModifiers: [
     flat('attackPower', SEAL_OF_THE_CRUSADER_ATTACK_POWER),
-    flat('hasteRating', SEAL_OF_THE_CRUSADER_HASTE_PERCENT * RATING_PER_PERCENT.haste),
+    // "Attacks 40% faster" is swing speed, not haste (round 75).
+    flat('attackSpeedRating', SEAL_OF_THE_CRUSADER_HASTE_PERCENT * RATING_PER_PERCENT.haste),
   ],
   // The third clause, on the owner's reading. See above for why it is the swing
   // table alone and not the whole character.

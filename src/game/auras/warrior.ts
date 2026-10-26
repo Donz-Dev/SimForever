@@ -547,7 +547,8 @@ export const THUNDER_CLAP_SLOW: AuraDefinition = {
   durationMs: THUNDER_CLAP_SLOW_DURATION_MS,
   isDebuff: true,
   refreshBehaviour: 'reset',
-  statModifiers: [flat('hasteRating', THUNDER_CLAP_HASTE_RATING)],
+  // The boss's attack speed, not haste (round 75).
+  statModifiers: [flat('attackSpeedRating', THUNDER_CLAP_HASTE_RATING)],
 };
 
 export const SHIELD_WALL_DAMAGE_TAKEN_MULTIPLIER = 0.4;
