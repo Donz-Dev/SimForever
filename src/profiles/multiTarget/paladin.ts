@@ -47,8 +47,17 @@ const moveAbove = (entries: readonly AplEntry[], id: string, aboveId: string): A
   return [...rest.slice(0, at), moved, ...rest.slice(at)];
 };
 
+/*
+ * Consecration, Holy Strike, Judgement, then Hammer of Wrath -- the order that
+ * was measured. The Single Target list puts Hammer of Wrath above Judgement
+ * (round 78), and this list keeps it below, where it was priced.
+ */
 const RET_AOE = moveAbove(
-  moveAbove(PALADIN_RETRIBUTION.entries, 'consecration', 'judgement'),
+  moveAbove(
+    moveAbove(PALADIN_RETRIBUTION.entries, 'hammer_of_wrath', 'consecration'),
+    'consecration',
+    'judgement',
+  ),
   'holy_strike',
   'judgement',
 );
