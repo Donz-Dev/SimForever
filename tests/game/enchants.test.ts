@@ -756,6 +756,14 @@ describe('what each of the 29 profiles opens with', () => {
     'shaman_enhancement wrists': '+16 Spell Power',
     'shaman_enhancement gloves': '+20 Spell Power',
     'shaman_resto gloves': '+1% Haste',
+    /*
+     * ROUND 78: both Warrior tanks' boots, Minor Speed -> +7 Agility. Minor
+     * Speed is `unmodelled` and grants nothing; +7 Agility is +5.10 +/- 3.02
+     * TPS on Prot Warr at 120s with deaths -0.10, and +0.56 (noise) on Fury
+     * Prot with deaths -0.16.
+     */
+    'prot_warr feet': '+7 Agility',
+    'fury_prot feet': '+7 Agility',
   };
 
   it('matches the owner table row for row, bar the measured exceptions', () => {
@@ -976,9 +984,12 @@ describe('the enchants reach the built character', () => {
     expect(enchanted.parry - plain.parry).toBe(fromDefense);
     expect(enchanted.miss - plain.miss).toBe(fromDefense);
 
-    // And dodge, which carries the three enchants and the chest's agility on
-    // top of it. Three points is 300 units and the 4.4 agility is 22 more.
-    expect(enchanted.dodge - plain.dodge).toBe(fromDefense + 300 + 22);
+    // And dodge, which carries the three enchants and the agility on top of
+    // it. Three points is 300 units; the chest's 4 agility and (since round 78)
+    // the boots' 7 are 11, multiplied to 12.1 by Blessing of Kings, over twenty
+    // agility a point -- 60.5 units, which the truncation into roll space
+    // lands at 61 on this pair.
+    expect(enchanted.dodge - plain.dodge).toBe(fromDefense + 300 + 61);
 
     /*
      * THE STAT ITSELF, so the 22 above is placed rather than accepted. Four
@@ -988,6 +999,6 @@ describe('the enchants reach the built character', () => {
      */
     const dodgeStat = (p: typeof profile) =>
       characterAtCombatStart(p)!.stats.effective.dodgeChance;
-    expect(dodgeStat(profile) - dodgeStat(stripped)).toBeCloseTo(3 + 4.4 / 20, 6);
+    expect(dodgeStat(profile) - dodgeStat(stripped)).toBeCloseTo(3 + 12.1 / 20, 6);
   });
 });

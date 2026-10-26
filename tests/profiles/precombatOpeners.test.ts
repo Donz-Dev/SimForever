@@ -442,6 +442,13 @@ describe("the owner's openers are transcribed exactly", () => {
       // Shadow Word: Pain is off the opener, by the owner (round 37).
       [0, 'devouring_plague', '+26.7 alone'],
     ],
+    /*
+     * ROUND 78: Blood Fury at the pull on the two damage Warriors. Free and
+     * off the global cooldown, so the window opens at t=0 rather than at the
+     * first decision; small and real at 120s, one target.
+     */
+    two_hand_arms: [[0, 'blood_fury', '+0.60 +/- 0.04 at 120s']],
+    dw_fury: [[0, 'blood_fury', '+0.42 +/- 0.03 at 120s']],
   };
 
   it('keeps every owner line, at its stated lead and in its stated order', () => {
