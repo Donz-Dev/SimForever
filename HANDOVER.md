@@ -6307,7 +6307,7 @@ almost everything that looked like an opportunity measured as a loss.
 
 | | spread | was | now |
 | --- | --- | --- | --- |
-| **Moonkin** | 41/0/10 | 778.6 | **790.3** |
+| **Moonkin** | 41/0/10 (then; 38/0/13 since round 78) | 778.6 | **790.3** |
 | **Cat** | 9/34/8 | 890.0 | **898.4** |
 
 **THE CAT THROWS AWAY THIRTEEN OF THE TWENTY-SEVEN COMBO POINTS IT GENERATES,
@@ -11893,14 +11893,14 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | DW Fury | Warrior | 17/34/0 | 1068.4 | | Combat Mut | Rogue | 30/21/0 | 848.0 |
 | LW Ranged | Hunter | 5/41/5 | 1021.0 | | Hemo Dagger | Rogue | 17/3/31 | 840.2 |
 | Fire Mage | Mage | 14/34/3 | 1020.7 | | **Enh Shaman** | Shaman | 19/32/0 | **838.8** |
-| BM Hunter | Hunter | 31/20/0 | 968.2 | | Moonkin | Druid | 41/0/10 | 820.3 |
+| BM Hunter | Hunter | 31/20/0 | 968.2 | | Moonkin | Druid | 41/0/10 (then; 38/0/13 since round 78) | 820.3 |
 | Cat Druid | Druid | 9/34/8 | 966.9 | | Ele Shaman | Shaman | 32/11/8 | 792.8 |
-| Seal Twist Ret | Paladin | 15/0/36 | 948.6 | | Pure Hemo | Rogue | 19/8/24 | 775.9 |
+| Seal Twist Ret | Paladin | 15/0/36 (then; 16/0/35 since round 78) | 948.6 | | Pure Hemo | Rogue | 19/8/24 | 775.9 |
 | Hawk Melee | Hunter | 16/11/24 | 937.6 | | Venom Rogue | Rogue | 33/16/2 | 771.6 |
 | Shockadin 2H | Paladin | 23/0/28 | 935.2 | | SM/DS | Warlock | 35/11/5 | 769.4 |
 | Shadow Priest | Priest | 14/2/35 | 931.0 | | Rupture Rogue | Rogue | 12/8/31 | 754.9 |
 | 2H Arms | Warrior | 39/10/2 | 927.0 | | Prot Pally | Paladin | 8/34/9 | 551.1 |
-elock | Warlock | 5/11/35 | 910.5 | | Prot Warr | Warrior | 17/0/34 | 499.5 |
+elock | Warlock | 5/11/35 | 910.5 | | Prot Warr | Warrior | 17/0/34 (then; 17/2/32 since round 78) | 499.5 |
 | Combat Rogue | Rogue | 18/33/0 | 899.5 | | Bear Druid | Druid | 9/42/0 | 432.8 |
 
 The mean across **28** is **863.8**, RE-SUMMED FROM THE ROWS ABOVE rather than
