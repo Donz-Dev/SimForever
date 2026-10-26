@@ -123,7 +123,11 @@ describe('editing one section', () => {
   });
 
   it('re-derives a default list in either section and never touches a custom one', () => {
-    const profile = PRESETS_BY_ID.get('dw_fury')!.build();
+    // DW Fury's own Multi Target list (round 78) is custom, so start from the
+    // default copy a fresh character gets.
+    const { multiTarget: _own, ...built } = PRESETS_BY_ID.get('dw_fury')!.build();
+    void _own;
+    const profile = syncDefaultRotation(built);
     const customSingle = { ...profile, rotation: only('slam') };
     // A change to the build: the default Multi Target list follows, the custom
     // Single Target one does not.
