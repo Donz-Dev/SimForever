@@ -449,6 +449,8 @@ describe("the owner's openers are transcribed exactly", () => {
      */
     two_hand_arms: [[0, 'blood_fury', '+0.60 +/- 0.04 at 120s']],
     dw_fury: [[0, 'blood_fury', '+0.42 +/- 0.03 at 120s']],
+    // ROUND 80: Inner Focus before the pull, the tank healer fight's opener.
+    priest_holy: [[0, 'inner_focus', '+14.1 +/- 2.3 HPS, tank healer fight at 120s']],
   };
 
   it('keeps every owner line, at its stated lead and in its stated order', () => {

@@ -50,10 +50,24 @@ const swpEverywhere: AplEntry = {
   note: 'On every target it is not on, while six seconds or more of the fight is left.',
 };
 
+/**
+ * AND AT THREE TARGETS OR FEWER THE SPREAD MAY CUT A MIND FLAY SHORT (round 80),
+ * after its two protected ticks. +7.96 +/- 2.68 DPS at three targets over 60s
+ * (600 paired fights); at five it is -2.78 and at eight noise, so it is a copy
+ * of the spread gated on the target count rather than a flag on the spread
+ * itself, and five and eight run the identical fight.
+ */
+const swpEverywhereClipping: AplEntry = {
+  ...swpEverywhere,
+  condition: { kind: 'all', of: [swpEverywhere.condition!, { kind: 'targetCount', compare: 'atMost', count: 3 }] },
+  interruptsChannel: true,
+  note: 'At three targets or fewer, the spread cuts a Mind Flay short after its two protected ticks.',
+};
+
 const shadowMulti = (): readonly AplEntry[] => {
   const rest = PRIEST_SHADOW.entries.filter((entry) => entry.abilityId !== 'shadow_word_pain');
   const at = rest.findIndex((entry) => entry.abilityId === 'inner_focus');
-  return [...rest.slice(0, at), swpEverywhere, ...rest.slice(at)];
+  return [...rest.slice(0, at), swpEverywhereClipping, swpEverywhere, ...rest.slice(at)];
 };
 
 /* ------------------------------------------------------------------ healers */
@@ -61,12 +75,52 @@ const shadowMulti = (): readonly AplEntry[] => {
 const TANK = { kind: 'tank' } as const;
 const LOWEST_PARTY = { kind: 'lowestParty' } as const;
 
+/**
+ * ==============================================================================
+ * THE RACIALS IN BOTH RAID LISTS, WITH BERSERKING HELD FIVE SECONDS (round 80).
+ * Both healers are Trolls since round 80, and Berserking at the pull spends its
+ * ten seconds of haste before the first raid pulse lands at five -- so it waits
+ * for it. Measured on the weighted healer score against Troll at the pull:
+ * Holy +4.8 (raid +9.6), Disc +18.7 (raid +37.4). Berserking in the TANK fight
+ * is worth nothing either way (switched off it runs the identical fight).
+ * ==============================================================================
+ */
+const RAID_RACIALS: readonly AplEntry[] = RACIAL_COOLDOWNS.map((entry) =>
+  entry.abilityId === 'berserking'
+    ? {
+        ...entry,
+        condition: { kind: 'fightElapsed', compare: 'atLeast', seconds: 5 },
+        note: 'Held for the first raid pulse, which lands at five seconds.',
+      }
+    : entry,
+);
+
 const POWER_WORD_SHIELD_ON_THE_TANK: AplEntry = {
   abilityId: 'power_word_shield',
   target: TANK,
   condition: { kind: 'aura', on: 'target', auraId: 'weakened_soul', present: false },
   note: 'Kept up on the tank, whenever Weakened Soul allows.',
 };
+
+/**
+ * GREATER HEAL ON THE TANK WHEN IT IS LOW (round 80), an addition above the
+ * owner's lines. The raid tank takes a tenth of its health every two seconds,
+ * and Prayer of Healing goes to the lowest PARTY -- so a tank that has fallen
+ * low is otherwise only reached by the Renew, the shield and Prayer of Mending.
+ * Swept at 30/40/50/60/70/80/90% on 600 paired raid fights at 60s:
+ *
+ *   Holy, above Prayer of Healing   -26.8 / -12.5 / +4.0 / +25.1 / **+29.5** / +8.8 / -60.9
+ *   Disc, above the shield          60% **+26.5**, 70% +26.1 (above PoH: +19.5 / +17.4)
+ *
+ * A Flash Heal there instead loses (-41.0 Holy, -70.0 Disc at 70%): Greater Heal
+ * is the efficient heal, and this fight runs out of mana.
+ */
+const greaterHealTheTank = (fraction: number): AplEntry => ({
+  abilityId: 'greater_heal',
+  target: TANK,
+  condition: { kind: 'health', on: 'target', compare: 'below', fraction },
+  note: `Greater Heal on the tank under ${fraction * 100}% health.`,
+});
 
 const PRAYER_OF_HEALING_SPAM: AplEntry = {
   abilityId: 'prayer_of_healing',
@@ -95,7 +149,7 @@ const PRAYER_OF_HEALING_SPAM: AplEntry = {
  * ==============================================================================
  */
 const HOLY_RAID: readonly AplEntry[] = [
-  ...RACIAL_COOLDOWNS,
+  ...RAID_RACIALS,
   ...CONSUMABLE_COOLDOWNS,
   {
     abilityId: 'inner_focus',
@@ -117,6 +171,7 @@ const HOLY_RAID: readonly AplEntry[] = [
     note: 'Kept up on the tank.',
   },
   POWER_WORD_SHIELD_ON_THE_TANK,
+  greaterHealTheTank(0.7),
   PRAYER_OF_HEALING_SPAM,
 ];
 
@@ -133,7 +188,7 @@ const HOLY_RAID: readonly AplEntry[] = [
  * ==============================================================================
  */
 const DISC_RAID: readonly AplEntry[] = [
-  ...RACIAL_COOLDOWNS,
+  ...RAID_RACIALS,
   ...CONSUMABLE_COOLDOWNS,
   {
     abilityId: 'inner_focus',
@@ -142,6 +197,7 @@ const DISC_RAID: readonly AplEntry[] = [
     note: 'Inner Focus, then Penance on the tank at once.',
   },
   { abilityId: 'penance', target: TANK, note: 'On cooldown, on the tank.' },
+  greaterHealTheTank(0.6),
   POWER_WORD_SHIELD_ON_THE_TANK,
   PRAYER_OF_HEALING_SPAM,
 ];
@@ -155,7 +211,7 @@ const DISC_RAID: readonly AplEntry[] = [
  */
 const forPreset = (
   entries: readonly AplEntry[],
-  race: 'human' | 'gnome',
+  race: 'undead' | 'troll',
   consumables: ConsumableSelection,
 ): readonly AplEntry[] =>
   withoutUnselectedConsumables({ name: '', entries: racialsForRace({ entries }, race, 'priest').entries }, 'priest', consumables)
@@ -168,7 +224,9 @@ const HEALER_MID_FIGHT: ConsumableSelection = { potion: 'major_mana_potion', oth
  * id. A preset with no entry runs its Single Target list on several targets.
  */
 export const PRIEST_MULTI_TARGET: MultiTargetDefaults = {
-  shadow_priest: { name: 'Priest (Shadow, multi-target)', entries: forPreset(shadowMulti(), 'human', casterConsumables('school_shadow')) },
-  priest_holy: { name: 'Priest (Holy, raid)', entries: forPreset(HOLY_RAID, 'gnome', HEALER_MID_FIGHT) },
-  priest_disc: { name: 'Priest (Discipline, raid)', entries: forPreset(DISC_RAID, 'gnome', HEALER_MID_FIGHT) },
+  shadow_priest: { name: 'Priest (Shadow, multi-target)', entries: forPreset(shadowMulti(), 'undead', { ...casterConsumables('school_shadow'), potion_secondary: 'secondary_major_mana_potion' }) },
+  // No opener in the raid fight: the Single Target section's pre-pull Inner Focus would be spent on the first spell
+  // and take the raid list's Inner Focus -> Prayer of Healing with it (round 80).
+  priest_holy: { name: 'Priest (Holy, raid)', entries: forPreset(HOLY_RAID, 'troll', HEALER_MID_FIGHT), precombat: [] },
+  priest_disc: { name: 'Priest (Discipline, raid)', entries: forPreset(DISC_RAID, 'troll', HEALER_MID_FIGHT) },
 };
