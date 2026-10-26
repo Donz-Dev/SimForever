@@ -18,6 +18,8 @@ import { legalAllocation } from '../src/game/talents/talentRules';
 import { talentsForClass } from '../src/game/talents/talentData';
 import type { EquipmentSlot } from '../src/game/items/Item';
 import type { AplEntry } from '../src/game/rotations/apl';
+import type { PrecombatAction } from '../src/engine';
+import { setSection, withSection } from '../src/profiles/aplSections';
 
 export type Apply = (profile: CharacterProfile) => CharacterProfile;
 
@@ -151,6 +153,35 @@ export const DRUID_TREE = treeFor('druid');
 export const MAGE_TREE = treeFor('mage');
 export const SHAMAN_TREE = treeFor('shaman');
 export const PRIEST_TREE = treeFor('priest');
+export const WARRIOR_TREE = treeFor('warrior');
+export const ROGUE_TREE = treeFor('rogue');
+export const WARLOCK_TREE = treeFor('warlock');
+
+/*
+ * ==============================================================================
+ * THE MULTI TARGET SECTION (round 78). Every edit above reaches the root, which
+ * is the Single Target section -- so an AoE variant wraps its edits in
+ * `inMulti`, which swaps the Multi Target lists into the root, applies them and
+ * writes them back. A fight with more than one target runs that section; with
+ * no Multi Target list a profile falls back to its Single Target one.
+ *
+ * `multiList` REPLACES the whole section: a combat list written out in full,
+ * and a pre-combat list that defaults to the Single Target opener.
+ * ==============================================================================
+ */
+export const inMulti =
+  (...applies: readonly Apply[]): Apply =>
+  (profile) =>
+    setSection(profile, 'multi', chain(...applies)(withSection(profile, 'multi')));
+
+export const multiList =
+  (name: string, entries: readonly AplEntry[], precombat?: readonly PrecombatAction[]): Apply =>
+  (profile) =>
+    setSection(profile, 'multi', {
+      ...withSection(profile, 'multi'),
+      rotation: { source: 'custom', name, entries },
+      ...(precombat ?? profile.precombat ? { precombat: precombat ?? profile.precombat } : {}),
+    });
 
 /*
  * ==============================================================================

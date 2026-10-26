@@ -1,13 +1,89 @@
 # WARRIOR DEEP DIVE — done
 
 **Class:** Warrior
-**Profiles:** 2H Arms, DW Fury, Prot Warr
+**Profiles:** 2H Arms, DW Fury, Prot Warr, Fury Prot
 **Dive completed:** 2026-09-30. **Live gaps: 1** -- it finished at 0 and client
 build 1.60.1.70170 added a talent nothing here can reach. See the patch note
 below.
 
 Read [CLAUDE.md](../../CLAUDE.md) first, then [README.md](README.md) in this
 directory for what the census columns mean and how to reprint every figure below.
+
+---
+
+## Round 78 — all four presets, optimised for the full report
+
+**THE OBJECTIVES CHANGED UNDER THIS CLASS, AND THE TANKS' CHANGED MOST.** DPS at
+one target over 120s and at five targets over 60s (reused at 3/60 and 8/30) for
+2H Arms and DW Fury; **TPS**, not deaths, for Prot Warr and Fury Prot, with
+deaths as the secondary check. Variant file:
+`tools/optimise/warriorVariants.ts`; Multi Target lists:
+`src/profiles/multiTarget/warrior.ts`.
+
+| | | t1 120s | t3 60s | t5 60s | t8 30s |
+| --- | --- | --- | --- | --- | --- |
+| 2H Arms | DPS | 850.2 -> **850.7** | 873.1 -> **1138.5** | 873.1 -> **1207.9** | 901.7 -> **1269.7** |
+| DW Fury | DPS | 991.9 -> **992.3** | 1221.5 -> **1390.4** | 1306.4 -> **1491.7** | 1486.1 -> **1658.8** |
+| Prot Warr | TPS | 1149.8 -> **1169.0** | 1410.5 -> **1621.5** | 1660.9 -> **1898.6** | 2040.8 -> **2284.2** |
+| Fury Prot | TPS | 1224.4 -> **1234.1** | 1665.0 -> **1840.1** | 1995.1 -> **2181.9** | 2645.8 -> **2839.8** |
+
+`full_report.ts`, 300 fights a cell, seed 20261025. Tank deaths stayed put in
+every column (Prot 17.84 -> 17.53 at t1, Fury Prot 18.30 -> 17.69).
+
+**ALMOST ALL OF IT IS THE MULTI TARGET LISTS**, which did not exist: 2H Arms
+read identically at three and five targets because nothing in its list touched a
+second enemy. Single Target moved only where a dead talent or an inert enchant
+could be re-spent, because all four Single Target lists are the owner's.
+
+### What shipped
+
+| | |
+| --- | --- |
+| 2H Arms, DW Fury | **Blood Fury at 0s**, added to the owner's opener. +0.60 +/- 0.04 and +0.42 +/- 0.03 at 120s |
+| 2H Arms Multi | Sweeping Strikes above Heroic Strike, **Cleave** in its place at 60, **Whirlwind above Mortal Strike** -- the list dances to Berserker for it and back for Overpower. +337.5 at 5 |
+| DW Fury Multi | Whirlwind above Execute, Cleave in Heroic Strike's place at the owner's 42. +187.0 at 5 |
+| Prot Warr | **Improved Shield Wall 2 -> Cruelty 2**, +19.21 +/- 2.75 TPS (deaths +0.04 +/- 0.13). Shield Wall fires 0.2 times a fight, so its cooldown is dead. Spread is now **17/2/32** |
+| Fury Prot | **Improved Berserker Rage 2 + Booming Voice 1 -> Unbridled Wrath 5/5**, +9.93 +/- 7.66 TPS at 1000 fights |
+| both tanks | boots **Minor Speed (inert) -> +7 Agility**: +5.10 +/- 3.02 TPS on Prot, +0.56 (noise) on Fury Prot, deaths down on both |
+| both tanks Multi | Cleave in Heroic Strike's place (26 on Prot, 40 on Fury Prot), **Thunder Clap and Demoralizing Shout out** |
+
+**DROPPING THUNDER CLAP FROM A FIVE-TARGET TANK LIST READS BACKWARDS AND IS
+MEASURED** on both tanks at all three target counts, deaths inside their
+interval each time: Thunder Clap carries no threat multiplier in
+`game/combat/threat.ts`, and both it and the shout are mitigation, which a
+Warrior pays for in rage (`D x 10 / H`). **Open question for the owner: should
+Thunder Clap carry Classic's x1.75 threat?** The answer could put it back.
+
+### One row per dimension
+
+| dimension | 2H Arms | DW Fury | Prot Warr | Fury Prot |
+| --- | --- | --- | --- | --- |
+| talents | forced; both alternatives noise/loss (-0.25, -3.22) | forced; -5.15, +1.99 (dead for dead) | **Cruelty 2 shipped**; Anger Management builds +19 to +37 but **deaths +2.0** -- withheld | **UW 5/5 shipped**; Deflection -> ITC 3 + MoD 2 is +53.6 with **deaths +2.2** -- withheld |
+| opener | **Blood Fury 0s**; Bloodrage at 0s -12.8 | **Blood Fury 0s**; Death Wish / potion at 0s noise | Thunder Clap at 0s +9.8 noise | -- |
+| Single Target APL | all owner lines: HS 70 -8.4, Spearing Strike out -11.6, others noise; Recklessness eye **+24.8** | all noise; Recklessness eye **+43.6** | owner lines: Demo Shout out **+21.6**, Thunder Clap out **+17.2** -- kept | Fury Prot's own HS 65 confirmed (40-80 noise); BT higher -9 to -16 |
+| Multi Target APL | **shipped**, see above | **shipped** | **shipped** | **shipped** |
+| enchants | strength confirmed; Crusader beats +25 Agi by 16.4 | strength confirmed; Crusader by 11.2 | boots shipped; Str/Agi for a dodge or defense slot +8 to +11 TPS for **~+0.3 deaths a slot** -- withheld | same, +9 to +14 for ~+0.2 deaths |
+| consumables | all confirmed (Frenzy -11.9, dense stone -5.8) | confirmed | dropping the +120 HP elixir +9.1 (noise deaths), flask -> nothing +11.3 for +0.79 deaths -- withheld, the rage formula pays for a smaller pool | noise |
+| race | Orc best or tied (Human +0.12 noise) | Orc best or tied | **every race beats Tauren**, +11 to +13 at 1500 fights, deaths +0.1 to +0.2 -- withheld | same, +9 to +12 |
+
+### What was priced and withheld, and why
+
+- **Recklessness's eye**, on every list it is in: +24.8 (Arms ST), +43.6 (Fury
+  ST), +61.7 and +122.9 over the new Multi lists. Off by the owner's ruling.
+- **The tank race**: Tauren's +5% health makes every point of damage taken worth
+  less rage, so Orc, Undead and Human all buy about 1% TPS -- for slightly more
+  deaths, on a preset whose race is part of its identity. A question.
+- **Anger Management / Master of Defense spreads**: real TPS, deaths up by 11-12%.
+- **Owner lines that measured as losses** (kept): 2H Arms Spearing Strike
+  (-11.6 to remove it, so it stays anyway) and HS at 70 (-8.4); Prot Warr's
+  Demoralizing Shout (+21.6 to remove) and Thunder Clap (+17.2 to remove) in the
+  Single Target list.
+
+### The talent-spread test reads HANDOVER
+
+`talentSpreads.test.ts` checks HANDOVER.md's baseline table, which still states
+Prot Warr at 17/0/34. That one row needs to read **17/2/32**; this round does not
+edit HANDOVER.md.
 
 ---
 
@@ -368,7 +444,7 @@ Full record, with the method: [source-cross-checks.md](../source-cross-checks.md
 | --- | --- | --- | --- | --- |
 | DW Fury | 17/34/0 | **667.5** | `WARRIOR_DUAL_WIELD_BERSERKER` | dual wield, Berserker |
 | 2H Arms | 39/10/2 | **621.1** | `WARRIOR_TWO_HAND_BATTLE` | two-hander, Battle |
-| Prot Warr | 17/0/34 | **457.0** | `WARRIOR_SHIELD_DEFENSIVE` | 1H & shield, Defensive, **target attacks back** |
+| Prot Warr | 17/2/32 | **457.0** | `WARRIOR_SHIELD_DEFENSIVE` | 1H & shield, Defensive, **target attacks back** |
 
 **DW Fury and 2H Arms are the two highest profiles in the project.** Prot Warr is
 sixth. Anything that moves a shared melee rule shows up here first and largest.

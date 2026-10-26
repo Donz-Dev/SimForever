@@ -5,6 +5,7 @@ import {
   casterConsumables,
   hybridConsumables,
 } from '../game/buffs/consumables';
+import { withMultiTargetDefault } from './multiTarget';
 import { getCombatStyle } from '../game/character';
 import { RAID_BUFFS } from '../game/buffs/raidBuffs';
 import type { ClassId } from '../game/character';
@@ -414,7 +415,14 @@ const PROT_WARR_TALENTS: TalentAllocation = {
   improved_charge: 1,
   deep_wounds: 3,
   impale: 2,
-  // Protection, 34
+  /*
+   * Fury, 2 -- ROUND 78, out of Improved Shield Wall's two points. Shield Wall
+   * fires about 0.2 times a fight, so its cooldown never comes back inside any
+   * fight the report runs and the talent was dead. Cruelty 2 is **+19.21 +/-
+   * 2.75 TPS** at 120s, one target (deaths +0.04 +/- 0.13), and +21.9 at five.
+   */
+  cruelty: 2,
+  // Protection, 32
   shield_specialization: 5,
   anticipation: 5,
   improved_revenge: 3,
@@ -423,7 +431,6 @@ const PROT_WARR_TALENTS: TalentAllocation = {
   master_of_defense: 2,
   defiance: 3,
   vanguard: 1,
-  improved_shield_wall: 2,
   concussion_blow: 1,
   bastion: 5,
   focused_rage: 3,
@@ -450,14 +457,19 @@ const PROT_WARR_TALENTS: TalentAllocation = {
 const FURY_PROT_TALENTS: TalentAllocation = {
   // Arms, 5
   deflection: 5,
-  // Fury, 31
-  booming_voice: 5,
+  /*
+   * Fury, 31. ROUND 78 MOVED THREE POINTS: Improved Berserker Rage 2 (no list
+   * here casts Berserker Rage -- it would drag a Defensive tank into Berserker
+   * Stance) and one of Booming Voice's five into Unbridled Wrath 5/5, the only
+   * live sink in Fury rows 0-4. **+9.93 +/- 7.66 TPS** at 120s over 1000
+   * paired fights (deaths -0.08 +/- 0.27), +12.2 at five targets.
+   */
+  booming_voice: 4,
   cruelty: 5,
-  unbridled_wrath: 2,
+  unbridled_wrath: 5,
   blood_craze: 3,
   enrage: 5,
   improved_execute: 2,
-  improved_berserker_rage: 2,
   death_wish: 1,
   flurry: 5,
   bloodthirst: 1,
@@ -665,7 +677,8 @@ const ROGUE_RUPTURE_TALENTS: TalentAllocation = {
 };
 
 /**
- * Hemo -- Assassination 17 / Combat 3 / Subtlety 31. Hemorrhage without Backstab.
+ * Hemo -- Assassination 20 / Subtlety 31 (the owner's 17 / 3 / 31 until round 78).
+ * Hemorrhage without Backstab.
  *
  * ----------------------------------------------------------------------------
  * THE OWNER'S URL, decoded to 51 points:
@@ -714,8 +727,23 @@ const ROGUE_HEMO_TALENTS: TalentAllocation = {
    * thing being managed.
    */
   cold_blood: 1,
-  // Combat, 3
-  improved_eviscerate: 3,
+  /*
+   * IMPROVED POISONS 3, WHERE THE OWNER'S URL SPENT THREE POINTS IN COMBAT ON
+   * IMPROVED EVISCERATE -- round 78's optimisation.
+   *
+   * Eviscerate is about 2% of this build's damage (0.5 casts a minute, behind
+   * a five-point gate with two four-second floors), so +20% to it is worth
+   * almost nothing; three more ranks of poison application reach every swing
+   * of both daggers. Paired over 1,200 fights at 120s it is +14.06 +/- 2.86,
+   * +13.72 +/- 5.40 at five targets for 60s and +9.32 +/- 3.85 at 240s.
+   * Improved Slice and Dice 3 + Improved Poisons 2 measured the same (+14.04)
+   * and Vile Poisons 3 only +5.95. The owner's spread is `HEMO_TREE` in
+   * `tools/optimise/rogueVariants.ts`, one line to restore.
+   *
+   * ASSASSINATION 20 / COMBAT 0 / SUBTLETY 31 NOW. Improved Poisons is tier 15
+   * and the 17 points below it clear the gate.
+   */
+  improved_poisons: 3,
   /*
    * ==========================================================================
    * SUBTLETY IS UNCHANGED, ON THE OWNER'S INSTRUCTION, AND THEIR SCREENSHOT
@@ -773,7 +801,22 @@ const ROGUE_HEMO_TALENTS: TalentAllocation = {
  */
 /*
  * ============================================================================
- * MOONKIN -- 41 Balance / 10 Restoration, was 38/0/13.
+ * MOONKIN -- 38 Balance / 13 Restoration (round 78), was 41/0/10.
+ *
+ * ROUND 78 PUT REFLECTION BACK, AND THE CLOCK IS WHY. The paragraph below
+ * priced Genesis over Reflection at **60s**, where this build ends with ~20% of
+ * its mana spare. At **120s** it ends with 0.8% spare, and Genesis 5 -> 2 plus
+ * Reflection 3 measures **+41.3 +/- 3.7** at 120s and **+100.3 +/- 4.2** at
+ * 180s, against **-6.2** at 60s. The owner's report measures 120s, and the
+ * owner's rule is that rotations are built for longer than a minute.
+ *
+ * AND ONCE INNERVATE (10%) AND SKYBORNE SHIPPED BESIDE IT, THE 120s ANSWER
+ * MOVED: Genesis 5 without Reflection is **+5.1 +/- 2.8** at 120s on the
+ * finished build, because Innervate now covers the mana -- and **-46.8** at
+ * 180s and **-97.2** at 300s. Reflection is kept on the owner's
+ * longer-than-a-minute rule; the 120s figure is the price, and a question.
+ *
+ * WHAT FOLLOWS IS THE ROUND THAT WENT THE OTHER WAY, KEPT AS ITS RECORD:
  *
  * REFLECTION'S THREE POINTS BUY GENESIS 2 -> 5, worth **+5.7**. Reflection is
  * "50% of your Mana regeneration continues while casting" and this build ends a
@@ -798,7 +841,7 @@ const ROGUE_HEMO_TALENTS: TalentAllocation = {
  */
 const DRUID_MOONKIN_TALENTS: TalentAllocation = {
   improved_wrath: 5,
-  genesis: 5,
+  genesis: 2,
   moonglow: 3,
   improved_moonfire: 2,
   nature_s_majesty: 2,
@@ -813,6 +856,7 @@ const DRUID_MOONKIN_TALENTS: TalentAllocation = {
   moonkin_form: 1,
   nature_s_focus: 5,
   naturalist: 5,
+  reflection: 3,
 };
 
 const DRUID_CAT_TALENTS: TalentAllocation = {
@@ -1113,23 +1157,31 @@ const SHAMAN_RESTORATION_TALENTS: TalentAllocation = {
 };
 
 /**
- * The Holy Priest's 17/34/0 (round 73), decoded from the owner's URL:
+ * The Holy Priest's 18/33/0 since round 78 -- the owner's 17/34/0 (round 73)
+ * with Holy Reach's two points moved, see below. The owner's URL:
  * https://talentsforever.com/priest/60/00500500033001-32505003230101531--USWZabfdghiCFJKNT-8?b=70425h&d=261025
  */
 const PRIEST_HOLY_TALENTS: TalentAllocation = {
-  // Discipline, 17
+  // Discipline, 18
   twin_disciplines: 5,
   mental_strength: 5,
   improved_power_word_shield: 3,
   meditation: 3,
   soul_warding: 1,
-  // Holy, 34
+  /*
+   * ROUND 78: Holy Reach's two points -- `positioning`, nothing here has a
+   * range -- buy Inner Focus here and Improved Renew 3/3 below: 18/33/0, Holy
+   * still the majority. The pair is +4.4 in the raid healer fight (Improved
+   * Renew alone) and Inner Focus then pays through its Multi Target entry,
+   * which casts it ahead of a Prayer of Healing: +83.8 with that entry.
+   */
+  inner_focus: 1,
+  // Holy, 33
   twilight_focus: 3,
-  improved_renew: 2,
+  improved_renew: 3,
   holy_specialization: 5,
   divine_fury: 5,
   inspiration: 3,
-  holy_reach: 2,
   improved_healing: 3,
   binding_heal: 1,
   spirit_of_redemption: 1,
@@ -1139,13 +1191,14 @@ const PRIEST_HOLY_TALENTS: TalentAllocation = {
 };
 
 /**
- * The Disc Priest's 31/20/0 (round 73), decoded from the owner's URL:
+ * The Disc Priest's 29/22/0 since round 78 -- the owner's 31/20/0 (round 73)
+ * with three dead points moved, see below. The owner's URL:
  * https://talentsforever.com/priest/60/005305001330011531-33505103--CFJKNID2OPQDRUTSWZX-8?b=70425h&d=261025
  */
 const PRIEST_DISCIPLINE_TALENTS: TalentAllocation = {
-  // Discipline, 31
+  // Discipline, 29
   twin_disciplines: 5,
-  silent_resolve: 3,
+  silent_resolve: 2,
   mental_strength: 5,
   inner_focus: 1,
   improved_power_word_shield: 3,
@@ -1154,14 +1207,22 @@ const PRIEST_DISCIPLINE_TALENTS: TalentAllocation = {
   penance: 1,
   renewed_hope: 5,
   divine_aegis: 3,
-  power_infusion: 1,
-  // Holy, 20
-  twilight_focus: 3,
+  /*
+   * ROUND 78: Power Infusion (its "and healing done" is not applied by the
+   * engine, so the point bought nothing on a healer), one Silent Resolve point
+   * (threat) and one Twilight Focus point (`castPushback`) buy Improved Healing
+   * 3/3 -- Penance 15% cheaper. 29/22/0, Discipline still the majority, with
+   * 20 points below Penance's tier and 26 below Divine Aegis's. +7.4 HPS in the
+   * tank healer fight at 120s and +11.3 in the raid healer fight.
+   */
+  // Holy, 22
+  twilight_focus: 2,
   improved_renew: 3,
   holy_specialization: 5,
   divine_fury: 5,
   holy_nova: 1,
   inspiration: 3,
+  improved_healing: 3,
 };
 
 /**
@@ -1456,11 +1517,19 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
   incineration: 3,
   improved_fireball: 5,
   ignite: 5,
-  burning_soul: 2,
+  /*
+   * ROUND 78: BURNING SOUL 2 AND ONE MASTER OF ELEMENTS RANK BUY IMPROVED
+   * FLAMESTRIKE 3/3 -- Flamestrike is this build's area spell now (see
+   * `profiles/multiTarget/mage.ts`). Burning Soul is cast pushback and threat,
+   * worth nothing here (BIT-IDENTICAL single target fights), and Master of
+   * Elements 3 -> 2 is +1.15 +/- 2.97 at 120s single target over 1500 paired
+   * fights. At 5 targets/60s the package is +193.7 +/- 7.2.
+   */
   pyroblast: 1,
+  improved_flamestrike: 3,
   improved_scorch: 3,
   heating_up: 1,
-  master_of_elements: 3,
+  master_of_elements: 2,
   critical_mass: 5,
   fire_power: 3,
   combustion: 1,
@@ -1497,7 +1566,9 @@ const PALADIN_RETRIBUTION_TALENTS: TalentAllocation = {
   divine_intellect: 5,
   improved_seals: 3,
   // Unyielding Faith's two points moved to Reverence, by the owner (round 37).
-  reverence: 2,
+  // Round 78: a third, out of Pursuit of Justice (movement speed, dead here).
+  // At 120 s this build is mana-bound, and 3/3 measured +12.51 +/- 4.86.
+  reverence: 3,
   benediction: 5,
   improved_judgement: 2,
   holy_conduit: 2,
@@ -1505,7 +1576,7 @@ const PALADIN_RETRIBUTION_TALENTS: TalentAllocation = {
   vindication: 3,
   sanctified_judgement: 3,
   seal_of_command: 1,
-  pursuit_of_justice: 2,
+  pursuit_of_justice: 1,
   sacred_arbiter: 1,
   two_handed_weapon_specialization: 3,
   vengeance: 3,
@@ -1733,9 +1804,16 @@ const HUNTER_BEAST_MASTERY_TALENTS: TalentAllocation = {
    * ability no list casts.
    * ==========================================================================
    */
-  hawk_eye: 3,
+  /*
+   * ROUND 78: HAWK EYE 3 -> EFFICIENCY 3, **+21.7 +/- 2.5** at 120s (400
+   * paired fights). Hawk Eye is range and was the filler that let Improved
+   * Stings sit below tier 15; Efficiency at tier 5 fills the same tier gate,
+   * and at two minutes this build is mana-bound (1.1% headroom), which it was
+   * not at one. Mortal Shots still has its fifteen below it.
+   */
   lethal_attacks: 5,
   improved_stings: 2,
+  efficiency: 3,
   careful_aim: 5,
   mortal_shots: 5,
 };
@@ -1791,16 +1869,27 @@ const HUNTER_BEAST_MASTERY_TALENTS: TalentAllocation = {
 const HUNTER_LONE_WOLF_RANGED_TALENTS: TalentAllocation = {
   // Beast Mastery, 5
   deadly_aspects: 5,
+  /*
+   * ROUND 78: Efficiency 4 -> Rapid Killing 2 + Rapid Recuperation 2, and
+   * Hawk Eye 3 -> Efficiency 3 -- **+56.3 +/- 3.4** at 120s, 400 paired
+   * fights. At two minutes this build is mana-bound (0.8% headroom, and its
+   * Serpent Sting uptime falls to 80%), and Rapid Recuperation is 100% of mana
+   * regeneration continuing while casting once Rapid Killing is taken. Rapid
+   * Killing's own clause (Rapid Fire 5 min -> 3) is worth nothing at 120s; it is
+   * the prerequisite. Alone, the swap is +7.1; Hawk Eye's three range points
+   * were the rest.
+   */
   // Marksmanship, 41
-  hawk_eye: 3,
   lethal_attacks: 5,
   improved_stings: 3,
   careful_aim: 5,
-  efficiency: 4,
+  efficiency: 3,
+  rapid_killing: 2,
   improved_arcane_shot: 5,
   lone_wolf: 1,
   trueshot_aura: 1,
   mortal_shots: 5,
+  rapid_recuperation: 2,
   barrage: 3,
   ranged_weapon_specialization: 5,
   sniper_shot: 1,
@@ -1844,7 +1933,15 @@ const HUNTER_HAWK_MELEE_TALENTS: TalentAllocation = {
   lone_wolf: 1,
   improved_tracking: 5,
   savage_strikes: 2,
-  survivalist: 5,
+  /*
+   * ROUND 78: Survivalist 5 -> 3 and CLEVER TRAPS 2, **+17.4 +/- 0.1** at
+   * 120s. Survivalist is health on a profile nothing attacks; three of its five
+   * stay because Clever Traps (tier 10) and Resourcefulness (tier 20) both need
+   * them below. The five Beast Mastery filler points stay: Summon Hawk's tier 15
+   * needs fifteen below it and every alternative is equally dead.
+   */
+  survivalist: 3,
+  clever_traps: 2,
   surefooted: 3,
   predator_s_edge: 5,
   resourcefulness: 1,
@@ -1894,7 +1991,17 @@ const HUNTER_LONE_WOLF_MELEE_TALENTS: TalentAllocation = {
   predator_s_edge: 5,
   resourcefulness: 2,
   expose_prey: 2,
-  survivalist_s_discipline: 2,
+  /*
+   * ROUND 78: Survivalist's Discipline 2 -> CLEVER TRAPS 2, **+17.9 +/- 0.2**
+   * at 120s, 400 paired fights: +30% to Immolation and Explosive Trap. The
+   * Discipline is `unmodelled` (a percentage cooldown cut the engine has no form
+   * for), so it was worth nothing today. Rapid Killing 2 -> Clever Traps
+   * measured identically to the decimal -- Rapid Fire's 5 min and 3 min are
+   * both longer than the fight -- and the Discipline was moved so the build
+   * keeps its 5/13/33 spread. If the engine gains fractional cooldowns, the
+   * Discipline (trap 30s -> 18s) is worth re-pricing against Rapid Killing.
+   */
+  clever_traps: 2,
   strider_kick: 1,
   lightning_reflexes: 5,
   lacerating_strikes: 1,
@@ -1969,8 +2076,17 @@ const WARLOCK_AFFLICTION_TALENTS: TalentAllocation = {
    * to have optimised, so the five points went where the evidence pointed
    * rather than where a measurement would put them.
    * ==========================================================================
+   *
+   * ROUND 78 MOVED THEM AGAIN, TO IMPROVED SHADOW BOLT, AND THE OPENER STILL
+   * WORKS. Bane only shortens a CAST Shadow Bolt and this build casts almost
+   * none: the filler sits under an ungated Wrack and fires zero times, and the
+   * rest are Nightfall instants. The one cast Shadow Bolt is the opener, and a
+   * 2.5 second lead on a 3.0 second cast still finishes at the pull, because
+   * `runPrecombat` clamps the rewind at zero. Improved Shadow Bolt turns the
+   * instants' crits into +20% Shadow damage taken: +12.58 +/- 1.18 at 120s,
+   * 400 paired fights, against +0.72 for Improved Life Tap 2 + Bane 3.
    */
-  bane: 5,
+  improved_shadow_bolt: 5,
   demonic_embrace: 5,
   demonic_aegis: 2,
   fel_vitality: 3,
@@ -2363,6 +2479,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         ...before(10, 'bloodrage_cast', 'battle_shout_cast'),
         ...before(3, 'battle_stance_cast'),
         ...before(0, 'charge', 'mighty_rage_potion'),
+        /*
+         * ROUND 78'S ONE ADDITION TO THE OWNER'S OPENER: Blood Fury, free and
+         * off the global cooldown, claimed at the pull rather than at the
+         * first decision. **+0.60 +/- 0.04** at 120s, one target -- small and
+         * real, because the in-fight entry already fires at once.
+         */
+        ...before(0, 'blood_fury'),
       ],
       encounter: {
         ...createDefaultProfile().encounter,
@@ -2416,6 +2539,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       precombat: [
         ...before(10, 'bloodrage_cast', 'battle_shout_cast'),
         ...before(3, 'berserker_stance_cast'),
+        // Round 78's addition, as on 2H Arms: **+0.42 +/- 0.03** at 120s.
+        ...before(0, 'blood_fury'),
       ],
       encounter: {
         ...createDefaultProfile().encounter,
@@ -2635,13 +2760,26 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'rogue_combat',
     label: 'Combat',
-    detail: 'Orc, dual-wield, standing target. 18 Assassination / 33 Combat',
+    detail: 'Gnome, dual-wield, standing target. 18 Assassination / 33 Combat',
     characterClass: 'rogue',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Combat',
-        race: 'orc',
+        /*
+         * GNOME, WHERE IT WAS ORC -- round 78's race swap, gear, talents,
+         * enchants and consumables held fixed. Eureka! (+10% non-periodic damage
+         * and -10% cost for 8s, two-minute cooldown) beats Blood Fury, and
+         * Expansive Mind's +5% energy rides along: +6.16 +/- 3.49 over 1,200
+         * fights at 120s, +13.55 +/- 5.59 at 60s. The racial cooldown entries
+         * follow the race on their own (`racialCooldowns.ts`).
+         *
+         * THE MULTI TARGET FIGURE IS NOT THE REASON AND IS INFLATED: +45.8 at
+         * five targets, but a Blade Flurry copy runs back through the
+         * attacker's `nonPeriodicDamageMultiplier`, so Eureka!'s 10% is paid
+         * twice on every copied hit. Reported as an engine question.
+         */
+        race: 'gnome',
         characterClass: 'rogue',
         level: 60,
         combatStyle: 'dual_wield',
@@ -2836,13 +2974,19 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'druid_moonkin',
     label: 'Moonkin',
-    detail: 'Tauren, Moonkin Form, standing target. 38 Balance / 13 Restoration',
+    detail: 'High Order Skyborne, Moonkin Form, standing target. 38 Balance / 13 Restoration',
     characterClass: 'druid',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Moonkin',
-        race: 'tauren',
+        /*
+         * HIGH ORDER SKYBORNE SINCE ROUND 78, was Tauren: Wind Blessed's 3%
+         * haste beside Reflection is **+8.4** over Reflection alone at 120s
+         * (+49.6 against +41.3, both paired against the Tauren build). Tauren's
+         * 2% crit damage and 5% health are worth less to a caster nothing hits.
+         */
+        race: 'high_order_skyborne',
         characterClass: 'druid',
         level: 60,
         combatStyle: 'moonkin',
@@ -3058,13 +3202,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
      * figure it gave was not even a legal reading of this tree. Derive it from
      * `encode_talent_build.mjs --all` rather than editing this sentence.
      */
-    detail: 'Troll, caster, standing target. 32 Elemental / 10 Enhancement / 9 Restoration',
+    detail: 'Orc, caster, standing target. 32 Elemental / 11 Enhancement / 8 Restoration',
     characterClass: 'shaman',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Ele Shaman',
-        race: 'troll',
+        race: 'orc',
         characterClass: 'shaman',
         level: 60,
         combatStyle: 'caster',
@@ -3072,7 +3216,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: { ...SHAMAN_ELEMENTAL_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: casterConsumables('school_nature'),
+      /*
+       * THE MAJOR MANA POTION FOR SPELLBLASTING (round 78): **+35.69 +/- 3.72** at
+       * 1 target / 120 s, where this build ends the fight with 1% of its mana
+       * spare, and **-9.37 +/- 4.04** at 5 targets / 60 s. The Single Target
+       * answer is the larger and wins. At 60 s it was -13.33 (round 27).
+       */
+      consumables: { ...casterConsumables('school_nature'), potion: 'major_mana_potion' },
       /*
        * THE ONE OPENER WHOSE CAST IS NOT LAST. Lightning Bolt occupies the two
        * seconds before the pull and LANDS at it; Flame Shock is then taken at
@@ -3135,13 +3285,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
      * prints the split and a URL the owner can audit, which is Step 0 of
      * `docs/profile-optimisation.md` and is the only reading that cannot drift.
      */
-    detail: 'Tauren, two-hander, standing target. 19 Elemental / 32 Enhancement',
+    detail: 'Orc, two-hander, standing target. 19 Elemental / 32 Enhancement',
     characterClass: 'shaman',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Enh Shaman',
-        race: 'tauren',
+        race: 'orc',
         characterClass: 'shaman',
         level: 60,
         combatStyle: 'two_hander',
@@ -3190,7 +3340,16 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
           blastedLands: 'blasted_strength',
         }),
         flask: 'flask_spell_power',
-        food: 'food_strength',
+        /*
+         * ROUND 78, AT 120 s WHERE THIS BUILD ENDS WITH 1% OF ITS MANA SPARE:
+         * the Major Mana Potion for Spellblasting **+23.27 +/- 4.40** (and
+         * **-11.87 +/- 3.09** at 5 targets / 60 s -- the Single Target answer
+         * is the larger); +25 Intellect for +25 Strength **+8.01 / +4.34**;
+         * +28 Spell Power food for +20 Strength **+1.72 / +8.30**.
+         */
+        potion: 'major_mana_potion',
+        blasted_lands: 'blasted_intellect',
+        food: 'food_spell_power',
         // +1% spell crit and +36 spell power on the main hand, by the owner
         // (round 37) -- the caster half of the row, where it was melee crit.
         weapon_effect_main_hand: 'weapon_spell_crit_main_hand',
@@ -3240,13 +3399,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'mage_frostfire',
     label: 'Frostfire',
-    detail: 'Gnome, caster, standing target. 29 Fire / 22 Frost',
+    detail: 'Human, caster, standing target. 29 Fire / 22 Frost',
     characterClass: 'mage',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Frostfire Mage',
-        race: 'gnome',
+        // Human (round 78): +7.19 +/- 5.64 at 120s single target (1000 paired fights) and +14.72 at 5 targets.
+        race: 'human',
         characterClass: 'mage',
         level: 60,
         combatStyle: 'caster',
@@ -3254,7 +3414,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: { ...MAGE_FROSTFIRE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: casterConsumables('school_fire'),
+      // The Major Mana Potion in place of Spellblasting (round 78): -12.13 +/- 5.14 at a 120s single target fight, +112.6 at 5 targets/60s, where this build runs dry.
+      consumables: { ...casterConsumables('school_fire'), potion: 'major_mana_potion' },
       /*
        * ==================================================================
        * THE OWNER'S OPENER, AND NOTHING ELSE -- A PRE-PULL SCORCH REVERTED
@@ -3308,13 +3469,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'mage_arcane',
     label: 'Arcane',
-    detail: 'Gnome, caster, standing target. 35 Arcane / 11 Fire / 5 Frost',
+    detail: 'High Order Skyborne, caster, standing target. 48 Arcane / 3 Fire',
     characterClass: 'mage',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Arcane Mage',
-        race: 'gnome',
+        // High Order Skyborne (round 78): +2.85 +/- 5.84 at 120s single target and +48.92 +/- 4.54 at 5 targets.
+        race: 'high_order_skyborne',
         characterClass: 'mage',
         level: 60,
         combatStyle: 'caster',
@@ -3322,7 +3484,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: { ...MAGE_ARCANE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: casterConsumables('school_arcane'),
+      // The Major Mana Potion in place of Spellblasting (round 78): +11.30 +/- 3.40 at a 120s single target fight (1000 paired), -6.2 at 5 targets/60s.
+      consumables: { ...casterConsumables('school_arcane'), potion: 'major_mana_potion' },
       /*
        * ========================================================================
        * THE OPENER IS THE OWNER'S OWN TWO LINES PLUS ONE FREE WINDOW, AND THAT
@@ -3394,13 +3557,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'mage_fire',
     label: 'Fire',
-    detail: 'Gnome, caster, standing target. 15 Arcane / 31 Fire / 5 Frost',
+    detail: 'High Order Skyborne, caster, standing target. 14 Arcane / 34 Fire / 3 Frost',
     characterClass: 'mage',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Fire Mage',
-        race: 'gnome',
+        // High Order Skyborne (round 78): +19.61 +/- 7.40 at 120s single target and +39.91 +/- 6.52 at 5 targets.
+        race: 'high_order_skyborne',
         characterClass: 'mage',
         level: 60,
         combatStyle: 'caster',
@@ -3535,6 +3699,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         }),
         flask: 'flask_spell_power',
         food: 'food_spell_power',
+        /*
+         * THE MAJOR MANA POTION, NOT SPELLBLASTING (round 78). At 120 s this
+         * build ends the fight with 0.8% of its mana spare -- Consecration and
+         * the twist's two seals are its three biggest bills -- so 2,250 mana
+         * buys more than forty spell power for fifteen seconds: +42.45 +/-
+         * 6.18 at 120 s, and +0.96 +/- 3.81 (noise) at 5 targets / 60 s.
+         */
+        potion: 'major_mana_potion',
       },
       /*
        * TWO SEALS IN SEQUENCE, WHICH IS THE SEAL TWIST OPENED BEFORE THE PULL.
@@ -3728,6 +3900,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         }),
         food: 'food_spell_power',
         other: 'healthstone',
+        /*
+         * ROUND 78: THIS TANK IS MANA-BOUND AT 120 s, so the mana potion
+         * (+62.31 +/- 5.93 TPS, deaths -0.16) and +25 Intellect (+22.63 +/-
+         * 4.96, deaths -0.11) both buy threat without costing survival.
+         */
+        potion: 'major_mana_potion',
+        blasted_lands: 'blasted_intellect',
       },
       precombat: [
         ...before(4.5, 'righteous_fury'),
@@ -3741,13 +3920,21 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'bm_hunter',
     label: 'BM Hunter',
-    detail: 'Orc, bow and a Cat, standing target. 31 Beast Mastery',
+    detail: 'High Order Skyborne, bow and a Cat, standing target. 31 Beast Mastery',
     characterClass: 'hunter',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'BM Hunter',
-        race: 'orc',
+        /*
+         * HIGH ORDER SKYBORNE SINCE ROUND 78, was Orc. A race swap on identical
+         * gear: **+11.4** at 120s on one target (C4 against C1) and **+24.6**
+         * at five targets. What pays is Wind Blessed's 3% haste and the race's
+         * base stats (8 agility and 3 intellect over the Orc's), against Blood
+         * Fury's 10% attack power for 15 seconds a fight and Savage's 1% crit.
+         * Read Ley Line is `unmodelled` and contributes nothing to the figure.
+         */
+        race: 'high_order_skyborne',
         characterClass: 'hunter',
         level: 60,
         combatStyle: 'ranged',
@@ -3770,13 +3957,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'lw_ranged',
     label: 'LW Ranged',
-    detail: 'Orc, bow, no pet, standing target. 39 Marksmanship',
+    detail: 'High Order Skyborne, bow, no pet, standing target. 41 Marksmanship',
     characterClass: 'hunter',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'LW Ranged',
-        race: 'orc',
+        // HIGH ORDER SKYBORNE SINCE ROUND 78, was Orc: **+10.3** at 120s on one
+        // target (C4 against C2) and **+26.7** at five. See BM Hunter.
+        race: 'high_order_skyborne',
         characterClass: 'hunter',
         level: 60,
         combatStyle: 'ranged',
@@ -3786,7 +3975,11 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       // Grace of Air rather than Windfury: a bow has no main-hand use.
       // See `RANGED_HUNTER_RAID_BUFFS`.
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: RANGED_HUNTER_CONSUMABLES,
+      // ROUND 78: Blasted Lands +25 INTELLECT rather than agility, **+9.0 +/-
+      // 2.9** at 120s. Mana-bound at two minutes, this build weighs intellect at
+      // 1.10 a point and agility at 0.74. BM Hunter measured +1.6, noise, and
+      // keeps agility.
+      consumables: { ...RANGED_HUNTER_CONSUMABLES, blasted_lands: 'blasted_intellect' },
       precombat: [
         ...before(7, 'hunters_mark'),
         ...before(5.5, 'aspect_of_the_hawk'),
@@ -3916,13 +4109,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'warlock_smds',
     label: 'SM/DS',
-    detail: 'Undead, caster, Imp sacrificed, standing target. 40 Affliction',
+    detail: 'Human, caster, Imp sacrificed, standing target. 35 Affliction',
     characterClass: 'warlock',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'SM/DS',
-        race: 'undead',
+        // Round 78: Human's +2% crit over Touch of the Grave, by race swap on
+        // identical gear -- +5.9 at 120s and +14.9 at 5 targets.
+        race: 'human',
         characterClass: 'warlock',
         level: 60,
         combatStyle: 'caster',
@@ -3951,8 +4146,17 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * the declaration says 3.0 and BANE takes half a second off it. See
        * `PrecombatAction`.
        */
+      /*
+       * ROUND 78 ADDS FOUR ACTIONS AT 0s, AND THE SHADOW BOLT IS STILL THE PULL.
+       * Amplify Curse is off the global cooldown; Bane of Agony, Corruption
+       * (instant with Improved Corruption 5/5) and Siphon Life are pure DoTs,
+       * whose first tick is after the pull -- Gate B's table makes each legal at
+       * a 0s lead, and each saves the global cooldown the list would spend on
+       * it: +24.9 at 120s and +94.5 at 5 targets over the same build without.
+       */
       precombat: [
         ...before(2.5, 'shadow_bolt'),
+        ...before(0, 'amplify_curse', 'bane_of_agony', 'corruption', 'siphon_life'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -3960,13 +4164,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'warlock_firelock',
     label: 'Firelock',
-    detail: 'Undead, caster, Succubus sacrificed, standing target. 33 Destruction',
+    detail: 'Human, caster, Succubus sacrificed, standing target. 33 Destruction',
     characterClass: 'warlock',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Firelock',
-        race: 'undead',
+        // Round 78: Human, by race swap on identical gear -- +6.9 at 120s
+        // beside the Major Mana Potion, +9.7 at 5 targets.
+        race: 'human',
         characterClass: 'warlock',
         level: 60,
         combatStyle: 'caster',
@@ -3987,7 +4193,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        */
       warlockStone: 'firestone',
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: casterConsumables('school_fire'),
+      /*
+       * THE MAJOR MANA POTION OVER SPELLBLASTING, round 78: at 120s the build
+       * Life Taps eleven times, and 2,250 mana is worth more than forty spell
+       * power for fifteen seconds -- +11.25 +/- 3.41 at 120s, -5.5 at 5 targets.
+       * The Single Target answer wins, per the round's brief. The list's
+       * Spellblasting entry is dropped by the selection; the mana potion's own
+       * entry, drunk under 30% mana, takes its place.
+       */
+      consumables: { ...casterConsumables('school_fire'), potion: 'major_mana_potion' },
       /*
        * BANE OF AGONY AT 0s IS THIS ROUND'S ADDITION (round 42): a pure DoT
        * deals nothing before the pull, so it is free of Gate B and saves the
@@ -4023,8 +4237,12 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_fire'),
       // Shadow Bolt is 3.0s and Bane takes it to 2.5: started at t-2.5, it is the pull.
+      // Round 78 adds Corruption at 0s -- instant with Improved Corruption, a
+      // pure DoT and so legal at that lead -- for the global cooldown it saves:
+      // +8.01 +/- 6.46 at 120s.
       precombat: [
         ...before(2.5, 'shadow_bolt'),
+        ...before(0, 'corruption'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -4033,13 +4251,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
     // The id keeps its first name, so a saved profile still finds it.
     id: 'warlock_demonology',
     label: 'Fire Demo',
-    detail: 'Undead, caster, Imp summoned, Succubus sacrificed, standing target. 31 Demonology',
+    detail: 'Human, caster, Imp summoned, Succubus sacrificed, standing target. 31 Demonology',
     characterClass: 'warlock',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Fire Demo',
-        race: 'undead',
+        // Round 78: Human, by race swap on identical gear -- +8.7 at 120s
+        // beside the Major Mana Potion, +9.8 at 5 targets.
+        race: 'human',
         characterClass: 'warlock',
         level: 60,
         combatStyle: 'caster',
@@ -4050,10 +4270,11 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: { ...WARLOCK_DEMONOLOGY_TALENTS },
       // The Firelock's stone, consumables and raid: the owner's "everything
-      // else ... the same as the Firelock profile".
+      // else ... the same as the Firelock profile" -- and round 78 gives both
+      // the Major Mana Potion: +14.41 +/- 3.29 here at 120s, -4.5 at 5 targets.
       warlockStone: 'firestone',
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: casterConsumables('school_fire'),
+      consumables: { ...casterConsumables('school_fire'), potion: 'major_mana_potion' },
       /*
        * SEARING PAIN IS THE PULL AND BANE OF AGONY GOES OUT WITH IT. The Searing
        * Pain finishes at t=0 and brands the target, so the Imp's first Firebolt
@@ -4072,13 +4293,18 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'shadow_priest',
     label: 'Shadow',
-    detail: 'Troll, caster, Shadowform, standing target. 35 Shadow',
+    detail: 'Human, caster, Shadowform, standing target. 35 Shadow',
     characterClass: 'priest',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Shadow Priest',
-        race: 'troll',
+        /*
+         * HUMAN SINCE ROUND 78, from Troll: Ruthless's +2% crit beats
+         * Berserking. +14.43 +/- 3.15 DPS at one target and 120s, +7.8 at five
+         * targets, +33 at three, -3.8 (noise) at eight over thirty seconds.
+         */
+        race: 'human',
         characterClass: 'priest',
         level: 60,
         combatStyle: 'caster',
@@ -4207,7 +4433,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         spell_power: 'spell_power_35',
         food: 'food_spell_power',
         school_spell_power: 'school_frost',
-        potion: 'major_spellblasting_potion',
+        potion: 'major_mana_potion',
         other: 'demonic_rune',
       },
       precombat: [
@@ -4230,13 +4456,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
      */
     id: 'shaman_resto',
     label: 'Piss Beam',
-    detail: 'Troll, caster mace and shield, a healer. 12 Enhancement / 39 Restoration',
+    detail: 'Windshaper Skyborne, caster mace and shield, a healer. 12 Enhancement / 39 Restoration',
     characterClass: 'shaman',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Piss Beam',
-        race: 'troll',
+        race: 'windshaper_skyborne',
         characterClass: 'shaman',
         level: 60,
         combatStyle: 'caster',
@@ -4302,13 +4528,18 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
      */
     id: 'priest_holy',
     label: 'Holy Priest',
-    detail: 'Troll, caster staff, a healer. 17 Discipline / 34 Holy',
+    detail: 'Gnome, caster staff, a healer. 18 Discipline / 33 Holy',
     characterClass: 'priest',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Holy Priest',
-        race: 'troll',
+        /*
+         * GNOME SINCE ROUND 78, from Troll (which was ours, not the owner's):
+         * Expansive Mind's +5% maximum mana is the largest single thing a
+         * mana-bound healer can buy. See docs/handoff/priest.md, round 78.
+         */
+        race: 'gnome',
         characterClass: 'priest',
         level: 60,
         combatStyle: 'caster',
@@ -4337,13 +4568,18 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
      */
     id: 'priest_disc',
     label: 'Disc Priest',
-    detail: 'Troll, caster staff, a healer. 31 Discipline / 20 Holy',
+    detail: 'Gnome, caster staff, a healer. 29 Discipline / 22 Holy',
     characterClass: 'priest',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Disc Priest',
-        race: 'troll',
+        /*
+         * GNOME SINCE ROUND 78, from Troll (which was ours, not the owner's):
+         * Expansive Mind's +5% maximum mana is the largest single thing a
+         * mana-bound healer can buy. See docs/handoff/priest.md, round 78.
+         */
+        race: 'gnome',
         characterClass: 'priest',
         level: 60,
         combatStyle: 'caster',
@@ -4375,7 +4611,8 @@ function withStockRotations(presets: readonly ProfilePreset[]): readonly Profile
        */
       const { multiTarget: _inherited, ...built } = withoutUnusedOffHandEffect(preset.build());
       void _inherited;
-      return syncDefaultRotation(built);
+      // AND ITS OWN MULTI TARGET LIST, where it has been given one (round 78).
+      return withMultiTargetDefault(preset.id, syncDefaultRotation(built));
     },
   }));
 }

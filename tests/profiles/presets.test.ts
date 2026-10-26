@@ -595,7 +595,7 @@ describe('Prot Warr', () => {
     expect(isTankBuild(p.character.combatStyle, p.character.stance)).toBe(true);
   });
 
-  it('spends 17 in Arms and 34 in Protection', () => {
+  it('spends 17 in Arms, 2 in Fury and 32 in Protection', () => {
     const talents = profile().talents;
     const inTree = (id: string) =>
       Object.entries(talents)
@@ -604,8 +604,9 @@ describe('Prot Warr', () => {
 
     // SEVENTEEN, not eighteen. The list as given came to 52 points.
     expect(inTree('arms')).toBe(17);
-    expect(inTree('protection')).toBe(34);
-    expect(inTree('fury')).toBe(0);
+    // Round 78: Improved Shield Wall's two points moved to Cruelty.
+    expect(inTree('protection')).toBe(32);
+    expect(inTree('fury')).toBe(2);
   });
 
   it('gives up Anger Management, which is the point the owner chose', () => {
@@ -642,7 +643,14 @@ describe('Prot Warr', () => {
     expect(t.improved_bloodrage).toBeUndefined();
     expect(t.improved_thunder_clap).toBe(2);
     expect(t.vanguard).toBe(1);
-    expect(t.improved_shield_wall).toBe(2);
+    /*
+     * ROUND 78 TOOK IMPROVED SHIELD WALL'S TWO POINTS, the one departure from
+     * the owner's ranks. Shield Wall fires about 0.2 times a fight, so its
+     * cooldown never returns inside any fight the report runs; Cruelty 2 is
+     * +19.21 +/- 2.75 TPS at 120s with deaths +0.04 +/- 0.13.
+     */
+    expect(t.improved_shield_wall).toBeUndefined();
+    expect(t.cruelty).toBe(2);
     expect(t.concussion_blow).toBe(1);
     expect(t.bastion).toBe(5);
     expect(t.focused_rage).toBe(3);

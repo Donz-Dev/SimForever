@@ -179,8 +179,6 @@ export const PALADIN_RETRIBUTION: AplList = {
   ...RACIAL_COOLDOWNS,
   ...CONSUMABLE_COOLDOWNS,
   ...CONSUMABLE_HEALS,
-  { abilityId: 'judgement' },
-  { abilityId: 'holy_strike' },
   /*
    * HAMMER OF WRATH, AND ONLY THE INSTANT ONE. Instrument of Law at 2/2 takes
    * the whole second off its cast, and the ruleset owner's ruling is that what
@@ -194,7 +192,14 @@ export const PALADIN_RETRIBUTION: AplList = {
    * gated**: that build takes no Instrument of Law, casts the one-second version
    * about twice a fight, and the owner's instruction named this profile.
    */
+  /*
+   * ABOVE JUDGEMENT SINCE ROUND 78: it is legal only in the last fifth of the
+   * fight, on a six second cooldown, and at 120 s it is the best damage per
+   * mana this build has -- +3.73 +/- 2.07 paired over 400 fights at 120 s.
+   */
   { abilityId: 'hammer_of_wrath', condition: castsInstantly('hammer_of_wrath') },
+  { abilityId: 'judgement' },
+  { abilityId: 'holy_strike' },
   { abilityId: 'consecration' },
   /*
    * THE TWIST, AND IT IS THE LAST TWO ENTRIES RATHER THAN THE FIRST. Each seal

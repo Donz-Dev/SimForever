@@ -107,6 +107,164 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 78: Optimize, Update, and Report all Profiles
+
+The owner's new procedure, run for the first time. Every preset (28 DPS, 4 tanks,
+5 healers) was optimised for the encounters the new full report measures. The
+optimised settings are now the presets' defaults, and the report is republished
+as **Forever Profile Report** (the artifact that was the Gear Tier Sweep).
+`.claude/skills/optimize-update-report/SKILL.md` is the procedure.
+
+| role | Single Target section, optimised for | Multi Target section, optimised for |
+| --- | --- | --- |
+| DPS | DPS, 1 target, 120 s | DPS, 5 targets, 60 s (reused at 3/60 s and 8/30 s) |
+| tank | TPS, 1 target, 120 s (deaths a check) | TPS, 5 targets, 60 s |
+| healer | HPS, tank healer fight, 120 s | HPS, raid healer fight, 60 s |
+
+**THE TOOLING CAME FIRST AND LANDED BEFORE ANY CLASS WORK**, on the rule that a
+shared piece is built once:
+
+| | what |
+| --- | --- |
+| `probe_build.ts` | `TARGETS=`, `FIGHT=tank\|raid`, `METRIC=dps\|tps\|hps` (defaulting by role) and `FILE=` to load a variant file by path. A `FILE=` group wins a name clash with the built-in registry; three agents hit the clash before that fix |
+| paired samples | `StreamingIterationTotals` and `sampleIterations` carry threat and healing per iteration; `healerSamples` runs a healer fight. `sampledFigures.test.ts` checks both reproduce the batch's own TPS and HPS on the same seeds |
+| Multi Target defaults | `src/profiles/multiTarget/<class>.ts`, one file per class, attached by `withStockRotations`. Stored **custom**, because a `default` Multi Target list is re-derived from the Single Target stock list on a build change. Narrowed to the character's race and consumables, as a stock list is. Healer lists can carry `smartHealing` |
+| `buildVariants.ts` | `inMulti(...)`, `multiList(...)`, and `WARRIOR_TREE`, `ROGUE_TREE`, `WARLOCK_TREE` |
+| roles | `src/profiles/presetRoles.ts`; the profile rail re-exports it |
+| report | `tools/full_report.ts` (300 fights a cell, `BEFORE=` for the change), `tools/full_report_page.ts`, columns in `tools/fullReportColumns.ts` |
+
+**THEN NINE CLASS AGENTS, IN PARALLEL, EACH IN ITS OWN WORKTREE**, each held to
+the procedure and to a scope that kept the nine branches mergeable: its own
+variant file (`tools/optimise/<class>Variants.ts`), its class's stock lists and
+Multi Target file, its own presets' blocks and enchant rows, and the tests that
+pinned what it changed. No engine or game rule changed, and no preset's
+`durationSeconds`. Every branch merged with conflicts only in two shared tests
+(`aplSections`, `enchants`) and in `presetEnchants.ts`, all resolved by each
+branch's diff. Typecheck clean and **4,396 tests pass** on the merged result.
+
+**THE BIGGEST SINGLE FINDING IS THAT NO PRESET HAD A MULTI TARGET LIST**, so
+every 3- and 5-target fight ran the single-target list, and most profiles read
+the same at 3 and 5 targets because nothing hit a third target. Every profile
+with an area ability has one now; four Rogues and the Cat have no area ability
+at all, so their figures are unchanged there.
+
+**AND THE SECOND IS THE CLOCK.** At 120 s most casters, both ranged Hunters, the
+Retribution and Protection Paladins and both damage Shamans run out of mana,
+where at 60 s they had it spare -- so the Major Mana Potion, intellect enchants
+and mana talents won on profiles where every earlier round, all taken at 60 s,
+had said otherwise.
+
+Before and after, 300 fights a cell (`full_report.ts`, seed 20261025):
+
+| profile | 1 target, 2 min | 3 targets, 1 min | 5 targets, 1 min | 8 targets, 30 s |
+| --- | --- | --- | --- | --- |
+| 2H Arms (DPS) | 850.2 → **850.7** | 873.1 → **1138.5** | 873.1 → **1207.9** | 901.7 → **1269.7** |
+| DW Fury (DPS) | 991.9 → **992.3** | 1221.5 → **1390.4** | 1306.4 → **1491.7** | 1486.1 → **1658.8** |
+| Prot Warr (TPS) | 1149.8 → **1169.0** | 1410.5 → **1621.5** | 1660.9 → **1898.6** | 2040.8 → **2284.2** |
+| Fury Prot (TPS) | 1224.4 → **1234.1** | 1665.0 → **1840.1** | 1995.1 → **2181.9** | 2645.8 → **2839.8** |
+| Venom (DPS) | 720.0 → **720.0** | 755.2 → **755.2** | 755.2 → **755.2** | 807.9 → **807.9** |
+| Combat Mut (DPS) | 781.3 → **781.3** | 1058.3 → **1058.3** | 1058.3 → **1058.3** | 1371.2 → **1371.2** |
+| Combat (DPS) | 795.3 → **799.0** | 1153.4 → **1208.2** | 1153.4 → **1208.2** | 1606.1 → **1713.6** |
+| Rupture (DPS) | 705.0 → **711.3** | 762.8 → **762.9** | 762.8 → **762.9** | 860.2 → **867.4** |
+| Hemo Dagger (DPS) | 717.7 → **742.4** | 773.8 → **799.0** | 773.8 → **799.0** | 865.6 → **886.7** |
+| Pure Hemo (DPS) | 717.3 → **716.9** | 791.9 → **791.9** | 791.9 → **791.9** | 817.3 → **821.2** |
+| Moonkin (DPS) | 806.9 → **854.3** | 853.9 → **863.5** | 853.9 → **1287.1** | 875.8 → **2009.6** |
+| Cat (DPS) | 919.8 → **919.8** | 972.7 → **972.7** | 972.7 → **972.7** | 1084.1 → **1084.1** |
+| Bear (TPS) | 1417.6 → **1440.8** | 1848.5 → **2090.8** | 2104.0 → **2345.8** | 2644.2 → **2892.9** |
+| Ele Shaman (DPS) | 690.8 → **737.2** | 774.4 → **1272.8** | 774.4 → **1607.7** | 865.5 → **2210.2** |
+| Enh Shaman (DPS) | 801.9 → **847.4** | 1046.2 → **1301.3** | 1204.7 → **1614.0** | 1544.5 → **2126.4** |
+| Frostfire Mage (DPS) | 971.1 → **991.8** | 1059.1 → **1254.5** | 1059.1 → **1767.6** | 1040.5 → **2937.7** |
+| Arcane Mage (DPS) | 938.8 → **951.5** | 1066.0 → **1277.7** | 1066.0 → **2168.9** | 1196.1 → **3902.2** |
+| Fire Mage (DPS) | 1024.2 → **1046.6** | 1131.0 → **1391.7** | 1131.0 → **2204.4** | 1213.8 → **3557.2** |
+| Seal Twist Ret (DPS) | 900.7 → **948.7** | 1078.5 → **1080.3** | 1162.6 → **1177.2** | 1262.4 → **1274.1** |
+| Shockadin (DPS) | 808.1 → **808.1** | 963.6 → **969.9** | 1077.2 → **1086.7** | 1194.6 → **1222.5** |
+| Shockadin 2H (DPS) | 913.7 → **913.7** | 1074.3 → **1080.8** | 1189.7 → **1198.8** | 1311.0 → **1336.8** |
+| Prot Pally (TPS) | 897.8 → **975.3** | 1536.7 → **1560.0** | 1920.8 → **1945.7** | 2384.7 → **2487.7** |
+| BM Hunter (DPS) | 958.6 → **1024.4** | 1021.0 → **1429.3** | 1021.0 → **1682.7** | 1088.8 → **2625.9** |
+| LW Ranged (DPS) | 933.3 → **1045.6** | 1085.3 → **1438.2** | 1085.3 → **1872.5** | 1177.2 → **3045.3** |
+| LW Melee (DPS) | 868.4 → **889.9** | 907.7 → **1061.2** | 907.7 → **1190.5** | 985.9 → **1488.0** |
+| Hawk Melee (DPS) | 927.4 → **956.1** | 960.4 → **1102.6** | 960.4 → **1237.2** | 1025.9 → **1543.9** |
+| SM/DS (DPS) | 765.0 → **814.9** | 790.0 → **1347.0** | 790.0 → **1834.3** | 834.5 → **2472.2** |
+| Firelock (DPS) | 868.2 → **882.8** | 1063.5 → **1226.4** | 1063.5 → **1825.6** | 1115.6 → **2883.5** |
+| Sbolt Spam (DPS) | 837.5 → **843.7** | 923.8 → **1150.0** | 923.8 → **1581.0** | 1004.6 → **2282.5** |
+| Fire Demo (DPS) | 1008.2 → **1026.1** | 1101.9 → **1353.1** | 1101.9 → **1898.8** | 1150.1 → **2948.7** |
+| Shadow Priest (DPS) | 930.6 → **949.4** | 935.9 → **1107.1** | 935.9 → **1285.0** | 958.3 → **1480.2** |
+| Frost Mage (DPS) | 924.0 → **949.8** | 983.7 → **1117.8** | 983.7 → **1866.2** | 996.5 → **3044.4** |
+
+| healer | tank healer, 2 min | raid healer, 1 min |
+| --- | --- | --- |
+| Holy Pal | 295.4 → **288.0** | 783.2 → **836.0** |
+| Piss Beam | 286.6 → **330.0** | 1175.9 → **1228.4** |
+| Resto Drood | 348.6 → **366.9** | 1921.7 → **1995.0** |
+| Holy Priest | 338.0 → **354.9** | 1354.1 → **1555.0** |
+| Disc Priest | 348.1 → **371.9** | 1111.0 → **1195.9** |
+
+The full per-dimension record -- one row per dimension per profile, with what
+lost -- is in each class's `docs/handoff/<class>.md` round 78 section.
+
+| class | shipped |
+| --- | --- |
+| Warrior | Area lists (Whirlwind, Cleave, Sweeping Strikes; Cleave for the tanks). Blood Fury in the damage openers. Prot Warr Improved Shield Wall 2 to Cruelty 2 (17/2/32); Fury Prot Unbridled Wrath 5/5. Tank boots +7 Agility |
+| Rogue | Combat: Gnome, area list with Slice and Dice at 1 point. Hemo Dagger: Improved Poisons 3 over Improved Eviscerate (20/0/31). Off-hand +25 Agility on three Subtlety builds; head/legs haste on Rupture and Hemo Dagger |
+| Druid | Moonkin 38/0/13 (Reflection back), High Order Skyborne, Innervate at 10%, Hurricane at 4+ targets. Bear +2% Threat gloves, Berserk Primal Bite and Swipe. Resto Swiftmend under 70%, +8 Intellect |
+| Shaman | Ele and Enh Orc with the Major Mana Potion, area lists on Magma Totem, Fire Nova, Flame Shock multi-DoT and Chain Lightning; Enh spell power enchants. Piss Beam Healing Wave, Mana Tide at 90%, a raid list, Windshaper Skyborne |
+| Mage | Flamestrike area lists with a Flamestrike pull in the area opener. Fire Improved Flamestrike 3/3 and Skyborne; Frostfire Scorch window 7 s and Human; Arcane, Frostfire and Frost the Major Mana Potion |
+| Paladin | Ret Reverence 3/3 (16/0/35), Major Mana Potion, Hammer of Wrath above Judgement. Prot Pally mana potion, Blasted Lands Intellect, +2% Threat gloves. Consecration-led area lists; Holy Pal +8 Intellect and Divine Favor in the raid |
+| Hunter | BM and LW Ranged Efficiency, Melee Weave above Serpent Sting, High Order Skyborne; LW Ranged Rapid Recuperation and intellect. Multi-Shot, Explosive Trap, multi-DoT Serpent Sting and Volley area lists. Melee builds Clever Traps, off-hand +25 Agility, Explosive Trap |
+| Warlock | Hellfire area lists for all four. SM/DS Improved Shadow Bolt, Life Tap at 5%, four pre-pull DoTs. Firelock and Fire Demo the mana potion. Three Warlocks Human; Sbolt Corruption in the opener |
+| Priest | Shadow Human and multi-DoT Shadow Word: Pain. Holy 18/33/0 and Disc 29/22/0, the +65 Spell Power staff enchant (it carries healing power), +8 Intellect, Gnome; Holy Inner Focus into Prayer of Healing and Prayer of Mending first in the raid |
+
+**THE TANK HEALER FIGHT AT 120 s BARELY MOVES, AND THAT IS THE ENCOUNTER.** The
+boss ramps 10% a swing, so from about 65 s every blow kills the 8,500-health
+tank from full: tank deaths go 2.1 at 60 s to 19.3 at 120 s, and only absorbs or
+a heal already on the tank can count. Holy Pal's tank figure reads -7.4, which
+paired over 1,000 fights is -2.8 +/- 3.1, noise.
+
+**OWNER LINES THAT MEASURED AS A LOSS WERE KEPT**, with the price recorded in
+each handoff document -- Prot Warr's Demoralizing Shout (+21.6 if removed) and
+Thunder Clap (+17.2), Holy Priest's raid shield line (+71.2), Resto Drood's raid
+Healing Touch pre-cast (+52.4), Holy Pal's raid pre-cast (+14.9), Combat's Slice
+and Dice at 3 points (+6.9), Pure Hemo's at 3 (+9.8), Rupture at 4 points (+7.4),
+Venom's Eviscerate floors (+6.5). **ONE OWNER LINE WAS REORDERED**: Prayer of
+Mending moved to first in Holy Priest's raid list, +44.9, which needs the
+owner's confirmation.
+
+**WITHHELD BECAUSE THEY BUY THREAT WITH DEATHS**: Bear strength enchants and
+food, the Warrior tanks' Anger Management and Improved Thunder Clap builds,
+dropping a tank's Hit Points elixir or flask (the rage formula `D x 10 / H`
+rewards a smaller pool), Prot Pally's spell power flask (+56.9 TPS, +1.1 deaths).
+
+**QUESTIONS FOR THE OWNER**, raised this round:
+
+| | question | the figure |
+| --- | --- | --- |
+| 1 | **Revelation's +100% spell crit raises every DoT tick while the buff is up**, not only the next spell. Looks like an engine bug | SM/DS +29.9 from it, withheld |
+| 2 | **A Blade Flurry copy pays Eureka!'s +10% a second time**: `ignoresAttackerDamageScaling` does not stop `nonPeriodicDamageMultiplier` or the ability-modifier lookup | inflates Gnome Combat's area figures |
+| 3 | **Mana per 5 weighs about zero on the Moonkin while it is mana-bound** (0.004 against Intellect's 0.72) -- does mp5 tick while casting? | none priced |
+| 4 | Thunder Clap has no threat multiplier (Classic x1.75), so it loses in the tanks' area lists | -- |
+| 5 | Explosive and Immolation Trap share no cooldown ("one Fire trap at a time" is not enforced) | about +235 at 5 targets on a list casting both |
+| 6 | Cone of Cold hits one target | -- |
+| 7 | Totemic Focus covers Searing Totem only, not Magma or Mana Tide | -- |
+| 8 | Power Infusion's healing half is not applied; Mental Agility lists Shadow spells only; Litany of Light is `unmodelled`; Major Mender's Potion is still inert though healing power is a stat; Resto Drood's staff enchant carries no healing power | -- |
+| 9 | Cooldowns on the global cooldown with no opt-out: Berserk, Shifting Power, Barkskin, Innervate (Druid); Elemental Mastery, Rage of the Farseer, Mana Tide (Shaman); Death Wish, Recklessness, Berserker Rage, Sweeping Strikes, Last Stand, Shield Wall (Warrior) | none priced |
+| 10 | Races are now ours on 16 presets (Orc, Human, Gnome, Skyborne swaps); Combat Rogue's identity changed | each +3 to +54 |
+| 11 | Moonkin Reflection against Genesis: Reflection kept; -5.1 at 120 s, +46.8 at 180 s | which clock is the target? |
+| 12 | The Major Mana Potion on Ele Shaman, Arcane and Firelock trades area DPS for single target (Ele +12.5 / -18.7 at 5 targets); on Frostfire it was taken for the area gain (-12.1 / +112.6) | -- |
+| 13 | A Multi Target opener that swaps the pull for Flamestrike (Mages), and Magma Totem plus Elemental Mastery at 0 s (Ele) | -- |
+| 14 | Disc: Inner Focus on Prayer of Healing instead of Penance; Shadow: a Holy Nova build (+235 at 8 targets, -10.5 at 1, loses Inner Focus) | +42.3; see left |
+| 15 | Recklessness ships disabled and is worth +24.8 / +43.6 (Arms / Fury) single target, +61.7 / +122.9 in the area lists | -- |
+| 16 | Sbolt Spam carries Firelock's fire consumables and stone; +40 Shadow Spell Power is +29.6, Spellstone +7.6; Improved Voidwalker is dead, Fel Vitality +8.1 | -- |
+| 17 | Bane of Doom above Bane of Agony while 61 s remain needs a clause on the owner's Bane line | Firelock +10.6, Demo +18.0 |
+| 18 | Melee Hunters with Volley at several targets | +512 to +655 at 5 targets |
+| 19 | Hemo Dagger's spread now differs from the owner's URL (restorable in one line) | +14.1 |
+
+**OPEN ITEMS, NOT DONE**: `printUses` does not credit Melee Weave's casts, so the
+weave entry reads `NEVER FIRED` while it fires twice a fight; the `Elusiveness`
+`crowdControl` reason names Vanish as unimplemented; the Shadow talent URL in
+`decode_talent_build.mjs` is stale; the Fire Mage's cooldown stack is keyed on
+the Spellblasting potion. Each preset's `durationSeconds` is still 60 -- the
+report runs its own clocks.
+
 ## Round 77: a Hunter's cast shots are sped by ranged attack speed too
 
 The owner: "Hunter's cast time are affected by Haste AND ranged attack speed
@@ -6307,7 +6465,7 @@ almost everything that looked like an opportunity measured as a loss.
 
 | | spread | was | now |
 | --- | --- | --- | --- |
-| **Moonkin** | 41/0/10 | 778.6 | **790.3** |
+| **Moonkin** | 41/0/10 (then; 38/0/13 since round 78) | 778.6 | **790.3** |
 | **Cat** | 9/34/8 | 890.0 | **898.4** |
 
 **THE CAT THROWS AWAY THIRTEEN OF THE TWENTY-SEVEN COMBO POINTS IT GENERATES,
@@ -11891,16 +12049,16 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Arcane Mage | Mage | 48/3/0 | 1123.4 | | LW Melee | Hunter | 5/13/33 | 878.8 |
 | Frostfire Mage | Mage | 0/29/22 | 1086.4 | | Shockadin | Paladin | 23/0/28 | 867.8 |
 | DW Fury | Warrior | 17/34/0 | 1068.4 | | Combat Mut | Rogue | 30/21/0 | 848.0 |
-| LW Ranged | Hunter | 5/41/5 | 1021.0 | | Hemo Dagger | Rogue | 17/3/31 | 840.2 |
+| LW Ranged | Hunter | 5/41/5 | 1021.0 | | Hemo Dagger | Rogue | 17/3/31 (then; 20/0/31 since round 78) | 840.2 |
 | Fire Mage | Mage | 14/34/3 | 1020.7 | | **Enh Shaman** | Shaman | 19/32/0 | **838.8** |
-| BM Hunter | Hunter | 31/20/0 | 968.2 | | Moonkin | Druid | 41/0/10 | 820.3 |
+| BM Hunter | Hunter | 31/20/0 | 968.2 | | Moonkin | Druid | 41/0/10 (then; 38/0/13 since round 78) | 820.3 |
 | Cat Druid | Druid | 9/34/8 | 966.9 | | Ele Shaman | Shaman | 32/11/8 | 792.8 |
-| Seal Twist Ret | Paladin | 15/0/36 | 948.6 | | Pure Hemo | Rogue | 19/8/24 | 775.9 |
+| Seal Twist Ret | Paladin | 15/0/36 (then; 16/0/35 since round 78) | 948.6 | | Pure Hemo | Rogue | 19/8/24 | 775.9 |
 | Hawk Melee | Hunter | 16/11/24 | 937.6 | | Venom Rogue | Rogue | 33/16/2 | 771.6 |
 | Shockadin 2H | Paladin | 23/0/28 | 935.2 | | SM/DS | Warlock | 35/11/5 | 769.4 |
 | Shadow Priest | Priest | 14/2/35 | 931.0 | | Rupture Rogue | Rogue | 12/8/31 | 754.9 |
 | 2H Arms | Warrior | 39/10/2 | 927.0 | | Prot Pally | Paladin | 8/34/9 | 551.1 |
-elock | Warlock | 5/11/35 | 910.5 | | Prot Warr | Warrior | 17/0/34 | 499.5 |
+elock | Warlock | 5/11/35 | 910.5 | | Prot Warr | Warrior | 17/0/34 (then; 17/2/32 since round 78) | 499.5 |
 | Combat Rogue | Rogue | 18/33/0 | 899.5 | | Bear Druid | Druid | 9/42/0 | 432.8 |
 
 The mean across **28** is **863.8**, RE-SUMMED FROM THE ROWS ABOVE rather than

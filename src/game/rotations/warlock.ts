@@ -135,6 +135,9 @@ const manaBelowFraction = (fraction: number) => resourceFraction('below', fracti
  */
 export const FIRELOCK_LIFE_TAP_MANA = 0.05;
 
+/** The mana SM/DS Life Taps at: a measured sweep at 120s, round 78. */
+export const SMDS_LIFE_TAP_MANA = 0.05;
+
 // ---------------------------------------------------------------------------
 
 /**
@@ -213,8 +216,13 @@ export const WARLOCK_AFFLICTION: AplList = {
    * LIFE TAP ON A MANA THRESHOLD rather than ungated. It was unconditional and
    * fired five times a fight, each one a global cooldown that dealt nothing --
    * at 15% it fires only when the bar actually needs it.
+   *
+   * 5% SINCE ROUND 78, re-swept at the report's 120 seconds, where this list
+   * does tap (at 60s it never reached the gate at all): 5% +8.63, 10% +7.09,
+   * 25% -10.19 against 15%, 400 paired fights; 3% and 7% sit within a point
+   * of 5% on the round's finished build.
    */
-  { abilityId: 'life_tap', condition: manaBelowFraction(0.15) },
+  { abilityId: 'life_tap', condition: manaBelowFraction(SMDS_LIFE_TAP_MANA) },
   /*
    * WRACK, BETWEEN LIFE TAP AND SHADOW BOLT, GATED ON ALL THREE BLEEDS HAVING
    * SIX SECONDS LEFT. The ruleset owner's own position and own condition, which

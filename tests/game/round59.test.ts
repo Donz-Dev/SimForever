@@ -96,7 +96,8 @@ describe("the owner's Frost Mage", () => {
     expect(profile.character).toMatchObject({ name: 'Frost Mage', race: 'windshaper_skyborne', characterClass: 'mage' });
     expect(Object.values(profile.talents ?? {}).reduce((a, b) => a + b, 0)).toBe(51);
     expect(profile.talents).toMatchObject({ ice_barrier: 1, improved_blizzard: 1, winter_s_chill: 5, fingers_of_frost: 2 });
-    expect(profile.consumables).toMatchObject({ potion: 'major_spellblasting_potion', other: 'demonic_rune', school_spell_power: 'school_frost' });
+    // The potion is the Major Mana Potion since round 78 (+25.68 at a 120s fight); their saved file had Spellblasting.
+    expect(profile.consumables).toMatchObject({ potion: 'major_mana_potion', other: 'demonic_rune', school_spell_power: 'school_frost' });
     expect(profile.precombat).toEqual([
       { abilityId: 'mage_armor', secondsBefore: 60 },
       { abilityId: 'ice_barrier', secondsBefore: 3.5 },

@@ -205,7 +205,7 @@ describe('mana, where the back-dated lockout is what stops the credit', () => {
 });
 
 describe('the owner’s own case', () => {
-  it('opens the two Combat Rogues on 85 energy rather than 75', () => {
+  it('opens the two Combat Rogues ten energy above their post-Flurry pool', () => {
     /*
      * BLADE FLURRY AT A ONE SECOND LEAD, which is the one opener in the project
      * that spends ENERGY before the pull -- every other energy spender sits at
@@ -217,6 +217,12 @@ describe('the owner’s own case', () => {
      * so a pool credited inside the former is the only regeneration that can
      * have happened by timestamp zero.
      */
+    /*
+     * 85 FOR AN UNDEAD, 90 FOR THE GNOME: Combat is a Gnome since round 78, and
+     * Expansive Mind's +5% maximum energy makes its pool 105 -- so Blade
+     * Flurry's 25 leaves 80 and the one-second lead banks the same ten.
+     */
+    const banked: Record<string, number> = { rogue_combat: 90, rogue_combat_mut: 85 };
     for (const presetId of ['rogue_combat', 'rogue_combat_mut']) {
       const profile = PRESETS_BY_ID.get(presetId)!.build();
       const simulation = new Simulation(trainingDummyEncounter(profile, 4242));
@@ -224,7 +230,7 @@ describe('the owner’s own case', () => {
       const player = simulation.combatants.find((actor) => actor.kind === 'player')!;
 
       const energy = player.resources.get('energy')!;
-      expect(energy.current, `${presetId} banked the lead`).toBeCloseTo(85, 6);
+      expect(energy.current, `${presetId} banked the lead`).toBeCloseTo(banked[presetId], 6);
       expect(player.lastSpentAt('energy'), `${presetId} spent a second early`).toBe(-seconds(1));
     }
   });

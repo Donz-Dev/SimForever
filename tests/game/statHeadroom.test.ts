@@ -9,7 +9,7 @@ import {
 import { createForeverAttackChances } from '../../src/game/combat/attackChances';
 import { createTrainingDummy } from '../../src/game/actors/createTrainingDummy';
 import { characterAtCombatStart } from '../../src/simulator';
-import { PROFILE_PRESETS } from '../../src/profiles';
+import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles';
 import type { CharacterProfile } from '../../src/profiles';
 
 /*
@@ -318,10 +318,10 @@ describe('hit headroom', () => {
       'prot_warr': 'melee-special',
       // Prot Warr's template row under its own label, so the same aim.
       'fury_prot': 'melee-special',
-      'shaman_enhancement': 'melee-special',
       'druid_cat': 'melee-special',
       'druid_bear': 'melee-special',
-      'druid_moonkin': 'spell',
+      // The Moonkin left this table in round 78, when it became High Order
+      // Skyborne; its template still aims at the spell cap through Nature's Reach.
     };
 
     /*
@@ -340,6 +340,22 @@ describe('hit headroom', () => {
      * table is empty. It stays as the place a future shortfall would be pinned.
      */
     const SHORT_SINCE_THE_FLOOR_WENT: Readonly<Record<string, number>> = {};
+
+    /*
+     * THE ENHANCEMENT SHAMAN LEFT THIS TABLE IN ROUND 78 BY BECOMING AN ORC
+     * (+4.5 at 1 target, +13.3 at 5). Its template row is the same 80 hit
+     * rating every melee row asks for since the ruling above, so it must still
+     * sit on the melee cap without the racial -- asserted here, so the move
+     * cannot quietly leave it a point short.
+     */
+    {
+      const enh = PRESETS_BY_ID.get('shaman_enhancement')!.build();
+      expect(enh.character.race).toBe('orc');
+      const { player, chances } = built(enh);
+      const special = hitHeadroom(player, BOSS, chances).filter((entry) => entry.table === 'melee-special');
+      expect(special.length).toBeGreaterThan(0);
+      for (const entry of special) expect(entry.headroom, `Enh Shaman ${entry.label}`).toBe(0);
+    }
 
     const tauren = PROFILE_PRESETS.filter(
       (preset) => preset.build().character.race === 'tauren',

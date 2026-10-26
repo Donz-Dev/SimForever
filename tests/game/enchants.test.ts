@@ -649,14 +649,16 @@ const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: '+7 Agility',
     shield: '+9 Stamina',
   },
-  // Round 73's two Priest healers: the Resto Drood's loadout.
+  // Round 73's two Priest healers: the Resto Drood's loadout -- with +8
+  // Intellect on head and legs since round 78, measured: both healer fights are
+  // mana-bound, so Intellect beats +1% Haste (+7.9 each in Holy's raid fight).
   priest_holy: {
-    head: '+1% Haste', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',
-    wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: '+7 Agility',
+    head: '+8 Intellect', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',
+    wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+8 Intellect', feet: '+7 Agility',
   },
   priest_disc: {
-    head: '+1% Haste', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',
-    wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: '+7 Agility',
+    head: '+8 Intellect', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',
+    wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+8 Intellect', feet: '+7 Agility',
   },
   // Round 71's Druid healer: Holy Pal's loadout, with a staff and no shield.
   druid_resto: {
@@ -664,9 +666,11 @@ const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: '+7 Agility',
   },
   // Round 52's healer, which has no owner row yet: chosen by the healer's stats.
+  // Round 78: Intellect on the head and legs, +48.84 +/- 7.17 HPS in the
+  // mana-bound raid healer fight and noise in the tank healer fight.
   holy_pal: {
-    head: '+1% Haste', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',
-    wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: '+7 Agility',
+    head: '+8 Intellect', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',
+    wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+8 Intellect', feet: '+7 Agility',
     shield: '+9 Stamina',
   },
 };
@@ -719,9 +723,66 @@ describe('what each of the 29 profiles opens with', () => {
    */
   const OPTIMISED_AWAY_FROM_THE_TABLE: Readonly<Record<string, string>> = {
     'shaman_enhancement feet': '+7 Agility',
+    /*
+     * ROUND 78. The Bear's gloves: +19.8 +/- 9.8 TPS at 120s for +0.33 deaths of
+     * 18.75. Its boots replace a dead Minor Speed (+2.4 TPS, -0.19 deaths). The
+     * Resto Drood's head and legs: +76.1 HPS in the mana-bound raid fight.
+     */
+    'druid_bear gloves': '+2% Threat',
+    'druid_bear feet': '+7 Agility',
+    'druid_resto head': '+8 Intellect',
+    'druid_resto legs': '+8 Intellect',
+    /*
+     * ROUND 78, measured paired at the full report's own clock (120 s, one
+     * target). Retribution is mana-bound there and reads spell power on half
+     * its damage: +0.62 +/- 0.03. The Protection Paladin is mana- and
+     * spell-power-bound: the threat gloves are +10.65 +/- 0.07 TPS with deaths
+     * unchanged, and the spell power wrists +9.2 TPS more, deaths +0.13 (noise).
+     */
+    'pally_ret wrists': '+16 Spell Power',
+    'prot_pally gloves': '+2% Threat',
+    'prot_pally wrists': '+16 Spell Power',
+    /*
+     * ROUND 78, measured at 1 target / 120 s and at 5 targets / 60 s, where the
+     * Enhancement Shaman is mana-bound and its spell power reaches Fire Nova,
+     * Magma Totem and Chain Lightning: Intellect on the head and legs (+3.93 /
+     * +3.06), Spell Power on the neck, wrists and gloves (+2.88 / +12.78). And
+     * Piss Beam's gloves +1% Haste, +6.48 HPS in the cast-bound raid fight.
+     * See `presetEnchants.ts`.
+     */
+    'shaman_enhancement head': '+8 Intellect',
+    'shaman_enhancement legs': '+8 Intellect',
+    'shaman_enhancement neck': '+6 Spell Power',
+    'shaman_enhancement wrists': '+16 Spell Power',
+    'shaman_enhancement gloves': '+20 Spell Power',
+    'shaman_resto gloves': '+1% Haste',
+    /*
+     * ROUND 78: both Warrior tanks' boots, Minor Speed -> +7 Agility. Minor
+     * Speed is `unmodelled` and grants nothing; +7 Agility is +5.10 +/- 3.02
+     * TPS on Prot Warr at 120s with deaths -0.10, and +0.56 (noise) on Fury
+     * Prot with deaths -0.16.
+     */
+    'prot_warr feet': '+7 Agility',
+    'fury_prot feet': '+7 Agility',
+    // Round 78: mana-bound at a 120 second fight, LW Ranged weighs intellect at
+    // 1.10 a point and agility at 0.74 -- +5.7 for the pair.
+    'lw_ranged head': '+8 Intellect',
+    'lw_ranged legs': '+8 Intellect',
+    /*
+     * ROUND 78, THE TWO SUBTLETY DAGGER ROGUES: +1% Haste for +8 Agility on
+     * head and legs. Stat weights at 120s over 1,500 iterations price 1% haste
+     * at 4.73 +/- 1.27 (Rupture) and 4.56 +/- 1.28 (Hemo Dagger) against 2.71
+     * and 2.93 for eight agility; paired, the pair of slots is +3.45 on Hemo
+     * Dagger. Pure Hemo, Combat, Venom and Combat Mut keep the table: their
+     * haste interval reaches zero.
+     */
+    'rogue_rupture head': '+1% Haste',
+    'rogue_rupture legs': '+1% Haste',
+    'rogue_hemo head': '+1% Haste',
+    'rogue_hemo legs': '+1% Haste',
   };
 
-  it('matches the owner table row for row, bar one measured exception', () => {
+  it('matches the owner table row for row, bar the measured exceptions', () => {
     for (const preset of PROFILE_PRESETS) {
       const equipment = preset.build().equipment;
       const expected = LOADOUTS[preset.id];
@@ -939,9 +1000,12 @@ describe('the enchants reach the built character', () => {
     expect(enchanted.parry - plain.parry).toBe(fromDefense);
     expect(enchanted.miss - plain.miss).toBe(fromDefense);
 
-    // And dodge, which carries the three enchants and the chest's agility on
-    // top of it. Three points is 300 units and the 4.4 agility is 22 more.
-    expect(enchanted.dodge - plain.dodge).toBe(fromDefense + 300 + 22);
+    // And dodge, which carries the three enchants and the agility on top of
+    // it. Three points is 300 units; the chest's 4 agility and (since round 78)
+    // the boots' 7 are 11, multiplied to 12.1 by Blessing of Kings, over twenty
+    // agility a point -- 60.5 units, which the truncation into roll space
+    // lands at 61 on this pair.
+    expect(enchanted.dodge - plain.dodge).toBe(fromDefense + 300 + 61);
 
     /*
      * THE STAT ITSELF, so the 22 above is placed rather than accepted. Four
@@ -951,6 +1015,6 @@ describe('the enchants reach the built character', () => {
      */
     const dodgeStat = (p: typeof profile) =>
       characterAtCombatStart(p)!.stats.effective.dodgeChance;
-    expect(dodgeStat(profile) - dodgeStat(stripped)).toBeCloseTo(3 + 4.4 / 20, 6);
+    expect(dodgeStat(profile) - dodgeStat(stripped)).toBeCloseTo(3 + 12.1 / 20, 6);
   });
 });

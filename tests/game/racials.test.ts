@@ -49,6 +49,17 @@ import {
 import { abilityChoicesFor, aplNamesFor } from '../../src/ui/panels/AplPanel';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { syncDefaultRotation } from '../../src/profiles/rotation';
+
+/*
+ * A GNOME MAGE PRESET. The Mage presets were this file's Gnomes until round 78
+ * moved Fire and Arcane to High Order Skyborne and Frostfire to Human, so the
+ * Eureka! tests take a Mage preset and make it a Gnome rather than depending on
+ * which race a preset happens to be.
+ */
+const gnomeMage = (presetId: string) => {
+  const built = PRESETS_BY_ID.get(presetId)!.build();
+  return syncDefaultRotation({ ...built, character: { ...built.character, race: 'gnome' as const } });
+};
 import { characterAtCombatStart } from '../../src/simulator';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import { makeAttacker, makeTarget } from '../helpers/actors';
@@ -238,7 +249,9 @@ describe('the crit racials, which the racial patch made unconditional', () => {
     }
 
     // And the Combat Rogue, the build the old condition excluded, now collects.
-    expect(racialSpellCritDelta('rogue_combat', 'troll')).toBeCloseTo(SAVAGE, 9);
+    // Built as an ORC: the preset is a Gnome since round 78, and this is a claim
+    // about the Orc trait on that build's sword and dagger.
+    expect(racialSpellCritDelta('rogue_combat', 'troll', 'orc')).toBeCloseTo(SAVAGE, 9);
   });
 
   it('leaves NO racial asking about a weapon, so the condition is unreachable', () => {
@@ -806,7 +819,7 @@ describe('Eureka!', () => {
      * `runCastReactions` afterwards, and the latch being cleared in between.
      * ========================================================================
      */
-    const built = PRESETS_BY_ID.get('mage_arcane')!.build();
+    const built = gnomeMage('mage_arcane');
     const recorder = new TelemetryRecorder();
     const simulation = new Simulation(
       { ...trainingDummyEncounter(built), seed: 4242 },
@@ -1140,7 +1153,10 @@ describe('Touch of the Grave', () => {
     let procs = 0;
     let crits = 0;
     for (let i = 0; i < 20; i += 1) {
-      const built = PRESETS_BY_ID.get('warlock_smds')!.build();
+      // As an Undead: the preset is Human since round 78, and this is Touch
+      // of the Grave's own mechanism rather than a claim about the preset.
+      const preset = PRESETS_BY_ID.get('warlock_smds')!.build();
+      const built = { ...preset, character: { ...preset.character, race: 'undead' as const } };
       const recorder = new TelemetryRecorder();
       const simulation = new Simulation(
         {
@@ -1425,7 +1441,10 @@ describe('Touch of the Grave', () => {
     let procs = 0;
     const fights = 40;
     for (let i = 0; i < fights; i += 1) {
-      const built = PRESETS_BY_ID.get('warlock_smds')!.build();
+      // As an Undead: the preset is Human since round 78, and this is Touch
+      // of the Grave's own mechanism rather than a claim about the preset.
+      const preset = PRESETS_BY_ID.get('warlock_smds')!.build();
+      const built = { ...preset, character: { ...preset.character, race: 'undead' as const } };
       const recorder = new TelemetryRecorder();
       const simulation = new Simulation(
         { ...trainingDummyEncounter(built), seed: 4000 + i },
@@ -1558,9 +1577,11 @@ describe('the racials are in the priority lists, or they never fire', () => {
       ['druid_cat', []],
       ['dw_fury', ['blood_fury']],
       ['mage_fire', ['eureka']],
-      ['shadow_priest', ['berserking']],
+      // Human since round 78: Ruthless and The Human Spirit are passives, so
+      // every racial entry in the list is switched off.
+      ['shadow_priest', []],
     ] as const) {
-      const built = PRESETS_BY_ID.get(preset)!.build();
+      const built = preset === 'mage_fire' ? gnomeMage(preset) : PRESETS_BY_ID.get(preset)!.build();
       /*
        * LIT, NOT STORED. Every racial entry is kept now and another race's is
        * switched off -- the owner's "invisible using the glyph feature" -- so
@@ -1777,7 +1798,12 @@ describe('what is NOT modelled says so, in the owner\'s own words', () => {
 // --- helpers ---------------------------------------------------------------
 
 /** The spell crit a preset's race grants, isolated by swapping the race. */
-function racialSpellCritDelta(presetId: string, otherRace: 'troll' | 'tauren' | 'undead'): number {
+function racialSpellCritDelta(
+  presetId: string,
+  otherRace: 'troll' | 'tauren' | 'undead',
+  /** The race to build the preset as, when it is not the preset's own. */
+  asRace?: 'orc',
+): number {
   /*
    * SWAPPING THE RACE ON IDENTICAL GEAR, which is the only honest isolation.
    * The first version of this probe took the WEAPON off instead and was
@@ -1789,7 +1815,8 @@ function racialSpellCritDelta(presetId: string, otherRace: 'troll' | 'tauren' | 
    * race differs from another in BASE spell crit -- where they do differ in base
    * agility, which feeds melee crit.
    */
-  const built = PRESETS_BY_ID.get(presetId)!.build();
+  const preset = PRESETS_BY_ID.get(presetId)!.build();
+  const built = asRace ? { ...preset, character: { ...preset.character, race: asRace } } : preset;
   const mine = characterAtCombatStart(built)!;
   const theirs = characterAtCombatStart({
     ...built,
@@ -1820,7 +1847,7 @@ describe('the panel can name and offer a racial ability', () => {
      * two that differ rather than on all five.
      * ========================================================================
      */
-    const gnome = PRESETS_BY_ID.get('mage_fire')!.build();
+    const gnome = gnomeMage('mage_fire');
     expect(aplNamesFor(gnome).nameOf('eureka')).toBe('Eureka!');
 
     const nightElf = {
@@ -1836,7 +1863,7 @@ describe('the panel can name and offer a racial ability', () => {
      * one has to be able to add it back -- and the dropdown offers the build's
      * BOOK, which is exactly the set `PriorityRotation` will act on.
      */
-    const gnome = PRESETS_BY_ID.get('mage_fire')!.build();
+    const gnome = gnomeMage('mage_fire');
     const offered = new Set(abilityChoicesFor(gnome).map((choice) => choice.id));
     expect(offered.has('eureka')).toBe(true);
     expect(offered.has('blood_fury')).toBe(false);

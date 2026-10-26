@@ -3,6 +3,8 @@ import type { SimulationConfig } from '../engine';
 import { Simulation, deriveSeed, toSeconds } from '../engine';
 import type { CharacterProfile } from '../profiles';
 import { trainingDummyEncounter } from './trainingDummyEncounter';
+import type { HealerFight } from './healerEncounter';
+import { HEALER_ID, healerEncounter } from './healerEncounter';
 
 /**
  * Per-iteration DPS and deaths, and nothing else.
@@ -60,6 +62,10 @@ export interface IterationSamples {
    * and the tank-weight panel only appears when it does.
    */
   readonly deaths: number[];
+  /** The PLAYER's threat per second, per iteration -- a tank's figure of merit. */
+  readonly tps: number[];
+  /** The PLAYER's healing per second, per iteration -- a healer's. */
+  readonly hps: number[];
 }
 
 /**
@@ -76,10 +82,18 @@ export function sampleIterations(
   config: SimulationConfig,
   baseSeed: number,
   slice: SampleSlice,
+  /**
+   * Whose deaths, threat and healing to read. The first friendly actor by
+   * default, which is the player in every fight but a healer's -- there the
+   * tank is first, and the healer is `HEALER_ID`.
+   */
+  playerId?: string,
 ): IterationSamples {
   const count = Math.max(0, slice.to - slice.from);
   const dps: number[] = new Array(count);
   const deaths: number[] = new Array(count);
+  const tps: number[] = new Array(count);
+  const hps: number[] = new Array(count);
 
   for (let index = slice.from; index < slice.to; index++) {
     const totals = new StreamingIterationTotals();
@@ -101,10 +115,13 @@ export function sampleIterations(
      * off `playerId` the same way, and for the reason it gives: rage, survival
      * and resources are genuinely the player's where damage is shared.
      */
-    deaths[at] = friendly[0] ? totals.deathsFor(friendly[0].id) : 0;
+    const player = playerId ?? friendly[0]?.id;
+    deaths[at] = player ? totals.deathsFor(player) : 0;
+    tps[at] = player ? totals.threatFor(player) / elapsedSeconds : 0;
+    hps[at] = player ? totals.healingFor(player) / elapsedSeconds : 0;
   }
 
-  return { dps, deaths };
+  return { dps, deaths, tps, hps };
 }
 
 /** The same thing from a profile, for a caller that has no config in hand. */
@@ -114,4 +131,18 @@ export function profileSamples(
   slice: SampleSlice,
 ): IterationSamples {
   return sampleIterations(trainingDummyEncounter(profile), baseSeed, slice);
+}
+
+/**
+ * The same for one of a healer's two fights (round 78), read off the healer.
+ * The seed is the base seed, and `deriveSeed` gives iteration `i` its own fight
+ * exactly as an ordinary fight does, so a variant and its baseline pair.
+ */
+export function healerSamples(
+  profile: CharacterProfile,
+  fight: HealerFight,
+  baseSeed: number,
+  slice: SampleSlice,
+): IterationSamples {
+  return sampleIterations(healerEncounter(profile, fight, baseSeed), baseSeed, slice, HEALER_ID);
 }

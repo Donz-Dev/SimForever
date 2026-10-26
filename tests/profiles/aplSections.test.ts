@@ -8,6 +8,7 @@ import { syncDefaultRotation } from '../../src/profiles/rotation';
 import { migrateProfile } from '../../src/profiles/migrateProfile';
 import { validateProfile } from '../../src/profiles/validateProfile';
 import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
+import { MULTI_TARGET_DEFAULTS, narrowedEntries } from '../../src/profiles/multiTarget';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import { HEALER_ID, healerEncounter } from '../../src/simulator/healerEncounter';
 
@@ -90,6 +91,21 @@ describe('the presets', () => {
     for (const preset of PROFILE_PRESETS) {
       const profile = preset.build();
       expect(profile.multiTarget, preset.id).toBeDefined();
+      /*
+       * Round 78: a preset with an optimised Multi Target list carries THAT, as
+       * a custom list; every other preset still starts with an identical copy.
+       */
+      const own = MULTI_TARGET_DEFAULTS[preset.id];
+      if (own) {
+        expect(profile.multiTarget!.rotation, preset.id).toEqual({
+          source: 'custom',
+          name: own.name,
+          entries: narrowedEntries(own, profile),
+          ...(own.smartHealing ? { smartHealing: true } : {}),
+        });
+        expect(profile.multiTarget!.precombat, preset.id).toEqual(own.precombat ?? profile.precombat);
+        continue;
+      }
       expect(profile.multiTarget!.rotation, preset.id).toEqual(profile.rotation);
       expect(profile.multiTarget!.precombat, preset.id).toEqual(profile.precombat);
     }
@@ -107,7 +123,11 @@ describe('editing one section', () => {
   });
 
   it('re-derives a default list in either section and never touches a custom one', () => {
-    const profile = PRESETS_BY_ID.get('dw_fury')!.build();
+    // DW Fury's own Multi Target list (round 78) is custom, so start from the
+    // default copy a fresh character gets.
+    const { multiTarget: _own, ...built } = PRESETS_BY_ID.get('dw_fury')!.build();
+    void _own;
+    const profile = syncDefaultRotation(built);
     const customSingle = { ...profile, rotation: only('slam') };
     // A change to the build: the default Multi Target list follows, the custom
     // Single Target one does not.

@@ -350,8 +350,9 @@ describe("the owner's talents, on the built characters", () => {
     const holy = build('priest_holy').player;
     expect(holy.abilityModifierFor('greater_heal')?.healingMultiplier).toBeCloseTo(1.1, 10);
     expect(holy.abilityModifierFor('greater_heal')?.critBonus).toBe(5);
-    // Twin Disciplines on the instants, and Improved Renew 2/3.
-    expect(holy.abilityModifierFor('renew')?.healingMultiplier).toBeCloseTo(1.1 * 1.05 * 1.1, 10);
+    // Twin Disciplines on the instants, and Improved Renew 3/3 -- 2/3 in the
+    // owner's URL, the third point bought out of Holy Reach in round 78.
+    expect(holy.abilityModifierFor('renew')?.healingMultiplier).toBeCloseTo(1.1 * 1.05 * 1.15, 10);
     expect(holy.abilityModifierFor('power_word_shield')?.healingMultiplier).toBeCloseTo(1.2, 10);
   });
 
@@ -385,7 +386,10 @@ describe('the lists, in both healer fights', () => {
   it('Holy: Renew, the shield and Flash Heal in the tank fight; Prayer of Mending and Prayer of Healing in the raid', () => {
     const tank = new Set(casts('priest_holy', 'tank').map((e) => e.abilityId));
     expect(['renew', 'power_word_shield', 'flash_heal'].every((id) => tank.has(id))).toBe(true);
-    expect(tank.has('prayer_of_mending') || tank.has('prayer_of_healing')).toBe(false);
+    // Prayer of Mending is in the tank fight too since round 78 -- at the bottom
+    // of the list, for when Flash Heal has nothing to do. Never Prayer of Healing.
+    expect(tank.has('prayer_of_mending')).toBe(true);
+    expect(tank.has('prayer_of_healing')).toBe(false);
     const raid = new Set(casts('priest_holy', 'raid').map((e) => e.abilityId));
     expect(['renew', 'power_word_shield', 'prayer_of_mending', 'prayer_of_healing'].every((id) => raid.has(id))).toBe(true);
     expect(raid.has('flash_heal')).toBe(false);

@@ -49,20 +49,57 @@ export const PRESET_ENCHANTS: Readonly<
    */
   two_hand_arms: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900021, head: 900005, legs: 900005, neck: 900008, twoHand: 20034, wrists: 900017 },
   dw_fury: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900021, head: 900005, legs: 900005, mainHand: 20034, neck: 900008, offHand: 20034, wrists: 900017 },
-  prot_warr: { chest: 900015, cloak: 900001, feet: 900025, gloves: 900024, head: 900001, legs: 900001, mainHand: 20034, neck: 900012, shield: 900030, wrists: 900016 },
+  /*
+   * ROUND 78: BOTH TANKS' BOOTS GO FROM MINOR SPEED, which is `unmodelled` and
+   * grants nothing, TO +7 AGILITY -- +5.10 +/- 3.02 TPS on Prot Warr and +0.56
+   * (noise) on Fury Prot at 120s, with deaths -0.10 and -0.16. Every other
+   * slot's defensive enchant stays: swapping one for strength or agility buys
+   * 8 to 14 TPS for about +0.3 deaths a slot, which is the owner's trade.
+   */
+  prot_warr: { chest: 900015, cloak: 900001, feet: 900026, gloves: 900024, head: 900001, legs: 900001, mainHand: 20034, neck: 900012, shield: 900030, wrists: 900016 },
   // Prot Warr's loadout exactly: Fury Prot copies that build in every other case.
-  fury_prot: { chest: 900015, cloak: 900001, feet: 900025, gloves: 900024, head: 900001, legs: 900001, mainHand: 20034, neck: 900012, shield: 900030, wrists: 900016 },
+  fury_prot: { chest: 900015, cloak: 900001, feet: 900026, gloves: 900024, head: 900001, legs: 900001, mainHand: 20034, neck: 900012, shield: 900030, wrists: 900016 },
   rogue_venom: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
   // The Venom loadout exactly; see `benchmarkSets.ts` for why the two share.
   rogue_combat_mut: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
   rogue_combat: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
-  rogue_rupture: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
-  rogue_hemo: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
-  // The Hemo Dagger loadout exactly; only the main-hand ITEM differs.
-  rogue_pure_hemo: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
+  /*
+   * ROUND 78: THE OFF HAND TAKES +25 AGILITY FOR CRUSADER, AND HEAD AND LEGS
+   * TAKE +1% HASTE FOR +8 AGILITY. Stat weights at 120s over 1,500 iterations:
+   * 1% haste 4.73 +/- 1.27 against 8 agility 2.71, so +2.0 a slot. Paired with
+   * the off hand: +5.21 +/- 3.09 (1,200 fights, 120s), +8.80 +/- 6.02 at five
+   * targets. The off-hand dagger's Crusader procs about half as often as its
+   * steady 25 agility is worth (+3.16 +/- 2.96 alone).
+   */
+  rogue_rupture: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900002, legs: 900002, mainHand: 20034, neck: 900011, offHand: 900031, wrists: 900019 },
+  // Round 78, the Rupture reasoning: 1% haste 4.56 +/- 1.28 against 8 agility
+  // 2.93; with the off hand's +25 agility +3.45 on top of the talent change.
+  rogue_hemo: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900002, legs: 900002, mainHand: 20034, neck: 900011, offHand: 900031, wrists: 900019 },
+  /*
+   * THE OWNER'S HEMO DAGGER ROW, PLUS ROUND 78's OFF HAND: +25 agility for
+   * Crusader on the off-hand dagger, +7.15 +/- 3.12 (1,200 fights, 120s) and
+   * +8.14 +/- 6.27 at five targets. Head and legs stay agility here: haste
+   * weighs 5.16 +/- 1.35 against 8 agility's 3.83, an interval that reaches
+   * zero, so no measurement argues for leaving the owner's table.
+   */
+  rogue_pure_hemo: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 900031, wrists: 900019 },
   druid_moonkin: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   druid_cat: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, twoHand: 20034, wrists: 900019 },
-  druid_bear: { chest: 900015, cloak: 900001, feet: 900025, gloves: 900022, head: 900001, legs: 900001, neck: 900011, twoHand: 20034, wrists: 900019 },
+  /*
+   * ROUND 78: GLOVES +2% THREAT (was +15 Agility) and FEET +7 AGILITY (was Minor
+   * Speed, which does nothing). The gloves are +19.8 +/- 9.8 TPS at 120s for
+   * +0.33 +/- 0.33 deaths of 18.75; the feet +2.4 TPS (noise) and -0.19 deaths.
+   * Head and legs stay +1% Dodge: +8 Strength there is +19.8 TPS for +0.87
+   * deaths, which is buying threat with deaths.
+   */
+  druid_bear: { chest: 900015, cloak: 900001, feet: 900026, gloves: 900024, head: 900001, legs: 900001, neck: 900011, twoHand: 20034, wrists: 900019 },
+  /*
+   * ROUND 78 LEFT THESE ALONE, AND THE ROUTE THERE IS THE KNOCK-ON: head and
+   * legs +8 Intellect for +1% Haste measured +12.77 +/- 3.87 at 1 target / 120 s
+   * on the round's starting build, and -10.17 +/- 3.45 once Orc and the Major
+   * Mana Potion were in. Haste here is also the Searing Totem knife-edge of
+   * docs/profile-optimisation.md Appendix B.
+   */
   shaman_elemental: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900009, shield: 900030, wrists: 900018 },
   /*
    * ==========================================================================
@@ -88,14 +125,23 @@ export const PRESET_ENCHANTS: Readonly<
    * every slot that offers it.
    * ==========================================================================
    */
-  shaman_enhancement: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900021, head: 900005, legs: 900005, neck: 900008, twoHand: 20034, wrists: 900017 },
+  /*
+   * ROUND 78, priced at 1 target / 120 s and at 5 targets / 60 s, paired:
+   *   two-hand +65 Spell Power for Crusader     +8.15 +/- 6.46  /  +22.73 +/- 9.92
+   *   wrists, gloves, neck Spell Power for Str  +2.88 (sum)     /  +12.78 +/- 0.13
+   *   head and legs +8 Intellect for +8 Str     +3.93 +/- 3.72  /  +3.06 +/- 1.51
+   * A mana-bound build (1% spare at 120 s) whose spell power reaches 26% of
+   * its damage and all of its Fire Nova and Magma Totem.
+   */
+  shaman_enhancement: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900006, legs: 900006, neck: 900009, twoHand: 900029, wrists: 900018 },
   mage_frostfire: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   // The owner's saved build, round 59: the Frostfire loadout exactly.
   mage_frost: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   mage_arcane: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   mage_fire: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   // +65 Spell Power on the two-hander in place of Crusader, by the owner (round 37).
-  pally_ret: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900002, head: 900002, legs: 900002, neck: 900008, twoHand: 900029, wrists: 900017 },
+  // Round 78: wrists +16 Spell Power (was +9 Strength), +0.62 +/- 0.03 at 120 s.
+  pally_ret: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900002, head: 900002, legs: 900002, neck: 900008, twoHand: 900029, wrists: 900018 },
   /*
    * THE TWO SHOCKADINS SHARE EIGHT SLOTS AND DIFFER ONLY IN THE HANDS, which is
    * what their being two profiles on one gear shape means: the only difference
@@ -121,11 +167,17 @@ export const PRESET_ENCHANTS: Readonly<
    */
   pally_shockadin: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900009, shield: 900030, wrists: 900018 },
   pally_shockadin_2h: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
-  prot_pally: { chest: 900015, cloak: 900001, feet: 900027, gloves: 900023, head: 900001, legs: 900001, mainHand: 22749, neck: 900012, shield: 900030, wrists: 900016 },
+  // Round 78: gloves +2% Threat (was +20 Spell Power, +10.65 TPS, deaths 0.00)
+  // and wrists +16 Spell Power (was +4 Defense, +9.2 TPS on top, deaths +0.13
+  // noise) -- this tank is mana- and spell-power-bound at 120 s.
+  prot_pally: { chest: 900015, cloak: 900001, feet: 900027, gloves: 900024, head: 900001, legs: 900001, mainHand: 22749, neck: 900012, shield: 900030, wrists: 900018 },
   bm_hunter: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },
-  lw_ranged: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },
-  lw_melee: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
-  hawk_melee: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
+  // Round 78: +8 Intellect on the head and legs (900006). Mana-bound at 120s, this
+  // build weighs intellect at 1.10 a point against agility's 0.74.
+  lw_ranged: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900006, legs: 900006, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },
+  // Round 78: +25 Agility on the OFF hand (900031), Crusader kept on the main hand.
+  lw_melee: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 900031, wrists: 900019 },
+  hawk_melee: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 900031, wrists: 900019 },
   warlock_smds: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   warlock_firelock: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   warlock_sbolt: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
@@ -133,10 +185,24 @@ export const PRESET_ENCHANTS: Readonly<
   shadow_priest: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   // The Shockadin's caster row with the two Healing Power enchants on the neck
   // (900010) and wrists (900020), which are stats since round 52.
-  holy_pal: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900010, shield: 900030, wrists: 900020 },
+  // Round 78: head and legs +8 Intellect (was 1% Haste): the raid healer
+  // fight is mana-bound, +48.84 +/- 7.17 HPS there and -1.57 +/- 4.87 (noise)
+  // in the tank healer fight.
+  holy_pal: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900006, legs: 900006, mainHand: 22749, neck: 900010, shield: 900030, wrists: 900020 },
   // Round 60: Holy Pal's healer loadout, for the Shaman healer.
-  priest_holy: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, neck: 900010, twoHand: 22749, wrists: 900020 },
-  priest_disc: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, neck: 900010, twoHand: 22749, wrists: 900020 },
-  druid_resto: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, neck: 900010, twoHand: 22749, wrists: 900020 },
-  shaman_resto: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900010, shield: 900030, wrists: 900020 },
+  // Round 78: the two Priest healers take the +65 Spell Power staff enchant
+  // (65 healing power) over Enchant Weapon - Spell Power, which is +30 spell
+  // power and NO healing power -- worth nothing to a heal. +5.0/+5.7 HPS in the
+  // tank healer fight, +31.4/+22.8 in the raid fight. And +8 Intellect on head
+  // and legs over +1% Haste, because both fights are mana-bound.
+  priest_holy: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900006, legs: 900006, neck: 900010, twoHand: 900029, wrists: 900020 },
+  priest_disc: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900006, legs: 900006, neck: 900010, twoHand: 900029, wrists: 900020 },
+  /*
+   * ROUND 78: HEAD AND LEGS +8 INTELLECT (was +1% Haste). The raid healer fight
+   * is mana-bound: +76.1 +/- 10.7 HPS there, and +5.9 (noise) in the tank fight.
+   */
+  druid_resto: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900006, legs: 900006, neck: 900010, twoHand: 22749, wrists: 900020 },
+  // Round 78: gloves +1% Haste for +20 Spell Power, +6.48 +/- 4.48 HPS in the
+  // raid healer fight (cast-bound) and -0.73 noise in the tank healer fight.
+  shaman_resto: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900002, head: 900002, legs: 900002, mainHand: 22749, neck: 900010, shield: 900030, wrists: 900020 },
 };

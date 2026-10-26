@@ -242,7 +242,7 @@ school's modifier in before the roll. `AbilityModifier.hitBonus` is the field.
 
 | Profile | Talents | DPS | List |
 | --- | --- | --- | --- |
-| Seal Twist Ret | 15/0/36 | **748.3** ±9.6 | `PALADIN_RETRIBUTION` |
+| Seal Twist Ret | 16/0/35 | **748.3** ±9.6 | `PALADIN_RETRIBUTION` |
 | Shockadin | 23/0/28 | **585.5** ±4.9 | `PALADIN_SHOCKADIN` |
 | Prot Pally | 8/34/9 | **303.9** ±3.7 | `PALADIN_PROTECTION` |
 
@@ -618,3 +618,57 @@ ruleset owner:
 **Prot Pally is a tank and 238.1 is correct.** Righteous Fury and Templar's
 Bulwark spend global cooldowns on threat and survival; six of its talents are
 threat, which is permanently out of scope, and a tank's whole job is threat.
+
+---
+
+## Round 78: the five presets optimised for the full report
+
+Objectives: DPS at 1 target / 120 s and 5 targets / 60 s (reused at 3/60 and
+8/30); Prot Pally's TPS at the same, deaths as the check; Holy Pal's HPS in the
+tank healer fight (120 s) and the raid healer fight (60 s). Variants, controls
+and every figure: `tools/optimise/paladinVariants.ts`. Paired, 400 fights.
+
+**THE CLOCK CHANGED THE ANSWER ON THREE OF THE FIVE.** At 120 s Seal Twist Ret
+ends with 0.8% of its mana spare, Prot Pally is mana-bound, and Holy Pal's raid
+fight is mana-bound at 60 s -- so the mana potion, Reverence and Intellect, which
+lost or tied at 60 s, now win. The two Shockadins are not mana-bound at 120 s
+(15.6% and 6.7% spare) and nothing moved them in Single Target.
+
+| profile | shipped | figure |
+| --- | --- | --- |
+| Seal Twist Ret | Reverence 3/3 out of Pursuit of Justice 1 | +12.51 +/- 4.86 |
+| | Major Mana Potion over Spellblasting | +42.45 +/- 6.18 |
+| | wrists +16 Spell Power over +9 Strength | +0.62 +/- 0.03 |
+| | Hammer of Wrath above Judgement (second pass) | +3.73 +/- 2.07 |
+| | MT: Consecration first, Holy Strike above Judgement | +23.20 +/- 11.73 at 5 |
+| Shockadin, Shockadin 2H | MT: Consecration first, Holy Strike above Holy Shock | +6.58 / +6.81 at 5, +38.6 / +36.7 at 8 |
+| Prot Pally | Major Mana Potion, +25 Intellect, gloves +2% Threat | +73.60 +/- 5.63 TPS, deaths -0.15 |
+| | wrists +16 Spell Power over +4 Defense | +9.2 TPS on top, deaths +0.13 (noise) |
+| | MT: Consecration above Templar's Bulwark | +10.75 at 5, +89.61 at 8, -4.60 (noise) at 3 |
+| Holy Pal | head and legs +8 Intellect over +1% Haste | raid +48.84 +/- 7.17; tank -2.80 +/- 3.09 (noise, 1000 fights) |
+| | raid list: Divine Favor above the Holy Light line | +8.40 HPS on top |
+
+**EVERY ALTERNATIVE LOST**, and these are the rows: Ret's Consecration gated on
+mana (+10.9 before the potion, -2.5 after it), Consecration at a 0s lead
+(-6.50), head/legs Intellect (-10.03), Crusader (-13.66), Revelation (-19.09),
+Dwarf (-6.33) and Undead (-7.75, noise); the Shockadins' free points (Divine
+Precision -16 to -78), every APL move (Hammer ungated -9 to -12, removed -16),
+the mana potion (-3.45 / -5.54), Strength Blasted Lands, Dwarf (-5.5 / -7.0),
+Undead (noise); Prot's talent moves (all -7 to -39 TPS), APL moves (Consecration
+above Judgement -11.40, Swift Judgement removed -23.78), Dwarf (-7.11); Holy
+Pal's other consumables (Spellblasting -94.85 in the raid), Spirit, Dwarf
+(-17.08) and Undead (-14.25) in the raid fight. Holy Pal's talents were not
+varied: the 13 Protection and 2 Holy Conduit points are dead for a healer
+nobody attacks and the Holy tree has no unbought healing talent left.
+
+**WITHHELD, AND WHY:**
+
+- Prot's flask +150 Spell Power: **+56.9 TPS on top of the shipped set, deaths
+  +1.1 (4%)**. The owner gave this build the spell power food and not the
+  flask; whether that is a ruling or a default is the question.
+- Prot's Demonic Rune over the Healthstone: +1.1 TPS on top, noise -- and the
+  owner ruled tanks take the Healthstone.
+- Prot's Deflection 5 -> Benediction 5: +37.69 before the potion, deaths +1.74;
+  -2.85 after it, deaths +2.19.
+- Holy Pal's raid list without the owner's pre-cast Holy Light: +14.85 HPS over
+  the Intellect enchants. It is the owner's line, so it stays.

@@ -440,8 +440,8 @@ export const SHAMAN_RESTORATION: AplList = {
     ...CONSUMABLE_COOLDOWNS,
     {
       abilityId: 'mana_tide_totem',
-      condition: resourceFraction('atMost', 0.7, 'mana'),
-      note: 'Under 70% mana: a gate of ours, not the owner\'s.',
+      condition: resourceFraction('atMost', 0.9, 'mana'),
+      note: 'Under 90% mana: a gate of ours, not the owner\'s (round 78, was 70%).',
     },
     {
       abilityId: 'nature_s_swiftness',
@@ -459,6 +459,22 @@ export const SHAMAN_RESTORATION: AplList = {
       target: { kind: 'withAura', auraId: 'riptide' },
       condition: { kind: 'injuredCount', of: 'targetParty', below: 0.9, compare: 'atLeast', count: 2 },
       note: 'On the Riptide target, when 2 or more in its party are under 90%.',
+    },
+    /*
+     * HEALING WAVE ABOVE LESSER HEALING WAVE (round 78), on the lowest under
+     * 90%: **+30.38 +/- 6.73 HPS** in the tank healer fight at 120 s. The
+     * owner's talents spend eight points on Healing Wave alone -- Improved
+     * Healing Wave 5 and Healing Way 3 -- and the list never cast it. Ungated
+     * it is +36.50, but then Lesser Healing Wave never fires; at 90% the
+     * owner's line still tops off, and the two are inside each other's
+     * interval. The Mana Tide gate above moved 70% -> 90% in the same round,
+     * +8.88 +/- 4.41.
+     */
+    {
+      abilityId: 'healing_wave',
+      target: { kind: 'lowestHealth' },
+      condition: { kind: 'health', on: 'target', compare: 'below', fraction: 0.9 },
+      note: 'On the lowest under 90%: an addition of ours (round 78).',
     },
     {
       abilityId: 'lesser_healing_wave',

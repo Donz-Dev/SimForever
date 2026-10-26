@@ -180,9 +180,18 @@ describe('the wiring, through a real fight', () => {
      * ------------------------------------------------------------------------
      */
     const warrior = batchOf('two_hand_arms', 6, 7).stats!;
-    const atPullRangedPool = characterAtCombatStart(
-      PRESETS_BY_ID.get('two_hand_arms')!.build() as never,
-    )!.stats.effective.rangedAttackPower;
+    /*
+     * THE UNBUFFED POOL, WHICH IS NOT "THE POOL AT THE PULL" ANY MORE: round 78
+     * put Blood Fury in this preset's opener at 0s, so the character arrives
+     * with the 10% already on. The floor is the same character without that
+     * one pre-combat line, which is the quantity the invariant was about.
+     */
+    const preset = PRESETS_BY_ID.get('two_hand_arms')!.build();
+    const unbuffed = {
+      ...preset,
+      precombat: (preset.precombat ?? []).filter((action) => action.abilityId !== 'blood_fury'),
+    };
+    const atPullRangedPool = characterAtCombatStart(unbuffed as never)!.stats.effective.rangedAttackPower;
     expect(warrior.spellPower).toBe(0);
     expect(warrior.rangedAttackPower).toBeGreaterThanOrEqual(atPullRangedPool);
     expect(warrior.rangedAttackPower).toBeLessThanOrEqual(atPullRangedPool * 1.1);

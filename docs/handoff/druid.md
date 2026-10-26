@@ -10,6 +10,54 @@ directory for what the census columns mean and how to reprint every figure below
 
 ---
 
+## Round 78 — the four presets optimised for the full report
+
+Paired with `tools/probe_build.ts` (400 fights unless stated) off
+`tools/optimise/druidVariants.ts`, groups `moon78*`, `cat78*`, `bear78*`,
+`resto78*`. Before and after are `tools/full_report.ts` at 300 fights:
+
+| | Single Target 2 min | 3 targets 1 min | 5 targets 1 min | 8 targets 30 s |
+| --- | --- | --- | --- | --- |
+| Moonkin DPS | 806.9 -> **854.3** | 853.9 -> **863.5** | 853.9 -> **1,287.1** | 875.8 -> **2,009.6** |
+| Cat DPS | 919.8 (unchanged) | 972.7 | 972.7 | 1,084.1 |
+| Bear TPS | 1,417.6 -> **1,440.8** | 1,848.5 -> **2,090.8** | 2,104.0 -> **2,345.8** | 2,644.2 -> **2,892.9** |
+| Resto HPS | tank 348.6 -> **366.9** | raid 1,921.7 -> **1,995.0** | | |
+
+**THE MOONKIN IS A DIFFERENT BUILD AT 120 SECONDS.** It ends a 60 s fight
+with ~20% of its mana spare and a 120 s fight with 0.8%, so every mana answer
+recorded above at 60 s flipped: Genesis 5 -> 2 plus Reflection 3 is **+41.3**
+at 120 s and **+100.3** at 180 s (-6.2 at 60 s); Innervate at 10% mana is
+noise at 120 s and **+29.9** at 180 s; Skyborne's 3% haste **+8.4** beside
+Reflection. With all three shipped, Genesis 5 back over Reflection reads +5.1
+at 120 s and -46.8 at 180 s -- Reflection is kept, and that is a question.
+Hurricane above the list at **four targets or more** (+425.7 at 5, +1,141 at
+8); at three it loses 68.3, hence the gate. At 120 s Major Mana over
+Spellblasting was +33.6 before Reflection and -1.8 after; +8 Intellect head
+and legs -9.7 after.
+
+**THE CAT HAD NOTHING TO SHIP**: not mana-bound at any length (22.7% spare at
+120 s), so Innervate, Major Mana (-2.5) and Demonic Rune (-22.5) all lose;
+strength and haste enchants lose to agility (-2.4 to -8.4); Night Elf -5.8,
+Skyborne -3.2 noise; Shifting Power pre-cast at the pull -0.1; Ferocious Bite
++0.2 / -3.0. Its AoE has no rage, so no Swipe and no Primal Bite: Rake
+walked across targets loses 32 to 49 at 5 targets, so it has no Multi Target
+list.
+
+**THE BEAR**: gloves +2% Threat (+19.8 TPS, +0.33 deaths of 18.75) and boots
++7 Agility over a dead Minor Speed. +8 Strength on head and legs is +19.8 TPS
+for +0.87 deaths and was withheld; strength food and Blasted Lands +17.4 and
++17.7 for +0.5 and +0.7 deaths, withheld as the owner's agility ruling. Multi
+Target: Primal Bite while Berserk is up (three targets, no cooldown), then
+Swipe, above the ordinary Primal Bite -- +196.6 / +212.4 / +195.7 TPS at
+5 / 3 / 8 targets, deaths at 5 targets 4.63 -> 5.24. Swipe above Maul is -393.
+
+**THE RESTO DROOD**: the raid fight is mana-bound, so +8 Intellect on head and
+legs is **+76.1 HPS** there (+5.9 noise in the tank fight), and Swiftmend's
+gate (ours) at 70% of the tank is +10.9 in the tank fight. Skyborne is +12.9
+in the tank fight and -11.6 in the raid fight, so the race stays. Removing the
+owner's Healing Touch pre-cast from a raid list is **+52.4** and was withheld
+because the line is theirs.
+
 ## Client build 1.60.1.70170 — Tiger's Fury is gone and the Cat gained a talent
 
 **CAT AND BEAR WERE RE-SPECIFIED and the owner supplied both URLs with the patch
@@ -79,7 +127,7 @@ mana regeneration, one potion, and one list swap.
 
 | | spread | was | now |
 | --- | --- | --- | --- |
-| **Moonkin** | 41/0/10 | 778.6 | **790.3** |
+| **Moonkin** | 41/0/10 (then; 38/0/13 since round 78) | 778.6 | **790.3** |
 | **Cat** | 9/34/8 | 890.0 | **898.4** |
 
 Both loaded in the calculator: **"all 51 spent"**, nothing refunded.
@@ -219,7 +267,7 @@ question** — the count was wrong for as long as nobody did.
 | --- | --- | --- | --- | --- |
 | Cat | 9/34/8 | **663.3** | `DRUID_CAT` | cat (paws) |
 | Bear | 9/42/0 | **433.6** | `DRUID_BEAR` | bear (paws) |
-| Moonkin | 41/0/10 | **513.4** | `DRUID_MOONKIN` | caster |
+| Moonkin | 38/0/13 | **513.4** | `DRUID_MOONKIN` | caster |
 
 **THESE ARE CURRENT AND THE TABLE USED TO CARRY A "was" COLUMN**, which is gone
 because it had stopped being about this class: the figures moved 656.1 → 716.4,
