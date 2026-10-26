@@ -23,6 +23,11 @@
  *
  * GEAR IS E65 AND FIXED; only `enchantId` moves. Race may move (gear stays).
  *
+ * WHAT SHIPPED (round 78), so the controls below are the post-ship presets:
+ * Ret Reverence 3, Major Mana, wrists SP, Hammer above Judgement; Prot Major
+ * Mana, Intellect Blasted Lands, threat gloves, SP wrists; Holy Pal Intellect
+ * head and legs; a Multi Target list for all five. See docs/handoff/paladin.md.
+ *
  * EVERY GROUP CARRIES ITS OWN CONTROL, labelled "the shipped X": `(p) => p` is
  * whatever the preset is on this branch, not what it was when a row was written.
  * ============================================================================
@@ -577,6 +582,14 @@ export const VARIANT_GROUPS: Readonly<Record<string, readonly Variant[]>> = {
     },
     { label: 'gloves +1% Haste (was +20 Spell Power)', apply: enchant('gloves', 900002) },
     { label: 'mainHand Revelation (was +30 Spell Power)', apply: enchant('mainHand', 900032) },
+  ],
+
+  holyRevert: [
+    CONTROL,
+    {
+      label: 'head + legs back to +1% Haste (the round 78 Intellect reverted)',
+      apply: chain(enchant('head', 900002), enchant('legs', 900002)),
+    },
   ],
 
   holyRace: [
