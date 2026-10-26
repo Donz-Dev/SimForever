@@ -248,14 +248,18 @@ export function useStatWeights() {
           const replies = await Promise.all(slices);
           const dps: number[] = [];
           const deaths: number[] = [];
+          const tps: number[] = [];
+          const hps: number[] = [];
           for (const reply of replies) {
             if (reply.kind === 'error') throw new Error(reply.message);
             if (reply.kind === 'samples') {
               dps.push(...reply.samples.dps);
               deaths.push(...reply.samples.deaths);
+              tps.push(...reply.samples.tps);
+              hps.push(...reply.samples.hps);
             }
           }
-          return { dps, deaths };
+          return { dps, deaths, tps, hps };
         };
 
         setState({ status: 'running', phase: 'Running', plan });

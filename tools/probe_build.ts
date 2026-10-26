@@ -18,9 +18,14 @@
  * nothing. Both readings are reported, never collapsed to "0.0".
  * ============================================================================
  */
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { PRESETS_BY_ID } from '../src/profiles';
 import type { CharacterProfile } from '../src/profiles';
-import { profileSamples } from '../src/simulator/iterationSamples';
+import type { IterationSamples } from '../src/simulator/iterationSamples';
+import { healerSamples, profileSamples } from '../src/simulator/iterationSamples';
+import type { HealerFight } from '../src/simulator/healerEncounter';
+import { HEALER_PROFILE_IDS } from '../src/profiles/presetRoles';
 import { pairedDelta } from '../src/simulator/statWeights';
 import { syncDefaultRotation } from '../src/profiles/rotation';
 import { VARIANT_GROUPS as SHOCKADIN } from './shockadinVariants';
@@ -41,7 +46,18 @@ import { VARIANT_GROUPS as FIRELOCK } from './firelockVariants';
  * ONE REGISTRY, SPREAD FROM THE PER-CLASS FILES. A group name is a command-line
  * argument, so they share a namespace -- each file prefixes its own.
  */
-const VARIANT_GROUPS = {
+/*
+ * `FILE=` LOADS ONE MORE VARIANT FILE BY PATH (round 78), so a file written for
+ * one optimisation round is measurable without editing this registry -- nine
+ * classes optimised at once would otherwise all edit the import list above.
+ */
+const EXTRA: Record<string, readonly { label: string; apply: Variant['apply'] }[]> = process.env.FILE
+  ? ((await import(/* @vite-ignore */ pathToFileURL(resolve(process.env.FILE)).href))
+      .VARIANT_GROUPS as Record<string, readonly { label: string; apply: Variant['apply'] }[]>)
+  : {};
+
+const VARIANT_GROUPS: Record<string, readonly { label: string; apply: Variant['apply'] }[]> = {
+  ...EXTRA,
   ...SHOCKADIN,
   ...HUNTER,
   ...DRUID,
@@ -87,15 +103,43 @@ export type Variant = {
  */
 const DURATION = process.env.DURATION === undefined ? undefined : Number(process.env.DURATION);
 
-const preset = PRESETS_BY_ID.get(PRESET)!.build();
-const base: CharacterProfile =
-  DURATION === undefined
-    ? preset
-    : { ...preset, simulation: { ...preset.simulation, durationSeconds: DURATION } };
-const slice = { from: 0, to: ITER };
+/*
+ * ============================================================================
+ * TARGETS, A HEALER'S FIGHT, AND WHICH FIGURE IS DIFFERENCED (round 78).
+ *
+ *   TARGETS=5           the encounter's Number of Targets. More than one runs
+ *                       the profile's Multi Target section, as the app does.
+ *   FIGHT=tank|raid     a healer's fight. Defaults to `tank` for a healer
+ *                       preset; ignored for anyone else.
+ *   METRIC=dps|tps|hps  the figure each row differences. Defaults by ROLE:
+ *                       hps for a healer, tps for a build whose target swings
+ *                       back, dps otherwise. The owner's core drivers.
+ *
+ * All three are applied to the baseline and every variant alike, so the
+ * comparison stays paired.
+ * ============================================================================
+ */
+const TARGETS = process.env.TARGETS === undefined ? undefined : Number(process.env.TARGETS);
+const HEALER = HEALER_PROFILE_IDS.includes(PRESET);
+const FIGHT: HealerFight = process.env.FIGHT === 'raid' ? 'raid' : 'tank';
 
-const baseline = profileSamples(base, SEED, slice);
-const baseMean = baseline.dps.reduce((a, b) => a + b, 0) / baseline.dps.length;
+const preset = PRESETS_BY_ID.get(PRESET)!.build();
+const base: CharacterProfile = {
+  ...preset,
+  simulation: { ...preset.simulation, ...(DURATION === undefined ? {} : { durationSeconds: DURATION }) },
+  encounter: { ...preset.encounter, ...(TARGETS === undefined ? {} : { numberOfTargets: TARGETS }) },
+};
+const METRIC = (process.env.METRIC ?? (HEALER ? 'hps' : base.encounter.targetAttacks ? 'tps' : 'dps')) as
+  | 'dps'
+  | 'tps'
+  | 'hps';
+const slice = { from: 0, to: ITER };
+const samplesOf = (profile: CharacterProfile): IterationSamples =>
+  HEALER ? healerSamples(profile, FIGHT, SEED, slice) : profileSamples(profile, SEED, slice);
+const metricOf = (samples: IterationSamples): number[] => samples[METRIC];
+
+const baseline = samplesOf(base);
+const baseMean = metricOf(baseline).reduce((a, b) => a + b, 0) / ITER;
 /*
  * A TANK IS READ ON DEATHS FIRST, which `docs/profile-optimisation.md` says in
  * capitals and this tool could not show: the samples already carried a death
@@ -106,9 +150,11 @@ const baseMean = baseline.dps.reduce((a, b) => a + b, 0) / baseline.dps.length;
 const baseDeaths = baseline.deaths.reduce((a, b) => a + b, 0) / baseline.deaths.length;
 const SHOW_DEATHS = baseDeaths > 0;
 console.log(
-  `${PRESET}   baseline ${baseMean.toFixed(1)} DPS` +
+  `${PRESET}   baseline ${baseMean.toFixed(1)} ${METRIC.toUpperCase()}` +
     (SHOW_DEATHS ? `, ${baseDeaths.toFixed(2)} deaths` : '') +
-    ` over ${ITER} paired iterations at ${base.simulation.durationSeconds}s\n`,
+    ` over ${ITER} paired iterations at ${base.simulation.durationSeconds}s` +
+    (HEALER ? `, ${FIGHT} healer fight` : `, ${base.encounter.numberOfTargets} target(s)`) +
+    '\n',
 );
 
 const groups = WANTED.includes('all') ? Object.keys(VARIANT_GROUPS) : WANTED;
@@ -148,8 +194,8 @@ for (const group of groups) {
       failures.push(`  ${variant.label.padEnd(46)} SKIPPED: ${(error as Error).message}`);
       continue;
     }
-    const samples = profileSamples(profile, SEED, slice);
-    const d = pairedDelta(baseline.dps, samples.dps);
+    const samples = samplesOf(profile);
+    const d = pairedDelta(metricOf(baseline), metricOf(samples));
     const dd = SHOW_DEATHS ? pairedDelta(baseline.deaths, samples.deaths) : undefined;
     rows.push({
       label: variant.label,

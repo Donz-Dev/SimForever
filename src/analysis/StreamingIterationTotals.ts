@@ -22,10 +22,28 @@ import type { TelemetryEvent, TelemetrySink } from '../engine';
 export class StreamingIterationTotals implements TelemetrySink {
   private readonly totals = new Map<string, number>();
   private readonly deaths = new Map<string, number>();
+  private readonly threat = new Map<string, number>();
+  private readonly healing = new Map<string, number>();
 
   emit(event: TelemetryEvent): void {
     if (event.type === 'death') {
       this.deaths.set(event.actorId, (this.deaths.get(event.actorId) ?? 0) + 1);
+      return;
+    }
+    /*
+     * THREAT AND HEALING DONE, so a tank's TPS and a healer's HPS can be
+     * paired the way DPS is. Read exactly as `BatchTotals` reads them: threat
+     * by source, and healing by source with an EXTERNAL heal -- the assumed
+     * tank healer, which names the tank it heals -- left out.
+     */
+    if (event.type === 'threat') {
+      this.threat.set(event.sourceId, (this.threat.get(event.sourceId) ?? 0) + event.amount);
+      return;
+    }
+    if (event.type === 'heal') {
+      if (!event.external) {
+        this.healing.set(event.sourceId, (this.healing.get(event.sourceId) ?? 0) + event.amount);
+      }
       return;
     }
     if (event.type !== 'damage') return;
@@ -43,6 +61,16 @@ export class StreamingIterationTotals implements TelemetrySink {
    */
   deathsFor(actorId: string): number {
     return this.deaths.get(actorId) ?? 0;
+  }
+
+  /** Threat an actor generated, after every modifier. */
+  threatFor(actorId: string): number {
+    return this.threat.get(actorId) ?? 0;
+  }
+
+  /** Healing an actor did that restored health, absorbs that count included. */
+  healingFor(actorId: string): number {
+    return this.healing.get(actorId) ?? 0;
   }
 
   totalFor(sourceId: string): number {

@@ -1,0 +1,7 @@
+import type { MultiTargetDefaults } from './types';
+
+/**
+ * The Hunter presets' optimised Multi Target lists (round 78), keyed by preset
+ * id. A preset with no entry runs its Single Target list on several targets.
+ */
+export const HUNTER_MULTI_TARGET: MultiTargetDefaults = {};

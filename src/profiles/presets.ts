@@ -5,6 +5,7 @@ import {
   casterConsumables,
   hybridConsumables,
 } from '../game/buffs/consumables';
+import { withMultiTargetDefault } from './multiTarget';
 import { getCombatStyle } from '../game/character';
 import { RAID_BUFFS } from '../game/buffs/raidBuffs';
 import type { ClassId } from '../game/character';
@@ -4375,7 +4376,8 @@ function withStockRotations(presets: readonly ProfilePreset[]): readonly Profile
        */
       const { multiTarget: _inherited, ...built } = withoutUnusedOffHandEffect(preset.build());
       void _inherited;
-      return syncDefaultRotation(built);
+      // AND ITS OWN MULTI TARGET LIST, where it has been given one (round 78).
+      return withMultiTargetDefault(preset.id, syncDefaultRotation(built));
     },
   }));
 }

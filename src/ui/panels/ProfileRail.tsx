@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import { TANK_PROFILE_IDS, HEALER_PROFILE_IDS } from '../../profiles/presetRoles';
 import type { ClassId } from '../../game/character';
 import type { ProfilePreset } from '../../profiles';
 import { PROFILE_PRESETS } from '../../profiles';
@@ -57,8 +58,8 @@ interface ProfileRailProps {
  * about. A preset in neither list is a DPS profile, so a new one appears.
  * ----------------------------------------------------------------------------
  */
-export const TANK_PROFILE_IDS: readonly string[] = ['druid_bear', 'prot_warr', 'prot_pally', 'fury_prot'];
-export const HEALER_PROFILE_IDS: readonly string[] = ['shaman_resto', 'holy_pal', 'druid_resto', 'priest_holy', 'priest_disc'];
+// The role lists live in `profiles/presetRoles.ts`, where the tools read them too.
+export { TANK_PROFILE_IDS, HEALER_PROFILE_IDS } from '../../profiles/presetRoles';
 
 const BY_ID = new Map(PROFILE_PRESETS.map((preset) => [preset.id, preset]));
 

@@ -1,0 +1,49 @@
+import type { CharacterProfile } from '../CharacterProfile';
+import { setSection } from '../aplSections';
+import type { MultiTargetDefault, MultiTargetDefaults } from './types';
+import { WARRIOR_MULTI_TARGET } from './warrior';
+import { ROGUE_MULTI_TARGET } from './rogue';
+import { DRUID_MULTI_TARGET } from './druid';
+import { SHAMAN_MULTI_TARGET } from './shaman';
+import { MAGE_MULTI_TARGET } from './mage';
+import { PALADIN_MULTI_TARGET } from './paladin';
+import { HUNTER_MULTI_TARGET } from './hunter';
+import { WARLOCK_MULTI_TARGET } from './warlock';
+import { PRIEST_MULTI_TARGET } from './priest';
+
+export type { MultiTargetDefault, MultiTargetDefaults } from './types';
+
+/**
+ * ==============================================================================
+ * EVERY PRESET'S OWN MULTI TARGET LIST (round 78), one file per class so the
+ * classes can be optimised side by side without editing one table.
+ *
+ * STORED AS A CUSTOM LIST, because that is what it is: written for the preset
+ * rather than derived from its build. A `default` Multi Target list is
+ * re-derived from the Single Target stock list whenever the build changes, and
+ * would replace this the first time it was synced.
+ * ==============================================================================
+ */
+export const MULTI_TARGET_DEFAULTS: MultiTargetDefaults = {
+  ...WARRIOR_MULTI_TARGET,
+  ...ROGUE_MULTI_TARGET,
+  ...DRUID_MULTI_TARGET,
+  ...SHAMAN_MULTI_TARGET,
+  ...MAGE_MULTI_TARGET,
+  ...PALADIN_MULTI_TARGET,
+  ...HUNTER_MULTI_TARGET,
+  ...WARLOCK_MULTI_TARGET,
+  ...PRIEST_MULTI_TARGET,
+};
+
+/** A built preset with its own Multi Target section, when it has one. */
+export function withMultiTargetDefault(presetId: string, profile: CharacterProfile): CharacterProfile {
+  const list: MultiTargetDefault | undefined = MULTI_TARGET_DEFAULTS[presetId];
+  if (!list) return profile;
+  const precombat = list.precombat ?? profile.precombat;
+  return setSection(profile, 'multi', {
+    ...profile,
+    rotation: { source: 'custom', name: list.name, entries: list.entries },
+    ...(precombat ? { precombat } : {}),
+  });
+}
