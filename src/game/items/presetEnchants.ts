@@ -70,6 +70,13 @@ export const PRESET_ENCHANTS: Readonly<
    * deaths, which is buying threat with deaths.
    */
   druid_bear: { chest: 900015, cloak: 900001, feet: 900026, gloves: 900024, head: 900001, legs: 900001, neck: 900011, twoHand: 20034, wrists: 900019 },
+  /*
+   * ROUND 78 LEFT THESE ALONE, AND THE ROUTE THERE IS THE KNOCK-ON: head and
+   * legs +8 Intellect for +1% Haste measured +12.77 +/- 3.87 at 1 target / 120 s
+   * on the round's starting build, and -10.17 +/- 3.45 once Orc and the Major
+   * Mana Potion were in. Haste here is also the Searing Totem knife-edge of
+   * docs/profile-optimisation.md Appendix B.
+   */
   shaman_elemental: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900009, shield: 900030, wrists: 900018 },
   /*
    * ==========================================================================
@@ -95,7 +102,15 @@ export const PRESET_ENCHANTS: Readonly<
    * every slot that offers it.
    * ==========================================================================
    */
-  shaman_enhancement: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900021, head: 900005, legs: 900005, neck: 900008, twoHand: 20034, wrists: 900017 },
+  /*
+   * ROUND 78, priced at 1 target / 120 s and at 5 targets / 60 s, paired:
+   *   two-hand +65 Spell Power for Crusader     +8.15 +/- 6.46  /  +22.73 +/- 9.92
+   *   wrists, gloves, neck Spell Power for Str  +2.88 (sum)     /  +12.78 +/- 0.13
+   *   head and legs +8 Intellect for +8 Str     +3.93 +/- 3.72  /  +3.06 +/- 1.51
+   * A mana-bound build (1% spare at 120 s) whose spell power reaches 26% of
+   * its damage and all of its Fire Nova and Magma Totem.
+   */
+  shaman_enhancement: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900006, legs: 900006, neck: 900009, twoHand: 900029, wrists: 900018 },
   mage_frostfire: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   // The owner's saved build, round 59: the Frostfire loadout exactly.
   mage_frost: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
@@ -161,5 +176,7 @@ export const PRESET_ENCHANTS: Readonly<
    * is mana-bound: +76.1 +/- 10.7 HPS there, and +5.9 (noise) in the tank fight.
    */
   druid_resto: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900006, legs: 900006, neck: 900010, twoHand: 22749, wrists: 900020 },
-  shaman_resto: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900010, shield: 900030, wrists: 900020 },
+  // Round 78: gloves +1% Haste for +20 Spell Power, +6.48 +/- 4.48 HPS in the
+  // raid healer fight (cast-bound) and -0.73 noise in the tank healer fight.
+  shaman_resto: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900002, head: 900002, legs: 900002, mainHand: 22749, neck: 900010, shield: 900030, wrists: 900020 },
 };

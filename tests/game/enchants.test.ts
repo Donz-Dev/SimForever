@@ -742,9 +742,23 @@ describe('what each of the 29 profiles opens with', () => {
     'pally_ret wrists': '+16 Spell Power',
     'prot_pally gloves': '+2% Threat',
     'prot_pally wrists': '+16 Spell Power',
+    /*
+     * ROUND 78, measured at 1 target / 120 s and at 5 targets / 60 s, where the
+     * Enhancement Shaman is mana-bound and its spell power reaches Fire Nova,
+     * Magma Totem and Chain Lightning: Intellect on the head and legs (+3.93 /
+     * +3.06), Spell Power on the neck, wrists and gloves (+2.88 / +12.78). And
+     * Piss Beam's gloves +1% Haste, +6.48 HPS in the cast-bound raid fight.
+     * See `presetEnchants.ts`.
+     */
+    'shaman_enhancement head': '+8 Intellect',
+    'shaman_enhancement legs': '+8 Intellect',
+    'shaman_enhancement neck': '+6 Spell Power',
+    'shaman_enhancement wrists': '+16 Spell Power',
+    'shaman_enhancement gloves': '+20 Spell Power',
+    'shaman_resto gloves': '+1% Haste',
   };
 
-  it('matches the owner table row for row, bar one measured exception', () => {
+  it('matches the owner table row for row, bar the measured exceptions', () => {
     for (const preset of PROFILE_PRESETS) {
       const equipment = preset.build().equipment;
       const expected = LOADOUTS[preset.id];
