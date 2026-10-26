@@ -57,7 +57,6 @@ const EXTRA: Record<string, readonly { label: string; apply: Variant['apply'] }[
   : {};
 
 const VARIANT_GROUPS: Record<string, readonly { label: string; apply: Variant['apply'] }[]> = {
-  ...EXTRA,
   ...SHOCKADIN,
   ...HUNTER,
   ...DRUID,
@@ -71,6 +70,8 @@ const VARIANT_GROUPS: Record<string, readonly { label: string; apply: Variant['a
   ...FURY_PROT,
   ...DEMO,
   ...FIRELOCK,
+  // LAST, so a group in the file named on the command line wins a name clash.
+  ...EXTRA,
 };
 
 const PRESET = process.env.PRESET ?? 'pally_shockadin_2h';
