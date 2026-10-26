@@ -43,7 +43,12 @@ export function withMultiTargetDefault(presetId: string, profile: CharacterProfi
   const precombat = list.precombat ?? profile.precombat;
   return setSection(profile, 'multi', {
     ...profile,
-    rotation: { source: 'custom', name: list.name, entries: list.entries },
+    rotation: {
+      source: 'custom',
+      name: list.name,
+      entries: list.entries,
+      ...(list.smartHealing ? { smartHealing: true } : {}),
+    },
     ...(precombat ? { precombat } : {}),
   });
 }

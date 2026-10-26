@@ -664,9 +664,11 @@ const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: '+7 Agility',
   },
   // Round 52's healer, which has no owner row yet: chosen by the healer's stats.
+  // Round 78: Intellect on the head and legs, +48.84 +/- 7.17 HPS in the
+  // mana-bound raid healer fight and noise in the tank healer fight.
   holy_pal: {
-    head: '+1% Haste', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',
-    wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: '+7 Agility',
+    head: '+8 Intellect', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',
+    wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+8 Intellect', feet: '+7 Agility',
     shield: '+9 Stamina',
   },
 };
@@ -719,6 +721,16 @@ describe('what each of the 29 profiles opens with', () => {
    */
   const OPTIMISED_AWAY_FROM_THE_TABLE: Readonly<Record<string, string>> = {
     'shaman_enhancement feet': '+7 Agility',
+    /*
+     * ROUND 78, measured paired at the full report's own clock (120 s, one
+     * target). Retribution is mana-bound there and reads spell power on half
+     * its damage: +0.62 +/- 0.03. The Protection Paladin is mana- and
+     * spell-power-bound: the threat gloves are +10.65 +/- 0.07 TPS with deaths
+     * unchanged, and the spell power wrists +9.2 TPS more, deaths +0.13 (noise).
+     */
+    'pally_ret wrists': '+16 Spell Power',
+    'prot_pally gloves': '+2% Threat',
+    'prot_pally wrists': '+16 Spell Power',
   };
 
   it('matches the owner table row for row, bar one measured exception', () => {
