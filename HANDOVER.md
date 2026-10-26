@@ -107,6 +107,67 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 75: haste shortens the global cooldown, and swing speed is not haste
+
+The owner: "Haste effects reduce the global cooldown triggered by spells. Haste
+effects are not Flurry, Rapid Fire, etc that specifically apply to weapon swing
+speed ... Haste can reduce the global cooldown from 1.5 sec to a floor of 1.0
+seconds."
+
+| | what changed |
+| --- | --- |
+| the global cooldown | divided by GLOBAL haste, floored at **1.0s** (`HASTED_GCD_FLOOR_MS`). 20% haste makes 1.5s into 1.25s; 50% or more makes it 1.0s. A Rogue's or a Cat's 1.0s does not move |
+| a new stat, `attackSpeedRating` | swing speed only, on haste's scale, compounding source by source the way haste does. It speeds up a swing timer and nothing else: no cast time, no GCD. Swing timers and parry haste divide by `swingHasteMultiplierFrom`, global haste times swing speed |
+| moved to swing speed | Flurry (Warrior and Shaman), Slice and Dice, Blade Flurry, Rapid Fire, Deadly Aspects, the pet's Frenzy, Seal of the Crusader, and Thunder Clap's slow on the boss |
+| still global haste | gear and enchant haste, Berserking, the Skyborne 3%, the Spellstone, Rage of the Farseer ("melee attack speed **and** spell casting speed") and Nature's Grace |
+| Nature's Grace | its separate 10% GCD cut (`gcdFraction`) is removed. Its haste now shortens the GCD by itself, and keeping both would have counted the cut twice |
+
+**SO THREE SWING BUFFS STOPPED SHORTENING CASTS**, which they had done since
+they were written, as a side effect of sharing `hasteRating`. Rapid Fire was
+speeding up Aimed Shot and Sniper Shot; Seal of the Crusader was speeding up
+the Retribution Paladin's casts by 40%.
+
+Measured over 300 fights a profile against `main`:
+
+| | before | after | |
+| --- | --- | --- | --- |
+| Ele Shaman | 750.8 | 771.2 | **+20.3 REAL** |
+| Fire Demo | 1084.0 | 1098.0 | **+14.1 REAL** |
+| Frostfire | 1038.6 | 1053.2 | +14.6 |
+| Fire | 1127.4 | 1141.2 | +13.8 |
+| Frost Mage | 970.4 | 981.5 | +11.2 |
+| Arcane | 1052.9 | 1062.9 | +10.0 |
+| Moonkin | 848.4 | 856.7 | +8.2 |
+| Firelock | 942.1 | 949.6 | +7.5 |
+| BM Hunter | 1011.0 | 1017.4 | +6.4 |
+| Seal Twist Ret | 983.7 | 959.3 | **-24.4 REAL**, Seal of the Crusader no longer hastes its casts |
+| LW Ranged | 1069.9 | 1042.0 | **-27.9 REAL**, Rapid Fire no longer hastes its cast shots |
+
+The rest are within noise. **Every Warrior and Rogue profile, the Cat, the Bear,
+the Prot Pally and both melee Hunters are bit-identical**: a Rogue or Cat GCD is
+already at the floor, and on the others the buff moved to swing speed paces
+the swings exactly as before.
+
+The five healers move only slightly. At 2 to 4% haste the GCD only goes from 1.5s
+to about 1.45s, and their heals are cast-time bound. Over 200 fights each, every
+tank and raid HPS is within its interval of `main`'s.
+
+**WHAT THE RESULTS PAGE'S "HASTE" TILE MEANS HAS NARROWED.** The average haste
+on the results page is GLOBAL haste, so a Venom Rogue's Slice and Dice no longer
+shows there. Swing speed is not reported anywhere; adding it would change the
+stat-sample event and with it every combat log, so it was left for the owner to
+ask for.
+
+**TWO FIGURES ARE FOR THE OWNER:**
+
+- **Shadow Word: Death's held cast now usually misses its window.** The Shadow
+  Priest's faster GCD brings its third cast back just before the final 20%
+  instead of inside it. The test now pins "at most one in the window"; whether
+  to retune the hold is a list question.
+- **Rage of the Farseer stayed global haste** on its own wording, "melee attack
+  speed and spell casting speed". If the owner means it as two effects, its
+  melee half would become swing speed.
+
 ## Round 74: Sim History shows a healer run's HPS
 
 The owner: a healer run's Sim History row read 0.0, because it deals no damage.

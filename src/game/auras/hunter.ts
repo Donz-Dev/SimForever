@@ -25,9 +25,14 @@ const FIRE = 'fire' as const;
 const NATURE = 'nature' as const;
 const PHYSICAL = 'physical' as const;
 
-/** A flat percentage as the engine's own haste rating. */
+/**
+ * A flat percentage of SWING SPEED (round 75): Rapid Fire, Deadly Aspects and
+ * the pet's Frenzy are all "attack speed", which the owner rules is not haste
+ * -- it reaches no cast time and no global cooldown, so Rapid Fire no longer
+ * shortens an Aimed Shot.
+ */
 const hasteFromPercent = (percent: number) =>
-  flat('hasteRating', percent * RATING_PER_PERCENT.haste);
+  flat('attackSpeedRating', percent * RATING_PER_PERCENT.haste);
 
 /**
  * Hunter’s Mark: "+71 Ranged Attack Power for all attackers against that

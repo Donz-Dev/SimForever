@@ -65,6 +65,8 @@ export {
   armorConstantForLevel,
   critChanceFrom,
   hasteMultiplierFrom,
+  attackSpeedMultiplierFrom,
+  swingHasteMultiplierFrom,
   spellCritChanceFrom,
   versatilityMultiplierFrom,
 } from './ratings';

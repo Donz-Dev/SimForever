@@ -130,22 +130,17 @@ const batchOf = (preset: string, iterations: number, seed: number) => {
 
 describe('the wiring, through a real fight', () => {
   /*
-   * SLICE AND DICE IS THE WHOLE POINT OF THIS STATISTIC. It is +30% attack
-   * speed and the Venom Rogue keeps it up for most of the fight, so the
-   * character's AVERAGE haste is a long way above the character sheet's --
-   * which shows the pull, before the Rogue has cast anything at all.
+   * SLICE AND DICE WAS THE WHOLE POINT OF THIS STATISTIC, AND ROUND 75 MOVED
+   * IT OUT. It is +30% attack SPEED, which the owner rules is not haste: it
+   * reaches the swing timer and no cast or global cooldown. The statistic is
+   * GLOBAL haste -- the figure that shortens a cast and the GCD -- so a Venom
+   * Rogue, whose only speed is Slice and Dice, now averages under it.
    */
-  it('reports a Rogue hasted well above its own character sheet', () => {
+  it('does not count Slice and Dice as haste', () => {
     const batch = batchOf('rogue_venom', 12, 4242);
     const stats = batch.stats!;
     expect(stats).toBeDefined();
-
-    // The sheet's figure is 1.0: nothing is hasting a Rogue at the pull.
-    expect(stats.hasteMultiplier).toBeGreaterThan(1.05);
-    // And it cannot exceed what Slice and Dice alone grants, because that is
-    // the only haste in the build -- a figure above it would mean the average
-    // was counting something twice.
-    expect(stats.hasteMultiplier).toBeLessThanOrEqual(1 + SLICE_AND_DICE_ATTACK_SPEED);
+    expect(stats.hasteMultiplier).toBeLessThan(1 + SLICE_AND_DICE_ATTACK_SPEED / 2);
   });
 
   it('reports attack power at or above the unbuffed character', () => {

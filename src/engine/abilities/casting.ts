@@ -8,7 +8,7 @@ import type { ScheduledEvent } from '../events';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import type { Milliseconds } from '../time';
 import type { Ability, AbilityContext } from './Ability';
-import { DEFAULT_GCD_MS, MINIMUM_GCD_MS } from './Ability';
+import { DEFAULT_GCD_MS, HASTED_GCD_FLOOR_MS, MINIMUM_GCD_MS } from './Ability';
 import { castModifiersFor, chargesIn, resolveCast } from './castModifiers';
 
 /** Why an ability could not be used. Useful for debugging a stuck rotation. */
@@ -301,7 +301,15 @@ export function castAbility(
      * cooldown.
      */
     const length = gcdLength(ability, caster.baseGcdMs) * caster.auras.gcdMultiplier();
-    caster.gcdReadyAt = now + Math.max(MINIMUM_GCD_MS, length);
+    /*
+     * AND HASTE SHORTENS IT (round 75), the owner's: "Haste effects reduce the
+     * global cooldown triggered by spells" -- GLOBAL haste, `hasteRating`, and
+     * not swing speed -- "to a floor of 1.0 seconds". So a 1.5s cooldown at 20%
+     * haste is 1.25s, at 50% or more it is 1.0, and a Rogue's 1.0 does not
+     * move. Integer milliseconds, as a hasted cast is.
+     */
+    const hasted = Math.max(Math.min(length, HASTED_GCD_FLOOR_MS), applyHaste(length, haste));
+    caster.gcdReadyAt = now + Math.max(MINIMUM_GCD_MS, hasted);
   }
 
   context.telemetry.emit({

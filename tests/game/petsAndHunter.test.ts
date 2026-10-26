@@ -5,7 +5,7 @@ import { characterAtCombatStart, runProfileBatch } from '../../src/simulator';
 import {
   DEFAULT_DAMAGE_VARIANCE,
   applyHaste,
-  hasteMultiplierFrom,
+  swingHasteMultiplierFrom,
   seconds,
   triggersGcd,
 } from '../../src/engine';
@@ -1104,7 +1104,7 @@ describe('Rapid Fire reaches the melee Hunter too', () => {
     simulation.begin();
     simulation.applyAura(hunter, RAPID_FIRE, hunter.id);
 
-    const hasted = applyHaste(before, hasteMultiplierFrom(hunter.stats.effective));
+    const hasted = applyHaste(before, swingHasteMultiplierFrom(hunter.stats.effective));
     expect(hasted).toBeLessThan(before);
     // 40%, so the swing is 1 / 1.4 of what it was.
     expect(hasted).toBeCloseTo(before / 1.4, 0);

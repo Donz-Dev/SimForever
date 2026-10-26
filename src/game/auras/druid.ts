@@ -930,8 +930,13 @@ export function naturesGraceAura(percentValue: number): AuraDefinition {
     name: "Nature's Grace",
     durationMs: NATURES_GRACE_DURATION_MS,
     refreshBehaviour: 'reset',
+    /*
+     * ITS CASTING SPEED NOW SHORTENS THE GLOBAL COOLDOWN TOO (round 75), as all
+     * haste does, so "and reducing your global cooldown by 10%" is the same
+     * effect said twice. The `gcdFraction` that carried it alone is gone, or
+     * the cooldown would be cut by both: 1.5 / 1.1 x 0.9 rather than 1.5 / 1.1.
+     */
     statModifiers: [flat('hasteRating', percentValue * RATING_PER_PERCENT.haste)],
-    gcdFraction: percentValue / 100,
   };
 }
 

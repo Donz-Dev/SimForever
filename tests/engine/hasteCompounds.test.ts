@@ -8,6 +8,7 @@ import {
   castAbility,
   hasteMultiplierFrom,
   seconds,
+  swingHasteMultiplierFrom,
 } from '../../src/engine';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
@@ -87,13 +88,19 @@ function ownerExample(options: { readonly talents?: boolean } = {}) {
 }
 
 describe("the owner's example, built", () => {
-  it('reads 1.03 x 1.01^3 out of Flurry and 1.3265 in it', () => {
+  /*
+   * ROUND 75: Flurry is swing speed, not haste, so it multiplies into the SWING
+   * and leaves global haste -- casts and the global cooldown -- at 1.0612.
+   */
+  it('reads 1.03 x 1.01^3 out of Flurry and swings at 1.3265 in it', () => {
     const simulation = new Simulation(trainingDummyEncounter(ownerExample(), 1));
     const player = simulation.combatants.find((actor) => actor.kind === 'player')!;
-    expect(hasteMultiplierFrom(player.stats.effective)).toBeCloseTo(1.03 * 1.01 * 1.01 * 1.01, 10);
+    const global = 1.03 * 1.01 * 1.01 * 1.01;
+    expect(hasteMultiplierFrom(player.stats.effective)).toBeCloseTo(global, 10);
     simulation.begin();
     simulation.applyAura(player, flurryAura(25), player.id);
-    expect(hasteMultiplierFrom(player.stats.effective)).toBeCloseTo(OWNER_EXAMPLE, 10);
+    expect(hasteMultiplierFrom(player.stats.effective)).toBeCloseTo(global, 10);
+    expect(swingHasteMultiplierFrom(player.stats.effective)).toBeCloseTo(OWNER_EXAMPLE, 10);
   });
 
   it('swings at the compounded speed', () => {

@@ -81,6 +81,16 @@ export const STAT_NAMES = [
   // that grant rating rather than a flat percentage.
   'critRating',
   'hasteRating',
+  /**
+   * WEAPON SWING SPEED ONLY (round 75), as a rating on haste's own scale. The
+   * owner's: "Haste effects are not Flurry, Rapid Fire, etc that specifically
+   * apply to weapon swing speed." So this hastens a swing timer -- multiplied
+   * with `hasteRating` -- and reaches neither a cast time nor the global
+   * cooldown, which `hasteRating` alone does. Slice and Dice, Blade Flurry,
+   * Flurry, Rapid Fire, Deadly Aspects, a pet's Frenzy, Seal of the Crusader
+   * and Thunder Clap's slow are this.
+   */
+  'attackSpeedRating',
   'masteryRating',
   'versatilityRating',
 

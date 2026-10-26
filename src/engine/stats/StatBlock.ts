@@ -23,6 +23,8 @@ import { RATING_PER_PERCENT } from '../combat/ratings';
  */
 const COMPOUNDING_STATS: Partial<Record<StatName, number>> = {
   hasteRating: RATING_PER_PERCENT.haste * 100,
+  // Swing speed compounds the same way, source by source (round 75).
+  attackSpeedRating: RATING_PER_PERCENT.haste * 100,
 };
 
 /**
