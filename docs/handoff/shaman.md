@@ -1,10 +1,74 @@
 # SHAMAN DEEP DIVE
 
 **Class:** Shaman
-**Profiles:** Ele Shaman, Enh Shaman
+**Profiles:** Ele Shaman, Enh Shaman, Piss Beam (Restoration, a healer)
 
 Read [CLAUDE.md](../../CLAUDE.md) first, then [README.md](README.md) in this
 directory for what the census columns mean and how to reprint every figure below.
+
+---
+
+## Round 78 — the three presets optimised for the full report
+
+`tools/optimise/shamanVariants.ts` holds every group, each with its control;
+`tools/optimise/probe_healer_book.ts` prints a healer's casts, overheal and
+mana book in one fight (a diagnostic, one batch). `full_report.ts`, 300 fights a
+cell, before -> after:
+
+| | 1 target 120 s | 3 targets 60 s | 5 targets 60 s | 8 targets 30 s |
+| --- | --- | --- | --- | --- |
+| Ele Shaman | 690.8 -> **737.2** | 774.4 -> **1272.8** | 774.4 -> **1607.7** | 865.5 -> **2210.2** |
+| Enh Shaman | 801.9 -> **847.4** | 1046.2 -> **1301.3** | 1204.7 -> **1614.0** | 1544.5 -> **2126.4** |
+
+| | tank healer 120 s | raid healer 60 s |
+| --- | --- | --- |
+| Piss Beam | 286.6 -> **330.0** HPS | 1175.9 -> **1228.4** HPS |
+
+**AT 120 s BOTH DAMAGE BUILDS ARE MANA-BOUND** (1.0% and 1.2% headroom), which
+is the regime round 27 found for Elemental and is now the published clock. So
+the Major Mana Potion wins the Single Target fight on both (+35.7 / +23.3 alone,
++12.5 / +10.3 in combination) and loses the 5-target one (-9.4 / -11.9 alone,
+-18.7 / -10.3 in combination). **Shipped on the brief's tie-break** -- prefer the
+Single Target answer unless the Multi Target gain is clearly larger. On Elemental
+the combined figures are 12.5 against 18.7, which is the closest call of the
+round and the owner's to overturn.
+
+**THE MULTI TARGET LISTS ARE THE ROUND** -- `profiles/multiTarget/shaman.ts`.
+Magma Totem for Searing (one fire totem at a time; Searing in its place is -306
+on Elemental), Fire Nova on cooldown, Flame Shock multi-DoT 5, Chain Lightning.
+Each beats the Single Target list at 3, 5 and 8 targets by hundreds.
+
+**PISS BEAM'S RAID FIGHT IS CAST-BOUND, NOT MANA-BOUND** -- about 5,000 mana
+unspent at 60 s -- so its raid list drops Mana Tide Totem (a global cooldown for
+mana it never needs, +24.9) and Nature's Swiftness (+5.5). Its tank list gains
+**Healing Wave**, which the owner's talents spend eight points on (Improved
+Healing Wave 5, Healing Way 3) and which no list cast: +30.4 HPS at 90%.
+
+**RACE: ORC FOR BOTH DAMAGE BUILDS, WINDSHAPER SKYBORNE FOR THE HEALER.** Orc is
++15.7 / +22.6 on Elemental and +4.5 / +13.3 on Enhancement; Windshaper's passive
+3% haste is +29.6 in the cast-bound raid fight. Troll and Tauren were ours.
+
+**A KNOCK-ON REVERSED AN ENCHANT INSIDE THE ROUND.** Elemental's head and legs
++8 Intellect for +1% Haste was +12.77 on the starting build and **-10.17** once
+Orc and the mana potion were in, so the haste stays. Haste on this build is also
+the Searing Totem knife-edge (`docs/profile-optimisation.md` Appendix B).
+
+**PRICED AND WITHHELD:**
+
+- Elemental Warding 3 -> 2 for Totemic Focus 1: +0.98 +/- 0.84 at 120 s, zero at
+  5 targets, and it would have contradicted a spread HANDOVER states. And
+  **Totemic Focus's ability list names Searing Totem only** -- Magma Totem
+  arrived later (round 57) and is not on it, nor Mana Tide Totem. A data
+  question for the owner, not fixed here.
+- Enhancement's Earth Shock gate at Flame Shock >= 1 s for the owner's 3 s:
+  +3.64 +/- 3.55 at 120 s. The owner's gate stands.
+- Lava Burst and Searing Totem entries on Elemental are the owner's lines and
+  were not re-priced for removal.
+
+**QUESTIONS FOR THE OWNER:** Elemental Mastery, Rage of the Farseer and Mana Tide
+Totem all take a global cooldown (Nature's Swiftness does not); all three are
+pre-cast or once a fight, so nothing was priced. Is Elemental Mastery meant to
+be off the GCD, as in Classic?
 
 ---
 

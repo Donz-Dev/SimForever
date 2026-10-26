@@ -8,6 +8,7 @@ import { syncDefaultRotation } from '../../src/profiles/rotation';
 import { migrateProfile } from '../../src/profiles/migrateProfile';
 import { validateProfile } from '../../src/profiles/validateProfile';
 import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
+import { MULTI_TARGET_DEFAULTS } from '../../src/profiles/multiTarget';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import { HEALER_ID, healerEncounter } from '../../src/simulator/healerEncounter';
 
@@ -86,10 +87,26 @@ describe('which section a fight runs', () => {
 });
 
 describe('the presets', () => {
-  it('carry both lists, starting identical, so no figure moves', () => {
+  it('carry both lists, starting identical unless the preset has its own Multi Target list', () => {
     for (const preset of PROFILE_PRESETS) {
       const profile = preset.build();
       expect(profile.multiTarget, preset.id).toBeDefined();
+      /*
+       * ROUND 78 GAVE SOME PRESETS A MULTI TARGET LIST OF THEIR OWN
+       * (`profiles/multiTarget/*.ts`), stored as a custom list and carrying its
+       * own opener when it says so. Those carry exactly that list; every other
+       * preset still starts with a copy of its Single Target one.
+       */
+      const own = MULTI_TARGET_DEFAULTS[preset.id];
+      if (own) {
+        expect(profile.multiTarget!.rotation, preset.id).toEqual({
+          source: 'custom',
+          name: own.name,
+          entries: own.entries,
+        });
+        expect(profile.multiTarget!.precombat, preset.id).toEqual(own.precombat ?? profile.precombat);
+        continue;
+      }
       expect(profile.multiTarget!.rotation, preset.id).toEqual(profile.rotation);
       expect(profile.multiTarget!.precombat, preset.id).toEqual(profile.precombat);
     }

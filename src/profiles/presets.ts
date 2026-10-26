@@ -3059,13 +3059,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
      * figure it gave was not even a legal reading of this tree. Derive it from
      * `encode_talent_build.mjs --all` rather than editing this sentence.
      */
-    detail: 'Troll, caster, standing target. 32 Elemental / 10 Enhancement / 9 Restoration',
+    detail: 'Orc, caster, standing target. 32 Elemental / 11 Enhancement / 8 Restoration',
     characterClass: 'shaman',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Ele Shaman',
-        race: 'troll',
+        race: 'orc',
         characterClass: 'shaman',
         level: 60,
         combatStyle: 'caster',
@@ -3073,7 +3073,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: { ...SHAMAN_ELEMENTAL_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: casterConsumables('school_nature'),
+      /*
+       * THE MAJOR MANA POTION FOR SPELLBLASTING (round 78): **+35.69 +/- 3.72** at
+       * 1 target / 120 s, where this build ends the fight with 1% of its mana
+       * spare, and **-9.37 +/- 4.04** at 5 targets / 60 s. The Single Target
+       * answer is the larger and wins. At 60 s it was -13.33 (round 27).
+       */
+      consumables: { ...casterConsumables('school_nature'), potion: 'major_mana_potion' },
       /*
        * THE ONE OPENER WHOSE CAST IS NOT LAST. Lightning Bolt occupies the two
        * seconds before the pull and LANDS at it; Flame Shock is then taken at
@@ -3136,13 +3142,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
      * prints the split and a URL the owner can audit, which is Step 0 of
      * `docs/profile-optimisation.md` and is the only reading that cannot drift.
      */
-    detail: 'Tauren, two-hander, standing target. 19 Elemental / 32 Enhancement',
+    detail: 'Orc, two-hander, standing target. 19 Elemental / 32 Enhancement',
     characterClass: 'shaman',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Enh Shaman',
-        race: 'tauren',
+        race: 'orc',
         characterClass: 'shaman',
         level: 60,
         combatStyle: 'two_hander',
@@ -3191,7 +3197,16 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
           blastedLands: 'blasted_strength',
         }),
         flask: 'flask_spell_power',
-        food: 'food_strength',
+        /*
+         * ROUND 78, AT 120 s WHERE THIS BUILD ENDS WITH 1% OF ITS MANA SPARE:
+         * the Major Mana Potion for Spellblasting **+23.27 +/- 4.40** (and
+         * **-11.87 +/- 3.09** at 5 targets / 60 s -- the Single Target answer
+         * is the larger); +25 Intellect for +25 Strength **+8.01 / +4.34**;
+         * +28 Spell Power food for +20 Strength **+1.72 / +8.30**.
+         */
+        potion: 'major_mana_potion',
+        blasted_lands: 'blasted_intellect',
+        food: 'food_spell_power',
         // +1% spell crit and +36 spell power on the main hand, by the owner
         // (round 37) -- the caster half of the row, where it was melee crit.
         weapon_effect_main_hand: 'weapon_spell_crit_main_hand',
@@ -4231,13 +4246,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
      */
     id: 'shaman_resto',
     label: 'Piss Beam',
-    detail: 'Troll, caster mace and shield, a healer. 12 Enhancement / 39 Restoration',
+    detail: 'Windshaper Skyborne, caster mace and shield, a healer. 12 Enhancement / 39 Restoration',
     characterClass: 'shaman',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Piss Beam',
-        race: 'troll',
+        race: 'windshaper_skyborne',
         characterClass: 'shaman',
         level: 60,
         combatStyle: 'caster',
