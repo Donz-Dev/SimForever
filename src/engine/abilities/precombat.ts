@@ -1,12 +1,11 @@
 import type { Combatant } from '../actors/Combatant';
-import { hasteMultiplierFrom } from '../combat/ratings';
 import type { AuraInstance } from '../effects/Aura';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import type { Milliseconds } from '../time';
 import type { Ability } from './Ability';
 import { spreadsEffectAcrossCast } from './channelled';
 import { resolveCast } from './castModifiers';
-import { castAbility, castLength } from './casting';
+import { castAbility, castHasteFor, castLength } from './casting';
 
 /**
  * Something the character did before the pull.
@@ -295,11 +294,7 @@ function creditRegen(
 function rewindFor(actor: Combatant, ability: Ability, secondsBefore: number): Milliseconds {
   const leadMs = Math.max(0, Math.round(secondsBefore * 1000));
   const resolved = resolveCast(actor, ability);
-  const castMs = castLength(
-    ability,
-    hasteMultiplierFrom(actor.stats.effective),
-    resolved.baseCastTimeMs,
-  );
+  const castMs = castLength(ability, castHasteFor(actor, ability), resolved.baseCastTimeMs);
   return Math.max(0, leadMs - castMs);
 }
 

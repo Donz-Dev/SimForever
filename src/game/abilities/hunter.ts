@@ -222,6 +222,8 @@ export const AIMED_SHOT: Ability = {
   name: 'Aimed Shot',
   cost: { resource: 'mana', amount: 310 },
   castTimeMs: seconds(2),
+  // Ranged attack speed shortens the cast too, the owner's (round 77).
+  castSpedByRangedAttackSpeed: true,
   // Auto shot runs straight through it -- see the note above Aimed Shot.
   swingTimer: 'continue',
   cooldownMs: seconds(6),
@@ -259,6 +261,8 @@ export const MULTI_SHOT: Ability = {
   name: 'Multi-Shot',
   cost: { resource: 'mana', amount: shareOfBase(0.139) },
   castTimeMs: seconds(0.5),
+  // Ranged attack speed shortens the cast too, the owner's (round 77).
+  castSpedByRangedAttackSpeed: true,
   // Auto shot runs straight through it -- see the note above Aimed Shot.
   swingTimer: 'continue',
   cooldownMs: seconds(6),
@@ -362,6 +366,8 @@ export const SNIPER_SHOT: Ability = {
   name: 'Sniper Shot',
   cost: { resource: 'mana', amount: 365 },
   castTimeMs: SNIPER_SHOT_CAST_MS,
+  // Ranged attack speed shortens the cast too, the owner's (round 77).
+  castSpedByRangedAttackSpeed: true,
   // Auto shot runs straight through it -- see the note above Aimed Shot.
   swingTimer: 'continue',
   cooldownMs: seconds(15),

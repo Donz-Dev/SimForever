@@ -1,5 +1,5 @@
 import type { Combatant } from '../actors/Combatant';
-import { applyHaste, hasteMultiplierFrom } from '../combat/ratings';
+import { applyHaste, attackSpeedMultiplierFrom, hasteMultiplierFrom } from '../combat/ratings';
 import { runCastReactions } from '../combat/reactions';
 import type { ResourceType } from '../resources/Resource';
 import { resetSwingTimers } from '../combat/autoAttack';
@@ -359,7 +359,7 @@ export function castAbility(
    * would deliver one tick's worth of effect and look like a whole channel,
    * so `runPrecombat` refuses one rather than relying on this line.
    */
-  const castTime = options?.precombat ? 0 : castLength(ability, haste, resolved.baseCastTimeMs);
+  const castTime = options?.precombat ? 0 : castLength(ability, castHasteFor(caster, ability), resolved.baseCastTimeMs);
   const abilityContext: AbilityContext = { simulation: context, caster, target, ability };
 
   // An on-next-swing ability is paid for and armed here; the auto-attack that
@@ -630,6 +630,20 @@ function runCast(
   }
 
   runCastReactions(context, caster, { caster, target, ability, spent, final });
+}
+
+/**
+ * WHAT A CAST'S TIME IS DIVIDED BY: global haste, and for an ability declaring
+ * `castSpedByRangedAttackSpeed` ranged attack speed as well (round 77) -- the
+ * swing-speed rating (Rapid Fire, Deadly Aspects) times the ranged weapon's own
+ * multiplier (the quiver). All multiply, as every speed source here does.
+ */
+export function castHasteFor(caster: Combatant, ability: Ability): number {
+  const haste = hasteMultiplierFrom(caster.stats.effective);
+  if (!ability.castSpedByRangedAttackSpeed) return haste;
+  return (
+    haste * attackSpeedMultiplierFrom(caster.stats.effective) * (caster.weapons.ranged?.speedMultiplier ?? 1)
+  );
 }
 
 /** Hasted cast time, or 0 for an instant ability. */
