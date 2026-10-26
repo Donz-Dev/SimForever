@@ -49,9 +49,16 @@ export const PRESET_ENCHANTS: Readonly<
    */
   two_hand_arms: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900021, head: 900005, legs: 900005, neck: 900008, twoHand: 20034, wrists: 900017 },
   dw_fury: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900021, head: 900005, legs: 900005, mainHand: 20034, neck: 900008, offHand: 20034, wrists: 900017 },
-  prot_warr: { chest: 900015, cloak: 900001, feet: 900025, gloves: 900024, head: 900001, legs: 900001, mainHand: 20034, neck: 900012, shield: 900030, wrists: 900016 },
+  /*
+   * ROUND 78: BOTH TANKS' BOOTS GO FROM MINOR SPEED, which is `unmodelled` and
+   * grants nothing, TO +7 AGILITY -- +5.10 +/- 3.02 TPS on Prot Warr and +0.56
+   * (noise) on Fury Prot at 120s, with deaths -0.10 and -0.16. Every other
+   * slot's defensive enchant stays: swapping one for strength or agility buys
+   * 8 to 14 TPS for about +0.3 deaths a slot, which is the owner's trade.
+   */
+  prot_warr: { chest: 900015, cloak: 900001, feet: 900026, gloves: 900024, head: 900001, legs: 900001, mainHand: 20034, neck: 900012, shield: 900030, wrists: 900016 },
   // Prot Warr's loadout exactly: Fury Prot copies that build in every other case.
-  fury_prot: { chest: 900015, cloak: 900001, feet: 900025, gloves: 900024, head: 900001, legs: 900001, mainHand: 20034, neck: 900012, shield: 900030, wrists: 900016 },
+  fury_prot: { chest: 900015, cloak: 900001, feet: 900026, gloves: 900024, head: 900001, legs: 900001, mainHand: 20034, neck: 900012, shield: 900030, wrists: 900016 },
   rogue_venom: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
   // The Venom loadout exactly; see `benchmarkSets.ts` for why the two share.
   rogue_combat_mut: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },

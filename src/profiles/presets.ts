@@ -415,7 +415,14 @@ const PROT_WARR_TALENTS: TalentAllocation = {
   improved_charge: 1,
   deep_wounds: 3,
   impale: 2,
-  // Protection, 34
+  /*
+   * Fury, 2 -- ROUND 78, out of Improved Shield Wall's two points. Shield Wall
+   * fires about 0.2 times a fight, so its cooldown never comes back inside any
+   * fight the report runs and the talent was dead. Cruelty 2 is **+19.21 +/-
+   * 2.75 TPS** at 120s, one target (deaths +0.04 +/- 0.13), and +21.9 at five.
+   */
+  cruelty: 2,
+  // Protection, 32
   shield_specialization: 5,
   anticipation: 5,
   improved_revenge: 3,
@@ -424,7 +431,6 @@ const PROT_WARR_TALENTS: TalentAllocation = {
   master_of_defense: 2,
   defiance: 3,
   vanguard: 1,
-  improved_shield_wall: 2,
   concussion_blow: 1,
   bastion: 5,
   focused_rage: 3,
@@ -451,14 +457,19 @@ const PROT_WARR_TALENTS: TalentAllocation = {
 const FURY_PROT_TALENTS: TalentAllocation = {
   // Arms, 5
   deflection: 5,
-  // Fury, 31
-  booming_voice: 5,
+  /*
+   * Fury, 31. ROUND 78 MOVED THREE POINTS: Improved Berserker Rage 2 (no list
+   * here casts Berserker Rage -- it would drag a Defensive tank into Berserker
+   * Stance) and one of Booming Voice's five into Unbridled Wrath 5/5, the only
+   * live sink in Fury rows 0-4. **+9.93 +/- 7.66 TPS** at 120s over 1000
+   * paired fights (deaths -0.08 +/- 0.27), +12.2 at five targets.
+   */
+  booming_voice: 4,
   cruelty: 5,
-  unbridled_wrath: 2,
+  unbridled_wrath: 5,
   blood_craze: 3,
   enrage: 5,
   improved_execute: 2,
-  improved_berserker_rage: 2,
   death_wish: 1,
   flurry: 5,
   bloodthirst: 1,
@@ -2364,6 +2375,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         ...before(10, 'bloodrage_cast', 'battle_shout_cast'),
         ...before(3, 'battle_stance_cast'),
         ...before(0, 'charge', 'mighty_rage_potion'),
+        /*
+         * ROUND 78'S ONE ADDITION TO THE OWNER'S OPENER: Blood Fury, free and
+         * off the global cooldown, claimed at the pull rather than at the
+         * first decision. **+0.60 +/- 0.04** at 120s, one target -- small and
+         * real, because the in-fight entry already fires at once.
+         */
+        ...before(0, 'blood_fury'),
       ],
       encounter: {
         ...createDefaultProfile().encounter,
@@ -2417,6 +2435,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       precombat: [
         ...before(10, 'bloodrage_cast', 'battle_shout_cast'),
         ...before(3, 'berserker_stance_cast'),
+        // Round 78's addition, as on 2H Arms: **+0.42 +/- 0.03** at 120s.
+        ...before(0, 'blood_fury'),
       ],
       encounter: {
         ...createDefaultProfile().encounter,
