@@ -4,7 +4,7 @@ import type { CharacterProfile } from '../../src/profiles';
 import { HEALER_PROFILE_IDS, TANK_PROFILE_IDS, presetRole } from '../../src/profiles/presetRoles';
 import { healerSamples, profileSamples } from '../../src/simulator/iterationSamples';
 import { runHealerBatch, runProfileBatch } from '../../src/simulator/runBatch';
-import { MULTI_TARGET_DEFAULTS, withMultiTargetDefault } from '../../src/profiles/multiTarget';
+import { MULTI_TARGET_DEFAULTS, narrowedEntries, withMultiTargetDefault } from '../../src/profiles/multiTarget';
 import { sectionOf } from '../../src/profiles/aplSections';
 
 /*
@@ -73,9 +73,7 @@ describe('a preset Multi Target default', () => {
       const built = PRESETS_BY_ID.get(id)!.build();
       const multi = sectionOf(built, 'multi');
       expect(multi.rotation.source).toBe('custom');
-      expect(multi.rotation.entries.map((entry) => entry.abilityId)).toEqual(
-        expect.arrayContaining(list.entries.map((entry) => entry.abilityId)),
-      );
+      expect(multi.rotation.entries).toEqual(narrowedEntries(list, built));
     }
   });
 });

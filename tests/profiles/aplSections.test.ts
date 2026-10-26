@@ -8,7 +8,7 @@ import { syncDefaultRotation } from '../../src/profiles/rotation';
 import { migrateProfile } from '../../src/profiles/migrateProfile';
 import { validateProfile } from '../../src/profiles/validateProfile';
 import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
-import { MULTI_TARGET_DEFAULTS } from '../../src/profiles/multiTarget';
+import { MULTI_TARGET_DEFAULTS, narrowedEntries } from '../../src/profiles/multiTarget';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import { HEALER_ID, healerEncounter } from '../../src/simulator/healerEncounter';
 
@@ -100,7 +100,7 @@ describe('the presets', () => {
         expect(profile.multiTarget!.rotation, preset.id).toEqual({
           source: 'custom',
           name: own.name,
-          entries: own.entries,
+          entries: narrowedEntries(own, profile),
           ...(own.smartHealing ? { smartHealing: true } : {}),
         });
         expect(profile.multiTarget!.precombat, preset.id).toEqual(own.precombat ?? profile.precombat);

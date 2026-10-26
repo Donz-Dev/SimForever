@@ -1,5 +1,7 @@
 import type { CharacterProfile } from '../CharacterProfile';
 import { setSection } from '../aplSections';
+import { racialsForRace } from '../../game/rotations/racialCooldowns';
+import { withoutUnselectedConsumables } from '../../game/rotations/consumableCooldowns';
 import type { MultiTargetDefault, MultiTargetDefaults } from './types';
 import { WARRIOR_MULTI_TARGET } from './warrior';
 import { ROGUE_MULTI_TARGET } from './rogue';
@@ -41,14 +43,30 @@ export function withMultiTargetDefault(presetId: string, profile: CharacterProfi
   const list: MultiTargetDefault | undefined = MULTI_TARGET_DEFAULTS[presetId];
   if (!list) return profile;
   const precombat = list.precombat ?? profile.precombat;
+  /*
+   * NARROWED THE WAY A STOCK LIST IS: racials this race cannot learn switched
+   * off or dropped, and mid-fight consumables it did not select dropped. The
+   * engine skips an unknown ability either way, so no figure moves; what it
+   * changes is a panel listing another race's Blood Fury.
+   */
   return setSection(profile, 'multi', {
     ...profile,
     rotation: {
       source: 'custom',
       name: list.name,
-      entries: list.entries,
+      entries: narrowedEntries(list, profile),
       ...(list.smartHealing ? { smartHealing: true } : {}),
     },
     ...(precombat ? { precombat } : {}),
   });
+}
+
+/** A Multi Target default's entries, narrowed to the character's race and consumables. */
+export function narrowedEntries(list: MultiTargetDefault, profile: CharacterProfile): MultiTargetDefault['entries'] {
+  const characterClass = profile.character.characterClass;
+  return withoutUnselectedConsumables(
+    racialsForRace({ name: list.name, entries: list.entries }, profile.character.race, characterClass),
+    characterClass,
+    profile.consumables,
+  ).entries;
 }
