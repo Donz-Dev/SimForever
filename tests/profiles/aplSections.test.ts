@@ -8,6 +8,7 @@ import { syncDefaultRotation } from '../../src/profiles/rotation';
 import { migrateProfile } from '../../src/profiles/migrateProfile';
 import { validateProfile } from '../../src/profiles/validateProfile';
 import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
+import { MULTI_TARGET_DEFAULTS } from '../../src/profiles/multiTarget';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import { HEALER_ID, healerEncounter } from '../../src/simulator/healerEncounter';
 
@@ -86,12 +87,24 @@ describe('which section a fight runs', () => {
 });
 
 describe('the presets', () => {
-  it('carry both lists, starting identical, so no figure moves', () => {
+  /*
+   * ROUND 78: a preset given its own Multi Target list in `profiles/multiTarget`
+   * carries THAT list -- stored custom, so a build change never re-derives it --
+   * and every other preset still starts with the two lists identical.
+   */
+  it('carry both lists, starting identical unless given their own Multi Target list', () => {
     for (const preset of PROFILE_PRESETS) {
       const profile = preset.build();
       expect(profile.multiTarget, preset.id).toBeDefined();
-      expect(profile.multiTarget!.rotation, preset.id).toEqual(profile.rotation);
-      expect(profile.multiTarget!.precombat, preset.id).toEqual(profile.precombat);
+      const own = MULTI_TARGET_DEFAULTS[preset.id];
+      if (own) {
+        expect(profile.multiTarget!.rotation.source, preset.id).toBe('custom');
+        expect(profile.multiTarget!.rotation.entries, preset.id).toEqual(own.entries);
+        expect(profile.multiTarget!.precombat, preset.id).toEqual(own.precombat ?? profile.precombat);
+      } else {
+        expect(profile.multiTarget!.rotation, preset.id).toEqual(profile.rotation);
+        expect(profile.multiTarget!.precombat, preset.id).toEqual(profile.precombat);
+      }
     }
   });
 });
