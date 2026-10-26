@@ -3324,3 +3324,29 @@ button:disabled {
   line-height: 16px;
   font-size: 0.7em;
 }
+
+/* The ability hover card (APL panel): the talent card's frame, plus the
+   client's two-column cost / range and cast / cooldown lines. */
+.ability-hover {
+  display: inline-flex;
+}
+
+.ability-card-lines {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--talent-card-text);
+}
+
+.ability-card-requires {
+  font-size: 11px;
+  color: var(--talent-card-meta);
+}
+
+.ability-card .talent-card-rank {
+  margin-bottom: 4px;
+}
+
+.ability-card .talent-card-text {
+  margin-top: 6px;
+}
