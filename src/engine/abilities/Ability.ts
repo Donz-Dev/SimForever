@@ -200,6 +200,14 @@ export interface Ability {
   readonly gcdMs?: Milliseconds;
   /** Whether haste shortens the cast time and GCD. Defaults to true. */
   readonly affectedByHaste?: boolean;
+  /**
+   * WHETHER RANGED ATTACK SPEED SHORTENS ITS CAST TOO (round 77), on top of
+   * haste: the swing-speed rating and the ranged weapon's own speed multiplier
+   * -- a Hunter's quiver. The owner's ruling for Multi-Shot, Sniper Shot and
+   * Aimed Shot, which are declared with it; a ruling covers what it names. The
+   * global cooldown is still haste alone.
+   */
+  readonly castSpedByRangedAttackSpeed?: boolean;
   readonly cost?: AbilityCost;
   /** Whether a living hostile target is required. Defaults to true. */
   readonly requiresTarget?: boolean;

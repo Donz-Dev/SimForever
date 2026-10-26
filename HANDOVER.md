@@ -107,6 +107,36 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 77: a Hunter's cast shots are sped by ranged attack speed too
+
+The owner: "Hunter's cast time are affected by Haste AND ranged attack speed
+increases. This includes: Rapid Fire, Berserking, Haste from gear/enchants,
+Haste from Racials, and Deadly Aspects proc 'Quick Shots', and the Quiver attack
+speed increase. This affects: Multi-shot, Sniper Shot, and Aimed Shot cast
+times."
+
+| | what changed |
+| --- | --- |
+| the three shots | declare `Ability.castSpedByRangedAttackSpeed`, so their cast time divides by **haste x swing speed x the quiver**. Each is already a product of its own sources, so they multiply. Nothing else in the Hunter book carries it, since a ruling covers what it names |
+| the quiver | still shortens the bow's swing timer as before, and now also records its 1.15 as `WeaponProfile.speedMultiplier`, which the cast reads. It is not applied to the swing a second time |
+| the global cooldown | still global haste only, round 75's rule. Rapid Fire speeds up the cast, not the GCD after it |
+
+**SO ROUND 75 REMOVED HALF OF THIS AND ROUND 77 PUTS IT BACK DELIBERATELY.**
+Before round 75, Rapid Fire and Deadly Aspects shortened the casts because they
+shared `hasteRating` with everything else. Round 75 split swing speed out, which
+cost LW Ranged 27.9. Now the owner has said those casts do read ranged attack
+speed, and the quiver is new on top.
+
+Measured over 300 fights a profile against round 75's figures:
+
+| | before | after | |
+| --- | --- | --- | --- |
+| LW Ranged | 1042.0 | 1087.3 | **+45.3 REAL** |
+| BM Hunter | 1017.4 | 1015.3 | -2.1, noise |
+
+The other 35 rows are identical to the decimal; both melee Hunters cast none of
+the three shots.
+
 ## Round 76: an ability's hover card in the APL panel
 
 The owner asked for a tooltip card on an ability when the mouse is over it in

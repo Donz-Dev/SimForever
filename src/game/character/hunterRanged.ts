@@ -102,6 +102,8 @@ export function withQuiverAndAmmo(weapon: WeaponProfile): WeaponProfile {
      * scheduled event. 3200 / 1.15 is 2782.6, so this is 2783.
      */
     swingTimerMs: Math.round(weapon.swingTimerMs / QUIVER_RANGED_SPEED_DIVISOR),
+    // Recorded, not re-applied: the three cast shots read it (round 77).
+    speedMultiplier: QUIVER_RANGED_SPEED_DIVISOR,
     baseDamage: weapon.baseDamage + AMMO_DAMAGE_PER_SECOND * baseSpeedSeconds,
     /*
      * `powerCoefficient` IS DELIBERATELY UNTOUCHED. It is the BASE speed over
