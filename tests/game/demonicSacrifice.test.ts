@@ -103,7 +103,13 @@ const SUBJECTS = [
 describe('Demonic Sacrifice, applied end to end', () => {
   for (const subject of SUBJECTS) {
     it(`gives ${subject.preset} exactly 15% more ${subject.school} damage`, () => {
-      const profile = PRESETS_BY_ID.get(subject.preset)!.build();
+      /*
+       * AS AN UNDEAD, which the presets were until round 78 made them Human:
+       * Touch of the Grave is the row here that proves the buff stops at a
+       * hit-points-only effect, and only an Undead has it to prove that with.
+       */
+      const built = PRESETS_BY_ID.get(subject.preset)!.build();
+      const profile: CharacterProfile = { ...built, character: { ...built.character, race: 'undead' } };
       expect(profile.character.petFamily, 'the preset must choose a demon').toBe(subject.demon);
       expect(sacrificedDemon(profile.talents ?? {}, profile.character.petFamily)).toBe(
         subject.demon,

@@ -8,6 +8,96 @@ directory for what the census columns mean and how to reprint every figure below
 
 ---
 
+## Round 78 -- all four optimised for the full report, and a Multi Target list each
+
+**The objective changed under every earlier figure here.** The report measures
+1 target for **120 seconds** and 3/5/8 targets for 60/60/30, so every number
+below is at those lengths; earlier sections are 60s figures and dated.
+`tools/optimise/warlockVariants.ts` (`wl*` groups, `FILE=` it), 400 paired
+fights a row unless said.
+
+### Before and after (`tools/full_report.ts`, 300 fights a cell)
+
+| | 1 target 120s | 3 targets 60s | 5 targets 60s | 8 targets 30s |
+| --- | --- | --- | --- | --- |
+| SM/DS | 765.0 ±2.5 -> **814.9 ±3.1** | 790.0 -> **1347.0** | 790.0 -> **1834.3** | 834.5 -> **2472.2** |
+| Firelock | 868.2 ±3.7 -> **882.8 ±3.9** | 1063.5 -> **1226.4** | 1063.5 -> **1825.6** | 1115.6 -> **2883.5** |
+| Sbolt Spam | 837.5 ±6.0 -> **843.7 ±6.0** | 923.8 -> **1150.0** | 923.8 -> **1581.0** | 1004.6 -> **2282.5** |
+| Fire Demo | 1008.2 ±3.4 -> **1026.1 ±3.4** | 1101.9 -> **1353.1** | 1101.9 -> **1898.8** | 1150.1 -> **2948.7** |
+
+The 3- and 5-target "before" cells are identical because no Warlock had a
+Multi Target list: the Single Target list hit the boss alone at both counts.
+
+### What shipped
+
+| profile | change | paired figure |
+| --- | --- | --- |
+| SM/DS | Bane 5 -> **Improved Shadow Bolt 5** (Bane only shortens a CAST bolt; this build's bolts are Nightfall instants) | +12.58 ±1.18 at 120s |
+| SM/DS | Life Tap gate **15% -> 5%** (`SMDS_LIFE_TAP_MANA`) | +8.63 ±1.16 alone; 3%/7% within a point |
+| SM/DS | **Human** for Undead | +5.9 at 120s, +14.9 at 5 targets |
+| SM/DS | opener **+ Amplify Curse, Bane of Agony, Corruption, Siphon Life at 0s** (pure DoTs and an off-GCD curse: Gate B legal) | +24.9 at 120s, +94.5 at 5 targets |
+| Firelock | **Major Mana Potion** for Spellblasting | +11.25 ±3.41 at 120s; -5.5 at 5 targets |
+| Firelock | **Human** | +6.9 at 120s, +9.7 at 5 |
+| Sbolt | opener **+ Corruption at 0s** | +8.01 ±6.46 at 120s |
+| Fire Demo | **Major Mana Potion** | +14.41 ±3.29 at 120s; -4.5 at 5 |
+| Fire Demo | **Human** | +8.7 at 120s, +9.8 at 5 |
+| all four | a **Multi Target list** each, `src/profiles/multiTarget/warlock.ts` | see below |
+
+**THE MULTI TARGET LISTS ARE BUILT ON HELLFIRE**, which no Warlock list cast
+before: 210 a tick plus 2.2% spell power to every enemy for 15 seconds, the
+self-damage healed back. Each list gates on the target count only what the
+three encounters disagreed about:
+
+| profile | shape | vs its Single Target list at 5 / 3 / 8 |
+| --- | --- | --- |
+| SM/DS | Bane + Corruption walked across 5 targets (boss only above 5), Hellfire, Wrack | +940 / +468 / +1380 |
+| Firelock | Havoc, **Shadowburn** (Shadow and Flame's +10% Fire feeds Hellfire), Immolate + Conflagrate + Bane on the boss at 4 targets or fewer, Hellfire; Havoc at 0s in the opener | +713 / +160 / +1620, and the opener's Havoc +48 / +9 on top |
+| Sbolt | the owner's opening stack, then the SM/DS shape | +602 / +196 / +1181 |
+| Fire Demo | Soul Fire, Immolate on every target at 4 or fewer, Hellfire | +793 / +253 / +1792 |
+
+**RAIN OF FIRE LOSES TO HELLFIRE EVERYWHERE** (-104 against the ST list at 5,
+-461 at 3 on the Firelock). Walking Immolate across five targets loses to
+Hellfire at 5 and 8 on both Fire builds.
+
+### Every dimension, with the rows that lost
+
+| dimension | SM/DS | Firelock | Sbolt | Fire Demo |
+| --- | --- | --- | --- | --- |
+| talents | ISB 5 **+12.58**; ILT 2 + ISB 3 +8.25; ILT 2 + Bane 3 +0.72 | forced: Cataclysm priced at **-16.84** (the only other home for its 3 points is Intensity) | **withheld**: Improved Voidwalker 3 -> Fel Vitality 3 **+8.05 ±1.08** (owner's URL build) | Cataclysm 3 + Aftermath 2: +0.29 noise -- kept |
+| opener | +4 at 0s **+24.9** | nothing non-damaging left in ST; MT +Havoc **+48** | +Corruption **+8.0** | nothing legal (Corruption is a 2s cast here) |
+| ST APL | tap 5% **+8.6**; tap 25% -10.2; tap floor 10s -5.4; Siphon interrupting Wrack -3.5 (then -9.4) | tap gate re-swept: 5% stays (3% -44.7, 8% -1.2, 12% -5.7, 20% -9.4; fight floors -6.7/-29.7) | owner's list; a second standalone Spellblasting entry +0.23 -- not shipped | tap 5% stays (all others noise or worse); removing Corruption -15.2 |
+| MT APL | above | above | above | above |
+| enchants | arithmetic (120s weights): +1% Haste beats +8 Int/Spirit on head and legs everywhere; SP is the only option elsewhere. Revelation **+29.91 -- withheld, see questions** | Revelation -26.2; head Int -5.1 | Revelation -31.5; head Int -7.8 | Revelation -34.8; head Int -4.3 |
+| consumables | Mana Potion -6.6 with tap 5% -- Spellblasting stays; Healthstone -3.8 | Mana **+11.25**; Healthstone -12.3 | **withheld**: school Shadow **+29.62 ±0.18**; Healthstone -19.5 | Mana **+14.41**; Healthstone -10.0 |
+| stone | Firestone -12.4, none -24.0 | Spellstone -8.5, none -24.9 | **withheld**: Spellstone +7.61 ±5.65 | Spellstone -13.5, none -24.1 |
+| race | **Human +5.0**, Orc +4.9, Troll/Gnome noise | **Human +9.5**, Orc +6.6, Gnome +6.4 | withheld: Human +6.55 (owner's Orc, Blood Fury in their sequence) | **Human +7.8**, Gnome +7.6, Orc +6.4 |
+
+A second pass on the shipped builds (Life Tap gates, the potion back to
+Spellblasting) shipped nothing: every alternative lost.
+
+### Questions for the owner
+
+1. **REVELATION RAISES EVERY DoT TICK WHILE IT IS UP**, not only "the next
+   spell cast". On SM/DS the buff is up 16% of the fight and Bane of Agony's
+   tick crit rate goes 23.3% -> 35.9% (Corruption the same), because a tick
+   reads the caster's `spellCritChance` at the moment it lands. Worth
+   **+29.91 ±4.21** over +65 Spell Power on that profile only. Is a periodic
+   tick meant to collect it?
+2. **Sbolt Spam's Firelock consumables and stone** are the owner's
+   instruction, and the build deals no Fire damage: +40 Shadow Spell Power is
+   **+29.62 ±0.18**, the Spellstone +7.61 ±5.65.
+3. **Sbolt Spam's Improved Voidwalker 3** does nothing with no demon out;
+   Fel Vitality 3 is **+8.05 ±1.08**. Kept because the build is the owner's URL.
+4. **Bane of Doom** (one 60s DoT, 1742 + 400% SP) above Bane of Agony while
+   61s+ remain, priced by also gating the owner's Bane of Agony line on it:
+   Firelock **+10.63**, Fire Demo **+18.01**, SM/DS -13.26, Sbolt -23.42.
+   Rewrites an owner line, so not shipped.
+5. The three Undead -> Human swaps take Touch of the Grave off the
+   presets; two tests that pinned that mechanism on `warlock_smds` /
+   `warlock_firelock` now build those presets as Undead explicitly.
+
+---
+
 ## Demonology -- the third profile, and the first with a demon out
 
 `warlock_demonology`, 5/31/15: the Imp summoned, the Succubus sacrificed and
