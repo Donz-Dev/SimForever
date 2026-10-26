@@ -4,7 +4,7 @@ import type { AttackTableKind, Combatant, TelemetryEvent } from '../../src/engin
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
-import { CRUSADER } from '../../src/game/items/itemData';
+import { CRUSADER, ENCHANTS_BY_ID } from '../../src/game/items/itemData';
 import { OFF_HAND_DAMAGE_MULTIPLIER } from '../../src/game/actors/weapons';
 import { characterAtCombatStart } from '../../src/simulator';
 import { talentBuild } from '../../src/game/talents/talentBuild';
@@ -760,10 +760,17 @@ describe('the three talents whose reasons were wrong', () => {
     expect(cooldownWith(2)).toBe(180);
   });
 
-  it('is taken by no profile, because the fight is shorter than either cooldown', () => {
-    for (const preset of ['bm_hunter', 'lw_ranged']) {
-      expect(PRESETS_BY_ID.get(preset)!.build().talents.rapid_killing ?? 0, preset).toBe(0);
-    }
+  it('is taken by BM Hunter for nothing, and by LW Ranged only as the prerequisite of Rapid Recuperation', () => {
+    /*
+     * The fight is shorter than either cooldown, so its own clause buys nothing.
+     * Round 78 put LW Ranged on Rapid Killing 2 because Rapid Recuperation --
+     * mana regeneration while casting, which that mana-bound build wants at two
+     * minutes -- requires it at full rank.
+     */
+    expect(PRESETS_BY_ID.get('bm_hunter')!.build().talents.rapid_killing ?? 0).toBe(0);
+    const lw = PRESETS_BY_ID.get('lw_ranged')!.build().talents;
+    expect(lw.rapid_killing).toBe(2);
+    expect(lw.rapid_recuperation).toBe(2);
   });
 
   it('Bestial Discipline lets half the mana regeneration through', () => {
@@ -1005,10 +1012,12 @@ describe('the melee Hunter dual-wields', () => {
      * THE ENCHANTS, NOT THE ITEMS. Vis'kag and the Core Hound Tooth were
      * Season of Discovery stand-ins and went with the rest of them; the melee
      * Hunter wears the E65 benchmark set now. What this test was really about
-     * survives: it dual-wields, and BOTH hands carry Crusader.
+     * survives: it dual-wields, and both hands are enchanted -- Crusader on the
+     * main hand, and since round 78 +25 Agility on the off hand (+8.0 alone,
+     * 1200 paired fights at 120s; both hands agility measured no better).
      */
     expect(profile.equipment.mainHand?.enchantId).toBe(CRUSADER.id);
-    expect(profile.equipment.offHand?.enchantId).toBe(CRUSADER.id);
+    expect(ENCHANTS_BY_ID.get(profile.equipment.offHand!.enchantId!)?.name).toBe('+25 Agility');
     // The two-hander is gone rather than carried alongside.
     expect(profile.equipment.twoHand).toBeUndefined();
   });

@@ -1788,9 +1788,16 @@ const HUNTER_BEAST_MASTERY_TALENTS: TalentAllocation = {
    * ability no list casts.
    * ==========================================================================
    */
-  hawk_eye: 3,
+  /*
+   * ROUND 78: HAWK EYE 3 -> EFFICIENCY 3, **+21.7 +/- 2.5** at 120s (400
+   * paired fights). Hawk Eye is range and was the filler that let Improved
+   * Stings sit below tier 15; Efficiency at tier 5 fills the same tier gate,
+   * and at two minutes this build is mana-bound (1.1% headroom), which it was
+   * not at one. Mortal Shots still has its fifteen below it.
+   */
   lethal_attacks: 5,
   improved_stings: 2,
+  efficiency: 3,
   careful_aim: 5,
   mortal_shots: 5,
 };
@@ -1846,16 +1853,27 @@ const HUNTER_BEAST_MASTERY_TALENTS: TalentAllocation = {
 const HUNTER_LONE_WOLF_RANGED_TALENTS: TalentAllocation = {
   // Beast Mastery, 5
   deadly_aspects: 5,
+  /*
+   * ROUND 78: Efficiency 4 -> Rapid Killing 2 + Rapid Recuperation 2, and
+   * Hawk Eye 3 -> Efficiency 3 -- **+56.3 +/- 3.4** at 120s, 400 paired
+   * fights. At two minutes this build is mana-bound (0.8% headroom, and its
+   * Serpent Sting uptime falls to 80%), and Rapid Recuperation is 100% of mana
+   * regeneration continuing while casting once Rapid Killing is taken. Rapid
+   * Killing's own clause (Rapid Fire 5 min -> 3) is worth nothing at 120s; it is
+   * the prerequisite. Alone, the swap is +7.1; Hawk Eye's three range points
+   * were the rest.
+   */
   // Marksmanship, 41
-  hawk_eye: 3,
   lethal_attacks: 5,
   improved_stings: 3,
   careful_aim: 5,
-  efficiency: 4,
+  efficiency: 3,
+  rapid_killing: 2,
   improved_arcane_shot: 5,
   lone_wolf: 1,
   trueshot_aura: 1,
   mortal_shots: 5,
+  rapid_recuperation: 2,
   barrage: 3,
   ranged_weapon_specialization: 5,
   sniper_shot: 1,
@@ -1899,7 +1917,15 @@ const HUNTER_HAWK_MELEE_TALENTS: TalentAllocation = {
   lone_wolf: 1,
   improved_tracking: 5,
   savage_strikes: 2,
-  survivalist: 5,
+  /*
+   * ROUND 78: Survivalist 5 -> 3 and CLEVER TRAPS 2, **+17.4 +/- 0.1** at
+   * 120s. Survivalist is health on a profile nothing attacks; three of its five
+   * stay because Clever Traps (tier 10) and Resourcefulness (tier 20) both need
+   * them below. The five Beast Mastery filler points stay: Summon Hawk's tier 15
+   * needs fifteen below it and every alternative is equally dead.
+   */
+  survivalist: 3,
+  clever_traps: 2,
   surefooted: 3,
   predator_s_edge: 5,
   resourcefulness: 1,
@@ -1949,7 +1975,17 @@ const HUNTER_LONE_WOLF_MELEE_TALENTS: TalentAllocation = {
   predator_s_edge: 5,
   resourcefulness: 2,
   expose_prey: 2,
-  survivalist_s_discipline: 2,
+  /*
+   * ROUND 78: Survivalist's Discipline 2 -> CLEVER TRAPS 2, **+17.9 +/- 0.2**
+   * at 120s, 400 paired fights: +30% to Immolation and Explosive Trap. The
+   * Discipline is `unmodelled` (a percentage cooldown cut the engine has no form
+   * for), so it was worth nothing today. Rapid Killing 2 -> Clever Traps
+   * measured identically to the decimal -- Rapid Fire's 5 min and 3 min are
+   * both longer than the fight -- and the Discipline was moved so the build
+   * keeps its 5/13/33 spread. If the engine gains fractional cooldowns, the
+   * Discipline (trap 30s -> 18s) is worth re-pricing against Rapid Killing.
+   */
+  clever_traps: 2,
   strider_kick: 1,
   lightning_reflexes: 5,
   lacerating_strikes: 1,
@@ -3855,13 +3891,21 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'bm_hunter',
     label: 'BM Hunter',
-    detail: 'Orc, bow and a Cat, standing target. 31 Beast Mastery',
+    detail: 'High Order Skyborne, bow and a Cat, standing target. 31 Beast Mastery',
     characterClass: 'hunter',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'BM Hunter',
-        race: 'orc',
+        /*
+         * HIGH ORDER SKYBORNE SINCE ROUND 78, was Orc. A race swap on identical
+         * gear: **+11.4** at 120s on one target (C4 against C1) and **+24.6**
+         * at five targets. What pays is Wind Blessed's 3% haste and the race's
+         * base stats (8 agility and 3 intellect over the Orc's), against Blood
+         * Fury's 10% attack power for 15 seconds a fight and Savage's 1% crit.
+         * Read Ley Line is `unmodelled` and contributes nothing to the figure.
+         */
+        race: 'high_order_skyborne',
         characterClass: 'hunter',
         level: 60,
         combatStyle: 'ranged',
@@ -3884,13 +3928,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'lw_ranged',
     label: 'LW Ranged',
-    detail: 'Orc, bow, no pet, standing target. 39 Marksmanship',
+    detail: 'High Order Skyborne, bow, no pet, standing target. 41 Marksmanship',
     characterClass: 'hunter',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'LW Ranged',
-        race: 'orc',
+        // HIGH ORDER SKYBORNE SINCE ROUND 78, was Orc: **+10.3** at 120s on one
+        // target (C4 against C2) and **+26.7** at five. See BM Hunter.
+        race: 'high_order_skyborne',
         characterClass: 'hunter',
         level: 60,
         combatStyle: 'ranged',
@@ -3900,7 +3946,11 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       // Grace of Air rather than Windfury: a bow has no main-hand use.
       // See `RANGED_HUNTER_RAID_BUFFS`.
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: RANGED_HUNTER_CONSUMABLES,
+      // ROUND 78: Blasted Lands +25 INTELLECT rather than agility, **+9.0 +/-
+      // 2.9** at 120s. Mana-bound at two minutes, this build weighs intellect at
+      // 1.10 a point and agility at 0.74. BM Hunter measured +1.6, noise, and
+      // keeps agility.
+      consumables: { ...RANGED_HUNTER_CONSUMABLES, blasted_lands: 'blasted_intellect' },
       precombat: [
         ...before(7, 'hunters_mark'),
         ...before(5.5, 'aspect_of_the_hawk'),

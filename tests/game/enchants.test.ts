@@ -764,6 +764,10 @@ describe('what each of the 29 profiles opens with', () => {
      */
     'prot_warr feet': '+7 Agility',
     'fury_prot feet': '+7 Agility',
+    // Round 78: mana-bound at a 120 second fight, LW Ranged weighs intellect at
+    // 1.10 a point and agility at 0.74 -- +5.7 for the pair.
+    'lw_ranged head': '+8 Intellect',
+    'lw_ranged legs': '+8 Intellect',
   };
 
   it('matches the owner table row for row, bar the measured exceptions', () => {

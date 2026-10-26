@@ -37,6 +37,14 @@ function weaving(options?: readonly string[]): CharacterProfile {
   const preset = PRESETS_BY_ID.get('lw_ranged')!.build();
   return {
     ...preset,
+    /*
+     * HELD AN ORC, which the preset was until round 78 made it a High Order
+     * Skyborne. `run` samples the bow's timer on a 50ms grid at the instant a
+     * run back ENDS, and Wind Blessed's 3% haste puts those instants off the
+     * grid -- so the fixture keeps the race it was written against rather than
+     * the test reading nothing. The mechanism does not depend on the race.
+     */
+    character: { ...preset.character, race: 'orc' },
     rotation: {
       source: 'custom',
       name: 'Weave test',

@@ -181,6 +181,25 @@ const hawksBelowCap: AplCondition = builtin('hawks_below_cap');
 
 const missingOn = targetMissing;
 
+/**
+ * THE OWNER'S MELEE WEAVE (round 68), ON BOTH RANGED LISTS SINCE ROUND 78:
+ * run in after a shot, drop an Immolation Trap (and a Raptor Strike if it is
+ * ready), run back out. Neither ranged build casts a trap any other way, and
+ * the trap is the best damage per MANA either of them owns -- 245 for about
+ * 1,700 -- which is what a build that is mana-bound at two minutes wants.
+ *
+ * MEASURED AT 120s, 400 paired fights: **+22.0 on BM Hunter and +23.6 on LW
+ * Ranged** above Serpent Sting; BM measured the same at three positions
+ * (+21.7 to +22.0), LW Ranged preferred this one (+17.6 above Aimed Shot,
+ * +14.3 at the bottom). The weave's own gate -- the bow fired in the last half
+ * second and an option is castable -- is what keeps it from firing on every
+ * decision.
+ *
+ * IMMOLATION TRAP ONLY: Strider Kick is not in either build and Mongoose Bite
+ * needs Expose Prey, which neither takes.
+ */
+const RANGED_TRAP_WEAVE = { abilityId: 'melee_weave', weave: ['immolation_trap'] };
+
 // ---------------------------------------------------------------------------
 
 /**
@@ -240,6 +259,7 @@ export const HUNTER_BEAST_MASTERY: AplList = {
   potionStack(['bestial_wrath', 'rapid_fire']),
   ...CONSUMABLE_HEALS,
   { abilityId: 'hunters_mark', condition: selfExpired('hunters_mark') },
+  RANGED_TRAP_WEAVE,
   { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
   { abilityId: 'summon_hawk', condition: hawksBelowCap },
   /*
@@ -327,6 +347,7 @@ export const HUNTER_LONE_WOLF_RANGED: AplList = {
   potionStack(['rapid_fire']),
   ...CONSUMABLE_HEALS,
   { abilityId: 'hunters_mark', condition: selfExpired('hunters_mark') },
+  RANGED_TRAP_WEAVE,
   { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
   /*
    * BOTH CASTS GATED ON THE SHOT WINDOW. Sniper Shot is a FOUR-second cast --
@@ -392,6 +413,15 @@ export const HUNTER_LONE_WOLF_RANGED: AplList = {
    * only if you've swung in the last 500 ms." Auto Shot is no longer suspended
    * by a cast, so the weave window protected nothing.
    */
+  /*
+   * ARCANE SHOT ABOVE AIMED SHOT (round 78), **+9.2** at a 120 second fight
+   * (C2 against C6, 400 paired fights each against the round's baseline). At
+   * two minutes this build is mana-bound and Arcane Shot is the better damage
+   * per mana of the two -- 944 for 190 against 1,395 for 310 -- and it is the
+   * shot on a cooldown that can be lost by waiting, which is the argument that
+   * already put it above Sniper Shot below.
+   */
+  { abilityId: 'arcane_shot' },
   { abilityId: 'aimed_shot' },
   /*
    * ==========================================================================
@@ -409,7 +439,6 @@ export const HUNTER_LONE_WOLF_RANGED: AplList = {
    * times a fight either way.
    * ==========================================================================
    */
-  { abilityId: 'arcane_shot' },
   { abilityId: 'sniper_shot' },
   /*
    * SUMMON HAWK IS OUT OF THIS LIST, by the owner: "Remove Summon Hawk from the
