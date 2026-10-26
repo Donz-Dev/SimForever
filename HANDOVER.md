@@ -107,6 +107,30 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 76: an ability's hover card in the APL panel
+
+The owner asked for a tooltip card on an ability when the mouse is over it in
+the APL sections. Every place the panel names an ability now shows one: the
+list entry's ability, a `sequence` step, a pre-combat action and a Melee Weave
+option. Keyboard focus shows it too, as the gear and talent cards do.
+
+**IT IS THE CLIENT'S OWN TOOLTIP**, from the spellbook captures that were
+already checked in and that nothing in `src/` had read. It shows rank and
+school, cost and range, cast and cooldown, any requirement line, and the
+description, all at max rank. `game/abilities/abilityTooltips.ts` matches an
+ability to its capture entry **by name**, because the capture is keyed by the
+client's spell id. Every class spell every preset can cast matches;
+`abilityCard.test.ts` pins that, so a renamed ability fails a test rather than
+silently losing its card.
+
+**WHAT HAS NO CAPTURE SAYS SO** rather than borrowing text: racials (the
+client's `/racials.js` is not captured), consumables, Start Auto-attack, Melee
+Weave, Mana Ruby and Eureka!. Their card shows the simulator's own cast time,
+cooldown and global cooldown, under "No client tooltip on file". Capturing
+`/racials.js` would fill the racial half.
+
+No simulation code changed; all combat logs are unchanged.
+
 ## Round 75: haste shortens the global cooldown, and swing speed is not haste
 
 The owner: "Haste effects reduce the global cooldown triggered by spells. Haste

@@ -56,6 +56,7 @@ import {
   toggleNegated,
 } from './aplEditing';
 import { Panel } from '../components/Panel';
+import { AbilityCardContext, AbilityHover } from '../components/AbilityCard';
 
 interface AplPanelProps {
   readonly profile: CharacterProfile;
@@ -155,8 +156,14 @@ export function AplPanel({ profile: whole, onChange: change, section }: AplPanel
   };
 
   const reset = () => onChange({ ...profile, rotation: defaultRotationFor(profile) });
+  // Every ability named below shows its hover card from this.
+  const cardSource = {
+    characterClass: profile.character.characterClass,
+    book: new Map(book.map((ability) => [ability.id, ability])),
+  };
 
   return (
+    <AbilityCardContext.Provider value={cardSource}>
     <Panel
       title={SECTION_TITLE[section]}
       // The list's name, which fights run it and its entry count are gone from
@@ -245,6 +252,7 @@ export function AplPanel({ profile: whole, onChange: change, section }: AplPanel
 
       <AddEntry abilities={abilities} onAdd={(id) => update(addEntry(list.entries, id))} />
     </Panel>
+    </AbilityCardContext.Provider>
   );
 }
 
@@ -301,6 +309,7 @@ function PrecombatSection({
         <ol className="apl-precombat-list">
           {actions.map((action, index) => (
             <li key={`${action.abilityId}-${index}`} className="apl-precombat-row">
+              <AbilityHover abilityId={action.abilityId}>
               <select
                 className="apl-ability apl-ability-choice"
                 value={choiceValue(action.abilityId, abilities)}
@@ -332,6 +341,7 @@ function PrecombatSection({
                   </option>
                 ))}
               </select>
+              </AbilityHover>
 
               <StartKind
                 abilityId={action.abilityId}
@@ -528,7 +538,7 @@ function EntryWeave({
       <span className="apl-unit">in melee, one of:</span>
       {shown.map((abilityId, at) => (
         <span key={`${abilityId}-${at}`} className="apl-weave-step">
-          {nameOf(abilityId)}
+          <AbilityHover abilityId={abilityId}>{nameOf(abilityId)}</AbilityHover>
           {onChange ? (
             <button
               type="button"
@@ -892,11 +902,16 @@ function EntryAbility({
   readonly onChange?: (abilityId: string) => void;
 }) {
   if (!onChange || abilities.length === 0) {
-    return <span className="apl-ability">{name}</span>;
+    return (
+      <AbilityHover abilityId={abilityId}>
+        <span className="apl-ability">{name}</span>
+      </AbilityHover>
+    );
   }
   const value = choiceValue(abilityId, abilities);
   const unknown = !abilities.some((ability) => ability.id === value);
   return (
+    <AbilityHover abilityId={abilityId}>
     <select
       className="apl-ability apl-ability-choice"
       value={value}
@@ -910,6 +925,7 @@ function EntryAbility({
         </option>
       ))}
     </select>
+    </AbilityHover>
   );
 }
 
@@ -951,7 +967,7 @@ function EntrySequence({
         {steps.map((abilityId, at) => (
           <span key={`${abilityId}-${at}`} className="apl-sequence-step">
             {' then '}
-            {nameOf(abilityId)}
+            <AbilityHover abilityId={abilityId}>{nameOf(abilityId)}</AbilityHover>
           </span>
         ))}
       </span>
@@ -966,6 +982,7 @@ function EntrySequence({
       {steps.map((abilityId, at) => (
         <span key={`${abilityId}-${at}`} className="apl-sequence-step">
           <span className="apl-sequence-label">then</span>
+          <AbilityHover abilityId={abilityId}>
           <select
             className="apl-ability apl-ability-choice"
             value={abilityId}
@@ -980,6 +997,7 @@ function EntrySequence({
               </option>
             ))}
           </select>
+          </AbilityHover>
         </span>
       ))}
       <select
