@@ -197,6 +197,9 @@ export function racialBuild(race: RaceId, context: RacialBuildContext): RacialBu
             castReactions.push(...built.casts);
           }
           break;
+        case 'petDamagePercent':
+          // Read off the definition by `petDamageMultiplierFor`, where the pet is built.
+          break;
         case 'unmodelled':
           // Declared so the census can count it. Nothing to apply.
           break;
@@ -225,6 +228,26 @@ export function racialBuild(race: RaceId, context: RacialBuildContext): RacialBu
     attackTableModifiers,
     openingAuras: [],
   };
+}
+
+/**
+ * What a race multiplies its pet's damage by (round 79, the Orc's Command), for
+ * the class that owns the pet. 1 when nothing raises it.
+ *
+ * READ WHERE THE PET IS BUILT rather than carried on the player's racial build,
+ * because the pet is a combatant of its own: `createPet` and `createDemon`
+ * compose one damage multiplier, and this is one more factor in it.
+ */
+export function petDamageMultiplierFor(race: RaceId, characterClass: ClassId): number {
+  let multiplier = 1;
+  for (const trait of RACIALS[race].traits) {
+    for (const effect of trait.effects) {
+      if (effect.kind !== 'petDamagePercent') continue;
+      if (effect.requires?.classes && !effect.requires.classes.includes(characterClass)) continue;
+      multiplier *= 1 + effect.percent / 100;
+    }
+  }
+  return multiplier;
 }
 
 /** The traits a race has, for the UI and the census. */

@@ -17,11 +17,12 @@ export {
   EUREKA_COST_FRACTION,
   EUREKA_DURATION_MS,
   EUREKA_DAMAGE_MULTIPLIER,
+  READ_LEY_LINE,
   STONEFORM,
 } from './auras';
 export { RACIALS, racialsFor } from './racialEffects';
 export type { RacialBuildContext } from './racialBuild';
-export { racialBuild, traitsFor } from './racialBuild';
+export { petDamageMultiplierFor, racialBuild, traitsFor } from './racialBuild';
 export {
   TOUCH_OF_THE_GRAVE_ABILITY_ID,
   TOUCH_OF_THE_GRAVE_CHANCE,

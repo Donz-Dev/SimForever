@@ -246,7 +246,34 @@ export const EUREKA: AuraDefinition = {
 };
 
 /** Every aura an active racial applies, for the catalog and for tests. */
+// ---------------------------------------------------------------------------
+// High Order Skyborne: Read Ley Line (round 79)
+// ---------------------------------------------------------------------------
+
+/** "2 sec cast, 2 min cooldown", the client's line, unchanged by the tuning. */
+export const READ_LEY_LINE_CAST_MS = seconds(2);
+export const READ_LEY_LINE_COOLDOWN_MS = seconds(120);
+/** "Increases Mana and Health regeneration by 50% ... with a 15-second duration". */
+export const READ_LEY_LINE_DURATION_MS = seconds(15);
+export const READ_LEY_LINE_REGEN_MULTIPLIER = 1.5;
+
+/**
+ * Read Ley Line's window: mana regeneration at x1.5 for 15 seconds.
+ *
+ * THE MANA HALF ONLY. `resourceRegenMultiplier` is the field Evocation and
+ * Innervate use, and every regeneration rule reads it. The health half has no
+ * rate to raise and is declared `unmodelled` on the trait. Attuned -- 100% at a
+ * Ley Line -- needs a place and is a question for the owner.
+ */
+export const READ_LEY_LINE: AuraDefinition = {
+  id: 'read_ley_line',
+  name: 'Read Ley Line',
+  durationMs: READ_LEY_LINE_DURATION_MS,
+  resourceRegenMultiplier: { mana: READ_LEY_LINE_REGEN_MULTIPLIER },
+};
+
 export const CATALOG_AURAS: readonly AuraDefinition[] = [
+  READ_LEY_LINE,
   STONEFORM,
   ELUNES_LIGHT,
   BLOOD_FURY,

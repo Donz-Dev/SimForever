@@ -1,4 +1,5 @@
 import { fightSection, withSection } from '../profiles/aplSections';
+import { petDamageMultiplierFor } from '../game/racials';
 import { withStartAutoAttack } from '../profiles/rotation';
 import type { AuraDefinition, Combatant, SimulationConfig } from '../engine';
 import { FOREVER_THREAT_RULES } from '../game/combat/threat';
@@ -479,7 +480,7 @@ function petFor(profile: CharacterProfile, owner: Combatant): Combatant | undefi
       summonedDemon: demon,
       level: MAX_CHARACTER_LEVEL,
     });
-    return createDemon({ owner, demon, talents: build.pet });
+    return createDemon({ owner, demon, talents: withRacialPetDamage(build.pet, profile) });
   }
   if (profile.character.characterClass !== 'hunter') return undefined;
   if (!hasPet(profile.talents ?? {})) return undefined;
@@ -499,5 +500,17 @@ function petFor(profile: CharacterProfile, owner: Combatant): Combatant | undefi
    * so illegal talents are stripped by the same rules everything else uses.
    */
   const build = talentBuild('hunter', profile.talents ?? {});
-  return createPet({ owner, family, talents: build.pet });
+  return createPet({ owner, family, talents: withRacialPetDamage(build.pet, profile) });
+}
+
+/**
+ * The race's pet damage on top of the talents' (round 79, the Orc's Command):
+ * one more factor in the pet's single damage multiplier.
+ */
+function withRacialPetDamage<T extends { readonly damageMultiplier: number }>(
+  pet: T,
+  profile: CharacterProfile,
+): T {
+  const racial = petDamageMultiplierFor(profile.character.race, profile.character.characterClass);
+  return racial === 1 ? pet : { ...pet, damageMultiplier: pet.damageMultiplier * racial };
 }

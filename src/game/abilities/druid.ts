@@ -1107,6 +1107,8 @@ export const INNERVATE: Ability = {
   cooldownMs: seconds(360),
   requiresTarget: false,
   onCast: ({ simulation, caster }) => {
+    // "Read Leyline ... will be replaced by Innervate as a more powerful effect" (round 79).
+    caster.auras.remove(simulation, 'read_ley_line');
     simulation.applyAura(caster, INNERVATE_AURA, caster.id);
   },
 };
