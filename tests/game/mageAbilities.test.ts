@@ -2842,8 +2842,17 @@ describe('the three lists, after the owner tuned them', () => {
     const stacks = MAGE_ARCANE.entries.filter(
       (row) => (row.sequence ?? []).includes('presence_of_mind'),
     );
-    expect(stacks).toHaveLength(1);
-    const stack = stacks[0]!;
+    /*
+     * TWO SINCE ROUND 78: the potion stack, and the same stack WITHOUT the
+     * potion beneath it -- the first is dropped from the list whenever the
+     * potion is not selected, and the preset now drinks the Major Mana Potion.
+     * Same gate, same steps after the potion.
+     */
+    expect(stacks).toHaveLength(2);
+    const stack = stacks.find((row) => row.abilityId === 'major_spellblasting_potion')!;
+    const withoutPotion = stacks.find((row) => row.abilityId === 'arcane_power')!;
+    expect(withoutPotion.sequence).toEqual(['presence_of_mind', 'arcane_wrath']);
+    expect(withoutPotion.condition).toEqual(stack.condition);
 
     /*
      * ORDER IS THE MECHANISM: Presence of Mind has to be cast BEFORE the

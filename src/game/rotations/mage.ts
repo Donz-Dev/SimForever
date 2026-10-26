@@ -1000,6 +1000,22 @@ export const MAGE_ARCANE: AplList = {
     condition: selfStacksExactly('arcane_blast', ARCANE_BLAST_MAX_STACKS),
     note: 'Cooldown stack: the potion, Arcane Power, Presence of Mind and an instant Arcane Wrath, at the Arcane Blast cap.',
   },
+  /*
+   * ROUND 78: THE SAME STACK WITHOUT THE POTION, for a build that does not
+   * carry Spellblasting. The entry above is dropped from the list whenever the
+   * potion is not selected -- its id IS the potion -- and with it went Arcane
+   * Power, Presence of Mind and the instant Arcane Wrath, silently. The preset
+   * now drinks the Major Mana Potion instead (+11.30 +/- 3.40 at a 120s fight),
+   * so this is what carries its cooldowns. With Spellblasting selected the
+   * entry above always fires first, and this one finds Arcane Power on its
+   * cooldown and is refused.
+   */
+  {
+    abilityId: 'arcane_power',
+    sequence: ['presence_of_mind', 'arcane_wrath'],
+    condition: selfStacksExactly('arcane_blast', ARCANE_BLAST_MAX_STACKS),
+    note: 'Cooldown stack without the potion: Arcane Power, Presence of Mind and an instant Arcane Wrath, at the Arcane Blast cap.',
+  },
   { abilityId: 'arcane_missiles', condition: selfHasStack('missile_barrage') },
   /*
    * AND AT THE ARCANE BLAST CAP WITHOUT ONE -- BUT ONLY IF THE WINDOW CAN COVER

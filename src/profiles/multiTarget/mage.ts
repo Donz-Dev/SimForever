@@ -107,19 +107,34 @@ const FIRE_AREA: readonly AplEntry[] = withArea(FIRE_ST, [
 ]);
 
 // --- Frostfire ---------------------------------------------------------------
-const FROSTFIRE_ST = narrowed(MAGE_FROSTFIRE, 'human', casterConsumables('school_fire'));
+const FROSTFIRE_ST = narrowed(MAGE_FROSTFIRE, 'human', {
+  ...casterConsumables('school_fire'),
+  potion: 'major_mana_potion',
+});
 const FROSTFIRE_AREA: readonly AplEntry[] = withArea(FROSTFIRE_ST, [flamestrikeOnDot(3), flamestrike(5)]);
 
 // --- Arcane ------------------------------------------------------------------
-const ARCANE_ST = narrowed(MAGE_ARCANE, 'high_order_skyborne', casterConsumables('school_arcane'));
+const ARCANE_ST = narrowed(MAGE_ARCANE, 'high_order_skyborne', {
+  ...casterConsumables('school_arcane'),
+  potion: 'major_mana_potion',
+});
+/*
+ * The preset drinks the Major Mana Potion, so its cooldown stack is the one
+ * WITHOUT the potion -- Arcane Power, Presence of Mind and Arcane Wrath -- and
+ * the area copy spends Presence of Mind on Flamestrike instead.
+ */
+const isArcaneStack = (entry: AplEntry) =>
+  entry.abilityId === 'arcane_power' && (entry.sequence ?? []).includes('presence_of_mind');
+const ARCANE_STACK = ARCANE_ST.find(isArcaneStack);
+if (!ARCANE_STACK) throw new Error('no Arcane Power stack in the Arcane list');
 const ARCANE_AREA: readonly AplEntry[] = withArea(
-  ARCANE_ST.filter((e) => !isStack(e)),
+  ARCANE_ST.filter((e) => !isArcaneStack(e)),
   [
     {
-      ...stackOf(ARCANE_ST),
-      sequence: ['arcane_power', 'presence_of_mind', 'flamestrike'],
+      ...ARCANE_STACK,
+      sequence: ['presence_of_mind', 'flamestrike'],
       condition: atLeast(3),
-      note: 'Cooldown stack at 3+ targets: the potion, Arcane Power and Presence of Mind, spent on an instant Flamestrike.',
+      note: 'Cooldown stack at 3+ targets: Arcane Power and Presence of Mind, spent on an instant Flamestrike.',
     },
     flamestrikeOnDot(3),
     arcaneExplosion(3),

@@ -3264,7 +3264,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: { ...MAGE_FROSTFIRE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: casterConsumables('school_fire'),
+      // The Major Mana Potion in place of Spellblasting (round 78): -12.13 +/- 5.14 at a 120s single target fight, +112.6 at 5 targets/60s, where this build runs dry.
+      consumables: { ...casterConsumables('school_fire'), potion: 'major_mana_potion' },
       /*
        * ==================================================================
        * THE OWNER'S OPENER, AND NOTHING ELSE -- A PRE-PULL SCORCH REVERTED
@@ -3333,7 +3334,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: { ...MAGE_ARCANE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: casterConsumables('school_arcane'),
+      // The Major Mana Potion in place of Spellblasting (round 78): +11.30 +/- 3.40 at a 120s single target fight (1000 paired), -6.2 at 5 targets/60s.
+      consumables: { ...casterConsumables('school_arcane'), potion: 'major_mana_potion' },
       /*
        * ========================================================================
        * THE OPENER IS THE OWNER'S OWN TWO LINES PLUS ONE FREE WINDOW, AND THAT
