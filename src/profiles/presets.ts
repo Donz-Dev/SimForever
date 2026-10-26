@@ -1970,8 +1970,17 @@ const WARLOCK_AFFLICTION_TALENTS: TalentAllocation = {
    * to have optimised, so the five points went where the evidence pointed
    * rather than where a measurement would put them.
    * ==========================================================================
+   *
+   * ROUND 78 MOVED THEM AGAIN, TO IMPROVED SHADOW BOLT, AND THE OPENER STILL
+   * WORKS. Bane only shortens a CAST Shadow Bolt and this build casts almost
+   * none: the filler sits under an ungated Wrack and fires zero times, and the
+   * rest are Nightfall instants. The one cast Shadow Bolt is the opener, and a
+   * 2.5 second lead on a 3.0 second cast still finishes at the pull, because
+   * `runPrecombat` clamps the rewind at zero. Improved Shadow Bolt turns the
+   * instants' crits into +20% Shadow damage taken: +12.58 +/- 1.18 at 120s,
+   * 400 paired fights, against +0.72 for Improved Life Tap 2 + Bane 3.
    */
-  bane: 5,
+  improved_shadow_bolt: 5,
   demonic_embrace: 5,
   demonic_aegis: 2,
   fel_vitality: 3,
@@ -3917,13 +3926,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'warlock_smds',
     label: 'SM/DS',
-    detail: 'Undead, caster, Imp sacrificed, standing target. 40 Affliction',
+    detail: 'Human, caster, Imp sacrificed, standing target. 35 Affliction',
     characterClass: 'warlock',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'SM/DS',
-        race: 'undead',
+        // Round 78: Human's +2% crit over Touch of the Grave, by race swap on
+        // identical gear -- +5.9 at 120s and +14.9 at 5 targets.
+        race: 'human',
         characterClass: 'warlock',
         level: 60,
         combatStyle: 'caster',
@@ -3952,8 +3963,17 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * the declaration says 3.0 and BANE takes half a second off it. See
        * `PrecombatAction`.
        */
+      /*
+       * ROUND 78 ADDS FOUR ACTIONS AT 0s, AND THE SHADOW BOLT IS STILL THE PULL.
+       * Amplify Curse is off the global cooldown; Bane of Agony, Corruption
+       * (instant with Improved Corruption 5/5) and Siphon Life are pure DoTs,
+       * whose first tick is after the pull -- Gate B's table makes each legal at
+       * a 0s lead, and each saves the global cooldown the list would spend on
+       * it: +24.9 at 120s and +94.5 at 5 targets over the same build without.
+       */
       precombat: [
         ...before(2.5, 'shadow_bolt'),
+        ...before(0, 'amplify_curse', 'bane_of_agony', 'corruption', 'siphon_life'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -3961,13 +3981,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'warlock_firelock',
     label: 'Firelock',
-    detail: 'Undead, caster, Succubus sacrificed, standing target. 33 Destruction',
+    detail: 'Human, caster, Succubus sacrificed, standing target. 33 Destruction',
     characterClass: 'warlock',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Firelock',
-        race: 'undead',
+        // Round 78: Human, by race swap on identical gear -- +6.9 at 120s
+        // beside the Major Mana Potion, +9.7 at 5 targets.
+        race: 'human',
         characterClass: 'warlock',
         level: 60,
         combatStyle: 'caster',
@@ -3988,7 +4010,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        */
       warlockStone: 'firestone',
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: casterConsumables('school_fire'),
+      /*
+       * THE MAJOR MANA POTION OVER SPELLBLASTING, round 78: at 120s the build
+       * Life Taps eleven times, and 2,250 mana is worth more than forty spell
+       * power for fifteen seconds -- +11.25 +/- 3.41 at 120s, -5.5 at 5 targets.
+       * The Single Target answer wins, per the round's brief. The list's
+       * Spellblasting entry is dropped by the selection; the mana potion's own
+       * entry, drunk under 30% mana, takes its place.
+       */
+      consumables: { ...casterConsumables('school_fire'), potion: 'major_mana_potion' },
       /*
        * BANE OF AGONY AT 0s IS THIS ROUND'S ADDITION (round 42): a pure DoT
        * deals nothing before the pull, so it is free of Gate B and saves the
@@ -4024,8 +4054,12 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_fire'),
       // Shadow Bolt is 3.0s and Bane takes it to 2.5: started at t-2.5, it is the pull.
+      // Round 78 adds Corruption at 0s -- instant with Improved Corruption, a
+      // pure DoT and so legal at that lead -- for the global cooldown it saves:
+      // +8.01 +/- 6.46 at 120s.
       precombat: [
         ...before(2.5, 'shadow_bolt'),
+        ...before(0, 'corruption'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -4034,13 +4068,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
     // The id keeps its first name, so a saved profile still finds it.
     id: 'warlock_demonology',
     label: 'Fire Demo',
-    detail: 'Undead, caster, Imp summoned, Succubus sacrificed, standing target. 31 Demonology',
+    detail: 'Human, caster, Imp summoned, Succubus sacrificed, standing target. 31 Demonology',
     characterClass: 'warlock',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Fire Demo',
-        race: 'undead',
+        // Round 78: Human, by race swap on identical gear -- +8.7 at 120s
+        // beside the Major Mana Potion, +9.8 at 5 targets.
+        race: 'human',
         characterClass: 'warlock',
         level: 60,
         combatStyle: 'caster',
@@ -4051,10 +4087,11 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: { ...WARLOCK_DEMONOLOGY_TALENTS },
       // The Firelock's stone, consumables and raid: the owner's "everything
-      // else ... the same as the Firelock profile".
+      // else ... the same as the Firelock profile" -- and round 78 gives both
+      // the Major Mana Potion: +14.41 +/- 3.29 here at 120s, -4.5 at 5 targets.
       warlockStone: 'firestone',
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: casterConsumables('school_fire'),
+      consumables: { ...casterConsumables('school_fire'), potion: 'major_mana_potion' },
       /*
        * SEARING PAIN IS THE PULL AND BANE OF AGONY GOES OUT WITH IT. The Searing
        * Pain finishes at t=0 and brands the target, so the Imp's first Firebolt

@@ -8,6 +8,7 @@ import { syncDefaultRotation } from '../../src/profiles/rotation';
 import { migrateProfile } from '../../src/profiles/migrateProfile';
 import { validateProfile } from '../../src/profiles/validateProfile';
 import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
+import { MULTI_TARGET_DEFAULTS } from '../../src/profiles/multiTarget';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import { HEALER_ID, healerEncounter } from '../../src/simulator/healerEncounter';
 
@@ -86,12 +87,28 @@ describe('which section a fight runs', () => {
 });
 
 describe('the presets', () => {
-  it('carry both lists, starting identical, so no figure moves', () => {
+  /*
+   * ROUND 78 GAVE SOME PRESETS A MULTI TARGET LIST OF THEIR OWN, so "starting
+   * identical" now holds for the presets without one, and the rest carry
+   * exactly the list `MULTI_TARGET_DEFAULTS` names -- stored as CUSTOM, so a
+   * sync cannot re-derive it -- with its own opener or the Single Target one.
+   */
+  it("carry both lists: identical, or the preset's own Multi Target default", () => {
     for (const preset of PROFILE_PRESETS) {
       const profile = preset.build();
       expect(profile.multiTarget, preset.id).toBeDefined();
-      expect(profile.multiTarget!.rotation, preset.id).toEqual(profile.rotation);
-      expect(profile.multiTarget!.precombat, preset.id).toEqual(profile.precombat);
+      const own = MULTI_TARGET_DEFAULTS[preset.id];
+      if (!own) {
+        expect(profile.multiTarget!.rotation, preset.id).toEqual(profile.rotation);
+        expect(profile.multiTarget!.precombat, preset.id).toEqual(profile.precombat);
+        continue;
+      }
+      expect(profile.multiTarget!.rotation, preset.id).toEqual({
+        source: 'custom',
+        name: own.name,
+        entries: own.entries,
+      });
+      expect(profile.multiTarget!.precombat, preset.id).toEqual(own.precombat ?? profile.precombat);
     }
   });
 });

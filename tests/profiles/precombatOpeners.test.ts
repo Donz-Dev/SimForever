@@ -424,6 +424,16 @@ describe("the owner's openers are transcribed exactly", () => {
      */
     // Round 42, the Firelock's re-optimisation once Life Tap was healed back.
     warlock_firelock: [[0, 'bane_of_agony', '+10.30 at 60s, +4.46 at 180s, +4.71 at 300s']],
+    // Round 78: the curse and three pure DoTs at 0s, each a global cooldown the
+    // list no longer spends -- +24.9 at 120s and +94.5 at 5 targets, together.
+    warlock_smds: [
+      [0, 'amplify_curse', 'off the global cooldown; precedes the Bane it amplifies'],
+      [0, 'bane_of_agony', 'with the three below, +24.9 at 120s'],
+      [0, 'corruption', 'instant with Improved Corruption 5/5'],
+      [0, 'siphon_life', 'alone after the other three, +4.6 at 120s'],
+    ],
+    // Round 78: Corruption at 0s, instant with Improved Corruption -- +8.01 at 120s.
+    warlock_sbolt: [[0, 'corruption', '+8.01 +/- 6.46 at 120s']],
     warlock_demonology: [
       [1.5, 'searing_pain', '+19.43 against no opener, at 60s'],
       [0, 'bane_of_agony', '+13.88 at 60s; noise at 180s and 300s'],

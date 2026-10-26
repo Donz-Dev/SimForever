@@ -1140,7 +1140,10 @@ describe('Touch of the Grave', () => {
     let procs = 0;
     let crits = 0;
     for (let i = 0; i < 20; i += 1) {
-      const built = PRESETS_BY_ID.get('warlock_smds')!.build();
+      // As an Undead: the preset is Human since round 78, and this is Touch
+      // of the Grave's own mechanism rather than a claim about the preset.
+      const preset = PRESETS_BY_ID.get('warlock_smds')!.build();
+      const built = { ...preset, character: { ...preset.character, race: 'undead' as const } };
       const recorder = new TelemetryRecorder();
       const simulation = new Simulation(
         {
@@ -1425,7 +1428,10 @@ describe('Touch of the Grave', () => {
     let procs = 0;
     const fights = 40;
     for (let i = 0; i < fights; i += 1) {
-      const built = PRESETS_BY_ID.get('warlock_smds')!.build();
+      // As an Undead: the preset is Human since round 78, and this is Touch
+      // of the Grave's own mechanism rather than a claim about the preset.
+      const preset = PRESETS_BY_ID.get('warlock_smds')!.build();
+      const built = { ...preset, character: { ...preset.character, race: 'undead' as const } };
       const recorder = new TelemetryRecorder();
       const simulation = new Simulation(
         { ...trainingDummyEncounter(built), seed: 4000 + i },
