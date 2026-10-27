@@ -161,6 +161,57 @@ const VARIANTS_SHADOW: Record<string, Variant[]> = {
     { label: 'blasted lands +25 Spirit', apply: consumable('blasted_lands', 'blasted_spirit') },
     { label: 'other Healthstone (was Demonic Rune)', apply: consumable('other', 'healthstone') },
   ],
+  sp80Pass2: [
+    { label: 'the shipped preset -- the control', apply: (p) => p },
+    { label: 'race troll', apply: race('troll') },
+    {
+      label: 'HN build: HN at 8+ above MB, at 5-7 above MF over 20% mana',
+      apply: chain(
+        tree(SHADOW_HOLY_NOVA),
+        inMulti(addAbove({ abilityId: 'holy_nova', condition: { kind: 'targetCount', compare: 'atLeast', count: 8 } }, 'mind_blast')),
+        inMulti(addAbove({ abilityId: 'holy_nova', condition: { kind: 'all', of: [manaAtLeast(0.2), { kind: 'targetCount', compare: 'atLeast', count: 5 }] } }, 'mind_flay')),
+      ),
+    },
+    {
+      label: 'HN build: HN at 8+ above MB, at 4+ above MF over 20% mana',
+      apply: chain(
+        tree(SHADOW_HOLY_NOVA),
+        inMulti(addAbove({ abilityId: 'holy_nova', condition: { kind: 'targetCount', compare: 'atLeast', count: 8 } }, 'mind_blast')),
+        inMulti(addAbove({ abilityId: 'holy_nova', condition: { kind: 'all', of: [manaAtLeast(0.2), { kind: 'targetCount', compare: 'atLeast', count: 4 }] } }, 'mind_flay')),
+      ),
+    },
+  ],
+  sp80Pass3: [
+    { label: 'the shipped preset -- the control', apply: (p) => p },
+    { label: 'staff +65 Spell Power (was Revelation)', apply: enchant('twoHand', 900029) },
+    { label: 'race undead', apply: race('undead') },
+    { label: 'head +8 Intellect (was +1% Haste)', apply: enchant('head', 900006) },
+    { label: 'gloves +1% Haste (was +20 Spell Power)', apply: enchant('gloves', 900002) },
+    {
+      label: 'HN build: HN at 8+ above MB, at 5+ above MF over 20% mana',
+      apply: chain(
+        tree(SHADOW_HOLY_NOVA),
+        inMulti(addAbove({ abilityId: 'holy_nova', condition: { kind: 'targetCount', compare: 'atLeast', count: 8 } }, 'mind_blast')),
+        inMulti(addAbove({ abilityId: 'holy_nova', condition: { kind: 'all', of: [manaAtLeast(0.2), { kind: 'targetCount', compare: 'atLeast', count: 5 }] } }, 'mind_flay')),
+      ),
+    },
+    {
+      label: 'HN build: HN at 5+ above MB, ungated',
+      apply: chain(tree(SHADOW_HOLY_NOVA), inMulti(addAbove({ abilityId: 'holy_nova', condition: { kind: 'targetCount', compare: 'atLeast', count: 5 } }, 'mind_blast'))),
+    },
+    {
+      label: 'HN build: HN at 3+ above MF over 50% mana, 8+ above MB',
+      apply: chain(
+        tree(SHADOW_HOLY_NOVA),
+        inMulti(addAbove({ abilityId: 'holy_nova', condition: { kind: 'targetCount', compare: 'atLeast', count: 8 } }, 'mind_blast')),
+        inMulti(addAbove({ abilityId: 'holy_nova', condition: manaAtLeast(0.5) }, 'mind_flay')),
+      ),
+    },
+  ],
+  sp80Dots: [
+    { label: 'the shipped Multi Target list -- the control', apply: (p) => p },
+    ...[3, 4, 6].map((n) => ({ label: `SWP spread to ${n} targets`, apply: inMulti(apl((e) => e.map((x) => (x.abilityId === 'shadow_word_pain' ? { ...x, multiDot: n } : x)))) })),
+  ],
   sp80Multi: [
     { label: 'the shipped Multi Target list -- the control', apply: (p) => p },
     { label: 'SWP spread interrupts Mind Flay', apply: inMulti(mapEntry('shadow_word_pain', (x) => ({ ...x, interruptsChannel: true }))) },
@@ -409,7 +460,39 @@ const tankPomAbove = (beforeId: string): Apply =>
     return e;
   });
 
+const healPass2 = (disc: boolean): Variant[] => [
+  { label: 'the shipped preset -- the control', apply: (p) => p },
+  { label: 'race undead', apply: race('undead') },
+  { label: 'mana potion under 50%, both lists', apply: both(manaPotionAt(manaBelow(0.5))) },
+  { label: 'mana potion under 70%, both lists', apply: both(manaPotionAt(manaBelow(0.7))) },
+  { label: 'mana potion under 50% after 60s, both lists', apply: both(manaPotionAt({ kind: 'all', of: [manaBelow(0.5), elapsed(60)] })) },
+  { label: 'blasted lands +25 Spirit', apply: consumable('blasted_lands', 'blasted_spirit') },
+  {
+    label: disc ? 'raid GH threshold 70% (was 60%)' : 'raid GH threshold 60% (was 70%)',
+    apply: inMulti(mapEntry('greater_heal', (x) => ({ ...x, condition: tankBelow(disc ? 0.7 : 0.6) }))),
+  },
+];
+
+/** The "Needs the owner" prices, against the finished round 80 presets. */
+const ownerGroup = (disc: boolean): Variant[] => [
+  { label: 'the shipped preset -- the control', apply: (p) => p },
+  ...[0.85, 0.8, 0.75].map((f) => ({ label: `tank: Flash Heal only under ${f * 100}%`, apply: flashHealBelow(f) })),
+  { label: 'tank: Greater Heal under 100% above Flash Heal (silences it)', apply: GH_ANY },
+  { label: 'tank: FH under 80% + GH under 100%', apply: chain(flashHealBelow(0.8), GH_ANY) },
+  { label: 'raid: no Power Word: Shield line', apply: inMulti(removeEntry('power_word_shield')) },
+  ...(disc
+    ? [{ label: 'raid: Inner Focus -> PoH instead of Penance', apply: inMulti(mapEntry('inner_focus', (x) => ({ ...x, target: { kind: 'lowestParty' }, sequence: ['prayer_of_healing'] }))) }]
+    : [
+        { label: 'raid: owner order (PoM third)', apply: inMulti(moveAbove('power_word_shield', 'prayer_of_mending'), moveAbove('renew', 'power_word_shield')) },
+        { label: 'raid: no Renew line', apply: inMulti(removeEntry('renew')) },
+      ]),
+];
+
 const VARIANTS_HEALERS: Record<string, Variant[]> = {
+  holy80Owner: ownerGroup(false),
+  disc80Owner: ownerGroup(true),
+  holy80Pass2: healPass2(false),
+  disc80Pass2: healPass2(true),
   holy80Pom: [
     { label: 'the shipped list -- the control', apply: (p) => p },
     { label: 'tank PoM above Flash Heal', apply: tankPomAbove('flash_heal') },

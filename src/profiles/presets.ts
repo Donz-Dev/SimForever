@@ -4293,19 +4293,22 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'shadow_priest',
     label: 'Shadow',
-    detail: 'Undead, caster, Shadowform, standing target. 35 Shadow',
+    detail: 'Troll, caster, Shadowform, standing target. 35 Shadow',
     characterClass: 'priest',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Shadow Priest',
         /*
-         * UNDEAD SINCE ROUND 80 (Human from round 78 is no longer allowed: a
-         * Priest may be Undead or Troll). On the weighted score against Human,
-         * Undead is -1.22 +/- 2.09 (noise) and Troll -4.18 +/- 2.03; Troll with
-         * Berserking held 10s is -1.57 +/- 1.87. Touch of the Grave carries it.
+         * TROLL SINCE ROUND 80 (Human from round 78 is no longer allowed: a
+         * Priest may be Undead or Troll). Against Human on the old staff,
+         * Undead was -1.22 +/- 2.09 and Troll -4.18 +/- 2.03 on the weighted
+         * score; once the staff took Revelation, Troll over Undead is
+         * +8.48 +/- 2.25 (800 paired fights a column: +0.1 at one target,
+         * +38.3 at eight over 30s), with Berserking at the pull. Holding it
+         * 10s, 30s or for five Shadow Weaving stacks all lose to that.
          */
-        race: 'undead',
+        race: 'troll',
         characterClass: 'priest',
         level: 60,
         combatStyle: 'caster',

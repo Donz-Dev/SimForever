@@ -224,7 +224,7 @@ const HEALER_MID_FIGHT: ConsumableSelection = { potion: 'major_mana_potion', oth
  * id. A preset with no entry runs its Single Target list on several targets.
  */
 export const PRIEST_MULTI_TARGET: MultiTargetDefaults = {
-  shadow_priest: { name: 'Priest (Shadow, multi-target)', entries: forPreset(shadowMulti(), 'undead', { ...casterConsumables('school_shadow'), potion_secondary: 'secondary_major_mana_potion' }) },
+  shadow_priest: { name: 'Priest (Shadow, multi-target)', entries: forPreset(shadowMulti(), 'troll', { ...casterConsumables('school_shadow'), potion_secondary: 'secondary_major_mana_potion' }) },
   // No opener in the raid fight: the Single Target section's pre-pull Inner Focus would be spent on the first spell
   // and take the raid list's Inner Focus -> Prayer of Healing with it (round 80).
   priest_holy: { name: 'Priest (Holy, raid)', entries: forPreset(HOLY_RAID, 'troll', HEALER_MID_FIGHT), precombat: [] },
