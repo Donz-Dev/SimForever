@@ -9,6 +9,7 @@ import {
 } from './consumableCooldowns';
 import {
   compileRotation,
+  fightRemaining,
   resourceFraction,
   selfStacks,
   targetExpired,
@@ -60,6 +61,13 @@ import { MAELSTROM_WEAPON_MAX_STACKS } from '../auras/shaman';
  * ----------------------------------------------------------------------------
  */
 const expired = targetExpired;
+
+/**
+ * The secondary potion's window in the Single Target lists (round 80): the
+ * damage potion is drunk only when this much fight is left, so the mana potion
+ * -- which shares its cooldown -- is never locked out by it.
+ */
+export const SPELLBLASTING_FALLBACK_SECONDS = 30;
 
 /** "<debuff> duration > N seconds", on the target. */
 const targetAuraAtLeast = (auraId: string, secondsLeft: number) =>
@@ -183,7 +191,19 @@ export const SHAMAN_ELEMENTAL: AplList = {
    * and the owner drew them this way round.
    * ==========================================================================
    */
-  buffPotionCooldown('major_spellblasting_potion'),
+  /*
+   * ROUND 80: GATED TO THE LAST THIRTY SECONDS, because the preset now carries
+   * BOTH potions -- the Major Mana Potion primary and Spellblasting secondary --
+   * and they share one two-minute cooldown. At the 120 s single-target clock
+   * this build runs dry and the mana potion under 30% is worth **+30.2** over
+   * Spellblasting at the pull (paired, 400 fights); drunk at the pull,
+   * Spellblasting would lock the mana potion out for the whole fight. So this
+   * is the FALLBACK: in a fight the mana potion was never needed in, the damage
+   * potion still gets its window at the end. At 120 s it never fires
+   * (identical fights to the mana potion alone). The Multi Target list drinks
+   * it at the pull instead -- see `profiles/multiTarget/shaman.ts`.
+   */
+  { ...buffPotionCooldown('major_spellblasting_potion'), condition: fightRemaining('atMost', SPELLBLASTING_FALLBACK_SECONDS) },
   ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
   ...CONSUMABLE_HEALS,
   /*
@@ -325,7 +345,11 @@ export const SHAMAN_ENHANCEMENT: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
+  // Spellblasting is the SECONDARY potion here (round 80): the mana potion
+  // under 30% first, the damage potion only in the last 30 s -- the same
+  // fallback as the Elemental list. Measured identical at 120 s.
+  ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
+  { ...buffPotionCooldown('major_spellblasting_potion'), condition: fightRemaining('atMost', SPELLBLASTING_FALLBACK_SECONDS) },
   ...CONSUMABLE_HEALS,
   { abilityId: 'stormstrike' },
   { abilityId: 'flame_shock', condition: expired('flame_shock') },

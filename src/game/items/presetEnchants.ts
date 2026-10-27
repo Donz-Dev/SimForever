@@ -99,8 +99,15 @@ export const PRESET_ENCHANTS: Readonly<
    * on the round's starting build, and -10.17 +/- 3.45 once Orc and the Major
    * Mana Potion were in. Haste here is also the Searing Totem knife-edge of
    * docs/profile-optimisation.md Appendix B.
+   *
+   * ROUND 80: THE MAIN HAND TAKES REVELATION FOR WEAPON SPELL POWER, on the
+   * weighted score: **+50.14 +/- 3.46** (t1 -2.9, t3 +48.3, t5 +80.7, t8
+   * +174.4). The proc rolls per landed non-crit hit, so Chain Lightning and
+   * Fire Nova give it a roll per target struck -- it is an AoE enchant. The
+   * Single Target cost is 2.9 DPS. Head and legs Intellect (-20.0) and gloves
+   * Haste (-13.5) still lose.
    */
-  shaman_elemental: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900009, shield: 900030, wrists: 900018 },
+  shaman_elemental: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, mainHand: 900032, neck: 900009, shield: 900030, wrists: 900018 },
   /*
    * ==========================================================================
    * THE BOOTS GO FROM MINOR SPEED TO +7 AGILITY, worth **+1.9 +/- 1.8** paired
