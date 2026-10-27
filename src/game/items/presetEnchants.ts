@@ -56,6 +56,13 @@ export const PRESET_ENCHANTS: Readonly<
    * slot's defensive enchant stays: swapping one for strength or agility buys
    * 8 to 14 TPS for about +0.3 deaths a slot, which is the owner's trade.
    */
+  /*
+   * ROUND 80: THE OWNER KEPT THE DEFENSIVE ROW. Strength on head, legs, neck
+   * and wrists and +5 Agility on the cloak measured +45.2 weighted TPS with
+   * the Undead swap, but deaths 0.36 -> 0.69 (Prot) and 0.42 -> 0.89 (Fury
+   * Prot) at one target, and asked, the owner chose the dodge and defense
+   * enchants. The race and Fury Prot's talents stay.
+   */
   prot_warr: { chest: 900015, cloak: 900001, feet: 900026, gloves: 900024, head: 900001, legs: 900001, mainHand: 20034, neck: 900012, shield: 900030, wrists: 900016 },
   // Prot Warr's loadout exactly: Fury Prot copies that build in every other case.
   fury_prot: { chest: 900015, cloak: 900001, feet: 900026, gloves: 900024, head: 900001, legs: 900001, mainHand: 20034, neck: 900012, shield: 900030, wrists: 900016 },
@@ -91,16 +98,31 @@ export const PRESET_ENCHANTS: Readonly<
    * +0.33 +/- 0.33 deaths of 18.75; the feet +2.4 TPS (noise) and -0.19 deaths.
    * Head and legs stay +1% Dodge: +8 Strength there is +19.8 TPS for +0.87
    * deaths, which is buying threat with deaths.
+   *
+   * ROUND 80: HEAD AND LEGS +8 AGILITY (was +1% Dodge). The ramp is capped at 2x
+   * and the Bear dies 0.09 times in two minutes, so threat is the figure:
+   * +10.6 weighted TPS on top of Ferocity 5 (+25.66 against +15.05) for
+   * +0.014 deaths. +8 Strength +5.2 noise; +1% Haste +2.0 noise.
    */
-  druid_bear: { chest: 900015, cloak: 900001, feet: 900026, gloves: 900024, head: 900001, legs: 900001, neck: 900011, twoHand: 20034, wrists: 900019 },
+  druid_bear: { chest: 900015, cloak: 900001, feet: 900026, gloves: 900024, head: 900003, legs: 900003, neck: 900011, twoHand: 20034, wrists: 900019 },
   /*
    * ROUND 78 LEFT THESE ALONE, AND THE ROUTE THERE IS THE KNOCK-ON: head and
    * legs +8 Intellect for +1% Haste measured +12.77 +/- 3.87 at 1 target / 120 s
    * on the round's starting build, and -10.17 +/- 3.45 once Orc and the Major
    * Mana Potion were in. Haste here is also the Searing Totem knife-edge of
    * docs/profile-optimisation.md Appendix B.
+   *
+   * ROUND 80: THE MAIN HAND TAKES REVELATION FOR WEAPON SPELL POWER, on the
+   * weighted score: **+50.14 +/- 3.46** (t1 -2.9, t3 +48.3, t5 +80.7, t8
+   * +174.4). The proc rolls per landed non-crit hit, so Chain Lightning and
+   * Fire Nova give it a roll per target struck -- it is an AoE enchant. The
+   * Single Target cost is 2.9 DPS. Head and legs Intellect (-20.0) and gloves
+   * Haste (-13.5) still lose.
+   *
+   * RE-PRICED WHEN THE OWNER RULED REVELATION ONCE PER CAST: still **+20.91
+   * +/- 3.17** over Weapon Spell Power (t1 -2.9, t8 +69.0), so it stays.
    */
-  shaman_elemental: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900009, shield: 900030, wrists: 900018 },
+  shaman_elemental: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, mainHand: 900032, neck: 900009, shield: 900030, wrists: 900018 },
   /*
    * ==========================================================================
    * THE BOOTS GO FROM MINOR SPEED TO +7 AGILITY, worth **+1.9 +/- 1.8** paired
@@ -134,10 +156,30 @@ export const PRESET_ENCHANTS: Readonly<
    * its damage and all of its Fire Nova and Magma Totem.
    */
   shaman_enhancement: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900006, legs: 900006, neck: 900009, twoHand: 900029, wrists: 900018 },
+  /*
+   * ROUND 80, priced on the weighted score (49% 1 target / 120 s, 17% each 3, 5
+   * and 8 targets), against +65 Spell Power on the staff:
+   *   Revelation       Arcane +114.3 +/- 6.9 (t1 +3.5, t8 +471.5), Frost +98.3
+   *                    +/- 5.4 (t1 -2.4), Frostfire +9.7 +/- 6.6 (t1 -18.3),
+   *                    Fire -5.8 -- so three of the four take it. It is rolled per
+   *                    non-periodic DAMAGE EVENT, so an area spell striking eight
+   *                    targets rolls eight times a cast: that is where the area
+   *                    figures come from, and a per-cast ruling would shrink them.
+   *   Enchant Weapon - Spell Power  -20 to -30 on all four.
+   *   gloves +1% Haste for +20 SP   Arcane +5.9 +/- 2.3 (shipped); Frostfire -2.4,
+   *                    Frost +1.4, Fire -11.9.
+   *   head +8 Intellect / Spirit for +1% Haste  -10 to -17 on all four.
+   *
+   * AND RE-PRICED WHEN THE OWNER RULED REVELATION ONCE PER CAST (later in round
+   * 80), +65 Spell Power against Revelation, weighted, 400 paired fights:
+   *   Arcane -6.04 +/- 6.27 (noise; Revelation kept), Frost +9.20 +/- 6.13 and
+   *   Frostfire +22.85 +/- 6.40 -- so Frost and Frostfire go back to +65 Spell
+   *   Power and only Arcane keeps Revelation.
+   */
   mage_frostfire: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   // The owner's saved build, round 59: the Frostfire loadout exactly.
   mage_frost: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
-  mage_arcane: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
+  mage_arcane: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900002, head: 900002, legs: 900002, neck: 900009, twoHand: 900032, wrists: 900018 },
   mage_fire: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   // +65 Spell Power on the two-hander in place of Crusader, by the owner (round 37).
   // Round 78: wrists +16 Spell Power (was +9 Strength), +0.62 +/- 0.03 at 120 s.
@@ -171,25 +213,36 @@ export const PRESET_ENCHANTS: Readonly<
   // and wrists +16 Spell Power (was +4 Defense, +9.2 TPS on top, deaths +0.13
   // noise) -- this tank is mana- and spell-power-bound at 120 s.
   prot_pally: { chest: 900015, cloak: 900001, feet: 900027, gloves: 900024, head: 900001, legs: 900001, mainHand: 22749, neck: 900012, shield: 900030, wrists: 900018 },
-  bm_hunter: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },
+  // Round 80: head and legs +1% Haste (900002), +7.4 +/- 2.9 on the weighted score.
+  bm_hunter: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900002, legs: 900002, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },
   // Round 78: +8 Intellect on the head and legs (900006). Mana-bound at 120s, this
   // build weighs intellect at 1.10 a point against agility's 0.74.
-  lw_ranged: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900006, legs: 900006, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },
+  // Round 80: back to +8 Agility on the head and legs (900003). On the weighted
+  // score agility wins once the Multi Target fights count: with Blasted Lands
+  // +25 Agility and the pre-pull Serpent Sting, +32.9 +/- 3.5 (-9.1 on one target).
+  lw_ranged: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },
   // Round 79: +15 Agility on the OFF hand (900022) -- +25 Agility is two-handed
   // only. +15 Agility beat Crusader there on four of the five builds at 120 s.
-  lw_melee: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 900022, wrists: 900019 },
-  hawk_melee: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 900022, wrists: 900019 },
+  // Round 80: the MAIN hand +15 Agility too (was Crusader), with food +20
+  // Agility: +15.1 / +7.1 weighted on LW Melee / Hawk Melee. Off hand Crusader
+  // measured -9.8 / -9.5.
+  lw_melee: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 900022, neck: 900011, offHand: 900022, wrists: 900019 },
+  hawk_melee: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 900022, neck: 900011, offHand: 900022, wrists: 900019 },
   warlock_smds: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   warlock_firelock: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   warlock_sbolt: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   warlock_demonology: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
-  shadow_priest: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
+  // Round 80: the staff takes Revelation over +65 Spell Power, +14.83 +/- 2.70
+  // on the weighted score (+25.8 at one target, -15.6 at eight over 30s).
+  // Re-priced once per cast, as the owner ruled: still +2.93 +/- 2.71.
+  shadow_priest: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900032, wrists: 900018 },
   // The Shockadin's caster row with the two Healing Power enchants on the neck
   // (900010) and wrists (900020), which are stats since round 52.
   // Round 78: head and legs +8 Intellect (was 1% Haste): the raid healer
   // fight is mana-bound, +48.84 +/- 7.17 HPS there and -1.57 +/- 4.87 (noise)
   // in the tank healer fight.
-  holy_pal: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900006, legs: 900006, mainHand: 22749, neck: 900010, shield: 900030, wrists: 900020 },
+  // Round 80: neck +6 Spell Power (was +11 Healing Power), +1.05 +/- 0.81 HPS weighted.
+  holy_pal: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900006, legs: 900006, mainHand: 22749, neck: 900009, shield: 900030, wrists: 900020 },
   // Round 60: Holy Pal's healer loadout, for the Shaman healer.
   // Round 78: the two Priest healers take the +65 Spell Power staff enchant
   // (65 healing power) over Enchant Weapon - Spell Power, which is +30 spell

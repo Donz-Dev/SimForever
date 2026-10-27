@@ -93,7 +93,8 @@ describe("the owner's Frost Mage", () => {
   const profile = PRESETS_BY_ID.get('mage_frost')!.build();
 
   it('is their saved build: race, 51 points, consumables, opener and list', () => {
-    expect(profile.character).toMatchObject({ name: 'Frost Mage', race: 'windshaper_skyborne', characterClass: 'mage' });
+    // Troll since round 80 (+8.0 on the weighted score); their saved file was Windshaper Skyborne.
+    expect(profile.character).toMatchObject({ name: 'Frost Mage', race: 'troll', characterClass: 'mage' });
     expect(Object.values(profile.talents ?? {}).reduce((a, b) => a + b, 0)).toBe(51);
     expect(profile.talents).toMatchObject({ ice_barrier: 1, improved_blizzard: 1, winter_s_chill: 5, fingers_of_frost: 2 });
     // The potion is the Major Mana Potion since round 78 (+25.68 at a 120s fight); their saved file had Spellblasting.

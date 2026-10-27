@@ -615,14 +615,35 @@ export const REVELATION: AuraDefinition = {
  * make every roll false. See `reactionsForEquipment`.
  */
 export function revelationReaction(slot: MeleeWeaponSlot): Reaction {
+  /*
+   * ==========================================================================
+   * ONCE PER CAST, NOT ONCE PER TARGET HIT (round 80), the owner's ruling. A
+   * `dealt` reaction fires per DAMAGE EVENT, so an area spell striking eight
+   * targets rolled eight times -- which is where most of the enchant's value on
+   * the area builds came from.
+   *
+   * THE CAST IS KEYED BY `castSequence - channelTicksDelivered`, Arcane
+   * Concentration's key: `runCast` stamps a new sequence on every channel tick
+   * and the delivered count rises with it, so the difference names the whole
+   * cast. The ability id is part of the key so a hit dealt outside any cast of
+   * its own cannot share the last cast's roll. The FIRST non-crit hit of the
+   * cast takes the roll; a cast whose first hits all crit keeps its roll for
+   * the first that does not, which is "a non-periodic spell fails to crit"
+   * read once per cast. Per HAND still, so each hand's closure keeps its own.
+   * ==========================================================================
+   */
+  let rolledFor: string | undefined;
   return {
     id: `revelation_${slot}`,
     on: 'dealt',
     // Landed, and not a crit. `glance` and `crush` cannot occur on the spell
     // table and are left out rather than filtered later.
     outcomes: ['hit'],
-    canTrigger: (context, _actor, attack) => {
+    canTrigger: (context, actor, attack) => {
       if (attack.attackTable !== 'spell') return false;
+      const cast = `${actor.castSequence - actor.channelTicksDelivered}:${attack.abilityId ?? ''}`;
+      if (rolledFor === cast) return false;
+      rolledFor = cast;
       const chance = revelationChance(attack.critChance ?? 0);
       if (chance <= 0) return false;
       return context.rng.nextFloat(0, 1) < chance;

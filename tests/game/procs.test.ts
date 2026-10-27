@@ -633,7 +633,7 @@ describe('Enchant Weapon - Revelation', () => {
        * exactly what a PPM effect would NOT give them.
        * ------------------------------------------------------------------------
        */
-      const reaction = revelationReaction('mainHand');
+      // A fresh reaction per call: it rolls once per cast (round 80).
       const attack = spellHit(false, 0.2) as never;
 
       // A dagger Rogue and a two-hand Warrior: 1.8s against 3.6s.
@@ -657,17 +657,17 @@ describe('Enchant Weapon - Revelation', () => {
       for (const roll of [0.0001, 0.03, 0.065, 0.0659, 0.067, 0.09, 0.5]) {
         const rolled = { rng: { nextFloat: () => roll } } as never;
         expect(
-          reaction.canTrigger!(rolled, dagger, attack),
+          revelationReaction('mainHand').canTrigger!(rolled, dagger, attack),
           `roll ${roll}: the dagger and the two-hander must agree`,
-        ).toBe(reaction.canTrigger!(rolled, twoHander, attack));
+        ).toBe(revelationReaction('mainHand').canTrigger!(rolled, twoHander, attack));
       }
 
       // And the threshold is crossed somewhere inside that sweep, so the
       // agreement above is not two identical `false`s.
       const low = { rng: { nextFloat: () => 0.0001 } } as never;
       const high = { rng: { nextFloat: () => 0.5 } } as never;
-      expect(reaction.canTrigger!(low, dagger, attack)).toBe(true);
-      expect(reaction.canTrigger!(high, dagger, attack)).toBe(false);
+      expect(revelationReaction('mainHand').canTrigger!(low, dagger, attack)).toBe(true);
+      expect(revelationReaction('mainHand').canTrigger!(high, dagger, attack)).toBe(false);
     });
 
     it('is listed with outcomes that exclude a crit', () => {
@@ -690,10 +690,23 @@ describe('Enchant Weapon - Revelation', () => {
        * crit is past the cut-off and cannot proc at all.
        * ======================================================================
        */
+      const character = mage();
+      expect(revelationReaction('mainHand').canTrigger!(always, character, spellHit(false, 0.1))).toBe(true);
+      expect(revelationReaction('mainHand').canTrigger!(always, character, spellHit(false, 0.6))).toBe(false);
+    });
+
+    it('rolls ONCE PER CAST, not once per target hit (round 80)', () => {
+      /*
+       * THE OWNER'S RULING: an area spell striking eight targets rolled eight
+       * times, because a `dealt` reaction fires per damage event. The second
+       * hit of the same cast is refused; the next cast rolls again.
+       */
       const reaction = revelationReaction('mainHand');
       const character = mage();
-      expect(reaction.canTrigger!(always, character, spellHit(false, 0.1))).toBe(true);
-      expect(reaction.canTrigger!(always, character, spellHit(false, 0.6))).toBe(false);
+      expect(reaction.canTrigger!(always, character, spellHit(false))).toBe(true);
+      expect(reaction.canTrigger!(always, character, spellHit(false))).toBe(false);
+      character.recordCast();
+      expect(reaction.canTrigger!(always, character, spellHit(false))).toBe(true);
     });
   });
 

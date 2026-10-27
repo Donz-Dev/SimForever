@@ -41,10 +41,12 @@ describe('Multi-DoT in the APL panel', () => {
    * a burn -- so the no-DoT case is its SINGLE TARGET list run on several
    * targets, and its area list is the case with exactly one.
    */
-  it('is on no entry of an Arcane Mage single target list, which casts no DoT', () => {
+  it('is on the one DoT of the Arcane Mage single target list, its Pyroblast', () => {
+    // Round 80 put Fire Blast into Heating Up into Pyroblast in the list, and
+    // Pyroblast carries a burn -- so the single target list has exactly one.
     const profile = PRESETS_BY_ID.get('mage_arcane')!.build();
     expect(profile.rotation.entries.length).toBeGreaterThan(0);
-    expect(multiDotControls('mage_arcane', true)).toEqual({ shown: 0, dots: 0 });
+    expect(multiDotControls('mage_arcane', true)).toEqual({ shown: 1, dots: 1 });
   });
 
   it('is on the Flamestrike entries of the Arcane Mage area list and nothing else', () => {

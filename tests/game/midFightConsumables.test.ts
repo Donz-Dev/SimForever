@@ -413,7 +413,11 @@ describe('what selecting one does to the priority list', () => {
       const inList = profile.rotation.entries
         .flatMap((entry) => [entry.abilityId, ...(entry.sequence ?? [])])
         .filter((id) => CONSUMABLE_ABILITY_IDS.has(id));
-      expect(inList.slice().sort(), preset.id).toEqual(selected.slice().sort());
+      // ONE SELECTION MAY HAVE TWO ENTRIES (round 80): the Arcane Mage drinks
+      // Spellblasting late through an entry of its own and the owner's cooldown
+      // stack still names it as a step. What this asserts is the SET -- every
+      // selection reachable, nothing unselected named.
+      expect([...new Set(inList)].sort(), preset.id).toEqual([...new Set(selected)].sort());
     }
   });
 

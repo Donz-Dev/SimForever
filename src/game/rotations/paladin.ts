@@ -1,14 +1,16 @@
 import type { Rotation } from '../../engine';
-import type { AplList } from './apl';
+import type { AplEntry, AplList } from './apl';
 import { RACIAL_COOLDOWNS, RACIAL_DEFENSIVE_COOLDOWNS } from './racialCooldowns';
-import { CONSUMABLE_COOLDOWNS, CONSUMABLE_HEALS } from './consumableCooldowns';
+import { CONSUMABLE_HEALS, consumableCooldowns } from './consumableCooldowns';
 import {
   all,
   any,
   castsInstantly,
   compileRotation,
+  fightRemaining,
   not,
   ready,
+  resourceFraction,
   selfHas,
   selfHealth,
   selfMissing,
@@ -136,6 +138,47 @@ const either = any;
  * ----------------------------------------------------------------------------
  */
 
+/**
+ * THE POTION PAIR (round 80), the owner's round 79 rule: a Primary and a
+ * Secondary Potion that share the two-minute potion cooldown, and the LIST
+ * decides which is drunk when. The shared group with its two potion entries
+ * replaced, so every other consumable keeps the shared gate and note.
+ *
+ * ----------------------------------------------------------------------------
+ * A 120 s FIGHT HOLDS ONE POTION, because the cooldown is two minutes and the
+ * report's fights are 114 to 126 s long. So the decision is WHICH ONE, and it
+ * is made by the two gates rather than by the order:
+ *
+ *   the mana potion     under `manaFraction` of the pool, as the shared gate is
+ *   Spellblasting       only in the last `spellblastingSeconds` of the fight,
+ *                       which is where it lands on a build that never needs
+ *                       the mana -- and never on one that drank the mana potion
+ *                       already, because the cooldown is shared.
+ *
+ * The Multi Target lists (60 s and 30 s fights) drink Spellblasting at the pull
+ * instead; see `profiles/multiTarget/paladin.ts`.
+ * ----------------------------------------------------------------------------
+ */
+export function paladinPotionPair(options: {
+  readonly manaFraction: number;
+  readonly spellblastingSeconds: number;
+}): readonly AplEntry[] {
+  const { manaFraction, spellblastingSeconds } = options;
+  return [
+    {
+      abilityId: 'major_mana_potion',
+      condition: resourceFraction('atMost', manaFraction, 'mana'),
+      note: `Primary or Secondary: drunk under ${manaFraction * 100}% mana. Shares the potion cooldown with Spellblasting.`,
+    },
+    {
+      abilityId: 'major_spellblasting_potion',
+      condition: fightRemaining('atMost', spellblastingSeconds),
+      note: `40 spell power for 30s, in the last ${spellblastingSeconds}s only -- unless the mana potion already took the shared cooldown.`,
+    },
+    ...consumableCooldowns({ exclude: ['major_mana_potion', 'major_spellblasting_potion'] }),
+  ];
+}
+
 // ---------------------------------------------------------------------------
 
 /**
@@ -177,7 +220,15 @@ export const PALADIN_RETRIBUTION: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
+  /*
+   * ROUND 80: THE POTION PAIR. Mana under the shared 30%, Spellblasting only in
+   * the last 30 s -- which at 120 s is never, because this build always drinks
+   * the mana potion first (+42 in round 78) and the cooldown is shared: the pair
+   * ran bit-identical fights to the mana potion alone. Spellblasting at the
+   * pull instead is -32.72 +/- 5.80. It is here for a fight that does not run
+   * dry, and the Multi Target list drinks it at the pull (+17.00 at 8 targets).
+   */
+  ...paladinPotionPair({ manaFraction: 0.3, spellblastingSeconds: 30 }),
   ...CONSUMABLE_HEALS,
   /*
    * HAMMER OF WRATH, AND ONLY THE INSTANT ONE. Instrument of Law at 2/2 takes
@@ -274,7 +325,16 @@ export const PALADIN_SHOCKADIN: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
+  /*
+   * ROUND 80: THE POTION PAIR. This build ends 120 s with 7-16% of its mana
+   * spare, so the mana potion (under 20%) is the safety net and Spellblasting
+   * is what is drunk -- in the last 45 s rather than at the pull, +0.25 +/-
+   * 0.04 on both Shockadins over 800 paired fights (last 30 s: +0.30 on the
+   * shield build, +0.01 on the two-hander; last 60 s and 80 s: +0.04, +0.11).
+   * At under 30% the two-hander drinks the mana potion and loses the window:
+   * -2.99 +/- 1.54. The Multi Target list drinks Spellblasting at the pull.
+   */
+  ...paladinPotionPair({ manaFraction: 0.2, spellblastingSeconds: 45 }),
   ...CONSUMABLE_HEALS,
   { abilityId: 'judgement' },
   /*
@@ -451,7 +511,14 @@ export const PALADIN_PROTECTION: AplList = {
    * to line it up against, where a potion the owner has placed is a decision.
    * ==========================================================================
    */
-  ...CONSUMABLE_COOLDOWNS,
+  /*
+   * ROUND 80: THE POTION PAIR, in the owner's place for the potions. Mana under
+   * 30%, Spellblasting only in the last 30 s -- bit-identical fights to the mana
+   * potion alone at 120 s (this tank always drinks it), and Spellblasting at the
+   * pull instead is -38.46 +/- 5.34 TPS. The Multi Target list drinks it at the
+   * pull.
+   */
+  ...paladinPotionPair({ manaFraction: 0.3, spellblastingSeconds: 30 }),
   { abilityId: 'judgement' },
   /*
    * SWIFT JUDGEMENT IS A SECOND JUDGEMENT, BACK TO BACK, which is the whole
@@ -514,7 +581,7 @@ export const PALADIN_PROTECTION: AplList = {
    * a tank list rarely falls this far. That is the right trade for a build
    * whose figure of merit is a DEATH COUNT, and it is worth 0.0 to all three
    * tank presets either way -- prot_warr and druid_bear are Tauren and
-   * prot_pally is Human, so not one of them learns an active racial. Stoneform
+   * prot_pally is Undead (round 80), so not one of them learns an active racial. Stoneform
    * is the one a tank would actually want, and at the bottom it fires when
    * nothing more pressing can, which is the honest policy for a ten percent
    * reduction that costs a global cooldown.
@@ -564,7 +631,13 @@ export const PALADIN_HOLY: AplList = {
      * whenever the tank is below full, which is nearly always.
      */
     ...RACIAL_COOLDOWNS,
-    ...CONSUMABLE_COOLDOWNS,
+    /*
+     * ROUND 80: THE POTION PAIR. Mana under 30%, Spellblasting only in the last
+     * 30 s -- bit-identical to the mana potion alone in the tank healer fight,
+     * which always drinks it. The raid list drops Spellblasting entirely: that
+     * fight is mana-bound and Spellblasting at the pull is -99.79 +/- 7.04.
+     */
+    ...paladinPotionPair({ manaFraction: 0.3, spellblastingSeconds: 30 }),
     /*
      * ========================================================================
      * THE LIGHT'S VIGIL CHAIN (round 61), RAID HEALER ONLY -- the owner's:
@@ -611,6 +684,26 @@ export const PALADIN_HOLY: AplList = {
         ],
       },
       note: "Raid healer: on the lowest party, whenever none of your Light's Vigils is up.",
+    },
+    /*
+     * ROUND 80, AN ADDITION ABOVE THE OWNER'S FOUR LINES, TANK HEALER FIGHT
+     * ONLY: under 60% mana, the cheap heal on whoever is below full instead of
+     * Holy Light. +2.52 +/- 1.34 HPS at 120 s over 400 paired fights (40%:
+     * +1.19, real). The raid list leaves it out. Without the "below 100%" half
+     * it is +60 -- by casting Flash of Light on a FULL tank, which is the
+     * owner's pre-cast line being skipped; that question is for the owner.
+     */
+    {
+      abilityId: 'flash_of_light',
+      target: { kind: 'lowestHealth' },
+      condition: {
+        kind: 'all',
+        of: [
+          { kind: 'resourceFraction', resource: 'mana', compare: 'atMost', fraction: 0.6 },
+          { kind: 'health', on: 'target', compare: 'below', fraction: 1 },
+        ],
+      },
+      note: 'Round 80: under 60% mana, Flash of Light on whoever is below full, before Holy Light.',
     },
     {
       abilityId: 'holy_light',

@@ -447,8 +447,14 @@ describe("the owner's openers are transcribed exactly", () => {
      * off the global cooldown, so the window opens at t=0 rather than at the
      * first decision; small and real at 120s, one target.
      */
+    // Round 80: Insect Swarm at the pull, a pure DoT behind the owner's Wrath.
+    druid_moonkin: [[0, 'insect_swarm', '+5.46 +/- 4.52 at 120s']],
     two_hand_arms: [[0, 'blood_fury', '+0.60 +/- 0.04 at 120s']],
+    // Round 80: a pure DoT at the pull, after the owner's Aimed Shot.
+    lw_ranged: [[0, 'serpent_sting', '+29.3 weighted with Blasted Lands +25 Agility, against +9.3 without it']],
     dw_fury: [[0, 'blood_fury', '+0.42 +/- 0.03 at 120s']],
+    // ROUND 80: Inner Focus before the pull, the tank healer fight's opener.
+    priest_holy: [[0, 'inner_focus', '+14.1 +/- 2.3 HPS, tank healer fight at 120s']],
   };
 
   it('keeps every owner line, at its stated lead and in its stated order', () => {

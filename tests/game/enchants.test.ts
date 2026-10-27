@@ -669,8 +669,9 @@ const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   // Round 52's healer, which has no owner row yet: chosen by the healer's stats.
   // Round 78: Intellect on the head and legs, +48.84 +/- 7.17 HPS in the
   // mana-bound raid healer fight and noise in the tank healer fight.
+  // Round 80: neck +6 Spell Power, +1.05 +/- 0.81 HPS on the weighted score.
   holy_pal: {
-    head: '+8 Intellect', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',
+    head: '+8 Intellect', neck: '+6 Spell Power', cloak: '+5 Agility', chest: '+4 Stats',
     wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+8 Intellect', feet: '+7 Agility',
     shield: '+9 Stamina',
   },
@@ -724,6 +725,8 @@ describe('what each of the 29 profiles opens with', () => {
    */
   const OPTIMISED_AWAY_FROM_THE_TABLE: Readonly<Record<string, string>> = {
     'shaman_enhancement feet': '+7 Agility',
+    // ROUND 80: the Arcane Mage's gloves, +5.9 +/- 2.3 on the weighted score.
+    'mage_arcane gloves': '+1% Haste',
     /*
      * ROUND 78. The Bear's gloves: +19.8 +/- 9.8 TPS at 120s for +0.33 deaths of
      * 18.75. Its boots replace a dead Minor Speed (+2.4 TPS, -0.19 deaths). The
@@ -731,6 +734,9 @@ describe('what each of the 29 profiles opens with', () => {
      */
     'druid_bear gloves': '+2% Threat',
     'druid_bear feet': '+7 Agility',
+    // Round 80: +10.6 weighted TPS for +0.014 deaths, now the ramp is capped.
+    'druid_bear head': '+8 Agility',
+    'druid_bear legs': '+8 Agility',
     'druid_resto head': '+8 Intellect',
     'druid_resto legs': '+8 Intellect',
     /*
@@ -765,10 +771,11 @@ describe('what each of the 29 profiles opens with', () => {
      */
     'prot_warr feet': '+7 Agility',
     'fury_prot feet': '+7 Agility',
-    // Round 78: mana-bound at a 120 second fight, LW Ranged weighs intellect at
-    // 1.10 a point and agility at 0.74 -- +5.7 for the pair.
-    'lw_ranged head': '+8 Intellect',
-    'lw_ranged legs': '+8 Intellect',
+    // Round 78 put +8 Intellect on LW Ranged's head and legs; round 80's
+    // weighted score took it back to the table's +8 Agility. BM Hunter takes
+    // +1% Haste there instead: +7.4 +/- 2.9 weighted.
+    'bm_hunter head': '+1% Haste',
+    'bm_hunter legs': '+1% Haste',
     /*
      * ROUND 78, THE TWO SUBTLETY DAGGER ROGUES: +1% Haste for +8 Agility on
      * head and legs. Stat weights at 120s over 1,500 iterations price 1% haste
@@ -846,6 +853,9 @@ describe('what each of the 29 profiles opens with', () => {
       '+9 Stamina',
       'Enchant Weapon - Crusader',
       'Enchant Weapon - Spell Power',
+      // Round 80: the Ele Shaman's main hand, and the Shadow Priest's, Arcane,
+      // Frost and Frostfire Mages' staves (the Mages' in place of +65 Spell Power).
+      'Revelation',
     ]);
   });
 });
@@ -880,7 +890,6 @@ describe('a character created from scratch gets a loadout too', () => {
      */
     expect(nameAt('two_hander', 'feet')).toBe('+7 Agility');
     expect(nameAt('dual_wield', 'feet')).toBe('+7 Agility');
-    expect(nameAt('one_hand_shield', 'head')).toBe('+1% Dodge');
     expect(nameAt('one_hand_shield', 'head')).toBe('+1% Dodge');
     expect(nameAt('one_hand_shield', 'gloves')).toBe('+2% Threat');
   });
@@ -1008,7 +1017,9 @@ describe('the enchants reach the built character', () => {
     // the boots' 7 are 11, multiplied to 12.1 by Blessing of Kings, over twenty
     // agility a point -- 60.5 units, which the truncation into roll space
     // lands at 61 on this pair.
-    expect(enchanted.dodge - plain.dodge).toBe(fromDefense + 300 + 61);
+    // 60.5 units truncates to 60 or 61 depending on the base it is added to:
+    // 61 on the Tauren this preset was, 60 on the Undead it is since round 80.
+    expect(enchanted.dodge - plain.dodge).toBe(fromDefense + 300 + 60);
 
     /*
      * THE STAT ITSELF, so the 22 above is placed rather than accepted. Four

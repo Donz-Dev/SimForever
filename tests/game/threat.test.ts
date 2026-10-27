@@ -82,8 +82,10 @@ describe('the presets at the pull', () => {
     expect(
       threatMultiplierFor(mage, { kind: 'damage', school: 'arcane', table: 'spell' }),
     ).toBeCloseTo(0.7 * 0.7 * 0.98, 6);
+    // And Burning Soul 1/3 since round 80 (the 32/16/3 tree's Fire tier tax):
+    // 10% off Fire threat.
     expect(threatMultiplierFor(mage, { kind: 'damage', school: 'fire', table: 'spell' })).toBeCloseTo(
-      0.7 * 0.98,
+      0.7 * 0.98 * 0.9,
       6,
     );
   });

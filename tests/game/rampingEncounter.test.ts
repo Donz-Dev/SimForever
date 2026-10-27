@@ -422,7 +422,13 @@ describe('dying', () => {
   });
 
   it('happens more than once in a fight', () => {
-    const deaths = timelineOf(31).filter((event) => event.type === 'death');
+    /*
+     * At 120 s rather than the 60 s default since round 80: the tank's stock
+     * enchant row moved to Strength, which re-rolls this seed's fight, and with
+     * the ramp capped at 2x one minute at seed 31 now holds a single death.
+     * The claim is that a revive lets the count pass one, not how fast.
+     */
+    const deaths = timelineOf(31, 120).filter((event) => event.type === 'death');
     expect(deaths.length).toBeGreaterThan(1);
   });
 

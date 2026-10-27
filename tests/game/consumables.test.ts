@@ -494,9 +494,9 @@ describe('what each of the 24 presets opens with', () => {
       // row that was simply empty.
       expect(selection.agility, id).toBe('elixir_agility');
       expect(selection.attack_power, id).toBe('elixir_attack_power');
-      // Round 78: LW Ranged takes INTELLECT here -- mana-bound at a 120 second
-      // fight, it weighs intellect at 1.10 a point and agility at 0.74.
-      expect(selection.blasted_lands, id).toBe(id === 'lw_ranged' ? 'blasted_intellect' : 'blasted_agility');
+      // Round 78 gave LW Ranged INTELLECT here (one target, 120 s); round 80's
+      // weighted score put it back on agility (+9.3).
+      expect(selection.blasted_lands, id).toBe('blasted_agility');
       /*
        * THE FOOD IS AGILITY AND NOT THE "+40 Attack Power" THAT NOW REACHES THE
        * BOW, which is the one place the ruling could have changed a row and

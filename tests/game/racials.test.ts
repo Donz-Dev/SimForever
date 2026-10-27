@@ -1437,9 +1437,9 @@ describe('the racials are in the priority lists, or they never fire', () => {
       ['druid_cat', []],
       ['dw_fury', ['blood_fury']],
       ['mage_fire', ['eureka']],
-      // Human since round 78: Ruthless and The Human Spirit are passives, so
-      // every racial entry in the list is switched off.
-      ['shadow_priest', []],
+      // Troll since round 80 (Human from round 78): Berserking is lit and
+      // every other racial entry is switched off.
+      ['shadow_priest', ['berserking']],
     ] as const) {
       const built = preset === 'mage_fire' ? gnomeMage(preset) : PRESETS_BY_ID.get(preset)!.build();
       /*

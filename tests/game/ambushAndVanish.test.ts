@@ -366,7 +366,10 @@ describe('a Cutthroat window is pooled for, not spent through', () => {
 });
 
 describe('the Rupture list carries the owner’s stealth cycle', () => {
-  const ids = ROGUE_RUPTURE.entries.map((entry) => entry.abilityId);
+  // The owner's entries: round 80's end-of-fight Eviscerate is a deliberate second one.
+  const ids = ROGUE_RUPTURE.entries
+    .filter((e) => !JSON.stringify(e.condition ?? {}).includes('fightRemaining'))
+    .map((entry) => entry.abilityId);
 
   it('has every ability the four sequences name', () => {
     for (const id of ['ambush', 'vanish', 'preparation']) {

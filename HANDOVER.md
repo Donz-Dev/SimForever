@@ -107,6 +107,101 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 80: Optimize, Update, and Report all Profiles, under the round 79 rules
+
+The second run of the `optimize-update-report` skill: nine class agents in
+parallel worktrees, each held to the owner's round 79 rules -- one talent build
+chosen on the weighted score, Horde and Windshaper Skyborne races only,
+slot-legal enchants, a Primary and Secondary Potion with list logic, and a
+deeper search. Merged one class at a time into `optimise-r80`; the published
+report is <https://claude.ai/artifact/V4ufqYWKcVt6m6hkETKhW3> (version 4).
+
+**34 of 37 weighted scores rose, 2 fell, 1 did not move.** Mean change by role:
+DPS **+74.0** (28 rows), tanks **+125.2 TPS** (4), healers **+1.8 HPS** (5). The
+two that fell are both healers forced off a race: Resto Drood (Night Elf to
+Tauren, 1220.1 -> 1209.3) and Holy Pal (Human to Undead, 608.5 -> 604.3). 2H Arms
+is the one that did not move -- every alternative lost.
+
+| | weighted before | after | the change that carried it |
+| --- | --- | --- | --- |
+| LW Melee | 1055.6 | **1516.6** | Volley in the Multi Target list; Serpent Sting and Arcane Shot above Raptor Strike |
+| Hawk Melee | 1111.6 | **1477.4** | the same, Volley gated at 4+ targets |
+| Fury Prot | 1683.2 TPS | **1932.6** | Undead; 0/31/20 (Deflection into Improved Thunder Clap and Master of Defense); no execute clause in Multi Target |
+| Firelock | 1434.1 | **1665.4** | Troll; Hellfire and Rain of Fire take the Destruction talents; Immolate walked over 4 targets |
+| Fire Demo | 1549.9 | **1759.5** | Troll; the Destruction list fix |
+| Arcane Mage | 1701.8 | **1869.6** | 32/16/3 and Fire Blast into Heating Up into Pyroblast; Troll; Revelation |
+| Prot Warr | 1489.0 TPS | **1628.2** | Undead; no execute clause in Multi Target, Rend spread to 5 |
+| Frostfire Mage | 1482.3 | **1602.7** | Improved Flamestrike 3; Troll |
+| Sbolt Spam | 1255.9 | **1364.1** | the Destruction list fix |
+| Bear | 1857.6 TPS | **1931.6** | Windshaper; Ferocity 5; Agility head and legs; Berserk at the Multi Target pull |
+
+Every other row is on the page, with all four encounter columns.
+
+**THREE OWNER RULINGS LANDED MID-ROUND**, asked with the agents' figures:
+
+| | ruling | what it moved |
+| --- | --- | --- |
+| Revelation | **one roll per CAST**, not per target hit | `revelationReaction` keys on `castSequence - channelTicksDelivered` plus the ability id. Re-priced: Frost (+9.20) and Frostfire (+22.85) go back to +65 Spell Power; Arcane (noise), Shadow Priest (-2.93 for +65) and Ele Shaman (-20.91 for Weapon Spell Power) keep it. Shadow Priest's round gain shrank to about zero with it |
+| Hellfire and Rain of Fire | **Destruction spells** | added to `WARLOCK_DESTRUCTION_SPELLS`, so Ruin and Agonizing Flames reach them |
+| tank enchants | **Prot Warr and Fury Prot keep the dodge and defense row** | the Strength row (+45 weighted TPS) roughly doubled single-target deaths; Undead and Fury Prot's tree stay |
+
+And the owner kept the Mage agent's replacement trees: Arcane 32/16/3 and Fire
+12/36/3.
+
+**QUESTIONS FOR THE OWNER, priced and not shipped** (weighted unless stated):
+
+- **Warlock**: Corruption on Firelock (+5 at 1T; "NO CORRUPTION" is your line);
+  Bane of Doom above your Bane of Agony (+8.4 Firelock, +8.5 Fire Demo, loses
+  on SM/DS and Sbolt); Sbolt Spam on Troll with Berserking for Blood Fury
+  (+19.7) and Shadow school power, Spellstone and Fel Vitality (+46.0).
+- **Shaman**: should Elemental Mastery, Rage of the Farseer and Mana Tide be
+  off the global cooldown? Ele's Spellblasting line was given a "last 30 s"
+  gate so the mana potion can fire -- confirm.
+- **Priest**: Flash Heal on the tank only under 80% (Holy +24.7, Disc +30.9);
+  Shadow's Holy Nova build 5/11/35 (+112.5, mostly at 8 targets, and priced
+  before Revelation went once per cast); removing Holy's raid shield line
+  (+24.0); Prayer of Mending first in Holy's raid list (+31.1).
+- **Druid**: Bear Maul queue at 25 rage, not 42 (+23.8); Demoralizing Roar out
+  of the Bear's Multi Target list (+60 to +89 TPS); Cat Thistle Tea at 15-20
+  energy (+4.7). Engine: the five second rule stops gear mp5 as well as spirit
+  regen; six Druid cooldowns are on the global cooldown.
+- **Paladin**: Holy Pal's pre-cast Holy Light (+61.3 tank HPS removed); smart
+  healing off in Holy Pal's raid list (+31.6); Holy Light at 50% not 65% (+2.9);
+  Prot Conviction 3 (+22.1 TPS, deaths +24%) and the Spell Power flask (+51.6
+  TPS, deaths +40%). Prot Pally still dies 3.4 to 3.6 times a 120 s fight.
+- **Hunter**: Melee Weave needs the melee builds' style changed to ranged (+45
+  at 1T, -37 to -54 weighted); a mana potion in place of Frenzy in the ranged
+  single-target stack (+32.5 BM, +19.0 LW Ranged at 1T); both fire traps in one
+  list (+57, only because the engine gives them no shared cooldown).
+- **Rogue**: Expose Armor stacks with Sunder Armor (separate aura ids; exclusive
+  in Classic) -- a 3+ point Expose is +18 to +43 on all six; Combat's Garrote
+  then Blade Flurry at 0 s (+8.8) and Blade Flurry at the Multi Target pull
+  (+19.7); +40 Attack Power food over +20 Agility (Combat +4.4, Rupture +2.4).
+- **Warrior**: Recklessness's eye on (+23.5 to +126.3); lifting the tank
+  execute clause in Single Target (+96.5 and +86.8 TPS, fewer deaths); Prot's
+  Thunder Clap and Demoralizing Shout lines (+14.8, +10.9); Strength Blasted
+  Lands and food on the tanks (+17.8, +12.4 on Fury Prot); Death Wish and
+  Berserker Rage off the global cooldown (+6.9 on DW Fury).
+- **Mage**: Frostfire's Fire Blast gate ungated (+13.3); Frost's saved order,
+  Arcane Missiles below Ice Lance (+5.7); a Secondary Potion on Frost needs your
+  ungated Spellblasting line gated to the last 30 s (about +8.6); Arcane carries
+  a potion-free copy of the cooldown stack above your Spellblasting stack, so
+  your line never fires -- confirm.
+
+**ENGINE AND DATA ITEMS THE AGENTS FOUND**: Resourcefulness misses Explosive
+Trap and Wing Clip; Survivalist's Discipline is unmodelled; Death Coil and Drain
+Life are undeclared; Prowl can be cast in combat and nothing gates a Cat's book
+by form; the `secondary_*` potions grant the primary's ability id, so an
+existing potion entry acts on the secondary; a consumable selected inside
+`inMulti` is discarded (a tooling trap); Totemic Focus names Searing Totem
+only; the Blade Flurry and Eureka double-pay is still in the engine though no
+preset reaches it.
+
+**A FLAKE WORTH NAMING**: `tests/game/lastStand.test.ts` "does it in a real
+fight" timed out at 5000 ms in several agents' first full runs under the
+nine-way load, and passed alone every time. It walks no source tree, so it is
+the CPU load rather than the cold-cache class above.
+
 ## Round 79: racial tuning, a 2x ramp ceiling, two potions, the weighted score
 
 The owner's notes on round 78, and the changes they asked for before the next
@@ -12089,11 +12184,11 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Arcane Mage | Mage | 48/3/0 | 1123.4 | | LW Melee | Hunter | 5/13/33 | 878.8 |
+| Arcane Mage | Mage | 48/3/0 (then; 32/16/3 since round 80) | 1123.4 | | LW Melee | Hunter | 5/13/33 | 878.8 |
 | Frostfire Mage | Mage | 0/29/22 | 1086.4 | | Shockadin | Paladin | 23/0/28 | 867.8 |
 | DW Fury | Warrior | 17/34/0 | 1068.4 | | Combat Mut | Rogue | 30/21/0 | 848.0 |
 | LW Ranged | Hunter | 5/41/5 | 1021.0 | | Hemo Dagger | Rogue | 17/3/31 (then; 20/0/31 since round 78) | 840.2 |
-| Fire Mage | Mage | 14/34/3 | 1020.7 | | **Enh Shaman** | Shaman | 19/32/0 | **838.8** |
+| Fire Mage | Mage | 14/34/3 (then; 12/36/3 since round 80) | 1020.7 | | **Enh Shaman** | Shaman | 19/32/0 (then; 18/31/2 since round 80) | **838.8** |
 | BM Hunter | Hunter | 31/20/0 | 968.2 | | Moonkin | Druid | 41/0/10 (then; 38/0/13 since round 78) | 820.3 |
 | Cat Druid | Druid | 9/34/8 | 966.9 | | Ele Shaman | Shaman | 32/11/8 | 792.8 |
 | Seal Twist Ret | Paladin | 15/0/36 (then; 16/0/35 since round 78) | 948.6 | | Pure Hemo | Rogue | 19/8/24 | 775.9 |

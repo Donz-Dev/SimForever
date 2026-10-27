@@ -8,6 +8,106 @@ directory for what the census columns mean and how to reprint every figure below
 
 ---
 
+## Round 80 — the second run, on the owner's five rules
+
+`tools/optimise/shamanVariants80.ts` holds every group, each with its control,
+and a `*combined` group per preset that reverts each ship on the finished
+build. `full_report.ts`, 300 fights a cell, before -> after:
+
+| | 1T 120 s | 3T 60 s | 5T 60 s | 8T 30 s | weighted |
+| --- | --- | --- | --- | --- | --- |
+| Ele Shaman | 731.1 -> 726.0 | 1263.1 -> **1326.7** | 1594.8 -> **1716.7** | 2191.7 -> **2462.8** | 1216.7 -> **1291.8** |
+| Enh Shaman | 841.2 -> 840.3 | 1292.7 -> 1297.1 | 1604.9 -> **1627.7** | 2114.5 -> **2168.6** | 1264.3 -> **1277.6** |
+
+| | tank healer 120 s | raid healer 60 s | weighted |
+| --- | --- | --- | --- |
+| Piss Beam | 453.5 -> 453.5 | 1218.0 -> **1246.5** | 835.8 -> **850.0** |
+
+**SHIPPED, each priced as a REVERT on the finished build (`*combined`, 600
+paired fights, weighted):**
+
+| preset | change | weighted |
+| --- | --- | --- |
+| Ele | main hand **Revelation** for Weapon Spell Power | +62.3 (t1 -2.7, t8 +213) |
+| Ele | Spellblasting as the **secondary potion**: last 30 s on one target, at the pull in the Multi list | +12.5 |
+| Ele | Multi list: **Flame Shock held while Revelation is up** | +11.0 |
+| Enh | **Elemental Focus 1 + Ancestral Knowledge 1 -> Tidal Focus 2** (18/31/2) | +10.9 |
+| Enh | Spellblasting secondary: last 30 s on one target, at the pull from **five** targets | +7.6 |
+| Piss Beam | raid list: **Chain Heal ungated** on the Riptide target | +12.5 (raid +24.9) |
+
+**REVELATION IS AN AOE ENCHANT HERE.** It rolls on every landed non-crit
+spell HIT, so Chain Lightning and Fire Nova give it a roll per target struck;
+on one target it costs 2.7-2.9 DPS. Whether "a non-periodic spell fails to
+crit" means one roll per CAST or per target hit is the owner's -- the figure
+rests on the per-hit reading the engine implements. On Enhancement it is
+-1.6 (noise) and on the healer it never fires (heals are not on the spell
+damage table).
+
+**THE POTION PAIR IS A FALLBACK ON ONE TARGET AND A SWITCH ON SEVERAL.** At
+120 s both damage builds run dry and the mana potion under 30% beats
+Spellblasting at the pull by 30.2 (Ele) and 32.9 (Enh); drunk first, the
+damage potion locks the mana potion out for the whole fight (shared
+cooldown). So the Single Target lists drink Spellblasting only in the last
+30 s -- identical fights at 120 s, a window at 60 s. Pre-pull Spellblasting at a
+10 or 20 s lead (so the cooldown returns at 110 or 100 s) lost -29 to -32: the
+mana arrives too late to spend. Mana-potion gates of 20/40/50/60% all lost
+narrowly to 30%; Demonic Rune at 20/30% was noise against the owner's 10%.
+
+**RACES ARE UNCHANGED** -- Orc for both damage builds (Ele: Troll -7.2, Windshaper
+-8.2, Tauren -20.7; Enh: Troll -16.2, Windshaper -15.3, Tauren -15.4) and
+Windshaper Skyborne for Piss Beam (Troll -4.9, Orc -9.6, Tauren -9.7). Orc
+losing Savage did not move it: Blood Fury is the trait that pays.
+
+**TRIED AND LOST, with figures** (paired, 400 fights unless stated):
+
+- Ele, Single Target at 120 s (mana-bound): Earth Shock as a filler between
+  Flame Shocks at gates FS >= 3/6/9/12/15 s, above LB or LvB, with mana floors
+  30/60% and on Clearcasting only: -1.0 to -4.0 (15 s never fires). Frost Shock
+  -7.3. Fire Nova above LB -93.3 (bottom: never reached). Chain Lightning inside
+  Elemental Mastery's no-cooldown window -26.8, on Clearcasting -1.3. Flame Shock
+  refreshed under 2 s -41.7. Elemental Mastery pre-cast at 2 s -4.3. Revelation
+  hooks (Lava Burst on Revelation, Flame Shock held): -0.0. Owner lines priced
+  for removal: Lava Burst -8.9, Searing Totem -20.0 -- both stay.
+- Ele talents (weighted): Elemental Warding is dead and nothing pays for its
+  three points -- Reverberation 3 -2.7, Totemic Focus 1 -0.0. The split stays
+  32/11/8.
+- Ele, Multi: Chain Lightning above Flame Shock +15.4 at 5 but less than the
+  Revelation hold, and combined no better; FS multi-DoT 3 -10.4; CL above Fire
+  Nova -50.4; Earth Shock never reached (identical).
+- Enh talents (weighted): every route to Tidal Focus was priced -- Devastation
+  (+8.0 with a third point), Reverberation (+9.7), Call of Flame (-31.3),
+  Trial by Fire (-83.6 / -130.3). Elemental Focus is worth about nothing on
+  this build (Focus -> AK 5 is +3.1).
+- Enh, Single Target at 120 s: Chain Lightning at the bottom -102.9; Magma for
+  Searing -29.7; Fire Nova above Earth Shock -5.1 / above Stormstrike -12.5;
+  Stormstrike only without its debuff -6.0; Blood Fury pre-cast at 0 s +0.42
+  (real, not worth a shared-test edit). **Imbues** (owner line): Windfury
+  Weapon -98.2, Rockbiter -53.3 against Flametongue. **The owner's Earth Shock
+  gate is now right**: 1 s +0.45, ungated +0.25 (noise) -- the round-78 question
+  is closed by the new build. Removing Flame Shock (owner line) -45.3.
+- Enh, Multi: Spellblasting at 3 targets -12.0, at 4 -0.5, so gated at 5.
+  Chain Lightning above Stormstrike -26.2, LB above CL -9.1, FS multi-DoT 3
+  -19.1, Magma under 2 s -11.8; Earth Shock never fires at 5 targets.
+- Enchants (weighted): Ele head/legs Intellect -20.0, Spirit -23.8, gloves
+  Haste -13.5. Enh head/legs Haste -15.5, Strength -5.8, gloves Haste -18.6,
+  Crusader -24.1, +25 Agility -27.6, wrists Strength -5.6. Piss Beam: SP for
+  healing on wrists/neck/gloves noise, Intellect/Spirit for Haste -15/-16.
+  All enchants are legal for their slot (`enchantsForSlot`).
+- Piss Beam: the TANK fight is at a plateau -- 13 list variants within +-6
+  (Healing Wave gates 80/90/95/100%, above Riptide -5.7, Mana Tide 70%/ungated,
+  NS at 20/35/50%/on cooldown, Chain Heal entries). Talents: Ghost Wolf or
+  Natural Grace into Tidal Focus 5 +0.55 (noise). Potions: mana-potion gate
+  15/50% and Rune 20/40% noise; dropping the Rune -2.2. No second potion has a
+  modelled effect for a healer (Mender's is unmodelled, a healing potion heals
+  only the drinker, damage potions do nothing), so its Secondary row stays empty.
+
+**NEEDS THE OWNER:** none that would move a figure. The imbue and Flame Shock
+owner lines all win on measurement. Two readings are flagged: Revelation's
+roll per target hit, and Elemental Mastery / Rage of the Farseer / Mana Tide
+still taking a global cooldown (round 78's question, still open).
+
+---
+
 ## Round 78 — the three presets optimised for the full report
 
 `tools/optimise/shamanVariants.ts` holds every group, each with its control;
@@ -453,7 +553,7 @@ were in a build; one is left, and it works.
 
 | Profile | Talents | DPS | was | List | Entries |
 | --- | --- | --- | --- | --- | --- |
-| Enh Shaman | 19/32/0 | **625.8** ±8.0 | 604.0 | `SHAMAN_ENHANCEMENT` | 8 |
+| Enh Shaman | 18/31/2 | **625.8** ±8.0 | 604.0 | `SHAMAN_ENHANCEMENT` | 8 |
 | Ele Shaman | 32/11/8 | **375.0** ±3.8 | 295.4 | `SHAMAN_ELEMENTAL` | 4 |
 
 **THE DPS COLUMN ABOVE IS THE DEEP DIVE'S AND IS LONG DEAD** -- raid buffs were

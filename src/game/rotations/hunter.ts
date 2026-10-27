@@ -2,7 +2,7 @@ import type { Rotation } from '../../engine';
 import type { AplCondition, AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
 import { CONSUMABLE_HEALS, consumableCooldowns } from './consumableCooldowns';
-import { builtin, compileRotation, selfTime, targetMissing } from './apl';
+import { all, builtin, compileRotation, fightElapsed, resourceFraction, selfTime, targetMissing } from './apl';
 import type { TalentAllocation } from '../talents/Talent';
 
 /**
@@ -136,7 +136,25 @@ import type { TalentAllocation } from '../talents/Talent';
  */
 const STACKED = new Set(['berserking', 'blood_fury']);
 const HUNTER_RACIALS = RACIAL_COOLDOWNS.filter((entry) => !STACKED.has(entry.abilityId));
-const HUNTER_CONSUMABLES = consumableCooldowns({ exclude: ['major_frenzy_potion'] });
+/*
+ * THE SECONDARY POTION (round 80, the owner's round 79 rule): a Major Mana
+ * Potion on the Secondary row, drunk under 50% mana once a minute has passed.
+ * It shares the two-minute potion cooldown with the Major Frenzy Potion that
+ * leads the cooldown stack at the pull, so in the report's fights it is a
+ * safety net: +1.1 weighted on BM Hunter, +1.5 on LW Ranged, 0.0 on the melee
+ * builds. Taking the frenzy OUT of the Single Target stack so the mana potion
+ * can be drunk instead is worth +32.5 / +19.0 on one target at 120s, and is
+ * the owner's stack line to change -- a question, not a ship.
+ */
+const HUNTER_MANA_POTION = {
+  abilityId: 'major_mana_potion',
+  condition: all(resourceFraction('below', 0.5, 'mana'), fightElapsed('above', 60)),
+  note: 'Secondary potion: under 50% mana and past the first minute; otherwise the potion cooldown belongs to the frenzy in the stack.',
+};
+const HUNTER_CONSUMABLES = [
+  HUNTER_MANA_POTION,
+  ...consumableCooldowns({ exclude: ['major_frenzy_potion', 'major_mana_potion'] }),
+];
 
 const potionStack = (steps: readonly string[]) => ({
   abilityId: 'major_frenzy_potion',
@@ -535,6 +553,25 @@ export const HUNTER_LONE_WOLF_MELEE: AplList = {
    * what the list does with it: arming costs no global cooldown and the swing
    * carries it. Its capture said "Next melee" all along.
    */
+  /*
+   * ROUND 80: SERPENT STING AND ARCANE SHOT, ADDED ABOVE THE OWNER'S RAPTOR
+   * STRIKE -- **+185.5 +/- 9.1 at 120s on one target** (300 paired fights),
+   * and +13.5 more with Improved Stings 2 out of Rapid Killing's dead points.
+   *
+   * THE "IT SHOOTS NOTHING" NOTE ABOVE IS A CLAIM ABOUT THE OWNER'S LIST, and
+   * the reason it was worth re-asking is in the same note: this build ended a
+   * two-minute fight with half its mana unspent. Both are instants, so neither
+   * costs a melee swing, and both scale with RANGED attack power, which Careful
+   * Aim and Aspect of the Beast's agility feed: Arcane Shot lands for about
+   * 830 on this build, more than a Raptor Strike. Neither needs a swinging bow.
+   *
+   * Placement swept: both above Raptor +185.5; sting above Raptor and Arcane
+   * above Immolation Trap +176.8; both above Wing Clip +168.3; Arcane alone
+   * +94.9 to +103.4; the sting alone +75.6 to +77.2. Aimed Shot added below
+   * them (a cast, which resets the swing) +2.7, noise; Multi-Shot -21.5.
+   */
+  { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
+  { abilityId: 'arcane_shot' },
   { abilityId: 'raptor_strike' },
   /*
    * MONGOOSE BITE NEEDS NO CONDITION HERE. "Activated from Expose Prey" is
@@ -600,7 +637,16 @@ export const HUNTER_LONE_WOLF_MELEE: AplList = {
 export const HUNTER_HAWK_MELEE: AplList = {
   name: 'Hunter (Hawk Melee)',
   entries: [
-  ...HUNTER_LONE_WOLF_MELEE.entries.filter((entry) => entry.abilityId !== 'wing_clip'),
+  /*
+   * ROUND 80: LONE WOLF MELEE'S ARCANE SHOT DOES NOT COME WITH THE SPREAD. On
+   * this build it is worth more BELOW the hawk: sting above Raptor and Arcane
+   * above Wing Clip measured **+90.3 +/- 8.1** at 120s, against +58.8 with both
+   * above Raptor, because a hawk is 13% of this profile and Arcane Shot shares
+   * its cooldown group.
+   */
+  ...HUNTER_LONE_WOLF_MELEE.entries.filter(
+    (entry) => entry.abilityId !== 'wing_clip' && entry.abilityId !== 'arcane_shot',
+  ),
   /*
    * NO RACIAL COOLDOWNS OF ITS OWN: the spread above already carries them.
    *
@@ -612,6 +658,7 @@ export const HUNTER_HAWK_MELEE: AplList = {
    * unreachable, which reads as a list four entries longer than it is.
    */
   { abilityId: 'summon_hawk', condition: hawksBelowCap },
+  { abilityId: 'arcane_shot' },
   { abilityId: 'wing_clip' },
   ],
 };

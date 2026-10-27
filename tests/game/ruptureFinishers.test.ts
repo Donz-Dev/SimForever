@@ -61,8 +61,14 @@ const pool = (points: number) => {
  * ==============================================================================
  */
 
-const entry = (abilityId: string) => ROGUE_RUPTURE.entries.find((e) => e.abilityId === abilityId);
-const ids = ROGUE_RUPTURE.entries.map((e) => e.abilityId);
+/*
+ * The owner's entries. Round 80 added an end-of-fight Eviscerate at the top --
+ * a deliberate second `eviscerate` entry, and the one that reads the clock --
+ * so both helpers leave it out.
+ */
+const owners = ROGUE_RUPTURE.entries.filter((e) => !JSON.stringify(e.condition ?? {}).includes('fightRemaining'));
+const entry = (abilityId: string) => owners.find((e) => e.abilityId === abilityId);
+const ids = owners.map((e) => e.abilityId);
 
 describe('why Rupture spends four points and not five', () => {
   /*
@@ -276,7 +282,7 @@ describe('Eviscerate’s duration floors came BACK, at six seconds', () => {
      * ==========================================================================
      */
     expect(JSON.stringify(entry('eviscerate')?.condition)).toContain('"points":4');
-    expect(JSON.stringify(ROGUE_COMBAT.entries.find((e) => e.abilityId === 'eviscerate')?.condition))
+    expect(JSON.stringify(ROGUE_COMBAT.entries.find((e) => e.abilityId === 'eviscerate' && !JSON.stringify(e.condition ?? {}).includes('fightRemaining'))?.condition))
       .toContain(`"points":${MAX_COMBO_POINTS}`);
   });
 });

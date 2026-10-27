@@ -10,7 +10,8 @@ import {
   targetTime,
 } from '../../game/rotations/apl';
 import { buffPotionCooldown, consumableCooldown } from '../../game/rotations/consumableCooldowns';
-import { WARLOCK_SBOLT, SBOLT_DEMONIC_RUNE_MANA } from '../../game/rotations/warlock';
+import { RACIAL_COOLDOWNS } from '../../game/rotations/racialCooldowns';
+import { WARLOCK_SBOLT, SBOLT_DEMONIC_RUNE_MANA, manaPotionEntry } from '../../game/rotations/warlock';
 import type { MultiTargetDefaults } from './types';
 
 /**
@@ -77,7 +78,9 @@ export const WARLOCK_MULTI_TARGET: MultiTargetDefaults = {
     name: 'SM/DS AoE',
     entries: [
       { abilityId: 'amplify_curse' },
+      ...RACIAL_COOLDOWNS,
       buffPotionCooldown('major_spellblasting_potion'),
+      manaPotionEntry(0.5, 60),
       consumableCooldown('demonic_rune'),
       SHADOW_TRANCE,
       when(UP_TO_FIVE, dot('bane_of_agony', 5, 12)),
@@ -101,11 +104,17 @@ export const WARLOCK_MULTI_TARGET: MultiTargetDefaults = {
     name: 'Firelock AoE',
     entries: [
       { abilityId: 'bane_of_havoc', condition: targetCount('atLeast', 2) },
+      ...RACIAL_COOLDOWNS,
       { abilityId: 'shadowburn' },
-      when(FEW, IMMOLATE),
+      // Round 80: Immolate walked over every target at four or fewer, where
+      // it was the boss's alone: +75.7 +/- 4.7 at 3 targets, nothing at 5/8.
+      when(FEW, { ...IMMOLATE, multiDot: 4 }),
       when(FEW, { abilityId: 'conflagrate' }),
       when(FEW, dot('bane_of_agony', 1, 25)),
-      consumableCooldown('major_mana_potion'),
+      // Round 80: the Blast at the pull, +5.38 at 5 targets over the mana
+      // potion, which no 60s Firelock fight drinks.
+      buffPotionCooldown('major_spellblasting_potion'),
+      manaPotionEntry(0.5, 60),
       consumableCooldown('demonic_rune'),
       TAP_FOR_HELLFIRE,
       HELLFIRE,
@@ -126,6 +135,8 @@ export const WARLOCK_MULTI_TARGET: MultiTargetDefaults = {
     name: 'Sbolt Spam AoE',
     entries: [
       WARLOCK_SBOLT.entries[0],
+      manaPotionEntry(0.5, 60),
+      ...RACIAL_COOLDOWNS.filter((entry) => entry.abilityId !== 'blood_fury'),
       SHADOW_TRANCE,
       when(UP_TO_FIVE, dot('corruption', 5, 10)),
       when(UP_TO_FIVE, dot('bane_of_agony', 5, 12)),
@@ -145,10 +156,16 @@ export const WARLOCK_MULTI_TARGET: MultiTargetDefaults = {
   warlock_demonology: {
     name: 'Fire Demo AoE',
     entries: [
+      ...RACIAL_COOLDOWNS,
       { abilityId: 'soul_fire', condition: selfHas('decimation') },
       when(FEW, { ...IMMOLATE, multiDot: 5 }),
-      consumableCooldown('major_mana_potion'),
+      // Round 80: the Blast at the pull, +4.66 at 5 targets.
+      buffPotionCooldown('major_spellblasting_potion'),
+      manaPotionEntry(0.5, 60),
       consumableCooldown('demonic_rune'),
+      // Round 80: Bane of Agony on the boss at four targets or fewer, +4.58 +/-
+      // 1.79 at 3 targets (-2.55 at 5, which is why it is gated).
+      when(FEW, dot('bane_of_agony', 1, 12)),
       TAP_FOR_HELLFIRE,
       HELLFIRE,
       { abilityId: 'searing_pain' },

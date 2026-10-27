@@ -306,13 +306,13 @@ describe('where it lands, and where it correctly does not', () => {
     ).toEqual([{ from: 'intellect', to: 'armor', fraction: 0.5 }]);
 
     /*
-     * THE ARCANE MAGE TAKES IT AGAIN, at round 37: the owner's new 48/3/0 tree
-     * spends two points there. Worth nothing all the same -- nothing attacks a
-     * Mage -- which is exactly what this test's title claims.
+     * THE ARCANE MAGE TOOK IT AGAIN at round 37 (the owner's 48/3/0 spent two
+     * points there) AND DROPPED IT AT ROUND 80: worth nothing -- nothing attacks
+     * a Mage -- so the 32/16/3 build spends those points on Heating Up.
      */
     expect(
       talentBuild('mage', PRESETS_BY_ID.get('mage_arcane')!.build().talents).statConversions,
-    ).toEqual([{ from: 'intellect', to: 'armor', fraction: 0.5 }]);
+    ).toEqual([]);
     expect(PRESETS_BY_ID.get('mage_arcane')!.build().encounter.targetAttacks).toBe(false);
 
     // The other two spend nothing on it. Both facts, apart.

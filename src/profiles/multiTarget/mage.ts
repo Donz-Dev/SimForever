@@ -1,6 +1,6 @@
 import type { MultiTargetDefaults } from './types';
 import type { AplEntry, AplList } from '../../game/rotations/apl';
-import { all, targetCount, targetMissing } from '../../game/rotations/apl';
+import { all, targetCount, targetMissing, targetStacks } from '../../game/rotations/apl';
 import { MAGE_ARCANE, MAGE_FIRE, MAGE_FROST, MAGE_FROSTFIRE } from '../../game/rotations/mage';
 import { racialsForRace } from '../../game/rotations/racialCooldowns';
 import { withoutUnselectedConsumables } from '../../game/rotations/consumableCooldowns';
@@ -95,28 +95,38 @@ const stackOf = (entries: readonly AplEntry[]): AplEntry => {
 };
 
 // --- Fire --------------------------------------------------------------------
-const FIRE_ST = narrowed(MAGE_FIRE, 'high_order_skyborne', casterConsumables('school_fire'));
+const FIRE_ST = narrowed(MAGE_FIRE, 'troll', {
+  ...casterConsumables('school_fire'),
+  potion_secondary: 'secondary_major_mana_potion',
+});
 const FIRE_AREA: readonly AplEntry[] = withArea(FIRE_ST, [
   {
     ...stackOf(FIRE_ST),
     condition: atLeast(5),
     note: 'Cooldown stack at 5+ targets: the potion and Combustion at once, for the Flamestrikes.',
   },
+  {
+    abilityId: 'blast_wave',
+    condition: atLeast(3),
+    note: 'At 3+ targets (round 80): an instant that strikes every target, on its 45s cooldown.',
+  },
   flamestrikeOnDot(3),
   flamestrike(5),
 ]);
 
 // --- Frostfire ---------------------------------------------------------------
-const FROSTFIRE_ST = narrowed(MAGE_FROSTFIRE, 'human', {
+const FROSTFIRE_ST = narrowed(MAGE_FROSTFIRE, 'troll', {
   ...casterConsumables('school_fire'),
   potion: 'major_mana_potion',
+  potion_secondary: 'secondary_major_spellblasting_potion',
 });
 const FROSTFIRE_AREA: readonly AplEntry[] = withArea(FROSTFIRE_ST, [flamestrikeOnDot(3), flamestrike(5)]);
 
 // --- Arcane ------------------------------------------------------------------
-const ARCANE_ST = narrowed(MAGE_ARCANE, 'high_order_skyborne', {
+const ARCANE_ST = narrowed(MAGE_ARCANE, 'troll', {
   ...casterConsumables('school_arcane'),
   potion: 'major_mana_potion',
+  potion_secondary: 'secondary_major_spellblasting_potion',
 });
 /*
  * The preset drinks the Major Mana Potion, so its cooldown stack is the one
@@ -156,8 +166,22 @@ const FROST_SELECTION: ConsumableSelection = {
   potion: 'major_mana_potion',
   other: 'demonic_rune',
 };
-const FROST_ST = narrowed(MAGE_FROST, 'windshaper_skyborne', FROST_SELECTION);
-const FROST_AREA: readonly AplEntry[] = withArea(FROST_ST, [flamestrikeOnDot(3), blizzard(5)]);
+const FROST_ST = narrowed(MAGE_FROST, 'troll', FROST_SELECTION);
+/*
+ * ROUND 80: CONE OF COLD AT 3 TO 7 TARGETS, ABOVE BLIZZARD, AND BLIZZARD FROM 3.
+ * Cone of Cold strikes one target here, and Blizzard's frost ticks stack Winter's
+ * Chill on it to five in a few seconds -- so a 40%-a-stack Cone of Cold between
+ * Blizzard channels is +115.5 at 5 targets and +192.6 at 3 (Blizzard at 3
+ * targets alone is +16.6). At 8 targets it loses (-17.1 noise, -135.6 ungated),
+ * so the entry stops at seven. The Winter's Chill gate swept 3, 4 and 5 stacks:
+ * identical, because the stacks are always up by the time the cooldown is.
+ */
+const coneOfColdOnChill: AplEntry = {
+  abilityId: 'cone_of_cold',
+  condition: all(atLeast(3), targetCount('atMost', 7), targetStacks('atLeast', 5, 'winters_chill')),
+  note: "At 3 to 7 targets, on five Winter's Chill stacks: one target struck, 40% a stack harder.",
+};
+const FROST_AREA: readonly AplEntry[] = withArea(FROST_ST, [flamestrikeOnDot(3), coneOfColdOnChill, blizzard(3)]);
 
 /*
  * ==============================================================================

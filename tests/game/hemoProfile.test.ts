@@ -123,8 +123,9 @@ describe('the Hemo list', () => {
      * quietly re-aligns one of them has to say so.
      * ==========================================================================
      */
+    // The owner's entries: round 80's end-of-fight Eviscerate (Rupture list only) reads the clock.
     const gate = (list: typeof ROGUE_HEMO, abilityId: string) =>
-      JSON.stringify(list.entries.find((e) => e.abilityId === abilityId)?.condition);
+      JSON.stringify(list.entries.find((e) => e.abilityId === abilityId && !JSON.stringify(e.condition ?? {}).includes('fightRemaining'))?.condition);
 
     // Rupture: three points here, four there, and no Hemorrhage clause here.
     expect(gate(ROGUE_HEMO, 'rupture')).toContain('"points":3');
@@ -154,7 +155,7 @@ describe('the Hemo list', () => {
      * someone to reorder it freely.
      */
     const order = (list: typeof ROGUE_HEMO, abilityId: string) =>
-      list.entries.findIndex((e) => e.abilityId === abilityId);
+      list.entries.findIndex((e) => e.abilityId === abilityId && !JSON.stringify(e.condition ?? {}).includes('fightRemaining'));
     for (const list of [ROGUE_HEMO, ROGUE_RUPTURE]) {
       expect(order(list, 'premeditation')).toBe(-1);
       expect(list.entries[order(list, 'vanish')].sequence).toEqual(['premeditation', 'ambush']);

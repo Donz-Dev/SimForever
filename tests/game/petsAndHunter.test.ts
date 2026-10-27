@@ -1287,10 +1287,15 @@ describe('Hawk Melee takes BOTH Lone Wolf and Summon Hawk', () => {
     const hawk = HUNTER_HAWK_MELEE.entries.map((e) => e.abilityId);
     const lw = HUNTER_LONE_WOLF_MELEE.entries.map((e) => e.abilityId);
 
+    /*
+     * Round 80: LW Melee's Arcane Shot (above Raptor Strike) does not come with
+     * the spread -- on Hawk Melee it sits below the hawk, above Wing Clip.
+     */
     expect(hawk).toHaveLength(lw.length + 1);
-    expect(hawk.filter((id) => id !== 'summon_hawk')).toEqual(lw);
-    expect(hawk[hawk.length - 2]).toBe('summon_hawk');
-    expect(hawk[hawk.length - 1]).toBe('wing_clip');
+    expect(hawk.filter((id) => id !== 'summon_hawk' && id !== 'arcane_shot')).toEqual(
+      lw.filter((id) => id !== 'arcane_shot'),
+    );
+    expect(hawk.slice(-3)).toEqual(['summon_hawk', 'arcane_shot', 'wing_clip']);
   });
 
   it('gates the hawk on the cap, so it never overwrites a live one', () => {

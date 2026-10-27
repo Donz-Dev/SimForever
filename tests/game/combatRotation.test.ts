@@ -18,6 +18,10 @@ import { runProfileBatch } from '../../src/simulator';
 
 /** Every entry the list declares, including what narrows away per preset. */
 const OWNER_ORDER = [
+  // Round 80's two ADDITIONS above the owner's list: Vanish into Garrote, then
+  // the end-of-fight Eviscerate.
+  'vanish',
+  'eviscerate',
   // THISTLE TEA ABOVE THE RACIALS, and the rest of its own row below them.
   'thistle_tea',
   'blood_fury',
@@ -44,10 +48,14 @@ const OWNER_ORDER = [
 
 /** The nine an ORC drinking Thistle Tea and a Frenzy Potion actually runs. */
 const COMBAT_ORDER = [
+  'vanish',
+  'eviscerate',
   'thistle_tea',
-  // Gnome since round 78, so Eureka! is the racial lit where Blood Fury was.
-  'eureka',
+  // Orc again since round 80 (Gnome in round 78), so Blood Fury is lit.
+  'blood_fury',
   'major_frenzy_potion',
+  // Round 80's Secondary Potion, behind its health gate.
+  'major_healing_potion',
   'adrenaline_rush',
   'blade_flurry',
   'slice_and_dice',
@@ -57,8 +65,11 @@ const COMBAT_ORDER = [
   'sinister_strike',
 ];
 
+/** The owner's entry for an ability: round 80's end-of-fight Eviscerate is the one that reads the clock. */
 const entryFor = (abilityId: string) => {
-  const found = ROGUE_COMBAT.entries.find((entry) => entry.abilityId === abilityId);
+  const found = ROGUE_COMBAT.entries.find(
+    (entry) => entry.abilityId === abilityId && !JSON.stringify(entry.condition ?? {}).includes('fightRemaining'),
+  );
   if (!found) throw new Error(`${abilityId} is not in the Combat list`);
   return found;
 };
@@ -90,7 +101,7 @@ describe('the Combat list', () => {
     expect(ROGUE_COMBAT.entries.map((entry) => entry.abilityId)).toEqual(OWNER_ORDER);
   });
 
-  it('narrows to the nine entries the owner can see', () => {
+  it('narrows to the nine entries the owner can see, plus the three round 80 adds', () => {
     expect(
       lit(PRESETS_BY_ID.get('rogue_combat')!.build().rotation.entries).map((e) => e.abilityId),
     ).toEqual(COMBAT_ORDER);
@@ -105,7 +116,8 @@ describe('the Combat list', () => {
      * list.
      */
     const ids = ROGUE_COMBAT.entries.map((entry) => entry.abilityId);
-    expect(ids.indexOf('thistle_tea')).toBe(0);
+    // Below round 80's two additions, and first of the owner's own.
+    expect(ids.indexOf('thistle_tea')).toBe(2);
     expect(ids.indexOf('blood_fury')).toBeLessThan(ids.indexOf('major_frenzy_potion'));
   });
 
@@ -147,7 +159,8 @@ describe('the Combat list', () => {
   });
 
   it('puts both cooldowns above everything that spends energy', () => {
-    const ids = ROGUE_COMBAT.entries.map((entry) => entry.abilityId);
+    // The owner's entries only: round 80's Vanish and end-of-fight Eviscerate sit above them.
+    const ids = ROGUE_COMBAT.entries.slice(2).map((entry) => entry.abilityId);
     for (const spender of ['slice_and_dice', 'eviscerate', 'sinister_strike']) {
       expect(ids.indexOf('adrenaline_rush'), spender).toBeLessThan(ids.indexOf(spender));
       expect(ids.indexOf('blade_flurry'), spender).toBeLessThan(ids.indexOf(spender));
@@ -166,7 +179,8 @@ describe('the Combat list', () => {
       batch.abilities.find((row) => row.abilityName === name)?.uses ?? 0;
     for (const name of [
       'Thistle Tea',
-      'Eureka!',
+      'Blood Fury',
+      'Garrote',
       'Adrenaline Rush',
       'Blade Flurry',
       'Slice and Dice',
@@ -191,8 +205,11 @@ describe('what the Combat Rogue drinks', () => {
      * four of five agreeing is still not five, because the melee Hunter shares
      * it and has not been spoken about.
      */
-    for (const id of ['rogue_hemo', 'lw_melee']) {
+    // Round 80: the melee Hunter took +20 Agility food on its own weighted
+    // measurement (+5.5), so the Hemo Rogue is the row's last default.
+    for (const id of ['rogue_hemo']) {
       expect(PRESETS_BY_ID.get(id)!.build().consumables.food, id).toBe('food_attack_power');
     }
+    expect(PRESETS_BY_ID.get('lw_melee')!.build().consumables.food).toBe('food_agility');
   });
 });

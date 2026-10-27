@@ -583,8 +583,10 @@ describe('the encounter builds Number of Targets', () => {
       expect(swing).toBeLessThanOrEqual(EXTRA_TARGET_SWING_DAMAGE * 1.15 + 1);
       expect(swing).toBeGreaterThanOrEqual(EXTRA_TARGET_SWING_DAMAGE * 0.85 - 1);
     }
-    // While the boss ramps: its last landed swing is far past its first.
-    expect(boss[boss.length - 1]).toBeGreaterThan(boss[0] * 2);
+    // While the boss ramps: its last landed swing is far past its first. The
+    // ramp is capped at 2x since round 79, so with a swing's own variance the
+    // last can land just under twice the first -- half again is the claim.
+    expect(boss[boss.length - 1]).toBeGreaterThan(boss[0] * 1.5);
   });
 
   it("the raid's debuffs land on the boss and not on an add", () => {
