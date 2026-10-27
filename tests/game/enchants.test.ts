@@ -725,6 +725,8 @@ describe('what each of the 29 profiles opens with', () => {
    */
   const OPTIMISED_AWAY_FROM_THE_TABLE: Readonly<Record<string, string>> = {
     'shaman_enhancement feet': '+7 Agility',
+    // ROUND 80: the Arcane Mage's gloves, +5.9 +/- 2.3 on the weighted score.
+    'mage_arcane gloves': '+1% Haste',
     /*
      * ROUND 78. The Bear's gloves: +19.8 +/- 9.8 TPS at 120s for +0.33 deaths of
      * 18.75. Its boots replace a dead Minor Speed (+2.4 TPS, -0.19 deaths). The
@@ -867,7 +869,8 @@ describe('what each of the 29 profiles opens with', () => {
       '+9 Stamina',
       'Enchant Weapon - Crusader',
       'Enchant Weapon - Spell Power',
-      // The Ele Shaman's main hand and the Shadow Priest's staff since round 80.
+      // Round 80: the Ele Shaman's main hand, and the Shadow Priest's, Arcane,
+      // Frost and Frostfire Mages' staves (the Mages' in place of +65 Spell Power).
       'Revelation',
     ]);
   });

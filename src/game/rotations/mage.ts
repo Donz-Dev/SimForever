@@ -3,7 +3,6 @@ import type { AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
 import {
   consumableCooldowns,
-  CONSUMABLE_COOLDOWNS,
   CONSUMABLE_HEALS,
 } from './consumableCooldowns';
 import {
@@ -363,6 +362,23 @@ const scorchNeededWithin = (refreshSeconds: number) =>
  * COMBUSTION AND FIRE BLAST ON COOLDOWN, both instants that cost nothing but
  * a global cooldown.
  */
+/*
+ * ROUND 80: THE MAGE POTION PAIR, shared by the Arcane and Frostfire lists --
+ * the Major Mana Potion under 30% mana, and Spellblasting in the last thirty
+ * seconds when the shared two-minute potion cooldown was not spent on mana. A
+ * fight drinks one of them; which one is the list's decision.
+ */
+const MAGE_MANA_POTION = {
+  abilityId: 'major_mana_potion',
+  condition: resourceFraction('atMost', 0.3, 'mana'),
+  note: 'Under 30% mana.',
+};
+const MAGE_LATE_SPELLBLASTING = {
+  abilityId: 'major_spellblasting_potion',
+  condition: fightRemaining('atMost', 30),
+  note: 'In the last 30 seconds, when the shared potion cooldown was not spent on mana.',
+};
+
 export const MAGE_FIRE: AplList = {
   name: 'Mage (Fire)',
   entries: [
@@ -401,7 +417,10 @@ export const MAGE_FIRE: AplList = {
    * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
-  ...RACIAL_COOLDOWNS.filter((entry) => entry.abilityId !== 'eureka'),
+  // ROUND 80: Berserking inside Combustion for the Troll this preset now is (+1.5 weighted over ungated).
+  ...RACIAL_COOLDOWNS.filter((entry) => entry.abilityId !== 'eureka').map((entry) =>
+    entry.abilityId === 'berserking' ? { ...entry, condition: selfHas('combustion') } : entry,
+  ),
   /*
    * ==========================================================================
    * EUREKA HELD FOR THE PYROBLAST IT MAKES BIGGER, WORTH **+5.34 +/- 0.55**.
@@ -542,6 +561,20 @@ export const MAGE_FIRE: AplList = {
       'stacks of Fire Vulnerability with ten seconds left on them. Both are off the ' +
       'global cooldown, so a player presses them together -- written as a sequence so ' +
       'nothing can land between them if either ever starts taking one again.',
+  },
+  /*
+   * ROUND 80: COMBUSTION WITHOUT THE POTION, under the same gate. The entry above
+   * is dropped whenever Spellblasting is not selected -- its id IS the potion --
+   * and Combustion went with it, which round 78 flagged. With Spellblasting
+   * drunk this is refused (Combustion is on its cooldown) and the fight is
+   * bit-identical; it is what keeps Combustion for any other potion choice.
+   */
+  {
+    abilityId: 'combustion',
+    condition: all(
+      targetStacksAtLeast('fire_vulnerability', IMPROVED_SCORCH_MAX_STACKS),
+      targetAuraAtLeast('fire_vulnerability', 10),
+    ),
   },
   /*
    * ==========================================================================
@@ -685,7 +718,15 @@ export const MAGE_FROSTFIRE: AplList = {
   { abilityId: 'eureka', condition: selfHas('fingers_of_frost') },
   // The Ruby first (round 59): see the Fire list.
   MANA_RUBY_ENTRY,
-  ...CONSUMABLE_COOLDOWNS,
+  /*
+   * ROUND 80: THE POTION PAIR in place of the shared block's ungated
+   * Spellblasting -- Spellblasting late is +13.3 at 5 targets, +8.6 at 3 and
+   * +45.5 at 8 over the mana potion alone, and noise at 120s single target
+   * where the mana potion is the one drunk.
+   */
+  MAGE_MANA_POTION,
+  MAGE_LATE_SPELLBLASTING,
+  ...consumableCooldowns({ exclude: ['major_mana_potion', 'major_spellblasting_potion'] }),
   ...CONSUMABLE_HEALS,
   /*
    * ICE BARRIER, RECAST WHEN IT FALLS OFF (round 55), the owner's: "it should
@@ -832,6 +873,13 @@ export const MAGE_FROSTFIRE: AplList = {
  * hoards a three-minute cooldown for a perfect moment is describing a player
  * and not a rotation.
  */
+const ARCANE_POTIONLESS_STACK = {
+  abilityId: 'arcane_power',
+  sequence: ['presence_of_mind', 'arcane_wrath'],
+  condition: selfStacksExactly('arcane_blast', ARCANE_BLAST_MAX_STACKS),
+  note: 'Cooldown stack without the potion: Arcane Power, Presence of Mind and an instant Arcane Wrath, at the Arcane Blast cap.',
+};
+
 export const MAGE_ARCANE: AplList = {
   name: 'Mage (Arcane)',
   entries: [
@@ -864,7 +912,14 @@ export const MAGE_ARCANE: AplList = {
    * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
-  ...RACIAL_COOLDOWNS.filter((entry) => entry.abilityId !== 'eureka'),
+  /*
+   * ROUND 80: BERSERKING INSIDE ARCANE POWER, for the Troll this preset now is:
+   * +3.1 at 120s single target against the shared ungated entry, and the same
+   * within noise at 3, 5 and 8 targets (where Arcane Power opens the fight).
+   */
+  ...RACIAL_COOLDOWNS.filter((entry) => entry.abilityId !== 'eureka').map((entry) =>
+    entry.abilityId === 'berserking' ? { ...entry, condition: selfHas('arcane_power') } : entry,
+  ),
   /*
    * ==========================================================================
    * EUREKA IS GATED ON THIS BUILD AND NOWHERE ELSE, WORTH **+1.92 +/- 0.28**.
@@ -896,7 +951,22 @@ export const MAGE_ARCANE: AplList = {
   { abilityId: 'eureka', condition: selfHas('missile_barrage') },
   // The Ruby first (round 59): see the Fire list.
   MANA_RUBY_ENTRY,
-  ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
+  /*
+   * ==========================================================================
+   * ROUND 80: THE TWO POTIONS, Major Mana Potion primary and Spellblasting
+   * secondary. They share the two-minute potion cooldown, so a fight drinks
+   * one of them: the mana potion under 30% mana, and Spellblasting in the last
+   * thirty seconds if the mana potion was never needed.
+   *
+   * At 120s single target that is the mana potion (Spellblasting at the first
+   * Arcane Power is **-26.1** there); in the area fights, which do not run dry
+   * before the end, it is Spellblasting late: **+11.3 at 5 targets, +65.8 at 8**,
+   * and -1.7 noise at 3. One rule, both lists.
+   * ==========================================================================
+   */
+  MAGE_MANA_POTION,
+  MAGE_LATE_SPELLBLASTING,
+  ...consumableCooldowns({ exclude: ['major_mana_potion', 'major_spellblasting_potion'] }),
   /*
    * AND THE SPELLBLASTING POTION HELD FOR PRESENCE OF MIND, which is the
    * owner's gate and is the first time anything in this project lines a potion
@@ -994,6 +1064,15 @@ export const MAGE_ARCANE: AplList = {
    * 3.5-second cast Presence of Mind makes instant now, inside Arcane Power.
    * ==========================================================================
    */
+  /*
+   * ROUND 80: THE POTION-LESS STACK NOW SITS ABOVE THE OWNER'S, and that is the
+   * one placement in this list that needs the owner. Spellblasting is selected
+   * again (as the Secondary Potion), so the owner's line below would drink it at
+   * the first Arcane Power and put the shared potion cooldown on it before the
+   * mana potion is wanted: **-26.1 at 120s single target**. This copy takes
+   * Arcane Power first, and the owner's line is kept and refused. Asked.
+   */
+  ARCANE_POTIONLESS_STACK,
   {
     abilityId: 'major_spellblasting_potion',
     sequence: ['arcane_power', 'presence_of_mind', 'arcane_wrath'],
@@ -1001,21 +1080,27 @@ export const MAGE_ARCANE: AplList = {
     note: 'Cooldown stack: the potion, Arcane Power, Presence of Mind and an instant Arcane Wrath, at the Arcane Blast cap.',
   },
   /*
-   * ROUND 78: THE SAME STACK WITHOUT THE POTION, for a build that does not
-   * carry Spellblasting. The entry above is dropped from the list whenever the
-   * potion is not selected -- its id IS the potion -- and with it went Arcane
-   * Power, Presence of Mind and the instant Arcane Wrath, silently. The preset
-   * now drinks the Major Mana Potion instead (+11.30 +/- 3.40 at a 120s fight),
-   * so this is what carries its cooldowns. With Spellblasting selected the
-   * entry above always fires first, and this one finds Arcane Power on its
-   * cooldown and is refused.
+   * ==========================================================================
+   * ROUND 80: FIRE BLAST INTO HEATING UP INTO PYROBLAST, the owner's named miss.
+   *
+   * The build takes Heating Up now (32 / 16 / 3, see `MAGE_ARCANE_TALENTS`):
+   * every Fire Blast that deals damage is a stack and a crit is two, and three
+   * stacks take Pyroblast from six seconds to one and a half. Both entries sit
+   * above the first Arcane Missiles: **+65.4 +/- 8.8 at 120s single target**
+   * with the talents, against 0.0 for the talents alone (no Fire spell was in
+   * the list). Below Arcane Wrath it is +60.6; only while Arcane Blast is
+   * capped +33.6; Pyroblast at two stacks +27.0; Fire Blast at the bottom
+   * +0.8. A mana floor on Fire Blast (20%) -4.4, a salvage Pyroblast at two
+   * stacks with 3.5s left +0.1, Presence of Mind on Pyroblast instead of Arcane
+   * Wrath -2.3 -- none shipped.
+   * ==========================================================================
    */
   {
-    abilityId: 'arcane_power',
-    sequence: ['presence_of_mind', 'arcane_wrath'],
-    condition: selfStacksExactly('arcane_blast', ARCANE_BLAST_MAX_STACKS),
-    note: 'Cooldown stack without the potion: Arcane Power, Presence of Mind and an instant Arcane Wrath, at the Arcane Blast cap.',
+    abilityId: 'pyroblast',
+    condition: selfStacksExactly('heating_up', HEATING_UP_MAX_STACKS),
+    note: 'At three Heating Up stacks: a 1.5 second Pyroblast.',
   },
+  { abilityId: 'fire_blast', note: 'On cooldown: one Heating Up stack a cast, two on a crit.' },
   { abilityId: 'arcane_missiles', condition: selfHasStack('missile_barrage') },
   /*
    * AND AT THE ARCANE BLAST CAP WITHOUT ONE -- BUT ONLY IF THE WINDOW CAN COVER
