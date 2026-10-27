@@ -853,8 +853,9 @@ describe('what each of the 29 profiles opens with', () => {
       '+9 Stamina',
       'Enchant Weapon - Crusader',
       'Enchant Weapon - Spell Power',
-      // Round 80: the Ele Shaman's main hand, and the Shadow Priest's, Arcane,
-      // Frost and Frostfire Mages' staves (the Mages' in place of +65 Spell Power).
+      // Round 80: the Ele Shaman's main hand, and the Shadow Priest's and Arcane
+      // Mage's staves (Frost and Frostfire went back to +65 Spell Power once it
+      // rolled once per cast).
       'Revelation',
     ]);
   });
