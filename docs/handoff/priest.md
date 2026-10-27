@@ -566,3 +566,112 @@ consumables again -- shipped nothing.
    still inert on the grounds that healing power is not a stat, which it now
    is. And **Resto Drood carries the same Enchant Weapon - Spell Power staff**,
    which gives a healer nothing.
+
+## Round 80: the second pass, under the owner's round 79 rules
+
+Variant file `tools/optimise/priestVariants80.ts` (groups `sp80*`, `holy80*`,
+`disc80*`, `heal80*`), diagnostic `tools/optimise/probe_priest80.ts` (one
+batch, any fight, any variant: casts, healing, overheal and mana). Talents,
+race, enchants and consumables on `WEIGHTED=1` (49/17/17/17 for Shadow, 50/50
+for the healers); lists on their own encounter. 400 paired fights unless said.
+
+### Before and after, `full_report.ts` at 300 fights a cell
+
+| | before | after |
+| --- | --- | --- |
+| Shadow, 1 target 120s | 940.7 +/- 2.9 | **962.1 +/- 4.0** |
+| Shadow, 3 targets 60s | 1097.1 +/- 4.5 | **1123.0 +/- 6.5** |
+| Shadow, 5 targets 60s | 1274.4 +/- 5.0 | **1290.3 +/- 7.8** |
+| Shadow, 8 targets 30s | 1467.8 +/- 6.4 | **1489.9 +/- 10.9** |
+| Shadow, weighted | 1113.6 +/- 2.1 | **1135.0 +/- 3.2** |
+| Holy, tank healer 120s | 397.3 +/- 3.0 | **401.2 +/- 3.2** |
+| Holy, raid healer 60s | 1555.0 +/- 8.5 | **1559.0 +/- 8.1** |
+| Holy, weighted | 976.2 +/- 4.5 | **980.1 +/- 4.3** |
+| Disc, tank healer 120s | 404.1 +/- 3.3 | **391.0 +/- 3.3** |
+| Disc, raid healer 60s | 1195.9 +/- 6.8 | **1220.8 +/- 8.5** |
+| Disc, weighted | 800.0 +/- 3.8 | **805.9 +/- 4.6** |
+
+**THE HEALERS' SMALL NET IS THE RACE RULE BEING PAID FOR.** Gnome's +5% mana
+was worth about 24 weighted HPS to each healer and is no longer allowed; the
+round's list work bought it back and a little more.
+
+### THE TANK HEALER FIGHT IS NOW A MANA FIGHT WITH OVERHEAL TO SPARE
+
+With the 2x ramp cap the tank no longer dies, and both healers spend every
+point of mana in the 120s fight -- Flash Heal overheals 15,500 of 37,800 for
+Holy. So the lever is efficiency, and the biggest one is the owner's own Flash
+Heal line: spamming it at any missing health is the expensive habit. See
+"Needs the owner".
+
+### Shadow
+
+| dimension | result |
+| --- | --- |
+| race | **shipped Troll** (Human not allowed). On the old staff Undead -1.22 and Troll -4.18 against Human; once the staff took Revelation, Troll over Undead is **+8.48 +/- 2.25** (800 fights: +0.1 / +1.2 / +10.0 / +38.3). Berserking at the pull beats holding it 10s, 30s or for five Shadow Weaving stacks (+1.1 / -2.1 / +2.7 against Undead) |
+| talents | 14/2/35 kept. Every mana talent is worth nothing -- moving Shadow Reach or Twilight Focus into Mental Agility runs IDENTICAL FIGHTS; the build ends 120s with ~5,000 mana spare. The Holy Nova build is the only real alternative: **+112.5 +/- 3.8 weighted** (see "Needs the owner") |
+| opener | owner lines kept; + Inner Focus at 0s -13.2, + Spellblasting pre-pull at 0/3/6/10s 0.0/-0.05/-0.0/-0.13 |
+| Single Target APL (1T 120s) | nothing beats the list: Mind Blast interrupting Mind Flay after its two protected ticks -5.5, SW:Death interrupting -8.9, both -22.2, SWP+DP interrupting -4.6, SW:Death above Mind Blast -10.5, Mind Blast above DP -7.5, the old SW:Death hold band -3.0, Vampiric Embrace back -32.1 |
+| Multi Target APL | **shipped**: the SWP spread may cut Mind Flay short at **3 targets or fewer**, +7.96 +/- 2.68 at 3/60s; identical fights at 5 and 8 (ungated it is -2.78 at 5). Lost (5 / 3 / 8 targets): DP above the spread -0.6 / +1.2 / +2.1, a 9s spread gate -4.6 / -1.5 / +2.1, a 4s gate -10.0 / -5.8 / -22.3, Mind Blast below SW:Death -21.8 / -1.1 / -16.7, no SW:Death -39.7 / -35.6 / -33.8, Inner Focus on Mind Blast (owner line) -2.6 / -3.2 / -4.4. Spreading to 6/4/3 targets at 8T: -98 / -210 / -283 |
+| potions | **shipped the pair Spellblasting / Major Mana** (the secondary is new). The shared list drinks the mana potion under 30% and Spellblasting otherwise; Spellblasting goes at the pull and the mana potion never fires -- IDENTICAL FIGHTS, kept as the fall-back for a fight that runs dry |
+| other consumables | shipped row wins: Blasted Lands Spirit -4.8, Healthstone identical (the Rune never fires) |
+| enchants | **shipped the staff's Revelation** over +65 Spell Power: +14.83 +/- 2.70 on Undead, **+27.55** once Troll. Head +8 Intellect -5.7, gloves Haste -11.3, head and legs Spirit -7.0, cloak Agility identical, Enchant Weapon - Spell Power -23.2 |
+
+### Holy Priest
+
+| dimension | result |
+| --- | --- |
+| race | **shipped Troll** with the raid list's Berserking held for the first pulse (after 5s): -19.2 weighted against Gnome where Undead is -26.7 and Troll at the pull -24.0. Re-checked at the end: Undead -11.7 against the shipped Troll. Berserking in the tank fight is worth nothing (switched off, identical fights) |
+| talents | 18/33 kept: Meditation into Mental Agility -69.0, Divine Fury into Spell Warding -16.0 (Greater Heal now earns it, in the raid list) |
+| opener | **shipped Inner Focus at 0s**: +14.1 +/- 2.3 in the tank fight; the raid section carries no opener, so its own Inner Focus -> Prayer of Healing survives |
+| Single Target APL (tank 120s) | **shipped** our Prayer of Mending line above Flash Heal: +3.08 +/- 1.64 (1200 fights); above Renew -0.66, above the shield -5.34. Lost or noise: Greater Heal above Flash Heal under 50/70/90/100% 0.0 / +0.5 / +1.8 / +5.0 (the last silences Flash Heal, so it is the owner's), with a cancel over 95% +0.7; Inner Focus into Greater Heal +2.5, into Flash Heal +7.2, into Prayer of Mending +11.3 (all below the pre-pull's +14.1) |
+| Multi Target APL (raid 60s) | **shipped Greater Heal on the tank under 70%, above Prayer of Healing**: swept 30-90% at 600 fights, -26.8 / -12.5 / +4.0 / +25.1 / **+29.5** / +8.8 / -60.9. Lost: Flash Heal there -41.0, Renew on the lowest non-tank -20.8, Flash Heal on the lowest non-tank under 50% -243.6, smart healing -144.3, PoH only under 90% identical, Inner Focus gated under 60% -38.0 |
+| potions | Major Mana Potion, no second potion: a Spellblasting secondary is drunk at the pull and blocks the mana potion, -29.7 in the tank fight. Gates under 50/70% noise; **the owner's example "under 50% after 60s" is -128.3 in the raid fight**, which a 60s fight never reaches. The shared 30% stays |
+| other consumables / enchants | shipped rows win: Healthstone -51.7, Blasted Lands Spirit -10.2, staff Revelation -20.1, head and legs Spirit -7.7, gloves Haste -9.0, neck Spell Power -1.1 |
+
+### Disc Priest
+
+| dimension | result |
+| --- | --- |
+| race | **shipped Troll** with Berserking held 5s in the raid list: -9.8 against Gnome; Undead -24.7, Troll at the pull -28.5. At the end Undead is -0.67 (noise) against the shipped Troll |
+| talents | 29/22 kept: Divine Aegis into Spiritual Guidance 3 -28.0, Divine Fury into Spell Warding -9.1, Meditation out -68.4, Silent Resolve into Mental Agility identical |
+| opener | none: an Inner Focus pre-pull runs IDENTICAL FIGHTS (the owner's Inner Focus -> Penance does the same at t=0) |
+| Single Target APL (tank 120s) | nothing additive: Greater Heal above Flash Heal under 50/70/90/100% 0.0 / +0.5 / +2.3 / +3.2 (noise); Inner Focus on Greater Heal (owner line) +1.4 noise |
+| Multi Target APL (raid 60s) | **shipped Greater Heal on the tank under 60%, above the shield**: +26.5 +/- 5.9 (600 fights); 70% above the shield +26.1, above PoH 60/70% +19.5 / +17.4. Lost: Flash Heal on the tank -70.0, Renew on the lowest non-tank -43.0, smart healing -74.0, PoH only under 90% -40.6 |
+| potions | as Holy: Major Mana alone (Spellblasting secondary -20.4 tank), gates noise, "after 60s" -130.0 raid |
+| other consumables / enchants | shipped rows win: Healthstone -51.8, Blasted Lands Spirit -15.0, Revelation -14.6, Spirit -8.4, Haste -2.5, neck Spell Power -0.7 |
+
+### Needs the owner (priced against the finished presets, weighted)
+
+1. **Flash Heal on the tank only under 80% health**, in both healers' tank
+   lists (the owner's "spammed on the tank" line). **Holy +24.7 weighted
+   (+49.5 tank HPS), Disc +30.9 (+61.7)**; 85% and 75% are close. The tank no
+   longer dies, so a Flash Heal at 99% is mana poured into overheal. A
+   pre-cast cancel at 80% of the cast when the tank is over 90% is the softer
+   version: +56.4 Holy / +41.2 Disc tank, measured before this round's other
+   changes.
+2. **Greater Heal as the tank spam** is noise (Holy -1.0, Disc +1.6); listed
+   only because an entry above Flash Heal silences the owner's line.
+3. **Shadow's Holy Nova build** (5/11/35): **+112.5 +/- 3.8 weighted** (-8.9
+   at 1 target, +4.8 at 3, +41.7 at 5, **+640.8 at 8 over 30s**), with Holy
+   Nova above Mind Blast at 8+ targets and above Mind Flay at 5+ over 20% mana.
+   It costs Inner Focus, so the owner's Inner Focus / Mind Flay pairing goes
+   silent, plus Mental Strength and Meditation, which are worth nothing here.
+   Revelation rolls off every Holy Nova hit, which is part of why it grew from
+   round 78's +35/+235.
+4. **Holy's raid shield line**: without it +24.0 weighted (+48.0 raid).
+   Disc's is worth keeping (-16.8 without it).
+5. **Disc spending Inner Focus on Prayer of Healing** has turned: -5.8 now
+   (+42.3 in round 78), so the owner's line is right.
+6. **Prayer of Mending first in Holy's raid list** (our round 78 reorder) is
+   still worth +31.1 over the owner's order.
+
+### Notes
+
+- The tank fight runs the Single Target section, so a pre-pull action on the
+  root opener reaches the raid fight only through the Multi Target section's
+  own `precombat`, which is `[]` for Holy so the Inner Focus stays in the tank
+  fight.
+- Major Mender's Potion is still inert although healing power is a stat now,
+  so a healer has no second potion worth carrying. An engine/data item.
+- The `holy80Pom` group in the variant file was written against the round 78
+  order and now SKIPS its rows (its Prayer of Mending is no longer last).

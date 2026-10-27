@@ -352,12 +352,6 @@ export const PRIEST_HOLY: AplList = {
       condition: { kind: 'all', of: [RAID, { kind: 'friendlyHealth', of: 'party', compare: 'below', fraction: 1 }] },
       note: 'Raid healer: on the party with the lowest average health.',
     },
-    {
-      abilityId: 'flash_heal',
-      target: { kind: 'tank' },
-      condition: { kind: 'all', of: [NOT_RAID, { kind: 'health', on: 'target', compare: 'below', fraction: 1 }] },
-      note: 'Tank healer: spammed on the tank.',
-    },
     /*
      * ROUND 78, AN ADDITION TO THE OWNER'S TANK HEALER LINES: Prayer of
      * Mending on the tank whenever none of yours is out, at the BOTTOM -- so
@@ -368,6 +362,12 @@ export const PRIEST_HOLY: AplList = {
      * absorb or a heal already sitting on the tank can count; Prayer of
      * Mending is the second. Above Flash Heal it is worth less (+3.5), because
      * it then takes global cooldowns Flash Heal had a use for.
+     *
+     * ROUND 80: ABOVE FLASH HEAL NOW, +3.08 +/- 1.64 HPS over 1200 paired
+     * fights at 120s. The 2x ramp cap means the tank no longer dies from about
+     * 65 seconds, so every Prayer of Mending charge now lands on a tank that
+     * needs it, and the efficient heal should not wait behind the spam one.
+     * Above Renew it is noise (-0.66), above the shield -5.34.
      */
     {
       abilityId: 'prayer_of_mending',
@@ -376,7 +376,13 @@ export const PRIEST_HOLY: AplList = {
         kind: 'all',
         of: [NOT_RAID, { kind: 'raidAura', auraId: 'prayer_of_mending', present: false }],
       },
-      note: 'Tank healer: on the tank whenever none of yours is out and Flash Heal has nothing to do.',
+      note: 'Tank healer: on the tank whenever none of yours is out -- above Flash Heal.',
+    },
+    {
+      abilityId: 'flash_heal',
+      target: { kind: 'tank' },
+      condition: { kind: 'all', of: [NOT_RAID, { kind: 'health', on: 'target', compare: 'below', fraction: 1 }] },
+      note: 'Tank healer: spammed on the tank.',
     },
   ],
 };

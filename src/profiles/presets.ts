@@ -4341,18 +4341,22 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'shadow_priest',
     label: 'Shadow',
-    detail: 'Human, caster, Shadowform, standing target. 35 Shadow',
+    detail: 'Troll, caster, Shadowform, standing target. 35 Shadow',
     characterClass: 'priest',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Shadow Priest',
         /*
-         * HUMAN SINCE ROUND 78, from Troll: Ruthless's +2% crit beats
-         * Berserking. +14.43 +/- 3.15 DPS at one target and 120s, +7.8 at five
-         * targets, +33 at three, -3.8 (noise) at eight over thirty seconds.
+         * TROLL SINCE ROUND 80 (Human from round 78 is no longer allowed: a
+         * Priest may be Undead or Troll). Against Human on the old staff,
+         * Undead was -1.22 +/- 2.09 and Troll -4.18 +/- 2.03 on the weighted
+         * score; once the staff took Revelation, Troll over Undead is
+         * +8.48 +/- 2.25 (800 paired fights a column: +0.1 at one target,
+         * +38.3 at eight over 30s), with Berserking at the pull. Holding it
+         * 10s, 30s or for five Shadow Weaving stacks all lose to that.
          */
-        race: 'human',
+        race: 'troll',
         characterClass: 'priest',
         level: 60,
         combatStyle: 'caster',
@@ -4360,7 +4364,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: { ...PRIEST_SHADOW_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: casterConsumables('school_shadow'),
+      /*
+       * THE POTION PAIR (round 80): Spellblasting first, the Major Mana Potion
+       * second. They share the potion cooldown and the shared list asks for
+       * the mana potion only under 30% mana, so Spellblasting is drunk at the
+       * pull; the mana potion is the fall-back for a fight that runs dry, and
+       * none measured here does (the build ends a 120s fight with ~5,000 mana
+       * spare), so it runs the identical fight.
+       */
+      consumables: { ...casterConsumables('school_shadow'), potion_secondary: 'secondary_major_mana_potion' },
       /*
        * ==================================================================
        * BOTH DoTs MOVED BEFORE THE PULL, WORTH **+35.5 +/- 4.1** TOGETHER --
@@ -4576,18 +4588,18 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
      */
     id: 'priest_holy',
     label: 'Holy Priest',
-    detail: 'Gnome, caster staff, a healer. 18 Discipline / 33 Holy',
+    detail: 'Troll, caster staff, a healer. 18 Discipline / 33 Holy',
     characterClass: 'priest',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Holy Priest',
         /*
-         * GNOME SINCE ROUND 78, from Troll (which was ours, not the owner's):
-         * Expansive Mind's +5% maximum mana is the largest single thing a
-         * mana-bound healer can buy. See docs/handoff/priest.md, round 78.
+         * TROLL SINCE ROUND 80 (Gnome is no longer allowed: a Priest may be
+         * Undead or Troll). Berserking is held for the first raid pulse in the
+         * raid list. See docs/handoff/priest.md, round 80.
          */
-        race: 'gnome',
+        race: 'troll',
         characterClass: 'priest',
         level: 60,
         combatStyle: 'caster',
@@ -4602,6 +4614,16 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         potion: 'major_mana_potion',
         other: 'demonic_rune',
       },
+      /*
+       * INNER FOCUS BEFORE THE PULL (round 80), the tank fight's opener: the
+       * first heal of the fight is free and carries +25% crit, and the Holy
+       * tank list has no Inner Focus entry of its own. +14.1 +/- 2.3 HPS in the
+       * tank healer fight at 120s; an Inner Focus -> Prayer of Mending entry in
+       * the list instead is +11.3. The raid list keeps its own Inner Focus ->
+       * Prayer of Healing, so the raid section has no opener (see
+       * multiTarget/priest.ts).
+       */
+      precombat: [...before(0, 'inner_focus')],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -4616,18 +4638,18 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
      */
     id: 'priest_disc',
     label: 'Disc Priest',
-    detail: 'Gnome, caster staff, a healer. 29 Discipline / 22 Holy',
+    detail: 'Troll, caster staff, a healer. 29 Discipline / 22 Holy',
     characterClass: 'priest',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Disc Priest',
         /*
-         * GNOME SINCE ROUND 78, from Troll (which was ours, not the owner's):
-         * Expansive Mind's +5% maximum mana is the largest single thing a
-         * mana-bound healer can buy. See docs/handoff/priest.md, round 78.
+         * TROLL SINCE ROUND 80 (Gnome is no longer allowed: a Priest may be
+         * Undead or Troll). Berserking is held for the first raid pulse in the
+         * raid list. See docs/handoff/priest.md, round 80.
          */
-        race: 'gnome',
+        race: 'troll',
         characterClass: 'priest',
         level: 60,
         combatStyle: 'caster',

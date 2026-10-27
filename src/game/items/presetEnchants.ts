@@ -190,7 +190,9 @@ export const PRESET_ENCHANTS: Readonly<
   warlock_firelock: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   warlock_sbolt: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   warlock_demonology: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
-  shadow_priest: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
+  // Round 80: the staff takes Revelation over +65 Spell Power, +14.83 +/- 2.70
+  // on the weighted score (+25.8 at one target, -15.6 at eight over 30s).
+  shadow_priest: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900032, wrists: 900018 },
   // The Shockadin's caster row with the two Healing Power enchants on the neck
   // (900010) and wrists (900020), which are stats since round 52.
   // Round 78: head and legs +8 Intellect (was 1% Haste): the raid healer
