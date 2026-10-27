@@ -288,7 +288,12 @@ describe('a death takes the survival cooldowns with it', () => {
 
     expect(anyDeath).toBe(true);
     expect(fadesOnDeath).toBe(true);
-  });
+    // Up to FIVE Monte Carlo batches, and since the round 79 ramp cap made a
+    // tank death rarer the loop runs deeper into them: it timed out at the 5000ms
+    // default on most round 80 branches and at 8142ms on a quiet machine, while
+    // passing alone in about 3s. A limit for THIS test, never a global one --
+    // which is chargeAndShieldTalents' arrangement for its two batches.
+  }, 30_000);
 });
 
 // ---------------------------------------------------------------------------

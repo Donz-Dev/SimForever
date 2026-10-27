@@ -1059,6 +1059,13 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   so -- the enchant is on each weapon and each one rolls. Two enchanted hands
   make the per-spell probability `1 - (1 - p)^2`, and the reaction ids carry
   the slot so nothing is left unable to say which fired.
+  **AND ONE ROLL PER CAST, NOT PER TARGET HIT (round 80)**: an area spell hitting
+  eight targets rolled eight times, which four class agents found independently
+  and which made Revelation the best staff enchant on area figures alone. The
+  owner ruled once per cast; `revelationReaction` keys on `castSequence -
+  channelTicksDelivered` plus the ability id, the arrangement Arcane
+  Concentration already used, and the re-price moved Frost and Frostfire back to
+  +65 Spell Power.
   **AND IT READS THE EFFECTIVE PER-SPELL CRIT, ALSO ON THEIR RULING, WHICH
   EXPOSED A BUG IN THE CHARACTER SHEET.** Asked whether
   "CharacterSpellCritChance" meant the sheet figure or the effective one, they
