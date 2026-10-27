@@ -609,3 +609,75 @@ nothing is lost today.
 4. **Frost Mage is your saved build** -- its potion was changed to the Major Mana
    Potion (+25.7 at 120s). Revert the one line in `presets.ts` if the saved
    selection should stand.
+
+## Round 80: the second pass, under the owner's round 79 rules
+
+Variant file `tools/optimise/mageVariants80.ts` (`FILE=` it into
+`tools/probe_build.ts`). Talents, race and enchants are priced on the WEIGHTED
+score (`WEIGHTED=1`: 49% 1 target/120s, 17% each 3/60, 5/60, 8/30); lists and
+potions per section. 400 paired fights a row unless stated.
+
+**THE FULL REPORT, BEFORE -> AFTER** (`tools/full_report.ts`, 300 fights a cell):
+
+| | 1T 120s | 3T 60s | 5T 60s | 8T 30s | weighted |
+| --- | --- | --- | --- | --- | --- |
+| Frostfire | 979.4 -> 953.9 | 1240.1 -> 1262.5 | 1740.5 -> 2078.7 | 2915.7 -> 3450.8 | 1482.3 -> **1622.1** |
+| Arcane | 944.3 -> **1004.3** | 1270.1 -> 1411.2 | 2146.4 -> 2512.0 | 3872.1 -> 4879.9 | 1701.8 -> **1988.7** |
+| Fire | 1033.7 -> 1029.4 | 1376.3 -> 1431.1 | 2190.9 -> 2270.4 | 3528.7 -> 3700.3 | 1712.8 -> **1762.7** |
+| Frost | 945.9 -> 946.7 | 1106.6 -> 1392.5 | 1844.7 -> 2133.8 | 3018.1 -> 3404.5 | 1478.3 -> **1642.1** |
+
+### What shipped
+
+| | Arcane | Fire | Frostfire | Frost |
+| --- | --- | --- | --- | --- |
+| talents | **32/16/3**: Heating Up chain + Improved Flamestrike 3 + Elemental Precision 3 from 16 dead Arcane points (+145.4 with the list) | **12/36/3**: Clearcasting 2 -> Blast Wave + Master of Elements 3 (+44.4) | Improved Fire Blast 2 + Incineration 1 -> Improved Flamestrike 3 (+108.4) | unchanged |
+| race | Troll, Berserking inside Arcane Power | Troll, Berserking inside Combustion | Troll | Troll |
+| Single Target list | Pyroblast at 3 Heating Up and Fire Blast on cooldown above the first Arcane Missiles; potion-less stack above the owner's potion stack | potion-less Combustion fallback | potion pair | -- |
+| Multi Target list | (the chain comes along, below the area entries) | Blast Wave at 3+ | -- | Cone of Cold on 5 Winter's Chill at 3-7 targets above Blizzard; Blizzard from 3 |
+| potions | Mana primary <= 30%, Spellblasting secondary in the last 30s | Spellblasting primary (with Combustion), Mana secondary <= 30% | as Arcane | Mana only -- see the owner question |
+| enchants | Revelation staff, +1% Haste gloves | unchanged | Revelation staff | Revelation staff |
+
+**FIRE BLAST INTO HEATING UP INTO PYROBLAST ON ARCANE** is the owner's named
+miss and the largest change of the round. The 48/3/0 build held sixteen points
+that do nothing (Wand Specialization, Improved Channeling, Magic Absorption,
+Arcane Resilience, Arcane Geometry, Arcane Shielding, Improved Counterspell);
+the 32 live Arcane points still reach Arcane Power, so 19 points were free and
+Heating Up needs 15 Fire points below it. The list half: +65.4 at 120s single
+target with the chain above the first Missiles; below Arcane Wrath +60.6, only
+while Arcane Blast is capped +33.6, Pyroblast at two stacks +27.0, Fire Blast
+at the bottom +0.8. Elemental Precision over Master of Elements is +24.4
+weighted: Fire Blast, Pyroblast and Flamestrike missed 5% more than the Arcane
+spells.
+
+### What lost (selected; every group is in the variant file)
+
+| profile | tried | result |
+| --- | --- | --- |
+| Arcane | PoM on Pyroblast in the stack; Fire Blast mana floor 20%; Pyroblast salvage at 2 stacks | -2.3, -4.4, +0.1 at 120s |
+| Arcane | FS spam (>=3/5), Fire Blast / Pyroblast in the area list | -180, -14 to -141 at 5/8 targets |
+| Fire | Cone of Cold weave, Scorch filler, Pyroblast under Clearcasting, FB above Pyro, AM above Pyro | -8 to -53 at 120s |
+| Fire | Scorch window sweep 2-8s | 5s stays (others -1.6 to -38) |
+| Fire | Combustion gate sweep (0-25s left, FV 3, ungated) | bit-identical: Scorch above it decides |
+| Frostfire | Ice Lance on Fingers, Cone of Cold weave, Fireball filler | -57, -30, -146 at 120s |
+| Frostfire | Scorch window 5-10s | noise |
+| Frost | Fire Blast weave, Cone of Cold ungated/at 3 WC, Fireball filler | -47, -7, -1, -428 |
+| Frost | Improved Blizzard ranks (Ice Block 1 -> 2 ranks) | bit-identical: rank 1 already chills |
+| all | Enchant Weapon - Spell Power; +8 Intellect / Spirit on head | -20 to -30; -10 to -17 |
+
+### Needs the owner
+
+1. **Frostfire's Fire Blast gate** ("at <= 1 stacks of Heating Up only", yours)
+   costs +30.7 at 120s single target; ungated in both lists is +13.3 weighted.
+2. **Frost Mage's Arcane Missiles above Cone of Cold** (your saved order):
+   moving it below Ice Lance is +12.4 at 120s (+5.7 weighted).
+3. **Frost Mage has no Secondary Potion**: your saved list's ungated
+   Spellblasting line would drink it at the pull (-19.7 at 120s). Gated to the
+   last 30s in single target and ungated in the area list it is about +8.6
+   weighted.
+4. **The Arcane potion-less stack sits above your Spellblasting stack**, so
+   your line is refused while the pair drinks the mana potion at 120s
+   (Spellblasting at the first Arcane Power is -26.1 there).
+5. **Revelation rolls per damage event**, so an area spell striking eight
+   targets rolls eight times; most of its +114 (Arcane) and +98 (Frost) is the
+   area columns. A per-cast ruling would shrink it. It replaces the +65 Spell
+   Power you gave the caster staves.

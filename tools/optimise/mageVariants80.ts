@@ -602,7 +602,51 @@ const enchGroup = (): Variant[] => [
   { label: 'head +8 Spirit (for +1% Haste)', apply: enchant('head', 900007) },
 ];
 
+// ---------------------------------------------------------------------------
+// COMBINED (Step 5's knock-on check): each shipped change reverted on its own
+// against the finished profile. A positive row would mean a change no longer
+// pays with the others in.
+// ---------------------------------------------------------------------------
+const noRevelation = enchant('twoHand', 900029);
+const combinedArc = (): Variant[] => [
+  control,
+  { label: 'revert: staff +65 SP for Revelation', apply: noRevelation },
+  { label: 'revert: gloves +20 SP for haste', apply: enchant('gloves', 900023) },
+  { label: 'revert: race windshaper (HOS is no longer allowed)', apply: race('windshaper_skyborne') },
+  { label: 'revert: Berserking ungated', apply: both(setCond('berserking', undefined)) },
+  { label: 'revert: no Pyro/Fire Blast entries', apply: both(chain(drop('pyroblast'), drop('fire_blast'))) },
+  { label: 'revert: no late Spellblasting', apply: both(drop('major_spellblasting_potion')) },
+  { label: 'knock-on: Fire Blast only at <= 2 HU', apply: both(setCond('fire_blast', any(selfMissing('heating_up'), selfStacks('atMost', 2, 'heating_up')))) },
+  { label: 'knock-on: PoM spent on Pyroblast', apply: both(pomPyroStack) },
+];
+const combinedFire = (): Variant[] => [
+  control,
+  { label: 'revert: race windshaper', apply: race('windshaper_skyborne') },
+  { label: 'revert: Berserking ungated', apply: both(setCond('berserking', undefined)) },
+  { label: 'revert: no Blast Wave entry', apply: inMulti(drop('blast_wave')) },
+  { label: 'check: Revelation on the staff', apply: enchant('twoHand', 900032) },
+];
+const combinedFf = (): Variant[] => [
+  control,
+  { label: 'revert: staff +65 SP for Revelation', apply: noRevelation },
+  { label: 'revert: race windshaper', apply: race('windshaper_skyborne') },
+  { label: 'revert: no late Spellblasting', apply: both(drop('major_spellblasting_potion')) },
+  { label: 'owner gate lifted: Fire Blast ungated (both lists)', apply: both(setCond('fire_blast', undefined)) },
+];
+const combinedFrost = (): Variant[] => [
+  control,
+  { label: 'revert: staff +65 SP for Revelation', apply: noRevelation },
+  { label: 'revert: race windshaper', apply: race('windshaper_skyborne') },
+  { label: 'revert: no Cone of Cold area entry', apply: inMulti(drop('cone_of_cold')) },
+  { label: 'owner order: Arcane Missiles below Ice Lance', apply: chain(drop('arcane_missiles'), above('ice_barrier', [{ abilityId: 'arcane_missiles', condition: selfHas('missile_barrage') }])) },
+  { label: 'owner line gated: SB secondary, its line in the last 30s', apply: chain(consumable('potion_secondary', 'secondary_major_spellblasting_potion'), setCond('major_spellblasting_potion', fightRemaining('atMost', 30)), inMulti(potionsIn([mana(0.3), blastWhen()]))) },
+];
+
 export const VARIANT_GROUPS: Record<string, readonly Variant[]> = {
+  m80CombArc: combinedArc(),
+  m80CombFire: combinedFire(),
+  m80CombFf: combinedFf(),
+  m80CombFrost: combinedFrost(),
   m80Ench: enchGroup(),
   m80FrostRace2: raceOnly(FROST_FULL, [
     { label: 'race troll, Berserking at 5 Winters Chill', apply: chain(FROST_FULL, race('troll'), both(setCond('berserking', targetStacks('atLeast', 5, 'winters_chill')))) },
