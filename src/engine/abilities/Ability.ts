@@ -183,6 +183,14 @@ export interface Ability {
   /** Whether using it starts the global cooldown. Defaults to true. */
   readonly triggersGcd?: boolean;
   /**
+   * Whether it is a SPELL, for the one rule that asks: haste shortens the
+   * global cooldown a spell starts and no other (round 81). Derived by
+   * `isSpellForGcd` when absent -- it rolls the spell table, or it rolls no
+   * table and costs mana -- so this is only for the free caster spells the
+   * derivation cannot see, such as Life Tap and Evocation.
+   */
+  readonly spell?: boolean;
+  /**
    * Whether a RUNNING global cooldown leaves it castable (round 65). Defaults
    * to false: being off the global cooldown means not STARTING one, and a
    * running one still blocks. Start Auto-attack is the owner's exception --

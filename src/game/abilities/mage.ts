@@ -856,6 +856,8 @@ export const EVOCATION_COOLDOWN_MS = seconds(480);
 
 export const EVOCATION: Ability = {
   id: 'evocation',
+  // A spell with no cost and no table: its GCD is hasted (round 81).
+  spell: true,
   name: 'Evocation',
   castTimeMs: EVOCATION_CHANNEL_MS,
   cooldownMs: EVOCATION_COOLDOWN_MS,

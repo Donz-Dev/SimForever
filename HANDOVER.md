@@ -107,6 +107,69 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 81: racial tuning, and haste reaches only a spell's global cooldown
+
+| | what it was | effect |
+| --- | --- | --- |
+| 1 | the owner's racial notes: Blood Fury's cooldown 3 min -> **2 min**, Berserking 10 s -> **15 s**, Touch of the Grave's internal cooldown 25 s -> **15 s** | the Troll Warlocks **+23.6 to +33.3** weighted, Troll Mages **+10 to +15**, the Undead tanks and Rogues up to +13.6 |
+| 2 | the owner's answer to "why does a Tauren Bear out-damage a Windshaper Bear": **haste shortens a SPELL's global cooldown and no other** | Windshaper Bear now **+6.45 +/- 2.92 DPS** over Tauren at 120 s (it trailed by 2.3) |
+
+**THE BEAR WAS A PHASE LOCK, NOT A RACIAL.** Round 75 read "Haste effects reduce
+the global cooldown triggered by spells" as every ability, so the Windshaper's 2%
+haste put the Bear on a **1.471 s** global cooldown. Its 6 s Primal Bite then
+came ready 0.12 s after the fourth GCD began, the list took that GCD with
+Lacerate, and the bite waited for the fifth. Each cycle lost about 1.4 s:
+**23.2 bites a fight against the Tauren's 25.5, and 1680 ms mean lateness
+against 605 ms**. A 1.5 s GCD divides 6 s exactly, so the un-hasted Tauren never
+met it. **So a little haste can be worth LESS than none to a build whose key
+cooldown is a whole number of GCDs**, which no stat weight or paired probe can
+explain on its own. The cast timeline is what showed it
+(`tools/optimise/bearTimeline81.ts`).
+
+**`isSpellForGcd` IS THE RULE.** A spell is an ability that rolls the spell
+table, or that rolls no table and costs mana: a heal, a seal, a DoT, a totem, an
+aspect, a trap. `Ability.spell` overrides it for the five free caster spells the
+derivation cannot see: Life Tap, Water Shield, Evocation, Elemental Mastery and
+Rage of the Farseer. Melee strikes, shots, shouts, energy and feral abilities
+keep 1.5 s; a Rogue's and a Cat's 1.0 s never moved. **Classified across every
+preset's book before shipping**, with nothing surprising on either side.
+
+The full report, both runs at 300 fights a cell. They are UNPAIRED, so about
++/-5 weighted is noise. Rows that moved by more:
+
+| | weighted before | after | why |
+| --- | --- | --- | --- |
+| Fire Demo | 1759.5 | **1792.8** | Troll, Berserking 15 s |
+| SM/DS | 1363.2 | **1386.8** | Troll |
+| Firelock | 1665.4 | **1689.0** | Troll |
+| Frostfire Mage | 1602.7 | 1617.6 | Troll |
+| Prot Warr | 1628.2 TPS | 1641.8 | Undead, Touch of the Grave every 15 s |
+| Arcane Mage | 1869.6 | 1881.9 | Troll |
+| Fire Mage | 1762.7 | 1773.2 | Troll |
+| Frost Mage | 1533.1 | 1543.5 | Troll |
+| Enh Shaman | 1277.6 | **1267.1** | its melee GCDs are no longer hasted |
+| Fury Prot | 1932.6 TPS | 1942.5 | Undead |
+| Combat Mut | 980.9 | 990.4 | Undead |
+| Rupture | 760.5 | 768.2 | Undead |
+| Bear | 1931.6 TPS | 1937.8 | the GCD fix |
+| BM Hunter | 1473.3 | 1468.1 | shot GCDs no longer hasted |
+
+The Orc rows (2H Arms, DW Fury, Sbolt Spam, the melee Hunters) read 0.0 to
++0.3, which is arithmetic rather than a missing change. Blood Fury is cast at
+the pull, so a 2-minute cooldown first comes back at 120 s, the moment the
+longest report fight ends.
+
+**QUESTIONS FOR THE OWNER:**
+- **Bear Lacerate gate.** "Lacerate only while Primal Bite has more than 1.5 s of
+  cooldown left" is **+8.24 +/- 2.89 DPS** on the Windshaper Bear at 120 s. It
+  adds a condition to a list line, so it was priced and not shipped.
+- **Re-optimise the hasted physical builds?** Enh Shaman and BM Hunter lost a
+  little. Their lists were tuned on hasted melee and shot GCDs.
+- **The client tooltips still read the old numbers** for Touch of the Grave
+  ("10% for casters, 5% for melee, 1 sec internal cooldown") and Eureka! ("your
+  next 3"), stored as the trait's text in `racialEffects.ts`. They were left as
+  the client's words.
+
 ## Round 80: Optimize, Update, and Report all Profiles, under the round 79 rules
 
 The second run of the `optimize-update-report` skill: nine class agents in

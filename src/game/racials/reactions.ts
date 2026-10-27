@@ -89,7 +89,8 @@ export const TOUCH_OF_THE_GRAVE_HEALTH_FRACTION = 0.05;
  * to converge rather than to scale with their old 10-or-5.
  * ===========================================================================
  */
-export const TOUCH_OF_THE_GRAVE_INTERNAL_COOLDOWN_MS = seconds(25);
+/** Fifteen since round 81: "Touch of the Grave internal cooldown reduced to 15 seconds (was 25 seconds)". */
+export const TOUCH_OF_THE_GRAVE_INTERNAL_COOLDOWN_MS = seconds(15);
 
 /** The id the drain's own damage and healing are reported under. */
 export const TOUCH_OF_THE_GRAVE_ABILITY_ID = 'touch_of_the_grave';

@@ -221,10 +221,26 @@ describe('a pet gets its own rows', () => {
      * landed in a row called "Main Hand Auto-Attack" on a profile that never
      * swings a melee weapon.
      */
-    const hunter = buildFightTimeline(fightFor('bm_hunter'), { includeSwings: true });
+    const fight = fightFor('bm_hunter');
+    const hunter = buildFightTimeline(fight, { includeSwings: true });
     const swings = hunter.casts.filter((lane) => lane.label.includes('Melee'));
     expect(swings.length).toBeGreaterThan(0);
-    expect(hunter.casts.some((lane) => lane.label === 'Main Hand Auto-Attack')).toBe(false);
+    /*
+     * ASKED OF THE PET'S OWN EVENTS, NOT OF THE LANE LIST. This used to assert
+     * that no lane is called "Main Hand Auto-Attack" at all, which was a claim
+     * that the Hunter never swings -- and it does: the Melee Weave casts Raptor
+     * Strike, and a Windfury Totem proc off it is a real main-hand swing by the
+     * HUNTER. Seed 4242 first landed one in round 81. What this test is for is
+     * that the PET's swing is never filed under that name.
+     */
+    const pets = new Set(fight.actors.filter((actor) => actor.kind === 'pet').map((actor) => actor.id));
+    expect(pets.size).toBeGreaterThan(0);
+    const petSwingNames = new Set(
+      fight.timeline.flatMap((event) =>
+        event.type === 'damage' && pets.has(event.sourceId) ? [event.abilityName] : [],
+      ),
+    );
+    expect(petSwingNames.has('Main Hand Auto-Attack')).toBe(false);
   });
 });
 

@@ -231,8 +231,21 @@ describe('Cold Blood takes no global cooldown', () => {
      * the distinction the owner's gate depends on.
      * ==========================================================================
      */
-    const batch = venom();
-    const casts = batch.representative.timeline.filter((event) => event.type === 'cast');
+    /*
+     * ONE REPRESENTATIVE FIGHT IS ONE SAMPLE, so look across several seeds for
+     * a fight that HAS a Cold Blood. Seed 4242 alone held one until round 81's
+     * shorter Touch of the Grave cooldown reordered that fight's random stream;
+     * whether a Cold Blood happens is a rate, and only what FOLLOWS one is the
+     * claim here.
+     */
+    const built = PRESETS_BY_ID.get('rogue_venom')!.build();
+    const timelineWithColdBlood = [4242, 1, 2, 3, 5, 8, 13]
+      .map((seed) =>
+        runProfileBatch({ ...built, simulation: { ...built.simulation, iterations: 1, seed } } as never)
+          .representative.timeline,
+      )
+      .find((timeline) => timeline.some((event) => event.type === 'cast' && event.abilityId === 'cold_blood'));
+    const casts = (timelineWithColdBlood ?? []).filter((event) => event.type === 'cast');
     const coldBloods = casts.filter((event) => event.type === 'cast' && event.abilityId === 'cold_blood');
     expect(coldBloods.length, 'Cold Blood never fired, so this proves nothing').toBeGreaterThan(0);
 

@@ -429,6 +429,8 @@ export const lifeTapMana = (caster: Combatant, ability: Ability): number =>
 
 export const LIFE_TAP: Ability = {
   id: 'life_tap',
+  // A spell with no cost and no table: its GCD is hasted (round 81).
+  spell: true,
   name: 'Life Tap',
   requiresTarget: false,
   // Only when there is health to spend AND room in the pool for what it grants.

@@ -57,9 +57,15 @@ describe('a cast shot', () => {
     expect(castEndsAt).toBe(applyHaste(2000, 1.1 * 1.4 * QUIVER_RANGED_SPEED_DIVISOR));
   });
 
-  it('keeps the global cooldown on haste alone', () => {
+  it('keeps the full global cooldown: a shot is not a spell (round 81)', () => {
+    /*
+     * The CAST is sped by haste, ranged speed and the quiver; the global
+     * cooldown it starts is not sped by any of them. Haste shortens only a
+     * SPELL's global cooldown, the owner's answer to round 75's "triggered by
+     * spells" -- it read "haste alone" until then, `applyHaste(1500, 1.1)`.
+     */
     const { gcdReadyAt } = castEnds(shot(true), { hasteRating: rating(10), attackSpeedRating: rating(40) });
-    expect(gcdReadyAt).toBe(applyHaste(1500, 1.1));
+    expect(gcdReadyAt).toBe(1500);
   });
 
   it('does not reach a cast that is not declared', () => {

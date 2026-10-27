@@ -111,7 +111,7 @@ const EUREKA_DAMAGE = 1.1;
 const TOUCH_HEALTH_FRACTION = 0.05;
 const TOUCH_MELEE_CHANCE = 20;
 const TOUCH_CASTER_CHANCE = 30;
-const TOUCH_INTERNAL_COOLDOWN_SECONDS = 25;
+const TOUCH_INTERNAL_COOLDOWN_SECONDS = 15; // 25 until round 81
 /** The two poisons this project has actually built. See the exclusion test. */
 const IMPLEMENTED_POISONS = new Set(['instant_poison', 'deadly_poison']);
 
@@ -478,7 +478,8 @@ describe('Blood Fury', () => {
      * moved the cooldown and the duration together would be a different
      * change, and the note moves only one.
      */
-    expect(RACIAL_ABILITIES.blood_fury.cooldownMs).toBe(seconds(180));
+    // Two minutes again since round 81 ("reduced to 2 minutes (was 3 minutes)").
+    expect(RACIAL_ABILITIES.blood_fury.cooldownMs).toBe(seconds(120));
     expect(BLOOD_FURY.durationMs).toBe(seconds(15));
     // No cost line exists for any racial in the client, so none is invented.
     expect(RACIAL_ABILITIES.blood_fury.cost).toBeUndefined();
@@ -501,10 +502,10 @@ describe('Berserking', () => {
     expect(after - before).toBeCloseTo(BERSERKING_HASTE / 100, 9);
   });
 
-  it('is off the global cooldown and lasts ten seconds', () => {
+  it('is off the global cooldown and lasts fifteen seconds (ten until round 81)', () => {
     expect(RACIAL_ABILITIES.berserking.triggersGcd).toBe(false);
     expect(RACIAL_ABILITIES.berserking.cooldownMs).toBe(seconds(180));
-    expect(BERSERKING.durationMs).toBe(seconds(10));
+    expect(BERSERKING.durationMs).toBe(seconds(15));
   });
 });
 

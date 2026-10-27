@@ -308,7 +308,17 @@ export function castAbility(
      * haste is 1.25s, at 50% or more it is 1.0, and a Rogue's 1.0 does not
      * move. Integer milliseconds, as a hasted cast is.
      */
-    const hasted = Math.max(Math.min(length, HASTED_GCD_FLOOR_MS), applyHaste(length, haste));
+    /*
+     * AND ONLY A SPELL'S (round 81), the owner's answer to the round 75 wording
+     * "the global cooldown triggered by SPELLS": a melee strike, a shot, a
+     * shout or a feral ability keeps the full length whatever the haste.
+     * Reaching every ability put a 2% hasted Bear on a 1.471s cooldown, so its
+     * 6s Primal Bite stopped landing on the fourth one and came about 1.4s late
+     * each cycle -- a Windshaper Bear trailed a Tauren on the haste it had.
+     */
+    const hasted = isSpellForGcd(ability)
+      ? Math.max(Math.min(length, HASTED_GCD_FLOOR_MS), applyHaste(length, haste))
+      : length;
     caster.gcdReadyAt = now + Math.max(MINIMUM_GCD_MS, hasted);
   }
 
@@ -681,6 +691,21 @@ export function castLength(
  * still say `triggersGcd: true`.
  * ----------------------------------------------------------------------------
  */
+/**
+ * Whether haste may shorten the global cooldown this ability starts (round 81):
+ * a spell's, and nothing else's. A spell is what rolls the spell table, or what
+ * rolls no table and costs mana -- a heal, a seal, a DoT, a totem, an aspect.
+ * `Ability.spell` overrides it for a free caster spell (Life Tap, Evocation).
+ *
+ * DERIVED RATHER THAN DECLARED, so a new ability gets the rule for free and the
+ * one that forgot would be the exception -- `refundsCostOnMiss`' shape.
+ */
+export function isSpellForGcd(ability: Ability): boolean {
+  if (ability.spell !== undefined) return ability.spell;
+  if (ability.attackTable !== undefined) return ability.attackTable === 'spell';
+  return ability.cost?.resource === 'mana';
+}
+
 export function triggersGcd(ability: Ability): boolean {
   return ability.triggersGcd ?? ability.onNextSwing === undefined;
 }
