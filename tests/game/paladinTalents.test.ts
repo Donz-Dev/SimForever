@@ -1295,8 +1295,20 @@ describe("Templar's Bulwark, whose reason had simply expired", () => {
     // 2/2 is 60 seconds off a 300 second cooldown. Index 1: index 0 is the
     // stamina percentage, and taking it would shorten the cooldown by four
     // SECONDS -- a plausible number and the wrong one.
-    const prot = bareBuild('prot_pally');
-    expect(prot.abilities.get('templars_bulwark')!.cooldownMs).toBe(seconds(240));
+    //
+    // ROUND 80: the Prot Pally preset no longer takes Sacred Duty (its two
+    // points went to Reckoning and Anticipation), so the talent is asserted on
+    // an allocation that does, and the preset's own plain cooldown beside it.
+    const p = built('prot_pally');
+    expect(p.talents.sacred_duty ?? 0).toBe(0);
+    const talents = { ...p.talents, reckoning: 4, anticipation: 2, sacred_duty: 2 };
+    const withDuty = makeAttacker({
+      autoAttack: 'none',
+      abilities: abilitiesForClass('paladin', p.character.combatStyle as never, talents),
+      resources: [{ type: 'mana', maximum: 100_000 }],
+    });
+    expect(withDuty.abilities.get('templars_bulwark')!.cooldownMs).toBe(seconds(240));
+    expect(bareBuild('prot_pally').abilities.get('templars_bulwark')!.cooldownMs).toBe(seconds(300));
   });
 });
 

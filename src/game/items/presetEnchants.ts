@@ -189,7 +189,8 @@ export const PRESET_ENCHANTS: Readonly<
   // Round 78: head and legs +8 Intellect (was 1% Haste): the raid healer
   // fight is mana-bound, +48.84 +/- 7.17 HPS there and -1.57 +/- 4.87 (noise)
   // in the tank healer fight.
-  holy_pal: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900006, legs: 900006, mainHand: 22749, neck: 900010, shield: 900030, wrists: 900020 },
+  // Round 80: neck +6 Spell Power (was +11 Healing Power), +1.05 +/- 0.81 HPS weighted.
+  holy_pal: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900006, legs: 900006, mainHand: 22749, neck: 900009, shield: 900030, wrists: 900020 },
   // Round 60: Holy Pal's healer loadout, for the Shaman healer.
   // Round 78: the two Priest healers take the +65 Spell Power staff enchant
   // (65 healing power) over Enchant Weapon - Spell Power, which is +30 spell

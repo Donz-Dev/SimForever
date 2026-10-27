@@ -669,8 +669,9 @@ const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   // Round 52's healer, which has no owner row yet: chosen by the healer's stats.
   // Round 78: Intellect on the head and legs, +48.84 +/- 7.17 HPS in the
   // mana-bound raid healer fight and noise in the tank healer fight.
+  // Round 80: neck +6 Spell Power, +1.05 +/- 0.81 HPS on the weighted score.
   holy_pal: {
-    head: '+8 Intellect', neck: '+11 Healing Power', cloak: '+5 Agility', chest: '+4 Stats',
+    head: '+8 Intellect', neck: '+6 Spell Power', cloak: '+5 Agility', chest: '+4 Stats',
     wrists: '+16 Healing Power', gloves: '+20 Spell Power', legs: '+8 Intellect', feet: '+7 Agility',
     shield: '+9 Stamina',
   },
