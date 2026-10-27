@@ -1844,10 +1844,15 @@ const HUNTER_BEAST_MASTERY_TALENTS: TalentAllocation = {
    * Stings sit below tier 15; Efficiency at tier 5 fills the same tier gate,
    * and at two minutes this build is mana-bound (1.1% headroom), which it was
    * not at one. Mortal Shots still has its fifteen below it.
+   *
+   * ROUND 80: STINGS 2 + EFFICIENCY 3 -> STINGS 3 + EFFICIENCY 2, **+4.74 +/-
+   * 1.19 on the weighted score** (49% one target/120s, 17% each 3, 5 and 8
+   * targets): -1.4 on one target, +15.9 at three and five, where the Multi
+   * Target list keeps three stings up.
    */
   lethal_attacks: 5,
-  improved_stings: 2,
-  efficiency: 3,
+  improved_stings: 3,
+  efficiency: 2,
   careful_aim: 5,
   mortal_shots: 5,
 };
@@ -1917,9 +1922,17 @@ const HUNTER_LONE_WOLF_RANGED_TALENTS: TalentAllocation = {
   lethal_attacks: 5,
   improved_stings: 3,
   careful_aim: 5,
-  efficiency: 3,
+  /*
+   * ROUND 80: IMPROVED ARCANE SHOT 5 -> 3 AND EFFICIENCY 3 -> 5, **+13.63 +/-
+   * 2.97 weighted**, all of it on one target (+27.8 at 120s; the Multi Target
+   * fights run identical rolls). The build is mana-bound at two minutes and
+   * the last two ranks of a 0.3 s cooldown cut buy less than 10% off every
+   * shot. The same move with Improved Arcane Shot at 2 and a dead point in
+   * Hawk Eye measured +14.78, inside the interval.
+   */
+  efficiency: 5,
   rapid_killing: 2,
-  improved_arcane_shot: 5,
+  improved_arcane_shot: 3,
   lone_wolf: 1,
   trueshot_aura: 1,
   mortal_shots: 5,
@@ -2014,7 +2027,12 @@ const HUNTER_LONE_WOLF_MELEE_TALENTS: TalentAllocation = {
   // Marksmanship, 13
   lethal_attacks: 5,
   careful_aim: 5,
-  rapid_killing: 2,
+  /*
+   * ROUND 80: RAPID KILLING 2 -> IMPROVED STINGS 2, worth +8.5 weighted (+13.5
+   * on one target) once the list casts Serpent Sting. Rapid Killing was a dead
+   * tier filler (Rapid Fire 5 min -> 3, longer than any report fight).
+   */
+  improved_stings: 2,
   lone_wolf: 1,
   // Survival, 33
   improved_tracking: 5,
@@ -4018,21 +4036,22 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'bm_hunter',
     label: 'BM Hunter',
-    detail: 'High Order Skyborne, bow and a Cat, standing target. 31 Beast Mastery',
+    detail: 'Orc, bow and a Cat, standing target. 31 Beast Mastery',
     characterClass: 'hunter',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'BM Hunter',
         /*
-         * HIGH ORDER SKYBORNE SINCE ROUND 78, was Orc. A race swap on identical
-         * gear: **+11.4** at 120s on one target (C4 against C1) and **+24.6**
-         * at five targets. What pays is Wind Blessed's 3% haste and the race's
-         * base stats (8 agility and 3 intellect over the Orc's), against Blood
-         * Fury's 10% attack power for 15 seconds a fight and Savage's 1% crit.
-         * Read Ley Line is `unmodelled` and contributes nothing to the figure.
+         * ORC SINCE ROUND 80 (High Order Skyborne in round 78, an Alliance race
+         * the owner's round 79 rule no longer allows). Priced on the weighted
+         * score, 600 paired fights a column, against High Order Skyborne:
+         * Orc -2.8, Troll -2.8, Windshaper Skyborne -5.4, Tauren about -31.
+         * Orc and Troll tie; Orc is the one that does not give up the single
+         * target fight (-3.8 against Troll's -20.2), and Command's +5% pet
+         * damage is the reason the Orc holds it.
          */
-        race: 'high_order_skyborne',
+        race: 'orc',
         characterClass: 'hunter',
         level: 60,
         combatStyle: 'ranged',
@@ -4043,7 +4062,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       // Grace of Air rather than Windfury: a bow has no main-hand use.
       // See `RANGED_HUNTER_RAID_BUFFS`.
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: RANGED_HUNTER_CONSUMABLES,
+      // Round 80: + a Secondary Major Mana Potion, gated in the list (+1.1).
+      consumables: { ...RANGED_HUNTER_CONSUMABLES, potion_secondary: 'secondary_major_mana_potion' },
       precombat: [
         ...before(5, 'hunters_mark'),
         ...before(3.5, 'aspect_of_the_hawk'),
@@ -4055,15 +4075,18 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'lw_ranged',
     label: 'LW Ranged',
-    detail: 'High Order Skyborne, bow, no pet, standing target. 41 Marksmanship',
+    detail: 'Troll, bow, no pet, standing target. 41 Marksmanship',
     characterClass: 'hunter',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'LW Ranged',
-        // HIGH ORDER SKYBORNE SINCE ROUND 78, was Orc: **+10.3** at 120s on one
-        // target (C4 against C2) and **+26.7** at five. See BM Hunter.
-        race: 'high_order_skyborne',
+        // TROLL SINCE ROUND 80 (High Order Skyborne in round 78, no longer
+        // allowed). On the weighted score with this round's tree, 600 paired
+        // fights a column: Troll +7.5 over High Order Skyborne, Orc -2.9,
+        // Windshaper Skyborne -5.8, Tauren about -31. Berserking rides the
+        // cooldown stack.
+        race: 'troll',
         characterClass: 'hunter',
         level: 60,
         combatStyle: 'ranged',
@@ -4073,16 +4096,25 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       // Grace of Air rather than Windfury: a bow has no main-hand use.
       // See `RANGED_HUNTER_RAID_BUFFS`.
       raidBuffs: [...PRESET_RAID_BUFFS],
-      // ROUND 78: Blasted Lands +25 INTELLECT rather than agility, **+9.0 +/-
-      // 2.9** at 120s. Mana-bound at two minutes, this build weighs intellect at
-      // 1.10 a point and agility at 0.74. BM Hunter measured +1.6, noise, and
-      // keeps agility.
-      consumables: { ...RANGED_HUNTER_CONSUMABLES, blasted_lands: 'blasted_intellect' },
+      // ROUND 78 took Blasted Lands +25 INTELLECT (+9.0 at 120 s, one target).
+      // Round 80 scores the weighted fights, where agility wins.
+      // Round 80: + a Secondary Major Mana Potion, gated in the list (+1.5).
+      // Round 80: Blasted Lands back to +25 AGILITY (+9.3 weighted alone; the
+      // round 78 intellect choice was a one-target, 120 s answer).
+      consumables: {
+        ...RANGED_HUNTER_CONSUMABLES,
+        potion_secondary: 'secondary_major_mana_potion',
+      },
       precombat: [
         ...before(7, 'hunters_mark'),
         ...before(5.5, 'aspect_of_the_hawk'),
         // AIMED SHOT AT 2s, where Sniper Shot was at 4s -- the owner's round 37.
         ...before(2, 'aimed_shot'),
+        // ROUND 80 ADDITION: Serpent Sting at 0s, a pure DoT whose first tick
+        // lands after the pull (Gate B), so the Aimed Shot is still the one
+        // damaging action. Part of the +32.9 weighted with the agility rows;
+        // +29.3 with Blasted Lands alone against +9.3 without it.
+        ...before(0, 'serpent_sting'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -4118,6 +4150,12 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         ...AGILITY_CONSUMABLES,
         mana_regen: 'mana_regen_12',
         other: 'demonic_rune',
+        // Round 80: the Secondary Potion row. Gated under 50% mana past the
+        // first minute; this build never gets there, so it measures 0.0.
+        potion_secondary: 'secondary_major_mana_potion',
+        // Round 80: +20 Agility food (was +40 Attack Power), with the main
+        // hand +15 Agility enchant. See `presetEnchants.ts`.
+        food: 'food_agility',
       },
       /*
        * ======================================================================
@@ -4193,6 +4231,12 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         ...AGILITY_CONSUMABLES,
         mana_regen: 'mana_regen_12',
         other: 'demonic_rune',
+        // Round 80: the Secondary Potion row. Gated under 50% mana past the
+        // first minute; this build never gets there, so it measures 0.0.
+        potion_secondary: 'secondary_major_mana_potion',
+        // Round 80: +20 Agility food (was +40 Attack Power), with the main
+        // hand +15 Agility enchant. See `presetEnchants.ts`.
+        food: 'food_agility',
       },
       // The same opener as LW Melee, including Strider Kick in Mongoose Bite's
       // place -- the dodge window cannot be open before the pull. See there.

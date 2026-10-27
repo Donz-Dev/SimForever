@@ -191,8 +191,11 @@ describe('what the Combat Rogue drinks', () => {
      * four of five agreeing is still not five, because the melee Hunter shares
      * it and has not been spoken about.
      */
-    for (const id of ['rogue_hemo', 'lw_melee']) {
+    // Round 80: the melee Hunter took +20 Agility food on its own weighted
+    // measurement (+5.5), so the Hemo Rogue is the row's last default.
+    for (const id of ['rogue_hemo']) {
       expect(PRESETS_BY_ID.get(id)!.build().consumables.food, id).toBe('food_attack_power');
     }
+    expect(PRESETS_BY_ID.get('lw_melee')!.build().consumables.food).toBe('food_agility');
   });
 });

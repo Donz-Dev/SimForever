@@ -1156,3 +1156,78 @@ list". The reporting gap is in `printUses`, not in the list.
    casting both gains ~+235 at five targets on that gap alone.
 5. **Rapid Recuperation's condition** (only while Serpent Sting is on the
    target) is not modelled; it is now load-bearing on LW Ranged.
+
+## Round 80: the four Hunters, second run, under the owner's round 79 rules
+
+Variants are `tools/optimise/hunterVariants80.ts` (every group has a control;
+groups before "fourth pass" were measured against the round 79 presets, the
+rest against the round 80 ones). `tools/optimise/hunterVariantReport80.ts`
+prints one variant's damage table. Talents, race, enchants and stat
+consumables on `WEIGHTED=1` (49% 1T/120s + 17% each 3T/60s, 5T/60s, 8T/30s);
+lists at their own clocks; 300 paired fights unless stated.
+
+`full_report.ts ITER=300`, before -> after:
+
+| | 1T 120s | 3T 60s | 5T 60s | 8T 30s | weighted |
+| --- | --- | --- | --- | --- | --- |
+| BM Hunter | 1015.7 -> 1011.7 | 1412.9 -> 1433.8 | 1668.6 -> 1688.0 | 2609.8 -> 2628.5 | 1465.2 -> **1473.3** |
+| LW Ranged | 1044.6 -> 1055.3 | 1429.9 -> 1524.4 | 1861.0 -> 1951.7 | 3023.5 -> 3195.6 | 1585.3 -> **1651.3** |
+| LW Melee | 876.2 -> 1074.1 | 1045.1 -> 1148.1 | 1173.2 -> 1799.2 | 1465.5 -> 2878.1 | 1055.6 -> **1516.6** |
+| Hawk Melee | 941.0 -> 1035.4 | 1087.1 -> 1179.5 | 1216.2 -> 1741.5 | 1523.6 -> 2785.2 | 1111.6 -> **1477.4** |
+
+### What shipped
+
+| | BM Hunter | LW Ranged | LW Melee | Hawk Melee |
+| --- | --- | --- | --- | --- |
+| race | **Orc** (was High Order Skyborne): HOS-relative Orc -2.3, Troll -2.8, Windshaper -5.4, Tauren -31 | **Troll**: +7.5 over HOS, Orc -2.9, Windshaper -5.8, Tauren -31 | Orc kept: Troll -12.2, Tauren -18.9, Windshaper -24.4 | Orc kept: Troll -12.4, Tauren -18.1, Windshaper -26.5 |
+| talents | Stings 3 + Efficiency 2 (was 2/3), **+4.7** | Imp Arcane 3 + Efficiency 5 (was 5/3), **+13.6** | Rapid Killing 2 -> Improved Stings 2, **+8.5** | none won |
+| Single Target | -- (all noise) | -- (the sniper floors that won on the old tree lose on the new one) | **+ Serpent Sting and Arcane Shot above Raptor Strike, +185.5** | **+ Serpent Sting above Raptor, Arcane Shot above Wing Clip, +90.3** |
+| Multi Target | -- | Sting Multi-DoT 5, Multi-Shot above it at <= 3 targets, **+14.3** | **Volley above Raptor**, the boss sting above it at <= 3 targets: +603 at 5, +1376 at 8, +88 at 3 | **Volley (>= 4 targets) above Raptor**: +504 at 5, +1235 at 8, +90 at 3 |
+| opener | -- | + Serpent Sting at 0s (pure DoT) | -- | -- |
+| potions | + Secondary Major Mana (<50% mana, >60 s), +1.1 | the same, +1.5 | the same, 0.0 | the same, 0.0 |
+| enchants / consumables | head + legs +1% Haste, **+7.4** | Blasted Lands and head/legs back to Agility, with the opener **+32.9** | main hand +15 Agility (was Crusader) + Agility food, **+15.1** | the same, **+7.1** |
+
+### Melee Weave on the melee builds -- what it takes, and why it is a question
+
+**The weave cannot run on a dual-wield build**: `melee_weave` needs the ranged
+auto-attack active and `return_to_range` needs a swinging bow, and `dual_wield`
+makes the bow a stat stick. Added to the dual-wield list it runs identical
+fights. In the **`ranged` style** (the axes held and swung during a weave, round
+65) it is large on one target and loses the weighted score:
+
+| | 1T 120s | weighted vs the shipped dual-wield build |
+| --- | --- | --- |
+| LW Melee: Sting > Weave(SK, MB, IT, Wing Clip) > Arcane > Aimed > Multi | +229.4 over the round 79 list (+42.9 over round 80's) | **-36.8** (3T -67.9, 5T -114.4, 8T -158.2) |
+| Hawk Melee: hawk above the Weave, same body | +136.0 (+45.7) | **-53.7** |
+
+The bow outhits either axe (879 a shot against 588-645 a swing) and both
+timers cool down while the other runs, which is why one target likes it; at
+several targets the dual-wield Volley list wins (the weave's AoE list with
+Volley above the sting measured +489 at 5 against +603). Sweeps: option order
+(SK/MB/IT, MB first, IT first) within 3; no trap -84; Wing Clip as a fourth
+option +56; Aimed Shot in the tail +75; Aspect of the Beast -7 against Hawk.
+
+### Priced and not shipped
+
+| | figure | why not |
+| --- | --- | --- |
+| ranged ST: Major Mana Potion in place of the stack's Frenzy | BM **+32.5**, LWR **+19.0** at 1T (any gate 20-60%) | the stack is the owner's line |
+| both Fire traps (melee ST / AoE, ranged weave) | melee +56.9 / +58.5 ST, +56 / +55 at 5; ranged -16 to -34 | the engine shares no cooldown between them |
+| Summon Hawk above Raptor (Hawk Melee) | +0.2 | noise now |
+| BM: hawk above the weave, Arcane above Aimed | -0.7 / -4.3 at 400 | noise |
+| LWR Sniper mana floors (on the new tree) | -11 to -15 | lose |
+| melee: Multi-Shot (no swinging bow) | -21 ST, -42 at 5 | lose |
+| melee: Serpent Sting Multi-DoT 3 at 5 | -168 / -237 | lose |
+| Volley in any Single Target list | -200 to -264 | lose |
+| sting refresh at <= 1-2 s instead of on expiry | -5.6 to -114 | lose |
+| Demonic Rune at 5% / 20% | noise | -- |
+| HWK Resourcefulness 1 -> Efficiency / Stings | -2.3 / +1.6 | noise |
+
+### Data issues found
+
+- **Resourcefulness** ("Trap and melee abilities") covers Raptor Strike,
+  Mongoose Bite and Immolation Trap, and NOT Explosive Trap (520 mana) or Wing
+  Clip (80).
+- **Survivalist's Discipline** (trap cooldowns -40%) is still `unmodelled`.
+- `USES=1` still reports `melee_weave` as never fired while its trap and
+  Raptor Strike fire under "not in the list".
