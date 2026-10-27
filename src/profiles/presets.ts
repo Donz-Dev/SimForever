@@ -1289,11 +1289,27 @@ const MAGE_FROSTFIRE_TALENTS: TalentAllocation = {
    * Warding 2 and Improved Frostbolt 2 with Ice Block; Critical Mass 4 -> 3
    * pays for Improved Fire Blast 2. The note above is the build it replaces.
    */
+  /*
+   * ==========================================================================
+   * ROUND 80: IMPROVED FIRE BLAST 2 AND ONE INCINERATION RANK BUY IMPROVED
+   * FLAMESTRIKE 3/3 -- **+108.4 +/- 5.4 on the weighted score** (t1 -2.1
+   * noise, t3 +25.0, t5 +294.0, t8 +324.8). Flamestrike is this build's area
+   * spell and it had no Fire talent behind it.
+   *
+   * WHERE THE THREE COME FROM, weighted: all of Incineration +103.2 (t1
+   * -11.8), Incineration 2 + Improved Fire Blast 1 +101.3, Master of Elements 3
+   * +54.2 (the area fights run dry without the refund), Critical Mass 3 +27.0
+   * (t1 -71.6), Improved Scorch 3 +23.1 (t1 -135.7). Only two ranks, from
+   * Incineration, +72.6. The Frost tier tax (Frost Warding 2, Improved
+   * Frostbolt 2, Ice Block 1) holds up Shatter and Fingers of Frost and has no
+   * live destination -- Improved Blizzard runs bit-identical fights.
+   * ==========================================================================
+   */
   // Fire, 29
-  improved_fire_blast: 2,
-  incineration: 3,
+  incineration: 2,
   improved_fireball: 5,
   ignite: 5,
+  improved_flamestrike: 3,
   pyroblast: 1,
   improved_scorch: 3,
   heating_up: 1,
@@ -1331,27 +1347,53 @@ const MAGE_FROSTFIRE_TALENTS: TalentAllocation = {
  * ----------------------------------------------------------------------------
  */
 const MAGE_ARCANE_TALENTS: TalentAllocation = {
-  // The owner's respecification, decoded from https://talentsforever.com/mage/60/1552225223122311531-03--UDCBEFGHKONMJILPQRSA-7
-  wand_specialization: 1,
+  /*
+   * ==========================================================================
+   * ROUND 80: 32 ARCANE / 16 FIRE / 3 FROST, FOR FIRE BLAST INTO HEATING UP
+   * INTO PYROBLAST -- worth **+145.4 +/- 5.4 on the weighted score** with the
+   * two list entries that cast it (t1 +65.4, t3 +114.8, t5 +183.4, t8 +368.8).
+   *
+   * The owner's 48/3/0 (https://talentsforever.com/mage/60/1552225223122311531-03--UDCBEFGHKONMJILPQRSA-7)
+   * carried SIXTEEN points that do nothing here: Wand Specialization 1,
+   * Improved Channeling 5 (cast pushback), Magic Absorption 2 (resistances),
+   * Arcane Resilience 2 (armor), Arcane Geometry 2 (range), Arcane Shielding 2
+   * and Improved Counterspell 2. The 32 live Arcane points still reach Arcane
+   * Power -- 31 below tier 30 -- so Arcane stays the majority, 32 to 16.
+   *
+   * WHAT THE SIXTEEN BUY: Heating Up (tier 15, behind Pyroblast) with
+   * Improved Fire Blast 2 and Ignite 5 under it; Improved Flamestrike 3 for the
+   * area fights; Burning Soul 1 is tier tax (every other tier-0-to-10 Fire
+   * point left is equally dead); and ELEMENTAL PRECISION 3 in Frost, because
+   * Arcane Focus covers Arcane spells only and Fire Blast, Pyroblast and
+   * Flamestrike missed 5% more than everything else. Master of Elements 3 in
+   * Elemental Precision's place is **-24.4** weighted (the area fights want the
+   * hit more than the refund). Pyroblast alone, spent by Presence of Mind and
+   * no Heating Up, is -2.9 noise at 120s.
+   * ==========================================================================
+   */
+  // Arcane, 32
   arcane_focus: 5,
-  improved_channeling: 5,
   missile_barrage: 2,
   arcane_subtlety: 2,
-  magic_absorption: 2,
   arcane_concentration: 5,
-  arcane_resilience: 2,
-  arcane_geometry: 2,
   arcane_impact: 3,
   arcane_blast: 1,
-  arcane_shielding: 2,
-  improved_counterspell: 2,
   arcane_meditation: 3,
   arcane_wrath: 1,
   presence_of_mind: 1,
   arcane_mind: 5,
   arcane_instability: 3,
   arcane_power: 1,
+  // Fire, 16
+  improved_fire_blast: 2,
   incineration: 3,
+  ignite: 5,
+  burning_soul: 1,
+  improved_flamestrike: 3,
+  pyroblast: 1,
+  heating_up: 1,
+  // Frost, 3
+  elemental_precision: 3,
 };
 
 /**
@@ -1507,12 +1549,30 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
    * Soul 2 and Improved Fire Blast 2 are in, Combustion is taken.
    * ==========================================================================
    */
-  // Arcane, 14
+  /*
+   * ==========================================================================
+   * ROUND 80: TWO CLEARCASTING RANKS BUY BLAST WAVE AND MASTER OF ELEMENTS 3/3
+   * -- 12 / 36 / 3, worth **+44.4 +/- 4.6 on the weighted score** with Blast
+   * Wave at the top of the Multi Target area entries (t1 -0.6 noise, t3 +53.5,
+   * t5 +76.2, t8 +133.0).
+   *
+   * BLAST WAVE WAS "WORTH EXACTLY NOTHING" ABOVE, AND THAT WAS A SINGLE TARGET
+   * FINDING: an instant that strikes every target is a Multi Target spell, and
+   * the report has three area columns now. Where the point comes from is the
+   * whole question, priced weighted: Clearcasting 1 +40.0, Incineration 1
+   * +35.5, Improved Fire Blast 1 +34.9, Improved Fireball 1 +30.8, Missile
+   * Barrage 1 +30.7, Master of Elements 1 +23.3, Arcane Subtlety 1 +23.1,
+   * Improved Flamestrike 1 +8.6; Critical Mass 1 strands Combustion. The second
+   * Clearcasting rank into Master of Elements is +4.3 more; Clearcasting 0/5
+   * (the last three into Burning Soul, dead) falls back to +31.8.
+   * ==========================================================================
+   */
+  // Arcane, 12
   arcane_focus: 5,
   missile_barrage: 2,
   arcane_subtlety: 2,
-  arcane_concentration: 5,
-  // Fire, 34
+  arcane_concentration: 3,
+  // Fire, 36
   improved_fire_blast: 2,
   incineration: 3,
   improved_fireball: 5,
@@ -1529,8 +1589,9 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
   improved_flamestrike: 3,
   improved_scorch: 3,
   heating_up: 1,
-  master_of_elements: 2,
+  master_of_elements: 3,
   critical_mass: 5,
+  blast_wave: 1,
   fire_power: 3,
   combustion: 1,
   // Frost, 3
@@ -3399,14 +3460,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'mage_frostfire',
     label: 'Frostfire',
-    detail: 'Human, caster, standing target. 29 Fire / 22 Frost',
+    detail: 'Troll, caster, standing target. 29 Fire / 22 Frost',
     characterClass: 'mage',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Frostfire Mage',
-        // Human (round 78): +7.19 +/- 5.64 at 120s single target (1000 paired fights) and +14.72 at 5 targets.
-        race: 'human',
+        // Troll (round 80, Horde and Windshaper only): best weighted, +5.8 over Human with the round 80 build (t1 -11.1, t8 +67.4); Windshaper +4.3 (t1 +0.4), Orc -3.6, Undead -17.1.
+        race: 'troll',
         characterClass: 'mage',
         level: 60,
         combatStyle: 'caster',
@@ -3415,7 +3476,12 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       talents: { ...MAGE_FROSTFIRE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       // The Major Mana Potion in place of Spellblasting (round 78): -12.13 +/- 5.14 at a 120s single target fight, +112.6 at 5 targets/60s, where this build runs dry.
-      consumables: { ...casterConsumables('school_fire'), potion: 'major_mana_potion' },
+      // Round 80: Spellblasting as the Secondary Potion, drunk in the last 30s when the mana potion was not needed -- see MAGE_FROSTFIRE.
+      consumables: {
+        ...casterConsumables('school_fire'),
+        potion: 'major_mana_potion',
+        potion_secondary: 'secondary_major_spellblasting_potion',
+      },
       /*
        * ==================================================================
        * THE OWNER'S OPENER, AND NOTHING ELSE -- A PRE-PULL SCORCH REVERTED
@@ -3469,14 +3535,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'mage_arcane',
     label: 'Arcane',
-    detail: 'High Order Skyborne, caster, standing target. 48 Arcane / 3 Fire',
+    detail: 'Troll, caster, standing target. 32 Arcane / 16 Fire / 3 Frost',
     characterClass: 'mage',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Arcane Mage',
-        // High Order Skyborne (round 78): +2.85 +/- 5.84 at 120s single target and +48.92 +/- 4.54 at 5 targets.
-        race: 'high_order_skyborne',
+        // Troll (round 80, Horde and Windshaper only): +8.1 weighted over High Order Skyborne with Berserking inside Arcane Power -- t1 -12.6, t8 +85.9. Windshaper -4.0, Orc -11.0, Undead -29.4.
+        race: 'troll',
         characterClass: 'mage',
         level: 60,
         combatStyle: 'caster',
@@ -3485,7 +3551,12 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       talents: { ...MAGE_ARCANE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       // The Major Mana Potion in place of Spellblasting (round 78): +11.30 +/- 3.40 at a 120s single target fight (1000 paired), -6.2 at 5 targets/60s.
-      consumables: { ...casterConsumables('school_arcane'), potion: 'major_mana_potion' },
+      // Round 80: Spellblasting back as the Secondary Potion, drunk in the last 30s when the mana potion was not needed -- see MAGE_ARCANE.
+      consumables: {
+        ...casterConsumables('school_arcane'),
+        potion: 'major_mana_potion',
+        potion_secondary: 'secondary_major_spellblasting_potion',
+      },
       /*
        * ========================================================================
        * THE OPENER IS THE OWNER'S OWN TWO LINES PLUS ONE FREE WINDOW, AND THAT
@@ -3557,14 +3628,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'mage_fire',
     label: 'Fire',
-    detail: 'High Order Skyborne, caster, standing target. 14 Arcane / 34 Fire / 3 Frost',
+    detail: 'Troll, caster, standing target. 12 Arcane / 36 Fire / 3 Frost',
     characterClass: 'mage',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Fire Mage',
-        // High Order Skyborne (round 78): +19.61 +/- 7.40 at 120s single target and +39.91 +/- 6.52 at 5 targets.
-        race: 'high_order_skyborne',
+        // Troll (round 80, Horde and Windshaper only), Berserking inside Combustion: +2.8 +/- 3.0 weighted over High Order Skyborne at 1000 paired fights (t1 -9.7, t8 +47.9); Windshaper -0.6, Orc and Undead lose more.
+        race: 'troll',
         characterClass: 'mage',
         level: 60,
         combatStyle: 'caster',
@@ -3572,7 +3643,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: { ...MAGE_FIRE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: casterConsumables('school_fire'),
+      // Round 80: Spellblasting stays primary (drunk with Combustion); the Major Mana Potion is the Secondary, under 30% mana if the potion cooldown is free.
+      consumables: { ...casterConsumables('school_fire'), potion_secondary: 'secondary_major_mana_potion' },
       /*
        * ========================================================================
        * THE PRE-PULL SCORCH IS GONE, AT A COST OF **-24.23 +/- 4.29**, AND IT
@@ -4409,13 +4481,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
      */
     id: 'mage_frost',
     label: 'Frost Mage',
-    detail: 'Windshaper Skyborne, caster, standing target. 14 Arcane / 3 Fire / 34 Frost',
+    detail: 'Troll, caster, standing target. 14 Arcane / 3 Fire / 34 Frost',
     characterClass: 'mage',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Frost Mage',
-        race: 'windshaper_skyborne',
+        // Troll (round 80): +8.0 weighted over Windshaper (t1 -8.2, t8 +73.6); Orc -13.8, Undead -19.6.
+        race: 'troll',
         characterClass: 'mage',
         level: 60,
         combatStyle: 'caster',

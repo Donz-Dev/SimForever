@@ -1046,8 +1046,10 @@ describe('the three fights', () => {
     // AND FIRE AND FROSTFIRE READ THE SAME, which is the half that catches one
     // Mage being given a different set: their templates are identical in
     // everything the budget sees. Arcane was the third until round 51 gave its
-    // template 10 more hit rating to reach 17% on Arcane.
-    expect(totals[0]).toBe(totals[1]);
+    // template 10 more hit rating to reach 17% on Arcane. Since round 80 the
+    // Frostfire staff carries Revelation where Fire keeps +65 Spell Power, so
+    // the two differ by exactly that enchant.
+    expect(totals[0]).toBe(totals[1] + 65);
     const named = batchOf('mage_fire', 20, 5).castButNotSimulated.map((e) => e.abilityName);
     expect(named).not.toContain('Fireball');
   });
@@ -2565,8 +2567,13 @@ describe('Evocation, which pays out during its own channel', () => {
      * is up, and Arcane Wrath taking the four-stack casts -- leave the build
      * clear of 10% mana in all twenty fights. A knock-on of a list and tree
      * change, which is what this tripwire is for: somebody looked.
+     *
+     * TWO AGAIN AT ROUND 80. The Arcane build now casts Fire Blast on cooldown
+     * and a Pyroblast at three Heating Up stacks (32/16/3), which spends mana
+     * the old list banked -- so two of twenty sixty-second fights reach the
+     * 10% gate. The owner's entry and gate are unchanged.
      */
-    expect(casts('mage_arcane')).toBe(0);
+    expect(casts('mage_arcane')).toBe(2);
   }, 20_000);
 });
 
@@ -2630,11 +2637,17 @@ describe('what round 28 did to the Fire list', () => {
     expect(entry.sequence).not.toContain('major_spellblasting_potion');
     expect(entry.condition).toBeDefined();
 
-    // And Combustion has no entry of its own: it is the step.
-    expect(MAGE_FIRE.entries.some((row) => row.abilityId === 'combustion')).toBe(false);
+    // And Combustion's own entry is the round 80 FALLBACK only: below the
+    // stack, under the same gate, so with Spellblasting drunk it is refused and
+    // without it Combustion is not lost with the potion.
+    const own = MAGE_FIRE.entries.filter((row) => row.abilityId === 'combustion');
+    expect(own).toHaveLength(1);
+    expect(own[0]!.condition).toEqual(entry.condition);
+    expect(MAGE_FIRE.entries.indexOf(own[0]!)).toBeGreaterThan(MAGE_FIRE.entries.indexOf(entry));
     // The arrangement MAGE_ARCANE already uses -- the potion names the stack.
+    // (The Arcane list also drinks it late through an entry of its own since round 80.)
     const arcane = MAGE_ARCANE.entries.find(
-      (row) => row.abilityId === 'major_spellblasting_potion',
+      (row) => row.abilityId === 'major_spellblasting_potion' && row.sequence !== undefined,
     )!;
     expect(arcane.sequence?.length).toBeGreaterThan(0);
   });
@@ -2868,8 +2881,11 @@ describe('the three lists, after the owner tuned them', () => {
       'arcane_wrath',
     ]);
 
-    // Pyroblast is in no entry at all now, and the new tree does not take it.
-    expect(MAGE_ARCANE.entries.filter((row) => row.abilityId === 'pyroblast')).toHaveLength(0);
+    // Pyroblast is in no STACK, and since round 80 it has one entry of its own:
+    // the Heating Up chain the 32/16/3 tree buys, at three stacks.
+    const pyro = MAGE_ARCANE.entries.filter((row) => row.abilityId === 'pyroblast');
+    expect(pyro).toHaveLength(1);
+    expect(pyro[0]!.sequence).toBeUndefined();
 
     const fires = () =>
       compiled(stack.condition as never)?.(simulation, mage, undefined) ?? true;

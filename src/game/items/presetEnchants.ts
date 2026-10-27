@@ -134,10 +134,24 @@ export const PRESET_ENCHANTS: Readonly<
    * its damage and all of its Fire Nova and Magma Totem.
    */
   shaman_enhancement: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900006, legs: 900006, neck: 900009, twoHand: 900029, wrists: 900018 },
-  mage_frostfire: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
-  // The owner's saved build, round 59: the Frostfire loadout exactly.
-  mage_frost: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
-  mage_arcane: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
+  /*
+   * ROUND 80, priced on the weighted score (49% 1 target / 120 s, 17% each 3, 5
+   * and 8 targets), against +65 Spell Power on the staff:
+   *   Revelation       Arcane +114.3 +/- 6.9 (t1 +3.5, t8 +471.5), Frost +98.3
+   *                    +/- 5.4 (t1 -2.4), Frostfire +9.7 +/- 6.6 (t1 -18.3),
+   *                    Fire -5.8 -- so three of the four take it. It is rolled per
+   *                    non-periodic DAMAGE EVENT, so an area spell striking eight
+   *                    targets rolls eight times a cast: that is where the area
+   *                    figures come from, and a per-cast ruling would shrink them.
+   *   Enchant Weapon - Spell Power  -20 to -30 on all four.
+   *   gloves +1% Haste for +20 SP   Arcane +5.9 +/- 2.3 (shipped); Frostfire -2.4,
+   *                    Frost +1.4, Fire -11.9.
+   *   head +8 Intellect / Spirit for +1% Haste  -10 to -17 on all four.
+   */
+  mage_frostfire: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900032, wrists: 900018 },
+  // The owner's saved build, round 59: the Frostfire loadout exactly (Revelation since round 80).
+  mage_frost: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900032, wrists: 900018 },
+  mage_arcane: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900002, head: 900002, legs: 900002, neck: 900009, twoHand: 900032, wrists: 900018 },
   mage_fire: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   // +65 Spell Power on the two-hander in place of Crusader, by the owner (round 37).
   // Round 78: wrists +16 Spell Power (was +9 Strength), +0.62 +/- 0.03 at 120 s.

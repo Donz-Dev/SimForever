@@ -143,8 +143,8 @@ owner supplied.
 | Profile | Talents | DPS | List | Notes |
 | --- | --- | --- | --- | --- |
 | Frostfire | 0/29/22 | **661.3** | `MAGE_FROSTFIRE` | **now the top Mage**, on the three Frost talents that reach its filler |
-| Fire | 14/34/3 | **622.0** | `MAGE_FIRE` | Combustion is a real ramp; Ignite rolls over |
-| Arcane | 48/3/0 | **576.1** | `MAGE_ARCANE` | two spells and one aura |
+| Fire | 12/36/3 | **622.0** | `MAGE_FIRE` | Combustion is a real ramp; Ignite rolls over (spread since round 80; the DPS is the old figure) |
+| Arcane | 32/16/3 | **576.1** | `MAGE_ARCANE` | two spells and one aura -- and the Fire Blast / Heating Up / Pyroblast chain since round 80 (spread since round 80; the DPS is the old figure) |
 
 **EVERY FIGURE HERE IS STALE THE MOMENT ANOTHER CLASS MERGES.** These are from
 `4be5c09`; the Mage figures moved 412–450 to 576–661 between two deep dives
