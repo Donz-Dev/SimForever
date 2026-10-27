@@ -312,6 +312,17 @@ export function App() {
     <div className="app">
       <header className="app-header">
         <Logo />
+        {/* The published full report, served beside the app from `public/reports/`
+            so it can be shared with anyone who has the sim's link. RELATIVE, so it
+            resolves under /SimForever/ on Pages and under / on the dev server. */}
+        <a
+          className="header-report-link"
+          href="reports/102726-full-report.html"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          102726 Full Report
+        </a>
       </header>
 
       <main className={confirmed ? 'app-layout' : 'app-layout single'}>

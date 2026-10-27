@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Forever Profile Report</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single column of three role sections, each one wide sortable table in its own scroll well. */
+:root {
+  color-scheme: dark;
+  --floor: #050b0d;
+  --panel: #132428;
+  --panel-bar: #1d353b;
+  --well: #0a1518;
+  --rule: #2e4b54;
+  --text: #f2fafb;
+  --muted: #879ca0;
+  --copper: #d98a5f;
+  --copper-bright: #f2a97d;
+  --bar: #2a4a52;
+  --bar-best: #8a5a3e;
+  --up: #7fd39a;
+  --down: #f08a7e;
+  --font-label: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --font-body: 'Barlow', system-ui, sans-serif;
+  --font-data: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+}
+body { background: var(--floor); color: var(--text); font-family: var(--font-body); }
+main {
+  max-width: 1180px; margin: 0 auto; display: grid; gap: 28px;
+  padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+header.page { display: grid; gap: 6px; }
+header.page h1 { margin: 0; font-family: var(--font-label); font-size: 34px; font-weight: 700; letter-spacing: .04em; color: var(--copper-bright); text-wrap: balance; }
+header.page p { margin: 0; font-size: 15px; color: var(--muted); max-width: 70ch; line-height: 1.5; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-family: var(--font-data); font-size: 12px; color: var(--muted); }
+.legend b { color: var(--text); font-weight: 500; }
+section.role { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; min-width: 0; }
+section.role > h2 {
+  margin: 0; padding: 10px 16px; background: var(--panel-bar); border-left: 3px solid var(--copper);
+  font-family: var(--font-label); font-size: 16px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--copper-bright);
+}
+section.role > h2 span { color: var(--muted); font-weight: 500; text-transform: none; letter-spacing: .02em; margin-left: 8px; }
+.well { overflow-x: auto; background: var(--well); }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-variant-numeric: tabular-nums; }
+th, td { padding: 8px 12px; text-align: right; border-bottom: 1px solid var(--panel-bar); }
+th { font-family: var(--font-label); font-size: 14px; font-weight: 600; letter-spacing: .04em; color: var(--muted); white-space: nowrap; }
+th button { all: unset; cursor: pointer; display: inline-flex; gap: 4px; align-items: center; }
+th button:focus-visible { outline: 2px solid var(--copper); outline-offset: 3px; }
+th button[aria-sort] { color: var(--copper-bright); }
+th:first-child, td:first-child { text-align: left; }
+td.name { font-family: var(--font-label); font-size: 16px; font-weight: 600; white-space: nowrap; }
+td.name i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 9px; vertical-align: 1px; }
+td.name small { display: block; font-family: var(--font-data); font-size: 11px; font-weight: 400; color: var(--muted); margin-left: 18px; }
+.cell { display: grid; gap: 3px; justify-items: end; min-width: 120px; }
+.fig { font-family: var(--font-data); font-size: 14px; }
+.fig .pm { color: var(--muted); font-size: 11px; margin-left: 4px; }
+.track { width: 100%; height: 4px; background: var(--panel-bar); border-radius: 2px; overflow: hidden; }
+.track span { display: block; height: 100%; background: var(--bar); }
+.track span.best { background: var(--bar-best); }
+.delta { font-family: var(--font-data); font-size: 11px; color: var(--muted); }
+.delta.up { color: var(--up); }
+.delta.down { color: var(--down); }
+tr:hover td { background: #0e1c20; }
+.notes { display: grid; gap: 14px; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 16px 18px; min-width: 0; }
+.notes h2 { margin: 0; font-family: var(--font-label); font-size: 16px; letter-spacing: .08em; text-transform: uppercase; color: var(--copper-bright); }
+.notes ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; line-height: 1.5; max-width: 80ch; }
+.notes dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; line-height: 1.5; }
+.notes dt { font-family: var(--font-label); font-weight: 600; font-size: 15px; }
+.notes dd { margin: 0; color: var(--muted); max-width: 80ch; }
+@media (max-width: 560px) { .notes dl { grid-template-columns: 1fr; } .notes dd { margin-bottom: 8px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <header class="page">
+    <h1>Forever Profile Report</h1>
+    <p id="meta"></p>
+    <div class="legend" id="legend"></div>
+  </header>
+  <section class="role" id="dps"><h2>DPS profiles <span>damage per second</span></h2><div class="well"></div></section>
+  <section class="role" id="tank"><h2>Tank profiles <span>threat per second</span></h2><div class="well"></div></section>
+  <section class="role" id="healer"><h2>Healer profiles <span>healing per second</span></h2><div class="well"></div></section>
+  <section class="notes" id="notes" hidden></section>
+</main>
+
+<script>
+const DATA = {"report":{"iterations":300,"seed":20261025,"generated":"2026-10-27T22:11:38.384Z","rows":[{"id":"two_hand_arms","name":"2H Arms","characterClass":"warrior","role":"dps","metric":"dps","cells":{"t1":{"mean":843.1437900852333,"interval":7.2465667687830155,"deaths":0,"before":842.5318565508898},"t3":{"mean":1129.2858692465277,"interval":12.98950524005016,"deaths":0,"before":1129.2858692465277},"t5":{"mean":1196.6972732412441,"interval":13.40579471806677,"deaths":0,"before":1196.6972732412441},"t8":{"mean":1258.5384448957052,"interval":20.402169673759598,"deaths":0,"before":1258.5384448957052},"weighted":{"mean":1022.5091269969555,"interval":5.8913393566241705,"deaths":0,"before":1022.2092795651272}}},{"id":"dw_fury","name":"DW Fury","characterClass":"warrior","role":"dps","metric":"dps","cells":{"t1":{"mean":979.6628928982552,"interval":7.31477179919968,"deaths":0,"before":979.3325981949898},"t3":{"mean":1391.2423575603295,"interval":13.175898679727812,"deaths":0,"before":1391.2423575603295},"t5":{"mean":1498.8461907608507,"interval":13.20021207872739,"deaths":0,"before":1498.8461907608507},"t8":{"mean":1705.2648843892619,"interval":20.954702088785844,"deaths":0,"before":1705.2648843892619},"weighted":{"mean":1261.24490108092,"interval":5.965702162412629,"deaths":0,"before":1261.0830566763202}}},{"id":"prot_warr","name":"Prot Warr","characterClass":"warrior","role":"tank","metric":"tps","cells":{"t1":{"mean":1089.3590873352139,"interval":8.218896205911417,"deaths":0.4766666666666667,"before":1079.4155823643252},"t3":{"mean":1795.3053389988293,"interval":15.518135117356316,"deaths":0.22666666666666666,"before":1779.1929117073084},"t5":{"mean":2154.2403639747263,"interval":13.485801042233676,"deaths":0.39666666666666667,"before":2132.4118336922606},"t8":{"mean":2568.228393314083,"interval":21.228642049141936,"deaths":0.23666666666666666,"before":2554.513398731983},"weighted":{"mean":1641.8075491631535,"interval":6.438803138318193,"deaths":0,"before":1628.1537198608835}}},{"id":"fury_prot","name":"Fury Prot","characterClass":"warrior","role":"tank","metric":"tps","cells":{"t1":{"mean":1206.879522862628,"interval":10.808161243854252,"deaths":0.7,"before":1194.0800575364199},"t3":{"mean":2065.0037232781115,"interval":19.5623092073406,"deaths":0.45,"before":2057.958796656643},"t5":{"mean":2503.680801794706,"interval":18.499586319857016,"deaths":0.5766666666666667,"before":2484.8360912821386},"t8":{"mean":3379.205540605396,"interval":27.78989840586129,"deaths":0.3333333333333333,"before":3383.6786611682683},"weighted":{"mean":1942.512277367984,"interval":8.444915711764022,"deaths":0,"before":1932.599731541044}}},{"id":"rogue_venom","name":"Venom","characterClass":"rogue","role":"dps","metric":"dps","cells":{"t1":{"mean":735.300507561726,"interval":4.911087107826256,"deaths":0,"before":733.1517736610069},"t3":{"mean":786.3646944302186,"interval":7.098882370556859,"deaths":0,"before":786.002550507602},"t5":{"mean":786.3646944302186,"interval":7.098882370556859,"deaths":0,"before":786.002550507602},"t8":{"mean":875.3695807978102,"interval":10.783156120337715,"deaths":0,"before":872.350588772869},"weighted":{"mean":776.4740735471478,"interval":3.4733396896404973,"deaths":0,"before":774.7848363578657}}},{"id":"rogue_combat_mut","name":"Combat Mut","characterClass":"rogue","role":"dps","metric":"dps","cells":{"t1":{"mean":793.287708558546,"interval":5.01238554007391,"deaths":0,"before":782.766227538001},"t3":{"mean":1073.1065341651286,"interval":9.758213061764117,"deaths":0,"before":1064.4374991323257},"t5":{"mean":1073.1065341651286,"interval":9.758213061764117,"deaths":0,"before":1064.4374991323257},"t8":{"mean":1392.9429906273472,"interval":17.006466643357268,"deaths":0,"before":1384.9348321859375},"weighted":{"mean":990.3675072164804,"interval":4.460336667394956,"deaths":0,"before":980.9031226702207}}},{"id":"rogue_combat","name":"Combat","characterClass":"rogue","role":"dps","metric":"dps","cells":{"t1":{"mean":812.8296678502552,"interval":5.219976631652575,"deaths":0,"before":812.499238658491},"t3":{"mean":1212.234874337682,"interval":10.728562930769105,"deaths":0,"before":1212.234874337682},"t5":{"mean":1212.234874337682,"interval":10.728562930769105,"deaths":0,"before":1212.234874337682},"t8":{"mean":1706.0272703346034,"interval":19.19433164457813,"deaths":0,"before":1706.0272703346034},"weighted":{"mean":1100.4710304783196,"interval":4.882887249813591,"deaths":0,"before":1100.309120174355}}},{"id":"rogue_rupture","name":"Rupture","characterClass":"rogue","role":"dps","metric":"dps","cells":{"t1":{"mean":719.1934004229344,"interval":4.7456269251268415,"deaths":0,"before":712.7298950390252},"t3":{"mean":779.332307871838,"interval":6.418145581021212,"deaths":0,"before":767.5098469681488},"t5":{"mean":779.332307871838,"interval":6.418145581021212,"deaths":0,"before":767.5098469681488},"t8":{"mean":887.0443166389598,"interval":8.839655104758831,"deaths":0,"before":884.229916189233},"weighted":{"mean":768.1752847122859,"interval":3.1696134706026484,"deaths":0,"before":760.5100822904626}}},{"id":"rogue_hemo","name":"Hemo Dagger","characterClass":"rogue","role":"dps","metric":"dps","cells":{"t1":{"mean":740.4142314172988,"interval":4.924085221892965,"deaths":0,"before":738.4862175950003},"t3":{"mean":794.2774428931832,"interval":6.6025008681124655,"deaths":0,"before":791.7189304737169},"t5":{"mean":794.2774428931832,"interval":6.6025008681124655,"deaths":0,"before":791.7189304737169},"t8":{"mean":896.0929071441823,"interval":10.10680665076266,"deaths":0,"before":897.8050049482875},"weighted":{"mean":785.1930981926697,"interval":3.3605583875731586,"deaths":0,"before":783.6695338238228}}},{"id":"rogue_pure_hemo","name":"Pure Hemo","characterClass":"rogue","role":"dps","metric":"dps","cells":{"t1":{"mean":720.980953428991,"interval":4.7509964219809,"deaths":0,"before":715.7767060103382},"t3":{"mean":804.8264811185406,"interval":7.105461264163653,"deaths":0,"before":797.2186164505719},"t5":{"mean":804.8264811185406,"interval":7.105461264163653,"deaths":0,"before":797.2186164505719},"t8":{"mean":857.5378134383133,"interval":9.887660181665426,"deaths":0,"before":859.659388529063},"weighted":{"mean":772.7030990450227,"interval":3.3411291052537226,"deaths":0,"before":767.9270115882009}}},{"id":"druid_moonkin","name":"Moonkin","characterClass":"druid","role":"dps","metric":"dps","cells":{"t1":{"mean":862.2880126665323,"interval":4.080164934893593,"deaths":0,"before":862.2880126665323},"t3":{"mean":1021.1959634952605,"interval":5.6347675650977935,"deaths":0,"before":1021.1959634952605},"t5":{"mean":1336.6237807485047,"interval":3.7605302138757675,"deaths":0,"before":1336.6237807485047},"t8":{"mean":2045.6419884706654,"interval":5.830839454698708,"deaths":0,"before":2045.6419884706654},"weighted":{"mean":1171.1096207680541,"interval":2.511169104650107,"deaths":0,"before":1171.1096207680541}}},{"id":"druid_cat","name":"Cat","characterClass":"druid","role":"dps","metric":"dps","cells":{"t1":{"mean":924.2344011691995,"interval":4.356025774135288,"deaths":0,"before":924.2344011691995},"t3":{"mean":976.8723568907054,"interval":6.297452084017924,"deaths":0,"before":976.8723568907054},"t5":{"mean":976.8723568907054,"interval":6.297452084017924,"deaths":0,"before":976.8723568907054},"t8":{"mean":1101.0302708747472,"interval":10.11062975131227,"deaths":0,"before":1101.0302708747472},"weighted":{"mean":972.1866039644547,"interval":3.1308804684138942,"deaths":0,"before":972.1866039644547}}},{"id":"druid_bear","name":"Bear","characterClass":"druid","role":"tank","metric":"tps","cells":{"t1":{"mean":1302.4640485548464,"interval":10.912451910408661,"deaths":0.06333333333333334,"before":1267.980283175662},"t3":{"mean":2175.6093629570105,"interval":16.81337711401995,"deaths":0.03,"before":2196.649691705015},"t5":{"mean":2424.3176103770184,"interval":16.15365627980294,"deaths":0.11333333333333333,"before":2441.2275434536446},"t8":{"mean":3044.47775984506,"interval":24.60235239887546,"deaths":0.013333333333333334,"before":3069.4928669649044},"weighted":{"mean":1937.7561884323197,"interval":7.860971778667692,"deaths":0,"before":1931.56325611708}}},{"id":"shaman_elemental","name":"Ele Shaman","characterClass":"shaman","role":"dps","metric":"dps","cells":{"t1":{"mean":726.4010260678036,"interval":3.02222740575533,"deaths":0,"before":726.041151351879},"t3":{"mean":1293.3679067915434,"interval":6.934071231213447,"deaths":0,"before":1293.3679067915434},"t5":{"mean":1652.7152767014488,"interval":8.185665737463331,"deaths":0,"before":1652.7152767014488},"t8":{"mean":2313.90247665617,"interval":13.496345083481325,"deaths":0,"before":2313.90247665617},"weighted":{"mean":1250.1340649985816,"interval":3.283780106319043,"deaths":0,"before":1249.9577263877784}}},{"id":"shaman_enhancement","name":"Enh Shaman","characterClass":"shaman","role":"dps","metric":"dps","cells":{"t1":{"mean":839.2607630181114,"interval":4.789754450359538,"deaths":0,"before":840.3150952087992},"t3":{"mean":1272.8636186908268,"interval":7.033308682052801,"deaths":0,"before":1297.1304260062466},"t5":{"mean":1606.7697757270184,"interval":7.448421383837275,"deaths":0,"before":1627.7319316397843},"t8":{"mean":2154.9674720645453,"interval":11.510267452223864,"deaths":0,"before":2168.565965441707},"weighted":{"mean":1267.119921180881,"interval":3.5171178192038015,"deaths":0,"before":1277.637211577227}}},{"id":"mage_frostfire","name":"Frostfire Mage","characterClass":"mage","role":"dps","metric":"dps","cells":{"t1":{"mean":967.5350716205367,"interval":9.92224894916181,"deaths":0,"before":958.9346007598762},"t3":{"mean":1291.5065280323515,"interval":13.793000072134626,"deaths":0,"before":1282.4081496347408},"t5":{"mean":2044.8634385984146,"interval":9.886522213148957,"deaths":0,"before":2036.654695559288},"t8":{"mean":3390.076121840775,"interval":12.299927189668677,"deaths":0,"before":3344.6382056274374},"weighted":{"mean":1617.588020134225,"interval":6.027705710559709,"deaths":0,"before":1602.7071330119886}}},{"id":"mage_arcane","name":"Arcane Mage","characterClass":"mage","role":"dps","metric":"dps","cells":{"t1":{"mean":980.1926553445973,"interval":7.8024048451290735,"deaths":0,"before":977.7829438028556},"t3":{"mean":1383.8112399018116,"interval":9.528577583896395,"deaths":0,"before":1376.0867367595788},"t5":{"mean":2391.946692923429,"interval":8.880230726117308,"deaths":0,"before":2365.1365615349973},"t8":{"mean":4468.710038299701,"interval":26.417542130730318,"deaths":0,"before":4437.945132439333},"weighted":{"mean":1881.8539562100927,"interval":6.29988609420611,"deaths":0,"before":1869.572275688164}}},{"id":"mage_fire","name":"Fire Mage","characterClass":"mage","role":"dps","metric":"dps","cells":{"t1":{"mean":1027.46462509108,"interval":7.725155476352581,"deaths":0,"before":1029.4377657096768},"t3":{"mean":1437.7799023075572,"interval":12.89036478495499,"deaths":0,"before":1431.1416402230598},"t5":{"mean":2284.786044149771,"interval":6.725897604972624,"deaths":0,"before":2270.371851554018},"t8":{"mean":3746.4448115575615,"interval":13.541435297095124,"deaths":0,"before":3700.2923542692024},"weighted":{"mean":1773.1894951571605,"interval":5.073217702640038,"deaths":0,"before":1762.7314990256095}}},{"id":"pally_ret","name":"Seal Twist Ret","characterClass":"paladin","role":"dps","metric":"dps","cells":{"t1":{"mean":932.6663956803496,"interval":6.91793208769437,"deaths":0,"before":935.1447544517872},"t3":{"mean":1080.6965606634067,"interval":10.623535744304558,"deaths":0,"before":1080.4693533212899},"t5":{"mean":1166.894025904792,"interval":9.881996632729502,"deaths":0,"before":1179.3578799121117},"t8":{"mean":1281.2181335615949,"interval":15.70288143076621,"deaths":0,"before":1277.4609680167575},"weighted":{"mean":1056.9040163054362,"interval":4.969976500855196,"deaths":0,"before":1059.5599238939028}}},{"id":"pally_shockadin","name":"Shockadin","characterClass":"paladin","role":"dps","metric":"dps","cells":{"t1":{"mean":809.0416781760315,"interval":3.79644864329313,"deaths":0,"before":802.607956736671},"t3":{"mean":973.955545148393,"interval":5.5696350079938215,"deaths":0,"before":970.6705564833858},"t5":{"mean":1087.9112026603525,"interval":6.273971692393142,"deaths":0,"before":1085.0282361074414},"t8":{"mean":1230.7028506471554,"interval":8.78095039432012,"deaths":0,"before":1234.4396360177702},"weighted":{"mean":956.1672540437587,"interval":2.779026535981547,"deaths":0,"before":952.6014316644305}}},{"id":"pally_shockadin_2h","name":"Shockadin 2H","characterClass":"paladin","role":"dps","metric":"dps","cells":{"t1":{"mean":914.5819914821719,"interval":4.422090937451924,"deaths":0,"before":908.1964504645784},"t3":{"mean":1083.958592006698,"interval":6.3921880781536675,"deaths":0,"before":1080.019030857157},"t5":{"mean":1199.4200706871707,"interval":7.151571479372789,"deaths":0,"before":1196.1149574997523},"t8":{"mean":1343.2802940115278,"interval":9.929472272626748,"deaths":0,"before":1346.1651122346134},"weighted":{"mean":1064.6771984661816,"interval":3.194284449136645,"deaths":0,"before":1060.8071078282023}}},{"id":"prot_pally","name":"Prot Pally","characterClass":"paladin","role":"tank","metric":"tps","cells":{"t1":{"mean":986.8477684007705,"interval":5.872123205505057,"deaths":3.29,"before":988.0067509343805},"t3":{"mean":1592.4776384136883,"interval":7.521495247728359,"deaths":1.5033333333333334,"before":1591.4683536702591},"t5":{"mean":1997.9315167095283,"interval":8.98282291763331,"deaths":1.9366666666666668,"before":1988.6320549769373},"t8":{"mean":2531.8029089495076,"interval":13.375566383685541,"deaths":0.7466666666666667,"before":2529.817308826458},"weighted":{"mean":1524.3314574087408,"interval":4.173295351332628,"deaths":0,"before":1522.809319928368}}},{"id":"bm_hunter","name":"BM Hunter","characterClass":"hunter","role":"dps","metric":"dps","cells":{"t1":{"mean":1009.2995786500148,"interval":4.12624777265526,"deaths":0,"before":1011.6949635451122},"t3":{"mean":1422.8496458769457,"interval":5.044799844482344,"deaths":0,"before":1433.8411466979499},"t5":{"mean":1675.618383392708,"interval":5.346674581516376,"deaths":0,"before":1688.0099119062475},"t8":{"mean":2628.5367535934956,"interval":7.7930620746607975,"deaths":0,"before":2628.5367535934956},"weighted":{"mean":1468.1476066252426,"interval":2.7211652763045016,"deaths":0,"before":1473.2964602107127}}},{"id":"lw_ranged","name":"LW Ranged","characterClass":"hunter","role":"dps","metric":"dps","cells":{"t1":{"mean":1053.5014977317403,"interval":5.059570562838106,"deaths":0,"before":1055.2723364387782},"t3":{"mean":1531.806792566961,"interval":6.46294370293533,"deaths":0,"before":1524.4290750089185},"t5":{"mean":1934.6664320796021,"interval":6.455719129695154,"deaths":0,"before":1951.654767404379},"t8":{"mean":3244.0790331141293,"interval":9.92724581726209,"deaths":0,"before":3195.5800813513797},"weighted":{"mean":1657.0096177078706,"interval":3.3772873708834097,"deaths":0,"before":1651.2663118949963}}},{"id":"lw_melee","name":"LW Melee","characterClass":"hunter","role":"dps","metric":"dps","cells":{"t1":{"mean":1074.1372858874536,"interval":6.163614122250167,"deaths":0,"before":1074.1372858874536},"t3":{"mean":1148.069368144587,"interval":3.7847435243114393,"deaths":0,"before":1148.069368144587},"t5":{"mean":1799.2069192761353,"interval":3.8947280044306343,"deaths":0,"before":1799.2069192761353},"t8":{"mean":2878.062832943673,"interval":8.02703965106168,"deaths":0,"before":2878.062832943673},"weighted":{"mean":1516.6349205467995,"interval":3.440335715384441,"deaths":0,"before":1516.6349205467995}}},{"id":"hawk_melee","name":"Hawk Melee","characterClass":"hunter","role":"dps","metric":"dps","cells":{"t1":{"mean":1035.3623135935247,"interval":5.800700787163479,"deaths":0,"before":1035.3623135935247},"t3":{"mean":1179.4910896877384,"interval":8.40089449408703,"deaths":0,"before":1179.4910896877384},"t5":{"mean":1741.5370068210007,"interval":3.8565744160109703,"deaths":0,"before":1741.5370068210007},"t8":{"mean":2785.1683896438144,"interval":8.146129375253777,"deaths":0,"before":2785.1683896438144},"weighted":{"mean":1477.3809363067612,"interval":3.530744410445706,"deaths":0,"before":1477.3809363067612}}},{"id":"warlock_smds","name":"SM/DS","characterClass":"warlock","role":"dps","metric":"dps","cells":{"t1":{"mean":812.0195042570177,"interval":3.2690882634685865,"deaths":0,"before":806.3647408149201},"t3":{"mean":1324.306308190406,"interval":2.9868495914733906,"deaths":0,"before":1324.306308190406},"t5":{"mean":1863.4458191425256,"interval":3.952940633966547,"deaths":0,"before":1833.3580785171707},"t8":{"mean":2629.531653826085,"interval":5.132015787853137,"deaths":0,"before":2537.202882746682},"weighted":{"mean":1386.8277998829717,"interval":2.0091039448927646,"deaths":0,"before":1363.2461588065348}}},{"id":"warlock_firelock","name":"Firelock","characterClass":"warlock","role":"dps","metric":"dps","cells":{"t1":{"mean":878.3891179927566,"interval":3.8543149914456314,"deaths":0,"before":873.5089858519041},"t3":{"mean":1465.2227237752375,"interval":4.670280765905232,"deaths":0,"before":1465.2227237752375},"t5":{"mean":2257.778544987434,"interval":5.711520143581968,"deaths":0,"before":2216.7692095532625},"t8":{"mean":3680.358365833869,"interval":12.673248130116997,"deaths":0,"before":3596.757582583699},"weighted":{"mean":1688.981805697863,"interval":3.1275616080999717,"deaths":0,"before":1665.4068207725068}}},{"id":"warlock_sbolt","name":"Sbolt Spam","characterClass":"warlock","role":"dps","metric":"dps","cells":{"t1":{"mean":834.627883572181,"interval":5.981818611723334,"deaths":0,"before":834.627883572181},"t3":{"mean":1249.8651253481946,"interval":3.3193633228308728,"deaths":0,"before":1249.8651253481946},"t5":{"mean":1707.593214019409,"interval":4.990959663959614,"deaths":0,"before":1707.593214019409},"t8":{"mean":2660.8276007384993,"interval":7.681957314754646,"deaths":0,"before":2660.8276007384993},"weighted":{"mean":1364.0762727684064,"interval":3.366759626634892,"deaths":0,"before":1364.0762727684064}}},{"id":"warlock_demonology","name":"Fire Demo","characterClass":"warlock","role":"dps","metric":"dps","cells":{"t1":{"mean":1017.5030739417298,"interval":3.285333667392422,"deaths":0,"before":1013.8684278846249},"t3":{"mean":1533.5250792329673,"interval":4.041983723584617,"deaths":0,"before":1533.5250792329673},"t5":{"mean":2316.5470204016474,"interval":4.589489943001827,"deaths":0,"before":2270.420871237998},"t8":{"mean":3762.9590960857468,"interval":9.161170090167861,"deaths":0,"before":3623.5816613987577},"weighted":{"mean":1792.7918095039092,"interval":2.4693888377544475,"deaths":0,"before":1759.4752236813192}}},{"id":"shadow_priest","name":"Shadow Priest","characterClass":"priest","role":"dps","metric":"dps","cells":{"t1":{"mean":936.6895734678272,"interval":3.852783350630562,"deaths":0,"before":940.3964291765019},"t3":{"mean":1108.5463132488765,"interval":6.028279573208547,"deaths":0,"before":1103.665792420307},"t5":{"mean":1267.7008089373162,"interval":6.859316507829775,"deaths":0,"before":1270.2896218001154},"t8":{"mean":1485.0540815056315,"interval":11.147746840872868,"deaths":0,"before":1466.7100018229505},"weighted":{"mean":1115.3990956268456,"interval":3.092811035314131,"deaths":0,"before":1113.7073710238594}}},{"id":"holy_pal","name":"Holy Pal","characterClass":"paladin","role":"healer","metric":"hps","cells":{"tank":{"mean":382.6841288202231,"interval":4.566623791080078,"deaths":0,"before":382.6841288202231},"raid":{"mean":825.9608526565661,"interval":7.869989429883792,"deaths":0,"before":825.9608526565661},"weighted":{"mean":604.3224907383947,"interval":4.549472125305891,"deaths":0,"before":604.3224907383947}}},{"id":"mage_frost","name":"Frost Mage","characterClass":"mage","role":"dps","metric":"dps","cells":{"t1":{"mean":941.3761084798954,"interval":5.465920084844205,"deaths":0,"before":935.7289399107768},"t3":{"mean":1303.3390041689786,"interval":8.548691092836826,"deaths":0,"before":1294.7946183189783},"t5":{"mean":1950.7444888561913,"interval":12.313298957141631,"deaths":0,"before":1936.2226033945703},"t8":{"mean":3111.897444995622,"interval":23.04083951158165,"deaths":0,"before":3089.8676738013364},"weighted":{"mean":1543.4910526186836,"interval":5.3860460421891085,"deaths":0,"before":1533.0576127938111}}},{"id":"shaman_resto","name":"Piss Beam","characterClass":"shaman","role":"healer","metric":"hps","cells":{"tank":{"mean":453.4913587602417,"interval":4.760154768314514,"deaths":0,"before":453.4913587602417},"raid":{"mean":1246.5423217194518,"interval":5.651270642723446,"deaths":0,"before":1246.5423217194518},"weighted":{"mean":850.0168402398467,"interval":3.694453048003699,"deaths":0,"before":850.0168402398467}}},{"id":"druid_resto","name":"Resto Drood","characterClass":"druid","role":"healer","metric":"hps","cells":{"tank":{"mean":446.2250667361,"interval":5.167105031435982,"deaths":0,"before":446.2250667361},"raid":{"mean":1972.3785624578456,"interval":10.079141822218372,"deaths":0,"before":1972.3785624578456},"weighted":{"mean":1209.301814596973,"interval":5.663216274306556,"deaths":0,"before":1209.301814596973}}},{"id":"priest_holy","name":"Holy Priest","characterClass":"priest","role":"healer","metric":"hps","cells":{"tank":{"mean":396.773535649493,"interval":3.23583347661477,"deaths":0,"before":401.1759167892308},"raid":{"mean":1563.039113372759,"interval":8.205105981029371,"deaths":0,"before":1558.9687307983936},"weighted":{"mean":979.906324511126,"interval":4.410056191487382,"deaths":0,"before":980.0723237938122}}},{"id":"priest_disc","name":"Disc Priest","characterClass":"priest","role":"healer","metric":"hps","cells":{"tank":{"mean":389.55915793501293,"interval":3.3404826032309733,"deaths":0,"before":391.03289585216885},"raid":{"mean":1229.2166615142824,"interval":8.192328548238331,"deaths":0,"before":1220.752479492248},"weighted":{"mean":809.3879097246477,"interval":4.423603482025981,"deaths":0,"before":805.8926876722085}}}]},"notes":{"build":"Round 81, October 2026: round 80's optimised presets, re-measured after two rule changes. No re-optimisation.","summary":["This page re-measures every profile on the same optimised settings as round 80. Nothing was re-optimised. The weighted score is unchanged: 49% single target (120 s) plus 17% each for 3, 5 and 8 targets, and 50/50 tank and raid fight for healers.","Rule change one, the owner's racial notes: Blood Fury's cooldown is 2 minutes (was 3), Berserking lasts 15 seconds (was 10), and Touch of the Grave's internal cooldown is 15 seconds (was 25). The Troll Warlocks gain the most (+23.6 to +33.3 weighted), then the Troll Mages (+10 to +15) and the Undead tanks and Rogues. The Orc rows barely move, because Blood Fury is used at the pull and a 2-minute cooldown first returns as the 2-minute fight ends.","Rule change two: haste now shortens only a spell's global cooldown. Melee strikes, shots, shouts and feral abilities keep the full 1.5 seconds. It had been reaching every ability, which put a hasted Bear's 6-second Primal Bite out of step with its global cooldowns, so a Windshaper Bear trailed a Tauren. The Bear gains, while Enh Shaman (-10.5) and BM Hunter (-5.2) lose a little, because their lists were tuned on hasted attack global cooldowns.","Both runs use 300 fights a cell and are not paired, so a change of about 5 or less is noise."],"classes":{"warrior":"Both Undead tanks gain from Touch of the Grave every 15 s (Prot Warr +13.6 TPS, Fury Prot +9.9). The Orc damage builds are unchanged.","rogue":"The Undead Rogues gain a little from Touch of the Grave's shorter cooldown (Combat Mut +9.5, Rupture +7.7). Combat is Orc and does not move. A Rogue's 1.0 s global cooldown was never hasted.","druid":"The Bear gains +6.2 TPS. Its Primal Bite lines up with its global cooldowns again, and a Windshaper Bear now beats a Tauren by +6.5 DPS at 120 s. The Moonkin, Cat and Resto do not move.","shaman":"Enh Shaman is -10.5: Stormstrike and its other melee strikes no longer get a hasted global cooldown. Ele and Piss Beam are unchanged.","mage":"All four Mages are Troll and gain +10 to +15 from the longer Berserking.","paladin":"All five are Undead. The damage builds and Prot move by noise; Holy Pal deals no damage, so Touch of the Grave does nothing for it.","hunter":"BM is -5.2 and LW Ranged +5.7, both near noise: shots no longer get a hasted global cooldown, and Troll LW Ranged gets the longer Berserking. The Orc melee builds do not move.","warlock":"SM/DS, Firelock and Fire Demo are Troll and gain +23.6, +23.6 and +33.3 from the longer Berserking. Life Tap is marked as a spell, so its global cooldown is still hasted. Sbolt Spam is Orc and does not move.","priest":"Shadow, Holy and Disc are Troll and move by noise: Berserking is held for a burst the healers rarely need."}},"combat":[{"id":"weighted","label":"Weighted (49/17/17/17)"},{"id":"t1","label":"Single Target (2 min)","seconds":120,"targets":1,"weight":0.49},{"id":"t3","label":"3 Targets (1 min)","seconds":60,"targets":3,"weight":0.17},{"id":"t5","label":"5 Targets (1 min)","seconds":60,"targets":5,"weight":0.17},{"id":"t8","label":"8 Targets (30 sec)","seconds":30,"targets":8,"weight":0.17}],"healer":[{"id":"weighted","label":"Weighted (50/50)"},{"id":"tank","label":"Tank Healer (2 min)","seconds":120,"fight":"tank","weight":0.5},{"id":"raid","label":"Raid Healer (1 min)","seconds":60,"fight":"raid","weight":0.5}]};
+const CLASS_COLOR = {
+  warrior: '#c69b6d', paladin: '#f48cba', hunter: '#aad372', rogue: '#fff468', priest: '#ffffff',
+  shaman: '#2f8ef0', mage: '#3fc7eb', warlock: '#8788ee', druid: '#ff7c0a',
+};
+const CLASS_NAME = { warrior: 'Warrior', paladin: 'Paladin', hunter: 'Hunter', rogue: 'Rogue', priest: 'Priest', shaman: 'Shaman', mage: 'Mage', warlock: 'Warlock', druid: 'Druid' };
+const { report, notes } = DATA;
+const hasBefore = false;
+
+document.getElementById('meta').textContent =
+  report.rows.length + ' profiles on their own E65 gear, raid buffs and consumables, each optimised for these encounters. ' +
+  report.iterations + ' fights a cell, mean with a 95% interval. Weighted is 49% single target and 17% each for 3, 5 and 8 targets (healers: half each fight). More than one target runs the profile\'s Multi Target list; a tank\'s adds swing for 500 every 2 seconds.' +
+  (notes.build ? ' ' + notes.build : '');
+document.getElementById('legend').innerHTML =
+  '<span><b>bar</b> against the best in its column</span>' +
+  (hasBefore ? '<span><b>+12.3</b> change from round 80</span>' : '') +
+  '<span>click a column to sort</span>';
+
+const fmt = (v) => v.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+function table(sectionId, rows, columns) {
+  const host = document.querySelector('#' + sectionId + ' .well');
+  if (rows.length === 0) { document.getElementById(sectionId).hidden = true; return; }
+  const best = Object.fromEntries(columns.map((c) => [c.id, Math.max(...rows.map((r) => r.cells[c.id]?.mean ?? 0))]));
+  let sortKey = columns[0].id;
+  let sortDir = -1;
+  const t = document.createElement('table');
+  const head = document.createElement('thead');
+  const body = document.createElement('tbody');
+  t.append(head, body);
+  host.appendChild(t);
+
+  function drawHead() {
+    head.innerHTML = '';
+    const tr = document.createElement('tr');
+    const cols = [{ id: 'name', label: 'Profile' }, ...columns];
+    for (const c of cols) {
+      const th = document.createElement('th');
+      th.scope = 'col';
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = c.label + (sortKey === c.id ? (sortDir < 0 ? ' \u25be' : ' \u25b4') : '');
+      if (sortKey === c.id) b.setAttribute('aria-sort', sortDir < 0 ? 'descending' : 'ascending');
+      b.addEventListener('click', () => {
+        if (sortKey === c.id) sortDir = -sortDir; else { sortKey = c.id; sortDir = c.id === 'name' ? 1 : -1; }
+        drawHead(); drawBody();
+      });
+      th.appendChild(b);
+      tr.appendChild(th);
+    }
+    head.appendChild(tr);
+  }
+
+  function drawBody() {
+    body.innerHTML = '';
+    const sorted = [...rows].sort((a, b) =>
+      sortKey === 'name' ? sortDir * a.name.localeCompare(b.name) : sortDir * ((a.cells[sortKey]?.mean ?? 0) - (b.cells[sortKey]?.mean ?? 0)));
+    for (const r of sorted) {
+      const tr = document.createElement('tr');
+      const name = document.createElement('td');
+      name.className = 'name';
+      const sw = document.createElement('i');
+      sw.style.background = CLASS_COLOR[r.characterClass] || '#ccc';
+      name.append(sw, document.createTextNode(r.name));
+      const sub = document.createElement('small');
+      sub.textContent = CLASS_NAME[r.characterClass] || r.characterClass;
+      name.appendChild(sub);
+      tr.appendChild(name);
+      for (const c of columns) {
+        const cell = r.cells[c.id];
+        const td = document.createElement('td');
+        if (!cell) { td.textContent = '\u2013'; tr.appendChild(td); continue; }
+        const box = document.createElement('div');
+        box.className = 'cell';
+        const fig = document.createElement('div');
+        fig.className = 'fig';
+        fig.innerHTML = fmt(cell.mean) + '<span class="pm">\u00b1' + cell.interval.toFixed(1) + '</span>';
+        const track = document.createElement('div');
+        track.className = 'track';
+        const fill = document.createElement('span');
+        fill.style.width = (100 * cell.mean / (best[c.id] || 1)).toFixed(1) + '%';
+        if (cell.mean === best[c.id]) fill.className = 'best';
+        track.appendChild(fill);
+        box.append(fig, track);
+        if (false) {
+          const d = cell.mean - cell.before;
+          const delta = document.createElement('div');
+          delta.className = 'delta' + (Math.abs(d) > cell.interval ? (d > 0 ? ' up' : ' down') : '');
+          delta.textContent = (d >= 0 ? '+' : '') + d.toFixed(1) + ' (was ' + fmt(cell.before) + ')';
+          box.appendChild(delta);
+        }
+        td.appendChild(box);
+        tr.appendChild(td);
+      }
+      body.appendChild(tr);
+    }
+  }
+  drawHead();
+  drawBody();
+}
+
+table('dps', report.rows.filter((r) => r.role === 'dps'), DATA.combat);
+table('tank', report.rows.filter((r) => r.role === 'tank'), DATA.combat);
+table('healer', report.rows.filter((r) => r.role === 'healer'), DATA.healer);
+
+if ((notes.summary && notes.summary.length) || (notes.classes && Object.keys(notes.classes).length)) {
+  const n = document.getElementById('notes');
+  n.hidden = false;
+  const h = document.createElement('h2');
+  h.textContent = 'What the optimisation changed';
+  n.appendChild(h);
+  if (notes.summary && notes.summary.length) {
+    const ul = document.createElement('ul');
+    for (const line of notes.summary) { const li = document.createElement('li'); li.textContent = line; ul.appendChild(li); }
+    n.appendChild(ul);
+  }
+  if (notes.classes) {
+    const dl = document.createElement('dl');
+    for (const [cls, text] of Object.entries(notes.classes)) {
+      const dt = document.createElement('dt');
+      dt.textContent = CLASS_NAME[cls] || cls;
+      dt.style.color = CLASS_COLOR[cls] || 'inherit';
+      const dd = document.createElement('dd');
+      dd.textContent = text;
+      dl.append(dt, dd);
+    }
+    n.appendChild(dl);
+  }
+}
+</script>
+</body>
+</html>

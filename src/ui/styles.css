@@ -381,11 +381,33 @@ body {
 }
 
 .app-header {
+  position: relative;
   display: flex;
   justify-content: center;
   margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border);
+}
+
+/* A link to the published full report, styled as one of the app's buttons and
+   pinned to the header's right edge so the centred logo does not move. */
+.header-report-link {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  padding: 6px 12px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 12px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.header-report-link:hover {
+  border-color: var(--accent);
 }
 
 /* The wordmark scales with the viewport rather than sitting at a fixed size,
@@ -3349,4 +3371,19 @@ button:disabled {
 
 .ability-card .talent-card-text {
   margin-top: 6px;
+}
+
+/* On a phone the logo fills the header, so the report link drops beneath it
+   rather than sitting on top of it. */
+@media (max-width: 600px) {
+  .app-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-report-link {
+    position: static;
+    transform: none;
+  }
 }
