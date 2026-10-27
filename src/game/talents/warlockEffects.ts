@@ -572,10 +572,11 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * for SHADOW BOLT: it is a Destruction spell in the spellbook capture, and
      * it is the entry a reader would get wrong from the school alone.
      *
-     * IT REACHES EVERY DESTRUCTION SPELL THIS PROJECT DECLARES. Soul Fire, Rain
-     * of Fire, Hellfire and Bane of Havoc are in the tab and declared nowhere --
-     * the three area effects need a second target to be worth declaring at all.
-     * That is the SPELL list's business, not this talent's.
+     * IT REACHES EVERY DESTRUCTION SPELL THIS PROJECT DECLARES, Hellfire and
+     * Rain of Fire included since round 80 -- both were declared for the Multi
+     * Target lists and left out of the list for a while, which is exactly how
+     * this talent missed them. That is the SPELL list's business, not this
+     * talent's.
      * ------------------------------------------------------------------------
      */
     {

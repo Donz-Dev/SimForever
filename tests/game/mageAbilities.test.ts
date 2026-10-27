@@ -2572,8 +2572,11 @@ describe('Evocation, which pays out during its own channel', () => {
      * and a Pyroblast at three Heating Up stacks (32/16/3), which spends mana
      * the old list banked -- so two of twenty sixty-second fights reach the
      * 10% gate. The owner's entry and gate are unchanged.
+     *
+     * AND ONE LATER IN ROUND 80, when Revelation became one roll per cast: the
+     * staff procs less often, one of the two fights no longer drops under 10%.
      */
-    expect(casts('mage_arcane')).toBe(2);
+    expect(casts('mage_arcane')).toBe(1);
   }, 20_000);
 });
 

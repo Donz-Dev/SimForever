@@ -851,6 +851,14 @@ export const WRACK: Ability = {
   },
 };
 
+/*
+ * THE SPELLBOOK CAPTURE'S OWN DESTRUCTION TAB, WHICH INCLUDES THE TWO AREA
+ * SPELLS (round 80). Hellfire and Rain of Fire were declared for the Multi
+ * Target lists and never added here, so Ruin and Agonizing Flames never reached
+ * the spell every Warlock area list is built on. The owner ruled them in:
+ * worth Firelock 1483 -> 1665, Sbolt 1256 -> 1364 and Fire Demo 1577 -> 1760
+ * weighted when the agent priced it.
+ */
 export const WARLOCK_DESTRUCTION_SPELLS: readonly string[] = [
   'shadow_bolt',
   'immolate',
@@ -859,6 +867,8 @@ export const WARLOCK_DESTRUCTION_SPELLS: readonly string[] = [
   'shadowburn',
   'searing_pain',
   'soul_fire',
+  'hellfire',
+  'rain_of_fire',
 ];
 
 /**
