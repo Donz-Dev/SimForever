@@ -203,9 +203,11 @@ describe('excluding an entry removes it and nothing else', () => {
      * A duplicate id is legal here on purpose (the Mage's Arcane Missiles), so
      * nothing else would object.
      */
+    // Round 80's end-of-fight Eviscerate is a deliberate second `eviscerate` entry.
     const ids = PRESETS_BY_ID.get('rogue_combat')!
       .build()
-      .rotation.entries.map((entry) => entry.abilityId);
+      .rotation.entries.filter((e) => !JSON.stringify(e.condition ?? {}).includes('fightRemaining'))
+      .map((entry) => entry.abilityId);
     expect(new Set(ids).size).toBe(ids.length);
   });
 });

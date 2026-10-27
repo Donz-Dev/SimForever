@@ -218,11 +218,11 @@ describe('the owner’s own case', () => {
      * have happened by timestamp zero.
      */
     /*
-     * 85 FOR AN UNDEAD, 90 FOR THE GNOME: Combat is a Gnome since round 78, and
-     * Expansive Mind's +5% maximum energy makes its pool 105 -- so Blade
-     * Flurry's 25 leaves 80 and the one-second lead banks the same ten.
+     * 85 FOR BOTH: Combat was a Gnome in round 78 (Expansive Mind's 105 pool
+     * gave 90) and is an Orc again since round 80, so both open on 100, spend
+     * 25 on Blade Flurry and bank the same ten.
      */
-    const banked: Record<string, number> = { rogue_combat: 90, rogue_combat_mut: 85 };
+    const banked: Record<string, number> = { rogue_combat: 85, rogue_combat_mut: 85 };
     for (const presetId of ['rogue_combat', 'rogue_combat_mut']) {
       const profile = PRESETS_BY_ID.get(presetId)!.build();
       const simulation = new Simulation(trainingDummyEncounter(profile, 4242));

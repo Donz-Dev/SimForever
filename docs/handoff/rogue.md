@@ -1093,3 +1093,74 @@ poison loses 7 to 67.
    table acceptable? They are listed in `enchants.test.ts`'
    `OPTIMISED_AWAY_FROM_THE_TABLE`.
 4. Combat Orc -> Gnome changes the preset's detail line.
+
+---
+
+## Round 80: the second optimisation run, under the round 79 rules
+
+Every candidate is in `tools/optimise/rogueVariants80.ts`, measured PAIRED by
+`tools/probe_build.ts` -- 400 fights at 120s for Single Target edits, 400 at
+5T/60s and 8T/30s for Multi Target edits, 300 a column (600 to confirm) on the
+WEIGHTED score for talents, race, enchants and consumables. Owner list and
+opener lines were priced and never edited; everything shipped in a Single
+Target list is an ADDITION.
+
+### What shipped
+
+| preset | change | figure |
+| --- | --- | --- |
+| Venom, Combat Mut, Combat, Rupture, Pure Hemo | **end-of-fight Eviscerate** at the top of the list: any 2+ points once the fight has under N s left (20 / 14 / 14 / 14 / 8) | +12.5 to +13.3, +3.07, +8.99, +5.42, +3.82 at 120s; Venom +33.5 at 60s, +7.5 at 240s |
+| Combat | **race Orc** (Gnome is no longer allowed) | weighted vs Gnome: Orc -41.8, Undead -46.3, Windshaper -47.5, Troll -48.7 |
+| Combat | **Vanish into Garrote** at the top of the Single Target list | +9.6 at 1T (600), weighted +4.70 +/- 2.38; NOT in Multi Target (-4.5 / -18.4) |
+| Venom, Combat Mut, Combat, Hemo Dagger, Pure Hemo | **Multi Target lists** tuned for the short clocks (see `multiTarget/rogue.ts` for the table) | 5T/60s +3.5 / +2.2 / +33.1 / +7.5 / +7.8; 8T/30s +16.3 / +11.4 / +77.5 / +25.5 / +32.7 |
+| all six | **Secondary Potion: Major Healing Potion** | worth 0; a Rogue has no mana and no second damage potion fits the shared cooldown |
+
+**THE END-OF-FIGHT DUMP IS THE ONE GENERAL FINDING.** A maintenance finisher in
+the last seconds buys a duration nobody sees, and Venom's floored Eviscerate
+stops firing as its buffs run down. It is NOT on Hemo Dagger: +0.54 at 8s and
+a loss from 14s up, because that list's points sink is a three-point Rupture.
+
+**A ROGUE'S 3T/5T/8T FIGURES ARE ITS 60s/30s FIGURES** for the four builds
+without Blade Flurry, and t3 equals t5 for all six (Blade Flurry copies to one
+extra target). So the Multi Target lists are short-fight lists, and that is
+where the owner's single-target thresholds (Thistle Tea gate, Cold Blood
+energy, Rupture) could move.
+
+### Every dimension, per preset
+
+| | Venom | Combat Mut | Combat | Rupture | Hemo Dagger | Pure Hemo |
+| --- | --- | --- | --- | --- | --- | --- |
+| talents (weighted) | all noise or loss: Vile->Vigor/ISnD +1.99 +/- 4.67, IP 3/Vile 5/ISnD 3 +1.00, Opportunity->ISnD/Vile -4.00, ->Vigor -4.59, IE->ISS/LR -23.42 | forced: every move strands Seal Fate or Blade Flurry; IP 2/Vile 4 -8.73 | forced (30 points below Adrenaline Rush); three swaps illegal | Puncturing+LR -> Precision+ISS -15.13; Elusiveness 0.00 | IP 3 -> Vile 3 -10.47, -> IP 2/ISnD 3 -2.49 | IP 1 -> Vile 1 -5.17, Combat 8 -> IP 5/Vile 4 -8.94 |
+| race (weighted) | stays Undead: Orc -0.64, Windshaper -3.18, Troll -6.25 | stays Undead: Windshaper -3.12, Orc -3.90, Troll -7.51 | **Orc** (above) | stays Undead: Orc +0.60, Windshaper -2.61, Troll -6.58 | stays Undead: Orc +2.61, Troll -1.77, Windshaper -2.36 | stays Undead: Orc -2.59, Windshaper -4.50, Troll -5.48 |
+| opener | Ambush at 0s -3.39, + potion -3.30; potion at 0s +0.16 | potion at 0s +0.13; Ambush + Flurry at 0s -1.17 (owner line) | potion +0.27; Adrenaline Rush at 0s +0.28 noise; Garrote + Flurry at 0s +8.80 (owner line) | Premeditation before Ambush -16.29 | owner's | Premeditation before Garrote -28.95 |
+| ST APL | **dump** shipped; Expose Armor 3+ +23.86 (engine question); Rupture as a sink -3.4 to -18.4; Vanish->Ambush -2.46, Cold Blood->Vanish->Ambush +1.00 | **dump**; Expose 3+ +38.40; Rupture -6.27/-25.96; Vanish->Ambush -6.34 | **dump**, **Vanish->Garrote**; Expose 3+ +43.34; Rupture -30.9/-32.7 | **dump**; Expose 3+ +18.58; Ghostly Strike -1.58; Rupture at 5 +0.65 | dump +0.54 (not shipped); Expose 3+ +17.80; extra Eviscerate +0.34 | **dump**; Expose 3+ +23.14; Ghostly Strike +1.59 / -1.77 |
+| MT APL | **shipped**; floors removed, Evis 4+, dump 26 all noise; tea 40 -7.5, 55 -22.9 | **shipped**; tea 25/40/55 -2.3 to -13.2; Cold Blood 3+ -1.74; Flurry lead 0s +0.88 noise (owner line) | **shipped**; tea 20 +12.9, 30 +31.1, 35 +21.5, 70 -4.3; SnD 2+ worse; Flurry lead 0s +19.65 (owner line) | none: Rupture 3+ +2.4 / -5.3; tea 25 -0.0 / -20.4; no Rupture -20.7 | **shipped**; Rupture 5 -12.4, removed -95.7; floors 0-3s all +3.3 to +4.0 | **shipped**; Evis/CB 4+ -4.2 / +17.3; dump 14 +3.4 noise |
+| potions | Frenzy primary, Healing secondary; Frenzy ungated in MT +0.0 to +1.5 | same | same | same | same | same |
+| other consumables (weighted) | +40 AP food +0.54 noise; stones -4.8/-9.3; poisons -16.5 to -65.6; Healthstone -52.7 | AP food +0.70 noise; poisons -14.0 to -43.4 | **+40 AP food +4.39 +/- 0.31 (owner food, withheld)**; poisons -6.1 to -16.5 | **+40 AP food +2.44 +/- 0.21 (owner food, withheld)**; Deadly/Instant +3.19 noise | agility food -2.32; poisons -7.4 to -21.7 | **MH +2% crit stone +3.49 +/- 0.48 (owner stone, withheld)** |
+| enchants (weighted, all legal) | OH +15 agility +1.84 noise; all else noise or loss | head+legs haste +2.60 noise | head+legs haste +4.61 noise | gloves haste +2.35 noise | all noise or loss | all noise or loss |
+
+### Needs the owner
+
+1. **EXPOSE ARMOR STACKS WITH SUNDER ARMOR**, because the two auras have
+   different ids. A 3+ point Expose Armor kept up is +17.8 to +43.3 at 120s on
+   every preset (+57.0 on Venom at 5T/60s). In Classic the two are exclusive.
+   Not shipped: is the stacking intended?
+2. **Combat's opener: Garrote, then Blade Flurry, both at 0s** -- +8.80 +/-
+   5.88 at 120s (Blade Flurry at a 1s lead breaks Stealth, so no stealth opener
+   can come after it). The shipped Vanish into Garrote takes most of this
+   without touching the opener.
+3. **Blade Flurry at a 0s lead in the Multi Target opener**: Combat +19.65 +/-
+   10.39 at 5T/60s, Combat Mut +0.88 noise.
+4. **Owner consumables that lose**: +40 Attack Power food over +20 Agility on
+   Combat (+4.39) and Rupture (+2.44); the +2% crit stone over the Dense stone
+   on Pure Hemo's sword (+3.49).
+5. **Owner list lines, re-priced** (120s): Venom's Eviscerate floors removed
+   +6.45 +/- 5.02, at 1s +4.06 noise; Venom Cold Blood on points only +1.32 +/-
+   1.24; Venom Slice and Dice at 2 +1.34 noise, at 3 -1.56; Venom at 2 -3.87, at 5
+   -17.93; Combat's Thistle Tea at 20/25/30 -0.45/-1.29/-1.79 (all noise).
+
+### Engine and data
+
+- Expose Armor and Sunder Armor are separate aura ids (above).
+- The Blade Flurry / Eureka! double-pay from round 78 no longer touches a
+  preset, because Combat is no longer a Gnome.

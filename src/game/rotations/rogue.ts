@@ -12,6 +12,7 @@ import {
   all,
   comboPoints,
   compileRotation,
+  fightRemaining,
   not,
   onCooldown,
   ready,
@@ -100,6 +101,48 @@ const selfAuraDown = (auraId: string) => selfTime('atMost', 0, auraId);
  * the same, so it is named rather than written inline twice.
  */
 const selfAuraAtLeast = (auraId: string, seconds: number) => selfTime('atLeast', seconds, auraId);
+
+/*
+ * ==============================================================================
+ * THE END-OF-FIGHT EVISCERATE (round 80), an ADDITION at the top of five of the
+ * six lists and a change to none of the owner's lines.
+ *
+ * In the last N seconds of a fight a maintenance finisher -- Slice and Dice,
+ * Venom, Rupture -- buys a duration the fight will not see, and an Eviscerate
+ * gated on a buff's remaining time stops firing as those buffs run down. So
+ * once the fight has under N seconds left, any two points go into Eviscerate.
+ * `fightRemaining` reads the PLANNED duration, so the window is the same share
+ * of every fight length the report runs.
+ *
+ * Measured paired at 120s, one target, 400 fights (`rogueVariants80.ts`):
+ *
+ * | list | window | figure |
+ * | --- | --- | --- |
+ * | Venom | 20s | +12.5 (22s) to +13.3 (26s); +33.5 at 60s, +7.5 at 240s |
+ * | Combat Mut | 14s | +3.07 +/- 1.16 |
+ * | Combat | 14s | +8.99 +/- 1.74 |
+ * | Rupture | 14s | +5.42 +/- 1.24 |
+ * | Pure Hemo | 8s | +3.82 +/- 1.01 |
+ *
+ * NOT ON HEMO DAGGER, where it measured +0.54 at 8s and a LOSS from 14s up:
+ * that list's sink is Rupture at three points, and an Eviscerate taking the
+ * points late is a Rupture tick lost rather than a buff duration saved.
+ *
+ * TWO POINTS, NOT ONE: a one-point Eviscerate spends a global cooldown and the
+ * energy of a builder on the smallest step of the table, and measured a loss on
+ * the two Subtlety lists.
+ * ==============================================================================
+ */
+const END_OF_FIGHT_EVISCERATE_POINTS = 2;
+const endOfFightEviscerate = (seconds: number) => ({
+  abilityId: 'eviscerate',
+  condition: all(fightRemaining('atMost', seconds), atLeastPoints(END_OF_FIGHT_EVISCERATE_POINTS)),
+});
+const VENOM_END_OF_FIGHT_SECONDS = 20;
+const COMBAT_MUT_END_OF_FIGHT_SECONDS = 14;
+const COMBAT_END_OF_FIGHT_SECONDS = 14;
+const RUPTURE_END_OF_FIGHT_SECONDS = 14;
+const PURE_HEMO_END_OF_FIGHT_SECONDS = 8;
 
 /**
  * "<debuff> duration >= N seconds", on the TARGET -- `selfAuraAtLeast`'s mirror.
@@ -287,6 +330,7 @@ const VENOM_COLD_BLOOD_COMBO_POINTS = 4;
 export const ROGUE_VENOM: AplList = {
   name: 'Rogue (Assassination, Venom)',
   entries: [
+  endOfFightEviscerate(VENOM_END_OF_FIGHT_SECONDS),
   /*
    * ==========================================================================
    * THE MID-FIGHT CONSUMABLES OPEN THIS LIST, which is new and is the owner's
@@ -479,6 +523,7 @@ const COMBAT_MUT_EVISCERATE_POINTS = 3;
 export const ROGUE_COMBAT_MUT: AplList = {
   name: 'Rogue (Assassination, Combat Mut)',
   entries: [
+  endOfFightEviscerate(COMBAT_MUT_END_OF_FIGHT_SECONDS),
   /*
    * SLICE AND DICE OPENS THE LIST, which no other Rogue list does -- and at
    * ONE point, which three of the four now share. A maintenance buff wants
@@ -555,6 +600,19 @@ export const ROGUE_COMBAT_MUT: AplList = {
 export const ROGUE_COMBAT: AplList = {
   name: 'Rogue (Combat)',
   entries: [
+  /*
+   * VANISH INTO GARROTE, AN ADDITION AT THE TOP (round 80). Vanish is a trainer
+   * ability every Rogue owns and is off the global cooldown, and Garrote's only
+   * gate is Stealth -- so a sword Rogue with no stealth talents can still buy one
+   * Garrote a fight with it. At the top it goes out in the opening instant,
+   * before the owner's own opener could have been changed to do it: paired at
+   * 120s, one target, 600 fights, +9.6 (weighted +4.70 +/- 2.38). Above Sinister
+   * Strike instead, +4.7 noise. NOT in the Multi Target list, where Blade Flurry
+   * copies nothing a bleed deals and the global cooldown it costs is worth more:
+   * -4.5 at three and five targets, -18.4 at eight.
+   */
+  { abilityId: 'vanish', sequence: ['garrote'], condition: resource('atLeast', GARROTE_ENERGY_COST, 'energy') },
+  endOfFightEviscerate(COMBAT_END_OF_FIGHT_SECONDS),
   /*
    * ==========================================================================
    * THISTLE TEA FIRST, ABOVE THE RACIALS -- and the rest of its own row BELOW
@@ -728,6 +786,7 @@ const RUPTURE_FLOOR_SECONDS = 6;
 export const ROGUE_RUPTURE: AplList = {
   name: 'Rogue (Subtlety, Rupture)',
   entries: [
+  endOfFightEviscerate(RUPTURE_END_OF_FIGHT_SECONDS),
   /*
    * PREMEDITATION OPENS THE LIST, and it is off the global cooldown now on the
    * owner's ruling -- which is what makes opening with it free. It banks two
@@ -1084,6 +1143,7 @@ const PURE_HEMO_FLOOR_SECONDS = 1;
 export const ROGUE_PURE_HEMO: AplList = {
   name: 'Rogue (Subtlety, Pure Hemo)',
   entries: [
+  endOfFightEviscerate(PURE_HEMO_END_OF_FIGHT_SECONDS),
   /*
    * NO STANDALONE PREMEDITATION ANY MORE. It sat first and fired at the pull,
    * while the opening stealth was up -- so Premeditation was on its two-minute
