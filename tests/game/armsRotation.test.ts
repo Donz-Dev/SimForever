@@ -94,6 +94,8 @@ const OWNER_ORDER = [
 const ORC_ARMS_ORDER = [
   'blood_fury',
   'mighty_rage_potion',
+  // Round 80: the Secondary Potion row (Major Healing, inert on a damage Warrior).
+  'major_healing_potion',
   'healthstone',
   'bloodrage_cast',
   'heroic_strike',
@@ -122,7 +124,7 @@ describe('the 2H Arms list', () => {
     expect(WARRIOR_TWO_HAND_BATTLE.entries.map((entry) => entry.abilityId)).toEqual(OWNER_ORDER);
   });
 
-  it('narrows to fourteen entries for the preset that runs it', () => {
+  it('narrows to fifteen entries for the preset that runs it', () => {
     /*
      * THE PANEL IS WHAT THE OWNER READ, and it shows the NARROWED list: every
      * stock list names all four racial cooldowns and all nine consumables,

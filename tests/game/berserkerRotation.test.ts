@@ -339,6 +339,8 @@ const ORC_FURY_ORDER = [
   'mighty_rage_potion',
   'recklessness_cast',
   'death_wish',
+  // Round 80: the Secondary Potion row (Major Healing, inert on a damage Warrior).
+  'major_healing_potion',
   'healthstone',
   'sunder_armor_cast',
   'execute',
@@ -355,7 +357,7 @@ describe('the Berserker list order', () => {
     );
   });
 
-  it('narrows to twelve entries for the preset that runs it', () => {
+  it('narrows to thirteen entries for the preset that runs it', () => {
     /*
      * THE PANEL IS WHAT THE OWNER READ, and it shows the NARROWED list: every
      * stock list names all four racial cooldowns and all nine consumables, and

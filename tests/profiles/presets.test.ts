@@ -585,10 +585,10 @@ describe('DW Fury', () => {
 describe('Prot Warr', () => {
   const profile = () => PRESETS_BY_ID.get('prot_warr')!.build();
 
-  it('is a Tauren with a shield in Defensive Stance, and the target swings back', () => {
+  it('is an Undead (round 80; was Tauren) with a shield in Defensive Stance, and the target swings back', () => {
     const p = profile();
     expect(p.character.name).toBe('Prot Warr');
-    expect(p.character.race).toBe('tauren');
+    expect(p.character.race).toBe('undead');
     expect(p.character.combatStyle).toBe('one_hand_shield');
     expect(p.character.stance).toBe('defensive');
     expect(p.encounter.targetAttacks).toBe(true);

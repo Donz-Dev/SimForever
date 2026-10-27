@@ -765,6 +765,22 @@ describe('what each of the 29 profiles opens with', () => {
      */
     'prot_warr feet': '+7 Agility',
     'fury_prot feet': '+7 Agility',
+    /*
+     * ROUND 80: with the boss ramp capped at 2x, the tanks take the trade round
+     * 78 left open -- Strength on head, legs, neck and wrists and Agility on
+     * the cloak. With the Undead swap +45.2 +/- 9.1 weighted TPS on Prot Warr,
+     * deaths 0.44 -> 0.60 a 120s fight. See `presetEnchants.ts`.
+     */
+    'prot_warr head': '+8 Strength',
+    'prot_warr legs': '+8 Strength',
+    'prot_warr neck': '+5 Strength',
+    'prot_warr wrists': '+9 Strength',
+    'prot_warr cloak': '+5 Agility',
+    'fury_prot head': '+8 Strength',
+    'fury_prot legs': '+8 Strength',
+    'fury_prot neck': '+5 Strength',
+    'fury_prot wrists': '+9 Strength',
+    'fury_prot cloak': '+5 Agility',
     // Round 78: mana-bound at a 120 second fight, LW Ranged weighs intellect at
     // 1.10 a point and agility at 0.74 -- +5.7 for the pair.
     'lw_ranged head': '+8 Intellect',
@@ -880,8 +896,8 @@ describe('a character created from scratch gets a loadout too', () => {
      */
     expect(nameAt('two_hander', 'feet')).toBe('+7 Agility');
     expect(nameAt('dual_wield', 'feet')).toBe('+7 Agility');
-    expect(nameAt('one_hand_shield', 'head')).toBe('+1% Dodge');
-    expect(nameAt('one_hand_shield', 'head')).toBe('+1% Dodge');
+    // Round 80: the tank row's head is Strength now; the gloves still tell it apart.
+    expect(nameAt('one_hand_shield', 'head')).toBe('+8 Strength');
     expect(nameAt('one_hand_shield', 'gloves')).toBe('+2% Threat');
   });
 
@@ -975,7 +991,26 @@ describe('the enchants reach the built character', () => {
      * all three, and only dodge has a second source.
      * ------------------------------------------------------------------------
      */
-    const profile = PRESETS_BY_ID.get('prot_warr')!.build();
+    /*
+     * ROUND 80 MOVED PROT WARR'S OWN ROW TO STRENGTH in the dodge and defense
+     * slots, so this builds the DEFENSIVE row onto the same preset by name --
+     * the claim is about the join from those enchants to the table, not about
+     * which loadout a preset happens to wear.
+     */
+    const preset = PRESETS_BY_ID.get('prot_warr')!.build();
+    const defensiveRow: Partial<Record<EquipmentSlot, string>> = {
+      head: '+1% Dodge', legs: '+1% Dodge', cloak: '+1% Dodge',
+      neck: '+5 Defense Skill', wrists: '+4 Defense Skill',
+    };
+    const profile = {
+      ...preset,
+      equipment: Object.fromEntries(
+        Object.entries(preset.equipment).map(([slot, equipped]) => {
+          const name = defensiveRow[slot as EquipmentSlot];
+          return [slot, name ? { ...equipped!, enchantId: foreverEnchantId(name) } : equipped];
+        }),
+      ),
+    } as typeof preset;
     const stripped = {
       ...profile,
       equipment: Object.fromEntries(
@@ -1008,7 +1043,9 @@ describe('the enchants reach the built character', () => {
     // the boots' 7 are 11, multiplied to 12.1 by Blessing of Kings, over twenty
     // agility a point -- 60.5 units, which the truncation into roll space
     // lands at 61 on this pair.
-    expect(enchanted.dodge - plain.dodge).toBe(fromDefense + 300 + 61);
+    // 60.5 units truncates to 60 or 61 depending on the base it is added to:
+    // 61 on the Tauren this preset was, 60 on the Undead it is since round 80.
+    expect(enchanted.dodge - plain.dodge).toBe(fromDefense + 300 + 60);
 
     /*
      * THE STAT ITSELF, so the 22 above is placed rather than accepted. Four
