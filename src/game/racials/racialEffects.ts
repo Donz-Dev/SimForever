@@ -590,7 +590,7 @@ const ORC: RacialDefinition = {
       id: 'blood_fury',
       name: 'Blood Fury',
       text:
-        'Instant, 3 min cooldown. Increases Attack Power and Spell Power by 10% for 15 sec.',
+        'Instant, 2 min cooldown. Increases Attack Power and Spell Power by 10% for 15 sec.',
       effects: [{ kind: 'grantAbility', abilityId: 'blood_fury' }],
     },
     {
@@ -808,7 +808,7 @@ const TROLL: RacialDefinition = {
       name: 'Berserking',
       text:
         'Instant, 3 min cooldown. Increases your spellcasting and attack speed by 10% ' +
-        'for 10 sec.',
+        'for 15 sec.',
       effects: [{ kind: 'grantAbility', abilityId: 'berserking' }],
     },
     {

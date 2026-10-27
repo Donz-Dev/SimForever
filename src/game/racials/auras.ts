@@ -72,6 +72,9 @@ export const ELUNES_LIGHT: AuraDefinition = {
 
 export const BLOOD_FURY_DURATION_MS = seconds(15);
 /**
+ * TWO MINUTES AGAIN SINCE ROUND 81: "Blood Fury's cooldown reduced to 2
+ * minutes (was 3 minutes)". The history below is the round that raised it.
+ *
  * THREE MINUTES, RAISED FROM TWO BY THE RACIAL PATCH.
  *
  * "Blood Fury: Cooldown increased to 3 minutes (was 2 minutes)". The client's
@@ -82,7 +85,7 @@ export const BLOOD_FURY_DURATION_MS = seconds(15);
  * -- the ability is off the global cooldown and sits second in every list, so
  * every Orc profile still casts it exactly once.
  */
-export const BLOOD_FURY_COOLDOWN_MS = seconds(180);
+export const BLOOD_FURY_COOLDOWN_MS = seconds(120);
 /** A fraction, because these are `percentAdd` modifiers. */
 export const BLOOD_FURY_POWER = 0.1;
 
@@ -123,13 +126,14 @@ export const BLOOD_FURY: AuraDefinition = {
 // Troll: Berserking
 // ---------------------------------------------------------------------------
 
-export const BERSERKING_DURATION_MS = seconds(10);
+/** Fifteen since round 81: "Berserking duration increased to 15 seconds (was 10 seconds)". */
+export const BERSERKING_DURATION_MS = seconds(15);
 export const BERSERKING_COOLDOWN_MS = seconds(180);
 /** Percentage points of haste. */
 export const BERSERKING_HASTE_PERCENT = 10;
 
 /**
- * Berserking: ten percent spell and attack speed for ten seconds.
+ * Berserking: ten percent spell and attack speed for fifteen seconds (ten until round 81).
  *
  * `hasteRating` through `RATING_PER_PERCENT.haste`, the idiom Seal of the
  * Crusader, Nature's Grace, Flurry, Blade Flurry and the "+1% Haste" enchant

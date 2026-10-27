@@ -1845,7 +1845,11 @@ the owner's two rulings, round 47. `engine/combat/threat.ts` is the rule and
 - **The GCD is 1.5s, 1.0 for a Rogue and a Cat-Form Druid, and it belongs to the
   CLASS** — it arrives as `baseGcdMs`. Being off it means ONE thing: the ability
   does not START one. It is still BLOCKED by one running, and what it buys is
-  that the action AFTER it is free. Haste does not affect it, only cast time.
+  that the action AFTER it is free. Haste shortens a SPELL's global cooldown
+  to a floor of 1.0s (round 75) and no other ability's (round 81,
+  `isSpellForGcd`): reaching every ability put a hasted Bear on a 1.471s
+  cooldown, its 6s Primal Bite fell out of step with four of them and came
+  ~1.4s late a cycle, and a Tauren out-damaged a Windshaper on the haste it had.
   On-next-swing abilities are off it by DERIVATION,
   `triggersGcd ?? onNextSwing === undefined`, so a new one gets the rule for
   free — declaring it per ability fails silently, because an ability wrongly

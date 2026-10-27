@@ -702,6 +702,8 @@ export const ROCKBITER_WEAPON: Ability = {
  */
 export const RAGE_OF_THE_FARSEER_ABILITY: Ability = {
   id: 'rage_of_the_farseer',
+  // A spell with no cost and no table: its GCD is hasted (round 81).
+  spell: true,
   name: 'Rage of the Farseer',
   cooldownMs: seconds(180),
   onCast: ({ simulation, caster }) => {
@@ -766,6 +768,8 @@ export const ELEMENTAL_MASTERY_COOLDOWN_MS = seconds(180);
 
 export const ELEMENTAL_MASTERY: Ability = {
   id: 'elemental_mastery',
+  // A spell with no cost and no table: its GCD is hasted (round 81).
+  spell: true,
   name: 'Elemental Mastery',
   cooldownMs: ELEMENTAL_MASTERY_COOLDOWN_MS,
   requiresTarget: false,
@@ -1006,6 +1010,8 @@ export const NATURES_SWIFTNESS_ABILITY: Ability = {
 /** Water Shield, granted by the talent: instant, ten minutes, cast before the pull. */
 export const WATER_SHIELD_ABILITY: Ability = {
   id: 'water_shield',
+  // A spell with no cost and no table: its GCD is hasted (round 81).
+  spell: true,
   name: 'Water Shield',
   requiresTarget: false,
   onCast: ({ simulation, caster }) => {
