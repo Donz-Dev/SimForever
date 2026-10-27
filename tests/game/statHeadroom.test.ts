@@ -315,9 +315,8 @@ describe('hit headroom', () => {
      * ========================================================================
      */
     const AIMED: Readonly<Record<string, AttackTableKind>> = {
-      'prot_warr': 'melee-special',
-      // Prot Warr's template row under its own label, so the same aim.
-      'fury_prot': 'melee-special',
+      // Prot Warr and Fury Prot left this table in round 80 by becoming Undead;
+      // they are asserted on the melee cap below, as the Enh Shaman is.
       // The Moonkin left this table in round 78, when it became High Order
       // Skyborne; its template still aims at the spell cap through Nature's Reach.
       // The Cat and the Bear left it in round 80, as Windshaper Skyborne, and are
@@ -365,6 +364,20 @@ describe('hit headroom', () => {
       const { player, chances } = built(profile);
       const special = hitHeadroom(player, BOSS, chances).filter((entry) => entry.table === 'melee-special');
       expect(special.length, id).toBeGreaterThan(0);
+      for (const entry of special) expect(entry.headroom, `${id} ${entry.label}`).toBe(0);
+    }
+
+    /*
+     * THE TWO WARRIOR TANKS LEFT THIS TABLE IN ROUND 80 BY BECOMING UNDEAD
+     * (+18.1 weighted TPS on Prot Warr). Their template row asks the same 80
+     * hit rating, so they must still sit on the melee cap without a racial.
+     */
+    for (const id of ['prot_warr', 'fury_prot']) {
+      const tank = PRESETS_BY_ID.get(id)!.build();
+      expect(tank.character.race).toBe('undead');
+      const { player, chances } = built(tank);
+      const special = hitHeadroom(player, BOSS, chances).filter((entry) => entry.table === 'melee-special');
+      expect(special.length).toBeGreaterThan(0);
       for (const entry of special) expect(entry.headroom, `${id} ${entry.label}`).toBe(0);
     }
 

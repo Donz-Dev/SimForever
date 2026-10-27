@@ -11,6 +11,81 @@ directory for what the census columns mean and how to reprint every figure below
 
 ---
 
+## Round 80 — the second run, on the weighted score
+
+Variant file `tools/optimise/warriorVariants80.ts`. Talents, race, enchants and
+stat consumables on `WEIGHTED=1` (49% 1T/120s + 17% each 3T/60, 5T/60, 8T/30);
+Single Target lists at 1T/120s; Multi Target at 5T/60s checked at 3/60 and 8/30.
+`full_report.ts`, ITER=300, seed 20261025:
+
+| | | t1 120s | t3 60s | t5 60s | t8 30s | weighted |
+| --- | --- | --- | --- | --- | --- | --- |
+| 2H Arms | DPS | 842.5 -> 842.5 | 1129.3 -> 1129.3 | 1196.7 -> 1196.7 | 1258.5 -> 1258.5 | 1022.2 -> 1022.2 |
+| DW Fury | DPS | 979.3 -> 979.3 | 1381.7 -> **1391.2** | 1475.4 -> **1498.8** | 1643.2 -> **1705.3** | 1244.9 -> **1261.1** |
+| Prot Warr | TPS | 1064.8 -> **1103.0** | 1558.0 -> **1823.4** | 1860.4 -> **2154.2** | 2271.5 -> **2577.4** | 1489.0 -> **1654.8** |
+| Fury Prot | TPS | 1121.4 -> **1245.5** | 1754.3 -> **2087.8** | 2088.5 -> **2531.1** | 2826.3 -> **3415.9** | 1683.2 -> **1976.2** |
+
+Tank deaths at t1 120s: Prot 0.36 -> 0.69, Fury Prot 0.42 -> 0.89 -- the price of
+the Strength enchants and, on Fury Prot, of giving up Deflection.
+
+### What shipped
+
+| | |
+| --- | --- |
+| both tanks | **Tauren -> Undead** (Prot +18.1 +/- 9.4 weighted; Orc +15.7, Windshaper +6.5, Troll +4.5). Tauren's health-only Endurance makes each blow taken worth less rage (`D x 10 / H`) |
+| both tanks | **Strength on head, legs, neck, wrists, Agility on the cloak** (was dodge and defense). With Undead: Prot +45.2 +/- 9.1 weighted |
+| Fury Prot | **Deflection 5 -> Improved Thunder Clap 3 + Master of Defense 2**: +122.0 +/- 11.1 weighted on its own; spread 5/31/15 -> **0/31/20** |
+| both tank Multi | **the tank execute clause lifted** -- Execute removed and `not(execute phase)` dropped from every gate: +190.3 (Prot) and +209.1 (Fury Prot) at 5T |
+| Prot Multi | **Rend `multiDot: 5`**, +77.6 more at 5T once lifted (3 targets measured best at 8T, 5 is the best sum) |
+| DW Fury Multi | **Death Wish + Mighty Rage added at 0s to the Multi opener**: +20.6 (5T), +31.4 (8T), -2.6 noise (3T) |
+| every preset | a **Secondary Potion**, inert by design: Major Healing on the damage pair, Major Frenzy on the tanks. Both rows share the 2-minute cooldown and every report fight is <= 120s, so only Mighty Rage is ever drunk; Frenzy on a damage Warrior pre-empts it (-0.70) and Healing on a tank reads -0.22 |
+
+### One row per dimension, with the losers
+
+| dimension | 2H Arms | DW Fury | Prot Warr | Fury Prot |
+| --- | --- | --- | --- | --- |
+| race | Orc kept: Undead -8.3, Troll -14.5, Tauren -18.1, Windshaper -19.6 | Orc kept: Troll -2.9, Windshaper -5.7, Undead -13.2, Tauren -21.1 | **Undead** | **Undead** (Orc +21.8 alone, Undead +20.8; Undead best with the new tree and enchants, +118.5 vs +105.6 at t1) |
+| talents | forced: ICharge->Deflection +0.7 noise, IBR->Deflection -2.2, IOP->Deflection -45.8, UW->BV -22.8 | forced: Lingering Rage/Enrage -> BV +3.5 +/- 3.7 noise, IBR->Enrage -11.7, IExec->Enrage -18.4, Raging Blows->Piercing Howl -28.3 | forced: AM build -10.5 (t1 +12, AoE -20 to -43), Cruelty->IBR -18.0, ->ITC 3+IBR -20.2, Vanguard->ITC 3 -3.4 | **ITC 3 + MoD 2** (+Anticipation variant +119.7); Deflection->IBR 2+ITC 3 +16.5; Anticipation->ITC 3 +4.3 noise |
+| enchants | confirmed: head/legs haste -15.9, gloves haste -20.5, Crusader->+25 Agi -23.4 | confirmed: head/legs haste +0.2 noise, gloves haste -5.6, OH Crusader->+15 Agi -16.4 | **Str x4 + cloak Agi**; gloves Threat->Str -17.3, ->haste -28.0, haste in head/legs -3.3, MH Crusader->+15 Agi -24.3 | same row (Prot's) |
+| consumables | confirmed: food AP -1.2, blasted Agi -4.1, dense stone -6.7 | confirmed: food AP -1.5, blasted Agi -6.1, dense stone -8.4 | defensive drops all noise (HP elixir +0.4, flask -0.7, armor -1.2); dense stone -14.1 | same; HP elixir drop -5.8, flask drop +3.7 noise |
+| potion pair and APL | Mighty Rage at 0s (owner opener); Secondary inert | Mighty Rage timing flat at 1500 fights: ungated +2.50 +/- 3.51, <=50 rage +1.50, <=10 -1.30, <=25s left -5.2, <=35s -2.5 | owner opener potion; inert Secondary | same |
+| opener | -- | Death Wish at 0s -0.5, Mighty Rage at 0s +0.9 (ST, noise); **both shipped in Multi** | -- | -- |
+| Single Target APL | owner list is a local optimum (below) | owner list: every owner line noise; additions all noise or loss | additions all lose (below) | HS 65 confirmed (40 -22.2, 50 -5.9, 80 -8.7); Death Wish entry IDENTICAL (pre-cast covers it) |
+| Multi Target APL | confirmed: Cleave 40 -61.7, 50 -16.4, 70 -2.1, 80 -21.8; Sweeping 50 -12.6; WW at top -37.4; Rend MD3/5 -23.8/-58.7; Execute removed -12.9 | Cleave 20/30/55/70 noise or worse; Berserker Rage <=40 +8.9 at 5T but -0.5/+27.1 vs +31.4 elsewhere -- not shipped | **shipped**; Cleave 10-65 swept, 26 kept; TC back -23 to -53 | **shipped**; Cleave swept, 40 kept; Rend MD -15.5 |
+
+### Outside the box, tried and lost
+
+- **Sunder Armor as a tank threat filler** (206 + 5% AP threat): every placement
+  loses -- bottom -8.3 / -27.4, above Thunder Clap -10.6 / -43.9, above Revenge
+  -172.1 / -331.5 (Prot / Fury Prot, 120s).
+- **Hamstring as a tank rage dump** -0.3 (Prot), -59.1 (Fury Prot).
+- **2H Arms**: Execute copies placed higher in the execute phase -2.9 to -22.7;
+  **Whirlwind by stance dance** above Slam -50.3, above Spearing Strike -12.3,
+  above Hamstring -11.5; Thunder Clap filler -13.7; Hamstring 10 -13.5 / 30 -3.0
+  / 45 -5.4 / 60 -8.3 / removed -26.1 (20 confirmed).
+- **DW Fury**: Overpower by dance +2.2 / -4.0 noise; Slam filler -27.9; Hamstring
+  at 60/80 -3.2 / +0.0; Berserker Rage gates and placement all noise.
+- **Off-GCD Death Wish and Berserker Rage** (a data question, priced by a
+  temporary edit to `abilities/warrior.ts`, reverted): DW Fury 978.9 -> 985.8 at
+  120s, 1000 fights; Sweeping Strikes off-GCD on 2H Arms 5T 1204.5 -> 1200.8.
+
+### Needs the owner
+
+- **Recklessness's eye** (still off by ruling): +23.5 2H Arms ST, +47.2 DW Fury
+  ST, +63.8 2H Arms Multi, +126.3 DW Fury Multi.
+- **The tank execute clause in the Single Target list** ("swap to Battle Stance
+  and spam Execute"): lifting it is +96.5 TPS and -0.34 deaths on Prot Warr and
+  +86.8, -0.42 on Fury Prot at 120s. The additive version (HS, Block, Revenge,
+  Shield Slam, TC above Execute) is +95.8 / +77.5 and is not shipped either,
+  because it undoes the owner's instruction rather than adding to it.
+- **Prot Warr's Thunder Clap and Demoralizing Shout** (owner lines): removing
+  them +14.8 and +10.9 TPS at 120s. Fury Prot: Demo Shout out +15.8.
+- **Tank Blasted Lands and food** (owner: Agility): Strength instead +17.8 and
+  +12.4 weighted on Fury Prot, +5.5 / +3.0 noise on Prot Warr.
+- **Is Death Wish / Berserker Rage on the global cooldown?** Off it is about +7
+  on DW Fury.
+- **Deaths**: the shipped tank trade doubles t1 deaths to under one a fight.
+
 ## Round 78 — all four presets, optimised for the full report
 
 **THE OBJECTIVES CHANGED UNDER THIS CLASS, AND THE TANKS' CHANGED MOST.** DPS at

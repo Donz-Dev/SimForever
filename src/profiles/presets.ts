@@ -455,8 +455,14 @@ const PROT_WARR_TALENTS: TalentAllocation = {
  * ----------------------------------------------------------------------------
  */
 const FURY_PROT_TALENTS: TalentAllocation = {
-  // Arms, 5
-  deflection: 5,
+  /*
+   * Arms, 0 -- ROUND 80 MOVED DEFLECTION'S FIVE INTO PROTECTION: Improved
+   * Thunder Clap 3 and Master of Defense 2 (5 rage on every dodge or parry with
+   * a shield). Deflection's 5% parry was the defensive half of the owner's
+   * build; the rage is worth **+122.0 +/- 11.1** on the weighted TPS score
+   * (t1 +48.9, t3 +124.8, t5 +169.3, t8 +282.7), deaths +0.18 at 120s on a
+   * baseline of 0.42 now that the boss ramp is capped at 2x. Spread 0/31/20.
+   */
   /*
    * Fury, 31. ROUND 78 MOVED THREE POINTS: Improved Berserker Rage 2 (no list
    * here casts Berserker Rage -- it would drag a Defensive tank into Berserker
@@ -479,6 +485,8 @@ const FURY_PROT_TALENTS: TalentAllocation = {
   improved_revenge: 3,
   last_stand: 1,
   defiance: 3,
+  improved_thunder_clap: 3,
+  master_of_defense: 2,
 };
 
 
@@ -2523,7 +2531,17 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * for the archetype the edit is one line up in `consumables.ts`.
        * ----------------------------------------------------------------------
        */
-      consumables: { ...STRENGTH_CONSUMABLES, food: 'food_strength' },
+      /*
+       * ROUND 80: THE SECONDARY POTION IS MAJOR HEALING, AND IT IS INERT BY
+       * DESIGN. Both potions share the two-minute cooldown and every report
+       * fight is 120 s or shorter, so one potion is drunk a fight -- Mighty
+       * Rage -- and the second row can only matter if it PRE-EMPTS it. Frenzy
+       * does (ungated, it is drunk first: -0.70 +/- 0.45 at 120 s); Healing is
+       * gated under 50% health, which a damage Warrior never reaches, and runs
+       * IDENTICAL FIGHTS. Moving Mighty Rage itself measured flat on DW Fury
+       * (ungated +2.50 +/- 3.51, <=50 rage +1.50, <=10 rage -1.30 at 1500 fights).
+       */
+      consumables: { ...STRENGTH_CONSUMABLES, food: 'food_strength', potion_secondary: 'secondary_major_healing_potion' },
       /*
        * THE OWNER'S OPENER, and the three entries it replaces are gone from the
        * list: Charge, Battle Stance and Battle Shout. See `WARRIOR_TWO_HAND_BATTLE`.
@@ -2592,7 +2610,17 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * these two overrides come out together.
        * ----------------------------------------------------------------------
        */
-      consumables: { ...STRENGTH_CONSUMABLES, food: 'food_strength' },
+      /*
+       * ROUND 80: THE SECONDARY POTION IS MAJOR HEALING, AND IT IS INERT BY
+       * DESIGN. Both potions share the two-minute cooldown and every report
+       * fight is 120 s or shorter, so one potion is drunk a fight -- Mighty
+       * Rage -- and the second row can only matter if it PRE-EMPTS it. Frenzy
+       * does (ungated, it is drunk first: -0.70 +/- 0.45 at 120 s); Healing is
+       * gated under 50% health, which a damage Warrior never reaches, and runs
+       * IDENTICAL FIGHTS. Moving Mighty Rage itself measured flat on DW Fury
+       * (ungated +2.50 +/- 3.51, <=50 rage +1.50, <=10 rage -1.30 at 1500 fights).
+       */
+      consumables: { ...STRENGTH_CONSUMABLES, food: 'food_strength', potion_secondary: 'secondary_major_healing_potion' },
       /*
        * NO CHARGE HERE AND THE OWNER DID NOT ASK FOR ONE, which is the spec
        * agreeing with the engine: Charge lists Battle Stance only on this
@@ -2616,13 +2644,19 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'prot_warr',
     label: 'Prot Warr',
-    detail: 'Tauren, shield, Defensive Stance, target swings back',
+    detail: 'Undead, shield, Defensive Stance, target swings back',
     characterClass: 'warrior',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Prot Warr',
-        race: 'tauren',
+        /*
+         * ROUND 80: UNDEAD, out of Tauren. Tauren Endurance is health only
+         * since round 79, and Forever's rage-from-damage is `D x 10 / H`, so
+         * a bigger pool makes every blow taken worth LESS rage: Undead is
+         * **+18.1 +/- 9.4** weighted TPS and Orc +15.7. Fury Prot inherits it.
+         */
+        race: 'undead',
         characterClass: 'warrior',
         level: 60,
         combatStyle: 'one_hand_shield',
@@ -2661,6 +2695,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         ...STRENGTH_CONSUMABLES,
         blasted_lands: 'blasted_agility',
         food: 'food_agility',
+        /*
+         * ROUND 80: Frenzy as the Secondary Potion, inert: the owner's opener
+         * drinks Mighty Rage at 0s, so the shared cooldown is back only at
+         * 120 s. Frenzy runs IDENTICAL FIGHTS; Major Healing reads -0.22 +/-
+         * 0.18 weighted, which is why it is not the one chosen.
+         */
+        potion_secondary: 'secondary_major_frenzy_potion',
       },
       /*
        * THE ONE OPENER THAT CHARGES OUT OF DEFENSIVE STANCE, and it works for
@@ -2696,7 +2737,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'fury_prot',
     label: 'Fury Prot',
-    detail: 'Tauren, shield, Defensive Stance, Bloodthirst, target swings back',
+    detail: 'Undead, shield, Defensive Stance, Bloodthirst, target swings back',
     characterClass: 'warrior',
     /*
      * PROT WARR WITH A FURY TREE, by the owner's word -- "in almost every other
