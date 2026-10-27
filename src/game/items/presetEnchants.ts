@@ -91,8 +91,13 @@ export const PRESET_ENCHANTS: Readonly<
    * +0.33 +/- 0.33 deaths of 18.75; the feet +2.4 TPS (noise) and -0.19 deaths.
    * Head and legs stay +1% Dodge: +8 Strength there is +19.8 TPS for +0.87
    * deaths, which is buying threat with deaths.
+   *
+   * ROUND 80: HEAD AND LEGS +8 AGILITY (was +1% Dodge). The ramp is capped at 2x
+   * and the Bear dies 0.09 times in two minutes, so threat is the figure:
+   * +10.6 weighted TPS on top of Ferocity 5 (+25.66 against +15.05) for
+   * +0.014 deaths. +8 Strength +5.2 noise; +1% Haste +2.0 noise.
    */
-  druid_bear: { chest: 900015, cloak: 900001, feet: 900026, gloves: 900024, head: 900001, legs: 900001, neck: 900011, twoHand: 20034, wrists: 900019 },
+  druid_bear: { chest: 900015, cloak: 900001, feet: 900026, gloves: 900024, head: 900003, legs: 900003, neck: 900011, twoHand: 20034, wrists: 900019 },
   /*
    * ROUND 78 LEFT THESE ALONE, AND THE ROUTE THERE IS THE KNOCK-ON: head and
    * legs +8 Intellect for +1% Haste measured +12.77 +/- 3.87 at 1 target / 120 s

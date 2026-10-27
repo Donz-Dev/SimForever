@@ -10,6 +10,70 @@ directory for what the census columns mean and how to reprint every figure below
 
 ---
 
+## Round 80 — the four presets again, under the owner's round 79 rules
+
+Paired with `tools/probe_build.ts` off `tools/optimise/druidVariants80.ts`
+(groups `w80moon*`, `w80cat*`, `w80bear*`, `w80resto*`); talents, race,
+enchants and stat consumables on `WEIGHTED=1`. Before and after are
+`tools/full_report.ts` at 300 fights a cell:
+
+| | Single Target 2 min | 3 targets 1 min | 5 targets 1 min | 8 targets 30 s | weighted |
+| --- | --- | --- | --- | --- | --- |
+| Moonkin DPS | 847.4 -> **862.3** | 854.9 -> **1,021.2** | 1,274.0 -> **1,336.6** | 1,985.0 -> **2,045.6** | 1,114.6 -> **1,171.1** |
+| Cat DPS | 907.0 -> **924.2** | 958.5 -> **976.9** | 958.5 -> **976.9** | 1,067.1 -> **1,101.0** | 951.7 -> **972.2** |
+| Bear TPS | 1,269.9 -> 1,268.0 | 2,049.0 -> **2,196.6** | 2,323.9 -> **2,441.2** | 2,894.0 -> **3,069.5** | 1,857.6 -> **1,931.6** |
+| Resto HPS | tank 445.1 -> 446.2 | raid 1,995.0 -> 1,972.4 | | | 1,220.1 -> 1,209.3 |
+
+Every race moved off an Alliance race (Druids may be Tauren or Windshaper
+Skyborne only). The Resto Drood's loss is that move: Night Elf is no longer
+allowed and Tauren is the better of the two that are.
+
+**MOONKIN.** Windshaper Skyborne (bit-identical to High Order Skyborne; Tauren
+-18.7 weighted). Talents back to **41/0/10**, Genesis 5 without Reflection:
+**+2.58** weighted, and +5.55 against Reflection 3 on the finished build -- the
+120 s fight has 9% mana spare now, so round 78's reason expired; it still costs
+7-10 at 180 s. Insect Swarm added to the opener at 0s (**+5.46** at 120 s). Moonfire
+and Insect Swarm not refreshed in the last 8 s (+2.21). The potion pair:
+Spellblasting while mana > 50%, Major Mana (Secondary) under 50% after 60 s --
+**+35.8 at 180 s**, +0.0 at 120 s. Multi Target: Moonfire on two targets above
+Hurricane at 4-7 targets (+30.0 at 5/60), and both DoTs walked across every
+target below Hurricane, which only three targets reach (**+144.7** at 3/60).
+Lost: every enchant swap (gloves haste -1.2, head/legs Int -17.3), Nature
+school power -2.2, Spirit Blasted Lands -4.8, Innervate gate 5-35% noise,
+Eclipse gates, Hurricane at three targets (-76.9), DoT walks at 8 targets
+(-241/-361).
+
+**CAT.** Windshaper (+8.91), Feral Swiftness 2 -> Ferocity 5 (+5.85). Three
+ADDITIONS around the owner's Rake and Rip lines, together **+6.34** at 120 s:
+Shred in Rake's place in the last 6 s, Ferocious Bite above Rip in the last 8 s,
+Ferocious Bite at 5 points while Rip has 4 s or more. Secondary Potion Mighty
+Rage on the second cooldown only (+0.56 at 180 s, noise). Lost or noise: Bite
+during Berserk, Bite with energy caps, Rip at 4 under Berserk (-3.1), Claw (-23),
+Innervate, Shifting Power 30-60, Rake multi-DoT at 3/5/8 targets (-57/-78),
+Prowl->Ravage in combat (+2.4 noise, and illegal in the game).
+
+**BEAR.** Feral Charge -> Ferocity 5 (+15.1 weighted), head and legs +8 Agility
+(+10.6), Windshaper (+9.7): **+35.4** together, deaths +0.02. Multi Target
+opener adds Berserk at the pull before the Primal Bite: **+54 / +87 / +164**
+at 5 / 3 / 8 targets. Secondary Potion Major Healing (noise). Lost: strength
+enchants and consumables (noise), +25 Agility on the stat stick (-29.8),
+gloves Strength (-19.6), Swipe above Maul in AoE (-500 to -800).
+
+**RESTO.** Tauren. Nothing in either list survived the noise: Swiftmend and
+Innervate sweeps +2.6 at most, raid additions (Regrowth, Healing Touch,
+Swiftmend spread, smart healing) all lose, and Innervate at 70% in the raid
+fight is +7.2 +/- 8.0 at 600 fights. The owner's raid Healing Touch pre-cast
+now measures **-1.6, noise** to remove: the round 78 question has dissolved.
+
+**FOR THE OWNER**: the Bear's "Maul if rage >= 42" at 25 is +23.8 weighted
+(t1 +46.8); Demoralizing Roar out of the Bear's Multi list is +60 / +76 / +88
+TPS; the Cat's Thistle Tea at 15-20 energy (owner: 10) is +4.5 to +4.8. The
+engine applies the five second rule to ALL `manaPer5`, gear mp5 included, and
+does not stop a form casting another form's spells (the Cat's book holds
+Hurricane, Swipe and Starfire).
+
+---
+
 ## Round 78 — the four presets optimised for the full report
 
 Paired with `tools/probe_build.ts` (400 fights unless stated) off
@@ -267,7 +331,7 @@ question** — the count was wrong for as long as nobody did.
 | --- | --- | --- | --- | --- |
 | Cat | 9/34/8 | **663.3** | `DRUID_CAT` | cat (paws) |
 | Bear | 9/42/0 | **433.6** | `DRUID_BEAR` | bear (paws) |
-| Moonkin | 38/0/13 | **513.4** | `DRUID_MOONKIN` | caster |
+| Moonkin | 41/0/10 | **513.4** | `DRUID_MOONKIN` | caster |
 
 **THESE ARE CURRENT AND THE TABLE USED TO CARRY A "was" COLUMN**, which is gone
 because it had stopped being about this class: the figures moved 656.1 → 716.4,

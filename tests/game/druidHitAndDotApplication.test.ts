@@ -153,8 +153,8 @@ describe("Nature's Reach, which was doing neither of its clauses", () => {
      */
     for (const preset of ['druid_moonkin', 'druid_cat', 'druid_bear'] as const) {
       const built = PRESETS_BY_ID.get(preset)!.build();
-      // Round 78 made the Moonkin High Order Skyborne; no race carries hit now.
-      expect(built.character.race, preset).toBe(preset === 'druid_moonkin' ? 'high_order_skyborne' : 'tauren');
+      // Round 80 made all three Windshaper Skyborne; no race carries hit now.
+      expect(built.character.race, preset).toBe('windshaper_skyborne');
       expect(built.talents.nature_s_reach, preset).toBe(2);
 
       const withBoth = characterAtCombatStart(built)!;

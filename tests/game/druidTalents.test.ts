@@ -353,11 +353,12 @@ describe('Genesis, which is periodic damage and nothing else', () => {
      * asserted apart from the builds: a profile's allocation is a DECISION and
      * moves, where "rank three is 3%" is the talent.
      */
-    // The Moonkin went back to Genesis 2 in round 78, for Reflection 3.
+    // The Moonkin went back to Genesis 2 in round 78, for Reflection 3, and to
+    // Genesis 5 in round 80, on the weighted score.
     for (const [preset, style, multiplier] of [
       ['druid_cat', 'cat', 1.05],
       ['druid_bear', 'bear', 1.05],
-      ['druid_moonkin', 'moonkin', 1.02],
+      ['druid_moonkin', 'moonkin', 1.05],
     ] as const) {
       expect(buildIn(preset, style).periodicDamageMultiplier, preset).toBeCloseTo(multiplier, 10);
     }
@@ -1094,17 +1095,30 @@ describe('Feral Swiftness grants four dodge, not thirty', () => {
    */
   const FERAL_SWIFTNESS_DODGE = 4;
 
-  it('contributes four dodge to the Cat, whose only dodge talent it is', () => {
-    expect(PRESETS_BY_ID.get('druid_cat')!.build().talents.feral_swiftness).toBe(2);
-    expect(PRESETS_BY_ID.get('druid_cat')!.build().talents.natural_reaction).toBeUndefined();
+  it('contributes four dodge to a Cat, whose only dodge talent it is', () => {
+    /*
+     * ROUND 80 MOVED THE CAT PRESET'S TWO POINTS TO FEROCITY, so the build fact
+     * and the mechanism are asserted apart: the preset no longer takes it, and
+     * the Cat tree it left (Ferocity 3, Feral Swiftness 2) still gets four.
+     */
+    const built = PRESETS_BY_ID.get('druid_cat')!.build();
+    expect(built.talents.feral_swiftness).toBeUndefined();
+    expect(built.talents.natural_reaction).toBeUndefined();
 
-    expect(buildIn('druid_cat', 'cat').stats.dodgeChance).toBeCloseTo(
-      FERAL_SWIFTNESS_DODGE,
-      6,
+    const talents = { ...built.talents, ferocity: 3, feral_swiftness: 2 };
+    const named = talentBuild(
+      'druid',
+      talents,
+      talentContextFor(built.equipment, 'cat', weaponsFor(built.equipment, 'cat'), {
+        characterClass: 'druid',
+        talents,
+        level: MAX_CHARACTER_LEVEL,
+      }),
     );
+    expect(named.stats.dodgeChance).toBeCloseTo(FERAL_SWIFTNESS_DODGE, 6);
+    const withIt = createPlayer({ race: 'tauren', characterClass: 'druid', combatStyle: 'cat', talents, equipment: built.equipment });
     expect(
-      druid('druid_cat', 'cat').stats.get('dodgeChance') -
-        untalented('druid_cat', 'cat').stats.get('dodgeChance'),
+      withIt.stats.get('dodgeChance') - untalented('druid_cat', 'cat').stats.get('dodgeChance'),
     ).toBeCloseTo(FERAL_SWIFTNESS_DODGE, 6);
   });
 
