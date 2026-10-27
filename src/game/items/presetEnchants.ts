@@ -118,6 +118,9 @@ export const PRESET_ENCHANTS: Readonly<
    * Fire Nova give it a roll per target struck -- it is an AoE enchant. The
    * Single Target cost is 2.9 DPS. Head and legs Intellect (-20.0) and gloves
    * Haste (-13.5) still lose.
+   *
+   * RE-PRICED WHEN THE OWNER RULED REVELATION ONCE PER CAST: still **+20.91
+   * +/- 3.17** over Weapon Spell Power (t1 -2.9, t8 +69.0), so it stays.
    */
   shaman_elemental: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, mainHand: 900032, neck: 900009, shield: 900030, wrists: 900018 },
   /*
@@ -166,10 +169,16 @@ export const PRESET_ENCHANTS: Readonly<
    *   gloves +1% Haste for +20 SP   Arcane +5.9 +/- 2.3 (shipped); Frostfire -2.4,
    *                    Frost +1.4, Fire -11.9.
    *   head +8 Intellect / Spirit for +1% Haste  -10 to -17 on all four.
+   *
+   * AND RE-PRICED WHEN THE OWNER RULED REVELATION ONCE PER CAST (later in round
+   * 80), +65 Spell Power against Revelation, weighted, 400 paired fights:
+   *   Arcane -6.04 +/- 6.27 (noise; Revelation kept), Frost +9.20 +/- 6.13 and
+   *   Frostfire +22.85 +/- 6.40 -- so Frost and Frostfire go back to +65 Spell
+   *   Power and only Arcane keeps Revelation.
    */
-  mage_frostfire: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900032, wrists: 900018 },
-  // The owner's saved build, round 59: the Frostfire loadout exactly (Revelation since round 80).
-  mage_frost: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900032, wrists: 900018 },
+  mage_frostfire: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
+  // The owner's saved build, round 59: the Frostfire loadout exactly.
+  mage_frost: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   mage_arcane: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900002, head: 900002, legs: 900002, neck: 900009, twoHand: 900032, wrists: 900018 },
   mage_fire: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   // +65 Spell Power on the two-hander in place of Crusader, by the owner (round 37).
@@ -225,6 +234,7 @@ export const PRESET_ENCHANTS: Readonly<
   warlock_demonology: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   // Round 80: the staff takes Revelation over +65 Spell Power, +14.83 +/- 2.70
   // on the weighted score (+25.8 at one target, -15.6 at eight over 30s).
+  // Re-priced once per cast, as the owner ruled: still +2.93 +/- 2.71.
   shadow_priest: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900032, wrists: 900018 },
   // The Shockadin's caster row with the two Healing Power enchants on the neck
   // (900010) and wrists (900020), which are stats since round 52.

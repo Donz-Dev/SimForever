@@ -1046,10 +1046,10 @@ describe('the three fights', () => {
     // AND FIRE AND FROSTFIRE READ THE SAME, which is the half that catches one
     // Mage being given a different set: their templates are identical in
     // everything the budget sees. Arcane was the third until round 51 gave its
-    // template 10 more hit rating to reach 17% on Arcane. Since round 80 the
-    // Frostfire staff carries Revelation where Fire keeps +65 Spell Power, so
-    // the two differ by exactly that enchant.
-    expect(totals[0]).toBe(totals[1] + 65);
+    // template 10 more hit rating to reach 17% on Arcane. Both staves carry
+    // +65 Spell Power again since Revelation was re-priced once per cast in
+    // round 80.
+    expect(totals[0]).toBe(totals[1]);
     const named = batchOf('mage_fire', 20, 5).castButNotSimulated.map((e) => e.abilityName);
     expect(named).not.toContain('Fireball');
   });
