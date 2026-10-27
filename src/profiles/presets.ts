@@ -1074,18 +1074,29 @@ const SHAMAN_ELEMENTAL_TALENTS: TalentAllocation = {
  * rather than quietly resolving -- which of the two is stale is the owner's.
  * ============================================================================
  */
+/*
+ * ROUND 80, ON THE WEIGHTED SCORE (49/17/17/17, 800 paired fights a column):
+ * Elemental Focus 1 and the fourth rank of Ancestral Knowledge into **Tidal
+ * Focus 2** -- +2% spell hit on a build whose spells miss 9% -- for **+11.15
+ * +/- 3.00**, positive in every encounter (t1 +5.0, t3 +11.7, t5 +12.4, t8
+ * +27.2). Elemental Focus alone into the fifth Ancestral Knowledge is +3.14,
+ * so the Clearcasting proc is worth about nothing here. Every other tidal
+ * source lost or was smaller: Devastation (+8.04 with a third tidal point),
+ * Reverberation (+9.65), Call of Flame (-31.3), Trial by Fire (-83.6).
+ * 18 / 31 / 2: Enhancement stays the majority, and only one point can leave
+ * it (Rage of the Farseer's tier-30 gate holds 31 below it).
+ */
 const SHAMAN_ENHANCEMENT_TALENTS: TalentAllocation = {
-  // Elemental, 19
+  // Elemental, 18
   concussion: 5,
   call_of_flame: 3,
   elemental_devastation: 3,
   reverberation: 5,
-  elemental_focus: 1,
   // Trial by Fire is Improved Fire Nova renamed, same row and same two clauses.
   trial_by_fire: 2,
-  // Enhancement, 32
+  // Enhancement, 31
   thundering_strikes: 5,
-  ancestral_knowledge: 4,
+  ancestral_knowledge: 3,
   mental_dexterity: 3,
   elemental_weapons: 3,
   shamanistic_focus: 1,
@@ -1095,6 +1106,8 @@ const SHAMAN_ENHANCEMENT_TALENTS: TalentAllocation = {
   improved_stormstrike: 2,
   maelstrom_weapon: 5,
   rage_of_the_farseer: 1,
+  // Restoration, 2
+  tidal_focus: 2,
 };
 
 /**
@@ -3222,7 +3235,18 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * spare, and **-9.37 +/- 4.04** at 5 targets / 60 s. The Single Target
        * answer is the larger and wins. At 60 s it was -13.33 (round 27).
        */
-      consumables: { ...casterConsumables('school_nature'), potion: 'major_mana_potion' },
+      /*
+       * ROUND 80: AND SPELLBLASTING AS THE SECONDARY POTION. The two share one
+       * cooldown; the Single Target list drinks Spellblasting only in the last
+       * 30 s (so never, at 120 s, where the mana potion fires first) and the
+       * Multi Target list at the pull: +17.10 at 5 targets, +51.21 at 8, +2.89
+       * at 3.
+       */
+      consumables: {
+        ...casterConsumables('school_nature'),
+        potion: 'major_mana_potion',
+        potion_secondary: 'secondary_major_spellblasting_potion',
+      },
       /*
        * THE ONE OPENER WHOSE CAST IS NOT LAST. Lightning Bolt occupies the two
        * seconds before the pull and LANDS at it; Flame Shock is then taken at
@@ -3285,7 +3309,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
      * prints the split and a URL the owner can audit, which is Step 0 of
      * `docs/profile-optimisation.md` and is the only reading that cannot drift.
      */
-    detail: 'Orc, two-hander, standing target. 19 Elemental / 32 Enhancement',
+    detail: 'Orc, two-hander, standing target. 18 Elemental / 31 Enhancement / 2 Restoration',
     characterClass: 'shaman',
     build: () => ({
       ...createDefaultProfile(),
@@ -3348,6 +3372,9 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
          * +28 Spell Power food for +20 Strength **+1.72 / +8.30**.
          */
         potion: 'major_mana_potion',
+        // Round 80: Spellblasting secondary -- last 30 s on one target, at the
+        // pull from five targets up (+11.52 at 5, +34.71 at 8, -11.99 at 3).
+        potion_secondary: 'secondary_major_spellblasting_potion',
         blasted_lands: 'blasted_intellect',
         food: 'food_spell_power',
         // +1% spell crit and +36 spell power on the main hand, by the owner

@@ -846,6 +846,8 @@ describe('what each of the 29 profiles opens with', () => {
       '+9 Stamina',
       'Enchant Weapon - Crusader',
       'Enchant Weapon - Spell Power',
+      // The Ele Shaman's main hand since round 80 (+50.14 on the weighted score).
+      'Revelation',
     ]);
   });
 });

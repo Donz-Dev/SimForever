@@ -1,6 +1,6 @@
 import type { MultiTargetDefaults } from './types';
-import type { AplEntry } from '../../game/rotations/apl';
-import { selfStacks, targetExpired, targetHas, targetTime } from '../../game/rotations/apl';
+import type { AplCondition, AplEntry } from '../../game/rotations/apl';
+import { all, not, selfHas, selfStacks, targetCount, targetExpired, targetHas, targetTime } from '../../game/rotations/apl';
 import { RACIAL_COOLDOWNS } from '../../game/rotations/racialCooldowns';
 import { SHAMAN_ELEMENTAL, SHAMAN_ENHANCEMENT, SHAMAN_RESTORATION } from '../../game/rotations/shaman';
 import { MAELSTROM_WEAPON_MAX_STACKS } from '../../game/auras/shaman';
@@ -8,6 +8,26 @@ import { MAELSTROM_WEAPON_MAX_STACKS } from '../../game/auras/shaman';
 /** Everything a stock list holds above its first ability entry: consumables, racials, heals. */
 const headOf = (entries: readonly AplEntry[], firstAbility: string): readonly AplEntry[] =>
   entries.slice(0, entries.findIndex((entry) => entry.abilityId === firstAbility));
+
+/*
+ * THE SECONDARY POTION ON SEVERAL TARGETS (round 80). Both damage presets carry
+ * the Major Mana Potion primary and Spellblasting secondary, sharing one
+ * cooldown; the Single Target lists hold Spellblasting for the last 30 s. Here
+ * the fight is short and the target count high, so the damage potion is worth
+ * more at the pull. Paired, 400 fights a cell, against the mana potion alone:
+ *
+ *   Elemental     3 / 60 s  +2.89 +/- 4.05   5 / 60 s  +17.10 +/- 3.60   8 / 30 s  +51.21 +/- 0.26
+ *   Enhancement   3 / 60 s  -11.99 +/- 5.11  4 / 60 s  -0.48 +/- 5.36   5 / 60 s  +11.52 +/- 4.74   8 / 30 s  +34.71 +/- 0.18
+ *
+ * So Elemental drinks it at the pull ungated, and Enhancement -- whose mana
+ * still binds at three targets -- only from five targets up.
+ */
+const spellblastingAt = (entries: readonly AplEntry[], condition?: AplCondition): readonly AplEntry[] =>
+  entries.map((entry) => {
+    if (entry.abilityId !== 'major_spellblasting_potion') return entry;
+    const { condition: _single, ...rest } = entry;
+    return condition === undefined ? rest : { ...rest, condition };
+  });
 
 /*
  * ==============================================================================
@@ -32,11 +52,25 @@ const headOf = (entries: readonly AplEntry[], firstAbility: string): readonly Ap
  * ==============================================================================
  */
 const ELEMENTAL_AOE: readonly AplEntry[] = [
-  ...headOf(SHAMAN_ELEMENTAL.entries, 'searing_totem'),
+  ...spellblastingAt(headOf(SHAMAN_ELEMENTAL.entries, 'searing_totem')),
   // Refreshed with under 2 s left rather than on expiry: +5.06 +/- 3.84.
   { abilityId: 'magma_totem', condition: targetTime('below', 2, 'magma_totem') },
   { abilityId: 'fire_nova' },
-  { abilityId: 'flame_shock', condition: targetExpired('flame_shock'), multiDot: 5 },
+  /*
+   * NOT WHILE REVELATION IS UP (round 80). The main hand carries Revelation now,
+   * and its guaranteed crit is spent by the next SPELL cast -- which on five
+   * Flame Shock targets is mostly a Flame Shock, whose direct hit is the
+   * smallest in the list. Holding the shock for one cast lets Chain Lightning
+   * or Lava Burst take it: **+23.95 +/- 4.21** at 5 / 60 s, **+8.96** at 3,
+   * **+35.33** at 8 (800 paired fights). Chain Lightning above Flame Shock as
+   * well was +23.28, +10.80 and +25.04 -- the same at three and five, worse at
+   * eight -- so the smaller edit ships.
+   */
+  {
+    abilityId: 'flame_shock',
+    condition: all(targetExpired('flame_shock'), not(selfHas('revelation'))),
+    multiDot: 5,
+  },
   ...RACIAL_COOLDOWNS,
   { abilityId: 'elemental_mastery' },
   { abilityId: 'chain_lightning' },
@@ -61,7 +95,7 @@ const ELEMENTAL_AOE: readonly AplEntry[] = [
  * ==============================================================================
  */
 const ENHANCEMENT_AOE: readonly AplEntry[] = [
-  ...headOf(SHAMAN_ENHANCEMENT.entries, 'stormstrike'),
+  ...spellblastingAt(headOf(SHAMAN_ENHANCEMENT.entries, 'stormstrike'), targetCount('atLeast', 5)),
   { abilityId: 'magma_totem', condition: targetExpired('magma_totem') },
   { abilityId: 'fire_nova' },
   { abilityId: 'stormstrike' },
@@ -105,19 +139,20 @@ const RAID_DROPS: readonly string[] = ['mana_tide_totem', 'nature_s_swiftness', 
 const RESTORATION_RAID: readonly AplEntry[] = SHAMAN_RESTORATION.entries
   .filter((entry) => !RAID_DROPS.includes(entry.abilityId))
   /*
-   * AND CHAIN HEAL WHEN ONE OR MORE IN THE RIPTIDE TARGET'S PARTY IS UNDER 90%,
-   * not two: +3.46 +/- 2.08 on top. It jumps only to the injured, so with one
-   * hurt it is a 2.5 s single heal -- and the raid is rarely that whole.
+   * AND CHAIN HEAL UNGATED ON THE RIPTIDE TARGET (round 80, was "1 or more in
+   * its party under 90%", round 78): **+25.02 +/- 4.61 HPS** at 60 s, 800
+   * paired fights. The party gate counts the Riptide target's own party, and
+   * the bolt jumps to whoever is injured -- so a full party around the Riptide
+   * target was refusing a heal that had somewhere to go. "1 injured under 100%"
+   * is only +2.34, which is that reading. Ungated also beat Riptide on the
+   * lowest whatever its health (+16.94), Nature's Swiftness on cooldown
+   * (+7.07) and Mana Tide back in at 50% (+5.66); the raid fight is cast-bound.
    */
-  .map((entry) =>
-    entry.abilityId === 'chain_heal'
-      ? {
-          ...entry,
-          condition: { kind: 'injuredCount', of: 'targetParty', below: 0.9, compare: 'atLeast', count: 1 },
-          note: 'On the Riptide target, when 1 or more in its party is under 90% (round 78, raid list).',
-        }
-      : entry,
-  );
+  .map((entry) => {
+    if (entry.abilityId !== 'chain_heal') return entry;
+    const { condition: _gate, ...rest } = entry;
+    return { ...rest, note: 'On the Riptide target, ungated: it jumps to whoever is injured (round 80, raid list).' };
+  });
 
 /**
  * The Shaman presets' optimised Multi Target lists (round 78), keyed by preset
