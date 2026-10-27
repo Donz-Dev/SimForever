@@ -171,14 +171,21 @@ export const PRESET_ENCHANTS: Readonly<
   // and wrists +16 Spell Power (was +4 Defense, +9.2 TPS on top, deaths +0.13
   // noise) -- this tank is mana- and spell-power-bound at 120 s.
   prot_pally: { chest: 900015, cloak: 900001, feet: 900027, gloves: 900024, head: 900001, legs: 900001, mainHand: 22749, neck: 900012, shield: 900030, wrists: 900018 },
-  bm_hunter: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },
+  // Round 80: head and legs +1% Haste (900002), +7.4 +/- 2.9 on the weighted score.
+  bm_hunter: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900002, legs: 900002, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },
   // Round 78: +8 Intellect on the head and legs (900006). Mana-bound at 120s, this
   // build weighs intellect at 1.10 a point against agility's 0.74.
-  lw_ranged: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900006, legs: 900006, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },
+  // Round 80: back to +8 Agility on the head and legs (900003). On the weighted
+  // score agility wins once the Multi Target fights count: with Blasted Lands
+  // +25 Agility and the pre-pull Serpent Sting, +32.9 +/- 3.5 (-9.1 on one target).
+  lw_ranged: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },
   // Round 79: +15 Agility on the OFF hand (900022) -- +25 Agility is two-handed
   // only. +15 Agility beat Crusader there on four of the five builds at 120 s.
-  lw_melee: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 900022, wrists: 900019 },
-  hawk_melee: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 900022, wrists: 900019 },
+  // Round 80: the MAIN hand +15 Agility too (was Crusader), with food +20
+  // Agility: +15.1 / +7.1 weighted on LW Melee / Hawk Melee. Off hand Crusader
+  // measured -9.8 / -9.5.
+  lw_melee: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 900022, neck: 900011, offHand: 900022, wrists: 900019 },
+  hawk_melee: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 900022, neck: 900011, offHand: 900022, wrists: 900019 },
   warlock_smds: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   warlock_firelock: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   warlock_sbolt: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },

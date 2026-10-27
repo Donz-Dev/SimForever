@@ -4,7 +4,7 @@ import type { AttackTableKind, Combatant, TelemetryEvent } from '../../src/engin
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
-import { CRUSADER, ENCHANTS_BY_ID } from '../../src/game/items/itemData';
+import { ENCHANTS_BY_ID } from '../../src/game/items/itemData';
 import { OFF_HAND_DAMAGE_MULTIPLIER } from '../../src/game/actors/weapons';
 import { characterAtCombatStart } from '../../src/simulator';
 import { talentBuild } from '../../src/game/talents/talentBuild';
@@ -1016,7 +1016,8 @@ describe('the melee Hunter dual-wields', () => {
      * main hand, and +15 Agility on the off hand since round 79 -- +25 Agility
      * is two-handed only, and +15 beat Crusader there by 3.9 at 120 s.
      */
-    expect(profile.equipment.mainHand?.enchantId).toBe(CRUSADER.id);
+    // Round 80: +15 Agility on the main hand too (was Crusader), +15.1 weighted with the food.
+    expect(ENCHANTS_BY_ID.get(profile.equipment.mainHand!.enchantId!)?.name).toBe('+15 Agility');
     expect(ENCHANTS_BY_ID.get(profile.equipment.offHand!.enchantId!)?.name).toBe('+15 Agility');
     // The two-hander is gone rather than carried alongside.
     expect(profile.equipment.twoHand).toBeUndefined();

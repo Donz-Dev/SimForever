@@ -765,10 +765,11 @@ describe('what each of the 29 profiles opens with', () => {
      */
     'prot_warr feet': '+7 Agility',
     'fury_prot feet': '+7 Agility',
-    // Round 78: mana-bound at a 120 second fight, LW Ranged weighs intellect at
-    // 1.10 a point and agility at 0.74 -- +5.7 for the pair.
-    'lw_ranged head': '+8 Intellect',
-    'lw_ranged legs': '+8 Intellect',
+    // Round 78 put +8 Intellect on LW Ranged's head and legs; round 80's
+    // weighted score took it back to the table's +8 Agility. BM Hunter takes
+    // +1% Haste there instead: +7.4 +/- 2.9 weighted.
+    'bm_hunter head': '+1% Haste',
+    'bm_hunter legs': '+1% Haste',
     /*
      * ROUND 78, THE TWO SUBTLETY DAGGER ROGUES: +1% Haste for +8 Agility on
      * head and legs. Stat weights at 120s over 1,500 iterations price 1% haste

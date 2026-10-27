@@ -448,6 +448,8 @@ describe("the owner's openers are transcribed exactly", () => {
      * first decision; small and real at 120s, one target.
      */
     two_hand_arms: [[0, 'blood_fury', '+0.60 +/- 0.04 at 120s']],
+    // Round 80: a pure DoT at the pull, after the owner's Aimed Shot.
+    lw_ranged: [[0, 'serpent_sting', '+29.3 weighted with Blasted Lands +25 Agility, against +9.3 without it']],
     dw_fury: [[0, 'blood_fury', '+0.42 +/- 0.03 at 120s']],
   };
 

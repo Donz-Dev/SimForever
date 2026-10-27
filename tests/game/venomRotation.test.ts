@@ -279,9 +279,12 @@ describe('what the Venom Rogue drinks', () => {
      * `AGILITY_CONSUMABLES` is shared with the other three Rogues and the melee
      * Hunter; the owner has named one of the five.
      */
-    for (const id of ['rogue_hemo', 'lw_melee']) {
+    // Round 80: the melee Hunter took +20 Agility food on its own weighted
+    // measurement (+5.5), so the Hemo Rogue is the row's last default.
+    for (const id of ['rogue_hemo']) {
       expect(PRESETS_BY_ID.get(id)!.build().consumables.food, id).toBe('food_attack_power');
     }
+    expect(PRESETS_BY_ID.get('lw_melee')!.build().consumables.food).toBe('food_agility');
   });
 
   /*
