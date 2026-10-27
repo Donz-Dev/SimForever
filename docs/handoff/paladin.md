@@ -672,3 +672,84 @@ nobody attacks and the Holy tree has no unbought healing talent left.
   -2.85 after it, deaths +2.19.
 - Holy Pal's raid list without the owner's pre-cast Holy Light: +14.85 HPS over
   the Intellect enchants. It is the owner's line, so it stays.
+
+## Round 80: the second optimisation run, under the round 79 rules
+
+Variants, controls and every row: `tools/optimise/paladinVariants80.ts`, paired
+over 400 fights (800 for the Shockadin potion sweep, 600 for Prot's AoE pair).
+Talents, race, enchants and stat consumables on `WEIGHTED=1` (49/17/17/17, or
+50/50 for Holy Pal); the Single Target list at 1 target / 120 s; the Multi
+Target list at 5/60, checked at 3/60 and 8/30.
+
+**EVERY PALADIN IS UNDEAD**, the only legal race. Undead against Human,
+weighted: Ret +4.18 +/- 6.71 (noise), Shockadin +6.14 +/- 3.57, Shockadin 2H
++4.14 +/- 4.07, Prot +5.78 +/- 5.66 TPS, Holy Pal **-6.54 +/- 1.86 HPS**
+(Touch of the Grave needs damage and the healer deals none; it loses the Human
+Spirit). No Paladin list carries an Undead racial: Will of the Forsaken is
+`crowdControl` and Cannibalize `healing`, both out of scope.
+
+| profile | shipped | figure |
+| --- | --- | --- |
+| all five | Undead | above |
+| Seal Twist Ret | potion pair: Major Mana under 30%, Spellblasting (secondary) in the last 30 s of a single-target fight and at the pull in Multi Target | ST bit-identical; MT +3.49 / +2.38 / +17.00 at 5 / 3 / 8 |
+| both Shockadins | potion pair: Spellblasting held for the last 45 s, Major Mana (secondary) under 20% | +0.25 +/- 0.04 / +0.24 +/- 0.04 at 120 s |
+| | MT opener: Consecration at 0s after the owner's Judgement (pure DoT, Gate B legal) | 1H +4.78 / +3.43 / +12.91, 2H +5.89 / +4.51 / +13.51 |
+| Prot Pally | Sacred Duty 2 -> Reckoning 5 + Anticipation 3 | +18.71 +/- 4.23 TPS weighted, deaths -0.08 +/- 0.17 at 120 s |
+| | potion pair (ST bit-identical) and MT Spellblasting at the pull + Consecration at 0s | +23.20 / +23.87 / +23.43 TPS, deaths noise |
+| Holy Pal | tank list: Flash of Light under 60% mana on whoever is below full, above the owner's four | +2.52 +/- 1.34 HPS at 120 s |
+| | neck +6 Spell Power (was +11 Healing Power) | +1.05 +/- 0.81 weighted |
+| | potion pair (ST bit-identical; the raid list drops Spellblasting, -99.79 at the pull) | |
+
+**THE TREES ARE FORCED, AND THE WEIGHTED SCORE SAYS SO ROW BY ROW.** Ret's
+only free point is Pursuit of Justice (Deflection runs bit-identical fights);
+Reverence -3.92, Benediction -10.13, Holy Conduit -27.46, Improved Seals
+-64.36. The Shockadins' Reverence and Benediction are worth ~0 (the 1H ends
+120 s with 15.6% mana spare) but every destination is dead too; Divine
+Precision -21.6 / -23.7, 2HWS 1 -20.2. Prot: Deflection -> Benediction -13.56,
+Divine Strength -> Intellect -8.15.
+
+**EVERY ALTERNATIVE LOST**, the rows: Ret seals (the twist is right: Fury for
+Righteousness -162, Righteousness alone -92, Command alone -196), Ret APL
+(Consecration removed -66.8, Holy Strike to the bottom -25.2, twist gated on
+mana >= 35% -20.8; every reorder noise), Ret enchants (Revelation -22, +25
+Agility -12.7, head/legs Intellect -9.3), consumables (Dense Stone -8.0).
+Shockadin seals (Fury -34 / -88, Command with a talent point -98 / -142,
+Crusader -317 / -368), APL (Consecration removed -119 / -125, Holy Strike
+removed -58 / -70, Divine Favor removed -4.4, Hammer of Wrath swing window
+150-1000 ms all noise or worse), weapon enchants (-8.5 to -27), consumables
+(Frost Oil beats every other weapon effect by 6-18). Prot APL (Holy Strike
+above Judgement -28.9, Consecration above Judgement -12.1, Seal of Fury -87.5),
+enchants (all noise). Holy Pal consumables and enchants (+8 Spirit -13.2,
++1% Haste -33.5). Spellblasting at the pull in a single-target fight: Ret
+-32.7, Prot -38.5, Holy -31.0.
+
+**THE IDLE GLOBAL COOLDOWNS ON THE SHOCKADIN ARE REAL AND UNFILLABLE**: about
+20 of 80 at 120 s, with Judgement, Consecration, Holy Shock and Holy Strike all
+at 95-97% of their cooldown-bound maximum. Nothing in a Paladin book deals
+damage off cooldown, so the list is cooldown-bound rather than tunable.
+
+**SMART HEALING IS WHY THE HOLY THRESHOLDS READ AS UNREAD.** Under it every
+friendly entry aims at the lowest member and its condition reads that member,
+so the raid Flash (line 3) and the tank Flash (line 4) become the same spell on
+the same target: line 3's 70% can change nothing while line 4 is at 100%. In
+the raid fight the lowest member is under 50% almost all fight, so the Holy
+Light gate at 50, 65 or 80% and the pre-cast cancel at 90, 95 or 99% all run
+BIT-IDENTICAL fights. In the tank fight the thresholds do bite: Holy Light at
+50% +2.85, at 80% -4.99; tank Flash at 90% -16.6.
+
+**WITHHELD, FOR THE OWNER:**
+
+- Holy Pal's pre-cast Holy Light: removed, **+61.30 +/- 5.47 HPS** in the tank
+  healer fight and +5.63 +/- 5.29 in the raid fight; cancelled above 85% (was
+  95%) +57.77, above 90% +10.48. An addition that casts Flash on a FULL tank
+  under 40% mana measures +60.89, which is the pre-cast being skipped by the
+  back door, so it was not shipped.
+- Holy Pal smart healing OFF in the raid list: +31.60 +/- 6.04 HPS (tank fight
+  bit-identical).
+- Holy Pal tank Holy Light at 50% (was 65%): +2.85 +/- 1.53.
+- Prot Improved Righteous Fury 3 -> Conviction 3: +22.12 TPS weighted, **deaths
+  +0.86 at 120 s (24%)**; with Sacred Duty also moved (Reckoning 5, Anticipation
+  4, Conviction 2) +29.44, deaths +0.70.
+- Prot flask +150 Spell Power: +51.58 TPS at 120 s, **deaths +1.41 (40%)**.
+  Tanks are NOT rare deaths here: 3.4-3.6 a fight at 120 s on this build.
+- Prot Demonic Rune over the Healthstone: +2.45, noise.

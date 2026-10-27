@@ -62,11 +62,55 @@ const RET_AOE = moveAbove(
   'judgement',
 );
 
+/*
+ * ROUND 80: SPELLBLASTING AT THE PULL, which is the Multi Target half of the
+ * potion pair. The Single Target lists hold it for the end of a 120 s fight
+ * (or drink the mana potion); at 60 s and 30 s nobody runs dry, so the window
+ * is worth most at once -- Seal Twist Ret +3.49 / +2.38 / +17.00 at 5 / 3 / 8
+ * targets over 400 paired fights. The Shockadins were already drinking it at
+ * the pull here and are unchanged.
+ */
+const spellblastingAtThePull = (entries: readonly AplEntry[]): AplEntry[] =>
+  entries.map((e) =>
+    e.abilityId === 'major_spellblasting_potion'
+      ? { abilityId: e.abilityId, note: '40 spell power for 30s, at the pull: a 60 s or 30 s fight never runs dry.' }
+      : e,
+  );
+
 const SHOCKADIN_AOE = moveAbove(
   moveAbove(PALADIN_SHOCKADIN.entries, 'consecration', 'judgement'),
   'holy_strike',
   'holy_shock',
 );
+
+/*
+ * ROUND 80: THE OWNER'S OPENER PLUS CONSECRATION AT 0s, Multi Target only. It
+ * is the pure-DoT row of Gate B -- it deals nothing when cast and its first
+ * tick lands after the pull -- so the owner's Judgement stays the one damaging
+ * action, and the ground effect is down for the first global cooldown of an
+ * AoE fight instead of the second. Paired over 400 fights: shield build +4.78
+ * / +3.43 / +12.91 at 5 / 3 / 8 targets, two-hander +5.89 / +4.51 / +13.51.
+ * Single target it is +0.5 noise, so the Single Target opener is unchanged.
+ */
+const SHOCKADIN_AOE_PRECOMBAT = [
+  { abilityId: 'seal_of_righteousness', secondsBefore: 1.5 },
+  { abilityId: 'judgement', secondsBefore: 0 },
+  { abilityId: 'consecration', secondsBefore: 0 },
+] as const;
+
+/*
+ * ROUND 80: THE OWNER'S PROTECTION OPENER PLUS CONSECRATION AT 0s, Multi Target
+ * only, with Spellblasting at the pull: +23.20 / +23.87 / +23.43 TPS at 5 / 3 /
+ * 8 targets over 600 paired fights, deaths +0.11 / +0.05 / +0.06 (noise).
+ * Spellblasting alone is +11.64 / +8.83 / +28.37.
+ */
+const PROTECTION_AOE_PRECOMBAT = [
+  { abilityId: 'righteous_fury', secondsBefore: 4.5 },
+  { abilityId: 'seal_of_righteousness', secondsBefore: 3 },
+  { abilityId: 'holy_shield', secondsBefore: 1.5 },
+  { abilityId: 'judgement', secondsBefore: 0 },
+  { abilityId: 'consecration', secondsBefore: 0 },
+] as const;
 
 /** Straight after Holy Shield, above Templar's Bulwark and the heals. */
 const PROTECTION_AOE = moveAbove(PALADIN_PROTECTION.entries, 'consecration', 'templars_bulwark');
@@ -76,17 +120,37 @@ const holyLight = find(
   (e) => e.abilityId === 'holy_light' && e.target?.kind === 'tank' && !e.cancel,
   "the tank's Holy Light",
 );
+/*
+ * ROUND 80: THE RAID LIST LEAVES OUT TWO SINGLE TARGET ENTRIES -- Spellblasting
+ * (this fight is mana-bound: -99.79 +/- 7.04 at the pull) and the tank fight's
+ * mana-conserving Flash of Light (-6.76, noise, in this fight).
+ */
+const raidOnly = (e: AplEntry) =>
+  e.abilityId !== 'major_spellblasting_potion' &&
+  !(e.abilityId === 'flash_of_light' && e.condition?.kind === 'all');
 const HOLY_RAID: AplEntry[] = [
-  ...PALADIN_HOLY.entries.slice(0, holyLight),
+  ...PALADIN_HOLY.entries.slice(0, holyLight).filter(raidOnly),
   { abilityId: 'divine_favor', note: 'Round 78: a guaranteed crit is an Illumination refund.' },
-  ...PALADIN_HOLY.entries.slice(holyLight),
+  ...PALADIN_HOLY.entries.slice(holyLight).filter(raidOnly),
 ];
 
 export const PALADIN_MULTI_TARGET: MultiTargetDefaults = {
-  pally_ret: { name: 'Paladin (Seal Twist Ret, AoE)', entries: RET_AOE },
-  pally_shockadin: { name: 'Paladin (Shockadin, AoE)', entries: SHOCKADIN_AOE },
-  pally_shockadin_2h: { name: 'Paladin (Shockadin, AoE)', entries: SHOCKADIN_AOE },
-  prot_pally: { name: 'Paladin (Protection, AoE)', entries: PROTECTION_AOE },
+  pally_ret: { name: 'Paladin (Seal Twist Ret, AoE)', entries: spellblastingAtThePull(RET_AOE) },
+  pally_shockadin: {
+    name: 'Paladin (Shockadin, AoE)',
+    entries: spellblastingAtThePull(SHOCKADIN_AOE),
+    precombat: SHOCKADIN_AOE_PRECOMBAT,
+  },
+  pally_shockadin_2h: {
+    name: 'Paladin (Shockadin, AoE)',
+    entries: spellblastingAtThePull(SHOCKADIN_AOE),
+    precombat: SHOCKADIN_AOE_PRECOMBAT,
+  },
+  prot_pally: {
+    name: 'Paladin (Protection, AoE)',
+    entries: spellblastingAtThePull(PROTECTION_AOE),
+    precombat: PROTECTION_AOE_PRECOMBAT,
+  },
   holy_pal: {
     name: 'Paladin (Holy, raid)',
     entries: HOLY_RAID,

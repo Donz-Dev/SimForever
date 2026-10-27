@@ -1774,15 +1774,16 @@ const PALADIN_PROTECTION_TALENTS: TalentAllocation = {
   improved_seals: 3,
   redoubt: 5,
   precision: 3,
-  anticipation: 2,
+  // Round 80: 3 (was 2) and Reckoning 5 (was 4), out of Sacred Duty 2: +18.71
+  // +/- 4.23 TPS on the weighted score, deaths -0.08 +/- 0.17 at 120 s.
+  anticipation: 3,
   improved_seal_of_fury: 1,
   improved_righteous_fury: 3,
   shield_specialization: 3,
-  sacred_duty: 2,
   swift_judgement: 1,
   one_handed_weapon_specialization: 3,
   templar_s_bulwark: 1,
-  reckoning: 4,
+  reckoning: 5,
   iron_creed: 5,
   holy_shield: 1,
   deflection: 5,
@@ -3725,13 +3726,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'pally_ret',
     label: 'Seal Twist Ret',
-    detail: 'Human, two-hander, standing target. 13 Holy / 38 Retribution',
+    detail: 'Undead, two-hander, standing target. 13 Holy / 38 Retribution',
     characterClass: 'paladin',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Seal Twist Ret',
-        race: 'human',
+        // UNDEAD SINCE ROUND 80: the only race a Paladin may be under the round 79 rule.
+        race: 'undead',
         characterClass: 'paladin',
         level: 60,
         combatStyle: 'two_hander',
@@ -3779,6 +3781,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
          * 6.18 at 120 s, and +0.96 +/- 3.81 (noise) at 5 targets / 60 s.
          */
         potion: 'major_mana_potion',
+        /*
+         * ROUND 80: SPELLBLASTING AS THE SECONDARY. The list drinks it only in
+         * the last 30 s of a single-target fight -- never, at 120 s, because
+         * the mana potion takes the shared cooldown first -- and at the pull in
+         * the Multi Target list, +17.00 +/- 0.15 at 8 targets / 30 s.
+         */
+        potion_secondary: 'secondary_major_spellblasting_potion',
       },
       /*
        * TWO SEALS IN SEQUENCE, WHICH IS THE SEAL TWIST OPENED BEFORE THE PULL.
@@ -3798,13 +3807,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'pally_shockadin',
     label: 'Shockadin',
-    detail: 'Human, 1H and a caster shield, standing target. 23 Holy / 28 Retribution',
+    detail: 'Undead, 1H and a caster shield, standing target. 23 Holy / 28 Retribution',
     characterClass: 'paladin',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Shockadin',
-        race: 'human',
+        // UNDEAD SINCE ROUND 80: the only race a Paladin may be under the round 79 rule.
+        race: 'undead',
         characterClass: 'paladin',
         level: 60,
         /*
@@ -3850,6 +3860,12 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         food: 'food_spell_power',
         // Frost Oil on the main hand, by the owner.
         weapon_effect_main_hand: 'frost_oil_main_hand',
+        /*
+         * ROUND 80: THE MANA POTION AS THE SECONDARY, a safety net under 20%
+         * mana that a 120 s fight never reaches. What it changes is WHEN the
+         * primary is drunk: the list holds Spellblasting for the last 45 s.
+         */
+        potion_secondary: 'secondary_major_mana_potion',
       },
       precombat: [
         ...before(1.5, 'seal_of_righteousness'),
@@ -3878,13 +3894,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'pally_shockadin_2h',
     label: 'Shockadin 2H',
-    detail: 'Human, fast 2H mace, standing target. 23 Holy / 28 Retribution',
+    detail: 'Undead, fast 2H mace, standing target. 23 Holy / 28 Retribution',
     characterClass: 'paladin',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Shockadin 2H',
-        race: 'human',
+        // UNDEAD SINCE ROUND 80: the only race a Paladin may be under the round 79 rule.
+        race: 'undead',
         characterClass: 'paladin',
         level: 60,
         /*
@@ -3918,6 +3935,12 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         food: 'food_spell_power',
         // Frost Oil on the main hand, by the owner.
         weapon_effect_main_hand: 'frost_oil_main_hand',
+        /*
+         * ROUND 80: THE MANA POTION AS THE SECONDARY, a safety net under 20%
+         * mana that a 120 s fight never reaches. What it changes is WHEN the
+         * primary is drunk: the list holds Spellblasting for the last 45 s.
+         */
+        potion_secondary: 'secondary_major_mana_potion',
       },
       precombat: [
         ...before(1.5, 'seal_of_righteousness'),
@@ -3929,13 +3952,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'prot_pally',
     label: 'Prot Pally',
-    detail: 'Human, 1H and shield, target swings back. 36 Protection',
+    detail: 'Undead, 1H and shield, target swings back. 36 Protection',
     characterClass: 'paladin',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Prot Pally',
-        race: 'human',
+        // UNDEAD SINCE ROUND 80: the only race a Paladin may be under the round 79 rule.
+        race: 'undead',
         characterClass: 'paladin',
         level: 60,
         combatStyle: 'one_hand_shield',
@@ -3978,6 +4002,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
          * 4.96, deaths -0.11) both buy threat without costing survival.
          */
         potion: 'major_mana_potion',
+        // Round 80: drunk at the pull in the Multi Target list, +8.8 to +28.4 TPS.
+        potion_secondary: 'secondary_major_spellblasting_potion',
         blasted_lands: 'blasted_intellect',
       },
       precombat: [
@@ -4477,13 +4503,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
      */
     id: 'holy_pal',
     label: 'Holy Pal',
-    detail: 'Human, caster mace and shield, a healer. 31 Holy / 13 Protection / 7 Retribution',
+    detail: 'Undead, caster mace and shield, a healer. 31 Holy / 13 Protection / 7 Retribution',
     characterClass: 'paladin',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Holy Pal',
-        race: 'human',
+        // UNDEAD SINCE ROUND 80: the only race a Paladin may be under the round 79 rule.
+        race: 'undead',
         characterClass: 'paladin',
         level: 60,
         combatStyle: 'caster',
@@ -4496,6 +4523,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         flask: 'flask_spell_power',
         food: 'food_healing_power',
         potion: 'major_mana_potion',
+        // Round 80: the pair's secondary, for the last 30 s of a fight that never ran dry.
+        potion_secondary: 'secondary_major_spellblasting_potion',
         other: 'demonic_rune',
       },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },

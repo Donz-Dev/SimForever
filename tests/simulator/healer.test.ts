@@ -254,6 +254,9 @@ describe("the Holy Pal's list", () => {
       // Round 61: the raid healer's Light's Vigil chain, above the four.
       ['holy_shock', 'withAura'],
       ['lights_vigil', 'lowestParty'],
+      // Round 80: an ADDITION above the owner's four, tank healer fight only --
+      // Flash of Light under 60% mana on whoever is below full.
+      ['flash_of_light', 'lowestHealth'],
       ['holy_light', 'tank'],
       ['holy_shock', 'tank'],
       ['flash_of_light', 'lowestHealth'],
