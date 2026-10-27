@@ -495,6 +495,18 @@ const FURY_PROT_TALENTS: TalentAllocation = {
  */
 
 /** Venom -- Assassination 37 / Combat 12 / Subtlety 2. Mutilate and poisons. */
+/*
+ * THE ROGUES' SECONDARY POTION (round 80), the owner's round 79 rule that every
+ * profile carries a Primary and a Secondary Potion. A Rogue spends no mana, and
+ * the only potion that raises its damage is the Major Frenzy Potion it already
+ * drinks as its Primary -- the two rows share one two-minute cooldown, and the
+ * Primary is drunk in the opening seconds, so no second damage potion can land
+ * inside a 120s fight either. So the Secondary is the Major Healing Potion: it
+ * sits behind the health-gated heal entries, fires 0.00 times against a target
+ * that never swings, and is there for the fight where something does.
+ */
+const ROGUE_SECONDARY_POTION = 'secondary_major_healing_potion';
+
 const ROGUE_VENOM_TALENTS: TalentAllocation = {
   // The owner's respecification, decoded from https://talentsforever.com/rogue/60/00530210541501051-30230320201-002-CFD2I2GDIJ3KLNPQRTWUZXbkJ-7
   malice: 5,
@@ -2760,7 +2772,12 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * a Hunter that may not drink it.
        * ----------------------------------------------------------------------
        */
-      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea', food: 'food_agility' },
+      consumables: {
+        ...AGILITY_CONSUMABLES,
+        other: 'thistle_tea',
+        food: 'food_agility',
+        potion_secondary: ROGUE_SECONDARY_POTION,
+      },
       /*
        * "Venom: none" -- the owner's own word, and the only profile of the 28
        * with no opener. Left ABSENT rather than written as an empty array: the
@@ -2812,26 +2829,24 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'rogue_combat',
     label: 'Combat',
-    detail: 'Gnome, dual-wield, standing target. 18 Assassination / 33 Combat',
+    detail: 'Orc, dual-wield, standing target. 18 Assassination / 33 Combat',
     characterClass: 'rogue',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Combat',
         /*
-         * GNOME, WHERE IT WAS ORC -- round 78's race swap, gear, talents,
-         * enchants and consumables held fixed. Eureka! (+10% non-periodic damage
-         * and -10% cost for 8s, two-minute cooldown) beats Blood Fury, and
-         * Expansive Mind's +5% energy rides along: +6.16 +/- 3.49 over 1,200
-         * fights at 120s, +13.55 +/- 5.59 at 60s. The racial cooldown entries
-         * follow the race on their own (`racialCooldowns.ts`).
-         *
-         * THE MULTI TARGET FIGURE IS NOT THE REASON AND IS INFLATED: +45.8 at
-         * five targets, but a Blade Flurry copy runs back through the
-         * attacker's `nonPeriodicDamageMultiplier`, so Eureka!'s 10% is paid
-         * twice on every copied hit. Reported as an engine question.
+         * ORC AGAIN SINCE ROUND 80, by the owner's round 79 rule that a preset
+         * may be Orc, Undead, Troll or Windshaper Skyborne only. Round 78 had
+         * moved it to Gnome (+6.16 at one target, most of its Multi Target
+         * figure an engine double-count of Eureka! on Blade Flurry copies).
+         * Priced on the weighted score against the Gnome build, 300 paired
+         * fights a column: Orc -41.8, Undead -46.3, Windshaper -47.5, Troll
+         * -48.7 -- so Orc, by Blood Fury's 10% attack power under Blade Flurry
+         * (Undead is the best at one target, -4.3 against Orc's -10.8, and
+         * loses 26 more at eight targets).
          */
-        race: 'gnome',
+        race: 'orc',
         characterClass: 'rogue',
         level: 60,
         combatStyle: 'dual_wield',
@@ -2854,6 +2869,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         food: 'food_agility',
         // +8 weapon damage on the main hand, by the owner.
         weapon_effect_main_hand: 'dense_sharpening_stone_main_hand',
+        potion_secondary: ROGUE_SECONDARY_POTION,
       },
       precombat: [
         ...before(1, 'blade_flurry'),
@@ -2889,6 +2905,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         food: 'food_agility',
         // +8 weapon damage on the main hand, by the owner.
         weapon_effect_main_hand: 'dense_sharpening_stone_main_hand',
+        potion_secondary: ROGUE_SECONDARY_POTION,
       },
       /*
        * STEALTH IS A STATE RATHER THAN A CAST, AND IS LISTED ANYWAY. A Rogue's
@@ -2957,6 +2974,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         other: 'thistle_tea',
         // +8 weapon damage on the main hand, by the owner.
         weapon_effect_main_hand: 'dense_sharpening_stone_main_hand',
+        potion_secondary: ROGUE_SECONDARY_POTION,
       },
       precombat: [
         ...before(2, 'stealth'),

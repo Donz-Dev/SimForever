@@ -23,6 +23,8 @@ import { runProfileBatch } from '../../src/simulator';
 
 /** Every entry the list declares, including the groups that narrow to nothing. */
 const OWNER_ORDER = [
+  // Round 80's end-of-fight Eviscerate, an addition at the top.
+  'eviscerate',
   // The mid-fight consumables OPEN this list, which is new.
   'major_mana_potion',
   'demonic_rune',
@@ -48,8 +50,11 @@ const OWNER_ORDER = [
 
 /** The seven the owner's screenshot actually shows. */
 const VENOM_ORDER = [
+  'eviscerate',
   'thistle_tea',
   'major_frenzy_potion',
+  // Round 80's Secondary Potion, behind its health gate.
+  'major_healing_potion',
   'slice_and_dice',
   'venom',
   'cold_blood',
@@ -57,8 +62,11 @@ const VENOM_ORDER = [
   'mutilate',
 ];
 
+/** The owner's entry for an ability: round 80's end-of-fight Eviscerate is the one that reads the clock. */
 const entryFor = (abilityId: string) => {
-  const found = ROGUE_VENOM.entries.find((entry) => entry.abilityId === abilityId);
+  const found = ROGUE_VENOM.entries.find(
+    (entry) => entry.abilityId === abilityId && !JSON.stringify(entry.condition ?? {}).includes('fightRemaining'),
+  );
   if (!found) throw new Error(`${abilityId} is not in the Venom list`);
   return found;
 };
@@ -104,7 +112,7 @@ describe('the Venom list', () => {
     expect(ROGUE_VENOM.entries.map((entry) => entry.abilityId)).toEqual(OWNER_ORDER);
   });
 
-  it('narrows to the seven entries the owner can see', () => {
+  it('narrows to the seven entries the owner can see, plus the two round 80 adds', () => {
     expect(lit(PRESETS_BY_ID.get('rogue_venom')!.build().rotation.entries).map((e) => e.abilityId)).toEqual(
       VENOM_ORDER,
     );
@@ -229,7 +237,10 @@ describe('Cold Blood takes no global cooldown', () => {
     expect(coldBloods.length, 'Cold Blood never fired, so this proves nothing').toBeGreaterThan(0);
 
     for (const coldBlood of coldBloods) {
-      const next = casts.find((event) => event.timestamp >= coldBlood.timestamp && event !== coldBlood);
+      // AFTER Cold Blood in the stream, not merely at or after its timestamp: an
+      // off-GCD Thistle Tea drunk in the same millisecond BEFORE it is not what
+      // followed it.
+      const next = casts.slice(casts.indexOf(coldBlood) + 1)[0];
       expect(next, 'nothing followed Cold Blood').toBeDefined();
       expect(next!.type === 'cast' && next!.abilityId, 'what followed Cold Blood').toBe('eviscerate');
       const gap = next!.timestamp - coldBlood.timestamp;
