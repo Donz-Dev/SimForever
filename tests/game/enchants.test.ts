@@ -731,6 +731,9 @@ describe('what each of the 29 profiles opens with', () => {
      */
     'druid_bear gloves': '+2% Threat',
     'druid_bear feet': '+7 Agility',
+    // Round 80: +10.6 weighted TPS for +0.014 deaths, now the ramp is capped.
+    'druid_bear head': '+8 Agility',
+    'druid_bear legs': '+8 Agility',
     'druid_resto head': '+8 Intellect',
     'druid_resto legs': '+8 Intellect',
     /*

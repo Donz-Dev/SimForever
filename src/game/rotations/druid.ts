@@ -13,6 +13,8 @@ import {
   all,
   comboPoints,
   compileRotation,
+  fightElapsed,
+  fightRemaining,
   not,
   onCooldown,
   ready,
@@ -23,6 +25,7 @@ import {
   selfStacks,
   targetExpired,
   targetHas,
+  targetTime,
 } from './apl';
 import type { CombatStyleId } from '../character';
 import type { TalentAllocation } from '../talents/Talent';
@@ -120,6 +123,13 @@ const energyAtMost = (maximum: number) => resource('atMost', maximum, 'energy');
  * A Clearcasting Shred costs nothing and is left alone.
  * ============================================================================
  */
+/** Round 80: no Rake with less than this much fight left. */
+export const CAT_RAKE_LAST_SECONDS = 6;
+/** Round 80: Ferocious Bite rather than Rip with less than this much fight left. */
+export const CAT_RIP_LAST_SECONDS = 8;
+/** Round 80: Ferocious Bite at five points while Rip has at least this long left. */
+export const CAT_BITE_RIP_SECONDS = 4;
+
 const BERSERK_POOL_ENERGY = 74;
 const berserkSetUp = all(onCooldown('shifting_power'), targetHas('rake'), targetHas('rip'));
 const poolingForBerserk = all(
@@ -191,6 +201,11 @@ const hasDebuff = targetHas;
  * tick and a seventh -- so "if not active" holds each one up for longer and the
  * list reaches Starfire more often.
  */
+/** The mana share below which the Moonkin drinks its mana potion (round 80). */
+export const MOONKIN_MANA_POTION_FRACTION = 0.5;
+/** The fight left below which the Moonkin stops refreshing its DoTs (round 80). */
+export const MOONKIN_DOT_LAST_SECONDS = 8;
+
 export const DRUID_MOONKIN: AplList = {
   name: 'Druid (Moonkin)',
   entries: [
@@ -202,8 +217,26 @@ export const DRUID_MOONKIN: AplList = {
    * so what it buys is thirty seconds of spell power from the pull rather than
    * from one cast later.
    */
-  buffPotionCooldown('major_spellblasting_potion'),
-  ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
+  /*
+   * THE TWO POTIONS (round 80): THE MANA POTION FIRST WHEN THE POOL IS LOW,
+   * THE SPELLBLASTING POTION WHILE IT IS NOT. They share the two-minute potion
+   * cooldown, so at the pull -- full mana -- the Spellblasting Potion goes out
+   * exactly as before, and the question is what the SECOND cooldown buys. The
+   * build is mana-bound past two minutes, so at 180 s this is **+35.8 +/- 2.9**
+   * against Spellblasting again (30%: +25.8); at 120 s it is +0.0 noise,
+   * because the second cooldown arrives at the end of the fight.
+   */
+  {
+    abilityId: 'major_mana_potion',
+    condition: all(resourceFraction('atMost', MOONKIN_MANA_POTION_FRACTION, 'mana'), fightElapsed('atLeast', 60)),
+    note: 'Secondary Potion: under 50% mana once 60 s have passed (round 80).',
+  },
+  {
+    ...buffPotionCooldown('major_spellblasting_potion'),
+    condition: resourceFraction('above', MOONKIN_MANA_POTION_FRACTION, 'mana'),
+    note: 'Primary Potion: +40 Spell Power for 30 s, while mana is above 50% -- at the pull, and on a later cooldown only if mana is not short (round 80).',
+  },
+  ...consumableCooldowns({ exclude: ['major_spellblasting_potion', 'major_mana_potion'] }),
   ...CONSUMABLE_HEALS,
   /*
    * THE RACIAL COOLDOWNS, BESIDE THE CONSUMABLES AS EVERYWHERE ELSE.
@@ -243,8 +276,13 @@ export const DRUID_MOONKIN: AplList = {
    * measured within a few DPS of 10% at both longer lengths.
    */
   { abilityId: 'innervate', condition: resourceFraction('atMost', 0.1, 'mana') },
-  { abilityId: 'insect_swarm', condition: expired('insect_swarm') },
-  { abilityId: 'moonfire', condition: expired('moonfire') },
+  /*
+   * NOT REFRESHED IN THE LAST EIGHT SECONDS (round 80): a DoT cast that late
+   * delivers a tick or two for a global cooldown a Starfire would have used.
+   * **+2.21 +/- 0.93** at 120 s; 4 s +1.01 and 12 s +1.28.
+   */
+  { abilityId: 'insect_swarm', condition: all(expired('insect_swarm'), fightRemaining('atLeast', MOONKIN_DOT_LAST_SECONDS)) },
+  { abilityId: 'moonfire', condition: all(expired('moonfire'), fightRemaining('atLeast', MOONKIN_DOT_LAST_SECONDS)) },
   /*
    * TWO STARFIRE ENTRIES, and the second is not a duplicate. Eclipse charges
    * shorten Starfire's cast and Nature's Grace shortens every cast AND the
@@ -356,7 +394,18 @@ export const DRUID_CAT: AplList = {
    * when it is drunk is thrown away: ten wastes half what twenty does and opens
    * half as often. See `TIGHT_THISTLE_TEA_ENERGY_THRESHOLD`.
    */
-  ...consumableCooldowns({ thistleTeaEnergy: TIGHT_THISTLE_TEA_ENERGY_THRESHOLD }),
+  /*
+   * THE SECONDARY POTION (round 80): Mighty Rage, on the second potion cooldown
+   * only, so the owner's Frenzy Potion is still the one drunk at the pull. A Cat
+   * gains no rage, so the stock rage gate below would put Mighty Rage out at the
+   * pull ahead of the Frenzy; this entry replaces it. +0.56 +/- 1.94 at 180 s
+   * (noise), and a Major Mana Potion there -0.08: the Cat is not mana-bound.
+   */
+  { abilityId: 'mighty_rage_potion', condition: fightElapsed('atLeast', 60) },
+  ...consumableCooldowns({
+    thistleTeaEnergy: TIGHT_THISTLE_TEA_ENERGY_THRESHOLD,
+    exclude: ['mighty_rage_potion'],
+  }),
   /*
    * ==========================================================================
    * THE MIGHTY RAGE POTION IS BACK, AT THE PULL, which reverses a swap this
@@ -430,7 +479,28 @@ export const DRUID_CAT: AplList = {
    * the build is not doing, where a finisher at five points can wait a global
    * cooldown without losing anything -- the points do not decay.
    */
+  /*
+   * ROUND 80, THREE ADDITIONS AROUND THE OWNER'S RAKE AND RIP LINES, which are
+   * left exactly as written. Together **+6.34 +/- 3.46** at 120 s (rewriting
+   * the two gates instead measures +8.80 +/- 3.50, inside the same interval):
+   *
+   * - A SHRED ABOVE RAKE IN THE LAST SIX SECONDS, so a Rake whose bleed would
+   *   outlast the fight is not cast (with the next one, +3.46);
+   * - FEROCIOUS BITE ABOVE RIP IN THE LAST EIGHT SECONDS, where a twelve-second
+   *   Rip would mostly tick after the fight (+3.34 alone; 6 s +4.1, 10 s +3.4);
+   * - FEROCIOUS BITE AT FIVE POINTS WHILE RIP HAS FOUR SECONDS OR MORE, above
+   *   the Shred filler: the points that would overflow while Rip is up (3 s
+   *   +3.6 noise, 5 s +6.6, 6 s and up never reached).
+   */
+  {
+    abilityId: 'shred',
+    condition: all(expired('rake'), fightRemaining('below', CAT_RAKE_LAST_SECONDS)),
+  },
   { abilityId: 'rake', condition: expired('rake') },
+  {
+    abilityId: 'ferocious_bite',
+    condition: all(atLeastPoints(MAX_COMBO_POINTS), fightRemaining('below', CAT_RIP_LAST_SECONDS)),
+  },
   /*
    * AND RIP ONLY WHEN RIP IS NOT ALREADY UP, which is the owner's new second
    * clause and is a guard against the thing this project calls a clipped
@@ -446,6 +516,10 @@ export const DRUID_CAT: AplList = {
   {
     abilityId: 'rip',
     condition: all(atLeastPoints(MAX_COMBO_POINTS), expired('rip')),
+  },
+  {
+    abilityId: 'ferocious_bite',
+    condition: all(atLeastPoints(MAX_COMBO_POINTS), targetTime('atLeast', CAT_BITE_RIP_SECONDS, 'rip')),
   },
   { abilityId: 'shred', condition: not(poolingForBerserk) },
   ],

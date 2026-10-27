@@ -801,7 +801,18 @@ const ROGUE_HEMO_TALENTS: TalentAllocation = {
  */
 /*
  * ============================================================================
- * MOONKIN -- 38 Balance / 13 Restoration (round 78), was 41/0/10.
+ * MOONKIN -- 41 Balance / 10 Restoration AGAIN (round 80), was 38/0/13.
+ *
+ * ROUND 80 CHOSE ON THE OWNER'S WEIGHTED SCORE (49% single target at 120 s,
+ * 17% each at 3/60 s, 5/60 s and 8/30 s), and Genesis 5 without Reflection is
+ * **+2.58 +/- 1.65** on it (t1 +3.2, t3 +6.1, t5 and t8 bit-identical: the
+ * Multi Target list opens on Hurricane, a channel Genesis does not reach). With
+ * Wind Blessed's 2% haste and the round 79 rules the 120 s fight is no longer
+ * mana-bound (9% spare), so the paragraph below about 120 s has expired.
+ * Genesis 4/3 with Reflection 1/2 and Moonglow traded for Reflection all lose
+ * or are noise.
+ *
+ * WHAT FOLLOWS IS ROUND 78'S RECORD:
  *
  * ROUND 78 PUT REFLECTION BACK, AND THE CLOCK IS WHY. The paragraph below
  * priced Genesis over Reflection at **60s**, where this build ends with ~20% of
@@ -841,7 +852,7 @@ const ROGUE_HEMO_TALENTS: TalentAllocation = {
  */
 const DRUID_MOONKIN_TALENTS: TalentAllocation = {
   improved_wrath: 5,
-  genesis: 2,
+  genesis: 5,
   moonglow: 3,
   improved_moonfire: 2,
   nature_s_majesty: 2,
@@ -856,16 +867,20 @@ const DRUID_MOONKIN_TALENTS: TalentAllocation = {
   moonkin_form: 1,
   nature_s_focus: 5,
   naturalist: 5,
-  reflection: 3,
 };
 
+/*
+ * ROUND 80: FERAL SWIFTNESS 2 -> FEROCITY 5, **+5.85 +/- 3.92** on the weighted
+ * score (t1 +2.7, t8 +16.8). Feral Swiftness was the two points that reach tier
+ * 10 and bought only dodge on a Cat nothing attacks; Ferocity's last two ranks
+ * reach tier 10 as well and take Rake from 37 energy to 35.
+ */
 const DRUID_CAT_TALENTS: TalentAllocation = {
   genesis: 5,
   nature_s_majesty: 2,
   nature_s_reach: 2,
-  ferocity: 3,
+  ferocity: 5,
   heart_of_the_wild: 5,
-  feral_swiftness: 2,
   shredding_attacks: 3,
   savage_fury: 2,
   sharpened_claws: 2,
@@ -881,17 +896,22 @@ const DRUID_CAT_TALENTS: TalentAllocation = {
   naturalist: 3,
 };
 
+/*
+ * ROUND 80: FERAL CHARGE 1 -> FEROCITY 5, **+15.05 +/- 4.95** weighted TPS at
+ * 800 fights a column (t1 +10.2, t3 +39.2, t5 +21.0). Feral Charge is a root
+ * and an interrupt, both out of scope; Ferocity's fifth rank takes a rage off
+ * Maul, Primal Bite and Swipe. Deaths at 120 s -0.007 +/- 0.040.
+ */
 const DRUID_BEAR_TALENTS: TalentAllocation = {
   genesis: 5,
   nature_s_majesty: 2,
   nature_s_reach: 2,
-  ferocity: 4,
+  ferocity: 5,
   heart_of_the_wild: 5,
   feral_swiftness: 2,
   feral_instinct: 3,
   thick_hide: 3,
   savage_fury: 2,
-  feral_charge: 1,
   sharpened_claws: 2,
   primal_bite: 1,
   predatory_strikes: 3,
@@ -2974,19 +2994,19 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'druid_moonkin',
     label: 'Moonkin',
-    detail: 'High Order Skyborne, Moonkin Form, standing target. 38 Balance / 13 Restoration',
+    detail: 'Windshaper Skyborne, Moonkin Form, standing target. 41 Balance / 10 Restoration',
     characterClass: 'druid',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Moonkin',
         /*
-         * HIGH ORDER SKYBORNE SINCE ROUND 78, was Tauren: Wind Blessed's 3%
-         * haste beside Reflection is **+8.4** over Reflection alone at 120s
-         * (+49.6 against +41.3, both paired against the Tauren build). Tauren's
-         * 2% crit damage and 5% health are worth less to a caster nothing hits.
+         * WINDSHAPER SKYBORNE SINCE ROUND 80 (High Order Skyborne is no longer
+         * allowed): the two share Wind Blessed and run BIT-IDENTICAL fights.
+         * Tauren is **-18.68 +/- 2.39** on the weighted score -- Endurance is
+         * health only since round 79, worth nothing to a caster nothing hits.
          */
-        race: 'high_order_skyborne',
+        race: 'windshaper_skyborne',
         characterClass: 'druid',
         level: 60,
         combatStyle: 'moonkin',
@@ -3005,7 +3025,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * physical share is and nothing more -- see HANDOVER for the figure.
        */
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: casterConsumables('school_arcane'),
+      /*
+       * THE SECONDARY POTION IS THE MAJOR MANA (round 80), and the list decides:
+       * Spellblasting while mana is above half, Major Mana under half once a
+       * minute has passed -- +35.8 at 180 s, +0.0 at 120 s. Nature school power
+       * for Arcane is -2.18 weighted; Spirit for Intellect -4.84.
+       */
+      consumables: { ...casterConsumables('school_arcane'), potion_secondary: 'secondary_major_mana_potion' },
       /*
        * MOONKIN FORM IS A STATE RATHER THAN A CAST, AND IS LISTED ANYWAY -- on
        * the owner's instruction, and it is the example they used: "Even if lines
@@ -3017,6 +3043,13 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       precombat: [
         ...before(3, 'moonkin_form'),
         ...before(1.5, 'wrath'),
+        /*
+         * INSECT SWARM AT THE PULL (round 80), ours: a pure DoT at a 0s lead,
+         * so its first tick is after the pull and the Wrath stays the one
+         * damaging action (Gate B). **+5.46 +/- 4.52** at 120 s -- a global
+         * cooldown the fight no longer spends.
+         */
+        ...before(0, 'insect_swarm'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -3024,13 +3057,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'druid_cat',
     label: 'Cat',
-    detail: 'Tauren, Cat Form, standing target. 35 Feral Combat',
+    detail: 'Windshaper Skyborne, Cat Form, standing target. 34 Feral Combat',
     characterClass: 'druid',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Cat',
-        race: 'tauren',
+        // WINDSHAPER SKYBORNE SINCE ROUND 80, was Tauren: Wind Blessed's 2% haste
+        // is +8.91 +/- 3.58 on the weighted score; Endurance is health only.
+        race: 'windshaper_skyborne',
         characterClass: 'druid',
         level: 60,
         combatStyle: 'cat',
@@ -3089,6 +3124,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         food: 'food_strength',
         // Major Frenzy Potion where Mighty Rage was, by the owner.
         potion: 'major_frenzy_potion',
+        // Round 80: Mighty Rage as the Secondary Potion, on the second cooldown.
+        potion_secondary: 'secondary_mighty_rage_potion',
         // +8 weapon damage on the main hand, by the owner.
         weapon_effect_main_hand: 'dense_sharpening_stone_main_hand',
       },
@@ -3133,13 +3170,17 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'druid_bear',
     label: 'Bear',
-    detail: 'Tauren, Bear Form, target swings back. 42 Feral Combat',
+    detail: 'Windshaper Skyborne, Bear Form, target swings back. 42 Feral Combat',
     characterClass: 'druid',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Bear',
-        race: 'tauren',
+        // WINDSHAPER SKYBORNE SINCE ROUND 80, was Tauren: with Ferocity 5 and the
+        // agility enchants, +9.7 weighted TPS on top (+35.37 against +25.66 for
+        // the pair without it); Endurance's 5% health is worth little now the
+        // ramp is capped and the Bear dies 0.09 times in two minutes.
+        race: 'windshaper_skyborne',
         characterClass: 'druid',
         level: 60,
         combatStyle: 'bear',
@@ -3166,6 +3207,10 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         ...STRENGTH_CONSUMABLES,
         blasted_lands: 'blasted_agility',
         food: 'food_agility',
+        // Round 80: the Major Healing Potion as the Secondary, on the stock half-health
+        // gate; the owner's Mighty Rage is drunk at the pull, so this is the second
+        // cooldown's. +0.13 TPS and -0.003 deaths, both noise; a Frenzy there is -2.30.
+        potion_secondary: 'secondary_major_healing_potion',
       },
       /*
        * THE ONE DRUID PROFILE THAT IS HIT BACK, which is the whole point of
@@ -4493,13 +4538,20 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
      */
     id: 'druid_resto',
     label: 'Resto Drood',
-    detail: 'Night Elf, caster staff, a healer. 11 Balance / 40 Restoration',
+    detail: 'Tauren, caster staff, a healer. 11 Balance / 40 Restoration',
     characterClass: 'druid',
     build: () => ({
       ...createDefaultProfile(),
       character: {
         name: 'Resto Drood',
-        race: 'night_elf',
+        /*
+         * TAUREN SINCE ROUND 80 (Night Elf is no longer allowed). Tauren is
+         * -7.76 +/- 3.04 weighted HPS against the old Night Elf build and
+         * Windshaper Skyborne -19.52 +/- 6.33: Wind Blessed's haste is +5.0 in
+         * the tank fight and **-44.1** in the raid fight, which is mana-bound,
+         * so casting faster empties the pool sooner.
+         */
+        race: 'tauren',
         characterClass: 'druid',
         level: 60,
         combatStyle: 'caster',
@@ -4512,6 +4564,10 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         flask: 'flask_spell_power',
         food: 'food_healing_power',
         potion: 'major_mana_potion',
+        // Round 80: the Secondary names the Major Mana again, one ability. No second
+        // potion heals: Spellblasting is spell power, which a heal does not read, and
+        // Mender's is unmodelled. The mana gate swept 20-50% is noise in both fights.
+        potion_secondary: 'secondary_major_mana_potion',
         other: 'demonic_rune',
       },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
