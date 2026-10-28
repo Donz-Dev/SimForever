@@ -217,7 +217,7 @@ describe('where it lands, and where it correctly does not', () => {
      * Shockadin casts Seal of Righteousness, which uses it.
      * ------------------------------------------------------------------------
      */
-    const shockadin = characterFor('pally_shockadin', 'paladin');
+    const shockadin = characterFor('pally_shockadin_2h', 'paladin');
     /*
      * ========================================================================
      * THIRTY PERCENT OF INTELLECT, HALVED AGAIN, AND THIS IS THE TALENT'S

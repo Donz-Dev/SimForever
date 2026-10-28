@@ -984,7 +984,7 @@ describe('Sanctified Judgement', () => {
   });
 
   it('registers as a cast reaction on both builds that take it', () => {
-    for (const preset of ['pally_ret', 'pally_shockadin']) {
+    for (const preset of ['pally_ret', 'pally_shockadin_2h']) {
       const ids = presetPlayer(preset).castReactions.map((r) => r.id);
       expect(ids, preset).toContain('sanctified_judgement');
     }
@@ -1013,11 +1013,11 @@ describe('Divine Favor', () => {
      * before the spell rolled anything and the talent would do nothing at all.
      * Cast reactions run after `onCast`.
      */
-    const p = built('pally_shockadin');
+    const p = built('pally_shockadin_2h');
     const actor = makeAttacker({
       autoAttack: 'none',
       abilities: abilitiesForClass('paladin', p.character.combatStyle as never, p.talents),
-      castReactions: [...presetPlayer('pally_shockadin').castReactions],
+      castReactions: [...presetPlayer('pally_shockadin_2h').castReactions],
       resources: [{ type: 'mana', maximum: 100_000 }],
     });
     const target = makeTarget({ maxHealth: 1_000_000 });
@@ -1080,7 +1080,7 @@ describe('Divine Favor', () => {
   });
 
   it('is granted by the talent, so a build without it cannot cast it', () => {
-    expect(bareBuild('pally_shockadin').abilities.get('divine_favor')).toBeDefined();
+    expect(bareBuild('pally_shockadin_2h').abilities.get('divine_favor')).toBeDefined();
     expect(bareBuild('pally_ret').abilities.get('divine_favor')).toBeUndefined();
   });
 });
@@ -1151,13 +1151,14 @@ describe('Toughness, which is where itemArmorPercent now lives', () => {
     expect(naked.stats.effective.armor).toBe(plain.stats.effective.armor);
   });
 
-  it('is taken by no Paladin preset, which is a BUILD cause', () => {
+  it('is taken by no damage or tank Paladin preset, which is a BUILD cause', () => {
     /*
      * The Prot Pally spends its 34 Protection points elsewhere, so this talent
-     * is correctly worth zero to every profile -- and that is why the tests
-     * above build their own character rather than reading one.
+     * is correctly worth zero to every damage and tank profile -- and that is
+     * why the tests above build their own character rather than reading one.
+     * (Holy Pal takes 5/5, and is a healer nothing attacks.)
      */
-    for (const preset of ['pally_ret', 'pally_shockadin', 'prot_pally']) {
+    for (const preset of ['pally_ret', 'pally_shockadin_2h', 'prot_pally']) {
       expect(built(preset).talents.toughness, preset).toBeUndefined();
     }
   });
@@ -1180,7 +1181,7 @@ describe('Vindication', () => {
      * every Paladin having it.
      */
     expect(presetPlayer('pally_ret').reactions.map((r) => r.id)).toContain('vindication');
-    expect(presetPlayer('pally_shockadin').reactions.map((r) => r.id)).toContain('vindication');
+    expect(presetPlayer('pally_shockadin_2h').reactions.map((r) => r.id)).toContain('vindication');
     expect(presetPlayer('prot_pally').reactions.map((r) => r.id)).not.toContain('vindication');
   });
 });
@@ -1195,7 +1196,7 @@ describe('Eye for an Eye', () => {
   it('is inert because of the BUILD, which is the cause that expires per profile', () => {
     // Only Protection is attacked and Protection does not take it. The effect
     // is declared, so the day a profile spends the points it works.
-    for (const preset of ['pally_ret', 'pally_shockadin', 'prot_pally']) {
+    for (const preset of ['pally_ret', 'pally_shockadin_2h', 'prot_pally']) {
       expect(presetPlayer(preset).reactions.map((r) => r.id), preset).not.toContain(
         'eye_for_an_eye',
       );
@@ -1288,7 +1289,7 @@ describe("Templar's Bulwark, whose reason had simply expired", () => {
      */
     expect(bareBuild('prot_pally').abilities.get('templars_bulwark')).toBeDefined();
     expect(bareBuild('pally_ret').abilities.get('templars_bulwark')).toBeUndefined();
-    expect(bareBuild('pally_shockadin').abilities.get('templars_bulwark')).toBeUndefined();
+    expect(bareBuild('pally_shockadin_2h').abilities.get('templars_bulwark')).toBeUndefined();
   });
 
   it('is shortened by Sacred Duty, which names it explicitly', () => {

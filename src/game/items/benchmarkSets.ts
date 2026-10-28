@@ -418,11 +418,21 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * cannot miss. Plate, a caster mace and a shield, the arrangement the
    * Shockadin already uses. `healer` puts a healing power floor on every slot
    * and keeps the stamina floor on the armour; intellect, spirit and crit
-   * compete for the rest, in that order. idBlock 31; A NEW ROW TAKES 32.
+   * compete for the rest, in that order. idBlock 31; A NEW ROW TAKES 40 (round 82).
    */
   // Frost Mage (round 59): the Frostfire Mage's specification, which is what the
   // owner's saved build wore, under its own name and id block.
   { idBlock: 32, presetId: 'mage_frost', characterClass: 'mage', label: 'Frost Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  /*
+   * THE OWNER'S THREE SAVED 3-TARGET BUILDS (round 82), each on the template its
+   * saved file wore, under its own name and id block. SPELLHANCE IS THE ONE
+   * CHANGE: the file held Premier High Warlord's War Staff, a real item, and
+   * the owner chose an E65 template caster staff instead, so its row is the Enh
+   * Shaman's with a staff in place of the borrowed Ret mace.
+   */
+  { idBlock: 37, presetId: 'hunter_survival_weave', characterClass: 'hunter', label: 'Survival Weave', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
+  { idBlock: 38, presetId: 'shaman_spellhance', characterClass: 'shaman', label: 'Spellhance', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina'], armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
+  { idBlock: 39, presetId: 'warlock_sm_ruin', characterClass: 'warlock', label: 'SM Ruin', hit: 130, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   // Piss Beam (round 60): Holy Pal's healer specification in Mail.
   { idBlock: 35, presetId: 'priest_holy', characterClass: 'priest', label: 'Holy Priest', hit: 0, expertise: 0, preferred: ['Intellect', 'Spirit', 'Crit'], armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, healer: true },
   { idBlock: 36, presetId: 'priest_disc', characterClass: 'priest', label: 'Disc Priest', hit: 0, expertise: 0, preferred: ['Intellect', 'Spirit', 'Crit'], armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, healer: true },

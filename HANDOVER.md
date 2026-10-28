@@ -107,6 +107,68 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 82: three saved builds in, three presets out
+
+The owner sent three saved 3-target profiles to add, and named three presets to
+remove: **Shockadin** (not Shockadin 2H), **Sbolt Spam** and **Rupture**. The
+count stays at 37.
+
+| new preset | id | t1 120s | t3 60s | t5 60s | t8 30s | weighted |
+| --- | --- | --- | --- | --- | --- | --- |
+| Survival Weave | `hunter_survival_weave` | 1147.4 | 1647.3 | 1783.3 | 2059.6 | **1495.6** |
+| Spellhance | `shaman_spellhance` | 700.0 | 1326.5 | 1648.8 | 2230.8 | **1228.0** |
+| SM Ruin | `warlock_sm_ruin` | 907.1 | 1511.9 | 1952.6 | 2784.5 | **1506.8** |
+
+300 fights a cell. All three are Orc, which is legal for their classes.
+
+**THE LISTS ARE THE OWNER'S, CARRIED AS CUSTOM LISTS.** Each saved file held a
+customised copy of a stock list: LW Ranged's, Enh Shaman's and Sbolt Spam's,
+which is also what the stock dispatch picks for these talents. So each preset
+carries its file's list as a `custom` list, never re-derived, in both sections.
+The lists are data in `src/profiles/ownerLists.ts`, outside `game/rotations`,
+because `rotationIds.test.ts` requires every list there to be reached by a
+dispatch. `tests/profiles/ownerSavedProfiles.test.ts` gives them the check the
+registry would: every ability they name is in the built character's book.
+
+**WHAT CHANGED FROM THE FILES, TO MEET THE STANDARDS:**
+- **The fight is 1 target.** The files were saved at 3 targets; presets run 1,
+  and the report sets the count.
+- **SM Ruin's Single Target Hellfire is gated to 2+ targets**, on the owner's
+  ruling. As saved, it cast Hellfire 7.7 times at 1 target and never Shadow
+  Bolt: **675 -> 906 DPS** at 1T/120s. The Multi Target list keeps it ungated.
+- **Spellhance wears an E65 template caster staff**, on the owner's ruling. The
+  file held Premier High Warlord's War Staff, a real item. The staff comes from
+  a template row of its own (block 38): the Enh Shaman's stats with a staff.
+- **Spellhance loses Rage of the Farseer**: one opener line and two list
+  entries. It is the Enhancement talent this 22-point build does not take, so
+  none of the three could fire; they look copied from the Enh Shaman's list.
+- **Every profile has a Secondary Potion** (the round 79 rule), drunk in the
+  last 30 s: Major Frenzy for Survival Weave, Spellblasting for the other two.
+  The mana potion takes the shared cooldown first, so at 120 s it is a fallback.
+- Dropped: the other races' disabled racial entries, and notes that had been
+  copied from another entry and described a gate the entry does not have.
+
+Each new preset has its own template row (blocks 37, 38, 39) and enchant row,
+the enchants as the file carried them; all are legal for their slot.
+
+**THE RETIRED THREE KEEP THEIR GEAR TEMPLATE ROWS** (blocks 6, 18, 30). A saved
+profile may still hold one of their item ids, and `benchmarkShape.test.ts` pins
+that these three are the only template rows with no preset. **Shockadin's
+enchant row stays too**: `startingSets.ts` gives a new one-hand-and-shield or
+caster Paladin that set and loadout. `ROGUE_RUPTURE` and `WARLOCK_SBOLT` stay
+as stock lists, because dispatch still picks them for those talent shapes;
+Rupture is now a fourth list no preset reaches, and SM Ruin's talents claim Sbolt.
+
+**THE TESTS THAT USED THEM AS FIXTURES WERE RETARGETED, NOT WEAKENED.**
+- **Shockadin's** mechanism tests run on Shockadin 2H, which takes the same
+  talent block. One helper now divides out its Two-Handed Weapon
+  Specialization (x1.04) before reading Judgement's coefficient.
+- **Rupture's** run on `tests/helpers/ruptureRogue.ts`: Hemo Dagger with
+  Rupture's old talents, so Vanish into Ambush, Premeditation and the Rupture
+  list keep a character.
+- Removed only the assertions about the removed presets themselves: what
+  Shockadin wore, and "Hemo matches Rupture in every field".
+
 ## Round 81: racial tuning, and haste reaches only a spell's global cooldown
 
 | | what it was | effect |

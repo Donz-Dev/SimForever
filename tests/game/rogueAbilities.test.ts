@@ -33,6 +33,7 @@ import { comboPointsOn } from '../../src/game/combat/comboPoints';
 import { talentNumber } from '../../src/game/talents/talentValues';
 import { THISTLE_TEA_ABILITY } from '../../src/game/abilities/consumables';
 import { BLOOD_FURY_ABILITY } from '../../src/game/racials/abilities';
+import { ruptureRogueProfile } from '../helpers/ruptureRogue';
 
 /*
  * The Rogue's numbers, written out by hand from the beta client's spellbook
@@ -43,7 +44,8 @@ import { BLOOD_FURY_ABILITY } from '../../src/game/racials/abilities';
 const rogue = () => createPlayer({ race: 'orc', characterClass: 'rogue' });
 
 const batchOf = (preset: string, iterations: number, seed: number) => {
-  const built = PRESETS_BY_ID.get(preset)!.build();
+  // `rogue_rupture` is no longer a preset (round 82); its build is rebuilt by hand.
+  const built = preset === 'rogue_rupture' ? ruptureRogueProfile() : PRESETS_BY_ID.get(preset)!.build();
   return runProfileBatch({
     ...built,
     simulation: { ...built.simulation, iterations, seed },
@@ -386,10 +388,11 @@ describe('Preparation, and cooldown reset as an engine capability', () => {
   });
 
   it('is granted by the talent, so only the build that takes it has one', () => {
-    const rupture = PRESETS_BY_ID.get('rogue_rupture')!.build();
-    expect(rupture.talents.preparation).toBe(1);
+    // Hemo Dagger since the Rupture preset went (round 82); it takes the talent too.
+    const hemo = PRESETS_BY_ID.get('rogue_hemo')!.build();
+    expect(hemo.talents.preparation).toBe(1);
     expect(
-      abilitiesForClass('rogue', 'dual_wield', rupture.talents).map((a) => a.id),
+      abilitiesForClass('rogue', 'dual_wield', hemo.talents).map((a) => a.id),
     ).toContain('preparation');
 
     const venom = PRESETS_BY_ID.get('rogue_venom')!.build();
@@ -419,7 +422,8 @@ describe('Cutthroat, Ambush and Premeditation, none of which needed stealth', ()
    * --------------------------------------------------------------------------
    */
   const subtletyRogue = () => {
-    const built = PRESETS_BY_ID.get('rogue_rupture')!.build();
+    // The Rupture build, rebuilt by hand since its preset went (round 82).
+    const built = ruptureRogueProfile();
     return { built, book: abilitiesForClass('rogue', 'dual_wield', built.talents) };
   };
 
@@ -484,7 +488,7 @@ describe('Cutthroat, Ambush and Premeditation, none of which needed stealth', ()
      * Rogue carries one it can never cast. That is the honest state of the
      * ability: the thing that gates it is Cutthroat, and they do not take it.
      */
-    for (const preset of ['rogue_venom', 'rogue_combat', 'rogue_rupture']) {
+    for (const preset of ['rogue_venom', 'rogue_combat', 'rogue_hemo']) {
       const built = PRESETS_BY_ID.get(preset)!.build();
       const ids = abilitiesForClass('rogue', 'dual_wield', built.talents).map((a) => a.id);
       expect(ids, preset).toContain('ambush');
@@ -593,9 +597,7 @@ describe('Lethality, which named six abilities and could not reach them', () => 
       .toBeCloseTo(0.2, 6);
     expect(rogue('rogue_combat').abilityModifiers.for('sinister_strike').critMultiplierBonus)
       .toBeCloseTo(0.2, 6);
-    expect(
-      rogue('rogue_rupture').abilityModifiers.for('sinister_strike').critMultiplierBonus ?? 0,
-    ).toBe(0);
+    // The Rupture preset's Lethality 0/5 assertion went with the preset (round 82).
   });
 
   it('reaches the five abilities it names that exist, and nothing else', () => {

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
-import { ITEMS_BY_ID } from '../../src/game/items/itemData';
 import { characterAtCombatStart } from '../../src/simulator';
 import { ROGUE_HEMO, ROGUE_RUPTURE, rogueRotation } from '../../src/game/rotations/rogue';
+import { RUPTURE_TALENTS } from '../helpers/ruptureRogue';
 
 const built = (id: string) => PRESETS_BY_ID.get(id)!.build();
 const talentsOf = (id: string) =>
@@ -27,8 +27,7 @@ describe('the Hemo build', () => {
     const talents = talentsOf('rogue_hemo');
     expect(talents.hemorrhage).toBe(1);
     expect(talents.cutthroat ?? 0).toBe(0);
-    // And the Rupture build is the other way round on the second of those.
-    expect(talentsOf('rogue_rupture').cutthroat).toBe(5);
+    // (The Rupture preset it was compared against went in round 82.)
   });
 
   it('drops the whole Backstab engine', () => {
@@ -43,46 +42,8 @@ describe('the Hemo build', () => {
     expect(talents.ghostly_strike ?? 0).toBe(0);
   });
 
-  it('matches the Rupture preset in every field except the talents', () => {
-    /*
-     * THE OWNER'S SPECIFICATION IS "EXACTLY THE SAME EXCEPT THESE TALENTS", and
-     * a build is FIVE settings that have to agree -- class, playstyle, stance or
-     * form, gear, and whether the target swings back. Checking them one by one is
-     * the test that the new preset did not quietly inherit a different encounter
-     * or a different weapon set.
-     */
-    const hemo = built('rogue_hemo');
-    const rupture = built('rogue_rupture');
-    expect(hemo.character.race).toBe(rupture.character.race);
-    expect(hemo.character.characterClass).toBe(rupture.character.characterClass);
-    expect(hemo.character.level).toBe(rupture.character.level);
-    expect(hemo.character.combatStyle).toBe(rupture.character.combatStyle);
-    expect(hemo.character.stance).toBe(rupture.character.stance);
-    /*
-     * THE SAME GEAR, SLOT BY SLOT AND STAT BY STAT, BUT NOT THE SAME ITEM IDS.
-     *
-     * Each benchmark template generates its OWN items -- the Hemo set is
-     * numbered separately from the Rupture set -- so comparing the equipment
-     * objects compares the id allocator and not the gear. The two templates are
-     * identical in everything the budget reads (hit 120, expertise 10, the
-     * Rogue preference order, leather, two daggers), so what has to match is
-     * the stats, and a mismatch there is the thing this test exists to catch.
-     */
-    expect(Object.keys(hemo.equipment).sort()).toEqual(Object.keys(rupture.equipment).sort());
-    for (const slot of Object.keys(hemo.equipment)) {
-      const mine = ITEMS_BY_ID.get(
-        (hemo.equipment as Record<string, { itemId: number }>)[slot].itemId,
-      );
-      const theirs = ITEMS_BY_ID.get(
-        (rupture.equipment as Record<string, { itemId: number }>)[slot].itemId,
-      );
-      expect(mine?.stats, slot).toEqual(theirs?.stats);
-      expect(mine?.weapon?.speed, slot).toBe(theirs?.weapon?.speed);
-    }
-    expect(hemo.raidBuffs).toEqual(rupture.raidBuffs);
-    expect(hemo.encounter).toEqual(rupture.encounter);
-    expect(hemo.talents).not.toEqual(rupture.talents);
-  });
+  // "Matches the Rupture preset in every field except the talents" went with
+  // that preset in round 82: there is nothing left to match.
 
   it('holds two daggers, because Ambush needs one in the main hand', () => {
     const character = characterAtCombatStart(built('rogue_hemo') as never);
@@ -232,12 +193,13 @@ describe('which list a Subtlety Rogue runs', () => {
     expect(rogueRotation({ adrenaline_rush: 1 }).name).toContain('Combat');
   });
 
-  it('routes each of the five presets to its own list', () => {
+  it('routes each Rogue preset, and the old Rupture build, to its own list', () => {
     const listFor = (id: string) =>
       rogueRotation(talentsOf(id) as Readonly<Record<string, number>>).name;
     expect(listFor('rogue_venom')).toContain('Venom');
     expect(listFor('rogue_combat')).toContain('Combat');
-    expect(listFor('rogue_rupture')).toContain('Rupture');
+    // The Rupture preset is gone (round 82); its talents still select its list.
+    expect(rogueRotation(RUPTURE_TALENTS).name).toContain('Rupture');
     expect(listFor('rogue_hemo')).toContain('Hemo');
     // The fifth, and the one that forced the capstone clause into the dispatch.
     expect(listFor('rogue_combat_mut')).toContain('Combat Mut');

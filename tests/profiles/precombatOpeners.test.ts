@@ -110,11 +110,6 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
   rogue_venom: [],
   rogue_combat_mut: [[1, 'blade_flurry']],
   rogue_combat: [[1, 'blade_flurry']],
-  rogue_rupture: [
-    [2, 'stealth'],
-    [0, 'ambush'],
-    [0, 'major_frenzy_potion'],
-  ],
   rogue_hemo: [
     [2, 'stealth'],
     [0, 'ambush'],
@@ -155,6 +150,13 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
     [1.5, 'searing_totem'],
     [0, 'flame_shock'],
   ],
+  // Round 82: the owner's saved Spellhance, its opener as the file held it --
+  // less Rage of the Farseer, a talent this build does not take.
+  shaman_spellhance: [
+    [3, 'flametongue_weapon'],
+    [1.5, 'magma_totem'],
+    [0, 'flame_shock'],
+  ],
   mage_frostfire: [
     // The owner's, round 55: "It should be cast at T-10 seconds."
     [10, 'ice_barrier'],
@@ -174,10 +176,6 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
   pally_ret: [
     [3, 'seal_of_righteousness'],
     [1.5, 'seal_of_command'],
-    [0, 'judgement'],
-  ],
-  pally_shockadin: [
-    [1.5, 'seal_of_righteousness'],
     [0, 'judgement'],
   ],
   pally_shockadin_2h: [
@@ -222,9 +220,20 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
     [0, 'raptor_strike'],
     [0, 'strider_kick'],
   ],
+  // Round 82: the owner's saved Survival Weave, its opener as the file held it.
+  hunter_survival_weave: [
+    [60, 'aspect_of_the_hawk'],
+    [10, 'hunters_mark'],
+    [2.5, 'aimed_shot'],
+    [0, 'serpent_sting'],
+  ],
   warlock_smds: [[2.5, 'shadow_bolt']],
   warlock_firelock: [[2, 'incinerate']],
-  warlock_sbolt: [[2.5, 'shadow_bolt']],
+  // Round 82: the owner's saved SM Ruin, its opener as the file held it.
+  warlock_sm_ruin: [
+    [2.5, 'shadow_bolt'],
+    [0, 'corruption'],
+  ],
   // The owner gave this profile no opener; both lines are additions, below.
   warlock_demonology: [],
   shadow_priest: [
@@ -432,8 +441,6 @@ describe("the owner's openers are transcribed exactly", () => {
       [0, 'corruption', 'instant with Improved Corruption 5/5'],
       [0, 'siphon_life', 'alone after the other three, +4.6 at 120s'],
     ],
-    // Round 78: Corruption at 0s, instant with Improved Corruption -- +8.01 at 120s.
-    warlock_sbolt: [[0, 'corruption', '+8.01 +/- 6.46 at 120s']],
     warlock_demonology: [
       [1.5, 'searing_pain', '+19.43 against no opener, at 60s'],
       [0, 'bane_of_agony', '+13.88 at 60s; noise at 180s and 300s'],
@@ -582,7 +589,6 @@ describe('the seven lines that name a STATE rather than a cast', () => {
         'druid_moonkin:moonkin_form',
         'rogue_hemo:stealth',
         'rogue_pure_hemo:stealth',
-        'rogue_rupture:stealth',
       ].sort(),
     );
   });
@@ -600,7 +606,7 @@ describe('the seven lines that name a STATE rather than a cast', () => {
     expect(precombatStateFor(moonkin, 'cat_form')).toBeUndefined();
     expect(precombatStateFor(moonkin, 'stealth')).toBeUndefined();
 
-    const rogue = PRESETS_BY_ID.get('rogue_rupture')!.build();
+    const rogue = PRESETS_BY_ID.get('rogue_hemo')!.build();
     expect(precombatStateFor(rogue, 'stealth')).toBeDefined();
     expect(precombatStateFor(rogue, 'bear_form')).toBeUndefined();
   });

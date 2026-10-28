@@ -139,7 +139,8 @@ describe('a pre-combat Start Auto-attack', () => {
   });
 
   it('is added by the version 18 migration, so a saved file still swings', () => {
-    const preset = PRESETS_BY_ID.get('rogue_rupture')!.build();
+    // Hemo Dagger, a dual-wielder, since the Rupture preset went (round 82).
+    const preset = PRESETS_BY_ID.get('rogue_hemo')!.build();
     const strip = (list: typeof preset.precombat) => (list ?? []).filter((a) => !a.abilityId.startsWith('start_auto'));
     const old = {
       ...preset,

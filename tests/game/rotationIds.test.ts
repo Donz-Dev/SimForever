@@ -276,6 +276,12 @@ describe('the 25 profiles and their lists', () => {
     expect(unreached.map((list) => list.name)).toEqual([
       'WARRIOR_BATTLE',
       'WARRIOR_SHIELD',
+      /*
+       * AND THE RUPTURE LIST (round 82), whose preset the owner removed. Still
+       * what `rogueRotation` dispatches a Rupture-shaped build to, so it is a
+       * list a user can reach and not dead code.
+       */
+      'ROGUE_RUPTURE',
       'IMP_PRIORITY',
       'SUCCUBUS_PRIORITY',
     ]);

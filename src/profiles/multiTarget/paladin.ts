@@ -136,11 +136,6 @@ const HOLY_RAID: AplEntry[] = [
 
 export const PALADIN_MULTI_TARGET: MultiTargetDefaults = {
   pally_ret: { name: 'Paladin (Seal Twist Ret, AoE)', entries: spellblastingAtThePull(RET_AOE) },
-  pally_shockadin: {
-    name: 'Paladin (Shockadin, AoE)',
-    entries: spellblastingAtThePull(SHOCKADIN_AOE),
-    precombat: SHOCKADIN_AOE_PRECOMBAT,
-  },
   pally_shockadin_2h: {
     name: 'Paladin (Shockadin, AoE)',
     entries: spellblastingAtThePull(SHOCKADIN_AOE),

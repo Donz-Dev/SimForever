@@ -268,9 +268,10 @@ describe('the crit, hit and pet racials, after round 79', () => {
       COMMAND_PET_DAMAGE,
       12,
     );
-    // A Warlock with a demon out: Sbolt Spam summons none, so build one in.
+    // A Warlock with a demon out: SM Ruin keeps a Succubus, swapped for an Imp
+    // here so the demon is the one this test has always measured.
     const withImp = (race: 'orc' | 'troll') => {
-      const built = PRESETS_BY_ID.get('warlock_sbolt')!.build();
+      const built = PRESETS_BY_ID.get('warlock_sm_ruin')!.build();
       const simulation = new Simulation(
         trainingDummyEncounter({
           ...built,
@@ -1346,7 +1347,8 @@ describe('Touch of the Grave', () => {
     let heals = 0;
     const fights = 20;
     for (let i = 0; i < fights; i += 1) {
-      const built = PRESETS_BY_ID.get('rogue_rupture')!.build();
+      // Hemo Dagger, an Undead Rogue (Rupture, round 82's retired preset, was).
+      const built = PRESETS_BY_ID.get('rogue_hemo')!.build();
       const recorder = new TelemetryRecorder();
       const simulation = new Simulation(
         { ...trainingDummyEncounter(built), seed: 7000 + i },

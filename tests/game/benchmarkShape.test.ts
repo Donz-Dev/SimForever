@@ -184,11 +184,23 @@ describe('a template piece names its build, its set and its class', () => {
      * preset would mislabel every card in the set. Tests can see both layers.
      */
     for (const template of BENCHMARK_TEMPLATES) {
-      const preset = PRESETS_BY_ID.get(template.presetId)!;
+      const preset = PRESETS_BY_ID.get(template.presetId);
+      if (!preset) continue; // a retired preset's row; pinned below
       expect(`${template.presetId}: ${template.characterClass}`).toBe(
         `${template.presetId}: ${preset.build().character.characterClass}`,
       );
     }
+  });
+
+  it('keeps a row for exactly the three retired presets, and no other orphan', () => {
+    /*
+     * ROUND 82 RETIRED RUPTURE, SHOCKADIN AND SBOLT SPAM AND KEPT THEIR ROWS:
+     * a saved profile may still hold one of their item ids, and Shockadin's row
+     * is the starting set for a new one-hand-and-shield or caster Paladin. Any
+     * other row with no preset is a template nobody can reach.
+     */
+    const orphans = BENCHMARK_TEMPLATES.filter((t) => !PRESETS_BY_ID.has(t.presetId)).map((t) => t.presetId);
+    expect(orphans.sort()).toEqual(['pally_shockadin', 'rogue_rupture', 'warlock_sbolt']);
   });
 });
 

@@ -112,10 +112,8 @@ describe("the Shockadin's fast two-hander", () => {
     expect(profile.equipment.twoHand?.enchantId).toBeDefined();
     expect(ITEMS_BY_ID.get(profile.equipment.twoHand!.itemId)?.weapon?.speed).toBe(2);
 
-    const shield = PRESETS_BY_ID.get('pally_shockadin')!.build();
-    expect(shield.character.combatStyle).toBe('one_hand_shield');
-    expect(shield.equipment.twoHand).toBeUndefined();
-    expect(shield.equipment.mainHand?.enchantId).toBeDefined();
+    // The one-hand Shockadin PRESET is gone (round 82); its template row stays,
+    // and is what the `pally_shockadin` comparisons above read.
   });
 });
 

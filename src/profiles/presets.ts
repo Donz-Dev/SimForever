@@ -5,6 +5,14 @@ import {
   casterConsumables,
   hybridConsumables,
 } from '../game/buffs/consumables';
+import {
+  SM_RUIN_PRECOMBAT,
+  SM_RUIN_SINGLE,
+  SPELLHANCE_PRECOMBAT,
+  SPELLHANCE_SINGLE,
+  SURVIVAL_WEAVE_PRECOMBAT,
+  SURVIVAL_WEAVE_SINGLE,
+} from './ownerLists';
 import { withMultiTargetDefault } from './multiTarget';
 import { getCombatStyle } from '../game/character';
 import { RAID_BUFFS } from '../game/buffs/raidBuffs';
@@ -654,46 +662,6 @@ const ROGUE_PURE_HEMO_TALENTS: TalentAllocation = {
   dirty_deeds: 2,
   preparation: 1,
   hemorrhage: 1,
-};
-
-const ROGUE_RUPTURE_TALENTS: TalentAllocation = {
-  /*
-   * ==========================================================================
-   * THE ASSASSINATION TWELVE WERE RESPECIFIED, AND THE OTHER TWO TREES WERE
-   * NOT. Combat stays at 8 and Subtlety at 31; what moved is three talents
-   * inside the first tree, for a net of zero points.
-   *
-   *   Ruthlessness        2 -> 3
-   *   Lethality           2 -> 0
-   *   Relentless Strikes  0 -> 1
-   *
-   * READ OFF THE OWNER'S TALENT PANEL rather than a build URL, so the grid was
-   * decoded against `src/data/talents/rogue.json` by row and column and the
-   * three per-tree totals checked against the ones the panel prints -- 12, 8
-   * and 31. **A tree total is the cheap check that a decode is right**, and it
-   * is the one thing a screenshot states in words rather than in icons.
-   * ==========================================================================
-   */
-  malice: 5,
-  ruthlessness: 3,
-  relentless_strikes: 1,
-  improved_slice_and_dice: 3,
-  improved_eviscerate: 3,
-  lightning_reflexes: 2,
-  puncturing_wounds: 3,
-  camouflage: 5,
-  master_of_deception: 3,
-  opportunity: 2,
-  improved_ambush: 3,
-  initiative: 3,
-  ghostly_strike: 1,
-  improved_distract: 2,
-  premeditation: 1,
-  serrated_blades: 3,
-  preparation: 1,
-  hemorrhage: 1,
-  cutthroat: 5,
-  thousand_cuts: 1,
 };
 
 /**
@@ -1819,17 +1787,6 @@ const HOLY_PAL_TALENTS: TalentAllocation = {
   holy_conduit: 2,
 };
 
-const PALADIN_SHOCKADIN_TALENTS: TalentAllocation = {
-  ...SHOCKADIN_HOLY_BELOW_20,
-  holy_shock: 1,
-  consecrated_ground: 2,
-  ...SHOCKADIN_RET_BELOW_20,
-  holy_conduit: 2,
-  pursuit_of_justice: 1,
-  vengeance: 3,
-  champion_of_the_light: 3,
-};
-
 /**
  * THE FAST TWO-HANDER -- 22 Holy / 29 Retribution.
  *
@@ -2353,33 +2310,6 @@ const WARLOCK_DEMONOLOGY_TALENTS: TalentAllocation = {
   // Destruction, 18
   bane: 5,
   aftermath: 5,
-  ruin: 5,
-  agonizing_flames: 3,
-};
-
-/**
- * SBOLT SPAM -- 22 Affliction / 11 Demonology / 18 Destruction, the owner's
- * build, decoded from their talentsforever.com link:
- *
- *   https://talentsforever.com/warlock/60/055000201342-0050230001-0550005003-lmqtCBGIJK2LKTVWa-7
- */
-const WARLOCK_SBOLT_TALENTS: TalentAllocation = {
-  // Affliction, 22
-  suppression: 5,
-  improved_corruption: 5,
-  improved_bane_of_agony: 2,
-  amplify_curse: 1,
-  pandemic: 3,
-  malevolence: 4,
-  nightfall: 2,
-  // Demonology, 11
-  demonic_embrace: 5,
-  demonic_aegis: 2,
-  improved_voidwalker: 3,
-  demonic_sacrifice: 1,
-  // Destruction, 18
-  improved_shadow_bolt: 5,
-  bane: 5,
   ruin: 5,
   agonizing_flames: 3,
 };
@@ -2980,62 +2910,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
     }),
   },
   {
-    id: 'rogue_rupture',
-    label: 'Rupture',
-    detail: 'Undead, dual-wield, standing target. 31 Subtlety',
-    characterClass: 'rogue',
-    build: () => ({
-      ...createDefaultProfile(),
-      character: {
-        name: 'Rupture',
-        race: 'undead',
-        characterClass: 'rogue',
-        level: 60,
-        combatStyle: 'dual_wield',
-        stance: 'battle',
-      },
-      talents: { ...ROGUE_RUPTURE_TALENTS },
-      raidBuffs: [...PRESET_RAID_BUFFS],
-      /*
-       * AGILITY FOOD, THE THIRD ROGUE AND THE SIXTH FOOD RULING. Three of the
-       * five members of `AGILITY_CONSUMABLES` are named now; the Hemo Rogue
-       * and the melee Hunter are what is left.
-       */
-      consumables: {
-        ...AGILITY_CONSUMABLES,
-        other: 'thistle_tea',
-        food: 'food_agility',
-        // +8 weapon damage on the main hand, by the owner.
-        weapon_effect_main_hand: 'dense_sharpening_stone_main_hand',
-        potion_secondary: ROGUE_SECONDARY_POTION,
-      },
-      /*
-       * STEALTH IS A STATE RATHER THAN A CAST, AND IS LISTED ANYWAY. A Rogue's
-       * `openingAuras` carry the `stealth` aura -- the one thing about stealth
-       * this project models -- and `openingAuras` are applied BEFORE
-       * `onPrecombat`, so it is already true when the opener runs. The owner
-       * asked for the line to stay so the sequence reads completely; see
-       * `PRECOMBAT_STATES`.
-       *
-       * SO AMBUSH'S OWN GATE IS ALREADY SATISFIED -- a dagger main hand AND
-       * Cutthroat or Stealth -- and the pre-combat Ambush SPENDS that window
-       * exactly as the list's first entry used to.
-       */
-      precombat: [
-        ...before(2, 'stealth'),
-        // Premeditation is off the opener and the Major Frenzy Potion is on it
-        // at 0s, so it is drunk with the first Ambush -- the owner's round 37.
-        // AMBUSH FIRST, THEN THE POTION, in the same instant: a potion is a
-        // completed action and the owner's stealth rule ("almost every completed
-        // cast or attack breaks stealth ... the only thing that doesn't is a
-        // rogue's premeditation") would end Stealth before the Ambush. So the first
-        // Ambush does not carry the potion's attack power -- a question for the owner.
-        ...before(0, 'ambush', 'major_frenzy_potion'),
-      ],
-      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
-    }),
-  },
-  {
     /*
      * THE ID STAYS `rogue_hemo` WHILE THE LABEL BECOMES "Hemo Dagger".
      *
@@ -3608,6 +3482,60 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
     }),
   },
   {
+    /*
+     * ==================================================================
+     * SPELLHANCE, THE OWNER'S SAVED 3-TARGET BUILD (round 82): their "1308
+     * spellhance" file, an Elemental-majority Shaman swinging a two-handed
+     * caster staff. The lists are in `ownerLists.ts`. THE STAFF IS AN E65
+     * TEMPLATE STAFF by the owner's choice -- the file held Premier High
+     * Warlord's War Staff, a real item, and presets wear template gear only.
+     * ADDED: the Secondary Potion (Spellblasting, in the last 30 s).
+     * ==================================================================
+     */
+    id: 'shaman_spellhance',
+    label: 'Spellhance',
+    detail: 'Orc, two-handed caster staff, standing target. 29 Elemental / 22 Enhancement',
+    characterClass: 'shaman',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Spellhance',
+        race: 'orc',
+        characterClass: 'shaman',
+        level: 60,
+        combatStyle: 'two_hander',
+        stance: 'battle',
+      },
+      talents: {
+        concussion: 5, convection: 2, reverberation: 2, elemental_devastation: 3, elemental_alacrity: 3,
+        call_of_flame: 3, elemental_focus: 1, trial_by_fire: 2, lava_burst: 1, lightning_overload: 3,
+        elemental_fury: 4, thundering_strikes: 5, ancestral_knowledge: 3, mental_dexterity: 3,
+        elemental_weapons: 3, shamanistic_focus: 1, flurry: 4, stormstrike: 1, mental_quickness: 2,
+      },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: {
+        flask: 'flask_spell_power',
+        potion: 'major_mana_potion',
+        potion_secondary: 'secondary_major_spellblasting_potion',
+        other: 'demonic_rune',
+        weapon_effect_main_hand: 'weapon_spell_crit_main_hand',
+        strength: 'elixir_strength',
+        agility: 'elixir_agility',
+        attack_power: 'elixir_attack_power',
+        blasted_lands: 'blasted_strength',
+        mana_regen: 'mana_regen_12',
+        hit_points: 'hit_points_120',
+        armor: 'armor_450',
+        spell_power: 'spell_power_35',
+        school_spell_power: 'school_fire',
+        food: 'food_spell_power',
+      },
+      rotation: { source: 'custom', name: SPELLHANCE_SINGLE.name, entries: [...SPELLHANCE_SINGLE.entries] },
+      precombat: [...SPELLHANCE_PRECOMBAT],
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
     id: 'mage_frostfire',
     label: 'Frostfire',
     detail: 'Troll, caster, standing target. 29 Fire / 22 Frost',
@@ -3954,93 +3882,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
     }),
   },
   {
-    id: 'pally_shockadin',
-    label: 'Shockadin',
-    detail: 'Undead, 1H and a caster shield, standing target. 23 Holy / 28 Retribution',
-    characterClass: 'paladin',
-    build: () => ({
-      ...createDefaultProfile(),
-      character: {
-        name: 'Shockadin',
-        // UNDEAD SINCE ROUND 80: the only race a Paladin may be under the round 79 rule.
-        race: 'undead',
-        characterClass: 'paladin',
-        level: 60,
-        /*
-         * THE GEAR DECIDED THIS, and it used to be `two_hander`.
-         *
-         * The owner's Shockadin set is Azuresong Mageblade and Earth and Fire:
-         * a one-hander and a caster shield. A two-hand style deletes the main
-         * hand and both off-hand slots, so that set under that style is a
-         * Paladin holding nothing. Five settings have to agree, and this is the
-         * one that did not.
-         */
-        combatStyle: 'one_hand_shield',
-        stance: 'battle',
-      },
-      talents: { ...PALADIN_SHOCKADIN_TALENTS },
-      raidBuffs: [...PRESET_RAID_BUFFS],
-      /*
-       * THE SAME PAIR AS SEAL TWIST RET, and on this build the case is
-       * stronger rather than merely equal: the Shockadin is **74% Holy** by
-       * measured share, the highest of the four hybrids, so +150 Spell Power
-       * reaches nearly all of its damage. See the Retribution row above for
-       * why these are overrides and not an edit to the shared one.
-       *
-       * THE FLASK IS THE LARGEST SINGLE CONSUMABLE DECISION EITHER SHOCKADIN
-       * MAKES: +1200 Hit Points against it measures **-63** on the shield
-       * build and **-65** on the two-hander, on a profile nothing attacks.
-       */
-      /*
-       * BLASTED LANDS IS INTELLECT HERE, NOT STRENGTH, AND CHAMPION OF THE
-       * LIGHT IS THE WHOLE REASON. +25 Intellect is 60% of itself as SPELL
-       * POWER on this build -- plus Divine Intellect's 10% on top -- against
-       * +25 Strength's fifty attack power, and this profile is three-quarters
-       * Holy. Measured +2.9 on the shield build and +3.0 on the two-hander.
-       */
-
-      consumables: {
-        ...hybridConsumables({
-          school: 'school_holy',
-          meleeWeaponEffect: false,
-          blastedLands: 'blasted_intellect',
-        }),
-        flask: 'flask_spell_power',
-        food: 'food_spell_power',
-        // Frost Oil on the main hand, by the owner.
-        weapon_effect_main_hand: 'frost_oil_main_hand',
-        /*
-         * ROUND 80: THE MANA POTION AS THE SECONDARY, a safety net under 20%
-         * mana that a 120 s fight never reaches. What it changes is WHEN the
-         * primary is drunk: the list holds Spellblasting for the last 45 s.
-         */
-        potion_secondary: 'secondary_major_mana_potion',
-      },
-      precombat: [
-        ...before(1.5, 'seal_of_righteousness'),
-        ...before(0, 'judgement'),
-      ],
-      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
-    }),
-  },
-  /*
-   * ==========================================================================
-   * SHOCKADIN 2H -- THE SAME CHARACTER WITH THE OTHER WEAPON IN ITS HANDS.
-   *
-   * The owner asked for a fast two-hander as "an alternative to the template
-   * gear, not a replacement", and for the two setups to be optimised against
-   * each other. A PRESET is what can hold a whole setup: the talents, the
-   * enchants, the consumables and the list are all allowed to differ, and a
-   * style flip on one profile cannot carry four of those.
-   *
-   * ITS GEAR IS THE SHOCKADIN'S GEAR. The two benchmark templates differ in
-   * exactly one field -- which weapon plan is primary -- so every armour slot,
-   * both trinkets and the whole hit spread come out identical. That is the
-   * owner's "don't change the gear beyond the two weapon swaps I've
-   * identified", held by construction rather than by care.
-   * ==========================================================================
-   */
-  {
     id: 'pally_shockadin_2h',
     label: 'Shockadin 2H',
     detail: 'Undead, fast 2H mace, standing target. 23 Holy / 28 Retribution',
@@ -4380,6 +4221,56 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
     }),
   },
   {
+    /*
+     * ==================================================================
+     * SURVIVAL WEAVE, THE OWNER'S SAVED 3-TARGET BUILD (round 82): their
+     * "1658 survival weave" file -- the race, the talents, the consumables,
+     * both openers and both lists, the lists in `ownerLists.ts`. It wears the
+     * LW Ranged template's gear and enchants, as the file did, under a template
+     * row of its own. ADDED to the file: the Secondary Potion (Major Frenzy,
+     * in the last 30 s).
+     * ==================================================================
+     */
+    id: 'hunter_survival_weave',
+    label: 'Survival Weave',
+    detail: 'Orc, bow and a two-handed axe to weave with, no pet. 20 Marksmanship / 31 Survival',
+    characterClass: 'hunter',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Survival Weave',
+        race: 'orc',
+        characterClass: 'hunter',
+        level: 60,
+        combatStyle: 'ranged',
+        stance: 'battle',
+      },
+      talents: {
+        improved_tracking: 5, savage_strikes: 2, deflection: 3, surefooted: 3, clever_traps: 2,
+        predator_s_edge: 5, expose_prey: 2, strider_kick: 1, survivalist_s_discipline: 2,
+        lightning_reflexes: 5, lacerating_strikes: 1, lethal_attacks: 5, careful_aim: 5,
+        improved_stings: 3, lone_wolf: 1, efficiency: 1, trueshot_aura: 1, mortal_shots: 4,
+      },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: {
+        flask: 'flask_hit_points',
+        agility: 'elixir_agility',
+        attack_power: 'elixir_attack_power',
+        blasted_lands: 'blasted_agility',
+        mana_regen: 'mana_regen_12',
+        hit_points: 'hit_points_120',
+        armor: 'armor_450',
+        food: 'food_agility',
+        potion: 'major_mana_potion',
+        potion_secondary: 'secondary_major_frenzy_potion',
+        other: 'demonic_rune',
+      },
+      rotation: { source: 'custom', name: SURVIVAL_WEAVE_SINGLE.name, entries: [...SURVIVAL_WEAVE_SINGLE.entries] },
+      precombat: [...SURVIVAL_WEAVE_PRECOMBAT],
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
     id: 'warlock_smds',
     label: 'SM/DS',
     detail: 'Troll, caster, Imp sacrificed, standing target. 35 Affliction',
@@ -4442,6 +4333,59 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
     }),
   },
   {
+    /*
+     * ==================================================================
+     * SM RUIN, THE OWNER'S SAVED 3-TARGET BUILD (round 82): their "1614 sm
+     * ruin" file -- Affliction with Ruin, a Succubus kept out rather than
+     * sacrificed, the Spellstone, and Hellfire at several targets. The lists
+     * are in `ownerLists.ts`; its Single Target Hellfire is gated to two or
+     * more targets by the owner's ruling (675 -> 906 DPS at 1T/120s). ADDED:
+     * the Secondary Potion (Spellblasting, in the last 30 s).
+     * ==================================================================
+     */
+    id: 'warlock_sm_ruin',
+    label: 'SM Ruin',
+    detail: 'Orc, caster, Succubus out, standing target. 30 Affliction / 21 Destruction',
+    characterClass: 'warlock',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'SM Ruin',
+        race: 'orc',
+        characterClass: 'warlock',
+        level: 60,
+        combatStyle: 'caster',
+        stance: 'battle',
+        petFamily: 'imp',
+        summonedDemon: 'succubus',
+      },
+      talents: {
+        suppression: 5, amplify_curse: 1, improved_corruption: 5, improved_bane_of_agony: 2, pandemic: 3,
+        malevolence: 5, shadow_mastery: 5, improved_shadow_bolt: 2, bane: 5, nightfall: 2, ruin: 5,
+        improved_life_tap: 2, aftermath: 5, agonizing_flames: 3, bane_of_havoc: 1,
+      },
+      warlockStone: 'spellstone',
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: {
+        flask: 'flask_spell_power',
+        weapon_effect_main_hand: 'weapon_spell_crit_main_hand',
+        blasted_lands: 'blasted_intellect',
+        mana_regen: 'mana_regen_12',
+        hit_points: 'hit_points_120',
+        armor: 'armor_450',
+        spell_power: 'spell_power_35',
+        food: 'food_spell_power',
+        school_spell_power: 'school_shadow',
+        potion: 'major_mana_potion',
+        potion_secondary: 'secondary_major_spellblasting_potion',
+        other: 'demonic_rune',
+      },
+      rotation: { source: 'custom', name: SM_RUIN_SINGLE.name, entries: [...SM_RUIN_SINGLE.entries] },
+      precombat: [...SM_RUIN_PRECOMBAT],
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
     id: 'warlock_firelock',
     label: 'Firelock',
     detail: 'Troll, caster, Succubus sacrificed, standing target. 33 Destruction',
@@ -4497,41 +4441,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       precombat: [
         ...before(2, 'incinerate'),
         ...before(0, 'bane_of_agony'),
-      ],
-      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
-    }),
-  },
-  {
-    id: 'warlock_sbolt',
-    label: 'Sbolt Spam',
-    detail: 'Orc, caster, Imp sacrificed, standing target. 22 Affliction / 18 Destruction',
-    characterClass: 'warlock',
-    build: () => ({
-      ...createDefaultProfile(),
-      character: {
-        name: 'Sbolt Spam',
-        race: 'orc',
-        characterClass: 'warlock',
-        level: 60,
-        combatStyle: 'caster',
-        stance: 'battle',
-        // Sacrificed for +15% Shadow damage; no demon is summoned.
-        petFamily: 'imp',
-      },
-      talents: { ...WARLOCK_SBOLT_TALENTS },
-      // The Firelock's stone, consumables and raid, by the owner's instruction.
-      warlockStone: 'firestone',
-      raidBuffs: [...PRESET_RAID_BUFFS],
-      // Round 80: a Secondary Potion (the Major Mana Potion) below the owner's
-      // Spellblasting sequence; reached only past two minutes.
-      consumables: { ...casterConsumables('school_fire'), potion_secondary: 'secondary_major_mana_potion' },
-      // Shadow Bolt is 3.0s and Bane takes it to 2.5: started at t-2.5, it is the pull.
-      // Round 78 adds Corruption at 0s -- instant with Improved Corruption, a
-      // pure DoT and so legal at that lead -- for the global cooldown it saves:
-      // +8.01 +/- 6.46 at 120s.
-      precombat: [
-        ...before(2.5, 'shadow_bolt'),
-        ...before(0, 'corruption'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),

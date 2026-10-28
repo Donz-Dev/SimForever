@@ -479,7 +479,6 @@ describe('what selecting one does to the priority list', () => {
       rogue_venom: 'thistle_tea',
       rogue_combat_mut: 'thistle_tea',
       rogue_combat: 'thistle_tea',
-      rogue_rupture: 'thistle_tea',
       rogue_hemo: 'thistle_tea',
       rogue_pure_hemo: 'thistle_tea',
       druid_cat: 'thistle_tea',
@@ -491,7 +490,6 @@ describe('what selecting one does to the priority list', () => {
       mage_arcane: 'demonic_rune',
       mage_fire: 'demonic_rune',
       pally_ret: 'demonic_rune',
-      pally_shockadin: 'demonic_rune',
       pally_shockadin_2h: 'demonic_rune',
       bm_hunter: 'demonic_rune',
       lw_ranged: 'demonic_rune',
@@ -499,7 +497,6 @@ describe('what selecting one does to the priority list', () => {
       hawk_melee: 'demonic_rune',
       warlock_smds: 'demonic_rune',
       warlock_firelock: 'demonic_rune',
-      warlock_sbolt: 'demonic_rune',
       warlock_demonology: 'demonic_rune',
       shadow_priest: 'demonic_rune',
       // A pure mana user, so the owner's rule gives it the Rune.
@@ -513,6 +510,10 @@ describe('what selecting one does to the priority list', () => {
       // Round 73's two Priest healers, mana users like the rest.
       priest_holy: 'demonic_rune',
       priest_disc: 'demonic_rune',
+      // Round 82's three saved builds, all mana users.
+      hunter_survival_weave: 'demonic_rune',
+      shaman_spellhance: 'demonic_rune',
+      warlock_sm_ruin: 'demonic_rune',
     };
 
     // EXHAUSTIVE, so a new preset has to be classified rather than defaulting.

@@ -872,12 +872,14 @@ describe('Enchant Weapon - Revelation', () => {
        * fight, so the sample is wider than it was.
        * ========================================================================
        */
-      const built = PRESETS_BY_ID.get('pally_shockadin')!.build();
+      // The two-hand Shockadin since round 82, which removed the one-hand one:
+      // the same list and seal, so the enchant goes on its two-hander.
+      const built = PRESETS_BY_ID.get('pally_shockadin_2h')!.build();
       const profile = {
         ...built,
         equipment: {
           ...built.equipment,
-          mainHand: { ...built.equipment.mainHand!, enchantId: REVELATION_ENCHANT_ID },
+          twoHand: { ...built.equipment.twoHand!, enchantId: REVELATION_ENCHANT_ID },
         },
       };
 

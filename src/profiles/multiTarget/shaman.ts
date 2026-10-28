@@ -1,3 +1,4 @@
+import { SPELLHANCE_MULTI } from '../ownerLists';
 import type { MultiTargetDefaults } from './types';
 import type { AplCondition, AplEntry } from '../../game/rotations/apl';
 import { all, not, selfHas, selfStacks, targetCount, targetExpired, targetHas, targetTime } from '../../game/rotations/apl';
@@ -182,5 +183,11 @@ export const SHAMAN_MULTI_TARGET: MultiTargetDefaults = {
   shaman_resto: {
     name: 'Shaman (Restoration, raid)',
     entries: RESTORATION_RAID,
+  },
+  // The owner's saved build (round 82): its own Multi Target list, on the
+  // Single Target opener, which is what the saved file carried in both.
+  shaman_spellhance: {
+    name: SPELLHANCE_MULTI.name,
+    entries: SPELLHANCE_MULTI.entries,
   },
 };

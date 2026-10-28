@@ -32,6 +32,12 @@ const BLOCKS: Readonly<Record<string, number>> = {
   druid_resto: 34,
   priest_holy: 35,
   priest_disc: 36,
+  // The owner's saved 3-target builds (round 82). Rupture (6), Shockadin (18)
+  // and Sbolt Spam (30) are no longer presets; their rows stay, so a saved
+  // profile still holding one of their ids resolves, and no block is reused.
+  hunter_survival_weave: 37,
+  shaman_spellhance: 38,
+  warlock_sm_ruin: 39,
 };
 
 describe('benchmark item ids', () => {

@@ -14,6 +14,7 @@ import { GARROTE_TICK_AP_COEFFICIENT } from '../../src/game/combat/coefficients'
 import { benchmarkItemIdsFor } from '../../src/game/items/benchmarkSets';
 import { pickerItems } from '../../src/ui/panels/gear/slots';
 import { DRUID_CAT } from '../../src/game/rotations/druid';
+import { ruptureRogueProfile } from '../helpers/ruptureRogue';
 
 /*
  * ==============================================================================
@@ -25,7 +26,9 @@ import { DRUID_CAT } from '../../src/game/rotations/druid';
 
 /** Every cast one fight of a preset made, with its timestamp. */
 function castsIn(presetId: string, seed = 4242): readonly { id: string; at: number }[] {
-  const profile = PRESETS_BY_ID.get(presetId)!.build();
+  // `rogue_rupture` is no longer a preset (round 82); its build is rebuilt by hand.
+  const profile =
+    presetId === 'rogue_rupture' ? ruptureRogueProfile() : PRESETS_BY_ID.get(presetId)!.build();
   const events: TelemetryEvent[] = [];
   new Simulation(trainingDummyEncounter(profile, seed), {
     emit: (event) => events.push(event),

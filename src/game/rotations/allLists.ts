@@ -183,7 +183,8 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     name: 'ROGUE_RUPTURE',
     owner: 'rogue',
     list: ROGUE_RUPTURE,
-    profiles: ['rogue_rupture'],
+    // No preset since round 82; still the dispatch for a Rupture build.
+    profiles: [],
   },
   {
     name: 'ROGUE_HEMO',
@@ -240,7 +241,7 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     name: 'SHAMAN_ENHANCEMENT',
     owner: 'shaman',
     list: SHAMAN_ENHANCEMENT,
-    profiles: ['shaman_enhancement'],
+    profiles: ['shaman_enhancement', 'shaman_spellhance'],
   },
   {
     name: 'SHAMAN_RESTORATION',
@@ -286,7 +287,7 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     name: 'PALADIN_SHOCKADIN',
     owner: 'paladin',
     list: PALADIN_SHOCKADIN,
-    profiles: ['pally_shockadin', 'pally_shockadin_2h'],
+    profiles: ['pally_shockadin_2h'],
   },
   {
     name: 'PALADIN_HOLY',
@@ -312,7 +313,7 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     name: 'HUNTER_LONE_WOLF_RANGED',
     owner: 'hunter',
     list: HUNTER_LONE_WOLF_RANGED,
-    profiles: ['lw_ranged'],
+    profiles: ['lw_ranged', 'hunter_survival_weave'],
   },
   {
     name: 'HUNTER_LONE_WOLF_MELEE',
@@ -350,7 +351,9 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     name: 'WARLOCK_SBOLT',
     owner: 'warlock',
     list: WARLOCK_SBOLT,
-    profiles: ['warlock_sbolt'],
+    // The Sbolt Spam preset is gone (round 82); SM Ruin's talents still
+    // dispatch here, though it carries the owner's own list.
+    profiles: ['warlock_sm_ruin'],
   },
 
   // Priest -- by talents: Penance heals as Disc, Prayer of Mending as Holy (round 73).

@@ -60,7 +60,7 @@ const PROBES: readonly {
   { preset: 'warlock_smds', against: 'human', note: 'Touch of the Grave, 10%' },
   // Touch of the Grave at 5%, against a Troll: Berserking is the only thing in
   // the way and it IS cast, so this understates the drain by Berserking's worth.
-  { preset: 'rogue_rupture', against: 'troll', note: 'Touch of the Grave, 5%' },
+  { preset: 'rogue_hemo', against: 'troll', note: 'Touch of the Grave, 5%' },
   // Blood Fury plus Axe Specialization, against a Troll's Berserking.
   { preset: 'lw_ranged', against: 'troll', note: 'Blood Fury + axe spec' },
   { preset: 'bm_hunter', against: 'troll', note: 'Blood Fury + axe spec + pet crit' },
@@ -99,7 +99,7 @@ const PROBES: readonly {
    * live on a Paladin at 5%, so the rows measured "+2% crit minus the drain".
    */
   { preset: 'pally_ret', against: 'dwarf', note: '+2% crit from a sword' },
-  { preset: 'pally_shockadin', against: 'dwarf', note: '+2% crit from a sword' },
+  { preset: 'pally_shockadin_2h', against: 'dwarf', note: '+2% crit from a sword' },
   { preset: 'prot_pally', against: 'dwarf', note: '+2% crit from a sword, on a TANK' },
   // Troll Berserking, against a Skyborne's 1% haste (a Druid-legal control is
   // not available to a Shaman or a Priest; a Tauren Shaman's own traits are the

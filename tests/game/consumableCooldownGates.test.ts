@@ -32,7 +32,7 @@ import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
 /** Every profile that drinks Thistle Tea, and the gate it drinks at. */
 const THISTLE_TEA_GATES: Readonly<Record<string, number>> = {
   rogue_venom: TIGHT_THISTLE_TEA_ENERGY_THRESHOLD,
-  rogue_rupture: TIGHT_THISTLE_TEA_ENERGY_THRESHOLD,
+  // `rogue_rupture` drank at ten too; the preset went in round 82.
   // Combat Mut has its own list and the owner gave it the same ten.
   rogue_combat_mut: TIGHT_THISTLE_TEA_ENERGY_THRESHOLD,
   // Pure Hemo spreads the Hemo Dagger build, so it carries the same ten.

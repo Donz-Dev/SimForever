@@ -1,3 +1,4 @@
+import { SURVIVAL_WEAVE_MULTI, SURVIVAL_WEAVE_MULTI_PRECOMBAT } from '../ownerLists';
 import type { MultiTargetDefault, MultiTargetDefaults } from './types';
 import type { AplCondition, AplEntry, AplList } from '../../game/rotations/apl';
 import { all, targetCount } from '../../game/rotations/apl';
@@ -172,4 +173,10 @@ export const HUNTER_MULTI_TARGET: MultiTargetDefaults = {
     volley: { abilityId: 'volley', condition: targetCount('atLeast', 4) },
     stingFirst: false,
   }),
+  // The owner's saved build (round 82): its own Multi Target list and opener.
+  hunter_survival_weave: {
+    name: SURVIVAL_WEAVE_MULTI.name,
+    entries: SURVIVAL_WEAVE_MULTI.entries,
+    precombat: SURVIVAL_WEAVE_MULTI_PRECOMBAT,
+  },
 };

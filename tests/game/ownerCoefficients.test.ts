@@ -304,7 +304,7 @@ describe("the instant-cast coefficient, and the two Judgements that did not use 
 
   /** The Judgement coefficient a seal actually delivers, measured. */
   const measuredFor = (seal: AuraDefinition): number => {
-    const profile = PROFILE_PRESETS.find((preset) => preset.id === 'pally_shockadin')!.build();
+    const profile = PROFILE_PRESETS.find((preset) => preset.id === 'pally_shockadin_2h')!.build();
 
     const damageAt = (spellPower: number): number => {
       const events: TelemetryEvent[] = [];
@@ -376,8 +376,15 @@ describe("the instant-cast coefficient, and the two Judgements that did not use 
      * identity is exactly what this project treats as evidence of a bug.
      * ==========================================================================
      */
+    /*
+     * AND THE WHOLE-CHARACTER MULTIPLIER TOO, since round 82 moved this onto the
+     * 2H Shockadin (the one-hand one was removed): its Two-Handed Weapon
+     * Specialization 2/3 is a flat x1.04 on everything, and read 0.4457 here.
+     */
+    const reference = zeroPowerPlayer(profile);
     const multiplier =
-      zeroPowerPlayer(profile).abilityModifierFor('judgement', 1).damageMultiplier ?? 1;
+      (reference.abilityModifierFor('judgement', 1).damageMultiplier ?? 1) *
+      reference.baseDamageMultiplier;
     return (damageAt(1000) - damageAt(0)) / 1000 / multiplier;
   };
 
