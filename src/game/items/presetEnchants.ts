@@ -78,7 +78,6 @@ export const PRESET_ENCHANTS: Readonly<
    * targets. The off-hand dagger's Crusader procs about half as often as its
    * steady 25 agility is worth (+3.16 +/- 2.96 alone).
    */
-  rogue_rupture: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900002, legs: 900002, mainHand: 20034, neck: 900011, offHand: 900022, wrists: 900019 },
   // Round 78, the Rupture reasoning: 1% haste 4.56 +/- 1.28 against 8 agility
   // 2.93; with the off hand's +25 agility +3.45 on top of the talent change.
   rogue_hemo: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900002, legs: 900002, mainHand: 20034, neck: 900011, offHand: 900022, wrists: 900019 },
@@ -207,6 +206,8 @@ export const PRESET_ENCHANTS: Readonly<
    * AND THE TWO-HANDER TAKES +65 SPELL POWER, the one enchant only that slot is
    * offered, against Crusader at -17 and the +30 the one-hander wears at -15.
    */
+  // No preset since round 82: kept as the starting set's loadout for a new
+  // one-hand-and-shield or caster Paladin (`startingSets.ts`).
   pally_shockadin: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900009, shield: 900030, wrists: 900018 },
   pally_shockadin_2h: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   // Round 78: gloves +2% Threat (was +20 Spell Power, +10.65 TPS, deaths 0.00)
@@ -221,6 +222,10 @@ export const PRESET_ENCHANTS: Readonly<
   // score agility wins once the Multi Target fights count: with Blasted Lands
   // +25 Agility and the pre-pull Serpent Sting, +32.9 +/- 3.5 (-9.1 on one target).
   lw_ranged: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },
+  // The owner's saved builds (round 82), each row as the saved file carried it.
+  hunter_survival_weave: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },
+  shaman_spellhance: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900005, legs: 900005, neck: 900009, twoHand: 900029, wrists: 900018 },
+  warlock_sm_ruin: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900032, wrists: 900018 },
   // Round 79: +15 Agility on the OFF hand (900022) -- +25 Agility is two-handed
   // only. +15 Agility beat Crusader there on four of the five builds at 120 s.
   // Round 80: the MAIN hand +15 Agility too (was Crusader), with food +20
@@ -230,7 +235,6 @@ export const PRESET_ENCHANTS: Readonly<
   hawk_melee: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 900022, neck: 900011, offHand: 900022, wrists: 900019 },
   warlock_smds: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   warlock_firelock: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
-  warlock_sbolt: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   warlock_demonology: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   // Round 80: the staff takes Revelation over +65 Spell Power, +14.83 +/- 2.70
   // on the weighted score (+25.8 at one target, -15.6 at eight over 30s).

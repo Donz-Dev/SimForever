@@ -574,7 +574,9 @@ describe('Quietus is a clock, not a health bar', () => {
   });
 
   it('is taken by no Rogue profile, so it moves none of the three figures', () => {
-    for (const id of ['rogue_venom', 'rogue_combat', 'rogue_rupture']) {
+    // The Rupture preset went in round 82; Hemo Dagger DOES take Quietus 5/5, so
+    // it is the one Rogue preset left out of this list.
+    for (const id of ['rogue_venom', 'rogue_combat', 'rogue_combat_mut', 'rogue_pure_hemo']) {
       const built = PRESETS_BY_ID.get(id)!.build();
       expect(built.talents?.quietus ?? 0).toBe(0);
     }

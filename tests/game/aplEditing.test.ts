@@ -368,8 +368,22 @@ describe('changing the tree', () => {
 
 describe('a stored list stays attached to its build', () => {
   it('every preset stores the list it was already running', () => {
+    /*
+     * BAR THE OWNER'S THREE SAVED BUILDS (round 82), which carry their saved
+     * file's list as a CUSTOM one -- never re-derived, so asked of separately.
+     */
+    const OWNER_LISTS: Readonly<Record<string, string>> = {
+      hunter_survival_weave: 'Hunter (Survival Weave)',
+      shaman_spellhance: 'Shaman (Spellhance)',
+      warlock_sm_ruin: 'Warlock (SM Ruin)',
+    };
     for (const preset of PROFILE_PRESETS) {
       const profile = preset.build();
+      if (preset.id in OWNER_LISTS) {
+        expect(profile.rotation.source, preset.id).toBe('custom');
+        expect(profile.rotation.name, preset.id).toBe(OWNER_LISTS[preset.id]);
+        continue;
+      }
       expect(profile.rotation.source, preset.id).toBe('default');
       expect(profile.rotation.entries.length, preset.id).toBeGreaterThan(0);
       expect(profile.rotation, preset.id).toEqual(defaultRotationFor(profile));

@@ -17,6 +17,7 @@ import {
 } from '../../src/game/items/equipment';
 import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
+import { PRESET_ENCHANTS } from '../../src/game/items/presetEnchants';
 import { createTrainingDummy } from '../../src/game/actors/createTrainingDummy';
 import { createPet } from '../../src/game/actors/createPet';
 import { COMBAT_CONSTANTS, createForeverAttackChances } from '../../src/game/combat/attackChances';
@@ -524,10 +525,6 @@ const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     head: '+8 Agility', neck: '+5 Agility', cloak: '+5 Agility', chest: '+4 Stats',
     wrists: '+9 Agility', gloves: '+15 Agility', legs: '+8 Agility', feet: '+7 Agility',
   },
-  rogue_rupture: {
-    head: '+8 Agility', neck: '+5 Agility', cloak: '+5 Agility', chest: '+4 Stats',
-    wrists: '+9 Agility', gloves: '+15 Agility', legs: '+8 Agility', feet: '+7 Agility',
-  },
   rogue_hemo: {
     head: '+8 Agility', neck: '+5 Agility', cloak: '+5 Agility', chest: '+4 Stats',
     wrists: '+9 Agility', gloves: '+15 Agility', legs: '+8 Agility', feet: '+7 Agility',
@@ -585,10 +582,6 @@ const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
    * Intellect measured as a TIE at 4,000 paired iterations (+0.4 +/- 1.4 and
    * -0.4 +/- 1.6); both beat +8 Strength by two to three.
    */
-  pally_shockadin: {
-    head: '+1% Haste', neck: '+6 Spell Power', cloak: '+5 Agility', chest: '+4 Stats',
-    wrists: '+16 Spell Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: '+7 Agility',
-  },
   pally_shockadin_2h: {
     head: '+1% Haste', neck: '+6 Spell Power', cloak: '+5 Agility', chest: '+4 Stats',
     wrists: '+16 Spell Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: '+7 Agility',
@@ -601,6 +594,20 @@ const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     head: '+8 Agility', neck: '+5 Agility', cloak: '+5 Agility', chest: '+4 Stats',
     wrists: '+9 Agility', gloves: '+15 Agility', legs: '+8 Agility', feet: '+7 Agility',
     ranged: '+2% Crit Chance',
+  },
+  // Round 82's three saved builds, each row as its saved file carried it.
+  hunter_survival_weave: {
+    head: '+8 Agility', neck: '+5 Agility', cloak: '+5 Agility', chest: '+4 Stats',
+    wrists: '+9 Agility', gloves: '+15 Agility', legs: '+8 Agility', feet: '+7 Agility',
+    ranged: '+2% Crit Chance',
+  },
+  shaman_spellhance: {
+    head: '+8 Strength', neck: '+6 Spell Power', cloak: '+5 Agility', chest: '+4 Stats',
+    wrists: '+16 Spell Power', gloves: '+20 Spell Power', legs: '+8 Strength', feet: '+7 Agility',
+  },
+  warlock_sm_ruin: {
+    head: '+1% Haste', neck: '+6 Spell Power', cloak: '-2% Threat', chest: '+4 Stats',
+    wrists: '+16 Spell Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: 'Minor Speed',
   },
   lw_ranged: {
     head: '+8 Agility', neck: '+5 Agility', cloak: '+5 Agility', chest: '+4 Stats',
@@ -624,10 +631,6 @@ const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     wrists: '+16 Spell Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: 'Minor Speed',
   },
   warlock_firelock: {
-    head: '+1% Haste', neck: '+6 Spell Power', cloak: '-2% Threat', chest: '+4 Stats',
-    wrists: '+16 Spell Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: 'Minor Speed',
-  },
-  warlock_sbolt: {
     head: '+1% Haste', neck: '+6 Spell Power', cloak: '-2% Threat', chest: '+4 Stats',
     wrists: '+16 Spell Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: 'Minor Speed',
   },
@@ -696,6 +699,9 @@ describe('what each of the 29 profiles opens with', () => {
     expect(PROFILE_PRESETS.map((preset) => preset.id).sort()).toEqual(
       Object.keys(LOADOUTS).sort(),
     );
+    // AND THE TABLE IN `src` HOLDS ONE ROW MORE: Shockadin's, retired as a
+    // preset in round 82 and kept as a new caster Paladin's starting set.
+    expect(Object.keys(PRESET_ENCHANTS).filter((id) => !PRESETS_BY_ID.has(id))).toEqual(['pally_shockadin']);
   });
 
   /*

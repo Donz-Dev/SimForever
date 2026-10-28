@@ -15,6 +15,7 @@ import { RACIAL_ABILITIES } from '../../src/game/racials/abilities';
 import { triggersGcd } from '../../src/engine/abilities/casting';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
+import { ruptureRogueProfile } from '../helpers/ruptureRogue';
 
 /*
  * ==============================================================================
@@ -105,7 +106,10 @@ describe('the termination invariant the immediate re-decision rests on', () => {
 
 /** Every cast in one fight of a preset, as `{ id, timestamp }`. */
 function castsIn(presetId: string, seed: number) {
-  const profile = PRESETS_BY_ID.get(presetId)!.build();
+  // `rogue_rupture` is no longer a preset (round 82); its list still is, so the
+  // build is rebuilt by hand.
+  const profile =
+    presetId === 'rogue_rupture' ? ruptureRogueProfile() : PRESETS_BY_ID.get(presetId)!.build();
   const events: TelemetryEvent[] = [];
   const simulation = new Simulation(trainingDummyEncounter(profile, seed), {
     emit: (event) => events.push(event),
@@ -173,7 +177,7 @@ describe('Vanish into Ambush', () => {
      * A Rogue is the right subject: its list holds four off-GCD abilities, so
      * it exercises the chain rather than merely surviving it.
      */
-    const profile = PRESETS_BY_ID.get('rogue_rupture')!.build();
+    const profile = ruptureRogueProfile();
     const simulation = new Simulation(trainingDummyEncounter(profile, 4242));
     simulation.begin();
     const run = simulation.run();

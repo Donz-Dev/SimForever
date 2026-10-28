@@ -64,7 +64,7 @@ const PROBES: readonly { readonly preset: string; readonly note: string }[] = [
   { preset: 'shadow_priest', note: 'Troll -- Berserking' },
   { preset: 'mage_arcane', note: 'Gnome -- Eureka!, and a channel' },
   { preset: 'mage_fire', note: 'Gnome -- Eureka!, and periodic damage' },
-  { preset: 'rogue_rupture', note: 'Undead, 5% -- Touch of the Grave' },
+  { preset: 'rogue_hemo', note: 'Undead, 5% -- Touch of the Grave' },
   { preset: 'warlock_smds', note: 'Undead, 10% -- Touch of the Grave' },
   { preset: 'pally_ret', note: 'Human, Azuresong Mageblade -- sword spec' },
   { preset: 'druid_cat', note: 'Tauren -- health and hit, no active' },
@@ -162,7 +162,7 @@ for (const [preset, other, expected] of [
   ['hawk_melee', 'troll', 0],
   // A Human holding a SWORD, against an Undead Paladin who has none.
   ['pally_ret', 'undead', 2],
-  ['pally_shockadin', 'undead', 2],
+  ['pally_shockadin_2h', 'undead', 2],
   ['prot_pally', 'undead', 2],
 ] as const) {
   const mine = PRESETS_BY_ID.get(preset)!.build();

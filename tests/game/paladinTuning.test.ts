@@ -110,7 +110,7 @@ describe('Sacred Arbiter, which was dropped for want of a number', () => {
   });
 
   it('actually raises Holy Strike by 20% on the builds that take it', () => {
-    for (const preset of ['pally_ret', 'pally_shockadin']) {
+    for (const preset of ['pally_ret', 'pally_shockadin_2h']) {
       const modifier = presetPlayer(preset).abilityModifierFor('holy_strike');
       expect(modifier.damageMultiplier, preset).toBeCloseTo(1.2, 10);
     }
@@ -158,7 +158,7 @@ describe('Instrument of Law, and the Hammer of Wrath it makes', () => {
     expect(hammerOfWrathTable(plain)).toBe('spell');
   });
 
-  it('is out of reach for both Shockadins, which is a TIER fact and not a preference', () => {
+  it('is out of reach for the Shockadin, which is a TIER fact and not a preference', () => {
     /*
      * ==========================================================================
      * IT WAS BRIEFLY IN BOTH TREES AND MEASURED **+18**, and it is unaffordable:
@@ -171,11 +171,12 @@ describe('Instrument of Law, and the Hammer of Wrath it makes', () => {
      * SO THE RET PALADIN KEEPS ITS INSTANT HAMMER OF WRATH AND THE SHOCKADINS
      * DO NOT, which is what makes the assertion above about the TALENT rather
      * than about the ability.
+     *
+     * The shield build is no longer a preset (round 82), so the two-hander is
+     * the one left to assert on.
      * ==========================================================================
      */
-    for (const preset of ['pally_shockadin', 'pally_shockadin_2h']) {
-      expect(isInstantHammerOfWrath(abilityOf(preset, 'hammer_of_wrath')!), preset).toBe(false);
-    }
+    expect(isInstantHammerOfWrath(abilityOf('pally_shockadin_2h', 'hammer_of_wrath')!)).toBe(false);
     expect(isInstantHammerOfWrath(abilityOf('pally_ret', 'hammer_of_wrath')!)).toBe(true);
   });
 
@@ -277,7 +278,7 @@ describe('Iron Creed', () => {
 
   it('is registered as a cast reaction on the build that takes it, and nowhere else', () => {
     expect(presetPlayer('prot_pally').castReactions.map((r) => r.id)).toContain('iron_creed');
-    for (const preset of ['pally_ret', 'pally_shockadin']) {
+    for (const preset of ['pally_ret', 'pally_shockadin_2h']) {
       expect(presetPlayer(preset).castReactions.map((r) => r.id), preset).not.toContain(
         'iron_creed',
       );

@@ -182,7 +182,7 @@ describe('the numbers', () => {
      * says which is which.
      * ------------------------------------------------------------------------
      */
-    const shockadin = presetPlayer('pally_shockadin');
+    const shockadin = presetPlayer('pally_shockadin_2h');
     const blind = shockadin.stats.get('spellPower');
 
     /*
@@ -211,12 +211,13 @@ describe('the numbers', () => {
      * "+19 Holy Spell Damage" and nothing blind, transcribed from their own
      * tooltip -- so Holy reads 19 above Shadow and the blind pool is untouched.
      *
-     * IN THE GLOVES RATHER THAN A WEAPON SLOT, because the Shockadin's style is
-     * `one_hand_shield` and `liveEquipment` strips a two-hander from it: a
-     * scoped STAFF would contribute nothing and the test would read zero for a
-     * reason that has nothing to do with scoping.
+     * IN THE GLOVES RATHER THAN A WEAPON SLOT, because `liveEquipment` strips
+     * whatever weapon the style cannot hold, so a scoped weapon can read zero
+     * for a reason that has nothing to do with scoping. (The one-hand
+     * Shockadin this was written on is gone since round 82; the 2H runs the
+     * same seal.)
      */
-    const scoped = presetPlayerWith('pally_shockadin', { gloves: { itemId: 254105 } });
+    const scoped = presetPlayerWith('pally_shockadin_2h', { gloves: { itemId: 254105 } });
     expect(spellPowerFor(scoped, 'holy') - spellPowerFor(scoped, 'shadow')).toBe(19);
     expect(spellPowerFor(scoped, 'shadow')).toBe(scoped.stats.get('spellPower'));
   });
@@ -260,7 +261,7 @@ describe('the numbers', () => {
      * half worth keeping: given scoped Holy power, its damage moves and
      * Retribution's does not.
      */
-    const shockadinScoped = presetPlayerWith('pally_shockadin', { gloves: { itemId: 254105 } });
+    const shockadinScoped = presetPlayerWith('pally_shockadin_2h', { gloves: { itemId: 254105 } });
     expect(
       spellPowerFor(shockadinScoped, 'holy') - shockadinScoped.stats.get('spellPower'),
     ).toBe(19);
@@ -334,8 +335,8 @@ describe('Twist of Light, the reason a profile is called Seal Twist', () => {
       expect(ret.abilities.get(id)?.bonuses?.[TWIST_OF_LIGHT_FLAG], id).toBe(1);
     }
 
-    // Shockadin stops at 28 Retribution points and does not reach it.
-    const shockadin = presetPlayer('pally_shockadin');
+    // Shockadin 2H stops at 28 Retribution points and does not reach it.
+    const shockadin = presetPlayer('pally_shockadin_2h');
     expect(
       shockadin.abilities.get('seal_of_righteousness')?.bonuses?.[TWIST_OF_LIGHT_FLAG] ?? 0,
     ).toBe(0);
@@ -414,7 +415,7 @@ describe('seal damage is not a weapon use', () => {
 describe('the three builds', () => {
   it('picks each list by its own capstone', () => {
     expect(batchOf('pally_ret', 1, 1).rotationName).toContain('Seal Twist');
-    expect(batchOf('pally_shockadin', 1, 1).rotationName).toContain('Shockadin');
+    expect(batchOf('pally_shockadin_2h', 1, 1).rotationName).toContain('Shockadin');
     expect(batchOf('prot_pally', 1, 1).rotationName).toContain('Protection');
   });
 
@@ -428,13 +429,13 @@ describe('the three builds', () => {
      */
     expect(paladinRotation({})).toBeDefined();
 
-    const shockadin = presetPlayer('pally_shockadin').abilities.all.map((a) => a.id);
+    const shockadin = presetPlayer('pally_shockadin_2h').abilities.all.map((a) => a.id);
     expect(shockadin).toContain('seal_of_righteousness');
     expect(shockadin).not.toContain('seal_of_command');
   });
 
   it('actually keeps a seal up and judges it, in every build', () => {
-    for (const preset of ['pally_ret', 'pally_shockadin', 'prot_pally']) {
+    for (const preset of ['pally_ret', 'pally_shockadin_2h', 'prot_pally']) {
       const batch = batchOf(preset, 30, 5);
       const used = (name: string) =>
         batch.abilities.find((a) => a.abilityName === name)?.uses ?? 0;
@@ -455,18 +456,7 @@ describe('the three builds', () => {
     expect(built.encounter.targetAttacks).toBe(true);
     expect(built.character.combatStyle).toBe('one_hand_shield');
 
-    /*
-     * SHOCKADIN HOLDS ONE TOO, and it is not a tank. Its own set is a
-     * one-hander and Earth and Fire, a CASTER shield carrying 26 spell power --
-     * which is what moved the build off `two_hander`, where a one-hander and
-     * an off hand are both deleted. A shield is not the tank's alone; what
-     * makes Protection a tank is the tree, the stance and a target that swings
-     * back.
-     */
-    const shockadin = PRESETS_BY_ID.get('pally_shockadin')!.build();
-    expect(shockadin.equipment.shield).toBeDefined();
-    expect(shockadin.character.combatStyle).toBe('one_hand_shield');
-    expect(shockadin.encounter.targetAttacks).toBe(false);
+    // The shield-holding Shockadin preset that stood here was removed in round 82.
 
     // Retribution swings a two-hander and holds nothing in the other hand.
     const ret = PRESETS_BY_ID.get('pally_ret')!.build();
@@ -483,7 +473,7 @@ describe('the three builds', () => {
       ).map((a) => a.id);
 
     expect(ids('pally_ret')).toContain('seal_of_command');
-    expect(ids('pally_shockadin')).toContain('holy_shock');
+    expect(ids('pally_shockadin_2h')).toContain('holy_shock');
     expect(ids('prot_pally')).toContain('holy_shield');
 
     expect(ids('prot_pally')).not.toContain('seal_of_command');
@@ -548,7 +538,7 @@ describe('Hammer of Wrath, the sheet\'s last unapplied row', () => {
   });
 
   it('is in every Paladin build, needing no talent', () => {
-    for (const preset of ['pally_ret', 'pally_shockadin', 'prot_pally']) {
+    for (const preset of ['pally_ret', 'pally_shockadin_2h', 'prot_pally']) {
       const built = PRESETS_BY_ID.get(preset)!.build();
       const book = abilitiesForClass(
         'paladin',

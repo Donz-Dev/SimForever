@@ -22,11 +22,10 @@ const CASTERS = [
   'druid_moonkin',
   'shaman_elemental',
   'mage_arcane',
-  'pally_shockadin',
   'pally_shockadin_2h',
   'warlock_smds',
   'warlock_firelock',
-  'warlock_sbolt',
+  'warlock_sm_ruin',
   'warlock_demonology',
   'shadow_priest',
 ];

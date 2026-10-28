@@ -225,7 +225,8 @@ describe('Venom, the finisher that buffs them', () => {
     // Only the Assassination build takes it.
     expect(knows('rogue_venom')).toBe(true);
     expect(knows('rogue_combat')).toBe(false);
-    expect(knows('rogue_rupture')).toBe(false);
+    // Hemo Dagger stands in for the Rupture preset, removed in round 82.
+    expect(knows('rogue_hemo')).toBe(false);
   });
 
   it('really does raise poison damage when it is up', () => {

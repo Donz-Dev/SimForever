@@ -1,9 +1,9 @@
+import { SM_RUIN_MULTI } from '../ownerLists';
 import type { AplCondition, AplEntry } from '../../game/rotations/apl';
 import {
   all,
   fightRemaining,
   resource,
-  resourceFraction,
   selfHas,
   targetCount,
   targetMissing,
@@ -11,7 +11,7 @@ import {
 } from '../../game/rotations/apl';
 import { buffPotionCooldown, consumableCooldown } from '../../game/rotations/consumableCooldowns';
 import { RACIAL_COOLDOWNS } from '../../game/rotations/racialCooldowns';
-import { WARLOCK_SBOLT, SBOLT_DEMONIC_RUNE_MANA, manaPotionEntry } from '../../game/rotations/warlock';
+import { manaPotionEntry } from '../../game/rotations/warlock';
 import type { MultiTargetDefaults } from './types';
 
 /**
@@ -127,28 +127,6 @@ export const WARLOCK_MULTI_TARGET: MultiTargetDefaults = {
     ],
   },
   /*
-   * SBOLT SPAM: the owner's opening stack kept whole, then the Affliction
-   * shape -- Corruption and Bane of Agony across five targets, on the boss
-   * only above that -- and Hellfire. +602 at 5, +196 at 3, +1181 at 8.
-   */
-  warlock_sbolt: {
-    name: 'Sbolt Spam AoE',
-    entries: [
-      WARLOCK_SBOLT.entries[0],
-      manaPotionEntry(0.5, 60),
-      ...RACIAL_COOLDOWNS.filter((entry) => entry.abilityId !== 'blood_fury'),
-      SHADOW_TRANCE,
-      when(UP_TO_FIVE, dot('corruption', 5, 10)),
-      when(UP_TO_FIVE, dot('bane_of_agony', 5, 12)),
-      dot('corruption', 1, 10),
-      dot('bane_of_agony', 1, 12),
-      { abilityId: 'demonic_rune', condition: resourceFraction('below', SBOLT_DEMONIC_RUNE_MANA, 'mana') },
-      TAP_FOR_HELLFIRE,
-      HELLFIRE,
-      { abilityId: 'shadow_bolt' },
-    ],
-  },
-  /*
    * FIRE DEMO: Soul Fire under Decimation, Immolate on every target at four
    * targets or fewer, then Hellfire, with the Imp on the boss throughout.
    * +793 at 5, +253 at 3, +1792 at 8. Corruption spread as well lost 77 at 3.
@@ -170,5 +148,11 @@ export const WARLOCK_MULTI_TARGET: MultiTargetDefaults = {
       HELLFIRE,
       { abilityId: 'searing_pain' },
     ],
+  },
+  // The owner's saved build (round 82): its own Multi Target list, on the
+  // Single Target opener, which is what the saved file carried in both.
+  warlock_sm_ruin: {
+    name: SM_RUIN_MULTI.name,
+    entries: SM_RUIN_MULTI.entries,
   },
 };

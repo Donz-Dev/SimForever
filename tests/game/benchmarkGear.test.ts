@@ -419,10 +419,14 @@ describe('a caster weapon trades melee damage for a stated spell power', () => {
       'Piss Beam',
       'Prot Pally',
       'Resto Drood',
+      // Round 82: the owner's saved SM Ruin, and Spellhance's staff by their ruling.
+      'SM Ruin',
       'SM/DS',
+      // Sbolt Spam and Shockadin are retired presets whose rows stay.
       'Sbolt Spam',
       'Shadow',
       'Shockadin',
+      'Spellhance',
     ]);
   });
 
