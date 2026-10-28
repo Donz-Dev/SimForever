@@ -2079,7 +2079,11 @@ const HUNTER_LONE_WOLF_MELEE_TALENTS: TalentAllocation = {
   surefooted: 3,
   deterrence: 1,
   predator_s_edge: 5,
-  resourcefulness: 2,
+  // ROUND 83: Resourcefulness 2 -> SURVIVALIST'S DISCIPLINE 2, now that its
+  // trap cooldown cut is modelled (both traps 30 s -> 18 s): +62.71 +/- 3.42
+  // weighted, 400 paired fights a cell. Round 78 had moved the Discipline's
+  // points to Clever Traps while it did nothing; undoing THAT is -8.75.
+  survivalist_s_discipline: 2,
   expose_prey: 2,
   /*
    * ROUND 78: Survivalist's Discipline 2 -> CLEVER TRAPS 2, **+17.9 +/- 0.2**

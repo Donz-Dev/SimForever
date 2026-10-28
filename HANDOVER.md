@@ -113,7 +113,8 @@ are stale.
 `unmodelled` on a reason that had **expired**: that `abilityCooldown` had no
 percentage form. Decimation added `unit: 'percent'` long ago, and nobody re-read
 the talent. It is now two percentage cuts, one per trap, so at 2/2 Immolation
-Trap and Explosive Trap go from 30 s to **18 s**. Deterrence stays inert, because
+Trap and Explosive Trap go from 30 s to **18 s**. LW Melee now takes it
+too (below). Deterrence stays inert, because
 no ability declares it. `tests/game/survivalistsDiscipline.test.ts` pins 30/24/18
 and fails without the change.
 
@@ -126,18 +127,30 @@ and fails without the change.
 
 **ROUND 78 PRICED MOVING LW MELEE'S TWO POINTS OUT OF AN INERT TALENT.** Its
 +17.9 for Clever Traps was correct arithmetic about a talent that did nothing.
-Re-priced now (weighted, 400 paired fights a cell; not shipped, a question for
-the owner):
+Re-priced on the working talent, weighted, 400 paired fights a cell:
 
-| | 2 points into Discipline, from | weighted |
-| --- | --- | --- |
-| LW Melee | Resourcefulness | **+62.71 +/- 3.42** |
-| LW Melee | Improved Stings | +53.40 +/- 3.30 |
-| LW Melee | Clever Traps (round 78 undone) | -8.75 +/- 3.28 |
-| LW Melee | Survivalist 4 -> 2 | -232.09 |
-| Hawk Melee | Pathfinding (movement, dead) | **+37.55 +/- 3.77** |
-| Hawk Melee | Improved Aspect of the Monkey 3 -> 1 | +37.55 (identical: both donors are dead) |
-| Hawk Melee | Clever Traps | -179.49 |
+| | 2 points into Discipline, from | weighted | |
+| --- | --- | --- | --- |
+| LW Melee | **Resourcefulness** | **+62.71 +/- 3.42** | **shipped, the owner's choice** |
+| LW Melee | Improved Stings | +53.40 +/- 3.30 | |
+| LW Melee | Clever Traps (round 78 undone) | -8.75 +/- 3.28 | |
+| Hawk Melee | Expose Prey (the only legal 2-point donor) | +26.05 +/- 4.12 | not shipped: t1 -20.4, t8 +171.6 |
+
+LW Melee in the report: **1516.6 -> 1582.1** weighted (t1 1074.1 -> 1111.5, t8
+2878.1 -> 3056.3). Putting Resourcefulness back measures exactly -62.71, which is
+the same move seen from the other side.
+
+**TWO FIGURES THIS ROUND FIRST PUBLISHED WERE MEASURED ON BROKEN BUILDS.** Hawk
+Melee "Pathfinding -> Discipline, +37.55" and LW Melee "Survivalist 4 -> 2,
+-232.09" both left a tree below a tier gate. `createPlayer` dropped the stranded
+talents in silence: Unleashed Fury and Summon Hawk on the Hawk, ten talents on
+LW Melee. So each figure measured a different build. **The tell was two donors
+agreeing to the decimal** (Pathfinding and Improved Monkey, both +37.55), and the
+owner approved the Hawk move on that figure. It surfaced as `presets.test.ts`
+refusing the allocation. `survivalistsDiscipline83.ts` now throws on any move
+that strands a talent. **A hand-written `FILE=` talent variant gets no legality
+check from `probe_build.ts`**, so check `legalAllocation(...).dropped` before
+trusting one.
 
 ## Round 82: three saved builds in, three presets out
 

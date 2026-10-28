@@ -801,9 +801,17 @@ describe('the three talents whose reasons were wrong', () => {
        * around traps as well, so the wording test that catches the others missed
        * it.
        */
-      const profile = PRESETS_BY_ID.get('lw_melee')!.build();
-      expect(profile.talents.resourcefulness).toBe(2);
+      /*
+       * LW MELEE'S ROUND 82 TREE, which held Resourcefulness 2/2. Round 83 moved
+       * those points to Survivalist's Discipline, so they are put back here for
+       * the mechanism rather than the preset.
+       */
+      const shipped = PRESETS_BY_ID.get('lw_melee')!.build();
+      const talents: Record<string, number> = { ...shipped.talents, resourcefulness: 2 };
+      delete talents.survivalist_s_discipline;
+      const profile = { ...shipped, talents };
       const hunter = characterAtCombatStart(profile)!;
+      expect(hunter.abilities.get('mongoose_bite')).toBeDefined();
 
       // Mongoose Bite is 65 mana; 60% off is 26.
       expect(MONGOOSE_BITE.cost).toEqual({ resource: 'mana', amount: 65 });
