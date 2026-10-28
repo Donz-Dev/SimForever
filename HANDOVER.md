@@ -107,6 +107,38 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 83: Survivalist's Discipline is modelled
+
+"Reduces the cooldown of your Trap and Deterrence abilities by 20/40%." It sat
+`unmodelled` on a reason that had **expired**: that `abilityCooldown` had no
+percentage form. Decimation added `unit: 'percent'` long ago, and nobody re-read
+the talent. It is now two percentage cuts, one per trap, so at 2/2 Immolation
+Trap and Explosive Trap go from 30 s to **18 s**. Deterrence stays inert, because
+no ability declares it. `tests/game/survivalistsDiscipline.test.ts` pins 30/24/18
+and fails without the change.
+
+**Survival Weave**, the one preset taking it: weighted **1495.6 -> 1559.7**.
+
+| | t1 120s | t3 60s | t5 60s | t8 30s | weighted |
+| --- | --- | --- | --- | --- | --- |
+| round 82 | 1147.4 | 1647.3 | 1783.3 | 2059.6 | 1495.6 |
+| round 83 | 1177.1 | 1666.8 | 1832.8 | 2282.4 | **1559.7** |
+
+**ROUND 78 PRICED MOVING LW MELEE'S TWO POINTS OUT OF AN INERT TALENT.** Its
++17.9 for Clever Traps was correct arithmetic about a talent that did nothing.
+Re-priced now (weighted, 400 paired fights a cell; not shipped, a question for
+the owner):
+
+| | 2 points into Discipline, from | weighted |
+| --- | --- | --- |
+| LW Melee | Resourcefulness | **+62.71 +/- 3.42** |
+| LW Melee | Improved Stings | +53.40 +/- 3.30 |
+| LW Melee | Clever Traps (round 78 undone) | -8.75 +/- 3.28 |
+| LW Melee | Survivalist 4 -> 2 | -232.09 |
+| Hawk Melee | Pathfinding (movement, dead) | **+37.55 +/- 3.77** |
+| Hawk Melee | Improved Aspect of the Monkey 3 -> 1 | +37.55 (identical: both donors are dead) |
+| Hawk Melee | Clever Traps | -179.49 |
+
 ## Round 82: three saved builds in, three presets out
 
 The owner sent three saved 3-target profiles to add, and named three presets to
