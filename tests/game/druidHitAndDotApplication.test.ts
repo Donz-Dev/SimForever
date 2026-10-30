@@ -52,7 +52,7 @@ const NATURES_REACH_HIT = 4;
 
 const spellMiss = (hitChance: number): number => {
   const caster = makeAttacker({ stats: { hitChance } });
-  return createForeverAttackChances()('spell', caster, makeTarget(), {}).miss;
+  return createForeverAttackChances()('spell', caster, makeTarget({ level: 63 }), {}).miss;
 };
 
 describe("the owner's spell hit numbers", () => {
@@ -83,7 +83,7 @@ describe("the owner's spell hit numbers", () => {
      * exactly like a correct number.
      */
     const caster = makeAttacker({ stats: { hitChance: 0 }, hitBonusBySlot: { mainHand: 10 } });
-    expect(createForeverAttackChances()('spell', caster, makeTarget(), {}).miss).toBe(
+    expect(createForeverAttackChances()('spell', caster, makeTarget({ level: 63 }), {}).miss).toBe(
       toRollUnits(SPELL_MISS_PERCENT),
     );
     // And the melee table DOES read it, which is the half that must not change.
@@ -194,7 +194,7 @@ describe("Nature's Reach, which was doing neither of its clauses", () => {
         createForeverAttackChances()(
           kind,
           actor,
-          makeTarget(),
+          makeTarget({ level: 63 }),
           {},
         ).miss;
       return { talented: chances(player), untalented: chances(bare) };

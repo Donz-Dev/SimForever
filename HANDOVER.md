@@ -179,10 +179,10 @@ the route is what exposed it. One run of the Arcane Mage's route went from
 so no ordinary fight moved.
 
 **OPEN, FOR THE OWNER:**
-- **Spell miss is a flat 17% against every level**, the existing ruling made
-  against a level 63 boss. Melee and ranged miss already fall with the level
-  gap, so a route's level 60 trash is easier to hit with a sword than with a
-  spell.
+- ~~Spell miss is a flat 17% against every level.~~ **Answered**: the owner's
+  table makes it 4%, 5%, 6% and 17% at a level gap of 0 to +3, so level 60
+  trash is 4%. `SPELL_MISS_BY_LEVEL_GAP` in `game/combat/attackChances.ts`. No
+  preset moves; each faces a level 63 target.
 - **Thistle Tea is held**: it restores ENERGY, which is none of mana, health or
   mitigation.
 - **A trash mob's armor is the panel's**, 3,731 by default. The route states
