@@ -122,6 +122,10 @@ every Warrior strike, and Rend's comment quoted that zero directly.
 Rend 2% per tick, while leaving Execute, Shield Slam, Intercept and Hamstring at
 zero.
 
+**Revenge is 22.5% now, by the owner's later statement**, which outranks the
+sheet's 22% the way their 5.5% outranks the sheet on Rake's tick.
+`REVENGE_AP_COEFFICIENT` says so beside itself.
+
 Called out in the code at both sites, because a reader who knows the Warrior
 sheet would otherwise read the new numbers as transcription errors.
 

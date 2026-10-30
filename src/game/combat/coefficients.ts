@@ -63,8 +63,15 @@
 // Warrior
 // ---------------------------------------------------------------------------
 
-/** Revenge: 22% of attack power, on top of its flat damage. */
-export const REVENGE_AP_COEFFICIENT = 0.22;
+/**
+ * Revenge: 22.5% of attack power, on top of its flat damage.
+ *
+ * THE OWNER'S LATER STATEMENT, NOT THE SHEET: `WoWSimWorksheet.xlsx` gives 22%,
+ * and the owner has since given 22.5% directly -- the same shape as Rake's 5.5%
+ * tick. A refresh of the sheet will not carry it, so a reader who knows the
+ * sheet should not read 0.225 as drift.
+ */
+export const REVENGE_AP_COEFFICIENT = 0.225;
 
 /** Rend: 2% of attack power PER TICK. */
 export const REND_TICK_AP_COEFFICIENT = 0.02;
