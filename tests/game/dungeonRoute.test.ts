@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { CharacterProfile } from '../../src/profiles';
 import { validateProfile } from '../../src/profiles';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
-import { Simulation, seconds } from '../../src/engine';
+import { Simulation, deriveSeed, seconds } from '../../src/engine';
 import type { SimulationRun, TelemetryEvent } from '../../src/engine';
 import type { ResourceTelemetryEvent } from '../../src/engine/logging/TelemetryEvent';
 import { buildSimulationResult } from '../../src/analysis/SimulationResult';
@@ -165,6 +165,24 @@ describe('a fight on the route', () => {
       const { step } = stepAt(event.timestamp);
       expect(step.kind, `swing at ${event.timestamp}`).toBe('pull');
       if (step.kind === 'pull') expect(Number(event.sourceId.replace('dummy_', ''))).toBeLessThanOrEqual(step.count);
+    }
+  });
+
+  /*
+   * A PULL THAT ENDS DURING THE MELEE WEAVE'S RUN IN (seed 7 of the preset's
+   * batch: the 01:45 pull ends 0.6 seconds into a one-second run) cancels the
+   * run after it has switched the Hunter to melee and before it sets up the
+   * way back. Every later pull has to open back in ranged mode, or the Hunter
+   * meleed the rest of the route -- 134 of 300 runs, a second hump at 1,110.
+   */
+  it('opens every pull in the mode the route opened in, whatever the last pull left', () => {
+    const profile = routed('hunter_survival_weave');
+    const simulation = new Simulation(trainingDummyEncounter(profile, deriveSeed(profile.simulation.seed, 7)));
+    const player = simulation.combatants.find((actor) => actor.kind === 'player')!;
+    for (const { step, start } of steps) {
+      if (step.kind !== 'pull' || start === 0) continue;
+      simulation.advanceTo(start);
+      expect(player.activeAutoAttack, `pull at ${step.start}`).toBe('ranged');
     }
   });
 
