@@ -3,8 +3,8 @@ import { ThreatTracker } from '../combat/threat';
 import { sampleStats } from '../logging/statSample';
 import type { CastCheck, CastCheckOptions } from '../abilities/casting';
 import { castAbility, checkCast, finishChannelEarly } from '../abilities/casting';
-import type { Combatant, WeaponSlot } from '../actors/Combatant';
-import { extraAttack, resetSwingTimers, startAutoAttack } from '../combat/autoAttack';
+import type { AutoAttackMode, Combatant, WeaponSlot } from '../actors/Combatant';
+import { extraAttack, resetSwingTimers, startAutoAttack, startAutoAttackMode } from '../combat/autoAttack';
 import { startResourceRegeneration } from '../resources';
 import type {
   AttackChanceProvider,
@@ -112,6 +112,11 @@ export class Simulation implements SimulationContext {
    * actor ever has two chains deciding for it.
    */
   private decisionEpoch = 0;
+  /**
+   * The auto-attack mode each actor opened the fight in, after its pre-combat
+   * list -- what every later pull starts from. See `enterSegment`.
+   */
+  private readonly openingAutoAttack = new Map<Combatant, AutoAttackMode>();
 
   /**
    * @param config    the fight to run
@@ -603,6 +608,7 @@ export class Simulation implements SimulationContext {
 
     for (const actor of this.actors) {
       if (!actor.isAlive) continue;
+      this.openingAutoAttack.set(actor, actor.activeAutoAttack);
       startAutoAttack(this, actor);
       startResourceRegeneration(this, actor);
       if (actor.rotation) {
@@ -681,6 +687,29 @@ export class Simulation implements SimulationContext {
         if (actor.isCasting(now)) this.cancelCast(actor);
         actor.pendingSequence = null;
         actor.pendingCastCancel = null;
+        /*
+         * AND ANY SUB-ROUTINE IS DROPPED, half-run or not: the Melee Weave's
+         * steps belong to the pull they started in, and a weave resumed at the
+         * next pull would return to range from a run it never finished.
+         */
+        actor.subroutine = null;
+      }
+    }
+
+    if (isInCombat(segment) && !wasInCombat) {
+      /*
+       * EACH PULL OPENS IN THE MODE THE FIGHT OPENED IN. Without it, a pull that
+       * ended during the Melee Weave's run in -- the cast cancelled above, after
+       * its `onCastStart` had switched to melee and before its `onCast` set up
+       * the way back -- left a Hunter in melee for the rest of the route: the
+       * weave only starts from ranged and Return to Range only comes from a
+       * weave, so nothing ever put the bow back. That was 134 of 300 Survival
+       * Weave routes, and the whole of its two-humped spread.
+       */
+      for (const actor of this.actors) {
+        const opening = this.openingAutoAttack.get(actor);
+        if (actor.faction !== 'friendly' || opening === undefined) continue;
+        if (actor.activeAutoAttack !== opening) startAutoAttackMode(this, actor, opening);
       }
     }
 
