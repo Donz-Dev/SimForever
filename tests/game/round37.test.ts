@@ -13,7 +13,7 @@ import { GARROTE } from '../../src/game/auras/rogue';
 import { GARROTE_TICK_AP_COEFFICIENT } from '../../src/game/combat/coefficients';
 import { benchmarkItemIdsFor } from '../../src/game/items/benchmarkSets';
 import { pickerItems } from '../../src/ui/panels/gear/slots';
-import { DRUID_CAT } from '../../src/game/rotations/druid';
+import { CAT_BITE_POOL_ENERGY, DRUID_CAT } from '../../src/game/rotations/druid';
 import { ruptureRogueProfile } from '../helpers/ruptureRogue';
 
 /*
@@ -126,12 +126,13 @@ describe('the off-hand weapon effect is empty where nothing swings there', () =>
   });
 });
 
-describe('the Cat pools energy for Berserk', () => {
-  it('waits for 74 energy and its maintenance before Berserk', () => {
-    const berserk = DRUID_CAT.entries.find((entry) => entry.abilityId === 'berserk');
-    const condition = JSON.stringify(berserk?.condition);
-    expect(condition).toContain('"amount":74');
-    for (const id of ['rake', 'rip', 'shifting_power']) expect(condition).toContain(id);
+describe('the Cat pools energy for Ferocious Bite, since Berserk left the tree', () => {
+  it('has no Berserk entry, and holds its filler Shred for the bite pool', () => {
+    expect(DRUID_CAT.entries.some((entry) => entry.abilityId === 'berserk')).toBe(false);
+    const shreds = DRUID_CAT.entries.filter((entry) => entry.abilityId === 'shred');
+    const filler = JSON.stringify(shreds[shreds.length - 1].condition);
+    expect(filler).toContain(`"amount":${CAT_BITE_POOL_ENERGY}`);
+    expect(filler).toContain('rip');
   });
 });
 

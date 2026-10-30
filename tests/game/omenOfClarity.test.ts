@@ -80,11 +80,10 @@ describe('what Clearcasting pays for', () => {
      * "nor by spells or abilities that cost no resources."
      *
      * TIGER'S FURY WAS THE FOURTH NAME HERE and was removed at client build
-     * 1.60.1.70170. The three left are all the free Druid abilities there are,
-     * which is what makes this list and not a sample.
+     * 1.60.1.70170, and BERSERK the third, at 1.60.1.70707.
      */
     const { actor } = clearcasting();
-    for (const id of ['barkskin', 'enrage', 'berserk']) {
+    for (const id of ['barkskin', 'enrage']) {
       expect(byId(id).cost, id).toBeUndefined();
       expect(resolveCast(actor, byId(id)).modified, id).toBe(false);
     }

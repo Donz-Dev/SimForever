@@ -1,6 +1,6 @@
 {
  "class": "druid",
- "source": "https://talentsforever.com/talents.js",
+ "source": "https://foreverchanges.pro/talents/druid",
  "trees": [
   {
    "id": "balance",
@@ -26,7 +26,7 @@
      "tier": 0,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases the periodic damage and healing done by your spells and abilities by 5%."
+     "description": "Increases the periodic damage and healing done by your spells and abilities by 10%."
     },
     {
      "row": 1,
@@ -180,7 +180,7 @@
      "tier": 30,
      "requires": null,
      "requiresRanks": null,
-     "description": "Shapeshift into Moonkin Form, increasing Omen of Clarity's chance to trigger by 100%, Armor contribution from items by 360%, and all party or raid members within 45 yards have their spell Critical Strike chance increased by 3%. Also protects the caster from Polymorph effects and prevents the use of healing spells.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects."
+     "description": "Shapeshift into Moonkin Form, increasing Omen of Clarity's chance to trigger by 100%, Armor contribution from items by 360%, and all party or raid members within 45 yards have their Critical Strike chance increased by 3%. Also protects the caster from Polymorph effects and prevents the use of healing spells.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects."
     }
    ]
   },
@@ -203,12 +203,12 @@
      "row": 0,
      "col": 2,
      "ranks": 5,
-     "name": "Heart of the Wild",
-     "icon": "spell_holy_blessingofagility",
+     "name": "Furor",
+     "icon": "spell_holy_blessingofstamina",
      "tier": 0,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases your Intellect by 10%. In addition, while in Bear Form or Dire Bear Form your Stamina is increased by 20% and while in Cat Form your Strength is increased by 10%."
+     "description": "Gives you a 100% chance to gain 10 Rage when shapeshifting into Bear Form or Dire Bear Form. Shapeshifting into Cat Form restores 100% of the Energy you had when last in Cat Form, plus 10 Energy per second spent outside Bear Form or Dire Bear Form, up to 100 Energy."
     },
     {
      "row": 1,
@@ -285,7 +285,7 @@
      "tier": 10,
      "requires": null,
      "requiresRanks": null,
-     "description": "Charge an enemy, immobilizing them and interrupting any spell they are casting for 4 sec.\n\nFeral Charge (Cat): 8-25 yd range, Instant, 30 sec cooldown, Requires Cat Form. Leap behind an enemy."
+     "description": "Requires Bear Form, Dire Bear Form\nCharge an enemy, immobilizing them and interrupting any spell they are casting for 4 sec.\n\nLeap behind an enemy."
     },
     {
      "row": 2,
@@ -301,28 +301,6 @@
     {
      "row": 3,
      "col": 0,
-     "ranks": 1,
-     "name": "Shifting Power",
-     "icon": "spell_druid_displacement",
-     "tier": 15,
-     "requires": "Shredding Attacks",
-     "requiresRanks": 3,
-     "description": "Instantly convert 55% of base Mana into 40 Energy. Shifting Power's cost is reduced by effects that reduce the cost of Shapeshifting."
-    },
-    {
-     "row": 3,
-     "col": 1,
-     "ranks": 1,
-     "name": "Primal Bite",
-     "icon": "ability_racial_cannibalize",
-     "tier": 15,
-     "requires": "Savage Fury",
-     "requiresRanks": 2,
-     "description": "Bite the target, dealing 100% normal damage plus 26 and generating a high amount of threat."
-    },
-    {
-     "row": 3,
-     "col": 2,
      "ranks": 3,
      "name": "Predatory Strikes",
      "icon": "ability_hunter_pet_cat",
@@ -330,6 +308,28 @@
      "requires": null,
      "requiresRanks": null,
      "description": "Increases your melee Attack Power in Cat Form, Bear Form, and Dire Bear Form by 150% of your level."
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "ranks": 1,
+     "name": "Lacerate",
+     "icon": "ability_druid_lacerate",
+     "tier": 15,
+     "requires": "Savage Fury",
+     "requiresRanks": 2,
+     "description": "Lacerates the enemy target, making them bleed for 20 damage over 15 sec plus 10% weapon damage per existing application of Lacerate on the target. Causes a high amount of threat. This effect stacks up to 5 times on the same target."
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "ranks": 1,
+     "name": "Predatory Discipline",
+     "icon": "spell_druid_savagery",
+     "tier": 15,
+     "requires": null,
+     "requiresRanks": null,
+     "description": "Your Ferocious Bite ability no longer converts extra Energy into damage, but still deals extra damage based on your excess Energy."
     },
     {
      "row": 3,
@@ -344,17 +344,6 @@
     },
     {
      "row": 4,
-     "col": 0,
-     "ranks": 2,
-     "name": "Improved Shifting Power",
-     "icon": "ability_hunter_aspectmastery",
-     "tier": 20,
-     "requires": "Shifting Power",
-     "requiresRanks": 1,
-     "description": "Reduces the cooldown of your Shifting Power spell by 8 sec."
-    },
-    {
-     "row": 4,
      "col": 1,
      "ranks": 1,
      "name": "Leader of the Pack",
@@ -362,7 +351,7 @@
      "tier": 20,
      "requires": null,
      "requiresRanks": null,
-     "description": "While in Cat Form, Bear Form, or Dire Bear Form, the Leader of the Pack increases the melee and ranged Critical Strike chance of all party or raid members within 45 yards by 3%."
+     "description": "While in Cat Form, Bear Form, or Dire Bear Form, the Leader of the Pack increases the Critical Strike chance of all party or raid members within 45 yards by 3%."
     },
     {
      "row": 4,
@@ -379,17 +368,6 @@
      "row": 5,
      "col": 0,
      "ranks": 5,
-     "name": "Natural Reaction",
-     "icon": "ability_bullrush",
-     "tier": 25,
-     "requires": null,
-     "requiresRanks": null,
-     "description": "Increases your dodge chance by 5%, and gives you a 100% chance to gain 5 Rage each time you dodge."
-    },
-    {
-     "row": 5,
-     "col": 2,
-     "ranks": 5,
      "name": "Rend and Tear",
      "icon": "ability_druid_primalagression",
      "tier": 25,
@@ -398,15 +376,37 @@
      "description": "Increases damage done by your melee abilities on Bleeding targets by 10%."
     },
     {
+     "row": 5,
+     "col": 3,
+     "ranks": 5,
+     "name": "Natural Reaction",
+     "icon": "ability_bullrush",
+     "tier": 25,
+     "requires": null,
+     "requiresRanks": null,
+     "description": "Increases your dodge chance by 5%, and gives you a 100% chance to gain 5 Rage each time you dodge."
+    },
+    {
      "row": 6,
      "col": 1,
      "ranks": 1,
-     "name": "Berserk",
-     "icon": "ability_druid_berserk",
+     "name": "Primal Bite",
+     "icon": "ability_racial_cannibalize",
      "tier": 30,
      "requires": "Leader of the Pack",
      "requiresRanks": 1,
-     "description": "Causes your Primal Bite ability to strike up to 3 targets, removes its cooldown, and increases the critical strike chance of your Combo Point-generating abilities by 100%. Clears and grants immunity to Fear effects for the duration. Lasts 15 sec."
+     "description": "Bite the target, dealing 100% normal damage plus 42 and generating a high amount of threat."
+    },
+    {
+     "row": 6,
+     "col": 2,
+     "ranks": 1,
+     "name": "Shifting Power",
+     "icon": "spell_druid_displacement",
+     "tier": 30,
+     "requires": "Predatory Discipline",
+     "requiresRanks": 1,
+     "description": "Instantly convert 55% of base Mana into 40 Energy. Shifting Power's cost is reduced by effects that reduce the cost of Shapeshifting."
     }
    ]
   },
@@ -423,18 +423,18 @@
      "tier": 0,
      "requires": null,
      "requiresRanks": null,
-     "description": "Gives you a 70% chance to avoid interruption caused by damage while casting Arcane and Nature spells."
+     "description": "Gives your Arcane and Nature spells a 70% chance to not lose casting time when you take damage."
     },
     {
      "row": 0,
      "col": 2,
      "ranks": 5,
-     "name": "Furor",
-     "icon": "spell_holy_blessingofstamina",
+     "name": "Heart of the Wild",
+     "icon": "spell_holy_blessingofagility",
      "tier": 0,
      "requires": null,
      "requiresRanks": null,
-     "description": "Gives you a 100% chance to gain 10 Rage when shapeshifting into Bear Form or Dire Bear Form. Shapeshifting into Cat Form restores 100% of the Energy you had when last in Cat Form, plus 10 Energy per second spent outside Bear Form or Dire Bear Form, up to 100 Energy."
+     "description": "Increases your Intellect by 10%. In addition, while in Bear Form or Dire Bear Form your Stamina is increased by 20% and while in Cat Form your Strength is increased by 10%."
     },
     {
      "row": 1,
@@ -445,18 +445,18 @@
      "tier": 5,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces the cast time of your Healing Touch spell by 0.5 sec and increases all damage you deal by 5%."
+     "description": "Reduces the cast time of your Healing Touch and Wild Growth spells by 0.5 sec and increases all damage you deal by 10%."
     },
     {
      "row": 1,
      "col": 1,
      "ranks": 3,
-     "name": "Subtlety",
-     "icon": "ability_eyeoftheowl",
+     "name": "Reflection",
+     "icon": "spell_frost_windwalkon",
      "tier": 5,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces the threat generated by your Nature and Arcane spells by 30%."
+     "description": "Allows 50% of your Mana regeneration to continue while casting."
     },
     {
      "row": 1,
@@ -473,12 +473,12 @@
      "row": 2,
      "col": 1,
      "ranks": 3,
-     "name": "Reflection",
-     "icon": "spell_frost_windwalkon",
+     "name": "Subtlety",
+     "icon": "ability_eyeoftheowl",
      "tier": 10,
      "requires": null,
      "requiresRanks": null,
-     "description": "Allows 50% of your Mana regeneration to continue while casting."
+     "description": "Reduces the threat generated by your Nature and Arcane spells by 30%."
     },
     {
      "row": 2,
@@ -495,12 +495,12 @@
      "row": 2,
      "col": 3,
      "ranks": 1,
-     "name": "Gift of the Earthmother",
-     "icon": "spell_nature_spiritarmor",
+     "name": "Bloom",
+     "icon": "inv_misc_herb_felblossom",
      "tier": 10,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces the global cooldown by 0.5 seconds on your Rejuvenation, Swiftmend, and Wild Growth spells."
+     "description": "When your Rejuvenation or Regrowth spell expires due to its duration, the target is instantly healed for an amount equal to 100% of your Spirit. If either spell expires due to being dispelled, the target is healed for 50% of your Spirit instead."
     },
     {
      "row": 3,
@@ -533,7 +533,7 @@
      "tier": 15,
      "requires": null,
      "requiresRanks": null,
-     "description": "Instantly heals a target with an active Rejuvenation or Regrowth effect for an amount equal to the full duration of the periodic effect of one of those spells."
+     "description": "Instantly heals a target with your active Rejuvenation or Regrowth effect for an amount equal to the full duration of the periodic effect of the consumed spell."
     },
     {
      "row": 4,
@@ -588,7 +588,7 @@
      "tier": 30,
      "requires": "Living Spirit",
      "requiresRanks": 3,
-     "description": "Heals the target and their party for 336 over 7 sec. Party members must be within 43 yards of target. The amount healed is applied quickly at first, and slows down as Wild Growth reaches its full duration."
+     "description": "Heals the target and their party for 336 over 7 sec. Party members must be within 43.5 yards of target. The amount healed is applied quickly at first, and slows down as Wild Growth reaches its full duration."
     }
    ]
   }

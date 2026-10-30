@@ -87,7 +87,7 @@ const BLANKET_MULTIPLIERS: readonly {
    * 0: "...by 0.1 sec and increases all damage you deal by 1%". Index 0 is the
    * Healing Touch cast time, in SECONDS.
    */
-  { cls: 'druid', talentId: 'naturalist', index: 1, atRankOne: 1, wants: 'all damage you deal' },
+  { cls: 'druid', talentId: 'naturalist', index: 1, atRankOne: 2, wants: 'all damage you deal' },
 
   /*
    * TWO MORE SIT ON MULTI-VALUE ROWS AND WANT INDEX 0 ANYWAY, which is why the
@@ -218,22 +218,23 @@ describe('every blanket damage or crit multiplier reads a number somebody checke
   });
 });
 
-describe('Naturalist is five percent, not half of one', () => {
+describe('Naturalist is ten percent, not half of one', () => {
   it('names index 1, because index 0 is a number of seconds', () => {
     // The tooltip, from the values file rather than from this test, so a
     // re-import that reordered the clauses fails here rather than silently.
     expect(druidValues.talents.naturalist.text).toBe(
-      'Reduces the cast time of your Healing Touch spell by {0} sec and increases all damage you deal by {1}%.',
+      'Reduces the cast time of your Healing Touch and Wild Growth spells by {0} sec and increases all damage you deal by {1}%.',
     );
     expect(talentNumber('druid', 'naturalist', 5, 0)).toBeCloseTo(0.5, 6);
-    expect(talentNumber('druid', 'naturalist', 5, 1)).toBe(5);
+    // Ten since client build 1.60.1.70707, where it was five.
+    expect(talentNumber('druid', 'naturalist', 5, 1)).toBe(10);
 
     expect(
       DRUID_TALENT_EFFECTS.naturalist.find((entry) => entry.kind === 'conditionalDamage'),
     ).toMatchObject({ valueIndex: 1 });
   });
 
-  it('is one percent a rank, so any Druid profile that takes it gets rank x 1%', () => {
+  it('is two percent a rank, so any Druid profile that takes it gets rank x 2%', () => {
     /*
      * ASSERTED ON THE VALUES rather than on a built character, so it holds for
      * every profile -- the talent has no requirement, which makes it the one
@@ -241,7 +242,7 @@ describe('Naturalist is five percent, not half of one', () => {
      * reaches the paw swings as well as the spells.
      */
     for (const rank of [1, 2, 3, 4, 5]) {
-      expect(talentNumber('druid', 'naturalist', rank, 1), `rank ${rank}`).toBe(rank);
+      expect(talentNumber('druid', 'naturalist', rank, 1), `rank ${rank}`).toBe(rank * 2);
     }
   });
 });

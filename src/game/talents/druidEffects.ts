@@ -52,13 +52,17 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   /*
    * "Increases the periodic damage and healing done by your spells and
-   * abilities by 5%." Every tick, whatever cast it, and nothing that is not a
+   * abilities by 10%." Every tick, whatever cast it, and nothing that is not a
    * tick -- which is an axis none of the three modifier scopes can see. Its
    * old reason said exactly that: "`abilityDamage` is per ability and
    * `damageMultiplier` is everything, and neither can select the ticks."
    *
    * ALL THREE PROFILES TAKE IT and it reaches all three: Moonfire and Insect
    * Swarm on the Moonkin, Rake and Rip on the Cat, Lacerate on the Bear.
+   *
+   * 2% A RANK SINCE CLIENT BUILD 1.60.1.70707, where it was 1% -- so 10% at
+   * 5/5. The figure is the values file's and nothing here restates it; the
+   * test is `druidTalents.test.ts`, which multiplies it out.
    */
   genesis: [
     { kind: 'periodicDamage' },
@@ -449,12 +453,32 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   /*
    * THE TALENT IS `primal_bite` AND THE ABILITY IT GRANTS IS STILL `mangle`,
    * which is not a typo. Forever renamed Mangle to Primal Bite; the ability's
-   * internal id was deliberately left alone -- rotations, tests and the Berserk
-   * aura all key off it -- and the TALENT's id is derived from the client's
+   * internal id was deliberately left alone -- rotations, tests and profiles
+   * all key off it -- and the TALENT's id is derived from the client's
    * name, so the two parted company. `MANGLE.name` is "Primal Bite" and that is
    * what a reader sees. See `abilities/druid.ts`.
    */
   primal_bite: [{ kind: 'grantAbility', abilityId: 'mangle' }],
+
+  /*
+   * LACERATE IS A TALENT NOW (client build 1.60.1.70707), at row 4 of Feral
+   * Combat requiring Savage Fury 2, where it was a trainer spell every Druid
+   * had. The ability is unchanged; it simply leaves the book of a build that
+   * has not spent the point, which `abilitiesForClass` derives from this grant.
+   */
+  lacerate: [{ kind: 'grantAbility', abilityId: 'lacerate' }],
+
+  /*
+   * "Your Ferocious Bite ability no longer converts extra Energy into damage,
+   * but still deals extra damage based on your excess Energy."
+   *
+   * NEW AT 1.60.1.70707, row 4 beside Lacerate, and Shifting Power now requires
+   * it. A marker aura Ferocious Bite reads -- the mechanism is on the ability,
+   * the reasoning on `PREDATORY_DISCIPLINE_AURA`. Cat-only by its own wording,
+   * since Ferocious Bite requires Cat Form, so no `styles` requirement is
+   * needed to keep it off a Bear: a Bear never casts the bite.
+   */
+  predatory_discipline: [{ kind: 'grantAura', auraId: 'predatory_discipline' }],
 
   /*
    * "Increases your melee Attack Power in Cat Form, Bear Form, and Dire Bear
@@ -575,9 +599,9 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * KING OF THE JUNGLE IS GONE, with Tiger's Fury, the ability its only clause
    * named. Removed at client build 1.60.1.70170.
    *
-   * SHIFTING POWER IS WHAT TOOK ITS PLACE IN THE TREE -- row 4 of Feral Combat,
-   * requiring Shredding Attacks 3 -- and it does the same job from the other
-   * end: King of the Jungle made a free cooldown refund 60 energy, and this buys
+   * SHIFTING POWER IS WHAT TOOK ITS PLACE IN THE TREE -- and at 1.60.1.70707 it
+   * moved again, to the capstone row Berserk left, requiring Predatory
+   * Discipline -- and it does the same job from the other end: King of the Jungle made a free cooldown refund 60 energy, and this buys
    * 40 energy with 55% of base mana.
    *
    * "Instantly convert 55% of base Mana into 40 Energy." Everything about it --
@@ -587,15 +611,10 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   shifting_power: [{ kind: 'grantAbility', abilityId: 'shifting_power' }],
 
   /*
-   * "Reduces the cooldown of your Shifting Power spell by 4/8 sec."
-   *
-   * A FLAT SECONDS REDUCTION, so `abilityCooldown` is the kind -- the same one
-   * Improved Arcane Shot and Improved Judgement use. At 2/2 it halves the
-   * sixteen second cooldown, which is what the Cat build takes.
+   * IMPROVED SHIFTING POWER IS GONE (1.60.1.70707). Its 2/2 figure is the
+   * spell's own cooldown now -- eight seconds -- so the two points it cost a
+   * Cat came back with nothing lost. See `SHIFTING_POWER`.
    */
-  improved_shifting_power: [
-    { kind: 'abilityCooldown', abilityId: 'shifting_power', unit: 'seconds' },
-  ],
 
   /*
    * "Increases your dodge chance by 5%, and gives you a 100% chance to gain 5
@@ -661,20 +680,9 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   /*
-   * THE ABILITY WAS BUILT AND THE TALENT NEVER GRANTED IT.
-   *
-   * `abilities/druid.ts` has carried Berserk -- with `suppressesCooldownOf` and
-   * +100 crit on every combo point generator, two aura fields written for it --
-   * while this entry said "the engine reaches none" of its clauses, and the
-   * ability sat in the BASE list so every Druid had it. The Moonkin's audit
-   * line read "in book, never cast: ... berserk", which is exactly what an
-   * ability nobody should have looks like.
-   *
-   * The two clauses the engine does not reach are on the ability itself, where
-   * the results page prints them: three targets on a one-target encounter, and
-   * Fear immunity, which is crowd control.
+   * BERSERK IS GONE (1.60.1.70707), the talent, the ability and its aura.
+   * Shifting Power took its row.
    */
-  berserk: [{ kind: 'grantAbility', abilityId: 'berserk' }],
 
   // --- Restoration ---------------------------------------------------------
 
@@ -716,11 +724,14 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   naturalist: [
     /*
-     * "Reduces the cast time of your Healing Touch spell by 0.5 sec and
-     * increases all damage you deal by 5%."
+     * "Reduces the cast time of your Healing Touch and Wild Growth spells by
+     * 0.5 sec and increases all damage you deal by 10%."
+     *
+     * 10% AT 5/5 SINCE CLIENT BUILD 1.60.1.70707, where it was 5%, and still
+     * the SECOND number on the row -- the trap below is unchanged by it.
      *
      * THE SECOND NUMBER, AND READING THE FIRST COST A FACTOR OF TEN. The row
-     * is `[0.5, 5]` -- a number of SECONDS and then a percentage -- and
+     * was `[0.5, 5]` -- a number of SECONDS and then a percentage -- and
      * `conditionalDamage` had no `valueIndex`, so it read 0.5 as a percentage
      * and a rank-5 Moonkin carried x1.005 where it should carry x1.05.
      *
@@ -769,12 +780,22 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     kind: 'abilityHealing' as const,
     abilityId,
   })),
-  // Half a second off the global cooldown of three spells; the 0.5 is filled in
-  // by hand, a single-rank talent having no placeholder to match.
-  gift_of_the_earthmother: (['rejuvenation', 'swiftmend', 'wild_growth'] as const).map((abilityId) => ({
-    kind: 'abilityGcd' as const,
-    abilityId,
-  })),
+  /*
+   * GIFT OF THE EARTHMOTHER IS GONE (1.60.1.70707), half a second off three
+   * global cooldowns. BLOOM took its place, a heal when Rejuvenation or Regrowth
+   * EXPIRES -- "an amount equal to 100% of your Spirit", or half that when
+   * dispelled. NOT BUILT YET, and a live gap rather than a ruling: the Resto
+   * Drood puts Gift of the Earthmother's old point here, and
+   * `AuraDefinition.onExpire` is the hook it would hang on.
+   */
+  bloom: [
+    {
+      kind: 'unmodelled',
+      reason:
+        'Heals when Rejuvenation or Regrowth expires, which no heal over time ' +
+        'here declares; AuraDefinition.onExpire is the hook it would use.',
+    },
+  ],
   tranquil_spirit: [
     { kind: 'grantCastModifier', abilityIds: ['healing_touch'], property: 'costFraction' },
     {

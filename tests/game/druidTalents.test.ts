@@ -96,7 +96,8 @@ const compiled = (condition: AplCondition | undefined) =>
  */
 const RESTO_20: Record<string, number> = {
   nature_s_focus: 5,
-  furor: 5,
+  // Heart of the Wild, since Furor moved to Feral Combat at 1.60.1.70707.
+  heart_of_the_wild: 5,
   naturalist: 5,
   subtlety: 3,
   natural_shapeshifter: 3,
@@ -340,9 +341,10 @@ describe('Genesis, which is periodic damage and nothing else', () => {
 
   it('is 1 for a character without it, so every other profile is untouched', () => {
     expect(makeAttacker().periodicDamageMultiplier).toBe(1);
-    // All three Druid profiles take it; the five ranks are 1% to 5%.
+    // All three Druid profiles take it; the five ranks are 2% to 10% since
+    // client build 1.60.1.70707, where they were 1% to 5%.
     expect([1, 2, 3, 4, 5].map((r) => talentNumber('druid', 'genesis', r, 0))).toEqual([
-      1, 2, 3, 4, 5,
+      2, 4, 6, 8, 10,
     ]);
     /*
      * ALL THREE DRUID PROFILES NOW SPEND FIVE. The Moonkin spent two until
@@ -356,9 +358,9 @@ describe('Genesis, which is periodic damage and nothing else', () => {
     // The Moonkin went back to Genesis 2 in round 78, for Reflection 3, and to
     // Genesis 5 in round 80, on the weighted score.
     for (const [preset, style, multiplier] of [
-      ['druid_cat', 'cat', 1.05],
-      ['druid_bear', 'bear', 1.05],
-      ['druid_moonkin', 'moonkin', 1.05],
+      ['druid_cat', 'cat', 1.1],
+      ['druid_bear', 'bear', 1.1],
+      ['druid_moonkin', 'moonkin', 1.1],
     ] as const) {
       expect(buildIn(preset, style).periodicDamageMultiplier, preset).toBeCloseTo(multiplier, 10);
     }
@@ -572,14 +574,13 @@ describe('Shifting Power, which replaced Tiger\'s Fury and King of the Jungle', 
     expect(build.castReactions).toEqual([]);
   });
 
-  it('halves its cooldown at 2/2 of Improved Shifting Power, which the Cat takes', () => {
+  it('has an eight second cooldown of its own, since Improved Shifting Power left the tree', () => {
     /*
-     * SIXTEEN SECONDS FROM THE SPELLBOOK CAPTURE, eight off from the talent --
-     * both written out by hand here rather than read from the constants. The
-     * talent tooltip states no cooldown for the ability at all, so the base
-     * figure has only one source.
+     * EIGHT SECONDS, foreverchanges.pro's spellbook at 1.60.1.70707, written
+     * out by hand rather than read from the constant. It was sixteen with a
+     * talent taking eight off; the talent is gone and no other touches it.
      */
-    expect(talentNumber('druid', 'improved_shifting_power', 2, 0)).toBe(8);
+    expect(DRUID_TALENT_EFFECTS.improved_shifting_power).toBeUndefined();
     const cat = druid('druid_cat', 'cat');
     expect(cat.abilities.get('shifting_power')!.cooldownMs).toBe(8_000);
   });
@@ -651,7 +652,10 @@ describe("Shredding Attacks' second clause", () => {
 
     // And the built book carries the reduced figures, which is what a rotation
     // reads -- Ferocity takes Claw to 42 and Improved Shred takes Shred there too.
-    const book = abilitiesForClass('druid', 'cat', PRESETS_BY_ID.get('druid_cat')!.build().talents);
+    // Lacerate is a TALENT since 1.60.1.70707 and the Cat does not take it, so
+    // the Lacerate half is read off a book that has the point.
+    const cat = PRESETS_BY_ID.get('druid_cat')!.build().talents;
+    const book = abilitiesForClass('druid', 'cat', { ...cat, lacerate: 1 });
     expect(book.find((a) => a.id === 'shred')!.cost!.amount).toBe(60 - 18);
     expect(book.find((a) => a.id === 'lacerate')!.cost!.amount).toBe(15 - 3);
   });
@@ -728,29 +732,28 @@ describe("Nature's Splendor, which lengthens a DoT rather than thickening it", (
   });
 });
 
-describe('Berserk is a talent, and was in every Druid book', () => {
-  it('reaches a feral build and no other', () => {
-    /*
-     * IT SAT IN THE BASE ABILITY LIST, so the Moonkin carried it: its own audit
-     * line read "in book, never cast: ... berserk", which is exactly what an
-     * ability nobody should have looks like. The capture's "Learned at level 40"
-     * is what misled it -- and Insect Swarm, Swiftmend, Feral Charge, Moonkin
-     * Form and Nature's Swiftness all carry the same line and are all talents.
-     */
-    const bookFor = (preset: string, style: 'cat' | 'bear' | 'moonkin') =>
-      abilitiesForClass('druid', style, PRESETS_BY_ID.get(preset)!.build().talents).map((a) => a.id);
-
-    expect(bookFor('druid_cat', 'cat')).toContain('berserk');
-    expect(bookFor('druid_bear', 'bear')).toContain('berserk');
-    expect(bookFor('druid_moonkin', 'moonkin')).not.toContain('berserk');
-    // And an untalented Druid has neither talent-granted ability.
-    expect(abilitiesForClass('druid', 'cat', {}).map((a) => a.id)).not.toContain('berserk');
+describe('Berserk left the tree, and Lacerate joined it', () => {
+  it('is in no Druid book, and has no effect to grant it', () => {
+    // Removed at client build 1.60.1.70707, with its ability and its aura.
+    expect(DRUID_TALENT_EFFECTS.berserk).toBeUndefined();
+    for (const [preset, style] of [
+      ['druid_cat', 'cat'],
+      ['druid_bear', 'bear'],
+      ['druid_moonkin', 'moonkin'],
+    ] as const) {
+      const book = abilitiesForClass('druid', style, PRESETS_BY_ID.get(preset)!.build().talents);
+      expect(book.map((a) => a.id), preset).not.toContain('berserk');
+    }
   });
 
-  it('keeps its two unreachable clauses on the ability, where they are printed', () => {
-    expect(DRUID_TALENT_EFFECTS.berserk).toEqual([
-      { kind: 'grantAbility', abilityId: 'berserk' },
-    ]);
+  it('puts Lacerate in a book only with the point spent', () => {
+    expect(DRUID_TALENT_EFFECTS.lacerate).toEqual([{ kind: 'grantAbility', abilityId: 'lacerate' }]);
+    const bookFor = (preset: string, style: 'cat' | 'bear') =>
+      abilitiesForClass('druid', style, PRESETS_BY_ID.get(preset)!.build().talents).map((a) => a.id);
+    // The Bear casts it, and moved Berserk's point to it so it still can.
+    expect(bookFor('druid_bear', 'bear')).toContain('lacerate');
+    expect(bookFor('druid_cat', 'cat')).not.toContain('lacerate');
+    expect(abilitiesForClass('druid', 'bear', {}).map((a) => a.id)).not.toContain('lacerate');
   });
 });
 
@@ -1097,15 +1100,14 @@ describe('Feral Swiftness grants four dodge, not thirty', () => {
 
   it('contributes four dodge to a Cat, whose only dodge talent it is', () => {
     /*
-     * ROUND 80 MOVED THE CAT PRESET'S TWO POINTS TO FEROCITY, so the build fact
-     * and the mechanism are asserted apart: the preset no longer takes it, and
-     * the Cat tree it left (Ferocity 3, Feral Swiftness 2) still gets four.
+     * THE CAT TAKES IT AGAIN SINCE 1.60.1.70707, at the rank the owner's build
+     * gives it. The build fact and the mechanism are still asserted apart.
      */
     const built = PRESETS_BY_ID.get('druid_cat')!.build();
-    expect(built.talents.feral_swiftness).toBeUndefined();
+    expect(built.talents.feral_swiftness).toBe(2);
     expect(built.talents.natural_reaction).toBeUndefined();
 
-    const talents = { ...built.talents, ferocity: 3, feral_swiftness: 2 };
+    const talents = built.talents;
     const named = talentBuild(
       'druid',
       talents,
@@ -1339,8 +1341,8 @@ describe('Thick Hide is armor per level and per excess defense point', () => {
   });
 });
 
-describe('what is left, and it is two talents', () => {
-  it('counts two live gaps and names them', () => {
+describe('what is left, and it is three talents', () => {
+  it('counts three live gaps and names them', () => {
     /*
      * Derived from the DATA, the same way `class_audit.ts` does it: a reason
      * with no `scope` is a gap, and one with a scope is the owner's decision.
@@ -1360,12 +1362,16 @@ describe('what is left, and it is two talents', () => {
       })
       .map(([id]) => id)
       .sort();
-    expect(live).toEqual(['furor', 'natural_shapeshifter']);
+    // BLOOM SINCE 1.60.1.70707: a heal on a heal over time's expiry, and not
+    // declared because no preset takes it -- a gap rather than a ruling.
+    expect(live).toEqual(['bloom', 'furor', 'natural_shapeshifter']);
   });
 
   it('declares an effect for all 52 and reaches every aura it names', () => {
     // 52 since client build 1.60.1.70170: King of the Jungle out, Shifting
-    // Power and Improved Shifting Power in.
+    // Power and Improved Shifting Power in. Still 52 at 1.60.1.70707: Berserk,
+    // Improved Shifting Power and Gift of the Earthmother out; Lacerate,
+    // Predatory Discipline and Bloom in.
     expect(Object.keys(DRUID_TALENT_EFFECTS)).toHaveLength(52);
     /*
      * A granted aura with no entry in `TALENT_AURAS` is DROPPED rather than

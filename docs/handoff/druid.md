@@ -10,6 +10,26 @@ directory for what the census columns mean and how to reprint every figure below
 
 ---
 
+## Client build 1.60.1.70707 — Berserk out, Predatory Discipline in
+
+See HANDOVER round 85 for the whole tree diff. What matters per profile:
+
+| Profile | Spread | What moved |
+| --- | --- | --- |
+| Cat | 9/32/10, the owner's | Berserk and Improved Shifting Power gone; Predatory Discipline, Feral Swiftness 2, Feral Instinct 3; Heart of the Wild in Restoration; Naturalist 5 |
+| Bear | 9/37/5 | Berserk's point to Lacerate (ours); Heart of the Wild's five now count as Restoration |
+| Resto | 11/0/40 | Gift of the Earthmother's point to Bloom (ours, inert) |
+| Moonkin | unchanged | Genesis and Naturalist doubled in value |
+
+**THE CAT'S FEROCIOUS BITE POOL** is `CAT_BITE_POOL_ENERGY` (100) in
+`rotations/druid.ts`: at five points with Rip up, the filler Shred waits for a
+full bar and the bite goes out on it. Predatory Discipline is what makes that
+free -- the bite reads the excess energy for its 2.7 a point and leaves it in
+the bar. The sweep is in the constant's comment and in
+`tools/optimise/catBite84.ts`.
+
+---
+
 ## Round 80 — the four presets again, under the owner's round 79 rules
 
 Paired with `tools/probe_build.ts` off `tools/optimise/druidVariants80.ts`
@@ -192,7 +212,7 @@ mana regeneration, one potion, and one list swap.
 | | spread | was | now |
 | --- | --- | --- | --- |
 | **Moonkin** | 41/0/10 (then; 38/0/13 since round 78) | 778.6 | **790.3** |
-| **Cat** | 9/34/8 | 890.0 | **898.4** |
+| **Cat** | 9/34/8 (then; 9/32/10 since 1.60.1.70707) | 890.0 | **898.4** |
 
 Both loaded in the calculator: **"all 51 spent"**, nothing refunded.
 
@@ -329,8 +349,8 @@ question** — the count was wrong for as long as nobody did.
 
 | Profile | Talents | DPS | List | Style |
 | --- | --- | --- | --- | --- |
-| Cat | 9/34/8 | **663.3** | `DRUID_CAT` | cat (paws) |
-| Bear | 9/42/0 | **433.6** | `DRUID_BEAR` | bear (paws) |
+| Cat | 9/34/8 (then; 9/32/10 since 1.60.1.70707) | **663.3** | `DRUID_CAT` | cat (paws) |
+| Bear | 9/42/0 (then; 9/37/5 since 1.60.1.70707) | **433.6** | `DRUID_BEAR` | bear (paws) |
 | Moonkin | 41/0/10 | **513.4** | `DRUID_MOONKIN` | caster |
 
 **THESE ARE CURRENT AND THE TABLE USED TO CARRY A "was" COLUMN**, which is gone

@@ -1,6 +1,6 @@
 import type { Ability, Combatant, SimulationContext } from '../../engine';
 import { DEMORALIZING_ROAR_FLAT_THREAT, FAERIE_FIRE_THREAT_PER_LEVEL } from '../combat/threat';
-import { applyHealing, dealDamage, seconds, selectTargets } from '../../engine';
+import { applyHealing, dealDamage, seconds } from '../../engine';
 import { areaTargets } from '../combat/multiTarget';
 import { HURRICANE_TICK_SP_COEFFICIENT } from '../combat/coefficients';
 import {
@@ -15,7 +15,6 @@ import {
   RAKE_DOT,
   BARKSKIN,
   BARKSKIN_COOLDOWN_MS,
-  BERSERK_COOLDOWN_MS,
   ENRAGE,
   ENRAGE_COOLDOWN_MS,
   ENRAGE_INSTANT_RAGE,
@@ -25,7 +24,7 @@ import {
   NATURES_SWIFTNESS,
   NATURES_SWIFTNESS_COOLDOWN_MS,
   PROWL,
-  berserkAura,
+  PREDATORY_DISCIPLINE_AURA_ID,
   lengthened,
   ripAura,
   INNERVATE_AURA,
@@ -510,9 +509,20 @@ export const FEROCIOUS_BITE: Ability = {
     if (spent <= 0) return;
 
     /*
-     * Everything still in the bar, converted at 2.7 a point -- and spent
-     * through `spendResource` rather than drained, for the reason written out
-     * at length on `EXECUTE`.
+     * PREDATORY DISCIPLINE KEEPS IT (client build 1.60.1.70707): "no longer
+     * converts extra Energy into damage, but still deals extra damage based on
+     * your excess Energy". So the bonus is read off the bar exactly as before
+     * and the bar is left alone -- the 35 is the whole price, and every point
+     * banked above it is 2.7 damage for nothing. That is what makes pooling
+     * energy before a bite worth doing, and the Cat list does it.
+     */
+    const remaining = caster.resources.get('energy')?.current ?? 0;
+    const keepsExcess = caster.auras.has(PREDATORY_DISCIPLINE_AURA_ID);
+
+    /*
+     * Otherwise everything still in the bar is converted at 2.7 a point -- and
+     * spent through `spendResource` rather than drained, for the reason written
+     * out at length on `EXECUTE`.
      *
      * THIS ONE WAS LATENT AND THE WARRIOR'S WAS LIVE, which is the only
      * difference between them. Execute is in both damage Warriors' lists and
@@ -522,11 +532,12 @@ export const FEROCIOUS_BITE: Ability = {
      * and it would have surfaced as "the energy panel does not add up" on the
      * day a list reached for it.
      */
-    const remaining = caster.resources.get('energy')?.current ?? 0;
-    simulation.spendResource(caster, 'energy', remaining, {
-      id: ability.id,
-      name: ability.name,
-    });
+    if (!keepsExcess) {
+      simulation.spendResource(caster, 'energy', remaining, {
+        id: ability.id,
+        name: ability.name,
+      });
+    }
 
     dealDamage(simulation, {
       source: caster,
@@ -590,9 +601,11 @@ export const DRUID_BASE_MANA = baseManaFor('tauren', 'druid');
  * 1.60.1.70170. Free instant damage buff and a 60-energy refund on it, out; a
  * mana-for-energy conversion on a sixteen second cooldown, in.
  *
- * SIXTEEN SECONDS, FROM THE SPELLBOOK CAPTURE and not from the talent tooltip,
- * which states no cooldown at all. Improved Shifting Power takes 8 off it, so a
- * Cat with 2/2 converts every eight seconds.
+ * EIGHT SECONDS, AND NO TALENT REDUCES IT ANY MORE. It was sixteen with
+ * Improved Shifting Power taking 4/8 off; client build 1.60.1.70707 removed the
+ * talent and gave the spell its 2/2 figure outright, which foreverchanges.pro's
+ * spellbook states ("8 sec cooldown"). A Cat that took 2/2 casts it exactly as
+ * often as before and has two points back.
  *
  * ITS COST IS A SHARE OF BASE MANA and not of the character's pool, which is the
  * distinction every "% of base mana" ability in this project turns on: a Cat
@@ -613,7 +626,7 @@ export const DRUID_BASE_MANA = baseManaFor('tauren', 'druid');
  */
 export const SHIFTING_POWER_BASE_MANA_FRACTION = 0.55;
 export const SHIFTING_POWER_ENERGY = 40;
-export const SHIFTING_POWER_COOLDOWN_MS = seconds(16);
+export const SHIFTING_POWER_COOLDOWN_MS = seconds(8);
 export const SHIFTING_POWER_MANA_COST = Math.round(
   DRUID_BASE_MANA * SHIFTING_POWER_BASE_MANA_FRACTION,
 );
@@ -664,33 +677,20 @@ export const MANGLE: Ability = {
   attackTable: 'melee-special',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
-    /*
-     * BERSERK'S "STRIKE UP TO 3 TARGETS" (round 57): while the aura is up the
-     * bite reaches the primary and two more, each a full hit with its own roll
-     * -- which is what Cleave and Swipe already do. Single target otherwise,
-     * and at one target in the fight either way.
-     */
-    const struck = caster.auras.has('berserk')
-      ? selectTargets(simulation, caster, target, { maxTargets: BERSERK_PRIMAL_BITE_TARGETS })
-      : [target];
-    for (const each of struck) {
-      dealDamage(simulation, {
-        source: caster,
-        target: each,
-        abilityId: ability.id,
-        abilityName: ability.name,
-        school: PHYSICAL,
-        baseAmount: MANGLE_BASE_DAMAGE,
-        weaponScaling: { slot: MAIN_HAND },
-        attackTable: ability.attackTable,
-        weaponSlot: MAIN_HAND,
-      });
-    }
+    // Single target since Berserk, which made it strike three, left the tree.
+    dealDamage(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: PHYSICAL,
+      baseAmount: MANGLE_BASE_DAMAGE,
+      weaponScaling: { slot: MAIN_HAND },
+      attackTable: ability.attackTable,
+      weaponSlot: MAIN_HAND,
+    });
   },
 };
-
-/** Berserk: "Causes your Primal Bite ability to strike up to 3 targets". */
-export const BERSERK_PRIMAL_BITE_TARGETS = 3;
 
 export const MAUL: Ability = {
   id: 'maul',
@@ -877,49 +877,13 @@ export const FRENZIED_REGENERATION_ABILITY: Ability = {
 };
 
 /**
- * Berserk, learned at 40 and usable in Cat, Bear and Dire Bear form.
- *
- * Free, instant, three minute cooldown. Every clause of it, what each one
- * reaches and what "+100%" was ruled to mean are on `berserkAura`.
- *
- * THE GENERATORS ARE READ OFF THIS FILE'S OWN ABILITIES rather than named, so
- * an ability that starts awarding a combo point is covered by Berserk on the
- * same day. The list is computed once at module load, not per cast.
- */
-export const COMBO_POINT_GENERATORS: readonly string[] = [SHRED, CLAW, RAKE]
-  .filter((ability) => (ability.comboPointsAwarded ?? 0) > 0)
-  .map((ability) => ability.id);
-
-export const BERSERK: Ability = {
-  id: 'berserk',
-  name: 'Berserk',
-  cooldownMs: BERSERK_COOLDOWN_MS,
-  requiresTarget: false,
-  /*
-   * DOES NOT BREAK PROWL -- the owner, round 51: "Berserk does not break
-   * stealth and therefore should be used at T-0 just before using Ravage." The
-   * SECOND declared exception to the engine's action rule, after the Rogue's
-   * Premeditation, and named rather than derived for the reason that one is:
-   * the owner's word is "almost every completed cast breaks stealth/prowl", so
-   * each exception has to be stated.
-   */
-  breaksActionAuras: false,
-  onCast: ({ simulation, caster }) => {
-    simulation.applyAura(caster, berserkAura(COMBO_POINT_GENERATORS), caster.id);
-  },
-  unmodelled:
-    'Its Fear immunity is crowd control, which is out of scope. Its "strike ' +
-    'up to 3 targets" is modelled on Primal Bite (round 57).',
-};
-
-/**
  * Nature's Swiftness: the next Nature spell is instant.
  *
  * Free, instant, three minute cooldown. Everything about the aura -- which
  * spells it names, why it spends `all` rather than a stack, and why an instant
  * must not eat the charge -- is on `NATURES_SWIFTNESS`.
  *
- * TALENT-GRANTED like Berserk below, and for the same reason: it is in the
+ * TALENT-GRANTED like Shifting Power, and for the same reason: it is in the
  * captured spellbook with a "Learned at level 30" line, and so are Insect
  * Swarm, Swiftmend, Feral Charge and Moonkin Form, every one of which is a
  * talent. `talentsforever.com` lists a talent-granted spell in the spellbook
@@ -1208,7 +1172,6 @@ export const DRUID_ABILITIES: readonly Ability[] = [
   INNERVATE,
   // Talent-granted: in the catalogue so the book can find them, and in no
   // character's book without the point spent.
-  BERSERK,
   NATURES_SWIFTNESS_ABILITY,
   SHIFTING_POWER,
   SWIFTMEND,

@@ -3,6 +3,18 @@
  *
  *   node tools/import_forever_talents.mjs --check    diff against what is on disk
  *   node tools/import_forever_talents.mjs --write    rewrite src/data/talents/
+ *   node tools/import_forever_talents.mjs --capture druid=tools/data/<file>.json --write
+ *
+ * ----------------------------------------------------------------------------
+ * `--capture` IS FOR A TREE THE CLIENT HAS SHIPPED AND talentsforever.com HAS
+ * NOT. Build 1.60.1.70707 reworked the Druid's Feral and Restoration trees and
+ * talentsforever.com still served the old ones, so the tree was read off
+ * foreverchanges.pro/talents/<class> -- the tie-break source by the owner's
+ * standing rule -- in a browser, hashed there and re-hashed on disk. The
+ * capture is a list of `{ name, tree, tier, col, max, pre, icon, ranks }` with
+ * zero-based tier and column, and is converted to the talentsforever payload
+ * shape here so EVERYTHING DOWNSTREAM IS THE SAME CODE: the template matching,
+ * the hand-filled merge and the validation. Only the named class is touched.
  *
  * ----------------------------------------------------------------------------
  * WHY THIS REPLACES THE WOWHEAD SCRAPE
@@ -208,12 +220,64 @@ function validate(className, structure) {
   }
 }
 
+/**
+ * Where a capture's rank text is a RENDERING artifact rather than a figure.
+ *
+ * Thick Hide reads "178 / 179 / 180 additional base Armor per level" across its
+ * three ranks on foreverchanges.pro at 1.60.1.70707, where talentsforever.com
+ * read 1 / 2 / 3. A per-level figure of 180 would be 10,800 armor at level 60,
+ * and 177 + rank is no formula anybody writes -- so the template's {0} is put
+ * back to the rank and the defense-point half, which renders cleanly, is kept.
+ * A question for the owner rather than a decision, and named here so a
+ * re-import cannot quietly reinstate it.
+ */
+const CAPTURE_CORRECTIONS = {
+  'Thick Hide': (text, rank) => text.replace(/gain \d+ additional base Armor per level/, `gain ${rank} additional base Armor per level`),
+};
+
+/**
+ * A foreverchanges.pro capture, as the talentsforever payload shape.
+ *
+ * Trees in the order they first appear, talents by row then column -- which is
+ * the order every file on disk already has, and the order a build URL's digits
+ * run in.
+ */
+function fromCapture(path) {
+  const captured = JSON.parse(readFileSync(path, 'utf8'));
+  const trees = [];
+  for (const t of captured) {
+    let tree = trees.find((x) => x.name === t.tree);
+    if (!tree) trees.push((tree = { name: t.tree, talents: [] }));
+    tree.talents.push({
+      name: t.name,
+      row: t.tier + 1,
+      col: t.col + 1,
+      max: t.max,
+      icon: t.icon,
+      req: t.pre ?? undefined,
+      desc: Array.from({ length: t.max }, (_, i) => {
+        const text = t.ranks[String(i + 1)];
+        const correct = CAPTURE_CORRECTIONS[t.name];
+        return correct ? correct(text, i + 1) : text;
+      }),
+    });
+  }
+  for (const tree of trees) tree.talents.sort((a, b) => a.row - b.row || a.col - b.col);
+  return { trees };
+}
+
 const mode = process.argv.includes('--write') ? 'write' : 'check';
-const data = await fetchTalentData();
+const captureArg = process.argv[process.argv.indexOf('--capture') + 1];
+const capture = process.argv.includes('--capture') ? captureArg.split('=') : null;
+const data = capture
+  ? { [CLASSES[capture[0]]]: fromCapture(capture[1]) }
+  : await fetchTalentData();
+const source = capture ? `https://foreverchanges.pro/talents/${capture[0]}` : SOURCE;
 
 let changed = 0;
 for (const [file, key] of Object.entries(CLASSES)) {
   const classData = data[key];
+  if (capture && file !== capture[0]) continue;
   if (!classData?.trees) {
     console.log(`${file.padEnd(8)} MISSING from the payload`);
     continue;
@@ -226,6 +290,8 @@ for (const [file, key] of Object.entries(CLASSES)) {
 
   const structure = toStructure(file, classData);
   const values = toValues(file, classData, existingValues);
+  structure.source = source;
+  values.source = source;
   validate(file, structure);
 
   const structurePath = join(OUT_DIR, `${file}.json`);

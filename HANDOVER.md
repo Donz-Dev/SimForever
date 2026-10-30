@@ -107,6 +107,50 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 85: the Druid tree at client build 1.60.1.70707, and the Cat's bite pool
+
+The owner gave a new Cat build -- **9/32/10**, read off
+[foreverchanges.pro](https://foreverchanges.pro/talents/druid?b=050022-5023002023032211050001-055&o=111115544DDDDDEEEEEgggggiijjjmmpppBoossrrruttxxxxxv)
+-- and talentsforever.com still served the old tree, so the tree was captured
+from foreverchanges.pro in a browser (hashed there and on disk) into
+`tools/data/foreverchanges-druid-talents-70707.json` and imported with the new
+`import_forever_talents.mjs --capture druid=...`. Still 52 talents:
+
+| | what changed |
+| --- | --- |
+| out | **Berserk**, **Improved Shifting Power**, **Gift of the Earthmother** |
+| in | **Predatory Discipline** (Ferocious Bite keeps the energy above its 35 and still deals 2.7 a point for it), **Lacerate** (a talent now, not a trainer spell), **Bloom** (not declared) |
+| values | **Genesis 2% a rank** (10% at 5/5, was 5%), **Naturalist 2% a rank** (10%; its tooltip now also names Wild Growth's cast, which is instant here, so that clause reaches nothing), Primal Bite's rank-1 tooltip 26 -> 42 (max rank still 77) |
+| moved | Furor to Feral, Heart of the Wild to Restoration; Shifting Power and Primal Bite to the bottom row |
+| spells | **Shifting Power 8 s baseline** (was 16, 8 with the talent); Ferocious Bite has a rank 6 and it is the 787-847 already implemented |
+
+**THE CAT'S LIST**: Berserk is out of the opener and the list, and the old
+Berserk pool is replaced by a **Ferocious Bite pool** -- at five points with Rip
+up, hold the Shred filler until the bar is at `CAT_BITE_POOL_ENERGY` (100),
+then bite. Paired at 400 fights against the shipped round 80 gate (Rip has 4 s
+or more), pool to 100 with "Rip is up" is **+7.64 +/- 4.92 at 120 s and
++11.20 +/- 3.44 at 240 s**, monotone in the threshold; with round 80's gate in
+place the threshold was worth nothing either way. No Rip at all is -68.6.
+`tools/optimise/catBite84.ts`.
+
+**THREE THINGS DONE BY US, NOT THE OWNER, AND FLAGGED:**
+
+- **Bear**: Berserk's point went to **Lacerate**, which is a talent now and the
+  third entry of its list. Its multi-target list lost its Berserk bite and its
+  Berserk opener; that list has not been re-measured.
+- **Resto Drood**: Gift of the Earthmother's point went to **Bloom**, which is
+  undeclared, so it is inert. The Rejuvenation/Swiftmend/Wild Growth one-second
+  global cooldown went with the talent.
+- **Thick Hide** rendered "178 / 179 / 180 armor per level" on foreverchanges.pro
+  where talentsforever.com read 1 / 2 / 3; the importer corrects it back to the
+  rank (`CAPTURE_CORRECTIONS`).
+
+**OPEN, FOR THE OWNER:** foreverchanges.pro gives **Wild Growth a 3 s cast**
+where this project has it instant (the Resto Drood's, not touched here); and the
+new tree's tooltips say Moonkin Form and Leader of the Pack raise "Critical
+Strike chance" with no school, while the same page's patch notes keep them
+spell-only and melee/ranged-only -- the split is left as it was.
+
 ## Round 84: the Dungeon Route
 
 The owner asked for a **Dungeon Route** in the Encounter panel's Target
@@ -6855,7 +6899,7 @@ almost everything that looked like an opportunity measured as a loss.
 | | spread | was | now |
 | --- | --- | --- | --- |
 | **Moonkin** | 41/0/10 (then; 38/0/13 since round 78) | 778.6 | **790.3** |
-| **Cat** | 9/34/8 | 890.0 | **898.4** |
+| **Cat** | 9/34/8 (then; 9/32/10 since 1.60.1.70707) | 890.0 | **898.4** |
 
 **THE CAT THROWS AWAY THIRTEEN OF THE TWENTY-SEVEN COMBO POINTS IT GENERATES,
 AND THAT IS CORRECT.** It looked exactly like the Hunter's missing Arcane Shot
@@ -12441,14 +12485,14 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | LW Ranged | Hunter | 5/41/5 | 1021.0 | | Hemo Dagger | Rogue | 17/3/31 (then; 20/0/31 since round 78) | 840.2 |
 | Fire Mage | Mage | 14/34/3 (then; 12/36/3 since round 80) | 1020.7 | | **Enh Shaman** | Shaman | 19/32/0 (then; 18/31/2 since round 80) | **838.8** |
 | BM Hunter | Hunter | 31/20/0 | 968.2 | | Moonkin | Druid | 41/0/10 (then; 38/0/13 since round 78) | 820.3 |
-| Cat Druid | Druid | 9/34/8 | 966.9 | | Ele Shaman | Shaman | 32/11/8 | 792.8 |
+| Cat Druid | Druid | 9/34/8 (then; 9/32/10 since 1.60.1.70707) | 966.9 | | Ele Shaman | Shaman | 32/11/8 | 792.8 |
 | Seal Twist Ret | Paladin | 15/0/36 (then; 16/0/35 since round 78) | 948.6 | | Pure Hemo | Rogue | 19/8/24 | 775.9 |
 | Hawk Melee | Hunter | 16/11/24 | 937.6 | | Venom Rogue | Rogue | 33/16/2 | 771.6 |
 | Shockadin 2H | Paladin | 23/0/28 | 935.2 | | SM/DS | Warlock | 35/11/5 | 769.4 |
 | Shadow Priest | Priest | 14/2/35 | 931.0 | | Rupture Rogue | Rogue | 12/8/31 | 754.9 |
 | 2H Arms | Warrior | 39/10/2 | 927.0 | | Prot Pally | Paladin | 8/34/9 | 551.1 |
 elock | Warlock | 5/11/35 | 910.5 | | Prot Warr | Warrior | 17/0/34 (then; 17/2/32 since round 78) | 499.5 |
-| Combat Rogue | Rogue | 18/33/0 | 899.5 | | Bear Druid | Druid | 9/42/0 | 432.8 |
+| Combat Rogue | Rogue | 18/33/0 | 899.5 | | Bear Druid | Druid | 9/42/0 (then; 9/37/5 since 1.60.1.70707) | 432.8 |
 
 The mean across **28** is **863.8**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.

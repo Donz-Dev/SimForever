@@ -78,7 +78,9 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
       ['balance', 16, 'Moonkin Form'],
       // 20: King of the Jungle out, Shifting Power and Improved Shifting
       // Power in, at client build 1.60.1.70170.
-      ['feral_combat', 20, 'Berserk'],
+      // Still 20 at 1.60.1.70707, and Berserk is gone: Primal Bite and
+      // Shifting Power share the bottom row, Primal Bite first.
+      ['feral_combat', 20, 'Primal Bite'],
       ['restoration', 16, 'Wild Growth'],
     ],
   },
@@ -269,7 +271,16 @@ describe('every class has its trees', () => {
        * `tools/import_forever_talents.mjs` fetches it with plain `fetch`, with
        * no browser, no DOM walk and no clipboard.
        */
-      expect(talentsOf(classId).source).toBe('https://talentsforever.com/talents.js');
+      /*
+       * EXCEPT THE DRUID, since client build 1.60.1.70707: talentsforever.com
+       * still served the old tree, so it was read off foreverchanges.pro with
+       * `--capture` -- see the importer.
+       */
+      expect(talentsOf(classId).source).toBe(
+        classId === 'druid'
+          ? 'https://foreverchanges.pro/talents/druid'
+          : 'https://talentsforever.com/talents.js',
+      );
     }
   });
 });
