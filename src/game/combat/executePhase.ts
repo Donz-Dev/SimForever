@@ -92,6 +92,7 @@ export function inExecutePhase(
   /** The last `fraction` of the fight. Defaults to Execute's own 20%. */
   fraction: number = EXECUTE_PHASE_FRACTION,
 ): boolean {
-  const remaining = simulation.plannedDurationMs - simulation.clock.now();
-  return remaining <= simulation.plannedDurationMs * fraction;
+  // The current pull's end, which is `plannedDurationMs` for one continuous fight.
+  const remaining = simulation.combatEndsAt - simulation.clock.now();
+  return remaining <= (simulation.combatEndsAt - simulation.combatStartedAt) * fraction;
 }

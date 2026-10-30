@@ -9,7 +9,7 @@ import {
   seconds,
   toRollUnits,
 } from '../engine';
-import type { CharacterProfile } from '../profiles';
+import type { CharacterProfile, EncounterSection } from '../profiles';
 import { selectedRaidBuffs } from '../game/buffs/raidBuffs';
 import { fightSection, withSection } from '../profiles/aplSections';
 import { MAX_CHARACTER_LEVEL } from '../game/character';
@@ -173,7 +173,9 @@ export function healerEncounter(
      * ordinary encounter would choose by the target count.
      */
     ...withSection(profile, fightSection({ targets: 1, healer: fight })),
-    encounter: { ...profile.encounter, targetAttacks: false },
+    // NOT A DUNGEON ROUTE: the owner's ruling is that a route is for DPS and
+    // tank runs only, so a healer fight drops it and fights its own target.
+    encounter: { ...withoutRoute(profile.encounter), targetAttacks: false },
   };
   const base = trainingDummyEncounter(healer, seed);
   const buffs = selectedRaidBuffs(healer.raidBuffs);
@@ -297,4 +299,11 @@ function scheduleRaidDamage(context: SimulationContext): void {
     ctx.schedule(next, createEvent('raid-pulse', EventPriority.AutoAttack, pulse));
   };
   context.schedule(RAID_PULSE_FIRST_MS, createEvent('raid-pulse', EventPriority.AutoAttack, pulse));
+}
+
+/** An encounter with no route. */
+function withoutRoute(encounter: EncounterSection): EncounterSection {
+  const { route: _route, ...rest } = encounter;
+  void _route;
+  return rest;
 }

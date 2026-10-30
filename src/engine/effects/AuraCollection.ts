@@ -499,6 +499,13 @@ export class AuraCollection {
     }
   }
 
+  /** Remove every aura matching a predicate. */
+  removeWhere(context: SimulationContext, predicate: (instance: AuraInstance) => boolean): void {
+    for (const instance of [...this.auras.values()]) {
+      if (predicate(instance)) this.expire(context, instance);
+    }
+  }
+
   /** Remove every aura. Used when a combatant dies or combat ends. */
   removeAll(context: SimulationContext): void {
     for (const instance of [...this.auras.values()]) {

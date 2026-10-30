@@ -107,6 +107,90 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 84: the Dungeon Route
+
+(Numbered 84 because PR #353 has round 83 open. Re-count against `main` if
+that one merges after this.)
+
+The owner asked for a **Dungeon Route** in the Encounter panel's Target
+dropdown, in place of a fixed target count and duration: 27 pulls and 26 gaps
+over 28 minutes, transcribed into `game/encounters/dungeonRoute.ts` in the
+owner's own `MM:SS` times. **Selecting it greys out Level, Number of Targets
+and Duration**, which show the range the route covers (60-63, 1-14, 1680).
+Armor and the two swing figures stay editable, because the route does not
+state them and they still apply to every enemy on it.
+
+**FOUR RULINGS, ASKED BEFORE BUILDING:**
+
+| question | the owner |
+| --- | --- |
+| which 2+ minute cooldowns wait for an "offensive cooldowns" pull | **damage ones only**; mana, health and mitigation cooldowns stay free |
+| how fast rage decays out of combat | **1 rage a second** |
+| what DPS divides by | **in-combat time**, 1145 of the 1680 seconds |
+| which runs take the route | **DPS and Tank**, not healers |
+
+**HOW IT WORKS, IN THE ENGINE:** a fight can be a list of `CombatSegment`s
+(`engine/simulation/CombatSegment.ts`). A segment names which hostile
+combatants are present, and an empty list means out of combat. Fourteen enemies
+are made once and stand in for every pull. Out of combat no rotation decides,
+nothing swings because nothing is present, and a cast in progress at the last
+enemy's exit is abandoned. Cooldowns, regeneration and auras carry on by
+themselves, which is the owner's "still cooling down". An enemy that leaves
+takes every aura the player put on it, so each pull is fresh mobs. Execute,
+Hammer of Wrath, Quietus-style windows and the APL's fight-remaining and
+fight-elapsed conditions all read **the current pull's** bounds
+(`combatStartedAt` / `combatEndsAt`), which are 0 and the planned duration in
+every ordinary fight.
+
+**AND IN THE GAME LAYER:** each pull sets its enemies' level, resets the boss
+ramp, puts the raid's debuffs back on the primary target, and swaps the
+character between its Single and Multi Target lists by pull size. Each gap
+applies **Out of Combat** (rage decay) and, where the route says "Drink for
+mana", **Drink** (165 mana a second). Both are auras, so the Timeline draws
+them. Major cooldowns are refused with a new cast rejection, `held`. The rule is
+`isHeldMajorCooldown`, and `tools/probe_major_cooldowns.ts` prints every 2+
+minute cooldown a preset carries beside whether it is held.
+
+**TWO TALENTS CAME ALIVE, BECAUSE THEIR REASONS NAMED THE MISSING STATE.**
+Anger Management's "reduces Rage loss while out of combat by 30%" and
+**Lingering Rage**'s delay were both filed as "nothing here leaves combat".
+Both are effects now (`rageDecayReduction`, `rageDecayDelay`). Anger
+Management's own tick stops out of combat, as its "while in combat" says. DW
+Fury takes both: decay starts 4 seconds into a gap, at 0.7 a second.
+
+**AND IT FOUND A REAL TARGETING BUG.** `selectTargets` read
+`context.combatants` rather than `enemiesOf`, so an area spell struck every
+hostile combatant that existed, present or not. A 3-mob pull's Flamestrike hit
+all 14. It cost nothing before, because every enemy was always present, and
+the route is what exposed it. One run of the Arcane Mage's route went from
+**4438.7 to 1784.3** when it was fixed.
+
+**ONE FIGHT EACH (seed 777), NOT A BASELINE:**
+
+| preset | route DPS | mana drunk | rage decayed |
+| --- | --- | --- | --- |
+| DW Fury | 1332.9 | 0 | 135.9 |
+| Arcane Mage | 1784.3 | 30,719 | 0 |
+| BM Hunter | 1447.0 | 24,304 | 0 |
+| SM/DS | 1336.6 | 23,890 | 0 |
+
+**THE CONTAINMENT CHECK:** all 37 presets over three seeds have
+**byte-identical combat logs** before and after (`tools/rotation_fingerprint.ts`),
+so no ordinary fight moved.
+
+**OPEN, FOR THE OWNER:**
+- **Spell miss is a flat 17% against every level**, the existing ruling made
+  against a level 63 boss. Melee and ranged miss already fall with the level
+  gap, so a route's level 60 trash is easier to hit with a sword than with a
+  spell.
+- **Thistle Tea is held**: it restores ENERGY, which is none of mana, health or
+  mitigation.
+- **A trash mob's armor is the panel's**, 3,731 by default. The route states
+  none.
+
+`tests/engine/combatSegments.test.ts` covers the engine half and
+`tests/game/dungeonRoute.test.ts` the route, read off the event stream.
+
 ## Round 82: three saved builds in, three presets out
 
 The owner sent three saved 3-target profiles to add, and named three presets to

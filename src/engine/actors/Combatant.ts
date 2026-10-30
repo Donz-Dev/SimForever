@@ -493,7 +493,20 @@ export class Combatant {
   readonly name: string;
   readonly kind: CombatantKind;
   readonly faction: Faction;
-  readonly level: number;
+  /**
+   * NOT READONLY FOR ONE CALLER: a dungeon route's enemies are created once and
+   * stand in for every pull, so a pack of level 60s and the level 62 boss after
+   * it are the same combatants at two levels. Everything that reads a level
+   * reads it at the moment it is asked -- defense skill, weapon skill, the armor
+   * constant -- so changing it between pulls is enough.
+   */
+  level: number;
+  /**
+   * WHETHER THIS COMBATANT IS IN THE FIGHT RIGHT NOW, which only a segmented
+   * fight ever changes. An absent combatant is not dead: nothing targets it and
+   * it swings at nobody. See `CombatSegment`.
+   */
+  present = true;
   /** This combatant's own resistance per school; see `resistanceFor`. */
   readonly resistances: Readonly<Partial<Record<DamageSchool, number>>>;
   /** Fight-long threat factors; see `CombatantOptions.threatModifiers`. */
@@ -511,7 +524,12 @@ export class Combatant {
   /** Applied by the simulation when combat begins. See the option. */
   readonly openingAuras: readonly AuraDefinition[];
   readonly abilities: AbilityBook;
-  readonly rotation: Rotation | undefined;
+  /**
+   * NOT READONLY FOR ONE CALLER: a dungeon route swaps a character between its
+   * Single and Multi Target lists as the pulls change size. Changed only
+   * between pulls, while nobody is deciding.
+   */
+  rotation: Rotation | undefined;
   readonly weapons: Partial<Record<WeaponSlot, WeaponProfile>>;
   readonly hitBonusBySlot: Partial<Record<WeaponSlot, number>>;
   readonly baseGcdMs: Milliseconds;

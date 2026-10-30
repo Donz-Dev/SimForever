@@ -40,6 +40,12 @@ export interface ActorResult {
 export interface SimulationResult {
   readonly seed: number;
   readonly durationMs: Milliseconds;
+  /**
+   * The part of `durationMs` spent in combat, which every per-second figure
+   * divides by: the whole fight, except on a dungeon route, whose gaps are
+   * not part of anybody's DPS -- the owner's ruling.
+   */
+  readonly inCombatMs: Milliseconds;
   readonly endReason: CombatEndReason;
   readonly damage: DamageSummary;
   readonly healing: HealingSummary;
@@ -62,7 +68,9 @@ export function buildSimulationResult(run: SimulationRun): SimulationResult {
   const input: AnalysisInput = {
     telemetry: run.telemetry,
     actors: run.actors,
-    elapsedMs: run.elapsedMs,
+    // THE PER-SECOND DENOMINATOR: in-combat time, which is all of it unless the
+    // fight is a dungeon route. See `SimulationResult.inCombatMs`.
+    elapsedMs: run.inCombatMs,
   };
 
   const damage = new DamageAnalyzer().analyze(input);
@@ -91,6 +99,7 @@ export function buildSimulationResult(run: SimulationRun): SimulationResult {
   return {
     seed: run.seed,
     durationMs: run.elapsedMs,
+    inCombatMs: run.inCombatMs,
     endReason: run.endReason,
     damage,
     healing,

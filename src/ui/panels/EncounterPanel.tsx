@@ -1,8 +1,9 @@
 import { TARGET_ARMOR_OPTIONS } from '../../game/actors/createTrainingDummy';
 import type { CharacterProfile } from '../../profiles';
 import { MAX_ENCOUNTER_TARGETS } from '../../profiles/CharacterProfile';
+import { DUNGEON_ROUTE } from '../../game/encounters/dungeonRoute';
 import type { SelectOption } from '../components/Field';
-import { NumberField, SelectField, TextField } from '../components/Field';
+import { FixedField, NumberField, SelectField } from '../components/Field';
 import { Panel } from '../components/Panel';
 
 interface EncounterPanelProps {
@@ -39,23 +40,49 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
     onChange({ ...profile, encounter: { ...profile.encounter, ...changes } });
   };
 
+  /*
+   * THE TARGET DROPDOWN (the dungeon route): the profile's own target, or the
+   * owner's Dungeon Route. A route decides its own levels, target counts and
+   * length, so those fields are shown greyed with what the route uses; armor
+   * and the swing figures still apply to every enemy on it, so they stay.
+   */
+  const route = profile.encounter.route === 'dungeon';
+  const targetOptions: readonly SelectOption<string>[] = [
+    { value: TARGET_KIND, label: profile.encounter.targetName },
+    { value: 'dungeon', label: 'Dungeon Route' },
+  ];
+  const setTarget = (value: string) => {
+    if (value === 'dungeon') {
+      setEncounter({ route: 'dungeon' });
+      return;
+    }
+    const { route: _route, ...rest } = profile.encounter;
+    void _route;
+    onChange({ ...profile, encounter: rest });
+  };
+
   return (
     <Panel
       title="Encounter"
       collapsible
     >
-      <TextField
+      <SelectField
         label="Target"
-        value={profile.encounter.targetName}
-        onChange={(targetName) => setEncounter({ targetName })}
+        value={route ? 'dungeon' : TARGET_KIND}
+        options={targetOptions}
+        onChange={setTarget}
       />
-      <NumberField
-        label="Level"
-        value={profile.encounter.targetLevel}
-        min={1}
-        max={99}
-        onChange={(targetLevel) => setEncounter({ targetLevel })}
-      />
+      {route ? (
+        <FixedField label="Level" hint="set by each pull" value={ROUTE_LEVELS} />
+      ) : (
+        <NumberField
+          label="Level"
+          value={profile.encounter.targetLevel}
+          min={1}
+          max={99}
+          onChange={(targetLevel) => setEncounter({ targetLevel })}
+        />
+      )}
       <SelectField
         label="Armor"
         value={profile.encounter.targetArmor}
@@ -69,12 +96,16 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
         * reads the count. On a tank run each add swings for 500 every two
         * seconds and does not ramp.
         */}
-      <SelectField
-        label="Number of Targets"
-        value={profile.encounter.numberOfTargets ?? 1}
-        options={TARGET_COUNT_OPTIONS}
-        onChange={(numberOfTargets) => setEncounter({ numberOfTargets })}
-      />
+      {route ? (
+        <FixedField label="Number of Targets" hint="set by each pull" value={ROUTE_TARGET_COUNTS} />
+      ) : (
+        <SelectField
+          label="Number of Targets"
+          value={profile.encounter.numberOfTargets ?? 1}
+          options={TARGET_COUNT_OPTIONS}
+          onChange={(numberOfTargets) => setEncounter({ numberOfTargets })}
+        />
+      )}
 
       {/*
         * THE "TARGET ATTACKS BACK" CHECKBOX IS GONE (round 52): the Simulation
@@ -102,6 +133,19 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
     </Panel>
   );
 }
+
+/** The Target dropdown's value for the profile's own target. */
+const TARGET_KIND = 'target';
+
+const routePulls = DUNGEON_ROUTE.flatMap((step) => (step.kind === 'pull' ? [step] : []));
+const span = (values: readonly number[]) => {
+  const low = Math.min(...values);
+  const high = Math.max(...values);
+  return low === high ? String(low) : `${low}\u2013${high}`;
+};
+/** What the greyed fields read on a route: the range its pulls cover. */
+const ROUTE_LEVELS = span(routePulls.map((step) => step.level));
+const ROUTE_TARGET_COUNTS = span(routePulls.map((step) => step.count));
 
 /** The Number of Targets presets, 1 to `MAX_ENCOUNTER_TARGETS`. */
 export const TARGET_COUNT_OPTIONS: readonly SelectOption<number>[] = Array.from(
