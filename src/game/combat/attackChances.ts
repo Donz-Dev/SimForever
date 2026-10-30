@@ -97,7 +97,12 @@ export const COMBAT_CONSTANTS = {
   /** Enemy parry. Not derived from skill; see `EncounterChances`. */
   enemyParry: 1400,
 
-  /** Spells miss on their own flat chance, unaffected by weapon skill. */
+  /**
+   * A spell's miss against a target THREE levels above the caster -- a raid
+   * boss, which is what every fight here was until the dungeon route. Unaffected
+   * by weapon skill. Against a closer level it is less: see
+   * `SPELL_MISS_BY_LEVEL_GAP`, of which this is the last entry.
+   */
   spellMiss: 1700,
   /**
    * The miss a spell can never go below, however much hit is stacked.
@@ -310,6 +315,33 @@ export function glanceMultiplierRange(
   return { min: low / 100, max: high / 100 };
 }
 
+/**
+ * A SPELL'S MISS BY LEVEL GAP (target minus caster), the owner's table:
+ *
+ *   | gap | hit | miss |
+ *   | --- | --- | --- |
+ *   | 0   | 96% | 4%   |
+ *   | +1  | 95% | 5%   |
+ *   | +2  | 94% | 6%   |
+ *   | +3  | 83% | 17%  |
+ *
+ * THE FOUR ROWS THE OWNER MARKED AS RELEVANT, and nothing beyond them. A level
+ * 60 character only ever faces a 60 to 63 target, so a gap outside 0 to 3 does
+ * not happen here: below 0 is held at the same-level row and above 3 at the
+ * boss's 17%, rather than reading the table's other rows into the ruleset.
+ *
+ * IT REPLACED A FLAT 17% THAT WAS RIGHT FOR A BOSS AND ONLY A BOSS, which was
+ * every fight until the dungeon route put level 60 trash in front of a caster.
+ * Every preset faces a level 63 target, so none of them moves.
+ */
+export const SPELL_MISS_BY_LEVEL_GAP: readonly RollUnits[] = [400, 500, 600, COMBAT_CONSTANTS.spellMiss];
+
+/** A spell's base miss against a target `targetLevel - casterLevel` levels up. */
+export function spellMissFor(casterLevel: number, targetLevel: number): RollUnits {
+  const gap = Math.min(Math.max(targetLevel - casterLevel, 0), SPELL_MISS_BY_LEVEL_GAP.length - 1);
+  return SPELL_MISS_BY_LEVEL_GAP[gap]!;
+}
+
 /** Crit lost against a higher-level target. Zero against equal or lower level. */
 export function critSuppression(attackerLevel: number, targetLevel: number): RollUnits {
   if (targetLevel <= attackerLevel) return 0;
@@ -454,13 +486,14 @@ function buildChances(
       return {
         ...NO_CHANCES,
         /*
-         * Spell miss is flat: weapon skill has nothing to do with it. It
-         * floors at `spellMissFloor`, which is ZERO now, so 17 points of hit
-         * cap a caster. See `spellMissFloor`.
+         * Spell miss follows the LEVEL gap and nothing else: weapon skill has
+         * nothing to do with it. It floors at `spellMissFloor`, which is ZERO
+         * now, so 17 points of hit cap a caster against a boss. See
+         * `SPELL_MISS_BY_LEVEL_GAP` and `spellMissFloor`.
          */
         miss: Math.max(
           COMBAT_CONSTANTS.spellMissFloor,
-          COMBAT_CONSTANTS.spellMiss - spellHit,
+          spellMissFor(source.level, target.level) - spellHit,
         ),
         /*
          * AND THE FLOOR TRAVELS WITH THE TABLE, so the school-scoped hit that

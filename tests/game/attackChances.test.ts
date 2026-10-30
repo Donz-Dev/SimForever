@@ -305,8 +305,27 @@ describe('enemy parry', () => {
 describe('spell chances', () => {
   const mage = () => createPlayer({ race: 'gnome', characterClass: 'mage' });
 
-  it('misses on a flat 17%, unaffected by weapon skill', () => {
+  it('misses 17% against a boss three levels up, unaffected by weapon skill', () => {
     expect(providerFor('caster')('spell', mage(), boss()).miss).toBe(1700);
+  });
+
+  /*
+   * THE OWNER'S TABLE, written out a second time: 96, 95, 94 and 83% to hit at
+   * a level gap of 0 to +3. The dungeon route's trash is level 60 to 62.
+   */
+  it.each([
+    [60, 400],
+    [61, 500],
+    [62, 600],
+    [63, 1700],
+  ])('misses by the level gap: a level %i target is %i', (level, miss) => {
+    const target = createTrainingDummy({ level });
+    expect(providerFor('caster')('spell', mage(), target).miss).toBe(miss);
+  });
+
+  it('holds a gap outside the table at its nearest row', () => {
+    expect(providerFor('caster')('spell', mage(), createTrainingDummy({ level: 58 })).miss).toBe(400);
+    expect(providerFor('caster')('spell', mage(), createTrainingDummy({ level: 66 })).miss).toBe(1700);
   });
 
   it('crits for 1.5x', () => {
