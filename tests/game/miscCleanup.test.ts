@@ -367,7 +367,8 @@ describe('a pure DoT rolls to hit when it is applied', () => {
     auraId: string,
     caster: Combatant,
   ): number => {
-    const boss = makeTarget({ maxHealth: 1e9 });
+    // A level 63 boss: 17% is the spell miss three levels up.
+    const boss = makeTarget({ maxHealth: 1e9, level: 63 });
     // THE RULESET'S table: the engine default has no 17% spell miss in it.
     const simulation = buildSimulation([caster, boss], {
       attackChances: createForeverAttackChances(),
