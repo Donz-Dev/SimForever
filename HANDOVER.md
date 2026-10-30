@@ -120,7 +120,7 @@ from foreverchanges.pro in a browser (hashed there and on disk) into
 | --- | --- |
 | out | **Berserk**, **Improved Shifting Power**, **Gift of the Earthmother** |
 | in | **Predatory Discipline** (Ferocious Bite keeps the energy above its 35 and still deals 2.7 a point for it), **Lacerate** (a talent now, not a trainer spell), **Bloom** (not declared) |
-| values | **Genesis 2% a rank** (10% at 5/5, was 5%), **Naturalist 2% a rank** (10%; its tooltip now also names Wild Growth's cast, which is instant here, so that clause reaches nothing), Primal Bite's rank-1 tooltip 26 -> 42 (max rank still 77) |
+| values | **Genesis 2% a rank** (10% at 5/5, was 5%), **Naturalist 2% a rank** (10%, and half a second off Wild Growth's cast as well as Healing Touch's), Primal Bite's rank-1 tooltip 26 -> 42 (max rank still 77) |
 | moved | Furor to Feral, Heart of the Wild to Restoration; Shifting Power and Primal Bite to the bottom row |
 | spells | **Shifting Power 8 s baseline** (was 16, 8 with the talent); Ferocious Bite has a rank 6 and it is the 787-847 already implemented |
 
@@ -145,9 +145,12 @@ place the threshold was worth nothing either way. No Rip at all is -68.6.
   where talentsforever.com read 1 / 2 / 3; the importer corrects it back to the
   rank (`CAPTURE_CORRECTIONS`).
 
-**OPEN, FOR THE OWNER:** foreverchanges.pro gives **Wild Growth a 3 s cast**
-where this project has it instant (the Resto Drood's, not touched here); and the
-new tree's tooltips say Moonkin Form and Leader of the Pack raise "Critical
+**WILD GROWTH IS A 3 SECOND CAST**, every rank on foreverchanges.pro and
+confirmed by the owner; it was instant on our older capture. Naturalist 5/5
+takes it to 2.5 s, and it joins Nature's Swiftness's spell list. The Resto
+Drood's HPS has not been re-measured.
+
+**OPEN, FOR THE OWNER:** the new tree's tooltips say Moonkin Form and Leader of the Pack raise "Critical
 Strike chance" with no school, while the same page's patch notes keep them
 spell-only and melee/ranged-only -- the split is left as it was.
 

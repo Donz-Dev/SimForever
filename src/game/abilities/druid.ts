@@ -982,8 +982,11 @@ export const REGROWTH: Ability = {
 };
 
 /**
- * Wild Growth, rank 3, granted by the Restoration capstone: 1,050 mana,
- * instant, a 6 second cooldown. "Heals the target AND THEIR PARTY" -- everyone
+ * Wild Growth, rank 3, granted by the Restoration capstone: 1,050 mana, a
+ * THREE SECOND CAST, a 6 second cooldown. It was instant on our older capture;
+ * foreverchanges.pro gives every rank "3 sec cast" at client build
+ * 1.60.1.70707, the owner confirmed it, and Naturalist takes half a second off
+ * it -- its tooltip names Wild Growth beside Healing Touch at the same build. "Heals the target AND THEIR PARTY" -- everyone
  * alive in the target's party, the target included; a target with no party
  * (the tank healer fight's lone tank) is healed alone. The falloff is
  * `WILD_GROWTH_HOT`.
@@ -993,6 +996,7 @@ export const WILD_GROWTH: Ability = {
   name: 'Wild Growth',
   heals: true,
   cost: { resource: 'mana', amount: 1050 },
+  castTimeMs: seconds(3),
   cooldownMs: seconds(6),
   onCast: ({ simulation, caster, target }) => {
     if (!isFriendly(caster, target)) return;

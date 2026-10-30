@@ -1026,11 +1026,12 @@ export const NATURES_SWIFTNESS_COOLDOWN_MS = seconds(180);
 
 /**
  * The Druid's NATURE spells, which is what the talent selects: Wrath and Insect
- * Swarm, and since round 71 the two Nature HEALS with a cast time, Healing
- * Touch and Regrowth. Rejuvenation and Wild Growth are Nature too, and instant,
- * so `requiresCastTime` keeps them from spending the charge.
+ * Swarm, and since round 71 the Nature HEALS with a cast time -- Healing Touch,
+ * Regrowth, and Wild Growth since it became a three second cast at
+ * 1.60.1.70707. Rejuvenation is Nature too, and instant, so `requiresCastTime`
+ * keeps it from spending the charge.
  */
-export const NATURE_SPELLS: readonly string[] = ['wrath', 'insect_swarm', 'healing_touch', 'regrowth'];
+export const NATURE_SPELLS: readonly string[] = ['wrath', 'insect_swarm', 'healing_touch', 'regrowth', 'wild_growth'];
 
 export const NATURES_SWIFTNESS: AuraDefinition = {
   id: 'natures_swiftness',

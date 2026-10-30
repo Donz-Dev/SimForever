@@ -383,10 +383,13 @@ describe("the owner's talents, on the built character", () => {
     expect(player.abilityModifierFor('swiftmend')?.healingMultiplier ?? 1).toBe(1);
   });
 
-  it('Improved Regrowth +50% crit; Naturalist 0.5s off Healing Touch; no shortened global cooldown', () => {
+  it('Improved Regrowth +50% crit; Naturalist 0.5s off Healing Touch and Wild Growth; no shortened global cooldown', () => {
     expect(player.abilityModifierFor('regrowth')?.critBonus).toBe(50);
     const ht = player.abilities.get('healing_touch')!;
     expect(ht.castTimeMs).toBe(3000);
+    // Wild Growth is a 3 second cast at client build 1.60.1.70707, and
+    // Naturalist 5/5 takes the same half second off it.
+    expect(player.abilities.get('wild_growth')!.castTimeMs).toBe(2500);
     // Gift of the Earthmother took these three to a one second global cooldown
     // and left the tree at client build 1.60.1.70707.
     for (const id of ['rejuvenation', 'swiftmend', 'wild_growth', 'regrowth']) {
