@@ -21,6 +21,7 @@ export type CastRejection =
   | 'invalid_target'
   | 'already_queued'
   | 'wrong_stance'
+  | 'held'
   | 'condition_failed';
 
 export type CastCheck = { ok: true } | { ok: false; reason: CastRejection };
@@ -128,6 +129,15 @@ export function checkCast(
     !caster.abilities.isReady(ability.id, now)
   ) {
     return { ok: false, reason: 'on_cooldown' };
+  }
+
+  /*
+   * HELD BACK BY THE ENCOUNTER -- a dungeon route keeping its major cooldowns
+   * for the pulls that call for them. After the cooldown, so an ability that
+   * is not ready anyway still says so. See `SimulationConfig.holdsAbility`.
+   */
+  if (context.holdsAbility(caster, ability)) {
+    return { ok: false, reason: 'held' };
   }
 
   /*

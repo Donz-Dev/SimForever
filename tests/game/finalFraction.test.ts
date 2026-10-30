@@ -39,7 +39,9 @@ describe('the shared ruling', () => {
    */
   it('takes a fraction, so 20% is a default rather than the rule', () => {
     const simulation = buildSimulation([], { durationMs: seconds(100) });
-    const at = (ms: number) => ({ ...simulation, clock: { now: () => ms } }) as never;
+    // The pull's bounds are getters, which a spread would drop; one pull, the whole fight.
+    const at = (ms: number) =>
+      ({ combatStartedAt: 0, combatEndsAt: simulation.plannedDurationMs, clock: { now: () => ms } }) as never;
 
     expect(inExecutePhase(at(seconds(50)))).toBe(false);
     expect(inExecutePhase(at(seconds(50)), 0.35)).toBe(false);

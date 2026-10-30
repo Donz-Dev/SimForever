@@ -1,7 +1,8 @@
 import type { StatName } from '../../engine';
 import type { CharacterProfile } from '../../profiles';
 import { WEIGHTABLE_STATS } from '../../simulator';
-import { NumberField } from '../components/Field';
+import { FixedField, NumberField } from '../components/Field';
+import { DUNGEON_ROUTE_DURATION_MS } from '../../game/encounters/dungeonRoute';
 import { Panel } from '../components/Panel';
 
 /**
@@ -95,13 +96,22 @@ export function SimulationPanel({
         iteration identical in length, and that is not a choice worth
         offering.
       */}
-      <NumberField
-        label="Duration (seconds)"
-        value={profile.simulation.durationSeconds}
-        min={1}
-        max={3600}
-        onChange={(durationSeconds) => setSimulation({ durationSeconds })}
-      />
+      {/* A DUNGEON ROUTE IS ITS OWN LENGTH, so the box is greyed with it. */}
+      {profile.encounter.route === 'dungeon' ? (
+        <FixedField
+          label="Duration (seconds)"
+          hint="the route's length"
+          value={String(Math.round(DUNGEON_ROUTE_DURATION_MS / 1000))}
+        />
+      ) : (
+        <NumberField
+          label="Duration (seconds)"
+          value={profile.simulation.durationSeconds}
+          min={1}
+          max={3600}
+          onChange={(durationSeconds) => setSimulation({ durationSeconds })}
+        />
+      )}
       <NumberField
         label="Iterations"
         value={profile.simulation.iterations}

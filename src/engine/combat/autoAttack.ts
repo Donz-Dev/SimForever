@@ -282,6 +282,17 @@ function scheduleSwing(
     context.clock.now() + delayMs,
     createEvent(`auto-attack:${attacker.id}:${slot}`, EventPriority.AutoAttack, (ctx) => {
       if (!attacker.isAlive || ctx.hasEnded) return;
+      /*
+       * AN ABSENT ENEMY SWINGS AT NOBODY -- a dungeon route's mob between its
+       * pulls. Its timer keeps running, as every timer here does with no
+       * target, and it swings again the moment it is back. A player out of
+       * combat needs no such check: with no enemy present it has no target.
+       */
+      if (!attacker.present) {
+        const haste = swingHasteMultiplierFrom(attacker.stats.effective);
+        scheduleSwing(ctx, attacker, slot, applyHaste(weapon.swingTimerMs, haste));
+        return;
+      }
       // Stopped since it was scheduled (round 65): the slot swings no more.
       if (!swingingSlots(attacker).includes(slot)) return;
 

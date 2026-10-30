@@ -310,9 +310,10 @@ export function compileCondition(condition: AplCondition): Condition {
     case 'fightRemaining': {
       const { compare: how, seconds, fraction } = condition;
       return (context) => {
-        const remaining = context.plannedDurationMs - context.clock.now();
-        const against =
-          fraction !== undefined ? context.plannedDurationMs * fraction : (seconds ?? 0) * 1000;
+        // OF THE CURRENT PULL -- the whole fight unless it is a dungeon route.
+        const remaining = context.combatEndsAt - context.clock.now();
+        const length = context.combatEndsAt - context.combatStartedAt;
+        const against = fraction !== undefined ? length * fraction : (seconds ?? 0) * 1000;
         return compare(remaining, how, against);
       };
     }
@@ -320,7 +321,7 @@ export function compileCondition(condition: AplCondition): Condition {
     case 'fightElapsed': {
       const { compare: how, seconds } = condition;
       const milliseconds = seconds * 1000;
-      return (context) => compare(context.clock.now(), how, milliseconds);
+      return (context) => compare(context.clock.now() - context.combatStartedAt, how, milliseconds);
     }
 
     case 'targetCount': {

@@ -823,8 +823,11 @@ export function appliesArmor(request: DamageRequest): boolean {
  * fraction in every fight of a batch.
  */
 export function remainingFractionOf(context: SimulationContext): number {
-  if (context.plannedDurationMs <= 0) return 0;
-  return (context.plannedDurationMs - context.clock.now()) / context.plannedDurationMs;
+  // THE CURRENT PULL, which for one continuous fight is the whole of it -- a
+  // dungeon route's Execute window is the end of each pull, not of the route.
+  const length = context.combatEndsAt - context.combatStartedAt;
+  if (length <= 0) return 0;
+  return (context.combatEndsAt - context.clock.now()) / length;
 }
 
 /**

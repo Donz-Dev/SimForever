@@ -38,6 +38,12 @@ export interface SimulationRun {
   readonly plannedDurationMs: Milliseconds;
   /** When combat actually ended. May be earlier if everything died. */
   readonly elapsedMs: Milliseconds;
+  /**
+   * How much of `elapsedMs` was spent in combat. Equal to it for an
+   * unsegmented fight; for a dungeon route, the pulls without the gaps -- what
+   * a per-second figure divides by.
+   */
+  readonly inCombatMs: Milliseconds;
   readonly endReason: CombatEndReason;
   readonly actors: readonly ActorSnapshot[];
   readonly telemetry: readonly TelemetryEvent[];

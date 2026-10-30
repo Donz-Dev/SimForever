@@ -3,6 +3,8 @@ import type { ThreatRules } from '../combat/threat';
 import type { AttackChanceProvider } from '../combat/attackTable';
 import type { Milliseconds } from '../time';
 import type { SimulationContext } from './SimulationContext';
+import type { CombatSegment } from './CombatSegment';
+import type { Ability } from '../abilities/Ability';
 
 /**
  * Everything needed to run one fight.
@@ -82,4 +84,29 @@ export interface SimulationConfig {
    * ============================================================================
    */
   readonly onPrecombat?: (context: SimulationContext) => void;
+
+  /**
+   * A FIGHT IN SEGMENTS -- pulls and the gaps between them. See `CombatSegment`.
+   *
+   * When given, the segments ARE the fight: it lasts until the last one ends,
+   * `durationMs` and `durationVariance` are ignored, and which enemies are
+   * present -- and whether anybody is in combat at all -- follows the segment.
+   * Absent means one continuous fight with every enemy present, which is every
+   * fight that existed before this.
+   */
+  readonly segments?: readonly CombatSegment[];
+
+  /**
+   * Runs as each segment begins, after the engine has changed who is present
+   * and before anybody decides. The FIRST segment's call comes after
+   * `onPrecombat`, so the opener has run against the pull it opens.
+   */
+  readonly onSegmentStart?: (context: SimulationContext, segment: CombatSegment, index: number) => void;
+
+  /**
+   * Whether an ability is HELD right now -- refused with `held` by every cast
+   * check, rotation and pre-combat list alike. The ruleset's rule about which
+   * abilities wait for which pull; the engine only enforces the answer.
+   */
+  readonly holdsAbility?: (context: SimulationContext, actor: Combatant, ability: Ability) => boolean;
 }

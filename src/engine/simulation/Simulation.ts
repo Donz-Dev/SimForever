@@ -28,6 +28,8 @@ import { MutableSimulationClock } from './SimulationClock';
 import type { SimulationContext } from './SimulationContext';
 import type { ActorSnapshot, SimulationRun } from './SimulationRun';
 import type { CastRejection } from '../abilities/casting';
+import type { CombatSegment } from './CombatSegment';
+import { inCombatMsWithin, isInCombat, validateSegments } from './CombatSegment';
 
 /**
  * How often an idle actor re-checks its rotation.
@@ -98,6 +100,19 @@ export class Simulation implements SimulationContext {
   private eventsProcessed = 0;
   private started = false;
 
+  /** The fight's segments, or null for one continuous fight. See `CombatSegment`. */
+  private readonly segments: readonly CombatSegment[] | null;
+  private segmentIndex = 0;
+  private pullStartedAt: Milliseconds = 0;
+  private pullEndsAt: Milliseconds;
+  /**
+   * WHICH GENERATION OF DECISION EVENTS IS LIVE. Out of combat an actor's
+   * decision chain stops rescheduling; the next pull starts a fresh chain, and
+   * bumping this retires anything from the old one still in the queue -- so no
+   * actor ever has two chains deciding for it.
+   */
+  private decisionEpoch = 0;
+
   /**
    * @param config    the fight to run
    * @param telemetry where events go. Defaults to a recorder that keeps them
@@ -127,14 +142,20 @@ export class Simulation implements SimulationContext {
           config.threatRules,
           (id) => this.actorsById.get(id),
           (actor) =>
-            this.actors.filter((other) => other.faction !== actor.faction && other.isAlive),
+            this.actors.filter(
+              (other) => other.faction !== actor.faction && other.isAlive && other.present,
+            ),
         )
       : null;
     this.telemetry = this.threatTracker ?? sink;
 
     // Duration variance is rolled before anything else, so that for a given
     // seed the fight length is fixed regardless of what happens during it.
-    this.plannedDurationMs = rollDuration(config, this.rng);
+    this.segments = config.segments && config.segments.length > 0 ? config.segments : null;
+    this.plannedDurationMs = this.segments
+      ? this.segments[this.segments.length - 1]!.endMs
+      : rollDuration(config, this.rng);
+    this.pullEndsAt = this.plannedDurationMs;
     this.chanceProvider = config.attackChances ?? defaultAttackChances;
 
     this.actors = config.createCombatants();
@@ -143,6 +164,12 @@ export class Simulation implements SimulationContext {
         throw new Error(`Duplicate combatant id: ${actor.id}`);
       }
       this.actorsById.set(actor.id, actor);
+    }
+    if (this.segments) {
+      validateSegments(
+        this.segments,
+        new Set(this.actors.filter((actor) => actor.faction === 'hostile').map((actor) => actor.id)),
+      );
     }
   }
 
@@ -240,15 +267,31 @@ export class Simulation implements SimulationContext {
   }
 
   enemiesOf(actor: Combatant): Combatant[] {
-    return this.actors.filter((other) => other.isAlive && other.isHostileTo(actor));
+    return this.actors.filter((other) => other.isAlive && other.present && other.isHostileTo(actor));
   }
 
   alliesOf(actor: Combatant): Combatant[] {
-    return this.actors.filter((other) => other.isAlive && !other.isHostileTo(actor));
+    return this.actors.filter((other) => other.isAlive && other.present && !other.isHostileTo(actor));
   }
 
   defaultTargetFor(actor: Combatant): Combatant | undefined {
-    return this.actors.find((other) => other.isAlive && other.isHostileTo(actor));
+    return this.actors.find((other) => other.isAlive && other.present && other.isHostileTo(actor));
+  }
+
+  get inCombat(): boolean {
+    return this.segments ? isInCombat(this.segments[this.segmentIndex]!) : true;
+  }
+
+  get combatStartedAt(): Milliseconds {
+    return this.pullStartedAt;
+  }
+
+  get combatEndsAt(): Milliseconds {
+    return this.pullEndsAt;
+  }
+
+  holdsAbility(actor: Combatant, ability: Ability): boolean {
+    return this.config.holdsAbility?.(this, actor, ability) ?? false;
   }
 
   schedule(delayMs: Milliseconds, event: CombatEvent): ScheduledEvent {
@@ -524,6 +567,12 @@ export class Simulation implements SimulationContext {
       }
     }
 
+    // WHO IS IN THE FIRST PULL, before anything is applied to anybody.
+    if (this.segments) {
+      this.setPresence(this.segments[0]!);
+      this.pullEndsAt = this.pullEndFrom(0);
+    }
+
     this.config.onCombatStart?.(this);
 
     /*
@@ -560,6 +609,90 @@ export class Simulation implements SimulationContext {
         this.scheduleDecision(actor, 0);
       }
     }
+
+    if (this.segments) {
+      this.config.onSegmentStart?.(this, this.segments[0]!, 0);
+      for (let index = 1; index < this.segments.length; index++) {
+        this.events.schedule(
+          this.segments[index]!.startMs,
+          createEvent('segment-start', EventPriority.Boundary, () => this.enterSegment(index)),
+        );
+      }
+    }
+  }
+
+  /** Mark exactly the segment's enemies present, and clear up after any that left. */
+  private setPresence(segment: CombatSegment): void {
+    const present = new Set(segment.enemyIds);
+    for (const actor of this.actors) {
+      if (actor.faction !== 'hostile') continue;
+      const stays = present.has(actor.id);
+      /*
+       * AN ENEMY THAT LEAVES TAKES THE PLAYER'S WORK WITH IT: every aura an
+       * opponent put on it goes, so the next pull's mobs arrive fresh and a DoT
+       * does not tick on through the gap against nobody. Its OWN auras stay --
+       * a ruleset that puts standing debuffs on a target applies them with the
+       * target as their source, and reapplies them as it sees fit.
+       */
+      // EVERY enemy not in the segment, not only those that just left: nothing
+      // should be on an absent one, and if anything is, it goes here.
+      if (!stays) {
+        actor.auras.removeWhere(this, (instance) => {
+          const source = this.actorsById.get(instance.sourceId);
+          return source !== undefined && source.isHostileTo(actor);
+        });
+      }
+      actor.present = stays;
+    }
+  }
+
+  /** Where the pull containing segment `index` ends: the run of in-combat segments from it. */
+  private pullEndFrom(index: number): Milliseconds {
+    const segments = this.segments!;
+    let end = segments[index]!.endMs;
+    for (let next = index + 1; next < segments.length && isInCombat(segments[next]!); next++) {
+      end = segments[next]!.endMs;
+    }
+    return end;
+  }
+
+  private enterSegment(index: number): void {
+    if (this.hasEnded) return;
+    const segment = this.segments![index]!;
+    const wasInCombat = this.inCombat;
+    const now = this.clock.now();
+
+    this.setPresence(segment);
+    this.segmentIndex = index;
+
+    if (isInCombat(segment) && !wasInCombat) {
+      this.pullStartedAt = segment.startMs;
+      this.pullEndsAt = this.pullEndFrom(index);
+    }
+
+    if (!isInCombat(segment) && wasInCombat) {
+      /*
+       * THE LAST ENEMY WENT, SO WHATEVER WAS BEING CAST AT IT IS ABANDONED --
+       * the cast is not finished against an empty room. Its cost is spent, as
+       * a cast at a mob that died would have been.
+       */
+      for (const actor of this.actors) {
+        if (actor.faction !== 'friendly') continue;
+        if (actor.isCasting(now)) this.cancelCast(actor);
+        actor.pendingSequence = null;
+        actor.pendingCastCancel = null;
+      }
+    }
+
+    this.config.onSegmentStart?.(this, segment, index);
+
+    if (isInCombat(segment) && !wasInCombat) {
+      this.decisionEpoch += 1;
+      for (const actor of this.actors) {
+        if (!actor.isAlive || !actor.present || !actor.rotation) continue;
+        this.scheduleDecision(actor, now);
+      }
+    }
   }
 
   /**
@@ -569,10 +702,16 @@ export class Simulation implements SimulationContext {
    * whole fight from a single initial event.
    */
   private scheduleDecision(actor: Combatant, timestamp: Milliseconds): void {
+    const epoch = this.decisionEpoch;
     this.events.schedule(
       timestamp,
       createEvent(`decision:${actor.id}`, EventPriority.Decision, (ctx) => {
         if (ctx.hasEnded || !actor.isAlive || !actor.rotation) return;
+        /*
+         * OUT OF COMBAT NOBODY DECIDES, and the chain simply stops: the next
+         * pull starts a new one. See `enterSegment` and `decisionEpoch`.
+         */
+        if (epoch !== this.decisionEpoch || !ctx.inCombat || !actor.present) return;
 
         /*
          * A CAST WITH A CANCEL CHECK IS WOKEN PART WAY THROUGH (round 53), and
@@ -889,6 +1028,7 @@ export class Simulation implements SimulationContext {
       seed: this.config.seed,
       plannedDurationMs: this.plannedDurationMs,
       elapsedMs: this.clock.now(),
+      inCombatMs: this.segments ? inCombatMsWithin(this.segments, this.clock.now()) : this.clock.now(),
       endReason: this.endReason ?? 'no_events',
       actors,
       telemetry,

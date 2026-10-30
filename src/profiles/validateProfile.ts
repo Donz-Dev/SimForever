@@ -17,7 +17,7 @@ import type { TalentAllocation } from '../game/talents/Talent';
 import { talentsForClass } from '../game/talents/talentData';
 import { isLegal } from '../game/talents/talentRules';
 import type { CharacterProfile, StoredRotation } from './CharacterProfile';
-import { MAX_ENCOUNTER_TARGETS } from './CharacterProfile';
+import { ENCOUNTER_ROUTES, MAX_ENCOUNTER_TARGETS } from './CharacterProfile';
 import { DEFAULT_POISON_LOADOUT } from '../game/reactions/poisons';
 import {
   DEFAULT_WARLOCK_STONE,
@@ -288,6 +288,9 @@ export function validateProfile(value: unknown): ValidationResult {
         message: `Must be a whole number from 1 to ${MAX_ENCOUNTER_TARGETS}.`,
       });
     }
+    if (encounter.route !== undefined && !(ENCOUNTER_ROUTES as readonly unknown[]).includes(encounter.route)) {
+      issues.push({ path: 'encounter.route', message: `Must be one of: ${ENCOUNTER_ROUTES.join(', ')}.` });
+    }
   }
 
   /*
@@ -501,6 +504,8 @@ export function validateProfile(value: unknown): ValidationResult {
         targetSwingSeconds: validated.encounter.targetSwingSeconds,
         // NAMED, or the rebuild drops it and every loaded fight has one target.
         numberOfTargets: validated.encounter.numberOfTargets,
+        // NAMED for the same reason: a loaded route would come back a dummy.
+        ...(validated.encounter.route !== undefined ? { route: validated.encounter.route } : {}),
       },
       raidBuffs: [...validated.raidBuffs],
       // NAMED, or the rebuild drops it -- the `stance` and `petFamily` hole.

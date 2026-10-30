@@ -279,6 +279,15 @@ export type TalentEffect =
    */
   | { readonly kind: 'itemArmorPercent' }
   /**
+   * OUT-OF-COMBAT RAGE (the dungeon route): seconds before rage starts to
+   * decay after a pull, and a percentage off the decay -- Lingering Rage and
+   * Anger Management's second clause. Only a segmented encounter has an
+   * out-of-combat state, so on every other fight both are correctly worth
+   * nothing.
+   */
+  | { readonly kind: 'rageDecayDelay' }
+  | { readonly kind: 'rageDecayReduction' }
+  /**
    * A PERCENTAGE added to what the off hand already does.
    *
    * Three separate kinds rather than one, because the three land in three
