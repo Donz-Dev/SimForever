@@ -448,7 +448,8 @@ export const OVERPOWER: Ability = {
  * THEY ARE NO LONGER ALL COEFFICIENT-ZERO, and the heading used to say they
  * were. `WoWForeverWarriorAbilities.xlsx` gives every one of these a
  * coefficient of 0; `WoWSimWorksheet.xlsx`, handed over later as the
- * authoritative coefficient document, gives Revenge 22% of attack power and
+ * authoritative coefficient document, gives Revenge 22% of attack power (the
+ * owner has since restated it as 22.5%, which is what is applied) and
  * Thunder Clap 7%, while leaving Execute, Shield Slam, Intercept and Hamstring
  * at zero. The later document wins and the disagreement is recorded rather
  * than smoothed over -- see docs/spell-coefficients.md.
