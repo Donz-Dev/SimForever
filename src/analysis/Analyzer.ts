@@ -7,7 +7,10 @@ import type { ActorSnapshot, Milliseconds, TelemetryEvent } from '../engine';
 export interface AnalysisInput {
   readonly telemetry: readonly TelemetryEvent[];
   readonly actors: readonly ActorSnapshot[];
-  /** Fight length, used for any per-second figure. */
+  /**
+   * Time IN COMBAT, used for any per-second figure: the fight length, except
+   * on a dungeon route, where the gaps between pulls are left out.
+   */
   readonly elapsedMs: Milliseconds;
 }
 

@@ -58,6 +58,25 @@ export interface SimulationContext {
    */
   readonly plannedDurationMs: Milliseconds;
 
+  /**
+   * Whether anybody is in combat right now. Always true in an unsegmented
+   * fight; in a segmented one, whether the current segment has any enemy
+   * present. See `CombatSegment`.
+   */
+  readonly inCombat: boolean;
+
+  /**
+   * THE CURRENT PULL'S BOUNDS -- what "the fight" means to anything that asks
+   * how much of it is left, Execute and the APL's fight-remaining condition
+   * above all. An unsegmented fight is one pull from zero to
+   * `plannedDurationMs`. Out of combat they describe the pull just ended.
+   */
+  readonly combatStartedAt: Milliseconds;
+  readonly combatEndsAt: Milliseconds;
+
+  /** Whether the ruleset is holding this ability back right now. See `SimulationConfig.holdsAbility`. */
+  holdsAbility(actor: Combatant, ability: Ability): boolean;
+
   /** K for a caster of this level, or undefined when the fight models no resistance. */
   spellResistanceConstant(casterLevel: number): number | undefined;
 

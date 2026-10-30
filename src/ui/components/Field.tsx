@@ -26,6 +26,8 @@ interface NumberFieldProps {
   readonly min?: number;
   readonly max?: number;
   readonly step?: number;
+  /** Shown but not editable -- the dungeon route's greyed-out fields. */
+  readonly disabled?: boolean;
   readonly onChange: (value: number) => void;
 }
 
@@ -42,6 +44,7 @@ export function NumberField({
   min,
   max,
   step,
+  disabled,
   onChange,
 }: NumberFieldProps) {
   return (
@@ -49,6 +52,7 @@ export function NumberField({
       <input
         type="number"
         value={value}
+        disabled={disabled}
         min={min}
         max={max}
         step={step}
@@ -72,6 +76,8 @@ interface SelectFieldProps<T extends string | number> {
   readonly hint?: string;
   readonly value: T;
   readonly options: readonly SelectOption<T>[];
+  /** Shown but not editable -- the dungeon route's greyed-out fields. */
+  readonly disabled?: boolean;
   readonly onChange: (value: T) => void;
 }
 
@@ -90,12 +96,14 @@ export function SelectField<T extends string | number>({
   hint,
   value,
   options,
+  disabled,
   onChange,
 }: SelectFieldProps<T>) {
   return (
     <Field label={label} hint={hint}>
       <select
         value={String(value)}
+        disabled={disabled}
         onChange={(event) => {
           const chosen = options.find((option) => String(option.value) === event.target.value);
           if (chosen) onChange(chosen.value);
@@ -121,6 +129,18 @@ export function TextField({ label, value, onChange }: TextFieldProps) {
   return (
     <Field label={label}>
       <input type="text" value={value} onChange={(event) => onChange(event.target.value)} />
+    </Field>
+  );
+}
+
+/**
+ * A value shown greyed out, with nothing to edit -- what a dungeon route puts in
+ * place of a field it decides itself ("60-63", "1-14", "1680").
+ */
+export function FixedField({ label, hint, value }: { readonly label: string; readonly hint?: string; readonly value: string }) {
+  return (
+    <Field label={label} hint={hint}>
+      <input type="text" value={value} disabled readOnly />
     </Field>
   );
 }

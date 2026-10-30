@@ -375,10 +375,9 @@ const BLOODRAGE_RAGE_PER_TICK =
 /**
  * "Generates 1 Rage every 3 sec while in combat."
  *
- * The out-of-combat half of the tooltip -- "reduces Rage loss while out of
- * combat by 30%" -- is deliberately not modelled, on the ruleset owner's
- * instruction: this simulator has no out-of-combat state, so the character is
- * always in combat and there is no rage decay for it to reduce.
+ * Only IN COMBAT, which a dungeon route's gaps are not. The out-of-combat half
+ * of the tooltip -- "reduces Rage loss while out of combat by 30%" -- is the
+ * `rageDecayReduction` effect, read by the route's out-of-combat aura.
  */
 export const ANGER_MANAGEMENT_RAGE_PER_TICK = 1;
 export const ANGER_MANAGEMENT_INTERVAL_MS = seconds(3);
@@ -408,7 +407,8 @@ export const ANGER_MANAGEMENT: AuraDefinition = {
       context.rng.nextInt(1, ANGER_MANAGEMENT_MAX_START_OFFSET_MS),
     onTick: (context, aura) => {
       const actor = combatantIn(context, aura.targetId);
-      if (!actor) return;
+      // "while in combat" -- which only a dungeon route's gaps are not.
+      if (!actor || !context.inCombat) return;
       context.grantResource(actor, 'rage', ANGER_MANAGEMENT_RAGE_PER_TICK, {
         id: 'anger_management',
         name: 'Anger Management',

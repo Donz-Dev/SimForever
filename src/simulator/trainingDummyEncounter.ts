@@ -1,7 +1,7 @@
 import { fightSection, withSection } from '../profiles/aplSections';
 import { petDamageMultiplierFor } from '../game/racials';
 import { withStartAutoAttack } from '../profiles/rotation';
-import type { AuraDefinition, Combatant, SimulationConfig } from '../engine';
+import type { AuraDefinition, Combatant, SimulationConfig, SimulationContext } from '../engine';
 import { FOREVER_THREAT_RULES } from '../game/combat/threat';
 import { spellResistanceConstant } from '../game/combat/spellResistance';
 import { runPrecombat, seconds } from '../engine';
@@ -23,6 +23,15 @@ import { hasPet } from '../game/rotations/hunter';
 import { talentBuild } from '../game/talents/talentBuild';
 import { sacrificedDemon } from '../game/rotations/warlock';
 import { demonicSacrificeAura } from '../game/auras/warlock';
+import { DUNGEON_ROUTE_DURATION_MS } from '../game/encounters/dungeonRoute';
+import { compileRotation } from '../game/rotations/apl';
+import {
+  DUNGEON_ROUTE_SEGMENTS,
+  FIRST_PULL_TARGETS,
+  dungeonRouteHooks,
+  dungeonRouteTargets,
+  isDungeonRoute,
+} from './dungeonRouteEncounter';
 
 /**
  * How much a fight's length varies from the length asked for, either side.
@@ -65,9 +74,14 @@ export function trainingDummyEncounter(
    * so a profile built by hand, by a tool or by a test swings as it always did.
    * A list that names one, anywhere, runs exactly what it says.
    */
-  const profile = withStartAutoAttack(
-    withSection(given, fightSection({ targets: Math.floor(given.encounter.numberOfTargets ?? 1) })),
-  );
+  /*
+   * A DUNGEON ROUTE OPENS ON ITS FIRST PULL, so that pull's size picks the
+   * section the opener comes from; the route swaps lists itself as the pulls
+   * change size. See `dungeonRouteEncounter.ts`.
+   */
+  const route = isDungeonRoute(given);
+  const openingTargets = route ? FIRST_PULL_TARGETS : Math.floor(given.encounter.numberOfTargets ?? 1);
+  const profile = withStartAutoAttack(withSection(given, fightSection({ targets: openingTargets })));
   /*
    * Resolved ONCE, outside the combatant factory, because the selection is the
    * same for every iteration of a batch. The auras themselves are shared
@@ -110,13 +124,65 @@ export function trainingDummyEncounter(
    * and quietly delete the reason its rotation refreshes at all.
    * ----------------------------------------------------------------------------
    */
-  const raidBuffDurationMs = seconds(profile.simulation.durationSeconds) * 2;
+  const fightMs = route ? DUNGEON_ROUTE_DURATION_MS : seconds(profile.simulation.durationSeconds);
+  const raidBuffDurationMs = fightMs * 2;
   const forTheFight = (aura: AuraDefinition): AuraDefinition =>
     aura.durationMs === raidBuffDurationMs ? aura : { ...aura, durationMs: raidBuffDurationMs };
 
+  /*
+   * APPLIED AS MANY TIMES AS IT TAKES, which for Sunder Armor is five -- the
+   * 2,250 armor the ruleset owner states, and the same aura a warrior's own
+   * casts refresh rather than a second copy of it.
+   *
+   * Repeated application rather than setting the stack count, because a stack
+   * count written straight onto the instance does NOT rescale the stat
+   * modifiers: `applyStatModifiers` multiplies by the stacks it saw when it
+   * ran. Sunder read as one stack's worth of armor -- 450 instead of 2,250 --
+   * until this went through the normal path.
+   */
+  const applyBuffs = (context: SimulationContext, actor: Combatant, applicable: readonly RaidBuff[]) => {
+    for (const buff of applicable) {
+      // An entry with no aura is a PROC -- Windfury Totem -- and its own
+      // reaction applies what it has when it fires.
+      if (!buff.aura) continue;
+      const aura = forTheFight(buff.aura);
+      for (let i = 0; i < (buff.stacks ?? 1); i++) {
+        context.applyAura(actor, aura, actor.id);
+      }
+    }
+  };
+
+  /*
+   * A DUNGEON ROUTE'S PIECES: its segments, the boundary hook and which
+   * abilities wait. The two lists are compiled once here, outside the factory
+   * -- a compiled rotation keeps its state on the combatant, so one serves
+   * every iteration.
+   */
+  const routeRotations = (() => {
+    if (!route) return undefined;
+    const listOf = (section: 'single' | 'multi') => withStartAutoAttack(withSection(given, section)).rotation;
+    const single = listOf('single');
+    const multi = listOf('multi');
+    if (single.entries.length === 0 || multi.entries.length === 0) return undefined;
+    const compile = (list: typeof single) =>
+      compileRotation({ name: list.name, entries: list.entries, ...(list.smartHealing ? { smartHealing: true } : {}) });
+    return { single: compile(single), multi: compile(multi) };
+  })();
+  const routeHooks = route
+    ? dungeonRouteHooks(profile, routeRotations, (context, target) => applyBuffs(context, target, onTarget))
+    : undefined;
+
   return {
-    durationMs: seconds(profile.simulation.durationSeconds),
-    durationVariance: FIGHT_DURATION_VARIANCE,
+    durationMs: fightMs,
+    // A ROUTE IS A FIXED TIMELINE, so its length does not vary; its segments
+    // are the fight. See `CombatSegment`.
+    ...(routeHooks
+      ? {
+          segments: DUNGEON_ROUTE_SEGMENTS,
+          onSegmentStart: routeHooks.onSegmentStart,
+          holdsAbility: routeHooks.holdsAbility,
+        }
+      : { durationVariance: FIGHT_DURATION_VARIANCE }),
     seed,
 
     /*
@@ -158,7 +224,8 @@ export function trainingDummyEncounter(
     createCombatants: () => {
       const player = createPlayerFor(profile, buffs);
       const pet = petFor(profile, player);
-      return [player, ...(pet ? [pet] : []), ...createTargetsFor(profile)];
+      const targets = route ? dungeonRouteTargets(profile) : createTargetsFor(profile);
+      return [player, ...(pet ? [pet] : []), ...targets];
     },
 
     /*
@@ -250,28 +317,7 @@ export function trainingDummyEncounter(
          */
         if (!actor.isPlayerControlled && actor.id !== PRIMARY_TARGET_ID) continue;
 
-        const applicable = actor.isPlayerControlled ? onPlayer : onTarget;
-        for (const buff of applicable) {
-          // An entry with no aura is a PROC -- Windfury Totem -- and its own
-          // reaction applies what it has when it fires.
-          if (!buff.aura) continue;
-
-          /*
-           * APPLIED AS MANY TIMES AS IT TAKES, which for Sunder Armor is five
-           * -- the 2,250 armor the ruleset owner states, and the same aura a
-           * warrior's own casts refresh rather than a second copy of it.
-           *
-           * Repeated application rather than setting the stack count, because
-           * a stack count written straight onto the instance does NOT rescale
-           * the stat modifiers: `applyStatModifiers` multiplies by the stacks
-           * it saw when it ran. Sunder read as one stack's worth of armor --
-           * 450 instead of 2,250 -- until this went through the normal path.
-           */
-          const aura = forTheFight(buff.aura);
-          for (let i = 0; i < (buff.stacks ?? 1); i++) {
-            context.applyAura(actor, aura, actor.id);
-          }
-        }
+        applyBuffs(context, actor, actor.isPlayerControlled ? onPlayer : onTarget);
       }
     },
   };

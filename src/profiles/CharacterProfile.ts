@@ -176,7 +176,22 @@ export interface EncounterSection {
    * ONE BY DEFAULT, and a migrated profile gets one, so no saved result moves.
    */
   readonly numberOfTargets: number;
+  /**
+   * A FIGHT THAT IS A ROUTE RATHER THAN ONE TARGET -- the owner's "Dungeon
+   * Route", chosen in the Target dropdown. When set, the route's own pulls
+   * decide the targets, their levels and the fight's length, and the level,
+   * target count and duration fields are ignored (the panel greys them out).
+   * See `game/encounters/dungeonRoute.ts`.
+   *
+   * ABSENT IS THE ORDINARY TARGET, which is every profile saved before this
+   * existed, so it needs no migration and no saved result moves.
+   */
+  readonly route?: EncounterRoute;
 }
+
+/** The routes the Target dropdown offers. */
+export type EncounterRoute = 'dungeon';
+export const ENCOUNTER_ROUTES: readonly EncounterRoute[] = ['dungeon'];
 
 /**
  * Everything needed to reproduce a simulation, as plain JSON-safe data.

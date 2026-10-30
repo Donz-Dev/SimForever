@@ -343,7 +343,9 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
         .map((actor) => actor.id);
     }
 
-    const elapsedSeconds = Math.max(toSeconds(run.elapsedMs), 0.001);
+    // Per-second figures divide by IN-COMBAT time -- a dungeon route's gaps
+    // are nobody's DPS. The whole fight for every other encounter.
+    const elapsedSeconds = Math.max(toSeconds(run.inCombatMs), 0.001);
     durations[index] = run.elapsedMs;
     if (!playerId) {
       playerId = options.playerId ?? friendlyIds[0] ?? '';

@@ -53,7 +53,8 @@ export function selectTargets(
   if (selection.maxTargets <= 1) return [primary];
 
   const hostile = context.combatants.filter(
-    (actor) => actor.faction !== source.faction && actor.isAlive && actor.id !== primary.id,
+    (actor) =>
+      actor.faction !== source.faction && actor.isAlive && actor.present && actor.id !== primary.id,
   );
   if (hostile.length === 0) return [primary];
 

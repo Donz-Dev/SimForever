@@ -445,7 +445,7 @@ describe('Execute', () => {
     const healthy = makeTarget({ maxHealth: 1000 });
     const at = (nowMs: number) =>
       ({
-        simulation: { plannedDurationMs: 100_000, clock: { now: () => nowMs } },
+        simulation: { plannedDurationMs: 100_000, combatStartedAt: 0, combatEndsAt: 100_000, clock: { now: () => nowMs } },
         caster,
         target: healthy,
         ability: EXECUTE,

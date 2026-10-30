@@ -107,7 +107,7 @@ export function sampleIterations(
      * somehow ended at zero would divide by nothing and poison a mean that
      * everything downstream reads.
      */
-    const elapsedSeconds = Math.max(toSeconds(run.elapsedMs), 0.001);
+    const elapsedSeconds = Math.max(toSeconds(run.inCombatMs), 0.001);
     const at = index - slice.from;
     dps[at] = totals.totalForAny(ids) / elapsedSeconds;
     /*

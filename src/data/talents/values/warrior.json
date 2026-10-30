@@ -76,8 +76,10 @@
    "tree": "arms",
    "ranks": 1,
    "text": "Generates 1 Rage every 3 sec while in combat, and reduces Rage loss while out of combat by 30%.",
-   "values": null,
-   "note": "single rank"
+   "values": [
+    30
+   ],
+   "note": "single rank; the 30 filled in by hand per this directory README, for the rageDecayReduction effect the dungeon route reads. The text states it literally rather than through a {0} placeholder, so there was nothing for the importer to match. The aura half reads no value."
   },
   "deep_wounds": {
    "name": "Deep Wounds",

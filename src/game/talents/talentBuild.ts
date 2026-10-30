@@ -215,6 +215,9 @@ export interface TalentBuild {
   readonly formScalableArmor: { readonly flat: number; readonly perDefensePoint: number };
   /** Resource caps to raise. */
   readonly resourceMaximums: Partial<Record<ResourceType, number>>;
+  /** Seconds after a pull before rage decays, and the percentage off the decay. */
+  readonly rageDecayDelaySeconds: number;
+  readonly rageDecayReductionPercent: number;
   /** Abilities a talent grants, which the character otherwise would not have. */
   readonly grantedAbilities: ReadonlySet<string>;
   /**
@@ -355,6 +358,8 @@ const EMPTY: TalentBuild = {
   statConversions: [],
   formScalableArmor: { flat: 0, perDefensePoint: 0 },
   resourceMaximums: {},
+  rageDecayDelaySeconds: 0,
+  rageDecayReductionPercent: 0,
   grantedAbilities: new Set(),
   grantedAuras: new Set(),
   castModifierAuras: [],
@@ -664,6 +669,8 @@ export function talentBuild(
    */
   const formScalableArmor = { flat: 0, perDefensePoint: 0 };
   const resourceMaximums: Partial<Record<ResourceType, number>> = {};
+  let rageDecayDelaySeconds = 0;
+  let rageDecayReductionPercent = 0;
   const grantedAbilities = new Set<string>();
   const grantedAuras = new Set<string>();
   const castModifierAuras: AuraDefinition[] = [];
@@ -999,6 +1006,12 @@ export function talentBuild(
             (abilityCooldownReductionMs.get(effect.abilityId) ?? 0) +
               seconds(effect.unit === 'minutes' ? value * 60 : value),
           );
+          break;
+        case 'rageDecayDelay':
+          rageDecayDelaySeconds += value;
+          break;
+        case 'rageDecayReduction':
+          rageDecayReductionPercent += value;
           break;
         case 'resourceMax':
           resourceMaximums[effect.resource] = (resourceMaximums[effect.resource] ?? 0) + value;
@@ -1414,6 +1427,8 @@ export function talentBuild(
     statConversions,
     formScalableArmor,
     resourceMaximums,
+    rageDecayDelaySeconds,
+    rageDecayReductionPercent,
     grantedAbilities,
     grantedAuras,
     castModifierAuras,

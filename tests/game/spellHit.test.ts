@@ -219,7 +219,8 @@ describe('the boundary it moves', () => {
     const chancesFor = (hitChance: number, schoolHit: number): number => {
       const caster = makeAttacker({ stats: { hitChance } });
       if (schoolHit > 0) caster.schoolModifiers.add('shadow', { hitBonus: schoolHit });
-      const target = makeTarget();
+      // A level 63 boss: 17% is the miss three levels up.
+      const target = makeTarget({ level: 63 });
       // THE REAL PROVIDER, not the harness default: the floor is a ruleset
       // number and only the ruleset's own table carries it.
       const base = createForeverAttackChances()('spell', caster, target, {});

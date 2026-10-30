@@ -107,16 +107,19 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
 
   /*
-   * FULLY MODELLED. One rage every three seconds, from the talent's own
-   * words, with the first tick placed randomly in the first three seconds to
-   * model a pull that did not line up with the passive's timer.
+   * FULLY MODELLED. One rage every three seconds IN COMBAT, from the talent's
+   * own words, with the first tick placed randomly in the first three seconds
+   * to model a pull that did not line up with the passive's timer.
    *
-   * The second half of the tooltip -- "reduces Rage loss while out of combat
-   * by 30%" -- is out of scope by the ruleset owner's decision: there is no
-   * out-of-combat state here, so the character is always in combat and there
-   * is no decay to reduce.
+   * AND THE SECOND HALF IS LIVE NOW: "reduces Rage loss while out of combat by
+   * 30%" was out of scope while no fight had an out-of-combat state, and the
+   * dungeon route has one. Its 30 is hand-filled in the values file. Worth
+   * nothing on any other encounter, which never leaves combat.
    */
-  anger_management: [{ kind: 'grantAura', auraId: 'anger_management' }],
+  anger_management: [
+    { kind: 'grantAura', auraId: 'anger_management' },
+    { kind: 'rageDecayReduction' },
+  ],
 
   deep_wounds: [{ kind: 'reaction', reactionId: 'deep_wounds' }],
 
@@ -577,19 +580,13 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * shape Improved Tactical Mastery has had all along.
    * ----------------------------------------------------------------------
    */
-  lingering_rage: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Rage decay after leaving combat. Nothing here leaves combat: a fight ' +
-        'begins in combat and ends with the clock, so no rage decays and there ' +
-        'is no delay to lengthen. Whether an out-of-combat state belongs in ' +
-        'scope is a question for the ruleset owner rather than a gap in the ' +
-        "engine -- Anger Management's second clause is the same question. Gore " +
-        "Drinker's Enrage clause is NOT: that one needs a hook on an aura " +
-        'being applied, and Enrage fires on being HIT, in combat.',
-    },
-  ],
+  /*
+   * THE DELAY BEFORE RAGE DECAYS AFTER A PULL -- live on the dungeon route,
+   * the one encounter with an out-of-combat state, and worth nothing on any
+   * other. Decay itself starts at once without it: the owner's "1 Rage decays
+   * per second when out of combat" states no delay of its own.
+   */
+  lingering_rage: [{ kind: 'rageDecayDelay' }],
 
   /*
    * PRECISION IS GONE from the Warrior, removed at client build 1.60.1.70170 and
