@@ -545,25 +545,23 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   expose_prey: [{ kind: 'reaction', reactionId: 'expose_prey' }],
 
   /*
-   * "Reduces the cooldown of your Trap and Deterrence abilities by 40%."
+   * "Reduces the cooldown of your Trap and Deterrence abilities by 20/40%."
    *
-   * A PERCENTAGE COOLDOWN REDUCTION, WHICH IS A REAL AND NAMED ENGINE GAP.
-   * `abilityCooldown` subtracts a FLAT amount in seconds or minutes, because
-   * every talent that has wanted one so far states one; there is no fractional
-   * form, and 40% of Immolation Trap's 30 seconds cannot be written without
-   * one. It is the same shape `grantCastModifier` was built for on the COST
-   * side, and it is the only talent in the project asking for it -- which is
-   * why the reason names the declaration rather than the concept.
+   * MODELLED SINCE ROUND 83, AND IT COULD HAVE BEEN SINCE DECIMATION. This
+   * carried "a PERCENTAGE cooldown reduction, and `abilityCooldown` subtracts a
+   * flat amount ... with no fractional form" -- true when written, and false
+   * from the day Decimation brought `unit: 'percent'`. Nobody re-read it, and
+   * round 78 then priced moving LW Melee's two points OUT of an inert talent.
+   * So both declared traps: at 2/2 each goes from 30 s to 18 s.
    *
-   * NO HUNTER PROFILE TAKES IT, so building the capability would move nothing.
+   * THE DETERRENCE HALF STAYS INERT: no ability here declares Deterrence.
    */
   survivalist_s_discipline: [
+    { kind: 'abilityCooldown', abilityId: 'immolation_trap', unit: 'percent', valueIndex: 0 },
+    { kind: 'abilityCooldown', abilityId: 'explosive_trap', unit: 'percent', valueIndex: 0 },
     {
       kind: 'unmodelled',
-      reason:
-        'A PERCENTAGE cooldown reduction, and `abilityCooldown` subtracts a ' +
-        'flat amount in seconds or minutes with no fractional form. Its ' +
-        'Deterrence half is a survival cooldown nothing here needs.',
+      reason: 'Deterrence is a survival cooldown that no ability here declares, so there is nothing to shorten.',
     },
   ],
 

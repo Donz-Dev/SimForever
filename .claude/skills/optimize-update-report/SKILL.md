@@ -209,6 +209,11 @@ Each of these reads like a finding and is not one.
   everywhere: use `tools/optimise/probe_healer_book.ts` or `probe_priest80.ts`. It also credits
   `melee_weave` casts to the weave's parts, so the weave reads NEVER FIRED.
 - **The built-in variant registry has won a name clash against `FILE=`.** Prefix every group.
+- **A hand-written talent variant is not checked for legality.** `buildVariants.ts`'s `<CLASS>_TREE`
+  refuses an illegal tree, but a `FILE=` variant that edits `talents` directly does not: `createPlayer`
+  drops stranded talents in silence, and the figure measures a different build. Round 83 published two
+  this way (Hawk Melee's Summon Hawk stranded, +37.55). Two donors agreeing to the decimal is the
+  tell, so check `legalAllocation(...).dropped` inside the variant and throw.
 - **A full report is unpaired.** A change under about ±7 at 1T is noise there. Quote the paired
   probe for each change, and the report only for the before and after.
 - **Gate sweeps that come back bit-identical** are usually smart healing (a healer's thresholds are

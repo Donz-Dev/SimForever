@@ -109,9 +109,6 @@ are stale.
 
 ## Round 84: the Dungeon Route
 
-(Numbered 84 because PR #353 has round 83 open. Re-count against `main` if
-that one merges after this.)
-
 The owner asked for a **Dungeon Route** in the Encounter panel's Target
 dropdown, in place of a fixed target count and duration: 27 pulls and 26 gaps
 over 28 minutes, transcribed into `game/encounters/dungeonRoute.ts` in the
@@ -190,6 +187,51 @@ so no ordinary fight moved.
 
 `tests/engine/combatSegments.test.ts` covers the engine half and
 `tests/game/dungeonRoute.test.ts` the route, read off the event stream.
+
+## Round 83: Survivalist's Discipline is modelled
+
+"Reduces the cooldown of your Trap and Deterrence abilities by 20/40%." It sat
+`unmodelled` on a reason that had **expired**: that `abilityCooldown` had no
+percentage form. Decimation added `unit: 'percent'` long ago, and nobody re-read
+the talent. It is now two percentage cuts, one per trap, so at 2/2 Immolation
+Trap and Explosive Trap go from 30 s to **18 s**. LW Melee now takes it
+too (below). Deterrence stays inert, because
+no ability declares it. `tests/game/survivalistsDiscipline.test.ts` pins 30/24/18
+and fails without the change.
+
+**Survival Weave**, the one preset taking it: weighted **1495.6 -> 1559.7**.
+
+| | t1 120s | t3 60s | t5 60s | t8 30s | weighted |
+| --- | --- | --- | --- | --- | --- |
+| round 82 | 1147.4 | 1647.3 | 1783.3 | 2059.6 | 1495.6 |
+| round 83 | 1177.1 | 1666.8 | 1832.8 | 2282.4 | **1559.7** |
+
+**ROUND 78 PRICED MOVING LW MELEE'S TWO POINTS OUT OF AN INERT TALENT.** Its
++17.9 for Clever Traps was correct arithmetic about a talent that did nothing.
+Re-priced on the working talent, weighted, 400 paired fights a cell:
+
+| | 2 points into Discipline, from | weighted | |
+| --- | --- | --- | --- |
+| LW Melee | **Resourcefulness** | **+62.71 +/- 3.42** | **shipped, the owner's choice** |
+| LW Melee | Improved Stings | +53.40 +/- 3.30 | |
+| LW Melee | Clever Traps (round 78 undone) | -8.75 +/- 3.28 | |
+| Hawk Melee | Expose Prey (the only legal 2-point donor) | +26.05 +/- 4.12 | not shipped: t1 -20.4, t8 +171.6 |
+
+LW Melee in the report: **1516.6 -> 1582.1** weighted (t1 1074.1 -> 1111.5, t8
+2878.1 -> 3056.3). Putting Resourcefulness back measures exactly -62.71, which is
+the same move seen from the other side.
+
+**TWO FIGURES THIS ROUND FIRST PUBLISHED WERE MEASURED ON BROKEN BUILDS.** Hawk
+Melee "Pathfinding -> Discipline, +37.55" and LW Melee "Survivalist 4 -> 2,
+-232.09" both left a tree below a tier gate. `createPlayer` dropped the stranded
+talents in silence: Unleashed Fury and Summon Hawk on the Hawk, ten talents on
+LW Melee. So each figure measured a different build. **The tell was two donors
+agreeing to the decimal** (Pathfinding and Improved Monkey, both +37.55), and the
+owner approved the Hawk move on that figure. It surfaced as `presets.test.ts`
+refusing the allocation. `survivalistsDiscipline83.ts` now throws on any move
+that strands a talent. **A hand-written `FILE=` talent variant gets no legality
+check from `probe_build.ts`**, so check `legalAllocation(...).dropped` before
+trusting one.
 
 ## Round 82: three saved builds in, three presets out
 
