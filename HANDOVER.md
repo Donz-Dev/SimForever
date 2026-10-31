@@ -146,6 +146,17 @@ E65:
 **TIME TO FIRST DEATH LIFTS ROUND 79'S 2x RAMP CAP** for that one measurement --
 `uncapRamp` in the tool, put back in a `finally`. Everything else uses the cap.
 
+**THE FIRST FIFTEEN SECONDS FLIP WITH THE ENCOUNTER**
+(`tools/tank_opening_threat.ts`, raw threat, single target, 200 fights a row).
+With the target attacking, Prot Pally leads the Bear at every tier -- **21,573
+against 19,765 at E65**; with nothing attacking, the Bear leads -- **19,290
+against 18,033**. Prot Pally loses about 3,500, mostly Holy Shield's block
+damage (4,324 to 2,256). The Bear loses only 300 to 1,000, because being hit
+is worth just ~35 rage in 15 s and an idle target cannot parry, so its
+auto-attacks land more. **"Not attacking" is not "Salvation on"**: the panel's
+switch turns Salvation on with it, a further 30% off both, which the tool
+reports as a third case rather than folding in.
+
 **PROT PALLY'S MANA HAS TWO LINES AND THE FIRST IS ALMOST NEVER CROSSED.** Holy
 Strike costs 20, so "cannot afford any core spell" is an empty bar: 21-37% of
 four minute single-target fights. Below Holy Shield's 240 is **70-80% of them,
