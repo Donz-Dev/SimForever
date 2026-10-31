@@ -157,8 +157,8 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
     [0, 'flame_shock'],
   ],
   mage_frostfire: [
-    // The owner's, round 55: "It should be cast at T-10 seconds."
-    [10, 'ice_barrier'],
+    // The owner's round 55 Ice Barrier at T-10 is gone at 1.60.1.70707: a talent
+    // this build does not take, and only a build taking it gets its buff.
     [4, 'mage_armor'],
     [2.5, 'frostfire_bolt'],
   ],

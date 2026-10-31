@@ -68,9 +68,9 @@ describe('the constants the whole thing is measured against', () => {
 const EXPECTED: ReadonlyArray<
   readonly [cls: 'mage' | 'priest' | 'paladin', id: string, rank: number, points: number, schools: readonly DamageSchool[]]
 > = [
-  ['mage', 'arcane_focus', 5, 5, ['arcane']],
-  // Three ranks at 2/4/6% since the client refresh in round 51 (was 5 at 1%).
-  ['mage', 'elemental_precision', 3, 6, ['frost', 'fire']],
+  // 1.60.1.70707 replaced Arcane Focus and Elemental Precision with PRECISION:
+  // three ranks at 2/4/6%, on every spell school.
+  ['mage', 'precision', 3, 6, ['arcane', 'fire', 'frost', 'holy', 'nature', 'shadow']],
   ['priest', 'shadow_focus', 5, 5, ['shadow']],
   ['priest', 'holy_precision', 3, 18, ['holy']],
   // Two ranks and 8% since 1.60.1.70707, where it was three ranks and 18%.
@@ -117,11 +117,13 @@ describe('what it does NOT reach', () => {
     }
   });
 
-  it('gives Elemental Precision both of its schools and neither of the others', () => {
-    const build = talentBuild('mage', { elemental_precision: 3 });
-    expect(build.schoolModifiers.for('frost').hitBonus).toBe(6);
-    expect(build.schoolModifiers.for('fire').hitBonus).toBe(6);
-    expect(build.schoolModifiers.for('arcane').hitBonus ?? 0).toBe(0);
+  it('gives Precision every spell school and not physical', () => {
+    // "All spells", which is every school but physical (1.60.1.70707).
+    const build = talentBuild('mage', { precision: 3 });
+    for (const school of ['arcane', 'fire', 'frost', 'holy', 'nature', 'shadow'] as const) {
+      expect(build.schoolModifiers.for(school).hitBonus, school).toBe(6);
+    }
+    expect(build.schoolModifiers.for('physical').hitBonus ?? 0).toBe(0);
   });
 });
 

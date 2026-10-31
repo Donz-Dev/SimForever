@@ -547,7 +547,12 @@ export const ARCANE_WRATH_SP_COEFFICIENT = 1.0;
 export const FIRE_BLAST_SP_COEFFICIENT = 0.429;
 export const SCORCH_SP_COEFFICIENT = 0.429;
 /**
- * Ice Lance: `1.5 / 3.5 / 3`, which is 0.143.
+ * Ice Lance: `1.5 / 3.5 / 4`, which is 0.107.
+ *
+ * FOUR AGAIN SINCE 1.60.1.70707, which took the frozen bonus to "300% more"
+ * (times four). The divisor follows the multiplier on the owner's ruling below
+ * -- "intended" meant the product -- so a frozen Ice Lance still carries
+ * exactly `1.5 / 3.5`. Not a question, by the owner's instruction.
  *
  * ----------------------------------------------------------------------------
  * THE RULESET OWNER'S OWN EXPRESSION, GIVEN IN THAT FORM TWICE. It was
@@ -594,7 +599,7 @@ export const SCORCH_SP_COEFFICIENT = 0.429;
  * `iceLance.test.ts` measures damage that landed and divides.
  * ----------------------------------------------------------------------------
  */
-export const ICE_LANCE_SP_COEFFICIENT = 1.5 / 3.5 / 3;
+export const ICE_LANCE_SP_COEFFICIENT = 1.5 / 3.5 / 4;
 
 /** Cone of Cold: 12.9% spell power, the owner's figure given with the spell. */
 export const CONE_OF_COLD_SP_COEFFICIENT = 0.129;

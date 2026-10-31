@@ -107,6 +107,57 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 88: the Mage tree at client build 1.60.1.70707
+
+**THE OWNER'S NOTE LISTED SEVEN CHANGES AND THE TREE CARRIED MORE**, so the
+whole tree was taken, on the owner's choice. Read off foreverchanges.pro (the
+page states 1.60.1.70707), hashed in the browser and on disk (`7e551de0...`),
+and imported with `--capture mage=...` as the Druid and Paladin trees were. 54
+talents to 53.
+
+| | the note | also in the tree |
+| --- | --- | --- |
+| Arcane | Arcane Resilience 3 ranks (75%); Arcane Blast 12% Intellect, +100% cost, 18 s | Arcane Focus REMOVED; Missile Barrage's Arcane Missile clause gone and Frost Blast added |
+| Fire | -- | Improved Fireball -> ACCELERANT (adds Arcane Wrath); Critical Mass 5 -> 3 ranks (6%); Incineration 3 -> 5 ranks (10%); Improved Fire Blast moved to row 2 |
+| Frost | Ice Lance 300% (x4); Ice Barrier +15% and +5%; Winter's Chill 20% a stack; Arctic Reach adds Ice Lance; Ice Lance 8 s cooldown at every rank | Elemental Precision -> PRECISION (6% hit, ALL spells); Winter's Chill now "your NEXT Cone of Cold", +7% spell damage a stack, applied only by Frostbolt, Frost Blast and an EMPOWERED Ice Lance |
+
+**ICE BARRIER IS GATED ON THE TALENT**, the owner's instruction. Round 55
+declared it in the TRAINER book, so every Mage knew it and the Frostfire Mage
+cast it at T-10 for the buff. It is `grantAbility` now: the Frostfire Mage does
+not know it, its opener line and its list entry are gone (both the owner's,
+round 55), and the Frost Mage, which takes the point, keeps it.
+
+**THREE READERS WOULD HAVE BROKEN SILENTLY**, each a wrong index on a
+captured row -- the shape CLAUDE.md records four times:
+
+| | the row moved | the old index would have read |
+| --- | --- | --- |
+| Missile Barrage | the Missile hit clause left, `[blast, others, duration, cost, interval]` | others at index 2 = the **50% duration** |
+| Winter's Chill | a 7% spell-power figure arrived, `[chance, damage, spellPower, maxStacks]` | maxStacks at index 2 = **seven stacks** |
+| Arcane Blast | a single-rank hand-fill, kept whole by the importer | the eight-second redesign's TEXT, two patches stale |
+
+**THE BUILDS ARE OURS, FLAGGED FOR THE OWNER TO REPLACE.** All four lost a
+talent, and the Frostfire, Arcane and Fire URLs no longer decode:
+
+| | remap |
+| --- | --- |
+| all | Elemental Precision 3 -> Precision 3; Improved Fireball 5 -> Accelerant 5 |
+| Frost, Arcane, Fire | Arcane Focus 5 -> Improved Channeling 5 -- the five tier-0 Arcane points Arcane Concentration needs; both are worth nothing here |
+| Fire | Critical Mass 5 -> 3, the two points finishing Incineration 5/5 |
+| Arcane | Improved Fire Blast 2 -> Incineration 5/5: it moved to the third Fire row, which needs 10 points above and this build had 8 |
+
+**TWO READINGS, BOTH FLAGGED.** Ice Barrier's 15% and 5% are ADDED, 1.20,
+which is the reading the old 3% and 3% (1.06) already took; multiplied they
+are 1.2075. And Winter's Chill's "additional 7% of your spell damage" is 0.07
+more coefficient a stack on the Cone of Cold. **Ice Lance's divisor follows its
+multiplier to four** on the owner's standing ruling ("intended" meant the
+product), so a frozen cast still carries `1.5 / 3.5` -- not a question.
+
+`USES=1` at 60 s, 3 seeds, against `main`: **Frostfire 1044.6 -> 1011.5,
+Arcane 1134.5 -> 1112.1, Fire 1150.6 -> 1123.3, Frost Mage 972.0 -> 1091.0.**
+The Frost Mage's Ice Lance falls 5.2 casts to 2.1 under the new cooldown and
+its Cone of Cold now spends a five-stack chill. Not baselined.
+
 ## Round 87: Protribution, a second Paladin tank
 
 **PROTRIBUTION IS PROT PALLY WITH A 0/21/30 TREE**, the owner's instruction --

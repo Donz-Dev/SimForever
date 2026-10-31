@@ -98,7 +98,8 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
        * Blast at row 3 -- a spell the talent grants, which is the one shape of
        * addition this count cannot see any other way.
        */
-      ['arcane', 19, 'Arcane Power'],
+      // 18 AT 1.60.1.70707: Arcane Focus removed (Precision took its job).
+      ['arcane', 18, 'Arcane Power'],
       /*
        * 17, UNCHANGED THROUGH A PATCH THAT RENAMED ONE ROW AND MOVED TWO RANK
        * COUNTS. Wake of Fire became IMPROVED FIRE BLAST, Fire Power went 5
@@ -232,9 +233,10 @@ describe('every class has its trees', () => {
     expect(classesWithTalents()).toEqual([...CLASS_IDS].sort());
   });
 
-  it('adds up to 466 talents', () => {
-    // 466 until round 51's refresh removed the Mage's Piercing Ice.
-    expect(TOTAL_TALENTS).toBe(466);
+  it('adds up to 465 talents', () => {
+    // 466 until round 51's refresh removed the Mage's Piercing Ice; 465 at
+    // 1.60.1.70707, where the Mage lost Arcane Focus.
+    expect(TOTAL_TALENTS).toBe(465);
     const loaded = CLASS_IDS.reduce(
       (sum, id) => sum + talentsOf(id).trees.reduce((n, tree) => n + tree.talents.length, 0),
       0,
@@ -276,9 +278,9 @@ describe('every class has its trees', () => {
        * still served the old tree, so it was read off foreverchanges.pro with
        * `--capture` -- see the importer.
        */
-      // AND THE PALADIN, for the same reason, at the same build.
+      // AND THE PALADIN AND THE MAGE, for the same reason, at the same build.
       expect(talentsOf(classId).source).toBe(
-        classId === 'druid' || classId === 'paladin'
+        classId === 'druid' || classId === 'paladin' || classId === 'mage'
           ? `https://foreverchanges.pro/talents/${classId}`
           : 'https://talentsforever.com/talents.js',
       );

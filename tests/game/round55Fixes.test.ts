@@ -78,14 +78,15 @@ describe('cost: increases first, reductions a share of the increased cost', () =
     expect(resolveCast(mage, ARCANE_BLAST_ABILITY).costAmount).toBe(0);
   });
 
-  it('measures a Clearcasting saving against the STACKED cost, all eight times the base', () => {
+  it('measures a Clearcasting saving against the STACKED cost, all five times the base', () => {
     const mage = mageWith((simulation, actor) => {
       const ramp = arcaneBlastAura(0);
       for (let stack = 0; stack < 4; stack++) simulation.applyAura(actor, ramp, actor.id);
       simulation.applyAura(actor, CLEARCASTING, actor.id);
     });
     const charges = chargesIn(mage.auras.active.filter((instance) => instance.definition.castModifier));
-    expect(resolveCast(mage, ARCANE_BLAST_ABILITY, charges).costAmount).toBeCloseTo(base * 8, 6);
+    // 1 + 4 x 100% since 1.60.1.70707, where 175% a stack made it eight.
+    expect(resolveCast(mage, ARCANE_BLAST_ABILITY, charges).costAmount).toBeCloseTo(base * 5, 6);
   });
 
   it('leaves an increase alone when nothing reduces it', () => {
@@ -110,11 +111,20 @@ describe('cost: increases first, reductions a share of the increased cost', () =
   });
 });
 
-describe('Ice Barrier on the Frostfire Mage', () => {
-  it('is a castable trainer spell: 480 mana, 30s cooldown, a 60 second +6% Frost buff', () => {
+/*
+ * ============================================================================
+ * ICE BARRIER IS A TALENT AT 1.60.1.70707, AND ONLY A BUILD TAKING IT GETS ITS
+ * FROST DAMAGE -- the owner's instruction: "the Frostfire profile should NOT be
+ * benefitting from Ice Barrier, and the Frost Mage profile SHALL benefit".
+ * Round 55 declared it a trainer spell, so every Mage knew it; this block used
+ * to assert the Frostfire Mage casting it at T-10 and recasting it.
+ * ============================================================================
+ */
+describe('Ice Barrier, which only a build taking the talent knows', () => {
+  it('is a 60 second +15% Frost buff and +5% more while shielded, added: 1.20', () => {
     expect(ICE_BARRIER.durationMs).toBe(seconds(60));
     expect(ICE_BARRIER.damageDoneBySchool).toEqual({ frost: ICE_BARRIER_FROST_DAMAGE });
-    expect(ICE_BARRIER_FROST_DAMAGE).toBe(1.06);
+    expect(ICE_BARRIER_FROST_DAMAGE).toBeCloseTo(1 + (15 + 5) / 100, 12);
   });
 
   it('reaches Frostfire Bolt, which counts as Frost as well as Fire', () => {
@@ -122,42 +132,46 @@ describe('Ice Barrier on the Frostfire Mage', () => {
     const simulation = buildSimulation([mage]);
     const before = mage.damageDoneMultiplierFor('fire', ['frost']);
     simulation.applyAura(mage, ICE_BARRIER, mage.id);
-    expect(mage.damageDoneMultiplierFor('fire', ['frost']) / before).toBeCloseTo(1.06, 10);
+    expect(mage.damageDoneMultiplierFor('fire', ['frost']) / before).toBeCloseTo(1.2, 10);
     // A plain Fire spell does not collect it.
     expect(mage.damageDoneMultiplierFor('fire') / before).toBeCloseTo(1, 10);
   });
 
-  it('is cast at T-10 and recast when it falls off', () => {
+  /** One fight's Ice Barrier casts and the buff at the pull, off the event stream. */
+  const fight = (presetId: string) => {
     const events: TelemetryEvent[] = [];
-    const preset = PRESETS_BY_ID.get('mage_frostfire')!.build();
-    const profile = { ...preset, simulation: { ...preset.simulation, durationSeconds: 150 } };
-    const simulation = new Simulation(trainingDummyEncounter(profile, 11), { emit: (e) => events.push(e) });
-    simulation.begin();
-    const mage = simulation.combatants.find((actor) => actor.kind === 'player')!;
-    // Fifty of its sixty seconds left at the pull.
-    expect(mage.auras.remainingMs('ice_barrier', 0)).toBe(seconds(50));
-    simulation.advanceTo(seconds(600));
-    const casts = events.filter((event) => event.type === 'cast' && event.abilityId === 'ice_barrier');
-    // The opener, and a recast only while a whole buff fits AND mana is at
-    // 90% -- which this mana-bound build is not by fifty seconds in, so in
-    // practice the T-10 cast is the only one.
-    expect(casts.length).toBeGreaterThanOrEqual(1);
-    for (const cast of casts.slice(1)) expect(cast.timestamp).toBeLessThanOrEqual(seconds(90));
-    const entry = preset.rotation.entries.find((candidate) => candidate.abilityId === 'ice_barrier')!;
-    expect(JSON.stringify(entry.condition)).toContain('"resourceFraction"');
-    expect(JSON.stringify(entry.condition)).toContain('"fraction":0.9');
-  });
-
-  it('is not recast in a 60 second fight, where a new buff would have ~10s to run', () => {
-    const events: TelemetryEvent[] = [];
-    const preset = PRESETS_BY_ID.get('mage_frostfire')!.build();
+    const preset = PRESETS_BY_ID.get(presetId)!.build();
     const simulation = new Simulation(trainingDummyEncounter(preset, 11), { emit: (e) => events.push(e) });
     simulation.begin();
+    const mage = simulation.combatants.find((actor) => actor.kind === 'player')!;
+    const atPull = mage.auras.remainingMs('ice_barrier', 0);
     simulation.advanceTo(seconds(600));
-    const casts = events.filter((event) => event.type === 'cast' && event.abilityId === 'ice_barrier');
-    // The T-10 opener only, which takes no global cooldown.
-    expect(casts).toHaveLength(1);
-    expect(casts[0].timestamp).toBe(0);
+    return {
+      preset,
+      mage,
+      atPull,
+      casts: events.filter((event) => event.type === 'cast' && event.abilityId === 'ice_barrier'),
+    };
+  };
+
+  it('is NOT known, cast or carried by the Frostfire Mage, which does not take it', () => {
+    const { preset, mage, atPull, casts } = fight('mage_frostfire');
+    expect(preset.talents.ice_barrier ?? 0).toBe(0);
+    expect(mage.abilities.get('ice_barrier')).toBeUndefined();
+    expect(atPull).toBe(0);
+    expect(casts).toHaveLength(0);
+    expect(preset.precombat?.some((action) => action.abilityId === 'ice_barrier') ?? false).toBe(false);
+    expect(preset.rotation.entries.some((entry) => entry.abilityId === 'ice_barrier')).toBe(false);
+  });
+
+  it('IS known and carried by the Frost Mage, which takes it', () => {
+    const { preset, mage, atPull, casts } = fight('mage_frost');
+    expect(preset.talents.ice_barrier).toBe(1);
+    expect(mage.abilities.get('ice_barrier')).toBeDefined();
+    // Its opener casts it 3.5 seconds before the pull.
+    expect(atPull).toBe(seconds(60 - 3.5));
+    expect(casts.length).toBeGreaterThanOrEqual(1);
+    expect(mage.damageDoneMultiplierFor('frost')).toBeGreaterThan(0);
   });
 });
 

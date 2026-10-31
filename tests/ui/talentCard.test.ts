@@ -28,8 +28,9 @@ const render = (talentId: string, allocation: TalentAllocation) =>
 
 describe('the talent card', () => {
   it('describes the rank held, says Passive and Max rank at full', () => {
-    const html = render('arcane_focus', { arcane_focus: 5 });
-    expect(html).toContain('Arcane Focus');
+    // Improved Frostbolt: a five-rank passive (Arcane Focus until 1.60.1.70707).
+    const html = render('improved_frostbolt', { improved_frostbolt: 5 });
+    expect(html).toContain('Improved Frostbolt');
     expect(html).toContain('Rank 5 of 5 · Passive');
     expect(html).toContain('Max rank');
     expect(html).not.toContain('Next rank');
@@ -37,10 +38,10 @@ describe('the talent card', () => {
   });
 
   it('shows the next rank part-way up, and the rank-one text at zero', () => {
-    const partial = render('arcane_focus', { arcane_focus: 2 });
+    const partial = render('improved_frostbolt', { improved_frostbolt: 2 });
     expect(partial).toContain('Rank 2 of 5');
     expect(partial).toContain('Next rank:');
-    const none = render('arcane_focus', {});
+    const none = render('improved_frostbolt', {});
     expect(none).toContain('Rank 0 of 5');
     expect(none).not.toContain('Next rank');
   });

@@ -83,7 +83,13 @@ describe('Presence of Mind', () => {
   it('makes ARCANE WRATH instant, which is the bug as reported', () => {
     const mage = mageWithWrath();
     expect(mage.abilities.get('arcane_wrath')).toBeDefined();
-    expect(resolved(mage, [], 'arcane_wrath').castMs).toBe(seconds(3.5));
+    /*
+     * A CAST TIME TO TAKE AWAY, rather than exactly 3.5: since 1.60.1.70707
+     * Accelerant reaches Arcane Wrath, and `legalise` pads the Fire tree's tier
+     * 0 with whatever it finds there -- so the base can be 3.0.
+     */
+    expect(resolved(mage, [], 'arcane_wrath').castMs).toBeGreaterThan(0);
+    expect(resolved(mage, [], 'arcane_wrath').castMs).toBeLessThanOrEqual(seconds(3.5));
     expect(resolved(mageWithWrath(), [PRESENCE_OF_MIND], 'arcane_wrath').castMs).toBe(0);
   });
 
