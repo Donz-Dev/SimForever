@@ -143,21 +143,25 @@ Champion of the Light 5/5, so its Hammer of Wrath is instant too -- and its list
 entry keeps the owner's 300 ms swing gate, which was written for the version
 with a cast.
 
-**SEAL TWIST SWAPS AT THREE STORED COPIES** (`UNSEALED_WRATH_SWAP_STACKS`), the
-talent's cap -- and on the owner's build THE CLOCK DECIDES IT, so it is a
-question rather than a finding. Paired at 400 fights (`tools/optimise/sealTwist707.ts`):
+**SEAL TWIST RUNS THE OWNER'S CYCLE**: Seal of Command for three attacks, Seal of
+Righteousness for one, repeat -- `SEAL_TWIST_COMMAND_ATTACKS` and
+`SEAL_TWIST_RIGHTEOUSNESS_ATTACKS`, read as copies stored, which is the same
+count. It replaced a symmetric swap at three that this round had shipped first.
+**THE OWNER'S LIST OUTRANKS THE MEASUREMENT, AND THE MEASUREMENT STAYS**: paired
+at 400 fights (`tools/optimise/sealTwist707.ts`), every symmetric swap beats it:
 
-| swap at | 120 s | 240 s |
+| against the 3-then-1 cycle | 120 s | 240 s |
 | --- | --- | --- |
-| 2 copies | **+16.43 +/- 8.16** | **-9.25 +/- 5.79** |
-| 1 copy | -13.68 +/- 7.74 | -39.92 +/- 5.60 |
+| symmetric at 3 | **+30.12 +/- 7.71** | **+53.03 +/- 5.35** |
+| symmetric at 2 | +46.56 +/- 8.39 | +43.78 +/- 5.54 |
+| symmetric at 1 | +16.44 +/- 8.07 | +13.12 +/- 5.69 |
 
-Three stays, on the standing instruction that rotations are built for longer
-than a minute; two is the one-line change if the owner prefers the shorter fight.
-`USES=1` at 3 seeds x 10, 60 s, on the owner's builds: Seal Twist **922.9 +/-
-18.0** with Unsealed Wrath 14.9% of its damage, Shockadin 889.6, Prot 618.5 --
-**not a baseline**, and not comparable to the published rows, which are the old
-tree's builds.
+The likely mechanism is the swap's own price: two seal casts -- two global
+cooldowns and their mana -- every four attacks instead of every six, for one
+stored Righteousness copy where the symmetric cycle banks three.
+`USES=1` at 3 seeds x 10, 60 s, on the owner's builds: Seal Twist **861.7 +/-
+19.9** (Unsealed Wrath 13.2% of its damage), Shockadin 889.6, Prot 618.5 --
+**not a baseline**, and not comparable to the published rows.
 
 **QUESTIONS FOR THE OWNER**, each flagged where it is implemented:
 
@@ -170,7 +174,7 @@ tree's builds.
 | 5 | Shieldsworn: does Shield Specialization's running 3 s cooldown refuse the strike's mana | no: the strike neither starts nor reads it |
 | 6 | Swift Judgement off the global cooldown -- that ruling was for the old reset | kept off |
 | 7 | Salvation is no longer taught, and is a raid buff on every non-tank preset | kept; it moves TPS only |
-| 8 | Seal Twist swaps at 3 copies or 2 -- +16.43 at 120 s, -9.25 at 240 s for 2 | 3 |
+| 8 | Seal Twist's 3-then-1 cycle measures -30 at 120 s and -53 at 240 s against a symmetric swap at 3 | the owner's cycle |
 
 ## Round 85: the Druid tree at client build 1.60.1.70707, and the Cat's bite pool
 

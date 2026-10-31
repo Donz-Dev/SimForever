@@ -33,7 +33,7 @@ import {
 } from '../../src/game/auras/paladin';
 import { SEAL_OF_COMMAND_PPM, unsealedWrathProc } from '../../src/game/reactions/paladin';
 import type { AttackEvent, TelemetryEvent } from '../../src/engine';
-import { PALADIN_SHOCKADIN } from '../../src/game/rotations/paladin';
+import { PALADIN_RETRIBUTION, PALADIN_SHOCKADIN } from '../../src/game/rotations/paladin';
 import { PALADIN_TALENT_EFFECTS } from '../../src/game/talents/paladinEffects';
 import { paladinRotation } from '../../src/game/rotations/paladin';
 import { EXECUTE_PHASE_FRACTION } from '../../src/game/combat/executePhase';
@@ -402,6 +402,23 @@ describe('Unsealed Wrath, the reason a profile is called Seal Twist', () => {
     expect(named('Unsealed Wrath (Seal of Righteousness)')).toBe(3);
     expect(actor.auras.has('unsealed_wrath_seal_of_righteousness')).toBe(false);
     expect(actor.auras.stacksOf('unsealed_wrath_seal_of_command')).toBe(1);
+  });
+
+  it("runs the owner's cycle: three under Command, then one under Righteousness", () => {
+    /*
+     * "Start with Seal of Command. Auto-Attack 3 times ... Then cast Seal of
+     * Righteousness and Auto-Attack 1 time ... This process then repeats." The
+     * two thresholds are written out by hand: Righteousness once Command has
+     * stored THREE copies, Command again once Righteousness has stored ONE.
+     */
+    const condition = (id: string) =>
+      JSON.stringify(PALADIN_RETRIBUTION.entries.find((e) => e.abilityId === id)!.condition);
+    expect(condition('seal_of_righteousness')).toContain(
+      '"auraId":"unsealed_wrath_seal_of_command","compare":"atLeast","stacks":3',
+    );
+    expect(condition('seal_of_command')).toContain(
+      '"auraId":"unsealed_wrath_seal_of_righteousness","compare":"atLeast","stacks":1',
+    );
   });
 
   it('lasts 15 seconds and stacks to 3, by its tooltip', () => {

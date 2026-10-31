@@ -111,8 +111,13 @@ const healthAtMostFraction = (fraction: number) => selfHealth('atMost', fraction
 
 const either = any;
 
-/** Seal Twist swaps seals once this many copies of the current one are stored. */
-export const UNSEALED_WRATH_SWAP_STACKS = 3;
+/**
+ * Seal Twist's cycle, the owner's: three attacks under Seal of Command, then one
+ * under Seal of Righteousness, counted as the copies each has STORED -- every
+ * landed attack stores one, so a copy is an attack.
+ */
+export const SEAL_TWIST_COMMAND_ATTACKS = 3;
+export const SEAL_TWIST_RIGHTEOUSNESS_ATTACKS = 1;
 
 /*
  * ----------------------------------------------------------------------------
@@ -256,23 +261,31 @@ export const PALADIN_RETRIBUTION: AplList = {
   { abilityId: 'holy_strike' },
   { abilityId: 'consecration' },
   /*
-   * THE TWIST, UNDER UNSEALED WRATH (1.60.1.70707), AND IT IS STILL THE LAST
-   * TWO ENTRIES. Every landed melee attack stores a copy of the active seal, up
-   * to three, and an attack under a DIFFERENT seal fires every stored copy --
-   * so the cycle is three swings under one seal, then a swap, and the swap's
-   * next swing cashes the three in.
+   * THE TWIST, UNDER UNSEALED WRATH (1.60.1.70707) -- THE OWNER'S CYCLE: "start
+   * with Seal of Command. Auto-Attack 3 times gaining 3 stacks and providing 3
+   * opportunities for Seal of Command to trigger. Then cast Seal of
+   * Righteousness and Auto-Attack 1 time, triggering a Seal of Righteousness
+   * hit and proccing Unsealed Wrath providing 3 more opportunities for Seal of
+   * Command to trigger. This process then repeats indefinitely."
    *
-   * EACH SEAL IS CAST ONCE THE OTHER HAS STORED ITS THIRD COPY, which is the
-   * reading where a swap spends the most copies it can: a swap at one or two
-   * spends fewer for the same global cooldown and mana. The threshold is the
-   * talent's cap -- `UNSEALED_WRATH_SWAP_STACKS` -- and on the owner's build it
-   * is the clock that decides it: swapping at two is +16.43 +/- 8.16 at 120 s
-   * and -9.25 +/- 5.79 at 240 s, paired at 400 fights. Three is kept for the
-   * longer fight; HANDOVER round 86 carries it as a question.
+   * SO THE TWO SWAPS ARE NOT SYMMETRIC: Righteousness goes up once Command has
+   * stored three copies, and Command goes back up once Righteousness has stored
+   * ONE -- `SEAL_TWIST_COMMAND_ATTACKS` and `SEAL_TWIST_RIGHTEOUSNESS_ATTACKS`.
+   * Counting stored copies rather than swings is the same count, because every
+   * landed attack stores one, and it is the only count the list can read.
    *
-   * THE SEED IS UNCHANGED: with neither seal up, Command starts the cycle. Twist
-   * of Light's Echo, which a single swap used to leave behind, is gone with the
-   * talent, and so is the alternate-every-swing cycle it rewarded.
+   * AND THE ONE RIGHTEOUSNESS COPY IS NOT WASTED: the first attack back under
+   * Command spends it, so each cycle is also one more Seal of Righteousness hit.
+   * That falls out of the talent; the owner's sentence does not name it.
+   *
+   * THE SEED IS COMMAND: with neither seal up, it starts the cycle. (The opener
+   * puts Command up last before the pull, so the fight starts under it too.)
+   *
+   * WHAT IT REPLACED was a symmetric swap at three either way, this project's
+   * reading before the owner gave the cycle -- and that one MEASURES BETTER,
+   * +30.12 +/- 7.71 at 120 s and +53.03 +/- 5.35 at 240 s paired at 400 fights.
+   * The owner's list outranks the measurement; the measurement is kept here and
+   * in HANDOVER round 86 as the price of the choice.
    */
   {
     abilityId: 'seal_of_command',
@@ -280,7 +293,11 @@ export const PALADIN_RETRIBUTION: AplList = {
       all(not(selfActive('seal_of_command')), not(selfActive('seal_of_righteousness'))),
       all(
         selfActive('seal_of_righteousness'),
-        selfStacks('atLeast', UNSEALED_WRATH_SWAP_STACKS, 'unsealed_wrath_seal_of_righteousness'),
+        selfStacks(
+          'atLeast',
+          SEAL_TWIST_RIGHTEOUSNESS_ATTACKS,
+          'unsealed_wrath_seal_of_righteousness',
+        ),
       ),
     ),
   },
@@ -288,7 +305,7 @@ export const PALADIN_RETRIBUTION: AplList = {
     abilityId: 'seal_of_righteousness',
     condition: all(
       selfActive('seal_of_command'),
-      selfStacks('atLeast', UNSEALED_WRATH_SWAP_STACKS, 'unsealed_wrath_seal_of_command'),
+      selfStacks('atLeast', SEAL_TWIST_COMMAND_ATTACKS, 'unsealed_wrath_seal_of_command'),
     ),
   },
   ],
