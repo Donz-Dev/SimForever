@@ -155,15 +155,14 @@ describe('Champion of the Light, and the Hammer of Wrath it makes', () => {
     expect(hammerOfWrathTable(plain)).toBe('spell');
   });
 
-  it('is instant for the Seal Twist build and not for the Shockadin', () => {
+  it('is instant for BOTH damage builds since 1.60.1.70707', () => {
     /*
-     * THE SHOCKADIN STOPS AT CHAMPION OF THE LIGHT 3/3 -- its Holy half buys
-     * Holy Shock, and the last two ranks would cost it -- so its Hammer of Wrath
-     * keeps 0.4 seconds of cast, which is what makes the assertion above about
-     * the TALENT rather than about the ability. Both builds are provisional
-     * since 1.60.1.70707.
+     * THE SHOCKADIN REACHES IT NOW. Instrument of Law was tier 25 in
+     * Retribution and out of its reach; Champion of the Light 5/5 is where the
+     * second lives now, and the owner's Shockadin takes it -- so the two damage
+     * builds both have the instant, ranged Hammer of Wrath.
      */
-    expect(isInstantHammerOfWrath(abilityOf('pally_shockadin_2h', 'hammer_of_wrath')!)).toBe(false);
+    expect(isInstantHammerOfWrath(abilityOf('pally_shockadin_2h', 'hammer_of_wrath')!)).toBe(true);
     expect(isInstantHammerOfWrath(abilityOf('pally_ret', 'hammer_of_wrath')!)).toBe(true);
   });
 
@@ -207,8 +206,10 @@ describe('Champion of the Light, and the Hammer of Wrath it makes', () => {
     expect(ret?.condition).toEqual({ kind: 'castsInstantly', abilityId: 'hammer_of_wrath' });
 
     /*
-     * THE SHOCKADIN'S IS NOT THE RETRIBUTION GATE. That build stops short of
-     * Champion of the Light 5/5 and casts a version with a cast, so it is gated on
+     * THE SHOCKADIN'S IS NOT THE RETRIBUTION GATE. It was written for a build
+     * casting the version WITH a cast -- the owner's 1.60.1.70707 Shockadin is
+     * instant now, so the timing gate is the owner's list kept as written -- and
+     * it is gated on
      * TIMING instead -- within 300ms of a main-hand swing, the owner's call
      * (round 56b), because a cast holds the swing timer at zero until it ends.
      * The Retribution gate here would delete an entry that fires.

@@ -240,9 +240,9 @@ school's modifier in before the roll. `AbilityModifier.hitBonus` is the field.
 
 ## Client build 1.60.1.70707
 
-The tree was re-captured off foreverchanges.pro and every Paladin build is
-PROVISIONAL until the owner supplies new ones -- see HANDOVER round 86 for the
-whole list, the readings and the seven open questions. What a reader of the
+The tree was re-captured off foreverchanges.pro and the owner supplied all
+four builds for it -- see HANDOVER round 86 for the whole list, the readings
+and the open questions. What a reader of the
 rest of this document most needs:
 
 - **Twist of Light is Unsealed Wrath** and its Echo is gone. A stored seal is
@@ -260,9 +260,9 @@ rest of this document most needs:
 
 | Profile | Talents | DPS | List |
 | --- | --- | --- | --- |
-| Seal Twist Ret | 14/6/31 (provisional, 1.60.1.70707) | **748.3** ±9.6 | `PALADIN_RETRIBUTION` |
-| Shockadin | 23/0/28 | **585.5** ±4.9 | `PALADIN_SHOCKADIN` |
-| Prot Pally | 12/32/7 (provisional, 1.60.1.70707) | **303.9** ±3.7 | `PALADIN_PROTECTION` |
+| Seal Twist Ret | 12/8/31 (1.60.1.70707) | **748.3** ±9.6 | `PALADIN_RETRIBUTION` |
+| Shockadin | 21/0/30 (1.60.1.70707) | **585.5** ±4.9 | `PALADIN_SHOCKADIN` |
+| Prot Pally | 10/31/10 (1.60.1.70707) | **303.9** ±3.7 | `PALADIN_PROTECTION` |
 
 **DO NOT READ THESE AS THE DEEP DIVE'S FIGURES.** The dive took them to 528.3,
 472.7 and 238.1; everything since — the raid buff list, Judgement of Wisdom,

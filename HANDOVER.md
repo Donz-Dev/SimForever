@@ -134,30 +134,43 @@ kinds `abilityHealingCritDamage` and `abilityHealingCrit`.
 **THE PATCH-NOTE OVERRIDE LAYER IS DELETED AGAIN**: its last row, Champion of the
 Light's 20/40/60, is shipped by the client as 12/24/36/48/60.
 
-**ALL FOUR PALADIN BUILDS ARE PROVISIONAL.** None of the owner's URLs decodes on
-the new tree -- every build lost most of its points to removed or moved talents
--- so each is the smallest legal edit that keeps its capstone: Seal Twist
-**14/6/31** (Unsealed Wrath), Shockadin **23/0/28** (Holy Shock), Prot **12/32/7**
-(Shieldsworn), Holy **31/15/5** (Light's Vigil). Not measured as choices.
+**ALL FOUR PALADIN BUILDS ARE THE OWNER'S NEW ONES**, read off their
+foreverchanges.pro URLs (that site's `b=` is one digit per grid cell, which
+`decode_talent_build.mjs` does not speak): Seal Twist **12/8/31**, Shockadin
+**21/0/30**, Prot **10/31/10**, Holy **32/11/8**. The first PR revision carried
+provisional builds while the URLs were asked for. The Shockadin now takes
+Champion of the Light 5/5, so its Hammer of Wrath is instant too -- and its list
+entry keeps the owner's 300 ms swing gate, which was written for the version
+with a cast.
 
 **SEAL TWIST SWAPS AT THREE STORED COPIES** (`UNSEALED_WRATH_SWAP_STACKS`), the
-talent's cap. Paired at 200 fights of 120 s it is indistinguishable from two
-(+7.33 +/- 10.82) and one (-2.96 +/- 11.51); `tools/optimise/sealTwist707.ts`.
-`USES=1` at 3 seeds x 10, 60 s: Seal Twist **897.0 +/- 34.6** with Unsealed
-Wrath 14.6% of its damage, Shockadin 909.8, Prot 619.8 -- **not a baseline**, and
-not comparable to the published rows, which are another tree's builds.
+talent's cap -- and on the owner's build THE CLOCK DECIDES IT, so it is a
+question rather than a finding. Paired at 400 fights (`tools/optimise/sealTwist707.ts`):
+
+| swap at | 120 s | 240 s |
+| --- | --- | --- |
+| 2 copies | **+16.43 +/- 8.16** | **-9.25 +/- 5.79** |
+| 1 copy | -13.68 +/- 7.74 | -39.92 +/- 5.60 |
+
+Three stays, on the standing instruction that rotations are built for longer
+than a minute; two is the one-line change if the owner prefers the shorter fight.
+`USES=1` at 3 seeds x 10, 60 s, on the owner's builds: Seal Twist **922.9 +/-
+18.0** with Unsealed Wrath 14.9% of its damage, Shockadin 889.6, Prot 618.5 --
+**not a baseline**, and not comparable to the published rows, which are the old
+tree's builds.
 
 **QUESTIONS FOR THE OWNER**, each flagged where it is implemented:
 
 | | the question | what is implemented |
 | --- | --- | --- |
-| 1 | the four builds | provisional, above |
+| 1 | the four builds | supplied, above |
 | 2 | Holy Shield's 221 rank has no level and no cost in the data, and reads "for 0 sec" | kept at 221; the highest rank with full data is 153 at level 50 |
 | 3 | Righteous Fury's "additional 90%" on Holy | MULTIPLIED, 1.33 x 1.9 = 2.527, on the standing ruling; adding would be 2.23 |
 | 4 | Unsealed Wrath: does the consuming attack also store its own seal, and does Holy Strike store one | yes, and no (`carriesSeal`) |
 | 5 | Shieldsworn: does Shield Specialization's running 3 s cooldown refuse the strike's mana | no: the strike neither starts nor reads it |
 | 6 | Swift Judgement off the global cooldown -- that ruling was for the old reset | kept off |
 | 7 | Salvation is no longer taught, and is a raid buff on every non-tank preset | kept; it moves TPS only |
+| 8 | Seal Twist swaps at 3 copies or 2 -- +16.43 at 120 s, -9.25 at 240 s for 2 | 3 |
 
 ## Round 85: the Druid tree at client build 1.60.1.70707, and the Cat's bite pool
 
@@ -12541,11 +12554,11 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Fire Mage | Mage | 14/34/3 (then; 12/36/3 since round 80) | 1020.7 | | **Enh Shaman** | Shaman | 19/32/0 (then; 18/31/2 since round 80) | **838.8** |
 | BM Hunter | Hunter | 31/20/0 | 968.2 | | Moonkin | Druid | 41/0/10 (then; 38/0/13 since round 78) | 820.3 |
 | Cat Druid | Druid | 9/34/8 (then; 9/32/10 since 1.60.1.70707) | 966.9 | | Ele Shaman | Shaman | 32/11/8 | 792.8 |
-| Seal Twist Ret | Paladin | 15/0/36 (then; 14/6/31 since 1.60.1.70707) | 948.6 | | Pure Hemo | Rogue | 19/8/24 | 775.9 |
+| Seal Twist Ret | Paladin | 15/0/36 (then; 12/8/31 since 1.60.1.70707) | 948.6 | | Pure Hemo | Rogue | 19/8/24 | 775.9 |
 | Hawk Melee | Hunter | 16/11/24 | 937.6 | | Venom Rogue | Rogue | 33/16/2 | 771.6 |
-| Shockadin 2H | Paladin | 23/0/28 | 935.2 | | SM/DS | Warlock | 35/11/5 | 769.4 |
+| Shockadin 2H | Paladin | 23/0/28 (then; 21/0/30 since 1.60.1.70707) | 935.2 | | SM/DS | Warlock | 35/11/5 | 769.4 |
 | Shadow Priest | Priest | 14/2/35 | 931.0 | | Rupture Rogue | Rogue | 12/8/31 | 754.9 |
-| 2H Arms | Warrior | 39/10/2 | 927.0 | | Prot Pally | Paladin | 8/34/9 (then; 12/32/7 since 1.60.1.70707) | 551.1 |
+| 2H Arms | Warrior | 39/10/2 | 927.0 | | Prot Pally | Paladin | 8/34/9 (then; 10/31/10 since 1.60.1.70707) | 551.1 |
 elock | Warlock | 5/11/35 | 910.5 | | Prot Warr | Warrior | 17/0/34 (then; 17/2/32 since round 78) | 499.5 |
 | Combat Rogue | Rogue | 18/33/0 | 899.5 | | Bear Druid | Druid | 9/42/0 (then; 9/37/5 since 1.60.1.70707) | 432.8 |
 

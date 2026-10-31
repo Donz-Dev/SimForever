@@ -1649,35 +1649,37 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
 };
 
 /**
- * THE FOUR PALADIN BUILDS, ALL PROVISIONAL SINCE CLIENT BUILD 1.60.1.70707.
+ * THE FOUR PALADIN BUILDS AT CLIENT BUILD 1.60.1.70707, the owner's, read off
+ * their foreverchanges.pro URLs -- 12/8/31, 21/0/30, 10/31/10 and 32/11/8, each
+ * exactly 51 points. Read off the calculator page rather than decoded, because
+ * that site's `b=` is one digit per GRID CELL and not per talent, which
+ * `decode_talent_build.mjs` does not speak:
  *
- * PROVISIONAL (1.60.1.70707). The tree this build was specified against is
- * gone -- One-Handed Weapon Specialization, Improved Seal of Fury, Instrument of
- * Law and Twist of Light are out, Voice of Truth left for the trainer, and
- * thirty-one talents moved or changed rank -- so the owner's URL no longer
- * decodes. This is the smallest legal edit that keeps the build's capstone and
- * shape, and it is a placeholder for the owner's new build, not a decision.
+ *   Seal Twist Ret  b=0500050000000000002-00300000000000005-0520303120103315011
+ *   Shockadin 2H    b=0500050120201210002--0520303120103305002
+ *   Prot Pally      b=050005-0532213221001531-5020003
+ *   Holy Pal        b=00035001222512105102-00120000200010005-05003
  *
  * EACH STILL HAS A DIFFERENT CAPSTONE, which is what lets the rotation tell
- * them apart: Unsealed Wrath (Seal Twist), Holy Shock (Shockadin), Holy Shield
- * (Protection) and Light's Vigil (Holy).
+ * them apart: Unsealed Wrath (Seal Twist), Holy Shock (Shockadin, which stops
+ * at 30 Retribution points), Holy Shield (Protection) and Light's Vigil (Holy).
  */
 const PALADIN_RETRIBUTION_TALENTS: TalentAllocation = {
-  // Holy, 14
+  // Holy, 12
   divine_strength: 5,
   improved_seals: 5,
-  reverence: 2,
   holy_conduit: 2,
-  // Protection, 6
+  // Protection, 8
   divine_intellect: 5,
-  precision: 1,
+  precision: 3,
   // Retribution, 31
   benediction: 5,
   improved_judgement: 2,
   conviction: 3,
   sanctified_judgement: 3,
-  vindication: 3,
+  unyielding_faith: 1,
   seal_of_command: 1,
+  pursuit_of_justice: 2,
   sacred_arbiter: 1,
   two_handed_weapon_specialization: 3,
   repentance: 1,
@@ -1730,30 +1732,6 @@ const PALADIN_RETRIBUTION_TALENTS: TalentAllocation = {
  * ============================================================================
  */
 
-/** Holy tiers 0-15: the twenty points that open tier 20. */
-const SHOCKADIN_HOLY_BELOW_20: TalentAllocation = {
-  divine_strength: 5,
-  improved_seals: 5,
-  reverence: 2,
-  healing_light: 3,
-  divine_favor: 1,
-  holy_conduit: 2,
-  divine_precision: 2,
-};
-
-/** Retribution tiers 0-15: the twenty that open tier 20. */
-const SHOCKADIN_RET_BELOW_20: TalentAllocation = {
-  benediction: 5,
-  improved_judgement: 2,
-  conviction: 3,
-  sanctified_judgement: 3,
-  vindication: 3,
-  seal_of_command: 1,
-  sacred_arbiter: 1,
-  two_handed_weapon_specialization: 3,
-  repentance: 1,
-};
-
 /**
  * 1H AND SHIELD -- 23 Holy / 28 Retribution.
  *
@@ -1773,26 +1751,29 @@ const SHOCKADIN_RET_BELOW_20: TalentAllocation = {
  * Duty and Improved Seal of Fury -- a healer standing in a raid, not a tank.
  */
 const HOLY_PAL_TALENTS: TalentAllocation = {
-  // Holy, 31
+  // Holy, 32
   spiritual_focus: 5,
   healing_light: 3,
   reverence: 2,
+  purifying_power: 2,
   divine_favor: 1,
   illumination: 5,
-  holy_conduit: 2,
+  divine_precision: 2,
   infusion_of_light: 2,
+  oath_of_light: 1,
   holy_shock: 1,
   boundless_light: 2,
-  consecrated_ground: 2,
   holy_power: 5,
   light_s_vigil: 1,
-  // Protection, 15
+  // Protection, 11
   divine_intellect: 5,
-  precision: 3,
+  precision: 1,
+  guardian_s_favor: 2,
   sacred_duty: 2,
-  toughness: 5,
-  // Retribution, 5
+  templar_s_bulwark: 1,
+  // Retribution, 8
   benediction: 5,
+  conviction: 3,
 };
 
 /**
@@ -1805,36 +1786,52 @@ const HOLY_PAL_TALENTS: TalentAllocation = {
  * the shield build has two -- so Consecrated Ground is 1/2 here and 2/2 there.
  */
 const PALADIN_SHOCKADIN_2H_TALENTS: TalentAllocation = {
-  ...SHOCKADIN_HOLY_BELOW_20,
+  // Holy, 21
+  divine_strength: 5,
+  reverence: 2,
+  improved_seals: 5,
+  divine_favor: 1,
+  holy_conduit: 2,
+  divine_precision: 2,
+  infusion_of_light: 2,
+  oath_of_light: 1,
   holy_shock: 1,
-  consecrated_ground: 2,
-  ...SHOCKADIN_RET_BELOW_20,
+  // Retribution, 30
+  benediction: 5,
+  improved_judgement: 2,
+  conviction: 3,
+  sanctified_judgement: 3,
+  unyielding_faith: 2,
+  seal_of_command: 1,
+  pursuit_of_justice: 2,
+  sacred_arbiter: 1,
+  two_handed_weapon_specialization: 3,
   vengeance: 3,
-  champion_of_the_light: 3,
+  champion_of_the_light: 5,
 };
 
 const PALADIN_PROTECTION_TALENTS: TalentAllocation = {
-  // Holy, 12
+  // Holy, 10
   divine_strength: 5,
   improved_seals: 5,
-  holy_conduit: 2,
-  // Protection, 32
+  // Protection, 31
   redoubt: 5,
   precision: 3,
+  guardian_s_favor: 2,
   sacred_duty: 2,
   templar_s_bulwark: 1,
   shield_specialization: 2,
-  toughness: 2,
   swift_judgement: 1,
   improved_righteous_fury: 3,
-  anticipation: 3,
+  anticipation: 2,
   holy_shield: 1,
   reckoning: 5,
   iron_creed: 3,
   shieldsworn: 1,
-  // Retribution, 7
+  // Retribution, 10
   deflection: 5,
   improved_judgement: 2,
+  sanctified_judgement: 3,
 };
 
 /**

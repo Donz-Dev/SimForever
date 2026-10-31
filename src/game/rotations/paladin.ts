@@ -265,7 +265,10 @@ export const PALADIN_RETRIBUTION: AplList = {
    * EACH SEAL IS CAST ONCE THE OTHER HAS STORED ITS THIRD COPY, which is the
    * reading where a swap spends the most copies it can: a swap at one or two
    * spends fewer for the same global cooldown and mana. The threshold is the
-   * talent's cap and not a measured figure -- `UNSEALED_WRATH_SWAP_STACKS`.
+   * talent's cap -- `UNSEALED_WRATH_SWAP_STACKS` -- and on the owner's build it
+   * is the clock that decides it: swapping at two is +16.43 +/- 8.16 at 120 s
+   * and -9.25 +/- 5.79 at 240 s, paired at 400 fights. Three is kept for the
+   * longer fight; HANDOVER round 86 carries it as a question.
    *
    * THE SEED IS UNCHANGED: with neither seal up, Command starts the cycle. Twist
    * of Light's Echo, which a single swap used to leave behind, is gone with the

@@ -57,6 +57,7 @@ import { HAND_OF_JUSTICE_ICD_MS } from '../../src/game/items/procs';
 import { PALADIN_TALENT_EFFECTS } from '../../src/game/talents/paladinEffects';
 import { talentNumber } from '../../src/game/talents/talentValues';
 import { legalise } from '../helpers/legalTalents';
+import { talentBuild } from '../../src/game/talents/talentBuild';
 import { armorFromItems } from '../../src/game/items/equipment';
 import { PALADIN_SHOCKADIN } from '../../src/game/rotations/paladin';
 
@@ -1149,14 +1150,13 @@ describe('Toughness, which is where itemArmorPercent now lives', () => {
     expect(naked.stats.effective.armor).toBe(plain.stats.effective.armor);
   });
 
-  it('is taken by the provisional Prot Pally build and by neither damage build', () => {
+  it('is taken by no Paladin preset, which is a BUILD cause', () => {
     /*
-     * 1.60.1.70707 moved Toughness to row 3, where the provisional Prot Pally
-     * build takes two ranks to open the tier -- so it is no longer worth zero to
-     * every tank. The tests above still build their own character.
+     * The owner's 1.60.1.70707 builds spend no point here -- the Prot Pally
+     * opens row 3 with Templar's Bulwark and Shield Specialization instead -- so
+     * the tests above build their own character rather than reading one.
      */
-    expect(built('prot_pally').talents.toughness).toBe(2);
-    for (const preset of ['pally_ret', 'pally_shockadin_2h']) {
+    for (const preset of ['pally_ret', 'pally_shockadin_2h', 'prot_pally', 'holy_pal']) {
       expect(built(preset).talents.toughness, preset).toBeUndefined();
     }
   });
@@ -1167,20 +1167,17 @@ describe('Vindication', () => {
     expect(VINDICATION_CHANCE).toBe(10);
   });
 
-  it('is registered on the two builds that take it and not on the tank', () => {
+  it('is registered from the allocation, and no preset takes it since 1.60.1.70707', () => {
     /*
-     * THE SHOCKADIN TOOK IT UP AT CLIENT BUILD 1.60.1.70170, which is a BUILD
-     * change rather than a talent one: Improved Holy Strike and Crusade were
-     * removed from the tree, and the owner's new Shockadin URL spends two of the
-     * four freed points here.
-     *
-     * The tank still does not, so the assertion still says something: this is
-     * about the TALENT being registered from the allocation rather than about
-     * every Paladin having it.
+     * THE OWNER'S 1.60.1.70707 BUILDS DROPPED IT, which is the right reading of
+     * the patch: its attack power gain is gone and the debuff reaches nothing
+     * here. So the registration is asserted on an allocation that takes it.
      */
-    expect(presetPlayer('pally_ret').reactions.map((r) => r.id)).toContain('vindication');
-    expect(presetPlayer('pally_shockadin_2h').reactions.map((r) => r.id)).toContain('vindication');
-    expect(presetPlayer('prot_pally').reactions.map((r) => r.id)).not.toContain('vindication');
+    for (const preset of ['pally_ret', 'pally_shockadin_2h', 'prot_pally', 'holy_pal']) {
+      expect(presetPlayer(preset).reactions.map((r) => r.id), preset).not.toContain('vindication');
+    }
+    const build = talentBuild('paladin', legalise({ vindication: 3 }, 'paladin'));
+    expect(build.reactions.map((r) => r.id)).toContain('vindication');
   });
 });
 
