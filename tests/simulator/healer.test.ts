@@ -263,12 +263,13 @@ describe("the Holy Pal's list", () => {
       ['flash_of_light', 'tank'],
       ['holy_light', 'tank'],
     ]);
-    // The pre-cast is last, unconditional, and cancels at 80% above 95%.
+    // The pre-cast is last, unconditional, and cancels at 80% of the cast with
+    // the tank above 80% (95% until round 89).
     const precast = owner[owner.length - 1];
     expect(precast.condition).toBeUndefined();
     expect(precast.cancel).toEqual({
       atFraction: 0.8,
-      condition: { kind: 'health', on: 'target', compare: 'above', fraction: 0.95 },
+      condition: { kind: 'health', on: 'target', compare: 'above', fraction: 0.8 },
     });
   });
 
@@ -349,7 +350,7 @@ describe("the Holy Pal's list", () => {
 });
 
 describe('the pre-cast (round 53)', () => {
-  it('cancels a Holy Light at 80% of its cast while the tank is above 95%, and spends no mana on it', () => {
+  it('cancels a Holy Light at 80% of its cast while the tank is above 80%, and spends no mana on it', () => {
     const { simulation, events } = fight('tank');
     const cancels = events.filter(
       (event): event is Extract<TelemetryEvent, { type: 'channel_interrupted' }> =>
@@ -370,13 +371,13 @@ describe('the pre-cast (round 53)', () => {
       expect(started.type === 'cast' && started.abilityId).toBe('holy_light');
       const elapsed = cancel.timestamp - started.timestamp;
       expect(elapsed).toBeGreaterThan(0);
-      // The tank was still above 95% when it was asked.
+      // The tank was still above 80% when it was asked.
       const health = healthTimeline(
         events.filter((event) => event.timestamp <= cancel.timestamp),
         TANK_ID,
         HEALER_TANK_HEALTH,
       ).at(-1)!;
-      expect(health.value).toBeGreaterThan(95);
+      expect(health.value).toBeGreaterThan(80);
       // And it cost NOTHING (round 55): a pre-cast pays as it lands, so no
       // Holy Light spend sits anywhere between its start and its cancel, and
       // there is no refund to hand back.

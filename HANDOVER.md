@@ -134,8 +134,9 @@ FLAGGED, since per crit a five-member party would return about 80% of its cost.
 
 The tank fight is unchanged, because its list casts no Vigil.
 
-**THE LARGER LEVER IS THE OWNER'S PRE-CAST THRESHOLD, LEFT AS IT IS AND PUT TO
-THEM.** The Holy Light pre-cast is cancelled at 80% of its cast only if the tank
+**THE LARGER LEVER WAS THE OWNER'S PRE-CAST THRESHOLD, AND THE OWNER MOVED IT
+TO 80%** on the table below: "Lower the Holy Light pre-cast cancel threshold to
+80%". The Holy Light pre-cast is cancelled at 80% of its cast only if the tank
 is ABOVE 95%, so a ~2,200 heal lands on a tank missing a few hundred: 57%
 overheal on Holy Light in the tank fight. At 60 s the threshold barely matters;
 at 180 s (100 fights each):
