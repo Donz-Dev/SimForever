@@ -2,6 +2,7 @@ import type { AplEntry } from '../../game/rotations/apl';
 import {
   PALADIN_HOLY,
   PALADIN_PROTECTION,
+  PALADIN_PROTRIBUTION,
   PALADIN_RETRIBUTION,
   PALADIN_SHOCKADIN,
 } from '../../game/rotations/paladin';
@@ -146,10 +147,12 @@ export const PALADIN_MULTI_TARGET: MultiTargetDefaults = {
     entries: spellblastingAtThePull(PROTECTION_AOE),
     precombat: PROTECTION_AOE_PRECOMBAT,
   },
-  // Protribution runs Prot Pally's list, so it runs its AoE list too.
+  // Protribution: Prot Pally's AoE list, with its own Hammer of Wrath above Judgement.
   protribution: {
-    name: 'Paladin (Protection, AoE)',
-    entries: spellblastingAtThePull(PROTECTION_AOE),
+    name: 'Paladin (Protribution, AoE)',
+    entries: spellblastingAtThePull(
+      moveAbove(PALADIN_PROTRIBUTION.entries, 'consecration', 'templars_bulwark'),
+    ),
     precombat: PROTECTION_AOE_PRECOMBAT,
   },
   holy_pal: {

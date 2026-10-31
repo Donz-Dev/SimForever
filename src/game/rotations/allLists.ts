@@ -11,6 +11,7 @@ import { MAGE_ARCANE, MAGE_FIRE, MAGE_FROST, MAGE_FROSTFIRE } from './mage';
 import {
   PALADIN_HOLY,
   PALADIN_PROTECTION,
+  PALADIN_PROTRIBUTION,
   PALADIN_RETRIBUTION,
   PALADIN_SHOCKADIN,
 } from './paladin';
@@ -299,7 +300,13 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     name: 'PALADIN_PROTECTION',
     owner: 'paladin',
     list: PALADIN_PROTECTION,
-    profiles: ['prot_pally', 'protribution'],
+    profiles: ['prot_pally'],
+  },
+  {
+    name: 'PALADIN_PROTRIBUTION',
+    owner: 'paladin',
+    list: PALADIN_PROTRIBUTION,
+    profiles: ['protribution'],
   },
 
   // Hunter -- by capstone AND style, because both Lone Wolf builds share a tree.

@@ -117,17 +117,22 @@ consumables, opener and encounter follow that one; Fury Prot's arrangement. Its
 benchmark row is Prot Pally's under its own label on a fresh `idBlock` (40), so
 no other set's item ids move.
 
-**IT RUNS THE PROTECTION LIST, BY DISPATCH**: `paladinRotation` sends any build
-with Holy Shield there. Entries for talents the tree skips -- Reckoning, Iron
-Creed, Shieldsworn -- are skipped in silence. `USES=1` at 60 s, 30 fights:
-**581.6 +/- 20.0** against Prot Pally's 618.5, with Holy Strike 6.0 casts
-against 9.5 (no Shieldsworn cooldown). Not baselined.
+**ITS LIST IS THE PROTECTION LIST PLUS HAMMER OF WRATH**, the owner's second
+instruction. `PALADIN_PROTRIBUTION` is DERIVED from `PALADIN_PROTECTION` (Fury
+Prot's arrangement), with Hammer of Wrath above Judgement, gated on being
+instant exactly as the Retribution list gates it -- Champion of the Light 5/5.
+A list of its own rather than an entry in the shared one, because Prot Pally
+takes no Champion and its Hammer has a cast. `paladinRotation` sends a Holy
+Shield build with Champion 5/5 here. Entries for talents the tree skips --
+Reckoning, Iron Creed, Shieldsworn -- are skipped in silence.
 
-**TWO THINGS THE COPY LEAVES ON THE TABLE, recorded rather than changed**: the
-tree buys Seal of Command and an instant Hammer of Wrath (Champion of the Light
-5/5), and the Protection list casts neither -- it keeps Seal of Righteousness
-and has no Hammer of Wrath entry. Whether this profile wants its own list is
-the owner's call.
+`USES=1` at 60 s, 30 fights: **619.7 +/- 11.6** (581.6 on the plain Protection
+list), Hammer of Wrath **1.9 casts and 6.2%** of damage; Prot Pally **618.5 to
+the decimal** either side of the change, which is the containment check. Not
+baselined.
+
+**ONE THING STILL LEFT ON THE TABLE**: the tree buys Seal of Command, and the
+list keeps Seal of Righteousness.
 
 ## Round 86: the Paladin tree at client build 1.60.1.70707
 
