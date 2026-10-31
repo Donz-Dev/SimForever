@@ -107,6 +107,50 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 89: the Holy Pal's mana
+
+**A CANCELLED HOLY LIGHT COSTS NOTHING, AND ALREADY DID.** The owner asked to
+make sure of it. A pre-cast pays as it LANDS (`payCostOnCompletion`, round 55),
+so a cancel spends nothing and starts no five second rule. Read off the event
+stream: in the tank fight 5.7 of 22.6 Holy Lights a minute are cancelled, no
+mana moves at any cancel, and every one that lands pays its 660 once.
+`holyPalMana.test.ts` pins it, and `tools/probe_holy_mana.ts` prints a healer's
+mana cast by cast.
+
+**WHAT WAS WRONG IS ILLUMINATION ON LIGHT'S VIGIL**, in two places at once. The
+tooltip names four spells and only three were declared ("Light's Vigil is the
+fourth the tooltip names and is not declared"), and the party heal passed the
+module constant instead of the caster's own copy, so no talent bonus could ever
+have reached it. The build's most expensive spell, 1,340 mana, never refunded.
+One refund per Vigil, on the owner's Revelation ruling for an area effect --
+FLAGGED, since per crit a five-member party would return about 80% of its cost.
+
+| raid fight, 60 s, 50 fights | before | after |
+| --- | --- | --- |
+| HPS | 916.7 | **1057.3** |
+| Illumination mana | 1,410 | **5,175** |
+| first below 400 mana | 33.6 s | **43.3 s** |
+| allied / tank deaths | 20.14 / 2.94 | 19.40 / 2.72 |
+
+The tank fight is unchanged, because its list casts no Vigil.
+
+**THE LARGER LEVER IS THE OWNER'S PRE-CAST THRESHOLD, LEFT AS IT IS AND PUT TO
+THEM.** The Holy Light pre-cast is cancelled at 80% of its cast only if the tank
+is ABOVE 95%, so a ~2,200 heal lands on a tank missing a few hundred: 57%
+overheal on Holy Light in the tank fight. At 60 s the threshold barely matters;
+at 180 s (100 fights each):
+
+| cancel if the tank is above | HPS | tank deaths | Holy Light overheal |
+| --- | --- | --- | --- |
+| 95% (the owner's) | 337.8 | **2.05** | 56.0% |
+| 85% | 384.5 | 1.06 | 52.4% |
+| 80% | **452.6** | **0.00** | 34.2% |
+| 70% | 449.5 | 0.00 | 10.3% |
+
+**THE RAID FIGHT OVERWHELMS EVERY HEALER**, which is the control that keeps the
+Holy Pal's deaths in proportion: Resto Shaman 16.3, Resto Druid 14.2, Holy
+Priest 14.8, Disc Priest 19.3 allied deaths against the Holy Pal's 19.4.
+
 ## Round 88: the Mage tree at client build 1.60.1.70707
 
 **THE OWNER'S NOTE LISTED SEVEN CHANGES AND THE TREE CARRIED MORE**, so the
