@@ -1416,6 +1416,7 @@ describe('the racials are in the priority lists, or they never fire', () => {
       [
         'Druid (Bear)',
         'Paladin (Protection)',
+        'Paladin (Protribution)',
         'Warrior (Shield, Defensive)',
         'Warrior (Fury Prot)',
       ].sort(),

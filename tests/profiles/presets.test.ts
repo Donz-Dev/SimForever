@@ -70,6 +70,7 @@ describe('the preset catalogue', () => {
       'pally_ret',
       'pally_shockadin_2h',
       'prot_pally',
+      'protribution',
       'bm_hunter',
       'lw_ranged',
       'lw_melee',
@@ -109,6 +110,7 @@ describe('the preset catalogue', () => {
       'Seal Twist Ret',
       'Shockadin 2H',
       'Prot Pally',
+      'Protribution',
       'BM Hunter',
       'LW Ranged',
       'LW Melee',
@@ -162,6 +164,7 @@ describe('the preset catalogue', () => {
       pally_ret: 'paladin',
       pally_shockadin_2h: 'paladin',
       prot_pally: 'paladin',
+      protribution: 'paladin',
       bm_hunter: 'hunter',
       lw_ranged: 'hunter',
       lw_melee: 'hunter',
@@ -279,7 +282,7 @@ describe('the preset catalogue', () => {
      * one shared list, and a tank's is that list plus exactly these two.
      */
     // FOUR SINCE FURY PROT, which copies Prot Warr's raid as well.
-    const TANKS = new Set(['prot_warr', 'fury_prot', 'prot_pally', 'druid_bear']);
+    const TANKS = new Set(['prot_warr', 'fury_prot', 'prot_pally', 'protribution', 'druid_bear']);
     const TANK_EXTRAS = ['retribution_aura', 'thorns'];
     /*
      * AND THE TANKS DROP SALVATION, round 47: it is on exactly when the target
@@ -303,7 +306,7 @@ describe('the preset catalogue', () => {
         expect(buffs, id).toEqual(first);
       }
     }
-    expect(lists.filter(([id]) => TANKS.has(id))).toHaveLength(4);
+    expect(lists.filter(([id]) => TANKS.has(id))).toHaveLength(5);
 
     /*
      * AND BOTH DRUID AURAS ARE ON EVERY PRESET, which is the owner's ruling and

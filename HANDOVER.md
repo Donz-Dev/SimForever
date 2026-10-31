@@ -107,6 +107,33 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 87: Protribution, a second Paladin tank
+
+**PROTRIBUTION IS PROT PALLY WITH A 0/21/30 TREE**, the owner's instruction --
+"to the maximum extent possible copy from the Prot Pally profile with the
+exception of the talent tree" -- read off their foreverchanges.pro URL. It
+DERIVES from the Prot Pally preset, so race, gear, enchants, raid buffs,
+consumables, opener and encounter follow that one; Fury Prot's arrangement. Its
+benchmark row is Prot Pally's under its own label on a fresh `idBlock` (40), so
+no other set's item ids move.
+
+**ITS LIST IS THE PROTECTION LIST PLUS HAMMER OF WRATH**, the owner's second
+instruction. `PALADIN_PROTRIBUTION` is DERIVED from `PALADIN_PROTECTION` (Fury
+Prot's arrangement), with Hammer of Wrath above Judgement, gated on being
+instant exactly as the Retribution list gates it -- Champion of the Light 5/5.
+A list of its own rather than an entry in the shared one, because Prot Pally
+takes no Champion and its Hammer has a cast. `paladinRotation` sends a Holy
+Shield build with Champion 5/5 here. Entries for talents the tree skips --
+Reckoning, Iron Creed, Shieldsworn -- are skipped in silence.
+
+`USES=1` at 60 s, 30 fights: **619.7 +/- 11.6** (581.6 on the plain Protection
+list), Hammer of Wrath **1.9 casts and 6.2%** of damage; Prot Pally **618.5 to
+the decimal** either side of the change, which is the containment check. Not
+baselined.
+
+**ONE THING STILL LEFT ON THE TABLE**: the tree buys Seal of Command, and the
+list keeps Seal of Righteousness.
+
 ## Round 86: the Paladin tree at client build 1.60.1.70707
 
 The owner listed the patch; talentsforever.com still served the old tree, so it

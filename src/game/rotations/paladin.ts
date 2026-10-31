@@ -606,6 +606,32 @@ export const PALADIN_PROTECTION: AplList = {
 };
 
 /**
+ * PROTRIBUTION -- the Protection list plus HAMMER OF WRATH, by the owner's
+ * instruction: "add hammer of wrath to the protribution APL".
+ *
+ * DERIVED, NOT COPIED, which is `WARRIOR_FURY_PROT`'s arrangement against the
+ * Prot Warr list: a change to the Protection list reaches this one too.
+ *
+ * ITS OWN LIST RATHER THAN AN ENTRY IN THE SHARED ONE, because Prot Pally runs
+ * that list and takes no Champion of the Light -- its Hammer of Wrath has a
+ * cast, and an entry there would change a profile nobody asked to change.
+ * Protribution takes Champion of the Light 5/5, so its Hammer is instant and
+ * ranged.
+ *
+ * ABOVE JUDGEMENT, AND GATED ON BEING INSTANT, exactly as the Retribution list
+ * places and gates it: it is legal only in the last fifth of the fight, on a
+ * six second cooldown.
+ */
+export const PALADIN_PROTRIBUTION: AplList = {
+  name: 'Paladin (Protribution)',
+  entries: PALADIN_PROTECTION.entries.flatMap((entry): AplEntry[] =>
+    entry.abilityId === 'judgement'
+      ? [{ abilityId: 'hammer_of_wrath', condition: castsInstantly('hammer_of_wrath') }, entry]
+      : [entry],
+  ),
+};
+
+/**
  * HOLY -- the owner's Holy Pal, the project's first HEALER list (round 52).
  *
  * ----------------------------------------------------------------------------
@@ -786,6 +812,7 @@ export const PALADIN_HOLY_ROTATION: Rotation = compileRotation(PALADIN_HOLY);
 export const PALADIN_RETRIBUTION_ROTATION: Rotation = compileRotation(PALADIN_RETRIBUTION);
 export const PALADIN_SHOCKADIN_ROTATION: Rotation = compileRotation(PALADIN_SHOCKADIN);
 export const PALADIN_PROTECTION_ROTATION: Rotation = compileRotation(PALADIN_PROTECTION);
+export const PALADIN_PROTRIBUTION_ROTATION: Rotation = compileRotation(PALADIN_PROTRIBUTION);
 
 /**
  * Which list a Paladin runs.
@@ -802,7 +829,13 @@ export const PALADIN_PROTECTION_ROTATION: Rotation = compileRotation(PALADIN_PRO
 export function paladinRotation(talents: TalentAllocation): Rotation | undefined {
   // Holy Shield is a row 5 talent since 1.60.1.70707 rather than the capstone,
   // and still only a Protection build spends that deep in the tree.
-  if ((talents.holy_shield ?? 0) > 0) return PALADIN_PROTECTION_ROTATION;
+  if ((talents.holy_shield ?? 0) > 0) {
+    // A Holy Shield build that goes deep enough in Retribution for Champion of
+    // the Light 5/5 -- the instant Hammer of Wrath -- is Protribution.
+    return (talents.champion_of_the_light ?? 0) >= 5
+      ? PALADIN_PROTRIBUTION_ROTATION
+      : PALADIN_PROTECTION_ROTATION;
+  }
   if ((talents.unsealed_wrath ?? 0) > 0) return PALADIN_RETRIBUTION_ROTATION;
   // The Holy capstone: a 31-point Holy build heals (round 52).
   if ((talents.light_s_vigil ?? 0) > 0) return PALADIN_HOLY_ROTATION;

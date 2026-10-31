@@ -214,6 +214,8 @@ export const PRESET_ENCHANTS: Readonly<
   // and wrists +16 Spell Power (was +4 Defense, +9.2 TPS on top, deaths +0.13
   // noise) -- this tank is mana- and spell-power-bound at 120 s.
   prot_pally: { chest: 900015, cloak: 900001, feet: 900027, gloves: 900024, head: 900001, legs: 900001, mainHand: 22749, neck: 900012, shield: 900030, wrists: 900018 },
+  // Protribution: Prot Pally's loadout, by the owner's instruction to copy it.
+  protribution: { chest: 900015, cloak: 900001, feet: 900027, gloves: 900024, head: 900001, legs: 900001, mainHand: 22749, neck: 900012, shield: 900030, wrists: 900018 },
   // Round 80: head and legs +1% Haste (900002), +7.4 +/- 2.9 on the weighted score.
   bm_hunter: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900002, legs: 900002, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },
   // Round 78: +8 Intellect on the head and legs (900006). Mana-bound at 120s, this

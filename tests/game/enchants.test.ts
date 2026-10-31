@@ -590,6 +590,11 @@ const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     head: '+1% Dodge', neck: '+5 Defense Skill', cloak: '+1% Dodge', chest: '+4 Stats',
     wrists: '+4 Defense Skill', gloves: '+20 Spell Power', legs: '+1% Dodge', feet: '+7 Stamina',
   },
+  // Protribution copies Prot Pally's row, measured exceptions included.
+  protribution: {
+    head: '+1% Dodge', neck: '+5 Defense Skill', cloak: '+1% Dodge', chest: '+4 Stats',
+    wrists: '+4 Defense Skill', gloves: '+20 Spell Power', legs: '+1% Dodge', feet: '+7 Stamina',
+  },
   bm_hunter: {
     head: '+8 Agility', neck: '+5 Agility', cloak: '+5 Agility', chest: '+4 Stats',
     wrists: '+9 Agility', gloves: '+15 Agility', legs: '+8 Agility', feet: '+7 Agility',
@@ -755,6 +760,8 @@ describe('what each of the 29 profiles opens with', () => {
     'pally_ret wrists': '+16 Spell Power',
     'prot_pally gloves': '+2% Threat',
     'prot_pally wrists': '+16 Spell Power',
+    'protribution gloves': '+2% Threat',
+    'protribution wrists': '+16 Spell Power',
     /*
      * ROUND 78, measured at 1 target / 120 s and at 5 targets / 60 s, where the
      * Enhancement Shaman is mana-bound and its spell power reaches Fire Nova,
