@@ -16,8 +16,6 @@ import {
   fightElapsed,
   fightRemaining,
   not,
-  onCooldown,
-  ready,
   resource,
   resourceFraction,
   selfHas,
@@ -25,7 +23,6 @@ import {
   selfStacks,
   targetExpired,
   targetHas,
-  targetTime,
 } from './apl';
 import type { CombatStyleId } from '../character';
 import type { TalentAllocation } from '../talents/Talent';
@@ -99,44 +96,52 @@ export const SHIFTING_POWER_ENERGY_CEILING = 50;
 /** "energy <= N". */
 const energyAtMost = (maximum: number) => resource('atMost', maximum, 'energy');
 
-/**
- * What the Cat's Berserk window waits for, both the owner's figures.
- *
- * THIRTY ENERGY is enough for a Shred the instant the window opens -- Berserk
- * halves costs, so Shred is 21 inside it -- and TWO SECONDS OF RAKE is enough
- * that the window will not spend one of its own global cooldowns re-applying
- * the bleed. Neither is derived; both are stated.
- */
-/*
- * ============================================================================
- * AND THE OWNER HAS REPLACED BOTH WITH A POOL: "Add ability to pool Energy
- * prior to using Berserk. The logic should be Shifting Power is on cooldown,
- * rake is active, rip is active. Pool 74 Energy. Use Berserk then Shred, Shred,
- * Shifting Power, Shred, etc. The idea is to use as many Shreds / Rakes during
- * Berserk as possible."
- *
- * 74 IS THE OWNER'S FIGURE. Berserk halves costs, so a full bar walked into the
- * window is three Shreds before Shifting Power's forty arrives. The pool is a
- * condition on the plain Shred -- the one entry that would spend it -- because
- * priority does not reserve a resource: Berserk above it is refused for cost
- * while the cheaper Shred below takes the energy every time it passes 42.
- * A Clearcasting Shred costs nothing and is left alone.
- * ============================================================================
- */
 /** Round 80: no Rake with less than this much fight left. */
 export const CAT_RAKE_LAST_SECONDS = 6;
 /** Round 80: Ferocious Bite rather than Rip with less than this much fight left. */
 export const CAT_RIP_LAST_SECONDS = 8;
-/** Round 80: Ferocious Bite at five points while Rip has at least this long left. */
-export const CAT_BITE_RIP_SECONDS = 4;
 
-const BERSERK_POOL_ENERGY = 74;
-const berserkSetUp = all(onCooldown('shifting_power'), targetHas('rake'), targetHas('rip'));
-const poolingForBerserk = all(
-  ready('berserk'),
-  berserkSetUp,
-  resource('below', BERSERK_POOL_ENERGY, 'energy'),
-);
+/*
+ * ============================================================================
+ * THE FEROCIOUS BITE POOL, which replaces the Berserk pool the owner specified
+ * before Berserk left the tree (client build 1.60.1.70707).
+ *
+ * PREDATORY DISCIPLINE IS WHY IT PAYS. The bite still adds 2.7 damage for
+ * every point of energy above its 35 cost, and with the talent it no longer
+ * SPENDS them -- so every point banked before the bite is free damage, and
+ * the bar is still there to Shred with afterwards. What pooling costs is only
+ * the energy the cap throws away while waiting, and a Shred at five points
+ * buys nothing a later one does not: its combo point overflows either way.
+ *
+ * SO THE POOL IS A THRESHOLD ON THE BAR, AND IT IS THE ONE NUMBER HERE TO TUNE.
+ * At five points with Rip held up, the bite waits until the bar reaches it and
+ * the filler Shred below is held back meanwhile -- a condition on the CHEAP
+ * entry, because priority does not reserve a resource (the Cat's own lesson,
+ * from the Berserk pool this replaces). See `CAT_BITE_POOL_ENERGY`.
+ * ============================================================================
+ */
+/*
+ * MEASURED, PAIRED AT 400 FIGHTS (tools/optimise/catBite84.ts), and the pool
+ * only pays once the bite is allowed whenever Rip is up -- with round 80's
+ * "Rip has four seconds or more" the bite fired about once a fight and every
+ * threshold from 35 to 100 sat within +/-1.2 of each other. Opened to "Rip is
+ * up", against the shipped round 80 gate:
+ *
+ *     pool to      35       50       70       90      100
+ *     120 s     -7.93    +0.11    +4.64    +5.29    +7.64 +/- 4.92
+ *     240 s     -3.75    +1.90    +8.09   +10.61   +11.20 +/- 3.44
+ *
+ * MONOTONE IN THE POOL AT BOTH CLOCKS, which is the talent's own arithmetic:
+ * every point banked is 2.7 damage the bite does not charge for, and a full bar
+ * is the most it can bank. Not pooling (35) is a loss -- a bite on a near-empty
+ * bar is worse than the Shred it displaces. Rip stays: a list with no Rip and
+ * every five points on a pooled bite is -68.6 at both clocks.
+ */
+/** Ferocious Bite at five points waits for the bar to reach this; measured. */
+export const CAT_BITE_POOL_ENERGY = 100;
+
+const biteWhileRipUp = all(comboPoints('atLeast', MAX_COMBO_POINTS), targetHas('rip'));
+const poolingForBite = all(biteWhileRipUp, resource('below', CAT_BITE_POOL_ENERGY, 'energy'));
 
 /** "rage >= N". */
 const rageAtLeast = (minimum: number) => resource('atLeast', minimum, 'rage');
@@ -369,8 +374,8 @@ export const DRUID_CAT: AplList = {
    * IT WAS UNCONDITIONAL FOR ONE COMMIT, on the owner's "on cooldown as long as
    * you have the mana", and that was not a floor under the list either: an entry
    * blocks the ones below it only when it is ungated AND ALWAYS CASTABLE, and
-   * this has a sixteen second cooldown -- eight with Improved Shifting Power,
-   * which the Cat build takes 2/2 of. Now it is neither.
+   * this has an eight second cooldown (baseline since 1.60.1.70707, where
+   * Improved Shifting Power took it there). Now it is neither.
    *
    * WHAT IT REPLACED: Tiger's Fury, gated on "energy <= 30". Both the ability
    * and King of the Jungle, the talent that refunded 60 energy on casting it,
@@ -435,25 +440,6 @@ export const DRUID_CAT: AplList = {
    */
   ...CONSUMABLE_HEALS,
   /*
-   * BERSERK BEHIND TWO CLAUSES, where it was unconditional. Both are the
-   * owner's and both say the same thing: do not open the window until there is
-   * something to spend it on.
-   *
-   * ENERGY AT LEAST 30 is the bar having enough for a Shred the instant the
-   * window opens -- Berserk halves energy costs, so a Shred inside it is 21
-   * after Improved Shred, and opening on an empty bar spends the first seconds
-   * of a fifteen-second cooldown regenerating.
-   *
-   * RAKE WITH TWO SECONDS LEFT ON IT is the other half: Rake is above the
-   * filler and below the Clearcasting entry, so a window opened while the bleed
-   * is about to drop spends one of its global cooldowns re-applying a 35-energy
-   * debuff instead of on the 42-energy strike the halved cost is worth most on.
-   */
-  {
-    abilityId: 'berserk',
-    condition: all(berserkSetUp, energyAtLeast(BERSERK_POOL_ENERGY)),
-  },
-  /*
    * EVERY CLEARCASTING PROC GOES ON SHRED, REGARDLESS OF COMBO POINTS -- the
    * ruleset owner's instruction, and the reason it needs its own entry above
    * the finisher rather than being left to fall out of the order below.
@@ -468,15 +454,15 @@ export const DRUID_CAT: AplList = {
    * Points" means: at five points the list would otherwise reach Rip first and
    * spend the charge on a 30-energy finisher.
    *
-   * TIGER'S FURY AND BERSERK STAY ABOVE IT and cannot take the charge anyway --
-   * both are free, and Clearcasting is "not consumed by ... abilities that cost
-   * no resources". So their position costs this entry nothing.
+   * SHIFTING POWER STAYS ABOVE IT and cannot take the charge anyway: it goes
+   * through no combat table, which is the owner's definition of an offensive
+   * ability and what `requiresAttackTable` reads. So its position costs this
+   * entry nothing.
    */
   { abilityId: 'shred', condition: selfActive('clearcasting') },
   /*
-   * RAKE ABOVE RIP, WHICH IS A SWAP, and it is the same argument the Berserk
-   * gate above makes from the other side: a bleed that has dropped is damage
-   * the build is not doing, where a finisher at five points can wait a global
+   * RAKE ABOVE RIP, WHICH IS A SWAP: a bleed that has dropped is damage the
+   * build is not doing, where a finisher at five points can wait a global
    * cooldown without losing anything -- the points do not decay.
    */
   /*
@@ -517,11 +503,18 @@ export const DRUID_CAT: AplList = {
     abilityId: 'rip',
     condition: all(atLeastPoints(MAX_COMBO_POINTS), expired('rip')),
   },
+  /*
+   * THE BITE AT A POOLED BAR (1.60.1.70707). Round 80 put it here at five
+   * points while Rip has four seconds or more, as the place the overflowing
+   * points go; Predatory Discipline makes it worth waiting for a full bar
+   * instead, while Rip is up at all, and the Shred below holds off until it
+   * has. See `CAT_BITE_POOL_ENERGY`.
+   */
   {
     abilityId: 'ferocious_bite',
-    condition: all(atLeastPoints(MAX_COMBO_POINTS), targetTime('atLeast', CAT_BITE_RIP_SECONDS, 'rip')),
+    condition: all(biteWhileRipUp, energyAtLeast(CAT_BITE_POOL_ENERGY)),
   },
-  { abilityId: 'shred', condition: not(poolingForBerserk) },
+  { abilityId: 'shred', condition: not(poolingForBite) },
   ],
 };
 
@@ -600,7 +593,6 @@ export const DRUID_BEAR: AplList = {
    * ==========================================================================
    */
   consumableCooldown('mighty_rage_potion'),
-  { abilityId: 'berserk' },
   /*
    * "QUEUE MAUL IF RAGE >= 42". Maul is on-next-swing, so `queue` is exactly
    * what the list does with it: arming costs no global cooldown and the swing

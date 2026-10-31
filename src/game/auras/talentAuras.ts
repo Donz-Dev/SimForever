@@ -6,6 +6,8 @@ import {
   LEADER_OF_THE_PACK_AURA_ID,
   MOONKIN_AURA,
   MOONKIN_AURA_ID,
+  PREDATORY_DISCIPLINE_AURA,
+  PREDATORY_DISCIPLINE_AURA_ID,
 } from './druid';
 
 /**
@@ -44,6 +46,8 @@ export const TALENT_AURAS: Readonly<Record<string, AuraDefinition>> = {
    */
   [MOONKIN_AURA_ID]: MOONKIN_AURA,
   [LEADER_OF_THE_PACK_AURA_ID]: LEADER_OF_THE_PACK_AURA,
+  // Ferocious Bite reads it; see the aura.
+  [PREDATORY_DISCIPLINE_AURA_ID]: PREDATORY_DISCIPLINE_AURA,
   /*
    * LONE WOLF, AND ITS 20% HAD NEVER APPLIED TO ANYTHING.
    *

@@ -1,6 +1,6 @@
 import type { MultiTargetDefaults } from './types';
 import type { AplEntry } from '../../game/rotations/apl';
-import { all, fightRemaining, selfHas, targetCount, targetExpired } from '../../game/rotations/apl';
+import { all, fightRemaining, targetCount, targetExpired } from '../../game/rotations/apl';
 import { DRUID_BEAR, DRUID_MOONKIN, MOONKIN_DOT_LAST_SECONDS } from '../../game/rotations/druid';
 
 /** `entries` with `added` inserted immediately above the first entry casting `beforeId`. */
@@ -68,34 +68,20 @@ export const DRUID_MULTI_TARGET: MultiTargetDefaults = {
     ),
   },
   /*
-   * THE BEAR: PRIMAL BITE WHILE BERSERK IS UP, THEN SWIPE, ABOVE THE ORDINARY
-   * PRIMAL BITE. Berserk makes Primal Bite strike three targets with no
-   * cooldown, so it goes first while that lasts; outside it Swipe's three
-   * targets beat the single Primal Bite. Maul stays above both. Paired TPS:
-   * +196.6 at 5 targets/60s, +212.4 at 3/60s and +195.7 at 8/30s, for +0.3 to
-   * +0.44 deaths. Swipe ABOVE Maul is -393: it starves the Maul.
+   * THE BEAR: SWIPE ABOVE THE ORDINARY PRIMAL BITE, whose three targets beat
+   * the single bite. Maul stays above it. Swipe ABOVE Maul is -393: it starves
+   * the Maul.
+   *
+   * IT ALSO PUT A PRIMAL BITE ABOVE SWIPE WHILE BERSERK WAS UP, and opened on
+   * Berserk at the pull; both went with Berserk at client build 1.60.1.70707.
+   * The figures round 78 and 80 measured -- +196.6 TPS at 5 targets/60s for the
+   * pair, +54.1 for the opener -- were for the list with them in, and the list
+   * without them has not been re-measured.
    */
   druid_bear: {
     name: 'Druid (Bear, Multi Target)',
     entries: insertAbove(DRUID_BEAR.entries, 'mangle', [
-      { abilityId: 'mangle', condition: selfHas('berserk') },
       { abilityId: 'swipe', condition: targetCount('atLeast', 2) },
     ]),
-    /*
-     * THE OWNER'S OPENER WITH BERSERK ADDED AT THE PULL (round 80), ahead of
-     * the Primal Bite so the first bite already strikes three targets and the
-     * window's fifteen seconds start at the pull with no global cooldown spent
-     * on it. Paired TPS +54.1 at 5/60 s, +86.8 at 3/60 s, +163.9 at 8/30 s;
-     * deaths unchanged. At one target it is +2.1 noise, so the Single Target
-     * opener is left as the owner wrote it.
-     */
-    precombat: [
-      { abilityId: 'bear_form', secondsBefore: 1.5 },
-      { abilityId: 'enrage', secondsBefore: 0 },
-      { abilityId: 'mighty_rage_potion', secondsBefore: 0 },
-      { abilityId: 'maul', secondsBefore: 0 },
-      { abilityId: 'berserk', secondsBefore: 0 },
-      { abilityId: 'mangle', secondsBefore: 0 },
-    ],
   },
 };

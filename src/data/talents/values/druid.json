@@ -1,6 +1,6 @@
 {
  "class": "druid",
- "source": "https://talentsforever.com/talents.js",
+ "source": "https://foreverchanges.pro/talents/druid",
  "structure": "src/data/talents/druid.json",
  "talents": {
   "improved_wrath": {
@@ -37,11 +37,11 @@
    "ranks": 5,
    "text": "Increases the periodic damage and healing done by your spells and abilities by {0}%.",
    "values": [
-    1,
     2,
-    3,
     4,
-    5
+    6,
+    8,
+    10
    ]
   },
   "moonglow": {
@@ -265,36 +265,46 @@
     5
    ]
   },
-  "heart_of_the_wild": {
-   "name": "Heart of the Wild",
+  "furor": {
+   "name": "Furor",
    "tree": "feral_combat",
    "ranks": 5,
-   "text": "Increases your Intellect by {0}%. In addition, while in Bear Form or Dire Bear Form your Stamina is increased by {1}% and while in Cat Form your Strength is increased by {2}%.",
+   "text": "Gives you a {0}% chance to gain {1} Rage when shapeshifting into Bear Form or Dire Bear Form. Shapeshifting into Cat Form restores {2}% of the Energy you had when last in Cat Form, plus {3} Energy per second spent outside Bear Form or Dire Bear Form, up to {4} Energy.",
    "values": [
     [
-     2,
-     4,
-     2
-    ],
-    [
-     4,
-     8,
-     4
-    ],
-    [
-     6,
-     12,
-     6
-    ],
-    [
-     8,
-     16,
-     8
-    ],
-    [
+     20,
      10,
      20,
-     10
+     2,
+     20
+    ],
+    [
+     40,
+     10,
+     40,
+     4,
+     40
+    ],
+    [
+     60,
+     10,
+     60,
+     6,
+     60
+    ],
+    [
+     80,
+     10,
+     80,
+     8,
+     80
+    ],
+    [
+     100,
+     10,
+     100,
+     10,
+     100
     ]
    ]
   },
@@ -404,7 +414,7 @@
    "name": "Feral Charge",
    "tree": "feral_combat",
    "ranks": 1,
-   "text": "Charge an enemy, immobilizing them and interrupting any spell they are casting for 4 sec.\n\nFeral Charge (Cat): 8-25 yd range, Instant, 30 sec cooldown, Requires Cat Form. Leap behind an enemy.",
+   "text": "Requires Bear Form, Dire Bear Form\nCharge an enemy, immobilizing them and interrupting any spell they are casting for 4 sec.\n\nLeap behind an enemy.",
    "values": null,
    "note": "single rank"
   },
@@ -418,22 +428,6 @@
     6
    ]
   },
-  "shifting_power": {
-   "name": "Shifting Power",
-   "tree": "feral_combat",
-   "ranks": 1,
-   "text": "Instantly convert 55% of base Mana into 40 Energy. Shifting Power's cost is reduced by effects that reduce the cost of Shapeshifting.",
-   "values": null,
-   "note": "single rank"
-  },
-  "primal_bite": {
-   "name": "Primal Bite",
-   "tree": "feral_combat",
-   "ranks": 1,
-   "text": "Bite the target, dealing 100% normal damage plus 26 and generating a high amount of threat.",
-   "values": null,
-   "note": "single rank"
-  },
   "predatory_strikes": {
    "name": "Predatory Strikes",
    "tree": "feral_combat",
@@ -444,6 +438,22 @@
     100,
     150
    ]
+  },
+  "lacerate": {
+   "name": "Lacerate",
+   "tree": "feral_combat",
+   "ranks": 1,
+   "text": "Lacerates the enemy target, making them bleed for 20 damage over 15 sec plus 10% weapon damage per existing application of Lacerate on the target. Causes a high amount of threat. This effect stacks up to 5 times on the same target.",
+   "values": null,
+   "note": "single rank"
+  },
+  "predatory_discipline": {
+   "name": "Predatory Discipline",
+   "tree": "feral_combat",
+   "ranks": 1,
+   "text": "Your Ferocious Bite ability no longer converts extra Energy into damage, but still deals extra damage based on your excess Energy.",
+   "values": null,
+   "note": "single rank"
   },
   "blood_frenzy": {
    "name": "Blood Frenzy",
@@ -463,21 +473,11 @@
     ]
    ]
   },
-  "improved_shifting_power": {
-   "name": "Improved Shifting Power",
-   "tree": "feral_combat",
-   "ranks": 2,
-   "text": "Reduces the cooldown of your Shifting Power spell by {0} sec.",
-   "values": [
-    4,
-    8
-   ]
-  },
   "leader_of_the_pack": {
    "name": "Leader of the Pack",
    "tree": "feral_combat",
    "ranks": 1,
-   "text": "While in Cat Form, Bear Form, or Dire Bear Form, the Leader of the Pack increases the melee and ranged Critical Strike chance of all party or raid members within 45 yards by 3%.",
+   "text": "While in Cat Form, Bear Form, or Dire Bear Form, the Leader of the Pack increases the Critical Strike chance of all party or raid members within 45 yards by 3%.",
    "values": null,
    "note": "single rank"
   },
@@ -495,6 +495,19 @@
      20,
      25
     ]
+   ]
+  },
+  "rend_and_tear": {
+   "name": "Rend and Tear",
+   "tree": "feral_combat",
+   "ranks": 5,
+   "text": "Increases damage done by your melee abilities on Bleeding targets by {0}%.",
+   "values": [
+    2,
+    4,
+    6,
+    8,
+    10
    ]
   },
   "natural_reaction": {
@@ -530,24 +543,19 @@
     ]
    ]
   },
-  "rend_and_tear": {
-   "name": "Rend and Tear",
-   "tree": "feral_combat",
-   "ranks": 5,
-   "text": "Increases damage done by your melee abilities on Bleeding targets by {0}%.",
-   "values": [
-    2,
-    4,
-    6,
-    8,
-    10
-   ]
-  },
-  "berserk": {
-   "name": "Berserk",
+  "primal_bite": {
+   "name": "Primal Bite",
    "tree": "feral_combat",
    "ranks": 1,
-   "text": "Causes your Primal Bite ability to strike up to 3 targets, removes its cooldown, and increases the critical strike chance of your Combo Point-generating abilities by 100%. Clears and grants immunity to Fear effects for the duration. Lasts 15 sec.",
+   "text": "Bite the target, dealing 100% normal damage plus 42 and generating a high amount of threat.",
+   "values": null,
+   "note": "single rank"
+  },
+  "shifting_power": {
+   "name": "Shifting Power",
+   "tree": "feral_combat",
+   "ranks": 1,
+   "text": "Instantly convert 55% of base Mana into 40 Energy. Shifting Power's cost is reduced by effects that reduce the cost of Shapeshifting.",
    "values": null,
    "note": "single rank"
   },
@@ -555,7 +563,7 @@
    "name": "Nature's Focus",
    "tree": "restoration",
    "ranks": 5,
-   "text": "Gives you a {0}% chance to avoid interruption caused by damage while casting Arcane and Nature spells.",
+   "text": "Gives your Arcane and Nature spells a {0}% chance to not lose casting time when you take damage.",
    "values": [
     14,
     28,
@@ -564,46 +572,36 @@
     70
    ]
   },
-  "furor": {
-   "name": "Furor",
+  "heart_of_the_wild": {
+   "name": "Heart of the Wild",
    "tree": "restoration",
    "ranks": 5,
-   "text": "Gives you a {0}% chance to gain {1} Rage when shapeshifting into Bear Form or Dire Bear Form. Shapeshifting into Cat Form restores {2}% of the Energy you had when last in Cat Form, plus {3} Energy per second spent outside Bear Form or Dire Bear Form, up to {4} Energy.",
+   "text": "Increases your Intellect by {0}%. In addition, while in Bear Form or Dire Bear Form your Stamina is increased by {1}% and while in Cat Form your Strength is increased by {2}%.",
    "values": [
     [
-     20,
-     10,
-     20,
      2,
-     20
-    ],
-    [
-     40,
-     10,
-     40,
      4,
-     40
+     2
     ],
     [
-     60,
-     10,
-     60,
-     6,
-     60
-    ],
-    [
-     80,
-     10,
-     80,
+     4,
      8,
-     80
+     4
     ],
     [
-     100,
+     6,
+     12,
+     6
+    ],
+    [
+     8,
+     16,
+     8
+    ],
+    [
      10,
-     100,
-     10,
-     100
+     20,
+     10
     ]
    ]
   },
@@ -611,39 +609,39 @@
    "name": "Naturalist",
    "tree": "restoration",
    "ranks": 5,
-   "text": "Reduces the cast time of your Healing Touch spell by {0} sec and increases all damage you deal by {1}%.",
+   "text": "Reduces the cast time of your Healing Touch and Wild Growth spells by {0} sec and increases all damage you deal by {1}%.",
    "values": [
     [
      0.1,
-     1
-    ],
-    [
-     0.2,
      2
     ],
     [
-     0.3,
-     3
-    ],
-    [
-     0.4,
+     0.2,
      4
     ],
     [
+     0.3,
+     6
+    ],
+    [
+     0.4,
+     8
+    ],
+    [
      0.5,
-     5
+     10
     ]
    ]
   },
-  "subtlety": {
-   "name": "Subtlety",
+  "reflection": {
+   "name": "Reflection",
    "tree": "restoration",
    "ranks": 3,
-   "text": "Reduces the threat generated by your Nature and Arcane spells by {0}%.",
+   "text": "Allows {0}% of your Mana regeneration to continue while casting.",
    "values": [
-    10,
-    20,
-    30
+    17,
+    33,
+    50
    ]
   },
   "natural_shapeshifter": {
@@ -657,15 +655,15 @@
     30
    ]
   },
-  "reflection": {
-   "name": "Reflection",
+  "subtlety": {
+   "name": "Subtlety",
    "tree": "restoration",
    "ranks": 3,
-   "text": "Allows {0}% of your Mana regeneration to continue while casting.",
+   "text": "Reduces the threat generated by your Nature and Arcane spells by {0}%.",
    "values": [
-    17,
-    33,
-    50
+    10,
+    20,
+    30
    ]
   },
   "gift_of_nature": {
@@ -681,15 +679,13 @@
     10
    ]
   },
-  "gift_of_the_earthmother": {
-   "name": "Gift of the Earthmother",
+  "bloom": {
+   "name": "Bloom",
    "tree": "restoration",
    "ranks": 1,
-   "text": "Reduces the global cooldown by 0.5 seconds on your Rejuvenation, Swiftmend, and Wild Growth spells.",
-   "values": [
-    0.5
-   ],
-   "note": "single rank; the 0.5 filled in by hand per this directory README (round 71), for the abilityGcd effect the Resto Drood reads. The text states it literally rather than through a {0} placeholder, so there was nothing for the importer to match."
+   "text": "When your Rejuvenation or Regrowth spell expires due to its duration, the target is instantly healed for an amount equal to 100% of your Spirit. If either spell expires due to being dispelled, the target is healed for 50% of your Spirit instead.",
+   "values": null,
+   "note": "single rank"
   },
   "tranquil_spirit": {
    "name": "Tranquil Spirit",
@@ -719,7 +715,7 @@
    "name": "Swiftmend",
    "tree": "restoration",
    "ranks": 1,
-   "text": "Instantly heals a target with an active Rejuvenation or Regrowth effect for an amount equal to the full duration of the periodic effect of one of those spells.",
+   "text": "Instantly heals a target with your active Rejuvenation or Regrowth effect for an amount equal to the full duration of the periodic effect of the consumed spell.",
    "values": null,
    "note": "single rank"
   },
@@ -775,7 +771,7 @@
    "name": "Wild Growth",
    "tree": "restoration",
    "ranks": 1,
-   "text": "Heals the target and their party for 336 over 7 sec. Party members must be within 43 yards of target. The amount healed is applied quickly at first, and slows down as Wild Growth reaches its full duration.",
+   "text": "Heals the target and their party for 336 over 7 sec. Party members must be within 43.5 yards of target. The amount healed is applied quickly at first, and slows down as Wild Growth reaches its full duration.",
    "values": null,
    "note": "single rank"
   }

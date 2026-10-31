@@ -837,63 +837,35 @@ export const FRENZIED_REGENERATION: AuraDefinition = {
 };
 
 // ---------------------------------------------------------------------------
-// Feral: Berserk, which belongs to both forms
+// Feral: Predatory Discipline
 // ---------------------------------------------------------------------------
 
 /*
- * ===================================================================== * BERSERK: "Causes your Primal Bite ability to strike up to 3 targets, removes
- * its cooldown, and increases the critical strike chance of your Combo
- * Point-generating abilities by 100%. Clears and grants immunity to Fear
- * effects for the duration. Lasts 15 sec."
+ * ============================================================================
+ * BERSERK IS GONE, removed from the tree at client build 1.60.1.70707 with the
+ * aura, its +100 crit on the combo point generators and its three-target Primal
+ * Bite. What took its row is Shifting Power, moved down to the capstone row
+ * beside Primal Bite and requiring the talent below.
  *
- * FOUR CLAUSES AND THEY LAND IN FOUR DIFFERENT PLACES, which is why this is a
- * long comment for a short aura.
+ * PREDATORY DISCIPLINE: "Your Ferocious Bite ability no longer converts extra
+ * Energy into damage, but still deals extra damage based on your excess
+ * Energy."
  *
- *   3 TARGETS      `MANGLE`'s own `onCast` reads the aura (round 57), and at
- *                  one target in the fight it strikes one.
- *   NO COOLDOWN    `suppressesCooldownOf`, an aura field that did not exist:
- *                  `CastModifier` carries cast time and cost, and an ability's
- *                  cooldown lives in the `AbilityBook` where no aura reached.
- *                  This is the BEAR's half -- Primal Bite is `mangle`, a rage
- *                  ability, and a Cat never casts it.
- *   +100% CRIT     `abilityModifiers`, the other aura field that did not
- *                  exist. This is the CAT's half: a Bear has no combo point
- *                  generators at all. One ability, two builds, and each gets
- *                  one half of it.
- *   FEAR IMMUNITY  crowd control, and permanently out of scope by ruling.
- *
- * +100 PERCENTAGE POINTS, NOT A DOUBLING, by the ruleset owner's ruling. So
- * Shred, Claw and Rake crit every time for fifteen seconds rather than going
- * from thirty percent to sixty. Both readings produce a plausible number and
- * the wording carries neither, which is why it was asked rather than chosen.
- *
- * THE GENERATORS ARE DERIVED, NOT LISTED. `comboPointsAwarded` is already
- * declared on every ability that awards one, so a new generator is covered on
- * the day it lands -- the same argument `triggersGcd` makes about
- * `onNextSwing`. Listing three ids by hand is how a fourth gets missed
- * silently, and a missed one looks exactly like an ability that simply did not
- * crit this time.
+ * A MARKER RATHER THAN A STAT, which is the Leader of the Pack arrangement with
+ * nothing on it: Ferocious Bite asks whether its carrier holds this aura, and
+ * keeps the energy above its cost where it would otherwise spend it. The
+ * damage is unchanged -- 2.7 per excess point, read off the bar as before --
+ * so what the talent changes is the PRICE of the bonus, from all of it to none.
  * ============================================================================
  */
-export const BERSERK_DURATION_MS = seconds(15);
-export const BERSERK_COOLDOWN_MS = seconds(180);
-/** Percentage POINTS, matching `critChance` on the stat block. */
-export const BERSERK_CRIT_BONUS = 100;
+export const PREDATORY_DISCIPLINE_AURA_ID = 'predatory_discipline';
 
-/** The ability Berserk frees, by the id it carries here. */
-export const BERSERK_FREED_ABILITY = 'mangle';
-
-export function berserkAura(comboPointGenerators: readonly string[]): AuraDefinition {
-  return {
-    id: 'berserk',
-    name: 'Berserk',
-    durationMs: BERSERK_DURATION_MS,
-    suppressesCooldownOf: [BERSERK_FREED_ABILITY],
-    abilityModifiers: Object.fromEntries(
-      comboPointGenerators.map((id) => [id, { critBonus: BERSERK_CRIT_BONUS }]),
-    ),
-  };
-}
+export const PREDATORY_DISCIPLINE_AURA: AuraDefinition = {
+  id: PREDATORY_DISCIPLINE_AURA_ID,
+  name: 'Predatory Discipline',
+  // Permanent: it is a passive, not something applied and lost.
+  durationMs: 0,
+};
 
 /*
  * ============================================================================
@@ -1054,11 +1026,12 @@ export const NATURES_SWIFTNESS_COOLDOWN_MS = seconds(180);
 
 /**
  * The Druid's NATURE spells, which is what the talent selects: Wrath and Insect
- * Swarm, and since round 71 the two Nature HEALS with a cast time, Healing
- * Touch and Regrowth. Rejuvenation and Wild Growth are Nature too, and instant,
- * so `requiresCastTime` keeps them from spending the charge.
+ * Swarm, and since round 71 the Nature HEALS with a cast time -- Healing Touch,
+ * Regrowth, and Wild Growth since it became a three second cast at
+ * 1.60.1.70707. Rejuvenation is Nature too, and instant, so `requiresCastTime`
+ * keeps it from spending the charge.
  */
-export const NATURE_SPELLS: readonly string[] = ['wrath', 'insect_swarm', 'healing_touch', 'regrowth'];
+export const NATURE_SPELLS: readonly string[] = ['wrath', 'insect_swarm', 'healing_touch', 'regrowth', 'wild_growth'];
 
 export const NATURES_SWIFTNESS: AuraDefinition = {
   id: 'natures_swiftness',
@@ -1269,5 +1242,4 @@ export const INNERVATE_AURA: AuraDefinition = {
 
 export const CATALOG_AURAS: readonly AuraDefinition[] = [
   ripAura(0),
-  berserkAura([]),
 ];

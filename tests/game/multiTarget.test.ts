@@ -52,7 +52,6 @@ import {
   BANE_OF_HAVOC_REACTIONS,
   BLADE_FLURRY_EXTRA_OPPONENT,
 } from '../../src/game/reactions/reactionsForClass';
-import { berserkAura } from '../../src/game/auras/druid';
 import { FOREVER_THREAT_RULES } from '../../src/game/combat/threat';
 import {
   EXTRA_TARGET_SWING_DAMAGE,
@@ -173,13 +172,9 @@ describe('the area abilities strike every target they are allowed', () => {
     expect(struckBy(run.events, 'fire_nova').size).toBe(5);
   });
 
-  it('Primal Bite strikes three targets while Berserk is up, and one otherwise', () => {
+  it('Primal Bite strikes one target, since Berserk left the tree', () => {
     const plain = castOnce(MANGLE, 5);
     expect(struckBy(plain.events, 'mangle').size).toBe(1);
-    const berserk = castOnce(MANGLE, 5, (simulation, caster) => {
-      simulation.applyAura(caster, berserkAura([]), caster.id);
-    });
-    expect(struckBy(berserk.events, 'mangle').size).toBe(3);
   });
 
   it('Consecration gives the first four both halves and the rest the 96', () => {

@@ -373,23 +373,28 @@ describe("the owner's talents, on the built character", () => {
     expect(player.abilities.get('regrowth')!.bonuses?.auraDurationBonusSeconds).toBe(6);
   });
 
-  it('Gift of Nature +10% on every heal, Improved Rejuvenation +15% on Rejuvenation, Genesis +5% on the ticks', () => {
+  it('Gift of Nature +10% on every heal, Improved Rejuvenation +15% on Rejuvenation, Genesis +10% on the ticks', () => {
     expect(player.abilityModifierFor('healing_touch')?.healingMultiplier).toBeCloseTo(1.1, 10);
     expect(player.abilityModifierFor('wild_growth')?.healingMultiplier).toBeCloseTo(1.1, 10);
     expect(player.abilityModifierFor('rejuvenation')?.healingMultiplier).toBeCloseTo(1.1 * 1.15, 10);
-    expect(player.periodicHealingMultiplier).toBeCloseTo(1.05, 10);
+    // Genesis is 2% a rank since client build 1.60.1.70707, where it was 1%.
+    expect(player.periodicHealingMultiplier).toBeCloseTo(1.1, 10);
     // Swiftmend takes the heal over time's modifiers instead, so carries none.
     expect(player.abilityModifierFor('swiftmend')?.healingMultiplier ?? 1).toBe(1);
   });
 
-  it('Improved Regrowth +50% crit; Naturalist 0.5s off Healing Touch; Earthmother a 1s global cooldown', () => {
+  it('Improved Regrowth +50% crit; Naturalist 0.5s off Healing Touch and Wild Growth; no shortened global cooldown', () => {
     expect(player.abilityModifierFor('regrowth')?.critBonus).toBe(50);
     const ht = player.abilities.get('healing_touch')!;
     expect(ht.castTimeMs).toBe(3000);
-    for (const id of ['rejuvenation', 'swiftmend', 'wild_growth']) {
-      expect(player.abilities.get(id)!.gcdMs, id).toBe(1000);
+    // Wild Growth is a 3 second cast at client build 1.60.1.70707, and
+    // Naturalist 5/5 takes the same half second off it.
+    expect(player.abilities.get('wild_growth')!.castTimeMs).toBe(2500);
+    // Gift of the Earthmother took these three to a one second global cooldown
+    // and left the tree at client build 1.60.1.70707.
+    for (const id of ['rejuvenation', 'swiftmend', 'wild_growth', 'regrowth']) {
+      expect(player.abilities.get(id)!.gcdMs ?? 1500, id).toBe(1500);
     }
-    expect(player.abilities.get('regrowth')!.gcdMs ?? 1500).toBe(1500);
   });
 
   it('Tranquil Spirit 4/5: Healing Touch costs 8% less', () => {

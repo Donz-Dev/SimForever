@@ -128,12 +128,11 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
   ],
   // "2s before cat form, 1s before prowl, 0s Ravage" -- the one opener the
   // owner had to restate, and the one that needed new abilities declaring.
-  // Round 51: "Berserk does not break stealth and therefore should be used a
-  // T-0 just before using Ravage."
+  // Round 51 put Berserk at T-0 just before the Ravage; the owner took it out
+  // with the talent at client build 1.60.1.70707.
   druid_cat: [
     [2, 'cat_form'],
     [1, 'prowl'],
-    [0, 'berserk'],
     [0, 'ravage'],
   ],
   druid_bear: [

@@ -857,31 +857,47 @@ const DRUID_MOONKIN_TALENTS: TalentAllocation = {
   naturalist: 5,
 };
 
-/*
- * ROUND 80: FERAL SWIFTNESS 2 -> FEROCITY 5, **+5.85 +/- 3.92** on the weighted
- * score (t1 +2.7, t8 +16.8). Feral Swiftness was the two points that reach tier
- * 10 and bought only dodge on a Cat nothing attacks; Ferocity's last two ranks
- * reach tier 10 as well and take Rake from 37 energy to 35.
+/**
+ * The Cat's 9/32/10 at client build 1.60.1.70707, the owner's URL:
+ * https://foreverchanges.pro/talents/druid?b=050022-5023002023032211050001-055&o=111115544DDDDDEEEEEgggggiijjjmmpppBoossrrruttxxxxxv
+ *
+ * ----------------------------------------------------------------------------
+ * READ OFF THE CALCULATOR'S OWN NODES, not decoded: foreverchanges.pro's `b=`
+ * runs its digits in a different talent order from talentsforever.com's, so
+ * `decode_talent_build.mjs` cannot read it. The page prints 9 / 32 / 10 and
+ * this sums to it.
+ *
+ * WHAT MOVED FROM THE ROUND 80 BUILD: Berserk and Improved Shifting Power left
+ * the tree (three points), Furor and Heart of the Wild swapped trees -- so
+ * Heart of the Wild is the five Restoration points under Naturalist now, and
+ * Furor is gone from the build -- and the points went to Feral Swiftness 2,
+ * Feral Instinct 3, PREDATORY DISCIPLINE 1 and Naturalist's last two ranks.
+ * Feral Swiftness and Feral Instinct are dodge and Swipe, which is to say the
+ * tier-5 filler the deeper talents need beneath them.
+ * ----------------------------------------------------------------------------
  */
 const DRUID_CAT_TALENTS: TalentAllocation = {
+  // Balance, 9
   genesis: 5,
   nature_s_majesty: 2,
   nature_s_reach: 2,
+  // Feral Combat, 32
   ferocity: 5,
-  heart_of_the_wild: 5,
+  feral_swiftness: 2,
+  feral_instinct: 3,
   shredding_attacks: 3,
   savage_fury: 2,
   sharpened_claws: 2,
-  shifting_power: 1,
   predatory_strikes: 3,
+  predatory_discipline: 1,
   blood_frenzy: 2,
-  improved_shifting_power: 2,
   leader_of_the_pack: 1,
   natural_instinct: 2,
   rend_and_tear: 5,
-  berserk: 1,
-  furor: 5,
-  naturalist: 3,
+  shifting_power: 1,
+  // Restoration, 10
+  heart_of_the_wild: 5,
+  naturalist: 5,
 };
 
 /*
@@ -908,7 +924,14 @@ const DRUID_BEAR_TALENTS: TalentAllocation = {
   leader_of_the_pack: 1,
   natural_reaction: 5,
   rend_and_tear: 5,
-  berserk: 1,
+  /*
+   * BERSERK'S POINT, MOVED HERE AT 1.60.1.70707, which is a decision of ours
+   * and not the owner's. Berserk left the tree and LACERATE became a talent in
+   * the same build, so without the point the Bear would have lost the ability
+   * its list casts third. This keeps the book exactly as it was; the owner has
+   * not specified the Bear's new build.
+   */
+  lacerate: 1,
 };
 
 /**
@@ -1263,7 +1286,13 @@ const DRUID_RESTORATION_TALENTS: TalentAllocation = {
   subtlety: 3,
   reflection: 3,
   gift_of_nature: 5,
-  gift_of_the_earthmother: 1,
+  /*
+   * GIFT OF THE EARTHMOTHER WAS HERE, ONE POINT, AND LEFT THE TREE AT
+   * 1.60.1.70707. BLOOM TOOK ITS ROW AND TAKES ITS POINT, which is our
+   * placement rather than the owner's and moves no figure: Bloom is not
+   * declared, so the point is inert until it is or until the owner moves it.
+   */
+  bloom: 1,
   tranquil_spirit: 4,
   improved_rejuvenation: 3,
   swiftmend: 1,
@@ -3087,7 +3116,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
   {
     id: 'druid_cat',
     label: 'Cat',
-    detail: 'Windshaper Skyborne, Cat Form, standing target. 34 Feral Combat',
+    detail: 'Windshaper Skyborne, Cat Form, standing target. 32 Feral Combat',
     characterClass: 'druid',
     build: () => ({
       ...createDefaultProfile(),
@@ -3187,12 +3216,10 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         ...before(2, 'cat_form'),
         ...before(1, 'prowl'),
         /*
-         * BERSERK FIRST, AT THE SAME INSTANT, by the owner (round 51): it does
-         * not break Prowl, so the Ravage behind it still has the window -- at
-         * half cost. Two actions at one lead run in declaration order, which
-         * `Array.prototype.sort` being stable is what guarantees.
+         * BERSERK WAS FIRST, AT THE SAME INSTANT, by the owner (round 51), and
+         * left the tree at 1.60.1.70707 -- so Ravage opens on its own.
          */
-        ...before(0, 'berserk', 'ravage'),
+        ...before(0, 'ravage'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
