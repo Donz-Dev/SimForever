@@ -134,8 +134,9 @@ kinds `abilityHealingCritDamage` and `abilityHealingCrit`.
 **OATH OF LIGHT IS DECLARED WITH THE OWNER'S AMOUNTS**, which the client data
 carries as zero. "Up to" is read as healing POWER, each heal scaling it by its own
 coefficient -- the owner's reading of Judgement of the Crusader's "up to 161" --
-so Holy Light gains 286 of its 400; added outright it would be the full 400, and
-every heal coefficient is still a placeholder (question 9). Only the Paladin who
+so Holy Light gains 286 of its 400. **The owner has ruled it** (question 9):
+"Keep Oath of Light scaled by each heal's coefficient." The heal coefficients
+themselves are still placeholders, so the Oath moves with them. Only the Paladin who
 swore it collects, and the Oath target hands back Boundless Light's 30% Holy
 Shock crit. **The Holy list swears it on the tank** (question 10) -- and smart
 healing had to learn to leave it aimed: retargeted to the raid's lowest member,
@@ -189,7 +190,7 @@ comes back at exactly -80.31, which is the check that B shipped as measured.
 | 6 | Swift Judgement off the global cooldown -- that ruling was for the old reset | kept off |
 | 7 | Salvation is no longer taught, and is a raid buff on every non-tank preset | kept; it moves TPS only |
 | 8 | Seal Twist's cycle | ANSWERED: the owner chose B, 3 Righteousness then 1 Command |
-| 9 | Oath of Light's "up to": healing power scaled by each heal's coefficient, or added outright | power: 286 / 49 / the Holy Shock heal's share |
+| 9 | Oath of Light's "up to": healing power scaled by each heal's coefficient, or added outright | ANSWERED: scaled by each heal's coefficient -- 286 / 49 / the Holy Shock heal's share |
 | 10 | Who the Holy Pal swears the Oath on | the tank |
 
 ## Round 85: the Druid tree at client build 1.60.1.70707, and the Cat's bite pool

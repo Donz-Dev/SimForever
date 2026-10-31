@@ -955,8 +955,10 @@ export const CONSECRATION_GROUND: AuraDefinition = consecrationGround();
  * "UP TO" IS HEALING POWER, AND EACH HEAL SCALES IT BY ITS OWN COEFFICIENT --
  * the reading the owner's ruling on Judgement of the Crusader's "up to 161" gave
  * the phrase, applied to the healing side. So Holy Light at 2.5 / 3.5 takes 286
- * of its 400. FLAGGED: added outright, the three would be the full 400, 115 and
- * 229, and every heal coefficient here is still a placeholder.
+ * of its 400. THE OWNER HAS RULED IT: "Keep Oath of Light scaled by each heal's
+ * coefficient." Added outright the three would be the full 400, 115 and 229 --
+ * which is the reading this ruling closes, so do not re-ask it. The heal
+ * coefficients themselves are still placeholders, and the Oath moves with them.
  *
  * "YOUR" HEALS: only the Paladin who swore it collects, which is why the bonus is
  * read in `paladinHeal` against the aura's source rather than off the target.
