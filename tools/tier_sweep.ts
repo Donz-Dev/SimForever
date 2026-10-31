@@ -34,7 +34,7 @@ const OUT = process.env.OUT;
 const HTML = process.env.HTML;
 
 /** The four builds whose target attacks back. */
-export const TANKS = new Set(['prot_warr', 'fury_prot', 'prot_pally', 'druid_bear']);
+export const TANKS = new Set(['prot_warr', 'fury_prot', 'prot_pally', 'protribution', 'druid_bear']);
 
 const rows: TierSweepRow[] = [];
 for (const preset of PROFILE_PRESETS) {

@@ -146,6 +146,12 @@ export const PALADIN_MULTI_TARGET: MultiTargetDefaults = {
     entries: spellblastingAtThePull(PROTECTION_AOE),
     precombat: PROTECTION_AOE_PRECOMBAT,
   },
+  // Protribution runs Prot Pally's list, so it runs its AoE list too.
+  protribution: {
+    name: 'Paladin (Protection, AoE)',
+    entries: spellblastingAtThePull(PROTECTION_AOE),
+    precombat: PROTECTION_AOE_PRECOMBAT,
+  },
   holy_pal: {
     name: 'Paladin (Holy, raid)',
     entries: HOLY_RAID,

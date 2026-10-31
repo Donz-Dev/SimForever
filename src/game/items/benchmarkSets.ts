@@ -433,6 +433,13 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
   { idBlock: 37, presetId: 'hunter_survival_weave', characterClass: 'hunter', label: 'Survival Weave', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
   { idBlock: 38, presetId: 'shaman_spellhance', characterClass: 'shaman', label: 'Spellhance', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina'], armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
   { idBlock: 39, presetId: 'warlock_sm_ruin', characterClass: 'warlock', label: 'SM Ruin', hit: 130, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  /*
+   * PROTRIBUTION IS THE PROT PALLY ROW under its own label -- the owner's "copy
+   * the Prot Pally profile with the exception of the talent tree" -- so it
+   * generates the same stats on its own ids, which is Fury Prot's arrangement.
+   * Appended on a fresh `idBlock`, so no other set's ids move.
+   */
+  { idBlock: 40, presetId: 'protribution', characterClass: 'paladin', label: 'Protribution', hit: 50, expertise: 20, preferred: PROT_PALLY, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true }, trinkets: PROT_PALLY_TRINKETS },
   // Piss Beam (round 60): Holy Pal's healer specification in Mail.
   { idBlock: 35, presetId: 'priest_holy', characterClass: 'priest', label: 'Holy Priest', hit: 0, expertise: 0, preferred: ['Intellect', 'Spirit', 'Crit'], armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, healer: true },
   { idBlock: 36, presetId: 'priest_disc', characterClass: 'priest', label: 'Disc Priest', hit: 0, expertise: 0, preferred: ['Intellect', 'Spirit', 'Crit'], armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, healer: true },

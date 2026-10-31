@@ -38,6 +38,8 @@ const BLOCKS: Readonly<Record<string, number>> = {
   hunter_survival_weave: 37,
   shaman_spellhance: 38,
   warlock_sm_ruin: 39,
+  // Protribution, appended on a fresh block.
+  protribution: 40,
 };
 
 describe('benchmark item ids', () => {

@@ -1835,6 +1835,37 @@ const PALADIN_PROTECTION_TALENTS: TalentAllocation = {
 };
 
 /**
+ * PROTRIBUTION, 0/21/30, read off the owner's foreverchanges.pro URL (its
+ * aria-labels, as the four 1.60.1.70707 Paladin builds were). Protection to
+ * Holy Shield, then Retribution to Champion of the Light 5/5. Exactly 51.
+ */
+const PALADIN_PROTRIBUTION_TALENTS: TalentAllocation = {
+  // Protection, 21
+  redoubt: 5,
+  precision: 3,
+  guardian_s_favor: 2,
+  sacred_duty: 2,
+  templar_s_bulwark: 1,
+  shield_specialization: 2,
+  swift_judgement: 1,
+  improved_righteous_fury: 3,
+  anticipation: 1,
+  holy_shield: 1,
+  // Retribution, 30
+  deflection: 5,
+  improved_judgement: 2,
+  conviction: 3,
+  sanctified_judgement: 3,
+  vindication: 3,
+  unyielding_faith: 2,
+  seal_of_command: 1,
+  pursuit_of_justice: 2,
+  sacred_arbiter: 1,
+  vengeance: 3,
+  champion_of_the_light: 5,
+};
+
+/**
  * THE THREE HUNTER BUILDS, decoded from the owner's URLs. 31/20/0, 5/41/5 and
  * 5/13/33, each exactly 51 points. (There are four Hunter presets now; Hawk
  * Melee arrived later and has its own block.)
@@ -4017,6 +4048,33 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: true },
     }),
+  },
+  {
+    id: 'protribution',
+    label: 'Protribution',
+    detail: 'Undead, 1H and shield, target swings back. 21 Protection / 30 Retribution',
+    characterClass: 'paladin',
+    /*
+     * PROT PALLY WITH A RETRIBUTION TREE, by the owner's word -- "to the maximum
+     * extent possible copy from the Prot Pally profile with the exception of the
+     * talent tree." So it DERIVES from that preset and states only the name and
+     * the tree, the arrangement Fury Prot uses with Prot Warr: race, gear,
+     * enchants, raid buffs, consumables, opener and encounter all come from the
+     * Prot Pally build, and a change to any of them reaches this one too.
+     *
+     * THE LIST IS THE PROTECTION ONE, by dispatch rather than by declaration:
+     * `paladinRotation` sends any build holding Holy Shield there. Entries for
+     * talents this tree skips -- Reckoning, Iron Creed, Shieldsworn -- are
+     * skipped in silence, which is what lets one list serve both builds.
+     */
+    build: () => {
+      const prot = PRESETS_BY_ID.get('prot_pally')!.build();
+      return {
+        ...prot,
+        character: { ...prot.character, name: 'Protribution' },
+        talents: { ...PALADIN_PROTRIBUTION_TALENTS },
+      };
+    },
   },
   {
     id: 'bm_hunter',

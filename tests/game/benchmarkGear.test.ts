@@ -418,6 +418,8 @@ describe('a caster weapon trades melee damage for a stated spell power', () => {
       'Moonkin',
       'Piss Beam',
       'Prot Pally',
+      // Protribution is the Prot Pally row under its own label.
+      'Protribution',
       'Resto Drood',
       // Round 82: the owner's saved SM Ruin, and Spellhance's staff by their ruling.
       'SM Ruin',

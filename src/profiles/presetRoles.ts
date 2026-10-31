@@ -8,7 +8,7 @@
  * Here rather than in the profile rail (round 78), because the measurement and
  * report tools need the same answer and must not import the UI for it.
  */
-export const TANK_PROFILE_IDS: readonly string[] = ['druid_bear', 'prot_warr', 'prot_pally', 'fury_prot'];
+export const TANK_PROFILE_IDS: readonly string[] = ['druid_bear', 'prot_warr', 'prot_pally', 'fury_prot', 'protribution'];
 export const HEALER_PROFILE_IDS: readonly string[] = [
   'shaman_resto',
   'holy_pal',

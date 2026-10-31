@@ -299,7 +299,7 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     name: 'PALADIN_PROTECTION',
     owner: 'paladin',
     list: PALADIN_PROTECTION,
-    profiles: ['prot_pally'],
+    profiles: ['prot_pally', 'protribution'],
   },
 
   // Hunter -- by capstone AND style, because both Lone Wolf builds share a tree.

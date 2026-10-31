@@ -15,8 +15,8 @@ describe('the profile rail', () => {
     expect(groups.map((group) => group.label)).toEqual(['DPS Profiles', 'Tank Profiles', 'Healer Profiles']);
   });
 
-  it('puts the four tanks and the two healers in their own groups', () => {
-    expect([...labels(1)].sort()).toEqual(['Bear', 'Fury Prot', 'Prot Pally', 'Prot Warr']);
+  it('puts the five tanks and the two healers in their own groups', () => {
+    expect([...labels(1)].sort()).toEqual(['Bear', 'Fury Prot', 'Prot Pally', 'Prot Warr', 'Protribution']);
     // Resto Drood joined in round 71.
     // Resto Drood joined in round 71, and the two Priests in round 73.
     expect([...labels(2)].sort()).toEqual(['Disc Priest', 'Holy Pal', 'Holy Priest', 'Piss Beam', 'Resto Drood']);

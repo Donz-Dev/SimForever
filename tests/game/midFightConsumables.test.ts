@@ -440,7 +440,7 @@ describe('what selecting one does to the priority list', () => {
       expect(consumables.potion, `${preset.id} potion`).toBeDefined();
       expect(consumables.other, `${preset.id} other`).toBeDefined();
     }
-    expect(PROFILE_PRESETS).toHaveLength(37);
+    expect(PROFILE_PRESETS).toHaveLength(38);
   });
 
   it("partitions `other` by pool, exactly as the owner's ruling does", () => {
@@ -475,6 +475,8 @@ describe('what selecting one does to the priority list', () => {
       fury_prot: 'healthstone',
       druid_bear: 'healthstone',
       prot_pally: 'healthstone',
+      // Protribution copies Prot Pally's consumables.
+      protribution: 'healthstone',
       // The energy bars -- the four Rogues, and the Cat by name.
       rogue_venom: 'thistle_tea',
       rogue_combat_mut: 'thistle_tea',
