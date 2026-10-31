@@ -8,7 +8,6 @@ import {
   FINGERS_OF_FROST,
   FINGERS_OF_FROST_PROC_CHANCE,
   FIRE_SPELL_IDS,
-  FROST_SPELL_IDS,
   MAGE_DAMAGE_SPELL_IDS,
   wintersChillAura,
   fingersOfFrostAura,
@@ -288,8 +287,14 @@ export const arcaneConcentration: TalentReactionBuilder = (chancePercent) => {
  */
 /** Index into the values row for each of the three chances. */
 const MISSILE_BARRAGE_ARCANE_BLAST_INDEX = 0;
-const MISSILE_BARRAGE_MISSILE_HIT_INDEX = 1;
-const MISSILE_BARRAGE_OTHERS_INDEX = 2;
+/*
+ * ONE AND NOT TWO SINCE 1.60.1.70707: the client dropped the Arcane Missile
+ * hit clause from the row, `[blast, others, duration%, cost%, interval]` where
+ * it was `[blast, missileHit, others, ...]`. Index 2 is now the 50% DURATION --
+ * a valid number of the right size for a chance, which is the wrong-index
+ * failure CLAUDE.md records four times over.
+ */
+const MISSILE_BARRAGE_OTHERS_INDEX = 1;
 
 /**
  * The four spells on the shared chance. ARCANE WRATH IS NEW HERE.
@@ -302,6 +307,9 @@ export const MISSILE_BARRAGE_OTHER_SPELL_IDS: readonly string[] = [
   'fireball',
   'frostbolt',
   'frostfire_bolt',
+  // Frost Blast joined the list at 1.60.1.70707 and is not declared here, so it
+  // is named for the day it is rather than silently left out.
+  'frost_blast',
 ];
 
 const MISSILE_BARRAGE_OTHERS = new Set(MISSILE_BARRAGE_OTHER_SPELL_IDS);
@@ -321,16 +329,10 @@ export const missileBarrage: TalentReactionBuilder = (_value, values) => {
    */
   const fromArcaneBlast = values?.[MISSILE_BARRAGE_ARCANE_BLAST_INDEX] ?? 0;
   /*
-   * ==========================================================================
-   * AN ARCANE MISSILE NO LONGER PROCS IT, by the owner's ruling ahead of the
-   * client: "Missile Barrage: no longer has a 10% chance for Arcane Missiles to
-   * proc Missile Barrage." The values row still carries the figure, because the
-   * row is captured data and the client has not shipped the change -- so it is
-   * READ AND IGNORED here, and the moment a refresh drops it this line is the
-   * one to delete. It took away the self-feeding loop described above.
-   * ==========================================================================
+   * AN ARCANE MISSILE NO LONGER PROCS IT -- the owner's ruling ahead of the
+   * client, which the client has now shipped (1.60.1.70707): the clause and
+   * its number are gone from the row.
    */
-  void values?.[MISSILE_BARRAGE_MISSILE_HIT_INDEX];
   const fromMissileHit = 0;
   const fromOthers = values?.[MISSILE_BARRAGE_OTHERS_INDEX] ?? 0;
 
@@ -416,7 +418,21 @@ export const improvedScorchReaction: TalentReactionBuilder = (chancePercent) => 
  * and this talent has already changed that answer once.
  * ============================================================================
  */
-const WINTERS_CHILL_MAX_STACKS_INDEX = 2;
+/*
+ * AND IT MOVED AGAIN AT 1.60.1.70707, 2 TO 3: the row is `[chance,
+ * damagePercent, spellPowerPercent, maxStacks]` now, and index 2 is the 7%
+ * spell power clause -- so the old index would have capped the debuff at
+ * SEVEN stacks rather than five.
+ */
+const WINTERS_CHILL_MAX_STACKS_INDEX = 3;
+
+/**
+ * What applies it since 1.60.1.70707: "your Frostbolt, Frost Blast, and Fingers
+ * of Frost empowered Ice Lance spells", where it was any Frost damage spell. So
+ * Frostfire Bolt, Cone of Cold and Blizzard no longer do, and Ice Lance only
+ * while Fingers of Frost is up. Frost Blast is not declared here.
+ */
+export const WINTERS_CHILL_APPLIER_IDS: readonly string[] = ['frostbolt', 'frost_blast'];
 
 export const wintersChill: TalentReactionBuilder = (chancePercent, values) => {
   /*
@@ -429,9 +445,16 @@ export const wintersChill: TalentReactionBuilder = (chancePercent, values) => {
     id: 'winter_s_chill',
     on: 'dealt',
     outcomes: ['hit', 'crit'],
-    canTrigger: (context, _actor, attack) =>
+    /*
+     * "FINGERS OF FROST EMPOWERED" IS READ ON THE CASTER AT THE HIT: a `dealt`
+     * reaction runs inside Ice Lance's `onCast`, and the Fingers of Frost charge
+     * is spent by a CAST reaction afterwards -- so the empowering charge is
+     * still up when this asks.
+     */
+    canTrigger: (context, actor, attack) =>
       attack.abilityId !== undefined &&
-      FROST_SPELL_IDS.includes(attack.abilityId) &&
+      (WINTERS_CHILL_APPLIER_IDS.includes(attack.abilityId) ||
+        (attack.abilityId === 'ice_lance' && actor.auras.has(FINGERS_OF_FROST.id))) &&
       context.rng.rollChance(chancePercent / 100),
     onTrigger: (context, actor, attack) => {
       context.applyAura(attack.defender, wintersChillAura(maxStacks), actor.id);

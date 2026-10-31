@@ -194,12 +194,13 @@ describe('the numbers', () => {
     expect(ARCANE_BLAST_BASE_MANA_FRACTION).toBe(0.15);
   });
 
-  it('declares an effect for every one of the 54 talents', () => {
+  it('declares an effect for every one of the 53 talents', () => {
     // 55: ARCANE WRATH was added at client build 1.60.1.70425. Wake of Fire
     // became Improved Fire Blast in the same patch, which is a rename and
     // changes no count -- so the tree grew by exactly one. 54 since round 51's
-    // refresh removed Piercing Ice.
-    expect(Object.keys(MAGE_TALENT_EFFECTS)).toHaveLength(54);
+    // refresh removed Piercing Ice. 53 at 1.60.1.70707: Arcane Focus, Improved
+    // Fireball and Elemental Precision out, Accelerant and Precision in.
+    expect(Object.keys(MAGE_TALENT_EFFECTS)).toHaveLength(53);
   });
 });
 
@@ -434,8 +435,9 @@ describe('the talents that needed a school', () => {
      * demands it, so +10% Fire crit where it was +6%.
      * ------------------------------------------------------------------------
      */
+    // AND BACK TO THREE RANKS AT 1.60.1.70707, so 6% at the new 3/3.
     const fire = presetPlayer('mage_fire');
-    expect(fire.schoolModifiers.for('fire').critBonus).toBe(10);
+    expect(fire.schoolModifiers.for('fire').critBonus).toBe(6);
     expect(fire.schoolModifiers.for('fire').damageMultiplier ?? 1).toBe(1);
     expect(fire.schoolModifiers.for('frost').damageMultiplier ?? 1).toBe(1);
     expect(fire.schoolModifiers.for('arcane').damageMultiplier ?? 1).toBe(1);
@@ -774,7 +776,8 @@ describe('the cast modifiers this class is full of', () => {
     const base = blast.cost!.amount;
 
     expect(base).toBe(Math.round(MAGE_BASE_MANA * ARCANE_BLAST_BASE_MANA_FRACTION));
-    expect(ARCANE_BLAST_COST_INCREASE_PER_STACK).toBe(1.75);
+    // 100% a stack since 1.60.1.70707, where it was 175%.
+    expect(ARCANE_BLAST_COST_INCREASE_PER_STACK).toBe(1.0);
 
     simulation.applyAura(actor, arcaneBlastAura(actor.stats.effective.intellect), actor.id);
     for (const stacks of [1, 2, 4]) {
@@ -1272,7 +1275,7 @@ describe('Fingers of Frost, the one Frozen talent that is not inert', () => {
     expect(fires('pyroblast')).toBe(false);
   });
 
-  it('triples ALL of Ice Lance, the coefficient as well as the base', () => {
+  it('quadruples ALL of Ice Lance, the coefficient as well as the base', () => {
     /*
      * TIMES THREE, LOWERED FROM FOUR: "Ice Lance damage against Frozen targets
      * changed to a 200% increase (Was 300%)." The READING is unchanged and is
@@ -1291,7 +1294,8 @@ describe('Fingers of Frost, the one Frozen talent that is not inert', () => {
      * project has held, so an exact ratio against a scripted non-crit is the
      * check -- the floor below is kept for the crit case.
      */
-    expect(ICE_LANCE_FROZEN_MULTIPLIER).toBe(3);
+    // Four since 1.60.1.70707, "300% more damage to Frozen targets".
+    expect(ICE_LANCE_FROZEN_MULTIPLIER).toBe(4);
 
     const actor = frostMage();
     const target = makeTarget({ maxHealth: 1_000_000 });
@@ -1310,17 +1314,18 @@ describe('Fingers of Frost, the one Frozen talent that is not inert', () => {
     const plain = damageOf();
     expect(plain).toBeGreaterThan(0);
 
-    simulation.advanceTo(seconds(5));
+    // Past Ice Lance's own 8 second cooldown, every rank's since 1.60.1.70707.
+    simulation.advanceTo(seconds(8));
     simulation.applyAura(actor, fingersOfFrostAura(2), actor.id);
-    simulation.advanceTo(seconds(6));
+    simulation.advanceTo(seconds(9));
     castAbility(simulation, actor, ICE_LANCE, target);
     const frozen = damageOf();
 
     /*
      * The combat table can crit either one, so this is a floor rather than an
-     * equality: three times the base must be well clear of an uncrit hit. A
+     * equality: four times the base must be well clear of an uncrit hit. A
      * crit is 1.5x on the spell table, so `plain * 1.5` is the worst case the
-     * unfrozen cast can reach and 3x must beat it -- which `> plain * 1.6`
+     * unfrozen cast can reach and 4x must beat it -- which `> plain * 1.6`
      * says without assuming neither cast crit.
      */
     expect(frozen).toBeGreaterThan(plain * 1.6);
@@ -1738,7 +1743,8 @@ describe('Arcane Blast, whose damage half is the Arcane rotation', () => {
 
     simulation.applyAura(mage, aura, mage.id);
     const expiresAt = mage.auras.get('arcane_blast')!.expiresAt;
-    expect(expiresAt).toBe(seconds(15));
+    // Eighteen seconds since 1.60.1.70707, where it was fifteen.
+    expect(expiresAt).toBe(seconds(18));
 
     simulation.advanceTo(seconds(5));
     simulation.applyAura(mage, aura, mage.id);
@@ -1945,12 +1951,20 @@ describe("Winter's Chill, a crit debuff the TARGET carries", () => {
     const reaction = buildFor(5);
     const applies = (abilityId: string) =>
       reaction.canTrigger?.(simulation, actor, { abilityId } as never) ?? true;
+    /*
+     * 1.60.1.70707 NARROWED WHAT APPLIES IT: "your Frostbolt, Frost Blast, and
+     * Fingers of Frost empowered Ice Lance spells". So an UNEMPOWERED Ice Lance
+     * and Frostfire Bolt, which both did, no longer do.
+     */
     expect(applies('frostbolt')).toBe(true);
-    expect(applies('ice_lance')).toBe(true);
-    // Frost by its own spellbook entry, even though it is DEALT as Fire.
-    expect(applies('frostfire_bolt')).toBe(true);
+    expect(applies('ice_lance')).toBe(false);
+    expect(applies('frostfire_bolt')).toBe(false);
+    expect(applies('cone_of_cold')).toBe(false);
     expect(applies('pyroblast')).toBe(false);
     expect(applies('arcane_missiles')).toBe(false);
+    simulation.applyAura(actor, fingersOfFrostAura(2), actor.id);
+    expect(applies('ice_lance')).toBe(true);
+    actor.auras.remove(simulation, 'fingers_of_frost');
 
     simulation.applyAura(target, wintersChillAura(5), actor.id);
     const damageAgainst = (abilityId: string) =>
@@ -2005,7 +2019,8 @@ describe("Winter's Chill, a crit debuff the TARGET carries", () => {
      * profile takes the talent.
      * ========================================================================
      */
-    expect(target.abilityModifierAgainst('cone_of_cold').damageMultiplier).toBeCloseTo(3, 6);
+    // 2x at five stacks since 1.60.1.70707's 20% a stack, where the owner's 40% made 3x.
+    expect(target.abilityModifierAgainst('cone_of_cold').damageMultiplier).toBeCloseTo(2, 6);
     expect(target.abilityModifierAgainst('cone_of_cold').damageMultiplier).toBeCloseTo(
       1 + (5 * WINTERS_CHILL_DAMAGE_PER_STACK) / 100,
       6,
@@ -2169,9 +2184,14 @@ describe('Frostfire Bolt, which counts as BOTH Frost and Fire', () => {
      * one talent naming both schools must leave the two spells on the SAME miss
      * rate -- and paid twice, Frostfire's would be about half of it.
      */
+    /*
+     * PRECISION SINCE 1.60.1.70707, which names every spell school rather than
+     * two -- still ONE source, and the guard is the same: Frostfire Bolt's two
+     * schools must take the larger, not the sum.
+     */
     const built = frostfireThatMisses();
-    expect(MAGE_TALENT_EFFECTS.elemental_precision).toEqual([
-      { kind: 'schoolHit', schools: ['frost', 'fire'] },
+    expect(MAGE_TALENT_EFFECTS.precision).toEqual([
+      { kind: 'schoolHit', schools: ['arcane', 'fire', 'frost', 'holy', 'nature', 'shadow'] },
     ]);
 
     const batch = runProfileBatch({
@@ -2187,15 +2207,16 @@ describe('Frostfire Bolt, which counts as BOTH Frost and Fire', () => {
 });
 
 /**
- * The Frostfire preset one Elemental Precision rank down, so its spells miss.
+ * The Frostfire preset one Precision rank down, so its spells miss.
  *
  * Round 51 put it on the 17% cap, and two tests here compare MISS RATES. The two
  * points go to Permafrost, which is crowd control and does nothing, so the tree
- * keeps its total and nothing deeper is refunded.
+ * keeps its total and nothing deeper is refunded. (Elemental Precision until
+ * 1.60.1.70707 replaced it with Precision in the same slot.)
  */
 function frostfireThatMisses() {
   const built = PRESETS_BY_ID.get('mage_frostfire')!.build();
-  return { ...built, talents: { ...built.talents, elemental_precision: 1, permafrost: 2 } };
+  return { ...built, talents: { ...built.talents, precision: 1, permafrost: 2 } };
 }
 
 describe('what the Results panel divides its rates by', () => {
@@ -2575,8 +2596,11 @@ describe('Evocation, which pays out during its own channel', () => {
      *
      * AND ONE LATER IN ROUND 80, when Revelation became one roll per cast: the
      * staff procs less often, one of the two fights no longer drops under 10%.
+     *
+     * AND ZERO AT 1.60.1.70707, when Arcane Blast's cost escalation fell from
+     * 175% a stack to 100%: four stacks cost five times the base, not eight.
      */
-    expect(casts('mage_arcane')).toBe(1);
+    expect(casts('mage_arcane')).toBe(0);
   }, 20_000);
 });
 

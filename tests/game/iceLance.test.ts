@@ -174,19 +174,19 @@ function measuredCoefficient(frozen: boolean): number {
 }
 
 describe("the owner's expression, and what it is not", () => {
-  it('is 1.5/3.5/3 exactly, not a rounded decimal', () => {
+  it('is 1.5/3.5/4 exactly, not a rounded decimal', () => {
     /*
      * ASSERTED AS THE EXPRESSION, because `1.5 / 3.5` does not terminate: the
      * original 0.43 was already a rounding of 0.428571..., and rounding a
      * second division would compound it. 0.143 is 0.1% low.
      */
-    expect(ICE_LANCE_SP_COEFFICIENT).toBeCloseTo(1.5 / 3.5 / 3, 12);
-    expect(ICE_LANCE_SP_COEFFICIENT).toBeCloseTo(0.1428571428, 9);
-    // A THIRD of what the spell shipped with, which is the whole change.
-    expect(ICE_LANCE_SP_COEFFICIENT * 3).toBeCloseTo(1.5 / 3.5, 12);
+    expect(ICE_LANCE_SP_COEFFICIENT).toBeCloseTo(1.5 / 3.5 / 4, 12);
+    expect(ICE_LANCE_SP_COEFFICIENT).toBeCloseTo(0.1071428571, 9);
+    // A QUARTER of what the spell shipped with (four again since 1.60.1.70707).
+    expect(ICE_LANCE_SP_COEFFICIENT * 4).toBeCloseTo(1.5 / 3.5, 12);
   });
 
-  it('is a different number from the frozen multiplier, which is also three', () => {
+  it('is a different number from the frozen multiplier, which is also four', () => {
     /*
      * ========================================================================
      * PINNED BY IDENTITY WHILE THEY AGREE, WHICH IS THE WHOLE POINT OF THE
@@ -206,15 +206,17 @@ describe("the owner's expression, and what it is not", () => {
      * stated value and neither is asserted against the other.
      * ========================================================================
      */
-    expect(ICE_LANCE_FROZEN_MULTIPLIER).toBe(3);
-    expect(ICE_LANCE_SP_COEFFICIENT).toBeCloseTo(1.5 / 3.5 / 3, 12);
+    // FOUR AND FOUR since 1.60.1.70707's "300% more", the divisor following the
+    // multiplier on the owner's standing ruling that "intended" meant the product.
+    expect(ICE_LANCE_FROZEN_MULTIPLIER).toBe(4);
+    expect(ICE_LANCE_SP_COEFFICIENT).toBeCloseTo(1.5 / 3.5 / 4, 12);
     expect(ICE_LANCE_COEFFICIENT).toBe(ICE_LANCE_SP_COEFFICIENT);
   });
 });
 
 describe('what the spell actually applies, measured from damage', () => {
   it('scales at the base coefficient when the target is not frozen', () => {
-    expect(measuredCoefficient(false)).toBeCloseTo(1.5 / 3.5 / 3, 6);
+    expect(measuredCoefficient(false)).toBeCloseTo(1.5 / 3.5 / 4, 6);
   });
 
   it('is the raw slope times whatever Frost multiplier the build carries', () => {
@@ -230,17 +232,17 @@ describe('what the spell actually applies, measured from damage', () => {
     const frost = mageWithSpellPower(0).schoolModifiers.for('frost').damageMultiplier ?? 1;
 
     const rawSlope = (iceLanceDamage(1000, false) - iceLanceDamage(0, false)) / 1000;
-    expect(rawSlope).toBeCloseTo((1.5 / 3.5 / 3) * frost, 6);
+    expect(rawSlope).toBeCloseTo((1.5 / 3.5 / 4) * frost, 6);
   });
 
-  it('scales at THREE TIMES it when Fingers of Frost is up', () => {
+  it('scales at FOUR TIMES it when Fingers of Frost is up', () => {
     /*
      * THE MULTIPLIER REACHES THE COEFFICIENT AND NOT ONLY THE BASE, which is a
      * separate owner ruling -- "increased damage" is all of the damage.
      * Applying it to the flat half alone would leave a spell-power-heavy
      * Mage's Ice Lance barely improved and look reasonable.
      */
-    expect(measuredCoefficient(true)).toBeCloseTo((1.5 / 3.5 / 3) * 3, 6);
+    expect(measuredCoefficient(true)).toBeCloseTo((1.5 / 3.5 / 4) * 4, 6);
   });
 
   it('lands the frozen case on exactly 1.5/3.5, which is the ruleset', () => {
@@ -273,9 +275,9 @@ describe('what the spell actually applies, measured from damage', () => {
      * THE RATIO NEEDS NO CORRECTION AT ALL, which is why it is the assertion to
      * trust most here: the school multiplier, the base damage and every other
      * term between the coefficient and the damage event appear on both sides and
-     * cancel. Three is three whatever else is in the way.
+     * cancel. Four is four whatever else is in the way.
      */
-    expect(measuredCoefficient(true) / measuredCoefficient(false)).toBeCloseTo(3, 6);
+    expect(measuredCoefficient(true) / measuredCoefficient(false)).toBeCloseTo(4, 6);
   });
 
   it('keeps its flat damage, which a coefficient edit is what deletes', () => {

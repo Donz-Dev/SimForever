@@ -89,14 +89,6 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  /*
-   * THE SCHOOL NEVER NEEDED THREADING INTO THE ROLL: `combineModifiers` has
-   * folded the school's modifier into the chances all along, and what was
-   * missing was a hit FIELD for it to carry. `AbilityModifier.hitBonus` is it.
-   * Arcane and Fire both take this 5/5.
-   */
-  arcane_focus: [{ kind: 'schoolHit', schools: ['arcane'] }],
-
   improved_channeling: [{ kind: 'unmodelled', scope: 'castPushback', reason: NO_PUSHBACK }],
 
   arcane_subtlety: [
@@ -243,9 +235,16 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'abilityCrit', abilityId: 'scorch' },
   ],
 
-  improved_fireball: [
+  /*
+   * ACCELERANT (1.60.1.70707) REPLACES IMPROVED FIREBALL in the same tier-0
+   * slot with the same 0.1 a rank, and adds ARCANE WRATH to the two spells it
+   * already named -- so the rule CLAUDE.md records about this talent's name
+   * hiding its best clause now has a third spell in it.
+   */
+  accelerant: [
     { kind: 'abilityCastTime', abilityId: 'fireball' },
     { kind: 'abilityCastTime', abilityId: 'frostfire_bolt' },
+    { kind: 'abilityCastTime', abilityId: 'arcane_wrath' },
   ],
 
   ignite: [{ kind: 'reaction', reactionId: 'ignite' }],
@@ -376,9 +375,11 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     {
       kind: 'unmodelled',
       reason:
-        'Armor and resistance on Frost Armor and Ice Armor, and a reflect ' +
-        'chance on Frost Ward. None of the three is declared -- a Mage here ' +
-        'casts Mage Armor, and only one Armor spell may be active at a time. ' +
+        'Armor and resistance on Frost Armor and Ice Armor, a chance on Frost ' +
+        'Ward to negate a spell, and +20% to what Ice Barrier and Frost Ward ' +
+        'absorb. None of the armors or Frost Ward is declared -- a Mage here ' +
+        'casts Mage Armor, and only one Armor spell may be active at a time -- ' +
+        'and an absorb does nothing. ' +
         NOT_ATTACKED,
     },
   ],
@@ -386,10 +387,15 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   improved_frostbolt: [{ kind: 'abilityCastTime', abilityId: 'frostbolt' }],
 
   /*
-   * TWO SCHOOLS IN ONE ROW, which is what `schools` is a list for -- Frostfire
-   * takes it 5/5 and Fire takes it 2/5, and the same entry serves both.
+   * PRECISION (1.60.1.70707) REPLACES ELEMENTAL PRECISION AND ARCANE FOCUS
+   * together: "improves your chance to hit with ALL spells by 6%" over three
+   * ranks, where the two it replaced named Frost and Fire, and Arcane. Every
+   * school a spell can be, rather than the three a Mage casts, because the
+   * tooltip says all spells and a list of three would be a claim about the kit.
    */
-  elemental_precision: [{ kind: 'schoolHit', schools: ['frost', 'fire'] }],
+  precision: [
+    { kind: 'schoolHit', schools: ['arcane', 'fire', 'frost', 'holy', 'nature', 'shadow'] },
+  ],
 
   ice_shards: [{ kind: 'schoolCritDamage', schools: ['frost'] }],
 
@@ -598,11 +604,27 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * reads exactly like a field that sometimes fires. See `wintersChillAura`.
    * ==========================================================================
    */
-  // Fully modelled now Cone of Cold is declared: the proc, the five stacks and
-  // the 40% a stack all reach the one spell the debuff names.
+  // Fully modelled: the proc off Frostbolt and an empowered Ice Lance, the five
+  // stacks, and the 20% and 7% a stack on the NEXT Cone of Cold (1.60.1.70707).
   winter_s_chill: [{ kind: 'reaction', reactionId: 'winter_s_chill' }],
 
+  /*
+   * ==========================================================================
+   * ICE BARRIER IS A TALENT, AND ONLY A BUILD THAT TAKES IT GETS ITS FROST
+   * DAMAGE -- the owner's instruction with 1.60.1.70707: "Ensure that only
+   * profiles that actually take the Ice Barrier talent benefit from its Frost
+   * damage." It was declared in the TRAINER book on the owner's round 55 word,
+   * so every Mage knew it, and the Frostfire profile -- which spends no point
+   * here -- cast it at T-10 and collected the buff. `grantAbility` is what makes
+   * the ability exist only on a build with the point.
+   *
+   * THE BUFF IS ON THE AURA, `ICE_BARRIER`: +15% Frost damage for the minute
+   * and another +5% while the shield holds, which is the whole minute here
+   * because nothing attacks a Mage.
+   * ==========================================================================
+   */
   ice_barrier: [
+    { kind: 'grantAbility', abilityId: 'ice_barrier' },
     { kind: 'unmodelled', reason: `An absorb -- ${NOT_ATTACKED} And ${NO_PUSHBACK}` },
   ],
 };

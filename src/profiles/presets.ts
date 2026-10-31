@@ -1151,8 +1151,15 @@ const SHAMAN_ENHANCEMENT_TALENTS: TalentAllocation = {
  */
 /** Frost Mage, 14 Arcane / 3 Fire / 34 Frost: the owner's saved build (round 59). */
 const MAGE_FROST_TALENTS: TalentAllocation = {
+  /*
+   * 1.60.1.70707 REMAP, OURS AND NOT THE OWNER'S: the client tree removed
+   * Arcane Focus, Improved Fireball and Elemental Precision. Arcane Focus 5 -> Improved Channeling 5
+   * (the five tier-0 Arcane points Arcane Concentration needs; both worth
+   * nothing here), Elemental Precision 3 -> Precision 3. Keeps Ice Barrier.
+   * Flagged for the owner to replace with their own build.
+   */
   // Arcane, 14
-  arcane_focus: 5,
+  improved_channeling: 5,
   arcane_concentration: 5,
   arcane_subtlety: 2,
   missile_barrage: 2,
@@ -1160,7 +1167,7 @@ const MAGE_FROST_TALENTS: TalentAllocation = {
   incineration: 3,
   // Frost, 34
   improved_frostbolt: 5,
-  elemental_precision: 3,
+  precision: 3,
   ice_shards: 5,
   frost_channeling: 3,
   ice_lance: 1,
@@ -1304,6 +1311,12 @@ const DRUID_RESTORATION_TALENTS: TalentAllocation = {
 
 const MAGE_FROSTFIRE_TALENTS: TalentAllocation = {
   /*
+   * 1.60.1.70707 REMAP, OURS AND NOT THE OWNER'S: the client tree removed
+   * Arcane Focus, Improved Fireball and Elemental Precision. Improved Fireball 5 -> Accelerant 5,
+   * Elemental Precision 3 -> Precision 3. No Ice Barrier, so no Frost buff.
+   * Flagged for the owner to replace with their own build.
+   */
+  /*
    * ==========================================================================
    * FOUR DEAD POINTS TRADED FOR FOUR LIVE ONES, worth **+28.5 +/- 9.5** paired
    * over 400 iterations.
@@ -1357,7 +1370,7 @@ const MAGE_FROSTFIRE_TALENTS: TalentAllocation = {
    */
   // Fire, 29
   incineration: 2,
-  improved_fireball: 5,
+  accelerant: 5,
   ignite: 5,
   improved_flamestrike: 3,
   pyroblast: 1,
@@ -1369,7 +1382,7 @@ const MAGE_FROSTFIRE_TALENTS: TalentAllocation = {
   // Frost, 22
   frost_warding: 2,
   improved_frostbolt: 2,
-  elemental_precision: 3,
+  precision: 3,
   ice_shards: 5,
   frost_channeling: 3,
   ice_lance: 1,
@@ -1398,6 +1411,14 @@ const MAGE_FROSTFIRE_TALENTS: TalentAllocation = {
  */
 const MAGE_ARCANE_TALENTS: TalentAllocation = {
   /*
+   * 1.60.1.70707 REMAP, OURS AND NOT THE OWNER'S: the client tree removed
+   * Arcane Focus, Improved Fireball and Elemental Precision. Arcane Focus 5 -> Improved Channeling 5,
+   * Elemental Precision 3 -> Precision 3, and Improved Fire Blast 2 ->
+   * Incineration 5/5: Improved Fire Blast moved to the Fire tree's third row,
+   * which needs 10 points above it and this build had 8 there.
+   * Flagged for the owner to replace with their own build.
+   */
+  /*
    * ==========================================================================
    * ROUND 80: 32 ARCANE / 16 FIRE / 3 FROST, FOR FIRE BLAST INTO HEATING UP
    * INTO PYROBLAST -- worth **+145.4 +/- 5.4 on the weighted score** with the
@@ -1422,7 +1443,7 @@ const MAGE_ARCANE_TALENTS: TalentAllocation = {
    * ==========================================================================
    */
   // Arcane, 32
-  arcane_focus: 5,
+  improved_channeling: 5,
   missile_barrage: 2,
   arcane_subtlety: 2,
   arcane_concentration: 5,
@@ -1435,15 +1456,14 @@ const MAGE_ARCANE_TALENTS: TalentAllocation = {
   arcane_instability: 3,
   arcane_power: 1,
   // Fire, 16
-  improved_fire_blast: 2,
-  incineration: 3,
+  incineration: 5,
   ignite: 5,
   burning_soul: 1,
   improved_flamestrike: 3,
   pyroblast: 1,
   heating_up: 1,
   // Frost, 3
-  elemental_precision: 3,
+  precision: 3,
 };
 
 /**
@@ -1463,6 +1483,14 @@ const MAGE_ARCANE_TALENTS: TalentAllocation = {
  * ----------------------------------------------------------------------------
  */
 const MAGE_FIRE_TALENTS: TalentAllocation = {
+  /*
+   * 1.60.1.70707 REMAP, OURS AND NOT THE OWNER'S: the client tree removed
+   * Arcane Focus, Improved Fireball and Elemental Precision. Arcane Focus 5 -> Improved Channeling 5,
+   * Improved Fireball 5 -> Accelerant 5, Elemental Precision 3 -> Precision 3,
+   * and Critical Mass 5 -> 3 (its new maximum) with the two points finishing
+   * Incineration at 5/5.
+   * Flagged for the owner to replace with their own build.
+   */
   /*
    * ==========================================================================
    * ARCANE SUBTLETY'S TWO DEAD POINTS BUY THE LAST POINT OF HIT AND MISSILE
@@ -1618,14 +1646,14 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
    * ==========================================================================
    */
   // Arcane, 12
-  arcane_focus: 5,
+  improved_channeling: 5,
   missile_barrage: 2,
   arcane_subtlety: 2,
   arcane_concentration: 3,
   // Fire, 36
   improved_fire_blast: 2,
-  incineration: 3,
-  improved_fireball: 5,
+  incineration: 5,
+  accelerant: 5,
   ignite: 5,
   /*
    * ROUND 78: BURNING SOUL 2 AND ONE MASTER OF ELEMENTS RANK BUY IMPROVED
@@ -1640,12 +1668,12 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
   improved_scorch: 3,
   heating_up: 1,
   master_of_elements: 3,
-  critical_mass: 5,
+  critical_mass: 3,
   blast_wave: 1,
   fire_power: 3,
   combustion: 1,
   // Frost, 3
-  elemental_precision: 3,
+  precision: 3,
 };
 
 /**
@@ -3639,9 +3667,12 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * buff is load-bearing and its lead is not.
        * ==================================================================
        */
-      // Ice Barrier at T-10, the owner's (round 55).
+      /*
+       * ICE BARRIER AT T-10 WAS THE OWNER'S (round 55) AND IS GONE: at
+       * 1.60.1.70707 it is a talent this build does not take, and the owner
+       * ruled that only a build taking it gets its Frost damage.
+       */
       precombat: [
-        ...before(10, 'ice_barrier'),
         ...before(4, 'mage_armor'),
         ...before(2.5, 'frostfire_bolt'),
       ],

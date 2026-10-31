@@ -213,11 +213,8 @@ export const MAGE_MULTI_TARGET: MultiTargetDefaults = {
   mage_frostfire: {
     name: 'Mage (Frostfire) -- AoE',
     entries: FROSTFIRE_AREA,
-    precombat: [
-      { abilityId: 'ice_barrier', secondsBefore: 10 },
-      { abilityId: 'mage_armor', secondsBefore: 4 },
-      pull,
-    ],
+    // No Ice Barrier since 1.60.1.70707: a talent this build does not take.
+    precombat: [{ abilityId: 'mage_armor', secondsBefore: 4 }, pull],
   },
   mage_arcane: {
     name: 'Mage (Arcane) -- AoE',

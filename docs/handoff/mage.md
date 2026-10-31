@@ -8,6 +8,22 @@ directory for what the census columns mean and how to reprint every figure below
 
 ---
 
+## Client build 1.60.1.70707 — the tree, and Ice Barrier on the talent
+
+The tree was recaptured from foreverchanges.pro and every Mage build remapped:
+see HANDOVER round 88 for the table. What to know before touching the class:
+
+- **Ice Barrier is talent-granted.** Only a build with the point knows it, so
+  only the Frost Mage gets the +20% Frost damage; Frostfire does not.
+- **Precision is all-spell hit**, replacing Elemental Precision (Frost and Fire)
+  and Arcane Focus (Arcane).
+- **Winter's Chill is spent by the next Cone of Cold** and adds 7% spell power
+  a stack there; only Frostbolt and an empowered Ice Lance apply it.
+- **Ice Lance has an 8 second cooldown** and a x4 frozen multiplier, with the
+  coefficient at `1.5 / 3.5 / 4`.
+- **Four builds are our remaps**, flagged in `presets.ts`, until the owner sends
+  new URLs.
+
 ## Client build 1.60.1.70170 — two renames and a charge count
 
 **NO BUILD CHANGED and no figure moved outside its interval.** Fire 874.1 → 877.7,

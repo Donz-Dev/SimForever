@@ -1,6 +1,6 @@
 {
  "class": "mage",
- "source": "https://talentsforever.com/talents.js",
+ "source": "https://foreverchanges.pro/talents/mage",
  "structure": "src/data/talents/mage.json",
  "talents": {
   "wand_specialization": {
@@ -13,24 +13,11 @@
     25
    ]
   },
-  "arcane_focus": {
-   "name": "Arcane Focus",
-   "tree": "arcane",
-   "ranks": 5,
-   "text": "Improves your chance to hit with Arcane spells by {0}%.",
-   "values": [
-    1,
-    2,
-    3,
-    4,
-    5
-   ]
-  },
   "improved_channeling": {
    "name": "Improved Channeling",
    "tree": "arcane",
    "ranks": 5,
-   "text": "Gives you a {0}% chance to avoid interruption caused by damage while channeling Arcane Missiles and a {1}% chance while casting Arcane Blast or Arcane Wrath.",
+   "text": "Gives your Arcane Missiles spell a {0}% chance and your Arcane Blast and Arcane Wrath spells a {1}% chance to not lose casting time when you take damage.",
    "values": [
     [
      20,
@@ -54,28 +41,15 @@
     ]
    ]
   },
-  "missile_barrage": {
-   "name": "Missile Barrage",
+  "arcane_resilience": {
+   "name": "Arcane Resilience",
    "tree": "arcane",
-   "ranks": 2,
-   "text": "Gives your Arcane Blast spell a {0}% chance, your Arcane Missile hits a {1}% chance, and your Arcane Wrath, Fireball, Frostbolt, and Frostfire Bolt spells a {2}% chance to reduce the channeled duration of your next Arcane Missiles spell by {3}%, reduce the Mana cost by {4}%, and missiles fire every {5} sec.",
+   "ranks": 3,
+   "text": "Increases your Armor by an amount equal to {0}% of your Intellect.",
    "values": [
-    [
-     20,
-     5,
-     10,
-     50,
-     100,
-     0.5
-    ],
-    [
-     40,
-     10,
-     20,
-     50,
-     100,
-     0.5
-    ]
+    25,
+    50,
+    75
    ]
   },
   "arcane_subtlety": {
@@ -140,14 +114,26 @@
     ]
    ]
   },
-  "arcane_resilience": {
-   "name": "Arcane Resilience",
+  "missile_barrage": {
+   "name": "Missile Barrage",
    "tree": "arcane",
    "ranks": 2,
-   "text": "Increases your Armor by an amount equal to {0}% of your Intellect.",
+   "text": "Gives your Arcane Blast spell a {0}% chance, and your Arcane Wrath, Fireball, Frostbolt, Frost Blast, and Frostfire Bolt spells a {1}% chance to reduce the channeled duration of your next Arcane Missiles spell by {2}%, reduce the Mana cost by {3}%, and missiles fire every {4} sec.",
    "values": [
-    25,
-    50
+    [
+     20,
+     10,
+     50,
+     100,
+     0.5
+    ],
+    [
+     40,
+     20,
+     50,
+     100,
+     0.5
+    ]
    ]
   },
   "arcane_geometry": {
@@ -175,11 +161,11 @@
    "name": "Arcane Blast",
    "tree": "arcane",
    "ranks": 1,
-   "text": "Blasts the target with energy, dealing 57 to 65 Arcane damage. Each time you cast Arcane Blast, the damage of all your other spells is increased by 10% and the mana cost of Arcane Blast is increased by 175%. Effect stacks up to 4 times and lasts 8 sec or until any other damage spell is cast.",
+   "text": "Blasts the target with energy, dealing 34 to 38 Arcane damage. Each time you cast Arcane Blast, you gain 12% of your Intellect as Spell Damage and the mana cost of Arcane Blast is increased by 100%. Effect stacks up to 4 times and lasts 18 sec from time of initial application.",
    "values": [
-    10
+    12
    ],
-   "note": "single rank; the 10 filled in by hand per this directory's README -- it is the +10% a stack to all your OTHER spells, and a single-rank talent has no variable the calculator can identify. The 175% cost escalation is the other number in the same sentence and is a constant beside the aura"
+   "note": "single rank; the 12 filled in by hand per this directory's README -- it is the 12% of Intellect gained as spell damage a stack (1.60.1.70707), and a single-rank talent has no variable the importer can identify. The 100% cost escalation and the 18 sec are the other numbers in the same sentence and are constants beside the aura. The entry carried the eight-second redesign's text until this refresh, because the importer keeps a hand-filled entry whole."
   },
   "arcane_shielding": {
    "name": "Arcane Shielding",
@@ -290,38 +276,24 @@
    "values": null,
    "note": "single rank"
   },
-  "improved_fire_blast": {
-   "name": "Improved Fire Blast",
-   "tree": "fire",
-   "ranks": 2,
-   "text": "Reduces the cooldown of your Fire Blast spell by {0} sec and increases its range by {1} yards.",
-   "values": [
-    [
-     1,
-     8
-    ],
-    [
-     2,
-     15
-    ]
-   ]
-  },
   "incineration": {
    "name": "Incineration",
    "tree": "fire",
-   "ranks": 3,
+   "ranks": 5,
    "text": "Increases the critical strike chance of your Fire Blast, Ice Lance, Arcane Blast, and Scorch spells by {0}%.",
    "values": [
     2,
     4,
-    6
+    6,
+    8,
+    10
    ]
   },
-  "improved_fireball": {
-   "name": "Improved Fireball",
+  "accelerant": {
+   "name": "Accelerant",
    "tree": "fire",
    "ranks": 5,
-   "text": "Reduces the casting time of your Fireball and Frostfire Bolt spells by {0} sec.",
+   "text": "Reduces the casting time of your Fireball, Frostfire Bolt, and Arcane Wrath spells by {0} sec.",
    "values": [
     0.1,
     0.2,
@@ -427,6 +399,22 @@
    "values": null,
    "note": "single rank"
   },
+  "improved_fire_blast": {
+   "name": "Improved Fire Blast",
+   "tree": "fire",
+   "ranks": 2,
+   "text": "Reduces the cooldown of your Fire Blast spell by {0} sec and increases its range by {1} yards.",
+   "values": [
+    [
+     1,
+     8
+    ],
+    [
+     2,
+     15
+    ]
+   ]
+  },
   "improved_scorch": {
    "name": "Improved Scorch",
    "tree": "fire",
@@ -487,14 +475,12 @@
   "critical_mass": {
    "name": "Critical Mass",
    "tree": "fire",
-   "ranks": 5,
+   "ranks": 3,
    "text": "Increases the critical strike chance of your Fire spells by {0}%.",
    "values": [
     2,
     4,
-    6,
-    8,
-    10
+    6
    ]
   },
   "blast_wave": {
@@ -539,14 +525,16 @@
    "name": "Frost Warding",
    "tree": "frost",
    "ranks": 2,
-   "text": "Increases the Armor and resistance given by your Frost Armor and Ice Armor spells by {0}%. In addition, gives your Frost Ward a {1}% chance to reflect Frost spells and effects while active.",
+   "text": "Increases the Armor and resistances granted by your Frost Armor and Ice Armor spells by {0}%, gives your Frost Ward a {1}% chance to negate the warded damage spell, and increases the amount absorbed by your Ice Barrier and Frost Ward by {2}%.",
    "values": [
     [
      15,
+     10,
      10
     ],
     [
      30,
+     20,
      20
     ]
    ]
@@ -564,11 +552,11 @@
     0.5
    ]
   },
-  "elemental_precision": {
-   "name": "Elemental Precision",
+  "precision": {
+   "name": "Precision",
    "tree": "frost",
    "ranks": 3,
-   "text": "Improves your chance to hit with Frost and Fire spells by {0}%.",
+   "text": "Improves your chance to hit with all spells by {0}%.",
    "values": [
     2,
     4,
@@ -682,7 +670,7 @@
    "name": "Ice Lance",
    "tree": "frost",
    "ranks": 1,
-   "text": "Deals 28 to 32 Frost damage to an enemy target. Deals 200% increased damage to Frozen targets.",
+   "text": "Deals 28 to 32 Frost damage to an enemy target. Deals 300% increased damage to Frozen targets.",
    "values": null,
    "note": "single rank"
   },
@@ -690,7 +678,7 @@
    "name": "Arctic Reach",
    "tree": "frost",
    "ranks": 2,
-   "text": "Increases the range of your Frostbolt, Frost Blast, and Blizzard spells and the radius of your Frost Nova and Cone of Cold spells by {0}%.",
+   "text": "Increases the range of your Frostbolt, Frost Blast, Ice Lance, and Blizzard spells and the radius of your Frost Nova and Cone of Cold spells by {0}%.",
    "values": [
     10,
     20
@@ -756,31 +744,36 @@
    "name": "Winter's Chill",
    "tree": "frost",
    "ranks": 5,
-   "text": "Gives your Frost damage spells a {0}% chance to apply the Winter's Chill effect, which increases the damage done by your Cone of Cold spell to the target by {1}%, stacking up to {2} times.",
+   "text": "Gives your Frostbolt, Frost Blast, and Fingers of Frost empowered Ice Lance spells a {0}% chance to apply Winter's Chill, increasing the target's damage taken from your next Cone of Cold by {1}% and it gains an additional {2}% of your spell damage, stacking up to {3} times.",
    "values": [
     [
      20,
-     40,
+     20,
+     7,
      5
     ],
     [
      40,
-     40,
+     20,
+     7,
      5
     ],
     [
      60,
-     40,
+     20,
+     7,
      5
     ],
     [
      80,
-     40,
+     20,
+     7,
      5
     ],
     [
      100,
-     40,
+     20,
+     7,
      5
     ]
    ]
@@ -789,7 +782,7 @@
    "name": "Ice Barrier",
    "tree": "frost",
    "ranks": 1,
-   "text": "Instantly shields you, absorbing 447 damage. Lasts 1 min. While the shield holds, your spellcasts will not be interrupted or delayed from taking damage.",
+   "text": "Shield yourself, absorbing 493 damage and increasing your Frost damage by 15% for 1 min. While shielded, your Frost damage is increased by an additional 5% and you do not lose casting time when you take damage.",
    "values": null,
    "note": "single rank"
   }

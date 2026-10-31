@@ -807,8 +807,9 @@ export const ARCANE_BLAST_MAX_STACKS = 4;
  * FIFTEEN SECONDS, FROM FIRST APPLICATION. Was eight, and was also ended early
  * by any other damage spell -- see above.
  */
-export const ARCANE_BLAST_DURATION_MS = seconds(15);
-export const ARCANE_BLAST_COST_INCREASE_PER_STACK = 1.75;
+export const ARCANE_BLAST_DURATION_MS = seconds(18);
+/** 100% a stack since 1.60.1.70707, where it was 175%. */
+export const ARCANE_BLAST_COST_INCREASE_PER_STACK = 1.0;
 /**
  * "15% of their Intellect as additional Spell Damage", per stack.
  *
@@ -819,7 +820,7 @@ export const ARCANE_BLAST_COST_INCREASE_PER_STACK = 1.75;
  * merges rather than overwrites and deleting it would be an edit to captured
  * data for no behavioural reason.
  */
-export const ARCANE_BLAST_INTELLECT_TO_SPELL_POWER = 0.15;
+export const ARCANE_BLAST_INTELLECT_TO_SPELL_POWER = 0.12;
 
 export const ARCANE_BLAST_UNMODELLED =
   'Its Intellect share is read at the FIRST application and frozen for the ' +
@@ -1120,8 +1121,18 @@ export const FINGERS_OF_FROST: AuraDefinition = fingersOfFrostAura(2);
  * ============================================================================
  */
 export const WINTERS_CHILL_DURATION_MS = seconds(15);
-/** 40% a stack at every rank. Checked against the values file by a test. */
-export const WINTERS_CHILL_DAMAGE_PER_STACK = 40;
+/**
+ * 20% a stack at every rank since 1.60.1.70707, where the owner's figure was
+ * 40. Checked against the values file by a test.
+ */
+export const WINTERS_CHILL_DAMAGE_PER_STACK = 20;
+/**
+ * "And it gains an additional 7% of your spell damage", per stack -- read as
+ * 0.07 more spell power COEFFICIENT on the Cone of Cold a stack, added in Cone
+ * of Cold's own `onCast` because no modifier field carries a coefficient.
+ * FLAGGED: a reading of an unstated unit. Checked against the values file.
+ */
+export const WINTERS_CHILL_SPELL_POWER_PER_STACK = 7;
 /**
  * The one spell the damage bonus names, and NOT the set that applies it.
  *
@@ -1282,15 +1293,26 @@ export const MAGE_ARMOR_REGEN_BYPASS = 50;
 export const MAGE_ARMOR_MAGIC_RESISTANCE = 15;
 
 /**
- * Ice Barrier's buff, the OWNER'S figures (round 55): "+6% Frost damage for 60
- * seconds". The client's tooltip is an 819-point absorb; nothing attacks a
- * Mage here, so the absorb would do nothing, and the owner stated the buff.
+ * Ice Barrier's buff, 1.60.1.70707: "increasing your Frost damage by 15% for 1
+ * min. While shielded, your Frost damage is increased by an additional 5%". It
+ * was the owner's +6% (round 55), which the patch note reads as 3% and 3%.
+ *
+ * TWENTY PERCENT IN ONE FIGURE, ADDED AND NOT MULTIPLIED, the reading the old
+ * pair already took -- 3 and 3 were 1.06, not 1.0609. Multiplied, 15 and 5
+ * would be 1.2075. And the shield holds the whole minute, because nothing
+ * attacks a Mage here, so the second half is never lost. Only a build taking
+ * the talent knows the ability (`mageEffects.ts`).
+ *
+ * The absorb itself would do nothing; nothing attacks a Mage.
  *
  * A SCHOOL BUFF ON THE AURA, `damageDoneBySchool` -- and Frostfire Bolt, which
  * counts as Frost as well as Fire, collects it through `countsAsSchools`. See
  * `Combatant.damageDoneMultiplierFor`.
  */
-export const ICE_BARRIER_FROST_DAMAGE = 1.06;
+export const ICE_BARRIER_FROST_DAMAGE_PERCENT = 15;
+export const ICE_BARRIER_SHIELDED_FROST_DAMAGE_PERCENT = 5;
+export const ICE_BARRIER_FROST_DAMAGE =
+  1 + (ICE_BARRIER_FROST_DAMAGE_PERCENT + ICE_BARRIER_SHIELDED_FROST_DAMAGE_PERCENT) / 100;
 export const ICE_BARRIER_DURATION_MS = seconds(60);
 
 export const ICE_BARRIER: AuraDefinition = {

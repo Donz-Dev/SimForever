@@ -26,6 +26,8 @@ import {
   FINGERS_OF_FROST,
   MAGE_ARMOR,
   ICE_BARRIER,
+  WINTERS_CHILL,
+  WINTERS_CHILL_SPELL_POWER_PER_STACK,
   MAGE_ARMOR_MAGIC_RESISTANCE,
   PRESENCE_OF_MIND,
   PYROBLAST_CAST_MS,
@@ -430,7 +432,13 @@ export const ICE_LANCE_DAMAGE = midpoint(133, 157);
  * that the note which caused the question twice is gone.
  * ============================================================================
  */
-export const ICE_LANCE_FROZEN_MULTIPLIER = 3;
+/*
+ * FOUR SINCE 1.60.1.70707, "300% more damage to Frozen targets instead of
+ * 200%". The coefficient's divisor follows it, on the owner's own standing
+ * ruling about these two numbers ("intended" meant the PRODUCT) -- see
+ * `ICE_LANCE_SP_COEFFICIENT`. Not a question.
+ */
+export const ICE_LANCE_FROZEN_MULTIPLIER = 4;
 export const ICE_LANCE_COEFFICIENT = ICE_LANCE_SP_COEFFICIENT;
 
 /*
@@ -517,6 +525,12 @@ export const ICE_LANCE: Ability = {
   id: 'ice_lance',
   name: 'Ice Lance',
   cost: { resource: 'mana', amount: 160 },
+  /*
+   * EIGHT SECONDS AT EVERY RANK since 1.60.1.70707: "Ranks 2 to 6 now have the
+   * 8 sec cooldown of rank 1 too. Only rank 1, the talent's, had it." A level 60
+   * casts the top rank, which had none.
+   */
+  cooldownMs: seconds(8),
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -810,8 +824,8 @@ export const ICE_BARRIER_ABILITY: Ability = {
     simulation.applyAura(caster, ICE_BARRIER, caster.id);
   },
   unmodelled:
-    'Its 819-point absorb does nothing: no Mage profile is attacked. The +6% ' +
-    'Frost damage the owner stated is modelled in full.',
+    'Its absorb does nothing: no Mage profile is attacked. The +15% and +5% ' +
+    'Frost damage are modelled in full, on a build that takes the talent.',
 };
 
 export const MAGE_ARMOR_ABILITY: Ability = {
@@ -1076,6 +1090,15 @@ export const CONE_OF_COLD: Ability = {
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
+    /*
+     * WINTER'S CHILL, 1.60.1.70707: "increasing the target's damage taken from
+     * your NEXT Cone of Cold by 20% and it gains an additional 7% of your spell
+     * damage". The damage half is the debuff's own modifier; the spell power
+     * half is added here, since no modifier carries a coefficient; and "next"
+     * is the debuff being spent by this cast.
+     */
+    const chill = target.auras.get(WINTERS_CHILL.id);
+    const stacks = chill && chill.sourceId === caster.id ? chill.stacks : 0;
     dealDamage(simulation, {
       source: caster,
       target,
@@ -1083,9 +1106,11 @@ export const CONE_OF_COLD: Ability = {
       abilityName: ability.name,
       school: 'frost',
       baseAmount: CONE_OF_COLD_DAMAGE,
-      powerCoefficient: CONE_OF_COLD_SP_COEFFICIENT,
+      powerCoefficient:
+        CONE_OF_COLD_SP_COEFFICIENT + (stacks * WINTERS_CHILL_SPELL_POWER_PER_STACK) / 100,
       attackTable: ability.attackTable,
     });
+    if (stacks > 0) target.auras.remove(simulation, WINTERS_CHILL.id);
   },
 };
 
