@@ -458,7 +458,13 @@ export const PALADIN_PROTECTION: AplList = {
   entries: [
   /*
    * ==========================================================================
-   * SEAL OF RIGHTEOUSNESS IS THE ONLY SEAL IN THIS LIST NOW, and it replaces
+   * SEAL OF FURY SINCE ROUND 90, the owner's instruction: "ensure Prot Pally is
+   * using Seal of Fury instead of Seal of Righteousness and that the absorb is
+   * working correctly". Its shield half is registered for a shield-holding
+   * Paladin only (`PALADIN_SHIELD_REACTIONS`), which this build is. The note
+   * below is the round it replaced, kept for its "is not up" reasoning.
+   *
+   * SEAL OF RIGHTEOUSNESS WAS THE ONLY SEAL IN THIS LIST, and it replaced
    * TWO entries: the Seal of the Crusader that opened it and the Seal of Fury
    * that was maintained below Swift Judgement.
    *
@@ -475,8 +481,8 @@ export const PALADIN_PROTECTION: AplList = {
    * ==========================================================================
    */
   {
-    abilityId: 'seal_of_righteousness',
-    condition: selfMissing('seal_of_righteousness'),
+    abilityId: 'seal_of_fury',
+    condition: selfMissing('seal_of_fury'),
   },
   /*
    * RIGHTEOUS FURY: +33% on all threat and a further 90% on Holy since

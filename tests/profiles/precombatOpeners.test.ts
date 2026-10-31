@@ -185,14 +185,14 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
   ],
   prot_pally: [
     [4.5, 'righteous_fury'],
-    [3, 'seal_of_righteousness'],
+    [3, 'seal_of_fury'],
     [1.5, 'holy_shield'],
     [0, 'judgement'],
   ],
   // Protribution copies Prot Pally's opener, by the owner's instruction.
   protribution: [
     [4.5, 'righteous_fury'],
-    [3, 'seal_of_righteousness'],
+    [3, 'seal_of_fury'],
     [1.5, 'holy_shield'],
     [0, 'judgement'],
   ],
