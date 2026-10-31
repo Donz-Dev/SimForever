@@ -118,9 +118,12 @@ export function resolveHealing(
    */
   const againstTarget = request.external || !request.abilityId ? 0 : request.target.abilityModifierAgainst(request.abilityId).critBonus ?? 0;
   const critChance =
-    spellCritChanceFrom(source.stats.effective) + ((modifier?.critBonus ?? 0) + againstTarget) / 100;
+    spellCritChanceFrom(source.stats.effective) +
+    ((modifier?.critBonus ?? 0) + (modifier?.healingCritBonus ?? 0) + againstTarget) / 100;
   const critical = (request.canCrit ?? true) && rng.rollChance(Math.min(1, critChance));
-  const afterCrit = critical ? scaled * HEALING_CRIT_MULTIPLIER : scaled;
+  const afterCrit = critical
+    ? scaled * (HEALING_CRIT_MULTIPLIER + (modifier?.healingCritMultiplierBonus ?? 0))
+    : scaled;
 
   const raw = request.external
     ? afterCrit

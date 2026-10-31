@@ -65,7 +65,7 @@ export function rotationFor(
   // by a capstone: all three builds are `caster`, and the Frostfire one is
   // 0/29/22 with no 31-point talent for the Rogue's test to find.
   if (characterClass === 'mage') return mageRotation(talents ?? {});
-  // AND THE PALADIN BY CAPSTONE, the Rogue's test: Holy Shield, Twist of Light
+  // AND THE PALADIN BY CAPSTONE, the Rogue's test: Holy Shield, Unsealed Wrath
   // and Holy Shock each belong to exactly one of the three builds.
   if (characterClass === 'paladin') return paladinRotation(talents ?? {});
   /*

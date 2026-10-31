@@ -107,6 +107,58 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 86: the Paladin tree at client build 1.60.1.70707
+
+The owner listed the patch; talentsforever.com still served the old tree, so it
+was captured off [foreverchanges.pro](https://foreverchanges.pro/talents/paladin)
+the way the Druid's was in round 85 -- read in a browser, hashed there and on
+disk (`d69546da...`), into
+`tools/data/foreverchanges-paladin-talents-70707.json`, and imported with
+`--capture paladin=...`. 50 talents to **51**.
+
+| | what changed |
+| --- | --- |
+| out | **One-Handed Weapon Specialization**, **Improved Seal of Fury**, **Instrument of Law** (its Hammer of Wrath second went to Champion of the Light, its threat cut to Two-Handed Weapon Specialization), **Voice of Truth** (a trainer spell now) |
+| renamed | **Twist of Light -> Unsealed Wrath**, reworked: every melee attack stores a copy of the active seal (15 s, up to 3), and an attack under a different seal fires every copy at its own chance. Its 20% off seal mana is gone |
+| in | **Shieldsworn** (Protection capstone: Holy Strike -4 s cooldown, and a landed Holy Strike sets off Holy Shield and Shield Specialization with no charge or cooldown spent), **Boundless Light** (+30% crit on Holy Shock heals), **Oath of Light** (amounts are 0 in the data -- not declared), **Stoicism** and **Turn Evil** (crowd control) |
+| reworked | **Holy Power** heal crit damage +50% (was crit chance); **Conviction** 3 ranks, 6% spells AND attacks; **Two-Handed Weapon Specialization** +6% PHYSICAL damage whatever is held, -20% threat while a two-hander is; **Vindication** debuff only; **Swift Judgement** a second Judgement, free, on its own 1 min cooldown; **Sacred Duty** Forbearance -10 s instead of +4% stamina; **Champion of the Light** 5 ranks to the same 60%, plus 1 s off Hammer of Wrath |
+| values | **Redoubt** 30% (was 20), **Improved Righteous Fury** 9% (was 6), **Iron Creed** 3 ranks 30%/6% (was 25%/10%), **Divine Precision** 2 ranks 8% (was 18) and no Holy Shock prerequisite, **Shield Specialization** 2 ranks, **Spiritual Focus**, **Reverence** and **Improved Seals** re-ranked to the same last rank |
+| spells | **Righteous Fury** +33% ALL threat and a further 90% on Holy; **Light's Vigil** friendly targets only (its enemy damage and refund are gone); **Seal of Fury**'s taunt 3 s (not modelled); **Holy Shield** a new rank 1 at level 30 |
+| moved | Holy Shield to row 5 (not the capstone), Holy Conduit to Holy, Divine Intellect to Protection, Unyielding Faith to Retribution, and nineteen more |
+
+**TWO ENGINE FIELDS**, both because Holy Shock heals and damages under one id:
+`AbilityModifier.healingCritMultiplierBonus` (Holy Power) and
+`healingCritBonus` (Boundless Light), read only by `healing.ts`, with talent
+kinds `abilityHealingCritDamage` and `abilityHealingCrit`.
+
+**THE PATCH-NOTE OVERRIDE LAYER IS DELETED AGAIN**: its last row, Champion of the
+Light's 20/40/60, is shipped by the client as 12/24/36/48/60.
+
+**ALL FOUR PALADIN BUILDS ARE PROVISIONAL.** None of the owner's URLs decodes on
+the new tree -- every build lost most of its points to removed or moved talents
+-- so each is the smallest legal edit that keeps its capstone: Seal Twist
+**14/6/31** (Unsealed Wrath), Shockadin **23/0/28** (Holy Shock), Prot **12/32/7**
+(Shieldsworn), Holy **31/15/5** (Light's Vigil). Not measured as choices.
+
+**SEAL TWIST SWAPS AT THREE STORED COPIES** (`UNSEALED_WRATH_SWAP_STACKS`), the
+talent's cap. Paired at 200 fights of 120 s it is indistinguishable from two
+(+7.33 +/- 10.82) and one (-2.96 +/- 11.51); `tools/optimise/sealTwist707.ts`.
+`USES=1` at 3 seeds x 10, 60 s: Seal Twist **897.0 +/- 34.6** with Unsealed
+Wrath 14.6% of its damage, Shockadin 909.8, Prot 619.8 -- **not a baseline**, and
+not comparable to the published rows, which are another tree's builds.
+
+**QUESTIONS FOR THE OWNER**, each flagged where it is implemented:
+
+| | the question | what is implemented |
+| --- | --- | --- |
+| 1 | the four builds | provisional, above |
+| 2 | Holy Shield's 221 rank has no level and no cost in the data, and reads "for 0 sec" | kept at 221; the highest rank with full data is 153 at level 50 |
+| 3 | Righteous Fury's "additional 90%" on Holy | MULTIPLIED, 1.33 x 1.9 = 2.527, on the standing ruling; adding would be 2.23 |
+| 4 | Unsealed Wrath: does the consuming attack also store its own seal, and does Holy Strike store one | yes, and no (`carriesSeal`) |
+| 5 | Shieldsworn: does Shield Specialization's running 3 s cooldown refuse the strike's mana | no: the strike neither starts nor reads it |
+| 6 | Swift Judgement off the global cooldown -- that ruling was for the old reset | kept off |
+| 7 | Salvation is no longer taught, and is a raid buff on every non-tank preset | kept; it moves TPS only |
+
 ## Round 85: the Druid tree at client build 1.60.1.70707, and the Cat's bite pool
 
 The owner gave a new Cat build -- **9/32/10**, read off
@@ -12489,11 +12541,11 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Fire Mage | Mage | 14/34/3 (then; 12/36/3 since round 80) | 1020.7 | | **Enh Shaman** | Shaman | 19/32/0 (then; 18/31/2 since round 80) | **838.8** |
 | BM Hunter | Hunter | 31/20/0 | 968.2 | | Moonkin | Druid | 41/0/10 (then; 38/0/13 since round 78) | 820.3 |
 | Cat Druid | Druid | 9/34/8 (then; 9/32/10 since 1.60.1.70707) | 966.9 | | Ele Shaman | Shaman | 32/11/8 | 792.8 |
-| Seal Twist Ret | Paladin | 15/0/36 (then; 16/0/35 since round 78) | 948.6 | | Pure Hemo | Rogue | 19/8/24 | 775.9 |
+| Seal Twist Ret | Paladin | 15/0/36 (then; 14/6/31 since 1.60.1.70707) | 948.6 | | Pure Hemo | Rogue | 19/8/24 | 775.9 |
 | Hawk Melee | Hunter | 16/11/24 | 937.6 | | Venom Rogue | Rogue | 33/16/2 | 771.6 |
 | Shockadin 2H | Paladin | 23/0/28 | 935.2 | | SM/DS | Warlock | 35/11/5 | 769.4 |
 | Shadow Priest | Priest | 14/2/35 | 931.0 | | Rupture Rogue | Rogue | 12/8/31 | 754.9 |
-| 2H Arms | Warrior | 39/10/2 | 927.0 | | Prot Pally | Paladin | 8/34/9 | 551.1 |
+| 2H Arms | Warrior | 39/10/2 | 927.0 | | Prot Pally | Paladin | 8/34/9 (then; 12/32/7 since 1.60.1.70707) | 551.1 |
 elock | Warlock | 5/11/35 | 910.5 | | Prot Warr | Warrior | 17/0/34 (then; 17/2/32 since round 78) | 499.5 |
 | Combat Rogue | Rogue | 18/33/0 | 899.5 | | Bear Druid | Druid | 9/42/0 (then; 9/37/5 since 1.60.1.70707) | 432.8 |
 

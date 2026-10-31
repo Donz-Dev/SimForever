@@ -248,10 +248,13 @@ describe('where it lands, and where it correctly does not', () => {
      * What it no longer checks is an override ARRIVING -- that claim went with
      * the layer, and this assertion would now pass whether the client's row or
      * a note supplied the 30.
+     *
+     * AND AT 1.60.1.70707 IT IS FIVE RANKS, 12 A RANK TO THE SAME 60% -- so the
+     * provisional Shockadin's 3/5 is 36%, written out here as 3 x 12.
      * ========================================================================
      */
     expect(shockadin.stats.get('spellPower')).toBeCloseTo(
-      shockadin.stats.get('intellect') * 0.6,
+      shockadin.stats.get('intellect') * ((3 * 12) / 100),
       6,
     );
     expect(shockadin.abilities.has('seal_of_righteousness')).toBe(true);

@@ -6,16 +6,16 @@ import {
   SEAL_OF_FURY_SP_COEFFICIENT,
 } from '../combat/coefficients';
 import {
-  ECHO_AURA_IDS,
-  IMPROVED_SEAL_OF_FURY_FLAG,
   JUDGEMENT_OF_THE_CRUSADER,
   SEAL_OF_COMMAND_WEAPON_FRACTION,
   SEAL_OF_FURY_DAMAGE,
-  improvedSealOfFuryMana,
+  UNSEALED_WRATH_AURA_IDS,
+  activeSeal,
   sealDamage,
   sealOfFuryShield,
   sealOfRighteousnessBase,
   sealOfRighteousnessCoefficient,
+  unsealedWrathAura,
 } from '../auras/paladin';
 
 /**
@@ -363,24 +363,8 @@ export function sealOfFuryShieldProc(): Reaction {
     outcomes: [...LANDED],
     canTrigger: (_context, actor, attack) =>
       carriesSeal(attack) && actor.auras.has('seal_of_fury'),
-    onTrigger: (context, actor, attack) => {
-      /*
-       * IMPROVED SEAL OF FURY ARRIVES AS A NUMBER, NOT AS A LOOKUP INSIDE THE
-       * AURA. The talent sets a flag on the seal ABILITY -- the Twist of Light
-       * pattern, and per character by construction because `applyTalentChanges`
-       * hands each character its own copy -- and this reads it once here. Zero
-       * without the talent, and the shield then simply returns nothing.
-       *
-       * THE LEVEL DIFFERENCE IS THE ATTACKER'S, and the enemy being hit is the
-       * enemy hitting back in this encounter. Read from the two combatants
-       * rather than assumed to be three, so a change of target level follows.
-       */
-      const hasTalent =
-        (actor.abilities.get('seal_of_fury')?.bonuses?.[IMPROVED_SEAL_OF_FURY_FLAG] ?? 0) > 0;
-      const mana = hasTalent
-        ? improvedSealOfFuryMana(attack.defender.level - actor.level)
-        : 0;
-      context.applyAura(actor, sealOfFuryShield(mana), actor.id);
+    onTrigger: (context, actor) => {
+      context.applyAura(actor, sealOfFuryShield(), actor.id);
     },
   };
 }
@@ -418,94 +402,102 @@ export function judgementOfTheCrusaderRefresh(): Reaction {
 }
 
 /**
- * Twist of Light's Echo: the next melee attack applies the REPLACED seal.
+ * Fire one stored copy of a seal: its "normal chance to activate".
+ *
+ * Seal of Righteousness and Seal of Fury deal their hit on every melee attack,
+ * so each stored copy is a hit; Seal of Command's effect IS a chance, so each
+ * copy rolls the seal's own PPM -- the reading the owner ruled for Twist of
+ * Light's Echo, which this replaced. Seal of the Crusader has no per-attack
+ * effect to fire: its haste and attack power are the seal's AURA.
+ */
+function fireStoredSeal(
+  context: SimulationContext,
+  actor: Combatant,
+  attack: AttackEvent,
+  sealId: string,
+): void {
+  if (sealId === 'seal_of_righteousness') {
+    sealHit(
+      context,
+      actor,
+      attack,
+      'unsealed_wrath',
+      'Unsealed Wrath (Seal of Righteousness)',
+      sealOfRighteousnessHit(actor, attack),
+    );
+    return;
+  }
+  if (sealId === 'seal_of_fury') {
+    sealHit(
+      context,
+      actor,
+      attack,
+      'unsealed_wrath',
+      'Unsealed Wrath (Seal of Fury)',
+      sealDamage(SEAL_OF_FURY_DAMAGE, spellPowerAgainst(actor, attack.defender, HOLY), SEAL_OF_FURY_SP_COEFFICIENT),
+    );
+    return;
+  }
+  if (sealId === 'seal_of_command') {
+    if (!rollSealOfCommand(context, actor, attack)) return;
+    sealHit(
+      context,
+      actor,
+      attack,
+      'unsealed_wrath',
+      'Unsealed Wrath (Seal of Command)',
+      // The same normalised weapon share as the seal itself.
+      SEAL_OF_COMMAND_SP_COEFFICIENT * spellPowerAgainst(actor, attack.defender, HOLY),
+      { slot: 'mainHand', fraction: SEAL_OF_COMMAND_WEAPON_FRACTION, normalized: true },
+      true,
+    );
+  }
+}
+
+/**
+ * Unsealed Wrath, the Retribution capstone since 1.60.1.70707 (Twist of Light
+ * renamed and reworked): "Your melee attacks store a copy of your active Seal
+ * for 15 sec, stacking up to 3 times. Landing an attack with a different Seal
+ * consumes all stacks, giving the stored Seal its normal chance to activate
+ * once per stack."
  *
  * ------------------------------------------------------------------------------
- * THE RETRIBUTION CAPSTONE, AND THE REASON A PROFILE IS CALLED "SEAL TWIST".
+ * ONE REACTION DOES BOTH HALVES, in one order: an attack under a DIFFERENT seal
+ * spends what is stored first -- every copy, each firing on this attack -- and
+ * then stores its own seal; an attack under the SAME seal adds a copy, up to
+ * three. So the attack that consumes also starts the next store, which is the
+ * reading where "your melee attacks store" holds of every attack.
  *
- * In Classic this was a timing trick -- swap seals in the window before a
- * swing lands and both resolve, a technique measured in milliseconds. Forever
- * has made it an explicit talent with an explicit trigger, so it can be
- * modelled exactly rather than approximated by a rotation pretending to have
- * millisecond hands.
+ * "MELEE ATTACKS" IS `carriesSeal`, the set every seal already rides on: a
+ * swing or a weapon ability, and not Holy Strike, which carries no seal by the
+ * seal balance pass. The stored copies are seal hits like the seal's own, so
+ * they are not weapon uses and cannot proc a Crusader or store themselves.
  *
- * ONE CHARGE, and it fires BEFORE the seal currently up. Both land on the same
- * swing -- that is the whole point of the talent -- and the echo is removed
- * first so a second echo cannot chain off its own damage.
- *
- * THE ECHOED DAMAGE IS STILL NOT A WEAPON USE, for the same reason every other
- * seal hit is not: it goes through `sealHit`.
+ * "LANDING" IS THE LANDED OUTCOMES, so a miss stores nothing and spends
+ * nothing -- the same set the seal procs fire on.
  * ------------------------------------------------------------------------------
  */
-export function echoProc(): Reaction {
+export function unsealedWrathProc(): Reaction {
   return {
-    id: 'twist_of_light',
+    id: 'unsealed_wrath',
     on: 'dealt',
     outcomes: [...LANDED],
-    canTrigger: (_context, actor, attack) =>
-      carriesSeal(attack) && ECHO_AURA_IDS.some((id) => actor.auras.has(id)),
+    canTrigger: (_context, actor, attack) => carriesSeal(attack) && activeSeal(actor) !== undefined,
     onTrigger: (context, actor, attack) => {
-      const echoId = ECHO_AURA_IDS.find((id) => actor.auras.has(id));
-      if (!echoId) return;
-      actor.auras.remove(context, echoId);
+      const current = activeSeal(actor);
+      if (current === undefined) return;
 
-      const sealId = echoId.replace(/^echo_/, '');
-
-      if (sealId === 'seal_of_righteousness') {
-        sealHit(
-          context,
-          actor,
-          attack,
-          'twist_of_light',
-          'Echo (Seal of Righteousness)',
-          sealOfRighteousnessHit(actor, attack),
-        );
-        return;
+      const storedId = UNSEALED_WRATH_AURA_IDS.find((id) => actor.auras.has(id));
+      if (storedId !== undefined && storedId !== `unsealed_wrath_${current}`) {
+        const copies = actor.auras.stacksOf(storedId);
+        actor.auras.remove(context, storedId);
+        const sealId = storedId.replace(/^unsealed_wrath_/, '');
+        for (let i = 0; i < copies; i++) fireStoredSeal(context, actor, attack, sealId);
       }
 
-      if (sealId === 'seal_of_fury') {
-        sealHit(
-          context,
-          actor,
-          attack,
-          'twist_of_light',
-          'Echo (Seal of Fury)',
-          sealDamage(SEAL_OF_FURY_DAMAGE, spellPowerAgainst(actor, attack.defender, HOLY), SEAL_OF_FURY_SP_COEFFICIENT),
-        );
-        return;
-      }
-
-      if (sealId === 'seal_of_command') {
-        /*
-         * ====================================================================
-         * AN ECHO OF SEAL OF COMMAND ROLLS ITS PPM, AND IT USED TO BE
-         * GUARANTEED. The old reading was that "applies the replaced Seal's
-         * effects" means the seal's HIT -- but Seal of Command's effect IS a
-         * chance to hit, so applying it is rolling it. The owner: it "could
-         * always be triggering a Seal of Command hit, rather than having a
-         * chance to trigger Seal of Command when the echo is active."
-         *
-         * THE CHARGE IS SPENT EITHER WAY, by the next attack that can carry a
-         * seal -- it was removed above, before the dispatch -- so a failed
-         * roll is an echo used up on nothing, exactly as the seal itself
-         * spends a swing that does not proc.
-         * ====================================================================
-         */
-        if (!rollSealOfCommand(context, actor, attack)) return;
-        sealHit(
-          context,
-          actor,
-          attack,
-          'twist_of_light',
-          'Echo (Seal of Command)',
-          // The same normalised weapon share as the seal itself. See above.
-          SEAL_OF_COMMAND_SP_COEFFICIENT * spellPowerAgainst(actor, attack.defender, HOLY),
-          { slot: 'mainHand', fraction: SEAL_OF_COMMAND_WEAPON_FRACTION, normalized: true },
-          true,
-        );
-      }
-      // Seal of the Crusader has no per-swing damage to echo: it is attack
-      // power and haste, which the aura it left behind no longer grants.
+      // A refresh adds a copy up to the cap and restarts the 15 seconds; at
+      // three the window still restarts and the count simply cannot rise.
+      context.applyAura(actor, unsealedWrathAura(current), actor.id);
     },
   };
 }
@@ -515,7 +507,6 @@ export const PALADIN_REACTIONS: readonly Reaction[] = [
   sealOfRighteousnessProc(),
   sealOfCommandProc(),
   sealOfFuryProc(),
-  echoProc(),
   judgementOfTheCrusaderRefresh(),
 ];
 

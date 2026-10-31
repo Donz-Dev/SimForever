@@ -14,7 +14,6 @@ import {
   infusionOfLight,
   HOLY_SHIELD,
   JUDGEMENT_OF_THE_CRUSADER,
-  RIGHTEOUS_FURY_THREAT_PERCENT,
   SEAL_AURA_IDS,
   SEAL_OF_COMMAND,
   SEAL_OF_FURY,
@@ -25,7 +24,6 @@ import {
   TEMPLARS_BULWARK_FORBEARANCE_MS,
   activeSeal,
   consecrationGround,
-  echoAura,
   righteousFury,
 } from '../auras/paladin';
 import {
@@ -104,33 +102,14 @@ const shareOfBase = (fraction: number) => Math.round(PALADIN_BASE_MANA * fractio
  * rather than by each seal, so a new seal cannot forget the rule -- the same
  * reason the global cooldown is derived rather than declared per ability.
  *
- * TWIST OF LIGHT READS THE REPLACEMENT. The talent pays out when a seal is
- * REPLACED, which is exactly this moment and nowhere else, so the echo is
- * granted here and gated on the character actually having the talent.
+ * TWIST OF LIGHT USED TO READ THE REPLACEMENT HERE, granting an Echo of the seal
+ * replaced. Its successor Unsealed Wrath (1.60.1.70707) is granted by ATTACKS
+ * rather than by a swap, so it lives on a reaction and this is a seal again.
  */
-export const TWIST_OF_LIGHT_FLAG = 'twistOfLight';
-
-function castSeal(
-  simulation: SimulationContext,
-  caster: Combatant,
-  seal: AuraDefinition,
-  hasTwistOfLight: boolean,
-): void {
-  const replaced = activeSeal(caster);
-
+function castSeal(simulation: SimulationContext, caster: Combatant, seal: AuraDefinition): void {
   for (const id of SEAL_AURA_IDS) {
     if (id !== seal.id) caster.auras.remove(simulation, id);
   }
-
-  /*
-   * An Echo only for a REPLACEMENT, and only by a different seal. Re-casting
-   * the same seal refreshes it and replaces nothing, which is what the
-   * tooltip's "with a different Seal" says.
-   */
-  if (hasTwistOfLight && replaced !== undefined && replaced !== seal.id) {
-    simulation.applyAura(caster, echoAura(replaced), caster.id);
-  }
-
   simulation.applyAura(caster, seal, caster.id);
 }
 
@@ -149,16 +128,8 @@ const sealAbility = (
   name,
   cost: { resource: 'mana', amount: cost },
   requiresTarget: false,
-  onCast: ({ simulation, caster, ability }) => {
-    /*
-     * THE TALENT ARRIVES ON THE ABILITY, not on the character. Twist of Light
-     * sets an `abilityFlag` on every seal, and `applyTalentChanges` hands each
-     * character its own COPY of the ability -- so reading it here is
-     * per-character by construction. A module-level set keyed on the character
-     * would leak the talent across a Monte Carlo batch, which is the exact bug
-     * that copy exists to prevent.
-     */
-    castSeal(simulation, caster, aura, (ability.bonuses?.[TWIST_OF_LIGHT_FLAG] ?? 0) > 0);
+  onCast: ({ simulation, caster }) => {
+    castSeal(simulation, caster, aura);
   },
   ...(unmodelled ? { unmodelled } : {}),
 });
@@ -302,50 +273,41 @@ export const JUDGEMENT: Ability = {
 };
 
 /**
- * Swift Judgement, granted by the Protection talent.
+ * Swift Judgement, granted by the Protection talent -- REWORKED at 1.60.1.70707:
  *
- * "Finishes the remaining cooldown on your Judgement ability and reduces the
- * Mana cost of your next Judgement by 100%." Only the cooldown reset is
- * modelled: a one-shot cost reduction is a `CastModifier`, which exists, but
- * Judgement's cost is 6% of base mana and the reset is the whole point.
+ *   "Unleash the energy of a Seal spell upon an enemy. Does not consume the
+ *    Seal. Refer to individual Seals for Judgement effect. Does not share a
+ *    cooldown with your Judgement ability."
+ *
+ * ----------------------------------------------------------------------------
+ * A SECOND JUDGEMENT, so it is Judgement's own definition with three things
+ * changed: its id and name, NO COST (the spellbook entry gives none, where
+ * Judgement's is 6% of base mana), and a ONE MINUTE cooldown of its own. The
+ * damage, the table and the seal dispatch are Judgement's, so a judged seal
+ * cannot drift between the two -- and the damage reports under its own row,
+ * because `onCast` names whichever ability was cast.
+ *
+ * IT USED TO RESET JUDGEMENT'S COOLDOWN, and the owner ruled it OFF the global
+ * cooldown so the two Judgements went out back to back. That ruling names this
+ * ability, so it is kept through the rework -- though it was given about a
+ * reset that dealt nothing, and whether a damaging Swift Judgement should take
+ * one is worth re-asking.
+ *
+ * WHAT JUDGEMENT'S TALENTS REACH IS A READING OF THEIR OWN WORDS. Improved
+ * Judgement shortens "your Judgement ability" and does not touch this one's
+ * minute; Sanctified Judgement's refund names "your Judgement spell" too. Both
+ * are keyed by the id `judgement`, so neither reaches it.
+ * ----------------------------------------------------------------------------
  */
+export const SWIFT_JUDGEMENT_COOLDOWN_MS = seconds(60);
+
 export const SWIFT_JUDGEMENT: Ability = {
+  ...JUDGEMENT,
   id: 'swift_judgement',
   name: 'Swift Judgement',
-  cooldownMs: seconds(60),
-  requiresTarget: false,
-  /*
-   * ==========================================================================
-   * OFF THE GLOBAL COOLDOWN, BY THE OWNER'S RULING, and it was on one.
-   *
-   * WHAT IT WAS WORTH WHILE IT TOOK ONE: a global cooldown spent dealing
-   * nothing, in exchange for a Judgement arriving a global cooldown sooner --
-   * which is close enough to nothing that a DPS figure could not say. That is
-   * why this is a RULING rather than a measurement: an ability wrongly taking
-   * a global cooldown still has the right cooldown, the right cost and the
-   * right effect, so the mistake is invisible everywhere except the figure.
-   *
-   * BEING OFF IT MEANS ONE THING -- the ability does not START a global
-   * cooldown -- and it is still BLOCKED by one already running. What it buys
-   * is that the Judgement it resets can go out in the SAME decision window
-   * rather than 1.5 seconds later, which is what "Judgement, Swift Judgement,
-   * Judgement" was always meant to be.
-   *
-   * IT STILL COSTS ONE `ROTATION_POLL_MS`, because a free off-GCD cast leaves
-   * the actor idle and `nextDecisionTime` returns `now + 100ms`. That is the
-   * same price the racials, the consumables and Bloodrage already pay.
-   * ==========================================================================
-   */
+  cost: undefined,
+  cooldownMs: SWIFT_JUDGEMENT_COOLDOWN_MS,
   triggersGcd: false,
-  // Only worth casting at all when there is something to reset.
-  canCast: ({ simulation, caster }) =>
-    !caster.abilities.isReady('judgement', simulation.clock.now()),
-  onCast: ({ caster }) => {
-    caster.abilities.resetCooldown('judgement');
-  },
-  unmodelled:
-    'Its free-next-Judgement clause is not modelled; the cooldown reset is, ' +
-    'and that is what the ability is for.',
 };
 
 // ---------------------------------------------------------------------------
@@ -455,8 +417,8 @@ export const HOLY_SHOCK: Ability = {
      * to 362 Holy damage to an enemy, or 307 to 333 healing to an ally". Which
      * one is the target's side, so the entry that picked the target decides.
      */
-    const vigil = spendLightsVigil(simulation, caster, target);
     if (!target.isHostileTo(caster)) {
+      const vigil = spendLightsVigil(simulation, caster, target);
       paladinHeal(simulation, caster, target, ability, HOLY_SHOCK_HEAL, PLACEHOLDER_HOLY_SHOCK_HEAL_COEFFICIENT);
       if (vigil) lightsVigilPartyHeal(simulation, caster, target);
       return;
@@ -471,7 +433,6 @@ export const HOLY_SHOCK: Ability = {
       powerCoefficient: HOLY_SHOCK_COEFFICIENT,
       attackTable: ability.attackTable,
     });
-    if (vigil) lightsVigilStrike(simulation, caster, target);
   },
 };
 
@@ -505,9 +466,7 @@ export const HOLY_SHOCK: Ability = {
  * ----------------------------------------------------------------------------
  */
 export const LIGHTS_VIGIL_PARTY_HEAL = midpoint(684, 724);
-export const LIGHTS_VIGIL_DAMAGE = midpoint(380, 410);
 export const LIGHTS_VIGIL_MANA_COST = 1340;
-export const LIGHTS_VIGIL_REFUND_FRACTION = 0.75;
 
 export const LIGHTS_VIGIL_ABILITY: Ability = {
   id: 'lights_vigil',
@@ -516,6 +475,12 @@ export const LIGHTS_VIGIL_ABILITY: Ability = {
   cost: { resource: 'mana', amount: LIGHTS_VIGIL_MANA_COST },
   castTimeMs: seconds(1.5),
   cooldownMs: seconds(6),
+  /*
+   * FRIENDLY TARGETS ONLY SINCE 1.60.1.70707: "Applies Light's Vigil to a
+   * friendly target". Its enemy half -- 380 to 410 Holy damage and 75% of the
+   * cost back off the next Holy Shock -- is gone from the tooltip and from here.
+   */
+  canCast: ({ caster, target }) => target !== undefined && !target.isHostileTo(caster),
   onCast: ({ simulation, caster, target }) => {
     if (!target) return;
     if (target.party !== undefined) {
@@ -556,24 +521,6 @@ function lightsVigilPartyHeal(simulation: SimulationContext, caster: Combatant, 
       PLACEHOLDER_LIGHTS_VIGIL_COEFFICIENT,
     );
   }
-}
-
-/** "Enemy targets suffer 380 to 410 Holy damage and refund 75% of the cost." */
-function lightsVigilStrike(simulation: SimulationContext, caster: Combatant, target: Combatant): void {
-  dealDamage(simulation, {
-    source: caster,
-    target,
-    abilityId: LIGHTS_VIGIL_ABILITY.id,
-    abilityName: LIGHTS_VIGIL_ABILITY.name,
-    school: HOLY,
-    baseAmount: LIGHTS_VIGIL_DAMAGE,
-    powerCoefficient: PLACEHOLDER_LIGHTS_VIGIL_COEFFICIENT,
-    attackTable: 'spell',
-  });
-  simulation.grantResource(caster, 'mana', LIGHTS_VIGIL_MANA_COST * LIGHTS_VIGIL_REFUND_FRACTION, {
-    id: LIGHTS_VIGIL_ABILITY.id,
-    name: LIGHTS_VIGIL_ABILITY.name,
-  });
 }
 
 /** Holy Shock's heal: "307 to 333 healing to an ally". */
@@ -757,6 +704,9 @@ export const HAMMER_OF_WRATH_COEFFICIENT = HAMMER_OF_WRATH_SP_COEFFICIENT;
  * ============================================================================
  * AND AT 2/2 INSTRUMENT OF LAW MAKES IT AN INSTANT RANGED ATTACK.
  *
+ * (Instrument of Law is gone since 1.60.1.70707 and Champion of the Light
+ * carries the same second, 0.2 a rank; everything below holds of it at 5/5.)
+ *
  * "Reduces the cast time of your Hammer of Wrath by 1 sec" at rank 2, against a
  * one-second cast -- so the cast is gone entirely, and the ruleset owner has
  * ruled what the ability then IS: an instant RANGED attack that scales with
@@ -833,7 +783,7 @@ export function isInstantHammerOfWrath(ability: Ability): boolean {
   return (ability.castTimeMs ?? 0) <= 0;
 }
 
-/** `ranged-special` once Instrument of Law has made it instant, else `spell`. */
+/** `ranged-special` once Champion of the Light 5/5 has made it instant, else `spell`. */
 export function hammerOfWrathTable(ability: Ability): 'spell' | 'ranged-special' {
   return isInstantHammerOfWrath(ability) ? 'ranged-special' : 'spell';
 }
@@ -864,8 +814,8 @@ export const TEMPLARS_BULWARK_ABILITY: Ability = {
 };
 
 /**
- * Righteous Fury. Declared and cast, and it does NOTHING, which is the honest
- * model rather than a generous one -- see `RIGHTEOUS_FURY`.
+ * Righteous Fury: threat, and the condition Improved Righteous Fury and Iron
+ * Creed read. See `RIGHTEOUS_FURY`.
  */
 export const RIGHTEOUS_FURY_ABILITY: Ability = {
   id: 'righteous_fury',
@@ -885,13 +835,8 @@ export const RIGHTEOUS_FURY_ABILITY: Ability = {
       caster.id,
     );
   },
-  unmodelled:
-    `Its OWN effect is threat -- +${RIGHTEOUS_FURY_THREAT_PERCENT}% from Holy ` +
-    'attacks -- and threat is not tracked here at all, by a permanent ruling. ' +
-    'It is cast because a Protection Paladin really does spend the mana and ' +
-    'the global cooldown on it, so the profile pays what it pays. **What it ' +
-    'switches ON is not inert**: Improved Righteous Fury and Iron Creed both ' +
-    'read "while Righteous Fury is active" and both apply.',
+  // Its threat is the aura's: +33% on all of it and a further 90% on Holy,
+  // since 1.60.1.70707. See `righteousFury`.
 };
 
 /**

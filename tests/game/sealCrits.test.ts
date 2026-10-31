@@ -5,10 +5,10 @@ import {
   SEAL_OF_COMMAND,
   SEAL_OF_FURY,
   SEAL_OF_RIGHTEOUSNESS,
-  echoAura,
+  unsealedWrathAura,
 } from '../../src/game/auras/paladin';
 import {
-  echoProc,
+  unsealedWrathProc,
   sealOfCommandProc,
   sealOfFuryProc,
   sealOfRighteousnessProc,
@@ -76,8 +76,14 @@ function sealAmounts(
   const target = makeTarget({ maxHealth: 100_000_000 });
   const simulation = buildSimulation([actor, target], { seed: 4242 });
 
+  // A stored copy only fires under a DIFFERENT active seal, so the echo case
+  // swings under Command and stores Righteousness.
   const aura =
-    seal === 'fury' ? SEAL_OF_FURY : seal === 'command' ? SEAL_OF_COMMAND : SEAL_OF_RIGHTEOUSNESS;
+    seal === 'fury'
+      ? SEAL_OF_FURY
+      : seal === 'command' || seal === 'echo'
+        ? SEAL_OF_COMMAND
+        : SEAL_OF_RIGHTEOUSNESS;
   simulation.applyAura(actor, aura, actor.id);
 
   const reaction =
@@ -86,7 +92,7 @@ function sealAmounts(
       : seal === 'command'
         ? sealOfCommandProc()
         : seal === 'echo'
-          ? echoProc()
+          ? unsealedWrathProc()
           : sealOfRighteousnessProc();
 
   const swing: AttackEvent = {
@@ -103,11 +109,14 @@ function sealAmounts(
   const amounts: number[] = [];
   for (let i = 0; i < count; i += 1) {
     /*
-     * THE ECHO IS ONE CHARGE, so it is re-applied before every trigger. That is
-     * the talent working rather than a workaround: `echoProc` removes the aura
-     * as it spends it.
+     * ONE STORED COPY OF RIGHTEOUSNESS before every trigger -- Unsealed Wrath's
+     * stack, which the reaction spends -- and the copy of Command it stores in
+     * its place taken off again, so every trigger fires exactly one seal hit.
      */
-    if (seal === 'echo') simulation.applyAura(actor, echoAura('seal_of_righteousness'), actor.id);
+    if (seal === 'echo') {
+      actor.auras.remove(simulation, 'unsealed_wrath_seal_of_command');
+      simulation.applyAura(actor, unsealedWrathAura('seal_of_righteousness'), actor.id);
+    }
 
     const before = target.health.current;
     reaction.onTrigger(simulation, actor, swing);

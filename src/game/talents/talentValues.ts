@@ -8,7 +8,6 @@ import hunterValues from '../../data/talents/values/hunter.json';
 import warlockValues from '../../data/talents/values/warlock.json';
 import priestValues from '../../data/talents/values/priest.json';
 import type { ClassId } from '../character';
-import { patchNoteValue } from './patchNoteValues';
 
 /**
  * The per-rank numbers behind talent effects.
@@ -112,24 +111,12 @@ export function talentValue(
   rank: number,
 ): TalentValue | undefined {
   /*
-   * ==========================================================================
-   * A PATCH NOTE'S OR AN OWNER'S VALUE OUTRANKS THE GENERATED ONE, AND IT IS
-   * CONSULTED HERE RATHER THAN AT EACH READER.
-   *
-   * THIS IS THE ROOT AND THAT IS THE WHOLE REASON IT IS HERE. `talentNumber`,
-   * `talentNumbers` and `talentDescription` all come through this function, so
-   * the override reaches the fight AND the Talent panel together -- wired into
-   * `talentBuild` alone, the panel would print the client's number for a talent
-   * the engine runs at another, which is the character sheet's crit bug.
-   *
-   * The layer was deleted once when the client caught up with all three of its
-   * entries, and rebuilt in round 51 for Champion of the Light, which the owner
-   * buffed back ahead of the client. `patchNoteValues.test.ts` fails the moment
-   * a refresh moves the generated row, which is how it expires again.
-   * ==========================================================================
+   * THE PATCH-NOTE OVERRIDE LAYER IS GONE A SECOND TIME, the same way as the
+   * first: its last row, Champion of the Light's 20/40/60, was shipped by the
+   * client at 1.60.1.70707 as 12/24/36/48/60 over five ranks -- the owner's 60
+   * at the last rank, and a cast time beside it. `git log` has the shape for
+   * the next note that runs ahead of the client.
    */
-  const overridden = patchNoteValue(characterClass, talentId, rank);
-  if (overridden !== undefined) return overridden;
 
   const entry = FILES[characterClass]?.talents[talentId];
   if (!entry?.values) return undefined;

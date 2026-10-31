@@ -238,13 +238,31 @@ school's modifier in before the roll. `AbilityModifier.hitBonus` is the field.
 
 ---
 
+## Client build 1.60.1.70707
+
+The tree was re-captured off foreverchanges.pro and every Paladin build is
+PROVISIONAL until the owner supplies new ones -- see HANDOVER round 86 for the
+whole list, the readings and the seven open questions. What a reader of the
+rest of this document most needs:
+
+- **Twist of Light is Unsealed Wrath** and its Echo is gone. A stored seal is
+  `unsealed_wrath_<seal>` with up to three stacks, spent by `unsealedWrathProc`;
+  Seal Twist swaps seals at three (`UNSEALED_WRATH_SWAP_STACKS`).
+- **Instrument of Law is gone**; Champion of the Light 5/5 makes Hammer of
+  Wrath instant, and `castsInstantly` still gates the Seal Twist entry.
+- **Holy Shield is row 5**, and **Shieldsworn** is the Protection capstone.
+- **Swift Judgement** is a second Judgement on its own minute, and the
+  Protection list casts it ungated.
+- **Light's Vigil** is friendly only.
+- The figures in the table below are another tree's.
+
 ## The profiles
 
 | Profile | Talents | DPS | List |
 | --- | --- | --- | --- |
-| Seal Twist Ret | 16/0/35 | **748.3** ±9.6 | `PALADIN_RETRIBUTION` |
+| Seal Twist Ret | 14/6/31 (provisional, 1.60.1.70707) | **748.3** ±9.6 | `PALADIN_RETRIBUTION` |
 | Shockadin | 23/0/28 | **585.5** ±4.9 | `PALADIN_SHOCKADIN` |
-| Prot Pally | 8/34/9 | **303.9** ±3.7 | `PALADIN_PROTECTION` |
+| Prot Pally | 12/32/7 (provisional, 1.60.1.70707) | **303.9** ±3.7 | `PALADIN_PROTECTION` |
 
 **DO NOT READ THESE AS THE DEEP DIVE'S FIGURES.** The dive took them to 528.3,
 472.7 and 238.1; everything since — the raid buff list, Judgement of Wisdom,

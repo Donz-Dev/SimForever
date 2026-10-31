@@ -38,7 +38,10 @@ describe('the abilities that apply a DoT', () => {
       'hunter/hunters_mark',
       'mage/mage_armor',
       'paladin/hammer_of_wrath',
-      'paladin/swift_judgement',
+      // Friendly targets only since 1.60.1.70707, and the probe casts at a boss.
+      // (Swift Judgement left this list then: it is a Judgement now, and the
+      // probe's seal is up.)
+      'paladin/lights_vigil',
       'shaman/fire_nova',
       'warlock/bane_of_havoc',
       'warlock/conflagrate',

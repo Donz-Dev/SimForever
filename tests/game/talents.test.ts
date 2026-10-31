@@ -119,12 +119,12 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
   },
   paladin: {
     trees: [
-      // 17 and 17: Improved Holy Strike and Crusade were both removed at
-      // client build 1.60.1.70170, neither of them mentioned in the patch
-      // notes, and all three Paladin builds had points in the first.
+      // 17, 17 and 17 since client build 1.60.1.70707, read off
+      // foreverchanges.pro: Shieldsworn is the Protection capstone where Holy
+      // Shield moved up to row 5, and Unsealed Wrath is Twist of Light renamed.
       ['holy', 17, "Light's Vigil"],
-      ['protection', 16, 'Holy Shield'],
-      ['retribution', 17, 'Twist of Light'],
+      ['protection', 17, 'Shieldsworn'],
+      ['retribution', 17, 'Unsealed Wrath'],
     ],
   },
   priest: {
@@ -209,7 +209,7 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
 
 const CLASS_IDS = Object.keys(SPEC);
 
-/** The 465 above, summed, so the total is asserted rather than assumed. */
+/** The 466 above, summed, so the total is asserted rather than assumed. */
 const TOTAL_TALENTS = Object.values(SPEC)
   .flatMap((spec) => spec.trees)
   .reduce((sum, [, count]) => sum + count, 0);
@@ -232,9 +232,9 @@ describe('every class has its trees', () => {
     expect(classesWithTalents()).toEqual([...CLASS_IDS].sort());
   });
 
-  it('adds up to 465 talents', () => {
+  it('adds up to 466 talents', () => {
     // 466 until round 51's refresh removed the Mage's Piercing Ice.
-    expect(TOTAL_TALENTS).toBe(465);
+    expect(TOTAL_TALENTS).toBe(466);
     const loaded = CLASS_IDS.reduce(
       (sum, id) => sum + talentsOf(id).trees.reduce((n, tree) => n + tree.talents.length, 0),
       0,
@@ -276,9 +276,10 @@ describe('every class has its trees', () => {
        * still served the old tree, so it was read off foreverchanges.pro with
        * `--capture` -- see the importer.
        */
+      // AND THE PALADIN, for the same reason, at the same build.
       expect(talentsOf(classId).source).toBe(
-        classId === 'druid'
-          ? 'https://foreverchanges.pro/talents/druid'
+        classId === 'druid' || classId === 'paladin'
+          ? `https://foreverchanges.pro/talents/${classId}`
           : 'https://talentsforever.com/talents.js',
       );
     }

@@ -106,8 +106,9 @@ describe('talents', () => {
     ]);
     // Suppression's index 0 is the 5% hit.
     expect(talentBuild('warlock', { suppression: 5 }).threatModifiers).toEqual([{ multiplier: 0.8 }]);
-    expect(talentBuild('paladin', { iron_creed: 5 }).threatModifiers).toEqual([
-      { multiplier: 1.25, abilityIds: ['holy_strike'] },
+    // Three ranks and 30% since 1.60.1.70707.
+    expect(talentBuild('paladin', { iron_creed: 3 }).threatModifiers).toEqual([
+      { multiplier: 1.3, abilityIds: ['holy_strike'] },
     ]);
   });
 });

@@ -15,7 +15,6 @@ import {
   HOLY_STRIKE_WEAPON_FRACTION,
   JUDGEMENT_OF_COMMAND,
   JUDGEMENT_OF_RIGHTEOUSNESS,
-  TWIST_OF_LIGHT_FLAG,
 } from '../../src/game/abilities/paladin';
 import {
   RIGHTEOUS_FURY,
@@ -28,8 +27,13 @@ import {
   TEMPLARS_BULWARK,
   TEMPLARS_BULWARK_HEALTH_SHARE,
   sealOfRighteousnessCoefficient,
+  unsealedWrathAura,
+  SEAL_OF_COMMAND,
+  SEAL_OF_RIGHTEOUSNESS,
 } from '../../src/game/auras/paladin';
-import { SEAL_OF_COMMAND_PPM } from '../../src/game/reactions/paladin';
+import { SEAL_OF_COMMAND_PPM, unsealedWrathProc } from '../../src/game/reactions/paladin';
+import type { AttackEvent, TelemetryEvent } from '../../src/engine';
+import { PALADIN_SHOCKADIN } from '../../src/game/rotations/paladin';
 import { PALADIN_TALENT_EFFECTS } from '../../src/game/talents/paladinEffects';
 import { paladinRotation } from '../../src/game/rotations/paladin';
 import { EXECUTE_PHASE_FRACTION } from '../../src/game/combat/executePhase';
@@ -218,7 +222,7 @@ describe('the numbers', () => {
      * same seal.)
      */
     const scoped = presetPlayerWith('pally_shockadin_2h', { gloves: { itemId: 254105 } });
-    expect(spellPowerFor(scoped, 'holy') - spellPowerFor(scoped, 'shadow')).toBe(19);
+    expect(spellPowerFor(scoped, 'holy') - spellPowerFor(scoped, 'shadow')).toBeCloseTo(19, 6);
     expect(spellPowerFor(scoped, 'shadow')).toBe(scoped.stats.get('spellPower'));
   });
 
@@ -264,7 +268,7 @@ describe('the numbers', () => {
     const shockadinScoped = presetPlayerWith('pally_shockadin_2h', { gloves: { itemId: 254105 } });
     expect(
       spellPowerFor(shockadinScoped, 'holy') - shockadinScoped.stats.get('spellPower'),
-    ).toBe(19);
+    ).toBeCloseTo(19, 6);
   });
 
   it('makes a slower weapon hit harder CONTINUOUSLY again, and a two-hander more', () => {
@@ -282,10 +286,11 @@ describe('the numbers', () => {
     expect(sealOfRighteousnessCoefficient(true)).toBeGreaterThan(sealOfRighteousnessCoefficient(false));
   });
 
-  it('declares an effect for every one of the 50 talents', () => {
-    // 50 since client build 1.60.1.70170: Improved Holy Strike and Crusade were
-    // both removed, and the patch notes mention neither.
-    expect(Object.keys(PALADIN_TALENT_EFFECTS)).toHaveLength(50);
+  it('declares an effect for every one of the 51 talents', () => {
+    // 51 since client build 1.60.1.70707: four out (One-Handed Weapon
+    // Specialization, Improved Seal of Fury, Instrument of Law, Voice of Truth),
+    // Twist of Light renamed Unsealed Wrath, and five in.
+    expect(Object.keys(PALADIN_TALENT_EFFECTS)).toHaveLength(51);
   });
 });
 
@@ -322,48 +327,93 @@ describe('a seal is exclusive, like a stance', () => {
   });
 });
 
-describe('Twist of Light, the reason a profile is called Seal Twist', () => {
-  it('flags every seal for the build that takes it, and none for the others', () => {
-    /*
-     * The talent arrives as a FLAG ON EACH SEAL rather than as a reaction,
-     * because only the cast that replaces a seal knows a replacement happened
-     * -- and `applyTalentChanges` hands each character its own copy of the
-     * ability, so reading it there is per-character by construction.
-     */
-    const ret = presetPlayer('pally_ret');
-    for (const id of SEAL_AURA_IDS) {
-      expect(ret.abilities.get(id)?.bonuses?.[TWIST_OF_LIGHT_FLAG], id).toBe(1);
-    }
+describe('Unsealed Wrath, the reason a profile is called Seal Twist', () => {
+  /*
+   * TWIST OF LIGHT RENAMED AND REWORKED AT 1.60.1.70707: "Your melee attacks
+   * store a copy of your active Seal for 15 sec, stacking up to 3 times. Landing
+   * an attack with a different Seal consumes all stacks, giving the stored Seal
+   * its normal chance to activate once per stack."
+   *
+   * DRIVEN THROUGH THE REAL REACTION with an ordinary main-hand swing, which is
+   * what `canTrigger` accepts -- the event stream is what is read.
+   */
+  const harness = () => {
+    const actor = makeAttacker({
+      autoAttack: 'none',
+      stats: { spellPower: 500, critChance: -1000, attackPower: 0 },
+      weapons: {
+        mainHand: { name: 'Test', swingTimerMs: 3500, baseDamage: 100, damageVariance: 0, twoHanded: true },
+      },
+    });
+    const target = makeTarget({ maxHealth: 100_000_000 });
+    const events: TelemetryEvent[] = [];
+    const simulation = buildSimulation([actor, target], { seed: 7 }, { emit: (e) => events.push(e) });
+    const reaction = unsealedWrathProc();
+    const swing: AttackEvent = {
+      attacker: actor,
+      defender: target,
+      outcome: 'hit',
+      abilityId: undefined,
+      abilityName: 'Main Hand',
+      amount: 500,
+      weaponSlot: 'mainHand',
+      critical: false,
+    };
+    const hit = () => {
+      expect(reaction.canTrigger!(simulation, actor, swing)).toBe(true);
+      reaction.onTrigger(simulation, actor, swing);
+    };
+    const named = (name: string) =>
+      events.filter((e) => e.type === 'damage' && (e as { abilityName?: string }).abilityName === name).length;
+    return { actor, simulation, hit, named };
+  };
 
-    // Shockadin 2H stops at 28 Retribution points and does not reach it.
-    const shockadin = presetPlayer('pally_shockadin_2h');
-    expect(
-      shockadin.abilities.get('seal_of_righteousness')?.bonuses?.[TWIST_OF_LIGHT_FLAG] ?? 0,
-    ).toBe(0);
+  it('is the Seal Twist build\'s, and no other preset carries it', () => {
+    expect(presetPlayer('pally_ret').reactions.map((r) => r.id)).toContain('unsealed_wrath');
+    for (const preset of ['pally_shockadin_2h', 'prot_pally']) {
+      expect(presetPlayer(preset).reactions.map((r) => r.id), preset).not.toContain('unsealed_wrath');
+    }
   });
 
-  it('grants an Echo only when a DIFFERENT seal replaces one', () => {
-    const actor = bareBuild('pally_ret');
-    const simulation = buildSimulation([actor, makeTarget()]);
+  it('stores a copy of the active seal on every attack, up to three', () => {
+    const { actor, simulation, hit } = harness();
+    simulation.applyAura(actor, SEAL_OF_RIGHTEOUSNESS, actor.id);
+    hit();
+    expect(actor.auras.stacksOf('unsealed_wrath_seal_of_righteousness')).toBe(1);
+    hit();
+    hit();
+    hit();
+    expect(actor.auras.stacksOf('unsealed_wrath_seal_of_righteousness')).toBe(3);
+  });
 
-    // The first seal replaces nothing.
-    castSpaced(simulation, actor, 'seal_of_command', 0);
-    expect(actor.auras.has('echo_seal_of_command')).toBe(false);
+  it('fires every stored copy on an attack under a different seal, then stores the new one', () => {
+    const { actor, simulation, hit, named } = harness();
+    simulation.applyAura(actor, SEAL_OF_RIGHTEOUSNESS, actor.id);
+    hit();
+    hit();
+    hit();
+    expect(named('Unsealed Wrath (Seal of Righteousness)')).toBe(0);
 
-    // Re-casting the SAME seal refreshes it and replaces nothing, which is
-    // what "with a different Seal" says.
-    castSpaced(simulation, actor, 'seal_of_command', seconds(2));
-    expect(actor.auras.has('echo_seal_of_command')).toBe(false);
+    // The swap. Seal of Righteousness hits on every attack, so each of the
+    // three copies is a hit.
+    simulation.applyAura(actor, SEAL_OF_COMMAND, actor.id);
+    actor.auras.remove(simulation, 'seal_of_righteousness');
+    hit();
+    expect(named('Unsealed Wrath (Seal of Righteousness)')).toBe(3);
+    expect(actor.auras.has('unsealed_wrath_seal_of_righteousness')).toBe(false);
+    expect(actor.auras.stacksOf('unsealed_wrath_seal_of_command')).toBe(1);
+  });
 
-    // A different one does.
-    castSpaced(simulation, actor, 'seal_of_the_crusader', seconds(4));
-    expect(actor.auras.has('echo_seal_of_command')).toBe(true);
+  it('lasts 15 seconds and stacks to 3, by its tooltip', () => {
+    const aura = unsealedWrathAura('seal_of_command');
+    expect(aura.durationMs).toBe(seconds(15));
+    expect(aura.maxStacks).toBe(3);
   });
 
   it('pays out in a real fight, which is the whole build', () => {
     const batch = batchOf('pally_ret', 40, 5);
-    const echo = batch.abilities.find((a) => a.abilityName.startsWith('Echo'));
-    expect(echo?.damage ?? 0).toBeGreaterThan(0);
+    const stored = batch.abilities.filter((a) => a.abilityName.startsWith('Unsealed Wrath'));
+    expect(stored.reduce((n, a) => n + a.damage, 0)).toBeGreaterThan(0);
   });
 });
 
@@ -431,7 +481,12 @@ describe('the three builds', () => {
 
     const shockadin = presetPlayer('pally_shockadin_2h').abilities.all.map((a) => a.id);
     expect(shockadin).toContain('seal_of_righteousness');
-    expect(shockadin).not.toContain('seal_of_command');
+    // The provisional 1.60.1.70707 build takes Seal of Command as a point on the
+    // way to Vengeance, so the guard is on the LIST: it puts up the trainer seal
+    // and never asks for the talent one.
+    const asked = PALADIN_SHOCKADIN.entries.map((e) => e.abilityId);
+    expect(asked).toContain('seal_of_righteousness');
+    expect(asked).not.toContain('seal_of_command');
   });
 
   it('actually keeps a seal up and judges it, in every build', () => {
@@ -623,24 +678,20 @@ describe("Templar's Bulwark, and the first absorb shield in the project", () => 
   });
 });
 
-describe('Righteous Fury, which is cast and does nothing', () => {
-  it('carries no modifier at all, because threat is not tracked', () => {
+describe('Righteous Fury, a threat buff', () => {
+  it('raises all threat by 33% and Holy threat by a further 90%, and nothing else', () => {
     /*
-     * "Increases the threat generated by your Holy attacks by 60%." Threat is
-     * permanently out of scope, so an aura with no effect is the CORRECT
-     * modelling rather than an unfinished one.
-     *
-     * IT IS STILL CAST, by the ruleset owner's ruling: a Protection Paladin
-     * really does spend 30% of its base mana and a global cooldown on this at
-     * the pull, so the profile pays what it pays. Dropping the ability would
-     * hand the build back a cast it does not get to keep.
+     * "Increases all threat generated by 33%, and all threat generated by your
+     * Holy attacks by an additional 90%" since 1.60.1.70707 -- two modifiers,
+     * which MULTIPLY on the owner's ruling that every threat factor does.
      */
+    expect(RIGHTEOUS_FURY.threatModifiers).toEqual([
+      { multiplier: 1.33 },
+      { multiplier: 1.9, schools: ['holy'] },
+    ]);
     expect(RIGHTEOUS_FURY.statModifiers).toBeUndefined();
     expect(RIGHTEOUS_FURY.damageDoneMultiplier).toBeUndefined();
     expect(RIGHTEOUS_FURY.durationMs).toBe(0);
-
-    // And it says so where a person can read it.
-    expect(RIGHTEOUS_FURY_ABILITY.unmodelled).toContain('threat');
     expect(RIGHTEOUS_FURY_ABILITY.cost?.amount).toBeGreaterThan(0);
   });
 

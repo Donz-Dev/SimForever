@@ -1022,6 +1022,20 @@ export function talentBuild(
         case 'abilityHealing':
           abilityModifiers.add(effect.abilityId, { healingMultiplier: 1 + value / 100 });
           break;
+        case 'abilityHealingCrit':
+          for (const abilityId of effect.abilityIds) {
+            abilityModifiers.add(abilityId, { healingCritBonus: value });
+          }
+          break;
+        case 'abilityHealingCritDamage':
+          // A heal crits on the spell multiplier, so the bonus half is the
+          // spell table's.
+          for (const abilityId of effect.abilityIds) {
+            abilityModifiers.add(abilityId, {
+              healingCritMultiplierBonus: critBonusHalfFor('spell') * (value / 100),
+            });
+          }
+          break;
         case 'abilityDamage':
           abilityModifiers.add(
             effect.abilityId,

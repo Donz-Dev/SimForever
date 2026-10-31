@@ -1,9 +1,8 @@
 import type { TalentEffects } from './TalentEffect';
-import { TWIST_OF_LIGHT_FLAG } from '../abilities/paladin';
+import { SHIELD_SPECIALIZATION_CHANCE_KEY } from '../reactions/paladinTalents';
 import {
   CONSECRATED_GROUND_FLAG,
   IMPROVED_RIGHTEOUS_FURY_FLAG,
-  IMPROVED_SEAL_OF_FURY_FLAG,
   ILLUMINATION_CHANCE_KEY,
   ILLUMINATION_REFUND_KEY,
   INFUSION_OF_LIGHT_KEY,
@@ -12,7 +11,7 @@ import {
 /**
  * What each Paladin talent does, as data.
  *
- * Every one of the 52 has an entry, and one that cannot be expressed says so.
+ * Every one of the 51 has an entry, and one that cannot be expressed says so.
  *
  * ----------------------------------------------------------------------------
  * WHAT CLUSTERS HERE, and it is a different shape from every class before it:
@@ -125,13 +124,6 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'unmodelled', scope: 'crowdControl', reason: 'Fear and Disorient duration, and nothing applies either.' },
   ],
 
-  voice_of_truth: [
-    {
-      kind: 'unmodelled',
-      scope: 'crowdControl',
-      reason: 'Silence and interrupt immunity, and nothing interrupts a cast here.',
-    },
-  ],
 
   reverence: [{ kind: 'stat', stat: 'manaRegenBypass', operation: 'flat' }],
 
@@ -199,22 +191,17 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   divine_precision: [
     /*
-     * "IMPROVES YOUR CHANCE TO HIT WITH HOLY SPELLS BY 12%" at 2/2, which the
-     * Shockadin takes.
-     *
-     * ITS REASON WAS THAT THE TABLE DECIDES HIT BEFORE ANY PER-SCHOOL MODIFIER IS
-     * CONSULTED, shared word for word with the Mage's Arcane Focus and Elemental
-     * Precision and the Priest's Shadow Focus and Holy Precision. It was not
-     * true: `rollTable` folds the school's modifier in before the roll and always
-     * has. `AbilityModifier.hitBonus` is the field that was missing, and one line
-     * in `talentBuild` reaches it -- five talents for the same line.
+     * "IMPROVES YOUR CHANCE TO HIT WITH HOLY SPELLS BY 8%" at 2/2 since
+     * 1.60.1.70707 -- two ranks where it had three, 8% where it was 18%, and no
+     * longer behind Holy Shock. Index 0 now, because the row grew a second
+     * number: the Silence reduction, which is crowd control.
      *
      * HOLY ONLY, which for this class is Judgement, Holy Shock, Consecration's
      * ticks and every seal. Holy Strike is dealt as PHYSICAL, so it keeps the
-     * melee table's own miss chance -- which is correct: it is a weapon strike
-     * that happens to carry Holy damage.
+     * melee table's own miss chance.
      */
-    { kind: 'schoolHit', schools: ['holy'] },
+    { kind: 'schoolHit', schools: ['holy'], valueIndex: 0 },
+    { kind: 'unmodelled', scope: 'crowdControl', reason: 'Its Silence duration, and nothing silences anybody here.' },
   ],
 
   holy_shock: [{ kind: 'grantAbility', abilityId: 'holy_shock' }],
@@ -262,9 +249,40 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * arithmetic gives and is deliberate rather than a double count.
    */
   holy_power: [
-    { kind: 'abilityCrit', abilityId: 'holy_shock' },
-    { kind: 'abilityCrit', abilityId: 'holy_strike' },
-    { kind: 'stat', stat: 'spellCritChance', operation: 'flat', valueIndex: 1 },
+    /*
+     * REWORKED AT 1.60.1.70707: "Increases the critical strike healing bonus of
+     * your Holy spells by {0}%", 50% at 5/5. It used to be crit CHANCE on Holy
+     * Shock and Holy Strike and a little on every other spell; it is now heal
+     * crit DAMAGE and nothing else, so it no longer reaches a damage build.
+     *
+     * THE BONUS HALF: a heal crits for 1.5, so "+50%" takes it to 1.75.
+     * Healing-only by field, because Holy Shock's damage shares its id.
+     */
+    {
+      kind: 'abilityHealingCritDamage',
+      abilityIds: ['holy_light', 'flash_of_light', 'holy_shock', 'lights_vigil'],
+    },
+  ],
+
+  oath_of_light: [
+    {
+      kind: 'unmodelled',
+      reason:
+        'Swears an Oath on an ally for 5 min, raising their healing from Holy ' +
+        'Light, Flash of Light and Holy Shock "by up to 0" -- the server sets the ' +
+        'amounts and the client data carries zero, so there is no number to ' +
+        'model. Not declared as an ability until the amounts arrive.',
+    },
+  ],
+
+  boundless_light: [
+    /*
+     * "INCREASES THE CRITICAL STRIKE CHANCE OF YOUR HOLY SHOCK SPELL BY {0}% WHEN
+     * CAST ON ALLIES NOT AFFECTED BY YOUR OATH OF LIGHT" -- and no Oath is ever
+     * sworn here (see `oath_of_light`), so every ally qualifies. A HEAL's crit
+     * only: Holy Shock's damage on an enemy is not "cast on allies".
+     */
+    { kind: 'abilityHealingCrit', abilityIds: ['holy_shock'] },
   ],
 
   /*
@@ -317,33 +335,12 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   anticipation: [{ kind: 'stat', stat: 'defenseSkill', operation: 'flat' }],
 
-  improved_seal_of_fury: [
-    /*
-     * ITS REASON WAS ABOUT THE SHIELD AND THE SHIELD IS BUILT NOW: "a shield
-     * granted per swing and consumed per hit has no declaration". It has one --
-     * `sealOfFuryShield`, granted by a reaction that `reactionsForClass` registers
-     * only for a Paladin holding a shield, re-evaluated on every swing because
-     * `AuraCollection`'s refresh path re-reads `absorb`.
-     *
-     * A FLAG RATHER THAN A VALUE, because the mana return is not a flat number:
-     * "60 Mana, increased by 15% per level the attacker is above you, up to 45%"
-     * needs the two levels, which only the reaction has. So the talent says
-     * PRESENT and `improvedSealOfFuryMana` does the arithmetic.
-     */
-    { kind: 'abilityFlag', abilityId: 'seal_of_fury', key: IMPROVED_SEAL_OF_FURY_FLAG },
-  ],
 
   improved_righteous_fury: [
     /*
-     * "WHILE RIGHTEOUS FURY IS ACTIVE, ALL DAMAGE TAKEN IS REDUCED BY 6%" at
-     * 3/3. Its reason had two clauses -- that threat is out of scope, and that
-     * "no profile casts it and the condition is never met" -- and only the first
-     * was still true. The Protection list casts Righteous Fury at the pull, on
-     * the owner's own ruling, so the condition holds for the whole fight.
-     *
-     * **A REASON WITH TWO CLAUSES EXPIRES WHEN EITHER ONE DOES**, and this one
-     * kept reading as true because its threat half still did. Three Paladin
-     * talents were wrong in exactly this shape at once.
+     * "WHILE RIGHTEOUS FURY IS ACTIVE, ALL DAMAGE TAKEN IS REDUCED BY 9%" at 3/3
+     * since 1.60.1.70707 (it was 6%). The Protection list casts Righteous Fury at
+     * the pull, so the condition holds for the whole fight.
      */
     { kind: 'abilityBonus', abilityId: 'righteous_fury', key: IMPROVED_RIGHTEOUS_FURY_FLAG },
   ],
@@ -351,36 +348,37 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   shield_specialization: [
     /*
      * "INCREASES THE AMOUNT OF DAMAGE ABSORBED BY YOUR SHIELD BY 30%" IS BLOCK
-     * VALUE, and its reason used to call it "a shield stat nothing reads".
-     * `blockValue` is read -- by the damage pipeline, as the flat amount a block
-     * removes -- so this is an ordinary percentage stat effect and index 0.
-     *
-     * AND THE MANA CLAUSE IS A BLOCK REACTION, which the file believed impossible.
-     * Index 1 is the CHANCE, 33/66/100; the 6% share and the three second
-     * internal cooldown are the same at every rank and live beside the reaction.
+     * VALUE, index 0; the mana clause is a block reaction at index 1's chance.
+     * Two ranks since 1.60.1.70707, the second giving what the third did.
      */
     { kind: 'stat', stat: 'blockValue', operation: 'percentAdd', scale: 0.01 },
     { kind: 'reaction', reactionId: 'shield_specialization', valueIndex: 1 },
+    // And the same chance carried to Holy Strike, for Shieldsworn.
+    {
+      kind: 'abilityBonus',
+      abilityId: 'holy_strike',
+      key: SHIELD_SPECIALIZATION_CHANCE_KEY,
+      valueIndex: 1,
+    },
   ],
 
   sacred_duty: [
-    { kind: 'stat', stat: 'stamina', operation: 'percentAdd', scale: 0.01 },
     /*
-     * ITS COOLDOWN CLAUSE NAMES THREE ABILITIES AND ONE OF THEM IS DECLARED.
-     * "Divine Shield, Divine Protection, and Templar's Bulwark by 60 sec" at 2/2,
-     * and the Protection list casts Templar's Bulwark -- so the reduction is real
-     * and index 1 is the seconds. It took 300 to 240, which on a fight this length
-     * is the difference between one cast and two.
+     * THE STAMINA IS GONE (1.60.1.70707) and Forbearance's duration took its
+     * place: "Reduces the cooldown of your Divine Shield, Divine Protection, and
+     * Templar's Bulwark spells by {0} sec, and reduces the duration of
+     * Forbearance by {1} sec." So the cooldown is index 0 now -- it was index 1
+     * while the stamina sat in front of it.
      */
-    { kind: 'abilityCooldown', abilityId: 'templars_bulwark', unit: 'seconds', valueIndex: 1 },
-    /*
-     * AND THE OTHER TWO ABILITIES IT SHORTENS ARE NOT THE SAME AS EACH OTHER,
-     * which this reason used to get wrong by reading Classic. **Forever's Divine
-     * Shield does NOT stop you attacking** -- "protects the paladin from all
-     * damage and spells for 12 sec, but reduces all damage you deal by 50%" --
-     * where Divine Protection says "you cannot attack or use physical abilities
-     * yourself". One is covered by the immunity ruling and one is not.
-     */
+    { kind: 'abilityCooldown', abilityId: 'templars_bulwark', unit: 'seconds', valueIndex: 0 },
+    {
+      kind: 'unmodelled',
+      reason:
+        'Its Forbearance half. Forbearance gates Templar\'s Bulwark, Divine ' +
+        'Shield and Divine Protection, and only the first is declared here -- ' +
+        'with a four minute cooldown that outlasts its one minute Forbearance ' +
+        'by itself, so ten seconds off it changes no cast.',
+    },
     {
       kind: 'unmodelled',
       scope: 'immunity',
@@ -393,31 +391,15 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     {
       kind: 'unmodelled',
       reason:
-        'Its Divine Shield cooldown. The stamina and the Templar\'s Bulwark ' +
-        'half apply. Divine Shield is NOT covered by the immunity ruling, ' +
-        'because Forever\'s version reduces the damage you deal by 50% rather ' +
-        'than stopping you attacking -- so it is a real survival cooldown a tank ' +
-        'could use, and it is simply not a declared ability here.',
+        'Its Divine Shield cooldown. Divine Shield is NOT covered by the ' +
+        'immunity ruling, because Forever\'s version reduces the damage you deal ' +
+        'by 50% rather than stopping you attacking -- so it is a real survival ' +
+        'cooldown a tank could use, and it is simply not a declared ability here.',
     },
   ],
 
   swift_judgement: [{ kind: 'grantAbility', abilityId: 'swift_judgement' }],
 
-  one_handed_weapon_specialization: [
-    /*
-     * EVERYTHING EXCEPT THREE, by the owner's ruling: "causes everything to
-     * deal 10% more damage except Consecration, Retribution Aura, and Thorns".
-     * The tooltip's "with one-handed melee weapons" is the BUILD gate below;
-     * what it reaches is the whole character, minus the three ids named.
-     */
-    {
-      kind: 'conditionalDamage',
-      requires: { twoHanded: false },
-      // And HOLY SHOCK, by the owner's later ruling: "One-Handed Weapon
-      // Specialization does not affect Holy Shock."
-      exceptAbilityIds: ['consecration', 'retribution_aura', 'thorns', 'holy_shock'],
-    },
-  ],
 
   improved_hammer_of_justice: [
     { kind: 'unmodelled', scope: 'crowdControl', reason: 'A stun, which is out of scope as every stun is.' },
@@ -478,27 +460,39 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   holy_shield: [
     /*
-     * ITS DAMAGE HALF WAS THE OTHER CASUALTY OF THE SAME WRONG RULE, and it is
-     * the Protection profile's missing damage source: 221 Holy for each of four
-     * blocks, every ten seconds.
+     * ROW 5 SINCE 1.60.1.70707, and no longer behind Templar's Bulwark -- so it
+     * is not the Protection capstone any more; Shieldsworn is.
      *
-     * ONE ORDERING BUG WAS REAL, unlike the rule. A block's charge used to be
-     * spent before the reactions ran, so the FOURTH block of every cast found the
-     * aura already gone -- the ability would have been quietly worth three
-     * quarters of itself. `dealDamage` spends the charge last now.
-     *
-     * ITS "+20% additional threat" IS THREAT, permanently out of scope, and
-     * nothing else in the tooltip is left.
+     * Its damage half: 221 Holy for each of four blocks, every ten seconds. Its
+     * "+20% additional threat" is NOT modelled.
      */
     { kind: 'grantAbility', abilityId: 'holy_shield' },
     /*
-     * VALUELESS, AND IT HAD TO BE SAID. Holy Shield is a single-rank talent, so
-     * its values entry is `null` and every effect asking for a number is dropped
-     * -- which is what happened to this reaction the first time it was written.
-     * The 221 is the ABILITY'S figure, from the spellbook capture, so there is no
-     * talent number for it to want.
+     * VALUELESS: a single-rank talent's values entry is `null`, and the 221 is
+     * the ABILITY'S figure, so there is no talent number for it to want.
      */
     { kind: 'reaction', reactionId: 'holy_shield', valueless: true },
+  ],
+
+  stoicism: [
+    { kind: 'unmodelled', scope: 'crowdControl', reason: 'Stun and Charm duration, and nothing stuns or charms anybody here.' },
+  ],
+
+  shieldsworn: [
+    /*
+     * THE PROTECTION CAPSTONE (1.60.1.70707): Holy Strike's cooldown four seconds
+     * shorter -- hand-filled in the values file, a single-rank talent stating the
+     * number literally -- and a landed Holy Strike setting off Holy Shield and
+     * Shield Specialization. See `shieldswornStrike`.
+     */
+    { kind: 'abilityCooldown', abilityId: 'holy_strike', unit: 'seconds' },
+    { kind: 'reaction', reactionId: 'shieldsworn', valueless: true },
+    {
+      kind: 'unmodelled',
+      reason:
+        'Its "allowing you to Block spells for 6 sec": nothing here casts a ' +
+        'spell at a Paladin -- inert because of the TARGET.',
+    },
   ],
 
   // --- Retribution ---------------------------------------------------------
@@ -553,30 +547,32 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  conviction: [{ kind: 'stat', stat: 'critChance', operation: 'flat' }],
+  /*
+   * "IMPROVES YOUR CHANCE TO GET A CRITICAL STRIKE WITH ALL SPELLS AND ATTACKS
+   * BY 6%" at 3/3 since 1.60.1.70707 -- three ranks where it had five, and
+   * "with all spells and attacks" where it said melee. That phrase is TWO
+   * STATS here, `critChance` and `spellCritChance`, read by separate tables.
+   */
+  conviction: [
+    { kind: 'stat', stat: 'critChance', operation: 'flat' },
+    { kind: 'stat', stat: 'spellCritChance', operation: 'flat' },
+  ],
 
   vindication: [
     /*
-     * ITS CHANCE IS 10%, ON THE RULESET OWNER'S ANSWER, and that is the whole of
-     * what was missing. The reason here said the values give the attack power
-     * taken, the attack power gained and the duration and no proc rate -- true,
-     * and the conclusion was to leave it inert rather than invent one. Asking
-     * settled it in one message, which is the lesson the coefficient sheet taught
-     * twenty-nine talents at once: check whether a missing number is missing DATA
-     * or a missing RULING.
-     *
-     * INDEX 1 IS THE ATTACK POWER IT GAINS -- the half that does anything. The 200
-     * it strips off the target is applied too and reaches nothing, because the
-     * training dummy's damage is a flat placeholder that reads no attack power.
+     * ITS CHANCE IS 10%, ON THE RULESET OWNER'S ANSWER. Since 1.60.1.70707 it no
+     * longer raises the Paladin's own attack power -- "reduce the target's
+     * Attack Power by {0} for {1} sec" is the whole tooltip -- so index 0, the
+     * attack power taken, is all the reaction applies.
      */
-    { kind: 'reaction', reactionId: 'vindication', valueIndex: 1 },
+    { kind: 'reaction', reactionId: 'vindication', valueIndex: 0 },
     {
       kind: 'unmodelled',
       reason:
-        'Its self buff applies in full. The 200 attack power it strips off the ' +
-        "target is applied as a debuff and changes no number, because the " +
-        'encounter\'s damage is a flat placeholder that reads no attack power -- ' +
-        'inert because of the TARGET rather than because of the engine.',
+        'The attack power it strips off the target is applied as a debuff and ' +
+        "changes no number, because the encounter's damage is a flat placeholder " +
+        'that reads no attack power -- inert because of the TARGET rather than ' +
+        'because of the engine.',
     },
   ],
 
@@ -660,7 +656,16 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    */
 
   two_handed_weapon_specialization: [
-    { kind: 'conditionalDamage', requires: { twoHanded: true } },
+    /*
+     * REWORKED AT 1.60.1.70707: "Increases the physical damage you deal by {0}%,
+     * and reduces all threat you generate by {1}% while a two-handed melee weapon
+     * is equipped." The damage is no longer gated on the weapon -- it is every
+     * point of PHYSICAL damage whatever is in the Paladin's hand -- and the
+     * weapon condition moved onto the threat, which is Instrument of Law's
+     * clause arriving here with that talent's removal.
+     */
+    { kind: 'schoolDamage', schools: ['physical'], valueIndex: 0 },
+    { kind: 'threat', direction: 'decrease', valueIndex: 1, requires: { twoHanded: true } },
   ],
 
   vengeance: [{ kind: 'reaction', reactionId: 'vengeance' }],
@@ -671,91 +676,35 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   champion_of_the_light: [
     /*
-     * "Increases your spell damage by up to {0}% of your Intellect", 60% at 3/3.
+     * "Increases your spell damage by up to {0}% of your Intellect, and reduces
+     * the cast time of your Hammer of Wrath by {1} sec" -- five ranks since
+     * 1.60.1.70707, the same 60% at the last, and Instrument of Law's cast time
+     * arriving with that talent's removal: 0.2 a rank, the whole second at 5/5.
      *
-     * 60% BECAUSE THE OWNER BUFFED IT BACK IN ROUND 51 AND THE CLIENT STILL
-     * SAYS 30 -- the figure arrives through `PATCH_NOTE_TALENT_VALUES`, not the
-     * values file. See `patchNoteValues.ts`.
+     * AT 5/5 HAMMER OF WRATH IS INSTANT, and an instant Hammer of Wrath is a
+     * RANGED attack that still scales with SPELL POWER, on the owner's ruling --
+     * derived from the cast time; see `HAMMER_OF_WRATH`.
      *
-     * ----------------------------------------------------------------------
-     * IT WAS 33/66/100% UNTIL CLIENT BUILD 1.60.1.70170 -- "Champion of the
-     * Light's Intellect to Spell Damage ratio changed to 20/40/60% (Was
-     * 33/66/100%)" -- so a Paladin at 3/3 converts 60% of its intellect where it
-     * converted all of it. That is a 40% cut to the biggest single spell power
-     * source either damage build has.
-     *
-     * THE TOOLTIP ALSO DROPPED "AND HEALING", which changes nothing here and is
-     * worth not reading as a second change: no Paladin profile heals, and
-     * `spellPower` is one stat either way.
-     * ----------------------------------------------------------------------
-     *
-     * THE ONE PLACE IN THE PROJECT WHERE SPELL POWER REACHES A MELEE BUILD.
-     * The ruleset owner's seal formula has a spell power term worth twice an
-     * attack power one, so this is the only stat-from-stat talent that moves
-     * a physical-looking profile's damage. Everything else a caster owns
-     * reads flat damage with no coefficient.
+     * THE ONE PLACE IN THE PROJECT WHERE SPELL POWER REACHES A MELEE BUILD THIS
+     * MUCH: the seals scale with it.
      */
-    { kind: 'statFromStat', from: 'intellect', to: 'spellPower' },
+    { kind: 'statFromStat', from: 'intellect', to: 'spellPower', valueIndex: 0 },
+    { kind: 'abilityCastTime', abilityId: 'hammer_of_wrath', valueIndex: 1 },
   ],
 
-  instrument_of_law: [
-    /*
-     * "REDUCES THE CAST TIME OF YOUR HAMMER OF WRATH BY 1 SEC" at 2/2, against a
-     * one-second cast -- so at full rank the ability becomes INSTANT, and on the
-     * ruleset owner's ruling an instant Hammer of Wrath is a RANGED attack that
-     * still scales with SPELL POWER. All of that is derived from this one number;
-     * see `HAMMER_OF_WRATH` for why the table is read off the cast time rather
-     * than declared beside it.
-     *
-     * ITS REASON SAID THE CAST TIME WAS "never usable here", which stopped being
-     * true when the owner put Hammer of Wrath in two priority lists.
-     *
-     * AND "REDUCES ALL THREAT YOU GENERATE BY 20% WHILE RIGHTEOUS FURY IS NOT
-     * ACTIVE" is live since round 47. wowsims/forever applies it as an INCREASE
-     * and says the tooltip reads otherwise; the tooltip is followed here.
-     */
-    { kind: 'abilityCastTime', abilityId: 'hammer_of_wrath' },
-    {
-      kind: 'threat',
-      direction: 'decrease',
-      valueIndex: 1,
-      whileNotAura: 'righteous_fury',
-    },
+  turn_evil: [
+    { kind: 'unmodelled', scope: 'crowdControl', reason: `Turn Undead's cast and cooldown, a fear. ${NOT_UNDEAD}` },
   ],
 
-  twist_of_light: [
+
+  unsealed_wrath: [
     /*
-     * A FLAG ON EVERY SEAL rather than a reaction, because the talent fires
-     * when a seal is REPLACED and only `castSeal` knows that happened. The
-     * reaction that spends the Echo is carried by every Paladin and does
-     * nothing without one.
+     * TWIST OF LIGHT RENAMED AND REWORKED (1.60.1.70707): the Retribution
+     * capstone, which stores copies of the active seal on every melee attack
+     * and spends them on an attack under a different one. All of it is the
+     * reaction -- see `unsealedWrathProc`. Twist of Light's 20% off every seal's
+     * mana went with the old talent.
      */
-    /*
-     * AND A SECOND CLAUSE ARRIVED AT CLIENT BUILD 1.60.1.70170, unmentioned in
-     * the patch notes: "Reduces the Mana cost of your Seal spells by 20%, and
-     * when you replace your Seal of Command, ...". A percentage, so
-     * `grantCastModifier` and not `abilityCost` -- a flat subtraction is right
-     * for a 20-rage strike and wrong for a 260-mana seal.
-     *
-     * IT IS WORTH MOST TO THE BUILD THAT CHANGES SEALS, which is the one that has
-     * this talent: Seal Twist Ret recasts a seal every few seconds, and seal mana
-     * is a real share of what that profile spends. The four ids are the same four
-     * the Echo clause names, listed once each.
-     */
-    {
-      kind: 'grantCastModifier',
-      abilityIds: [
-        'seal_of_righteousness',
-        'seal_of_command',
-        'seal_of_the_crusader',
-        'seal_of_fury',
-      ],
-      property: 'costFraction',
-      valueIndex: 0,
-    },
-    { kind: 'abilityFlag', abilityId: 'seal_of_righteousness', key: TWIST_OF_LIGHT_FLAG },
-    { kind: 'abilityFlag', abilityId: 'seal_of_command', key: TWIST_OF_LIGHT_FLAG },
-    { kind: 'abilityFlag', abilityId: 'seal_of_the_crusader', key: TWIST_OF_LIGHT_FLAG },
-    { kind: 'abilityFlag', abilityId: 'seal_of_fury', key: TWIST_OF_LIGHT_FLAG },
+    { kind: 'reaction', reactionId: 'unsealed_wrath', valueless: true },
   ],
 };

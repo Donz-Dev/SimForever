@@ -1,6 +1,7 @@
-import type { Reaction } from '../../engine';
+import type { Combatant, Reaction, SimulationContext } from '../../engine';
 import { dealDamage } from '../../engine';
 import type { TalentReactionBuilder } from './warriorTalents';
+import { unsealedWrathProc } from './paladin';
 import {
   HOLY_SHIELD_DAMAGE,
   RECKONING_CHARGES,
@@ -9,7 +10,6 @@ import {
   redoubtAura,
   vengeanceAura,
   vindicationDebuff,
-  vindicationSelfAura,
 } from '../auras/paladin';
 
 /**
@@ -376,24 +376,27 @@ export function holyShieldBlockDamage(): Reaction {
     on: 'taken',
     outcomes: ['block'],
     canTrigger: (_context, actor) => actor.auras.has('holy_shield'),
-    onTrigger: (context, actor, attack) => {
-      dealDamage(context, {
-        source: actor,
-        target: attack.attacker,
-        abilityId: 'holy_shield',
-        abilityName: 'Holy Shield',
-        school: 'holy',
-        baseAmount: HOLY_SHIELD_DAMAGE,
-        /*
-         * NO COEFFICIENT. The sheet gives Holy Shield no row, and this project
-         * does not derive one -- a flat figure with no stated scaling stays
-         * flat rather than inheriting a plausible share of spell power.
-         */
-        powerCoefficient: 0,
-        appliesArmor: false,
-      });
-    },
+    onTrigger: (context, actor, attack) => holyShieldStrike(context, actor, attack.attacker),
   };
+}
+
+/** Holy Shield's damage on one target, shared by a block and by Shieldsworn. */
+function holyShieldStrike(context: SimulationContext, actor: Combatant, target: Combatant): void {
+  dealDamage(context, {
+    source: actor,
+    target,
+    abilityId: 'holy_shield',
+    abilityName: 'Holy Shield',
+    school: 'holy',
+    baseAmount: HOLY_SHIELD_DAMAGE,
+    /*
+     * NO COEFFICIENT. The sheet gives Holy Shield no row, and this project
+     * does not derive one -- a flat figure with no stated scaling stays
+     * flat rather than inheriting a plausible share of spell power.
+     */
+    powerCoefficient: 0,
+    appliesArmor: false,
+  });
 }
 
 /**
@@ -427,6 +430,23 @@ export function holyShieldBlockDamage(): Reaction {
  */
 export const SHIELD_SPECIALIZATION_MANA_PERCENT = 4;
 
+/**
+ * Shield Specialization's chance, carried to Holy Strike for Shieldsworn.
+ *
+ * The talent writes its rank's chance onto the character's own copy of Holy
+ * Strike, so Shieldsworn's reaction reads it per character by construction.
+ */
+export const SHIELD_SPECIALIZATION_CHANCE_KEY = 'shieldSpecializationChance';
+
+function shieldSpecializationMana(context: SimulationContext, actor: Combatant): void {
+  context.grantResource(
+    actor,
+    'mana',
+    ((actor.resources.get('mana')?.maximum ?? 0) * SHIELD_SPECIALIZATION_MANA_PERCENT) / 100,
+    { id: 'shield_specialization', name: 'Shield Specialization' },
+  );
+}
+
 export const shieldSpecialization: TalentReactionBuilder = (chancePercent) => ({
   id: 'shield_specialization',
   on: 'taken',
@@ -436,14 +456,50 @@ export const shieldSpecialization: TalentReactionBuilder = (chancePercent) => ({
     context.rng.rollChance(chancePercent / 100),
   onTrigger: (context, actor) => {
     context.applyAura(actor, SHIELD_SPECIALIZATION_USED, actor.id);
-    context.grantResource(
-      actor,
-      'mana',
-      ((actor.resources.get('mana')?.maximum ?? 0) * SHIELD_SPECIALIZATION_MANA_PERCENT) / 100,
-      { id: 'shield_specialization', name: 'Shield Specialization' },
-    );
+    shieldSpecializationMana(context, actor);
   },
 });
+
+/**
+ * Shieldsworn (1.60.1.70707): "Holy Strike now strikes with your shield,
+ * triggering your active Holy Shield and Shield Specialization talents without
+ * consuming their charges or triggering their cooldowns, and allowing you to
+ * Block spells for 6 sec."
+ *
+ * ----------------------------------------------------------------------------
+ * A LANDED HOLY STRIKE IS A BLOCK'S PAYOUT WITHOUT THE BLOCK. Holy Shield's
+ * damage, if Holy Shield is up, with no charge spent; and Shield
+ * Specialization's mana at its own rank's chance, with its three second
+ * internal cooldown neither started nor consulted -- "without triggering their
+ * cooldowns" read as a strike that stands outside the window both ways.
+ * Flagged as a reading: an internal cooldown that is UP could also have been
+ * meant to refuse the strike's mana.
+ *
+ * THE SPELL BLOCK IS INERT because of the TARGET: nothing here casts a spell at
+ * a Paladin. Its four second cut off Holy Strike's cooldown is an ordinary
+ * `abilityCooldown` effect beside this reaction.
+ *
+ * THE STRIKE'S OWN DAMAGE IS UNCHANGED, still weapon damage plus its flat Holy
+ * -- "strikes with your shield" names what it triggers and states no damage of
+ * a shield's.
+ * ----------------------------------------------------------------------------
+ */
+export function shieldswornStrike(): Reaction {
+  return {
+    id: 'shieldsworn',
+    on: 'dealt',
+    outcomes: [...LANDED],
+    canTrigger: (_context, _actor, attack) => attack.abilityId === 'holy_strike',
+    onTrigger: (context, actor, attack) => {
+      if (actor.auras.has('holy_shield')) holyShieldStrike(context, actor, attack.defender);
+      const chance =
+        actor.abilities.get('holy_strike')?.bonuses?.[SHIELD_SPECIALIZATION_CHANCE_KEY] ?? 0;
+      if (chance > 0 && context.rng.rollChance(chance / 100)) shieldSpecializationMana(context, actor);
+    },
+  };
+}
+
+
 
 /**
  * Eye for an Eye: "All critical strikes against you cause 10% of the damage
@@ -507,9 +563,14 @@ export const eyeForAnEye: TalentReactionBuilder = (sharePercent) => ({
  * and the day the encounter grows an attack power it is already right.
  * ----------------------------------------------------------------------------
  */
-export const VINDICATION_ATTACK_POWER_TAKEN = 200;
+/*
+ * AND SINCE 1.60.1.70707 THE DEBUFF IS THE WHOLE TALENT: "Gives your damaging
+ * melee attacks a chance to reduce the target's Attack Power by {0} for {1}
+ * sec" -- the 1/2/3% the Paladin gained is gone, so the builder takes index 0,
+ * the attack power taken, and the talent is inert because of the TARGET.
+ */
 
-export const vindication: TalentReactionBuilder = (attackPowerPercent) => ({
+export const vindication: TalentReactionBuilder = (attackPowerTaken) => ({
   id: 'vindication',
   on: 'dealt',
   // "Damaging melee attacks", which is every melee outcome that landed.
@@ -520,12 +581,7 @@ export const vindication: TalentReactionBuilder = (attackPowerPercent) => ({
     attack.weaponSlot !== 'ranged' &&
     context.rng.rollChance(VINDICATION_CHANCE / 100),
   onTrigger: (context, actor, attack) => {
-    context.applyAura(actor, vindicationSelfAura(attackPowerPercent), actor.id);
-    context.applyAura(
-      attack.defender,
-      vindicationDebuff(VINDICATION_ATTACK_POWER_TAKEN),
-      actor.id,
-    );
+    context.applyAura(attack.defender, vindicationDebuff(attackPowerTaken), actor.id);
   },
 });
 
@@ -539,4 +595,8 @@ export const PALADIN_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBui
   vindication,
   // Holy Shield takes no value: its 221 is the ability's, not the talent's.
   holy_shield: () => holyShieldBlockDamage(),
+  // Neither takes a value: the stored copies and the strike's payouts are the
+  // seals' and the shields' own.
+  unsealed_wrath: () => unsealedWrathProc(),
+  shieldsworn: () => shieldswornStrike(),
 };

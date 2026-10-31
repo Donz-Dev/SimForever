@@ -5,10 +5,7 @@ import {
   HOLY_SHOCK,
   HOLY_SHOCK_HEAL,
   LIGHTS_VIGIL_ABILITY,
-  LIGHTS_VIGIL_DAMAGE,
-  LIGHTS_VIGIL_MANA_COST,
   LIGHTS_VIGIL_PARTY_HEAL,
-  LIGHTS_VIGIL_REFUND_FRACTION,
 } from '../../src/game/abilities/paladin';
 import { LIGHTS_VIGIL } from '../../src/game/auras/paladin';
 import { PLACEHOLDER_LIGHTS_VIGIL_COEFFICIENT } from '../../src/game/combat/coefficients';
@@ -66,7 +63,6 @@ describe("Light's Vigil, the spell", () => {
     expect(LIGHTS_VIGIL_ABILITY.cooldownMs).toBe(seconds(6));
     expect(LIGHTS_VIGIL.durationMs).toBe(seconds(30));
     expect(LIGHTS_VIGIL_PARTY_HEAL).toBe((684 + 724) / 2);
-    expect(LIGHTS_VIGIL_DAMAGE).toBe((380 + 410) / 2);
   });
 
   it('is granted by the talent, which is no longer a gap', () => {
@@ -120,23 +116,21 @@ describe("Holy Shock on a Light's Vigil target", () => {
     expect(caster.abilities.isReady('holy_shock', seconds(2.1))).toBe(false);
   });
 
-  it('on an enemy: the Holy damage, and 75% of the Vigil refunded', () => {
+  it('cannot be put on an enemy since 1.60.1.70707, so its damage half is gone', () => {
+    /*
+     * "Applies Light's Vigil to a FRIENDLY target", and the enemy half -- 380 to
+     * 410 Holy damage and 75% of the Vigil's mana back off the next Holy Shock --
+     * left the tooltip with it.
+     */
     const caster = paladin();
     const boss = makeTarget({ maxHealth: 1_000_000 });
-    const events: TelemetryEvent[] = [];
-    const simulation = buildSimulation([caster, boss], {}, { emit: (e) => events.push(e) });
+    const simulation = buildSimulation([caster, boss]);
     simulation.begin();
-    castAbility(simulation, caster, caster.abilities.get('lights_vigil')!, boss);
-    simulation.advanceTo(seconds(2));
-    events.length = 0;
-    castAbility(simulation, caster, caster.abilities.get('holy_shock')!, boss);
-    const refund = events.find(
-      // One event type carries both directions, so it is extracted by both.
-      (event): event is Extract<TelemetryEvent, { type: 'resource_gained' | 'resource_spent' }> =>
-        event.type === 'resource_gained' && event.sourceName === "Light's Vigil",
-    );
-    expect(refund?.amount).toBeCloseTo(LIGHTS_VIGIL_MANA_COST * LIGHTS_VIGIL_REFUND_FRACTION, 6);
-    expect(events.some((event) => event.type === 'damage' && event.abilityId === 'lights_vigil')).toBe(true);
+    expect(castAbility(simulation, caster, caster.abilities.get('lights_vigil')!, boss)).toEqual({
+      ok: false,
+      reason: 'condition_failed',
+    });
+    expect(boss.auras.has(LIGHTS_VIGIL.id)).toBe(false);
   });
 });
 

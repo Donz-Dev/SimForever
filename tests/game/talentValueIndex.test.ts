@@ -145,22 +145,9 @@ const BLANKET_MULTIPLIERS: readonly {
     atRankOne: 1,
     wants: 'damage against tracked creature types',
   },
-  {
-    cls: 'paladin',
-    talentId: 'one_handed_weapon_specialization',
-    index: 0,
-    atRankOne: 3,
-    wants: 'damage with one-handed melee weapons',
-  },
-  {
-    cls: 'paladin',
-    talentId: 'two_handed_weapon_specialization',
-    index: 0,
-    // 2/4/6% since client build 1.60.1.70170, down from 3/6/9%. Not in the
-    // patch notes; read off the client's own tooltip.
-    atRankOne: 2,
-    wants: 'damage with two-handed melee weapons',
-  },
+  // The PALADIN'S two weapon specializations left this table at 1.60.1.70707:
+  // One-Handed was removed, and Two-Handed became PHYSICAL damage, a
+  // `schoolDamage` effect rather than a blanket one.
   // Rogue's MURDER left this table at round 37: the owner ruled the target is
   // not a Humanoid or Giant, so it declares no multiplier at all now.
   {
@@ -189,7 +176,7 @@ const BLANKET_MULTIPLIERS: readonly {
 ];
 
 describe('every blanket damage or crit multiplier reads a number somebody checked', () => {
-  it('has exactly these ten, so an eleventh has to be recorded', () => {
+  it('has exactly these, so another has to be recorded', () => {
     /*
      * EQUAL SETS, not "every one found is recorded". A stale row and an
      * unrecorded effect are both worth failing on, and the second is the

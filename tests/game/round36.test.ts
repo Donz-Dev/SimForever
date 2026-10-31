@@ -79,9 +79,15 @@ describe('the Paladin balance items', () => {
     expect(CONSECRATION_TICK_SP_COEFFICIENT).toBe(0.04125);
   });
 
-  it('lets One-Handed Weapon Specialization reach everything but three abilities', () => {
+  it('has no One-Handed Weapon Specialization to apply since 1.60.1.70707', () => {
+    /*
+     * The talent left the tree -- "it gave up to 10% more damage with one-handed
+     * weapons", everything but Consecration, Retribution Aura, Thorns and Holy
+     * Shock by the owner's two rulings. The Prot Pally's one-hander carries no
+     * blanket multiplier now.
+     */
     const built = PRESETS_BY_ID.get('prot_pally')!.build();
-    expect(built.talents.one_handed_weapon_specialization).toBe(3);
+    expect(built.talents.one_handed_weapon_specialization).toBeUndefined();
     const build = talentBuild('paladin', built.talents, {
       mainHand: {
         name: 'One-Hander',
@@ -92,16 +98,7 @@ describe('the Paladin balance items', () => {
       },
       hasShield: true,
     });
-
-    // +10% on the whole character...
-    expect(build.damageMultiplier).toBeCloseTo(1.1, 10);
-    // ...divided back out, exactly, on the three the owner named.
-    for (const id of ['consecration', 'retribution_aura', 'thorns']) {
-      const modifier = build.abilityModifiers.for(id).damageMultiplier ?? 1;
-      expect(build.damageMultiplier * modifier, id).toBeCloseTo(1, 10);
-    }
-    // And on nothing else.
-    expect(build.abilityModifiers.for('holy_strike').damageMultiplier ?? 1).toBe(1);
+    expect(build.damageMultiplier).toBeCloseTo(1, 10);
   });
 });
 

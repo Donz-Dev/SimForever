@@ -73,7 +73,8 @@ const EXPECTED: ReadonlyArray<
   ['mage', 'elemental_precision', 3, 6, ['frost', 'fire']],
   ['priest', 'shadow_focus', 5, 5, ['shadow']],
   ['priest', 'holy_precision', 3, 18, ['holy']],
-  ['paladin', 'divine_precision', 3, 18, ['holy']],
+  // Two ranks and 8% since 1.60.1.70707, where it was three ranks and 18%.
+  ['paladin', 'divine_precision', 2, 8, ['holy']],
 ];
 
 describe('the five talents', () => {
@@ -84,9 +85,13 @@ describe('the five talents', () => {
     }
   });
 
-  it.each(EXPECTED)('%s %s has no unmodelled clause left', (cls, id) => {
+  it.each(EXPECTED)('%s %s has no unmodelled clause left but a ruled-out one', (cls, id) => {
+    // Divine Precision gained a Silence clause at 1.60.1.70707, which is crowd
+    // control and so a RULING rather than a gap.
     const table = { mage: MAGE_TALENT_EFFECTS, priest: PRIEST_TALENT_EFFECTS, paladin: PALADIN_TALENT_EFFECTS }[cls];
-    expect(table[id].some((effect) => effect.kind === 'unmodelled')).toBe(false);
+    expect(
+      table[id].some((effect) => effect.kind === 'unmodelled' && effect.scope === undefined),
+    ).toBe(false);
   });
 
   /*
@@ -95,7 +100,7 @@ describe('the five talents', () => {
    * typo in the expectation fails the first, and upstream drift fails this.
    */
   it.each(EXPECTED)('%s %s reads that value out of the capture too', (cls, id, rank, points) => {
-    expect(talentNumber(cls, id, rank)).toBe(points);
+    expect(talentNumber(cls, id, rank, 0)).toBe(points);
   });
 
   it('scales with rank rather than being all-or-nothing', () => {
