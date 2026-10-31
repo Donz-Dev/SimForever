@@ -158,12 +158,14 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   /*
-   * A heal crit returns {1}% of the spell's base cost {0}% of the time. Both
-   * numbers ride on the three heal abilities; Light's Vigil is the fourth the
-   * tooltip names and is not declared. See `paladinHeal`.
+   * A heal crit returns {1}% of the spell's base cost {0}% of the time, on all
+   * FOUR spells the tooltip names. LIGHT'S VIGIL WAS LEFT OUT -- "the fourth the
+   * tooltip names and is not declared" -- which cost the Holy Pal every refund
+   * on its most expensive spell, 1,340 mana, whose party heal crits a third of
+   * the time. See `paladinHeal` and `lightsVigilPartyHeal`.
    */
   illumination: [
-    ...(['holy_light', 'flash_of_light', 'holy_shock'] as const).flatMap((abilityId) => [
+    ...(['holy_light', 'flash_of_light', 'holy_shock', 'lights_vigil'] as const).flatMap((abilityId) => [
       { kind: 'abilityBonus' as const, abilityId, key: ILLUMINATION_CHANCE_KEY, valueIndex: 0 },
       { kind: 'abilityBonus' as const, abilityId, key: ILLUMINATION_REFUND_KEY, valueIndex: 1 },
     ]),

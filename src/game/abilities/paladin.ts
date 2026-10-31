@@ -538,16 +538,33 @@ function lightsVigilPartyHeal(simulation: SimulationContext, caster: Combatant, 
       : simulation.combatants.filter(
           (member) => member.party === target.party && member.isAlive && !member.isHostileTo(caster),
         );
+  /*
+   * THE CASTER'S OWN COPY OF THE ABILITY, which is where a talent's bonuses
+   * live (`applyTalentChanges`). The module constant carries none, so passing
+   * it -- as this did -- meant no talent riding on `bonuses` could ever reach
+   * the party heal, whatever the effect table declared.
+   */
+  const vigil = caster.abilities.get(LIGHTS_VIGIL_ABILITY.id) ?? LIGHTS_VIGIL_ABILITY;
+  let anyCrit = false;
   for (const member of party) {
-    paladinHeal(
+    const critical = paladinHeal(
       simulation,
       caster,
       member,
-      LIGHTS_VIGIL_ABILITY,
+      vigil,
       LIGHTS_VIGIL_PARTY_HEAL,
       PLACEHOLDER_LIGHTS_VIGIL_COEFFICIENT,
+      { illumination: false },
     );
+    anyCrit ||= critical;
   }
+  /*
+   * ILLUMINATION ONCE PER VIGIL, NOT ONCE PER MEMBER WHO CRITS -- the owner's
+   * ruling on Revelation (round 80), "one roll per cast, not per target hit",
+   * applied to an area heal. A FLAGGED reading: per crit, a five-member party
+   * at a 32% crit rate would hand back about 80% of the Vigil's cost.
+   */
+  if (anyCrit) rollIllumination(simulation, caster, vigil);
 }
 
 /** Holy Shock's heal: "307 to 333 healing to an ally". */
@@ -576,7 +593,9 @@ export function paladinHeal(
   ability: Ability,
   amount: number,
   coefficient: number,
-): void {
+  /** False when the caller rolls Illumination itself, once for several heals. */
+  options: { readonly illumination?: boolean } = {},
+): boolean {
   /*
    * OATH OF LIGHT: "up to" N more healing on the Oath target, scaled by this
    * heal's own coefficient as power is -- and only from the Paladin who swore
@@ -595,8 +614,17 @@ export function paladinHeal(
     powerCoefficient: coefficient,
     threatens: true,
   });
-  if (!result.critical) return;
+  if (!result.critical) return false;
 
+  if (options.illumination ?? true) rollIllumination(simulation, caster, ability);
+
+  const infusion = ability.bonuses?.[INFUSION_OF_LIGHT_KEY] ?? 0;
+  if (infusion > 0) simulation.applyAura(caster, infusionOfLight(infusion), caster.id);
+  return true;
+}
+
+/** Illumination's roll on a heal that crit: {1}% of the BASE cost, {0}% of the time. */
+function rollIllumination(simulation: SimulationContext, caster: Combatant, ability: Ability): void {
   const chance = ability.bonuses?.[ILLUMINATION_CHANCE_KEY] ?? 0;
   const refund = ability.bonuses?.[ILLUMINATION_REFUND_KEY] ?? 0;
   if (chance > 0 && refund > 0 && ability.cost?.resource === 'mana') {
@@ -607,9 +635,6 @@ export function paladinHeal(
       });
     }
   }
-
-  const infusion = ability.bonuses?.[INFUSION_OF_LIGHT_KEY] ?? 0;
-  if (infusion > 0) simulation.applyAura(caster, infusionOfLight(infusion), caster.id);
 }
 
 /**
