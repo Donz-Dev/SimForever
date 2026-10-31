@@ -120,7 +120,7 @@ disk (`d69546da...`), into
 | --- | --- |
 | out | **One-Handed Weapon Specialization**, **Improved Seal of Fury**, **Instrument of Law** (its Hammer of Wrath second went to Champion of the Light, its threat cut to Two-Handed Weapon Specialization), **Voice of Truth** (a trainer spell now) |
 | renamed | **Twist of Light -> Unsealed Wrath**, reworked: every melee attack stores a copy of the active seal (15 s, up to 3), and an attack under a different seal fires every copy at its own chance. Its 20% off seal mana is gone |
-| in | **Shieldsworn** (Protection capstone: Holy Strike -4 s cooldown, and a landed Holy Strike sets off Holy Shield and Shield Specialization with no charge or cooldown spent), **Boundless Light** (+30% crit on Holy Shock heals), **Oath of Light** (amounts are 0 in the data -- not declared), **Stoicism** and **Turn Evil** (crowd control) |
+| in | **Shieldsworn** (Protection capstone: Holy Strike -4 s cooldown, and a landed Holy Strike sets off Holy Shield and Shield Specialization with no charge or cooldown spent), **Boundless Light** (+30% crit on Holy Shock heals), **Oath of Light** (the owner's amounts: Holy Light, Flash of Light and Holy Shock heal for up to 400 / 115 / 229 more on the Oath target), **Stoicism** and **Turn Evil** (crowd control) |
 | reworked | **Holy Power** heal crit damage +50% (was crit chance); **Conviction** 3 ranks, 6% spells AND attacks; **Two-Handed Weapon Specialization** +6% PHYSICAL damage whatever is held, -20% threat while a two-hander is; **Vindication** debuff only; **Swift Judgement** a second Judgement, free, on its own 1 min cooldown; **Sacred Duty** Forbearance -10 s instead of +4% stamina; **Champion of the Light** 5 ranks to the same 60%, plus 1 s off Hammer of Wrath |
 | values | **Redoubt** 30% (was 20), **Improved Righteous Fury** 9% (was 6), **Iron Creed** 3 ranks 30%/6% (was 25%/10%), **Divine Precision** 2 ranks 8% (was 18) and no Holy Shock prerequisite, **Shield Specialization** 2 ranks, **Spiritual Focus**, **Reverence** and **Improved Seals** re-ranked to the same last rank |
 | spells | **Righteous Fury** +33% ALL threat and a further 90% on Holy; **Light's Vigil** friendly targets only (its enemy damage and refund are gone); **Seal of Fury**'s taunt 3 s (not modelled); **Holy Shield** a new rank 1 at level 30 |
@@ -130,6 +130,19 @@ disk (`d69546da...`), into
 `AbilityModifier.healingCritMultiplierBonus` (Holy Power) and
 `healingCritBonus` (Boundless Light), read only by `healing.ts`, with talent
 kinds `abilityHealingCritDamage` and `abilityHealingCrit`.
+
+**OATH OF LIGHT IS DECLARED WITH THE OWNER'S AMOUNTS**, which the client data
+carries as zero. "Up to" is read as healing POWER, each heal scaling it by its own
+coefficient -- the owner's reading of Judgement of the Crusader's "up to 161" --
+so Holy Light gains 286 of its 400; added outright it would be the full 400, and
+every heal coefficient is still a placeholder (question 9). Only the Paladin who
+swore it collects, and the Oath target hands back Boundless Light's 30% Holy
+Shock crit. **The Holy list swears it on the tank** (question 10) -- and smart
+healing had to learn to leave it aimed: retargeted to the raid's lowest member,
+it was re-sworn 16.4 times a raid fight. Worth **0.00 HPS in the raid fight and
+-2.02 +/- 5.52 in the tank fight**, paired at 200 -- the healer already heals all
+the damage either fight deals, so more healing is overhealing; the HPS figure
+cannot see it.
 
 **THE PATCH-NOTE OVERRIDE LAYER IS DELETED AGAIN**: its last row, Champion of the
 Light's 20/40/60, is shipped by the client as 12/24/36/48/60.
@@ -176,6 +189,8 @@ comes back at exactly -80.31, which is the check that B shipped as measured.
 | 6 | Swift Judgement off the global cooldown -- that ruling was for the old reset | kept off |
 | 7 | Salvation is no longer taught, and is a raid buff on every non-tank preset | kept; it moves TPS only |
 | 8 | Seal Twist's cycle | ANSWERED: the owner chose B, 3 Righteousness then 1 Command |
+| 9 | Oath of Light's "up to": healing power scaled by each heal's coefficient, or added outright | power: 286 / 49 / the Holy Shock heal's share |
+| 10 | Who the Holy Pal swears the Oath on | the tank |
 
 ## Round 85: the Druid tree at client build 1.60.1.70707, and the Cat's bite pool
 

@@ -116,7 +116,10 @@ export function resolveHealing(
    * chance when cast on targets with Weakened Soul" is carried by the Weakened
    * Soul on the target, the way Winter's Chill carries a Mage's crit on a boss.
    */
-  const againstTarget = request.external || !request.abilityId ? 0 : request.target.abilityModifierAgainst(request.abilityId).critBonus ?? 0;
+  const againstModifier =
+    request.external || !request.abilityId ? undefined : request.target.abilityModifierAgainst(request.abilityId);
+  // Its heal-only half too: Oath of Light hands back Boundless Light's crit.
+  const againstTarget = (againstModifier?.critBonus ?? 0) + (againstModifier?.healingCritBonus ?? 0);
   const critChance =
     spellCritChanceFrom(source.stats.effective) +
     ((modifier?.critBonus ?? 0) + (modifier?.healingCritBonus ?? 0) + againstTarget) / 100;

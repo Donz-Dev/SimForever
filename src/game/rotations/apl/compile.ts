@@ -71,6 +71,9 @@ export function compileRotation(list: AplList): PriorityRotation {
   );
 }
 
+/** Friendly-target abilities that are buffs, which smart healing leaves aimed. */
+const NOT_HEALS: ReadonlySet<string> = new Set(['oath_of_light']);
+
 /**
  * An entry under smart healing: a friendly target becomes the lowest-health
  * member, the tank included. Ties go to party order, so at full health that
@@ -87,6 +90,13 @@ function smartTargeted(entry: AplEntry): AplEntry {
   if (entry.target?.kind === 'lowestParty') return entry;
   // Nor "the lowest without your X" (round 71): who it is NOT on is the choice.
   if (entry.target?.kind === 'lowestHealth' && entry.target.withoutAura !== undefined) return entry;
+  /*
+   * NOR A FRIENDLY BUFF THAT IS NOT A HEAL (1.60.1.70707). Smart healing is
+   * about whoever has the lowest health, and Oath of Light is sworn on one ally
+   * for five minutes: retargeted, it followed the raid's lowest member and was
+   * re-sworn sixteen times a fight, on somebody new each time.
+   */
+  if (NOT_HEALS.has(entry.abilityId)) return entry;
   return entry.target ? { ...entry, target: { kind: 'lowestHealth' } } : entry;
 }
 

@@ -42,6 +42,8 @@ describe('the abilities that apply a DoT', () => {
       // (Swift Judgement left this list then: it is a Judgement now, and the
       // probe's seal is up.)
       'paladin/lights_vigil',
+      // Friendly targets only, like Light's Vigil.
+      'paladin/oath_of_light',
       'shaman/fire_nova',
       'warlock/bane_of_havoc',
       'warlock/conflagrate',

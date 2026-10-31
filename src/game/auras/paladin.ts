@@ -946,6 +946,49 @@ export function consecrationGround(
 export const CONSECRATION_GROUND: AuraDefinition = consecrationGround();
 
 /**
+ * Oath of Light (1.60.1.70707), the owner's figures: "swear an Oath on one ally
+ * for 5 minutes. On that ally, your Holy Light heals for up to 400 more, Flash of
+ * Light for up to 115 more and Holy Shock for up to 229 more. One Oath at a time,
+ * and it costs 8% of base mana."
+ *
+ * ----------------------------------------------------------------------------
+ * "UP TO" IS HEALING POWER, AND EACH HEAL SCALES IT BY ITS OWN COEFFICIENT --
+ * the reading the owner's ruling on Judgement of the Crusader's "up to 161" gave
+ * the phrase, applied to the healing side. So Holy Light at 2.5 / 3.5 takes 286
+ * of its 400. FLAGGED: added outright, the three would be the full 400, 115 and
+ * 229, and every heal coefficient here is still a placeholder.
+ *
+ * "YOUR" HEALS: only the Paladin who swore it collects, which is why the bonus is
+ * read in `paladinHeal` against the aura's source rather than off the target.
+ *
+ * AND IT CARRIES BOUNDLESS LIGHT'S EXCEPTION. "+30% critical strike chance for
+ * Holy Shock on allies NOT affected by your Oath of Light": the talent is a
+ * standing modifier on the caster, so the Oath target hands it back as a
+ * negative one, sized at the cast from what the caster actually has.
+ * ----------------------------------------------------------------------------
+ */
+export const OATH_OF_LIGHT_DURATION_MS = seconds(300);
+
+/** "Up to" this much more healing on the Oath target, per ability. */
+export const OATH_OF_LIGHT_HEALING: Readonly<Record<string, number>> = {
+  holy_light: 400,
+  flash_of_light: 115,
+  holy_shock: 229,
+};
+
+export function oathOfLight(boundlessLightPercent = 0): AuraDefinition {
+  return {
+    id: 'oath_of_light',
+    name: 'Oath of Light',
+    durationMs: OATH_OF_LIGHT_DURATION_MS,
+    refreshBehaviour: 'reset',
+    ...(boundlessLightPercent > 0
+      ? { attackerAbilityModifiers: { holy_shock: { healingCritBonus: -boundlessLightPercent } } }
+      : {}),
+  };
+}
+
+/**
  * Light's Vigil (round 61): "Applies Light's Vigil to the target for 30 sec.
  * Your next Holy Shock cast on them triggers no cooldown and ..." The aura is
  * the mark and nothing else; what it does is read by Holy Shock, which spends
@@ -984,5 +1027,6 @@ export const CATALOG_AURAS: readonly AuraDefinition[] = [
   vindicationDebuff(0),
   redoubtAura(0),
   infusionOfLight(1),
+  oathOfLight(),
   ...SEAL_AURA_IDS.map(unsealedWrathAura),
 ];

@@ -104,8 +104,6 @@ const MENTIONS_BUT_IS_A_LIVE_GAP: Record<string, string> = {
     'Names pushback, but its FIRST clause is a 447-damage absorb, and what makes that inert is a target that does not swing back. Scoping it as pushback would file an absorb under a cast-time ruling.',
   'druid.bloom':
     'A HEAL, and healing is a per-talent question since round 52 made a Druid heal: the Resto Drood takes it, and what is missing is the expiry trigger, not a ruling.',
-  'paladin.oath_of_light':
-    'A HEAL with no number: the server sets the amounts and the client data carries zero -- missing DATA, which the client catching up would clear, not a ruling.',
   'shaman.improved_reincarnation':
     'Its live clause is +4% MAXIMUM HEALTH, which no effect kind reaches -- the resurrection half is incidental and the word "health" is not "healing".',
 };

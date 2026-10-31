@@ -700,6 +700,20 @@ export const PALADIN_HOLY: AplList = {
       note: "Raid healer: on the lowest party, whenever none of your Light's Vigils is up.",
     },
     /*
+     * OATH OF LIGHT ON THE TANK, kept up for its five minutes (1.60.1.70707).
+     * The tank is the one target of every Holy Light in this list and of most
+     * Flashes, so it is where 400 / 115 / 229 more healing lands; the cost is
+     * Boundless Light's crit on the tank's Holy Shocks. The target is this
+     * project's choice, flagged for the owner. BELOW the Vigil, so the owner's
+     * raid chain still opens with the Vigil at the pull and the Oath takes the
+     * next global cooldown.
+     */
+    {
+      abilityId: 'oath_of_light',
+      target: { kind: 'tank' },
+      condition: { kind: 'aura', on: 'target', auraId: 'oath_of_light', present: false },
+    },
+    /*
      * ROUND 80, AN ADDITION ABOVE THE OWNER'S FOUR LINES, TANK HEALER FIGHT
      * ONLY: under 60% mana, the cheap heal on whoever is below full instead of
      * Holy Light. +2.52 +/- 1.34 HPS at 120 s over 400 paired fights (40%:

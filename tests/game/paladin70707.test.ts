@@ -2,7 +2,17 @@ import { describe, expect, it } from 'vitest';
 import type { AttackEvent, TelemetryEvent } from '../../src/engine';
 import { applyHealing, dealDamage, seconds } from '../../src/engine';
 import { createPlayer } from '../../src/game/actors/createPlayer';
-import { HOLY_SHIELD } from '../../src/game/auras/paladin';
+import { HOLY_SHIELD, OATH_OF_LIGHT_DURATION_MS, OATH_OF_LIGHT_HEALING } from '../../src/game/auras/paladin';
+import {
+  FLASH_OF_LIGHT,
+  HOLY_LIGHT,
+  HOLY_SHOCK,
+  OATH_OF_LIGHT_ABILITY,
+} from '../../src/game/abilities/paladin';
+import { castAbility } from '../../src/engine';
+import { PLACEHOLDER_HOLY_LIGHT_HEAL_COEFFICIENT } from '../../src/game/combat/coefficients';
+import { PALADIN_HOLY } from '../../src/game/rotations/paladin';
+import { Combatant } from '../../src/engine';
 import { PALADIN_TALENT_EFFECTS } from '../../src/game/talents/paladinEffects';
 import { talentBuild } from '../../src/game/talents/talentBuild';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
@@ -191,5 +201,94 @@ describe('the five new talents and the four that left', () => {
     ]) {
       expect(PALADIN_TALENT_EFFECTS[id], id).toBeUndefined();
     }
+  });
+});
+
+describe("Oath of Light, with the owner's amounts", () => {
+  /** A Paladin with Holy Light, Flash, Holy Shock and the Oath, no crit, no healing power. */
+  const healer = (id: string, talents: Record<string, number> = {}) => {
+    const build = talentBuild('paladin', legalise(talents, 'paladin'));
+    return makeAttacker({
+      id,
+      name: id,
+      autoAttack: 'none',
+      abilities: [HOLY_LIGHT, FLASH_OF_LIGHT, HOLY_SHOCK, OATH_OF_LIGHT_ABILITY],
+      abilityModifiers: build.abilityModifiers,
+      resources: [{ type: 'mana', maximum: 100_000 }],
+      stats: { spellCritChance: -1000, healingPower: 0 },
+    });
+  };
+  const ally = (id: string) => {
+    const a = new Combatant({ id, name: id, kind: 'summon', faction: 'friendly', maxHealth: 1_000_000, party: 1 });
+    a.health.set(1);
+    return a;
+  };
+  const healed = (events: TelemetryEvent[], targetId: string, abilityId: string) =>
+    events
+      .filter((e) => e.type === 'heal' && (e as { targetId?: string }).targetId === targetId)
+      .filter((e) => (e as { abilityId?: string }).abilityId === abilityId)
+      .reduce((n, e) => n + (e as unknown as { amount: number }).amount, 0);
+
+  it('states the figures: 400, 115, 229, five minutes, 8% of base mana', () => {
+    expect(OATH_OF_LIGHT_HEALING).toEqual({ holy_light: 400, flash_of_light: 115, holy_shock: 229 });
+    expect(OATH_OF_LIGHT_DURATION_MS).toBe(seconds(300));
+    expect(PALADIN_TALENT_EFFECTS.oath_of_light).toEqual([{ kind: 'grantAbility', abilityId: 'oath_of_light' }]);
+  });
+
+  it("adds 400 'up to' to the caster's Holy Light on the Oath target, scaled by its coefficient", () => {
+    const paladin = healer('paladin');
+    const sworn = ally('sworn');
+    const other = ally('other');
+    const events: TelemetryEvent[] = [];
+    const simulation = buildSimulation([paladin, sworn, other, makeTarget()], {}, { emit: (e) => events.push(e) });
+    simulation.begin();
+    expect(castAbility(simulation, paladin, OATH_OF_LIGHT_ABILITY, sworn)).toEqual({ ok: true });
+    simulation.advanceTo(seconds(2));
+    castAbility(simulation, paladin, HOLY_LIGHT, sworn);
+    simulation.advanceTo(seconds(6));
+    castAbility(simulation, paladin, HOLY_LIGHT, other);
+    simulation.advanceTo(seconds(10));
+    const difference = healed(events, 'sworn', 'holy_light') - healed(events, 'other', 'holy_light');
+    expect(difference).toBeCloseTo(400 * PLACEHOLDER_HOLY_LIGHT_HEAL_COEFFICIENT, 6);
+  });
+
+  it('pays only the Paladin who swore it, and moves when sworn again', () => {
+    const paladin = healer('paladin');
+    const second = healer('second');
+    const a = ally('a');
+    const b = ally('b');
+    const events: TelemetryEvent[] = [];
+    const simulation = buildSimulation([paladin, second, a, b, makeTarget()], {}, { emit: (e) => events.push(e) });
+    simulation.begin();
+    castAbility(simulation, paladin, OATH_OF_LIGHT_ABILITY, a);
+    castAbility(simulation, second, HOLY_LIGHT, a);
+    simulation.advanceTo(seconds(4));
+    castAbility(simulation, second, HOLY_LIGHT, b);
+    simulation.advanceTo(seconds(8));
+    // Another Paladin's Holy Light gains nothing from somebody else's Oath.
+    expect(healed(events, 'a', 'holy_light')).toBeCloseTo(healed(events, 'b', 'holy_light'), 6);
+
+    // "One Oath at a time": swearing it on b takes it off a.
+    castAbility(simulation, paladin, OATH_OF_LIGHT_ABILITY, b);
+    expect(a.auras.has('oath_of_light')).toBe(false);
+    expect(b.auras.get('oath_of_light')?.sourceId).toBe('paladin');
+  });
+
+  it("takes Boundless Light's 30% back on the Oath target and nowhere else", () => {
+    const paladin = healer('paladin', { holy_shock: 1, boundless_light: 2 });
+    const sworn = ally('sworn');
+    const other = ally('other');
+    const simulation = buildSimulation([paladin, sworn, other, makeTarget()]);
+    simulation.begin();
+    castAbility(simulation, paladin, OATH_OF_LIGHT_ABILITY, sworn);
+    expect(sworn.abilityModifierAgainst('holy_shock').healingCritBonus).toBe(-30);
+    expect(other.abilityModifierAgainst('holy_shock').healingCritBonus ?? 0).toBe(0);
+    expect(paladin.abilityModifierFor('holy_shock')?.healingCritBonus).toBe(30);
+  });
+
+  it('is cast on the tank by the Holy list, and only while the tank has none', () => {
+    const entry = PALADIN_HOLY.entries.find((e) => e.abilityId === 'oath_of_light')!;
+    expect(entry.target).toEqual({ kind: 'tank' });
+    expect(entry.condition).toEqual({ kind: 'aura', on: 'target', auraId: 'oath_of_light', present: false });
   });
 });

@@ -265,21 +265,19 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   oath_of_light: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Swears an Oath on an ally for 5 min, raising their healing from Holy ' +
-        'Light, Flash of Light and Holy Shock "by up to 0" -- the server sets the ' +
-        'amounts and the client data carries zero, so there is no number to ' +
-        'model. Not declared as an ability until the amounts arrive.',
-    },
+    /*
+     * THE OWNER GAVE THE AMOUNTS the client data carries as zero: 400 on Holy
+     * Light, 115 on Flash of Light, 229 on Holy Shock, as "up to" healing power
+     * on the Oath target. See `oathOfLight` and `OATH_OF_LIGHT_ABILITY`.
+     */
+    { kind: 'grantAbility', abilityId: 'oath_of_light' },
   ],
 
   boundless_light: [
     /*
      * "INCREASES THE CRITICAL STRIKE CHANCE OF YOUR HOLY SHOCK SPELL BY {0}% WHEN
-     * CAST ON ALLIES NOT AFFECTED BY YOUR OATH OF LIGHT" -- and no Oath is ever
-     * sworn here (see `oath_of_light`), so every ally qualifies. A HEAL's crit
+     * CAST ON ALLIES NOT AFFECTED BY YOUR OATH OF LIGHT". A standing heal crit
+     * here, which the Oath target hands back -- see `oathOfLight`. A HEAL's crit
      * only: Holy Shock's damage on an enemy is not "cast on allies".
      */
     { kind: 'abilityHealingCrit', abilityIds: ['holy_shock'] },

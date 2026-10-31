@@ -11,6 +11,8 @@ import {
   IMPROVED_RIGHTEOUS_FURY_FLAG,
   INFUSION_OF_LIGHT_KEY,
   LIGHTS_VIGIL,
+  OATH_OF_LIGHT_HEALING,
+  oathOfLight,
   infusionOfLight,
   HOLY_SHIELD,
   JUDGEMENT_OF_THE_CRUSADER,
@@ -465,6 +467,31 @@ export const HOLY_SHOCK: Ability = {
  * rather than resolved.
  * ----------------------------------------------------------------------------
  */
+/**
+ * Oath of Light, granted by the Holy talent (1.60.1.70707): 8% of base mana,
+ * instant, on one ally for five minutes, "one Oath at a time" -- so swearing it
+ * takes the caster's Oath off anybody else. Everything it does is on the aura
+ * and in `paladinHeal`.
+ */
+export const OATH_OF_LIGHT_ABILITY: Ability = {
+  id: 'oath_of_light',
+  name: 'Oath of Light',
+  // NOT `heals`: it is a buff on an ally, and a heal-only clause must not take it.
+  cost: { resource: 'mana', amount: shareOfBase(0.08) },
+  canCast: ({ caster, target }) => target !== undefined && !target.isHostileTo(caster),
+  onCast: ({ simulation, caster, target }) => {
+    if (!target) return;
+    for (const other of simulation.combatants) {
+      if (other !== target && other.auras.get('oath_of_light')?.sourceId === caster.id) {
+        other.auras.remove(simulation, 'oath_of_light');
+      }
+    }
+    // Boundless Light's crit, which the Oath target does not get.
+    const boundless = caster.abilityModifierFor('holy_shock')?.healingCritBonus ?? 0;
+    simulation.applyAura(target, oathOfLight(boundless), caster.id);
+  },
+};
+
 export const LIGHTS_VIGIL_PARTY_HEAL = midpoint(684, 724);
 export const LIGHTS_VIGIL_MANA_COST = 1340;
 
@@ -550,12 +577,21 @@ export function paladinHeal(
   amount: number,
   coefficient: number,
 ): void {
+  /*
+   * OATH OF LIGHT: "up to" N more healing on the Oath target, scaled by this
+   * heal's own coefficient as power is -- and only from the Paladin who swore
+   * it. See `oathOfLight`.
+   */
+  const oath =
+    target.auras.get('oath_of_light')?.sourceId === caster.id
+      ? (OATH_OF_LIGHT_HEALING[ability.id] ?? 0) * coefficient
+      : 0;
   const result = applyHealing(simulation, {
     source: caster,
     target,
     abilityId: ability.id,
     abilityName: ability.name,
-    baseAmount: amount,
+    baseAmount: amount + oath,
     powerCoefficient: coefficient,
     threatens: true,
   });
@@ -904,6 +940,7 @@ export const PALADIN_ABILITIES: readonly Ability[] = [
   HOLY_STRIKE,
   HOLY_SHOCK,
   LIGHTS_VIGIL_ABILITY,
+  OATH_OF_LIGHT_ABILITY,
   HOLY_LIGHT,
   FLASH_OF_LIGHT,
   DIVINE_FAVOR_ABILITY,
