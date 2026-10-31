@@ -247,8 +247,9 @@ rest of this document most needs:
 
 - **Twist of Light is Unsealed Wrath** and its Echo is gone. A stored seal is
   `unsealed_wrath_<seal>` with up to three stacks, spent by `unsealedWrathProc`;
-  Seal Twist runs the owner's cycle: three attacks under Command, one under
-  Righteousness (`SEAL_TWIST_COMMAND_ATTACKS`, `SEAL_TWIST_RIGHTEOUSNESS_ATTACKS`).
+  Seal Twist runs the owner's cycle B: three attacks under Righteousness, one
+  under Command (`SEAL_TWIST_RIGHTEOUSNESS_ATTACKS`, `SEAL_TWIST_COMMAND_ATTACKS`),
+  opening under Righteousness.
 - **Instrument of Law is gone**; Champion of the Light 5/5 makes Hammer of
   Wrath instant, and `castsInstantly` still gates the Seal Twist entry.
 - **Holy Shield is row 5**, and **Shieldsworn** is the Protection capstone.

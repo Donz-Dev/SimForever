@@ -3881,8 +3881,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * no entry point of its own when both seals were gated on each other.
        */
       precombat: [
-        ...before(3, 'seal_of_righteousness'),
-        ...before(1.5, 'seal_of_command'),
+        /*
+         * SEAL OF RIGHTEOUSNESS LAST, so the fight opens under it: the Seal
+         * Twist cycle is three attacks under Righteousness, then one under
+         * Command (1.60.1.70707). The owner's opener had the two the other way
+         * round, for the cycle that started under Command.
+         */
+        ...before(3, 'seal_of_command'),
+        ...before(1.5, 'seal_of_righteousness'),
         ...before(0, 'judgement'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },

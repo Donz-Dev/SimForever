@@ -1,7 +1,8 @@
 /**
- * Seal Twist under Unsealed Wrath (1.60.1.70707). The shipped list is the
- * owner's cycle -- Righteousness after three copies of Command, Command after
- * one of Righteousness -- and the variants are other cycles.
+ * Seal Twist under Unsealed Wrath (1.60.1.70707). The shipped list was cycle A
+ * when these were measured, and is cycle B now -- the owner's choice of the
+ * three. The `cycles` group re-runs all three against the shipped list, so B
+ * reads as identical fights and A and C as what the choice is worth.
  *
  *   PRESET=pally_ret FILE=tools/optimise/sealTwist707.ts VARIANTS=swap DURATION=120 ITER=400 npx vite-node tools/probe_build.ts
  *   PRESET=pally_ret FILE=tools/optimise/sealTwist707.ts VARIANTS=cycles DURATION=120 ITER=400 npx vite-node tools/probe_build.ts
@@ -18,7 +19,7 @@ const SOR = 'seal_of_righteousness';
 const stored = (seal: string, n: number) => selfStacks('atLeast', n, `unsealed_wrath_${seal}`);
 const neither = all(not(selfHas(SOC)), not(selfHas(SOR)));
 
-const control: Variant = { label: "A: 3 Command then 1 Righteousness -- the control", apply: (p) => p };
+const control: Variant = { label: 'the shipped list (B) -- the control', apply: (p) => p };
 
 /** Replace both seal entries' conditions. */
 const seals = (command: AplCondition, righteousness: AplCondition): Apply =>
@@ -58,6 +59,14 @@ const swapAt = (n: number): Variant => ({
  *      is one attack, read off the clock: it is the only Command phase that
  *      can end inside the first three seconds.
  */
+const A: Variant = {
+  label: 'A: 3 Command then 1 Righteousness',
+  apply: chain(
+    openOn(SOC),
+    seals(any(neither, all(selfHas(SOR), stored(SOR, 1))), all(selfHas(SOC), stored(SOC, 3))),
+  ),
+};
+
 const B: Variant = {
   label: 'B: 3 Righteousness then 1 Command',
   apply: chain(
@@ -79,5 +88,5 @@ const C: Variant = {
 
 export const VARIANT_GROUPS: Record<string, readonly Variant[]> = {
   swap: [control, swapAt(1), swapAt(2), swapAt(3)],
-  cycles: [control, B, C],
+  cycles: [control, A, B, C],
 };

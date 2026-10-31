@@ -172,9 +172,11 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
     [3, 'fireball'],
     [0, 'fire_blast'],
   ],
+  // The two seals swapped at 1.60.1.70707, when the owner chose the Unsealed
+  // Wrath cycle that opens under Righteousness.
   pally_ret: [
-    [3, 'seal_of_righteousness'],
-    [1.5, 'seal_of_command'],
+    [3, 'seal_of_command'],
+    [1.5, 'seal_of_righteousness'],
     [0, 'judgement'],
   ],
   pally_shockadin_2h: [

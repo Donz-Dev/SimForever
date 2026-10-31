@@ -143,24 +143,25 @@ Champion of the Light 5/5, so its Hammer of Wrath is instant too -- and its list
 entry keeps the owner's 300 ms swing gate, which was written for the version
 with a cast.
 
-**SEAL TWIST RUNS THE OWNER'S CYCLE**: Seal of Command for three attacks, Seal of
-Righteousness for one, repeat -- `SEAL_TWIST_COMMAND_ATTACKS` and
-`SEAL_TWIST_RIGHTEOUSNESS_ATTACKS`, read as copies stored, which is the same
-count. It replaced a symmetric swap at three that this round had shipped first.
-**THE OWNER'S LIST OUTRANKS THE MEASUREMENT, AND THE MEASUREMENT STAYS**: paired
-at 400 fights (`tools/optimise/sealTwist707.ts`), every symmetric swap beats it:
+**SEAL TWIST RUNS CYCLE B: THREE ATTACKS UNDER SEAL OF RIGHTEOUSNESS, THEN ONE
+UNDER SEAL OF COMMAND**, repeat -- `SEAL_TWIST_RIGHTEOUSNESS_ATTACKS` and
+`SEAL_TWIST_COMMAND_ATTACKS`, read as copies stored, which is the same count; the
+opener puts Righteousness up last so the fight starts under it. The owner chose
+it out of three after they were measured, paired at 400 fights
+(`tools/optimise/sealTwist707.ts`), against cycle A:
 
-| against the 3-then-1 cycle | 120 s | 240 s |
-| --- | --- | --- |
-| symmetric at 3 | **+30.12 +/- 7.71** | **+53.03 +/- 5.35** |
-| symmetric at 2 | +46.56 +/- 8.39 | +43.78 +/- 5.54 |
-| symmetric at 1 | +16.44 +/- 8.07 | +13.12 +/- 5.69 |
+| against A (3 Command, then 1 Righteousness) | 60 s | 120 s | 240 s |
+| --- | --- | --- | --- |
+| **B: 3 Righteousness, then 1 Command** | **+84.50 +/- 12.40** | **+80.31 +/- 8.11** | **+77.34 +/- 5.80** |
+| C: 1 Command, then 3 Righteousness, 3 Command | +48.89 +/- 11.17 | +42.37 +/- 8.16 | +59.93 +/- 5.49 |
 
-The likely mechanism is the swap's own price: two seal casts -- two global
-cooldowns and their mana -- every four attacks instead of every six, for one
-stored Righteousness copy where the symmetric cycle banks three.
-`USES=1` at 3 seeds x 10, 60 s, on the owner's builds: Seal Twist **861.7 +/-
-19.9** (Unsealed Wrath 13.2% of its damage), Shockadin 889.6, Prot 618.5 --
+THE ROUND GOT HERE IN THREE STEPS, which is worth keeping: a symmetric swap at
+three (this project's first reading), then the owner's A, which measured 30 to 53
+below that swap, then B, which beats A by more than A lost. **Re-run with
+`VARIANTS=cycles`** -- the shipped list now reads as identical fights to B, and A
+comes back at exactly -80.31, which is the check that B shipped as measured.
+`USES=1` at 3 seeds x 10, 60 s, on the owner's builds: Seal Twist **996.1 +/-
+19.4** (Unsealed Wrath 17.1% of its damage), Shockadin 889.6, Prot 618.5 --
 **not a baseline**, and not comparable to the published rows.
 
 **QUESTIONS FOR THE OWNER**, each flagged where it is implemented:
@@ -174,7 +175,7 @@ stored Righteousness copy where the symmetric cycle banks three.
 | 5 | Shieldsworn: does Shield Specialization's running 3 s cooldown refuse the strike's mana | no: the strike neither starts nor reads it |
 | 6 | Swift Judgement off the global cooldown -- that ruling was for the old reset | kept off |
 | 7 | Salvation is no longer taught, and is a raid buff on every non-tank preset | kept; it moves TPS only |
-| 8 | Seal Twist's 3-then-1 cycle measures -30 at 120 s and -53 at 240 s against a symmetric swap at 3 | the owner's cycle |
+| 8 | Seal Twist's cycle | ANSWERED: the owner chose B, 3 Righteousness then 1 Command |
 
 ## Round 85: the Druid tree at client build 1.60.1.70707, and the Cat's bite pool
 

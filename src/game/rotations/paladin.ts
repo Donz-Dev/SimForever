@@ -112,12 +112,12 @@ const healthAtMostFraction = (fraction: number) => selfHealth('atMost', fraction
 const either = any;
 
 /**
- * Seal Twist's cycle, the owner's: three attacks under Seal of Command, then one
- * under Seal of Righteousness, counted as the copies each has STORED -- every
- * landed attack stores one, so a copy is an attack.
+ * Seal Twist's cycle, the owner's choice of three measured: three attacks under
+ * Seal of Righteousness, then one under Seal of Command, counted as the copies
+ * each has STORED -- every landed attack stores one, so a copy is an attack.
  */
-export const SEAL_TWIST_COMMAND_ATTACKS = 3;
-export const SEAL_TWIST_RIGHTEOUSNESS_ATTACKS = 1;
+export const SEAL_TWIST_RIGHTEOUSNESS_ATTACKS = 3;
+export const SEAL_TWIST_COMMAND_ATTACKS = 1;
 
 /*
  * ----------------------------------------------------------------------------
@@ -261,51 +261,44 @@ export const PALADIN_RETRIBUTION: AplList = {
   { abilityId: 'holy_strike' },
   { abilityId: 'consecration' },
   /*
-   * THE TWIST, UNDER UNSEALED WRATH (1.60.1.70707) -- THE OWNER'S CYCLE: "start
-   * with Seal of Command. Auto-Attack 3 times gaining 3 stacks and providing 3
-   * opportunities for Seal of Command to trigger. Then cast Seal of
-   * Righteousness and Auto-Attack 1 time, triggering a Seal of Righteousness
-   * hit and proccing Unsealed Wrath providing 3 more opportunities for Seal of
-   * Command to trigger. This process then repeats indefinitely."
+   * THE TWIST, UNDER UNSEALED WRATH (1.60.1.70707): THREE ATTACKS UNDER SEAL OF
+   * RIGHTEOUSNESS, THEN ONE UNDER SEAL OF COMMAND, REPEAT. Every landed attack
+   * stores a copy of the active seal; an attack under the other seal fires every
+   * stored copy. So Command goes up once Righteousness has stored three copies,
+   * and its one attack fires all three as Righteousness hits -- Righteousness
+   * hits on every attack, so a copy of it is a guaranteed hit -- and stores one
+   * Command copy, which the first attack back under Righteousness rolls.
    *
-   * SO THE TWO SWAPS ARE NOT SYMMETRIC: Righteousness goes up once Command has
-   * stored three copies, and Command goes back up once Righteousness has stored
-   * ONE -- `SEAL_TWIST_COMMAND_ATTACKS` and `SEAL_TWIST_RIGHTEOUSNESS_ATTACKS`.
-   * Counting stored copies rather than swings is the same count, because every
-   * landed attack stores one, and it is the only count the list can read.
+   * THE OWNER CHOSE IT OUT OF THREE, measured paired at 400 fights against
+   * "3 Command then 1 Righteousness":
    *
-   * AND THE ONE RIGHTEOUSNESS COPY IS NOT WASTED: the first attack back under
-   * Command spends it, so each cycle is also one more Seal of Righteousness hit.
-   * That falls out of the talent; the owner's sentence does not name it.
+   *   3 Righteousness, 1 Command    +84.50 (60 s)   +80.31 (120 s)   +77.34 (240 s)
+   *   1 Command, then 3 and 3       +48.89          +42.37           +59.93
    *
-   * THE SEED IS COMMAND: with neither seal up, it starts the cycle. (The opener
-   * puts Command up last before the pull, so the fight starts under it too.)
+   * so it wins at every clock. `tools/optimise/sealTwist707.ts`.
    *
-   * WHAT IT REPLACED was a symmetric swap at three either way, this project's
-   * reading before the owner gave the cycle -- and that one MEASURES BETTER,
-   * +30.12 +/- 7.71 at 120 s and +53.03 +/- 5.35 at 240 s paired at 400 fights.
-   * The owner's list outranks the measurement; the measurement is kept here and
-   * in HANDOVER round 86 as the price of the choice.
+   * THE SEED IS RIGHTEOUSNESS: with neither seal up, it starts the cycle -- and
+   * the opener puts it up last before the pull, so the fight starts under it.
    */
   {
     abilityId: 'seal_of_command',
-    condition: either(
-      all(not(selfActive('seal_of_command')), not(selfActive('seal_of_righteousness'))),
-      all(
-        selfActive('seal_of_righteousness'),
-        selfStacks(
-          'atLeast',
-          SEAL_TWIST_RIGHTEOUSNESS_ATTACKS,
-          'unsealed_wrath_seal_of_righteousness',
-        ),
+    condition: all(
+      selfActive('seal_of_righteousness'),
+      selfStacks(
+        'atLeast',
+        SEAL_TWIST_RIGHTEOUSNESS_ATTACKS,
+        'unsealed_wrath_seal_of_righteousness',
       ),
     ),
   },
   {
     abilityId: 'seal_of_righteousness',
-    condition: all(
-      selfActive('seal_of_command'),
-      selfStacks('atLeast', SEAL_TWIST_COMMAND_ATTACKS, 'unsealed_wrath_seal_of_command'),
+    condition: either(
+      all(not(selfActive('seal_of_command')), not(selfActive('seal_of_righteousness'))),
+      all(
+        selfActive('seal_of_command'),
+        selfStacks('atLeast', SEAL_TWIST_COMMAND_ATTACKS, 'unsealed_wrath_seal_of_command'),
+      ),
     ),
   },
   ],
