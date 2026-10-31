@@ -107,7 +107,7 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
-## Round 90: the two-tank deep dive, and Prot Pally on Seal of Fury
+## Round 90: Prot Pally on Seal of Fury
 
 **PROT PALLY RUNS SEAL OF FURY NOW**, the owner's instruction: "ensure Prot
 Pally is using Seal of Fury instead of Seal of Righteousness and that the absorb
@@ -116,8 +116,8 @@ Multi Target opener all moved. **Protribution follows**, because it derives its
 list and opener from Prot Pally's -- which is what "copy from Prot Pally to the
 maximum extent" asked for.
 
-**THE ABSORB WORKS, CHECKED HIT BY HIT** (`tools/probe_fury_shield.ts`, 40
-fights a tier). One grant per landed seal hit; a pool of `0.5 x (35 + 10% Holy
+**THE ABSORB WORKS, CHECKED HIT BY HIT** (a one-off probe, 40 fights a
+tier). One grant per landed seal hit; a pool of `0.5 x (35 + 10% Holy
 SP)` -- 39.9, 45.8 and 48.3 at B55, E65 and E75; each grant REPLACES the last;
 the next boss hit spends it. Zero disagreements and zero stacked hits at every
 tier. `tests/game/sealOfFuryAbsorb.test.ts` drives the real fight and fails 2 of
@@ -130,38 +130,6 @@ spent in the order they were applied, so a hit can leave either one standing.
 same 200 fights a cell, Fury is **-115 to -185 TPS** (about 9%) for **-1 to -29
 DTPS** and +10 to +23 absorbed a second; mana is unchanged. Recorded for the
 owner rather than acted on -- the seal was their call.
-
-**THE DEEP DIVE ITSELF** is `tools/tank_deep_dive.ts`, every figure off the
-combat log, 200 fights a cell, and published as the Tank Deep Dive report. At
-E65:
-
-| | Prot Pally | Bear Druid |
-| --- | --- | --- |
-| TPS, 1 / 8 targets | 1268 / 3023 | 1327 / 2515 |
-| least-held target TPS, 8 targets | 197 | 106 |
-| DTPS, 1 / 8 targets | 906 / 1308 | 678 / 994 |
-| healing needed, 1 target | 906 | 662 |
-| first death, ramp uncapped, 1 target | 29.3 s | 39.4 s |
-
-**TIME TO FIRST DEATH LIFTS ROUND 79'S 2x RAMP CAP** for that one measurement --
-`uncapRamp` in the tool, put back in a `finally`. Everything else uses the cap.
-
-**THE FIRST FIFTEEN SECONDS FLIP WITH THE ENCOUNTER**
-(`tools/tank_opening_threat.ts`, raw threat, single target, 200 fights a row).
-With the target attacking, Prot Pally leads the Bear at every tier -- **21,573
-against 19,765 at E65**; with nothing attacking, the Bear leads -- **19,290
-against 18,033**. Prot Pally loses about 3,500, mostly Holy Shield's block
-damage (4,324 to 2,256). The Bear loses only 300 to 1,000, because being hit
-is worth just ~35 rage in 15 s and an idle target cannot parry, so its
-auto-attacks land more. **"Not attacking" is not "Salvation on"**: the panel's
-switch turns Salvation on with it, a further 30% off both, which the tool
-reports as a third case rather than folding in.
-
-**PROT PALLY'S MANA HAS TWO LINES AND THE FIRST IS ALMOST NEVER CROSSED.** Holy
-Strike costs 20, so "cannot afford any core spell" is an empty bar: 21-37% of
-four minute single-target fights. Below Holy Shield's 240 is **70-80% of them,
-at a median of 178-185 s**. With more targets it barely happens -- 0% at eight
--- because being hit is what refills its mana.
 
 ## Round 89: the Holy Pal's mana
 
