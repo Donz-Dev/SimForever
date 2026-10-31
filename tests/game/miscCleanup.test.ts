@@ -9,8 +9,8 @@ import {
 } from '../../src/game/combat/coefficients';
 import { linearBySpeed } from '../../src/game/combat/speedRow';
 import { JUDGEMENT } from '../../src/game/abilities/paladin';
-import { echoAura } from '../../src/game/auras/paladin';
-import { SEAL_OF_COMMAND_PPM, carriesSeal, echoProc } from '../../src/game/reactions/paladin';
+import { SEAL_OF_RIGHTEOUSNESS, unsealedWrathAura } from '../../src/game/auras/paladin';
+import { SEAL_OF_COMMAND_PPM, carriesSeal, unsealedWrathProc } from '../../src/game/reactions/paladin';
 import { SHAMAN_ABILITIES } from '../../src/game/abilities/shaman';
 import { FLAMETONGUE_WEAPON_IMBUE, WINDFURY_WEAPON_IMBUE } from '../../src/game/auras/shaman';
 import {
@@ -108,10 +108,12 @@ describe('the seal balance pass', () => {
     expect(carriesSeal(mainHandHit(player, boss, 'holy_strike'))).toBe(false);
   });
 
-  it('rolls the Echo of Seal of Command at 7 PPM rather than landing it every time', () => {
+  it('rolls a stored Seal of Command at 7 PPM rather than landing it every time', () => {
     /*
-     * The owner: it "could always be triggering a Seal of Command hit, rather
-     * than having a chance to trigger Seal of Command when the echo is active."
+     * The owner, of Twist of Light's Echo: it "could always be triggering a Seal
+     * of Command hit, rather than having a chance to trigger Seal of Command when
+     * the echo is active." Unsealed Wrath (1.60.1.70707) says it outright -- "its
+     * normal chance to activate once per stack" -- so the reading carries over.
      * A 3.5-second weapon at 7 PPM is 7 x 3.5 / 60 = 40.8%, by hand.
      */
     const player = withMainHand(3.5);
@@ -119,19 +121,22 @@ describe('the seal balance pass', () => {
     const events: TelemetryEvent[] = [];
     const simulation = buildSimulation([player, boss], {}, { emit: (e) => events.push(e) });
     simulation.begin();
-    const reaction = echoProc();
+    const reaction = unsealedWrathProc();
+    // The attack is under Righteousness, so a stored Command is a different seal.
+    simulation.applyAura(player, SEAL_OF_RIGHTEOUSNESS, player.id);
 
     const trials = 2000;
     for (let i = 0; i < trials; i += 1) {
-      simulation.applyAura(player, echoAura('seal_of_command'), player.id);
+      player.auras.remove(simulation, 'unsealed_wrath_seal_of_righteousness');
+      simulation.applyAura(player, unsealedWrathAura('seal_of_command'), player.id);
       const attack = mainHandHit(player, boss);
       expect(reaction.canTrigger!(simulation, player, attack)).toBe(true);
       reaction.onTrigger(simulation, player, attack);
-      // The charge is spent whether or not the roll landed.
-      expect(player.auras.has('echo_seal_of_command')).toBe(false);
+      // The copy is spent whether or not the roll landed.
+      expect(player.auras.has('unsealed_wrath_seal_of_command')).toBe(false);
     }
 
-    const echoes = damageEvents(events, 'twist_of_light').length;
+    const echoes = damageEvents(events, 'unsealed_wrath').length;
     const expected = (SEAL_OF_COMMAND_PPM * 3.5) / 60;
     expect(expected).toBeCloseTo(0.4083, 3);
     expect(echoes / trials).toBeGreaterThan(expected - 0.05);

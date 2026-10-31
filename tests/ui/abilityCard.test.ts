@@ -20,6 +20,9 @@ const NOT_IN_A_CLASS_CAPTURE = new Set([
   'melee_weave',
   'mana_ruby',
   'eureka',
+  // New at client build 1.60.1.70707, after the Paladin spellbook capture was
+  // taken -- so its card falls back to what the simulator declares.
+  'oath_of_light',
   ...Object.keys(RACIAL_ABILITIES),
 ]);
 const isNotClassSpell = (ability: Ability) =>

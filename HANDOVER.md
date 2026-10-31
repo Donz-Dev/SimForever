@@ -107,6 +107,92 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 86: the Paladin tree at client build 1.60.1.70707
+
+The owner listed the patch; talentsforever.com still served the old tree, so it
+was captured off [foreverchanges.pro](https://foreverchanges.pro/talents/paladin)
+the way the Druid's was in round 85 -- read in a browser, hashed there and on
+disk (`d69546da...`), into
+`tools/data/foreverchanges-paladin-talents-70707.json`, and imported with
+`--capture paladin=...`. 50 talents to **51**.
+
+| | what changed |
+| --- | --- |
+| out | **One-Handed Weapon Specialization**, **Improved Seal of Fury**, **Instrument of Law** (its Hammer of Wrath second went to Champion of the Light, its threat cut to Two-Handed Weapon Specialization), **Voice of Truth** (a trainer spell now) |
+| renamed | **Twist of Light -> Unsealed Wrath**, reworked: every melee attack stores a copy of the active seal (15 s, up to 3), and an attack under a different seal fires every copy at its own chance. Its 20% off seal mana is gone |
+| in | **Shieldsworn** (Protection capstone: Holy Strike -4 s cooldown, and a landed Holy Strike sets off Holy Shield and Shield Specialization with no charge or cooldown spent), **Boundless Light** (+30% crit on Holy Shock heals), **Oath of Light** (the owner's amounts: Holy Light, Flash of Light and Holy Shock heal for up to 400 / 115 / 229 more on the Oath target), **Stoicism** and **Turn Evil** (crowd control) |
+| reworked | **Holy Power** heal crit damage +50% (was crit chance); **Conviction** 3 ranks, 6% spells AND attacks; **Two-Handed Weapon Specialization** +6% PHYSICAL damage whatever is held, -20% threat while a two-hander is; **Vindication** debuff only; **Swift Judgement** a second Judgement, free, on its own 1 min cooldown; **Sacred Duty** Forbearance -10 s instead of +4% stamina; **Champion of the Light** 5 ranks to the same 60%, plus 1 s off Hammer of Wrath |
+| values | **Redoubt** 30% (was 20), **Improved Righteous Fury** 9% (was 6), **Iron Creed** 3 ranks 30%/6% (was 25%/10%), **Divine Precision** 2 ranks 8% (was 18) and no Holy Shock prerequisite, **Shield Specialization** 2 ranks, **Spiritual Focus**, **Reverence** and **Improved Seals** re-ranked to the same last rank |
+| spells | **Righteous Fury** +33% ALL threat and a further 90% on Holy; **Light's Vigil** friendly targets only (its enemy damage and refund are gone); **Seal of Fury**'s taunt 3 s (not modelled); **Holy Shield** a new rank 1 at level 30 |
+| moved | Holy Shield to row 5 (not the capstone), Holy Conduit to Holy, Divine Intellect to Protection, Unyielding Faith to Retribution, and nineteen more |
+
+**TWO ENGINE FIELDS**, both because Holy Shock heals and damages under one id:
+`AbilityModifier.healingCritMultiplierBonus` (Holy Power) and
+`healingCritBonus` (Boundless Light), read only by `healing.ts`, with talent
+kinds `abilityHealingCritDamage` and `abilityHealingCrit`.
+
+**OATH OF LIGHT IS DECLARED WITH THE OWNER'S AMOUNTS**, which the client data
+carries as zero. "Up to" is read as healing POWER, each heal scaling it by its own
+coefficient -- the owner's reading of Judgement of the Crusader's "up to 161" --
+so Holy Light gains 286 of its 400. **The owner has ruled it** (question 9):
+"Keep Oath of Light scaled by each heal's coefficient." The heal coefficients
+themselves are still placeholders, so the Oath moves with them. Only the Paladin who
+swore it collects, and the Oath target hands back Boundless Light's 30% Holy
+Shock crit. **The Holy list swears it on the tank** (question 10) -- and smart
+healing had to learn to leave it aimed: retargeted to the raid's lowest member,
+it was re-sworn 16.4 times a raid fight. Worth **0.00 HPS in the raid fight and
+-2.02 +/- 5.52 in the tank fight**, paired at 200 -- the healer already heals all
+the damage either fight deals, so more healing is overhealing; the HPS figure
+cannot see it.
+
+**THE PATCH-NOTE OVERRIDE LAYER IS DELETED AGAIN**: its last row, Champion of the
+Light's 20/40/60, is shipped by the client as 12/24/36/48/60.
+
+**ALL FOUR PALADIN BUILDS ARE THE OWNER'S NEW ONES**, read off their
+foreverchanges.pro URLs (that site's `b=` is one digit per grid cell, which
+`decode_talent_build.mjs` does not speak): Seal Twist **12/8/31**, Shockadin
+**21/0/30**, Prot **10/31/10**, Holy **32/11/8**. The first PR revision carried
+provisional builds while the URLs were asked for. The Shockadin now takes
+Champion of the Light 5/5, so its Hammer of Wrath is instant too -- and its list
+entry keeps the owner's 300 ms swing gate, which was written for the version
+with a cast.
+
+**SEAL TWIST RUNS CYCLE B: THREE ATTACKS UNDER SEAL OF RIGHTEOUSNESS, THEN ONE
+UNDER SEAL OF COMMAND**, repeat -- `SEAL_TWIST_RIGHTEOUSNESS_ATTACKS` and
+`SEAL_TWIST_COMMAND_ATTACKS`, read as copies stored, which is the same count; the
+opener puts Righteousness up last so the fight starts under it. The owner chose
+it out of three after they were measured, paired at 400 fights
+(`tools/optimise/sealTwist707.ts`), against cycle A:
+
+| against A (3 Command, then 1 Righteousness) | 60 s | 120 s | 240 s |
+| --- | --- | --- | --- |
+| **B: 3 Righteousness, then 1 Command** | **+84.50 +/- 12.40** | **+80.31 +/- 8.11** | **+77.34 +/- 5.80** |
+| C: 1 Command, then 3 Righteousness, 3 Command | +48.89 +/- 11.17 | +42.37 +/- 8.16 | +59.93 +/- 5.49 |
+
+THE ROUND GOT HERE IN THREE STEPS, which is worth keeping: a symmetric swap at
+three (this project's first reading), then the owner's A, which measured 30 to 53
+below that swap, then B, which beats A by more than A lost. **Re-run with
+`VARIANTS=cycles`** -- the shipped list now reads as identical fights to B, and A
+comes back at exactly -80.31, which is the check that B shipped as measured.
+`USES=1` at 3 seeds x 10, 60 s, on the owner's builds: Seal Twist **996.1 +/-
+19.4** (Unsealed Wrath 17.1% of its damage), Shockadin 889.6, Prot 618.5 --
+**not a baseline**, and not comparable to the published rows.
+
+**QUESTIONS FOR THE OWNER**, each flagged where it is implemented:
+
+| | the question | what is implemented |
+| --- | --- | --- |
+| 1 | the four builds | supplied, above |
+| 2 | Holy Shield's 221 rank has no level and no cost in the data, and reads "for 0 sec" | kept at 221; the highest rank with full data is 153 at level 50 |
+| 3 | Righteous Fury's "additional 90%" on Holy | MULTIPLIED, 1.33 x 1.9 = 2.527, on the standing ruling; adding would be 2.23 |
+| 4 | Unsealed Wrath: does the consuming attack also store its own seal, and does Holy Strike store one | yes, and no (`carriesSeal`) |
+| 5 | Shieldsworn: does Shield Specialization's running 3 s cooldown refuse the strike's mana | no: the strike neither starts nor reads it |
+| 6 | Swift Judgement off the global cooldown -- that ruling was for the old reset | kept off |
+| 7 | Salvation is no longer taught, and is a raid buff on every non-tank preset | kept; it moves TPS only |
+| 8 | Seal Twist's cycle | ANSWERED: the owner chose B, 3 Righteousness then 1 Command |
+| 9 | Oath of Light's "up to": healing power scaled by each heal's coefficient, or added outright | ANSWERED: scaled by each heal's coefficient -- 286 / 49 / the Holy Shock heal's share |
+| 10 | Who the Holy Pal swears the Oath on | the tank |
+
 ## Round 85: the Druid tree at client build 1.60.1.70707, and the Cat's bite pool
 
 The owner gave a new Cat build -- **9/32/10**, read off
@@ -12489,11 +12575,11 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Fire Mage | Mage | 14/34/3 (then; 12/36/3 since round 80) | 1020.7 | | **Enh Shaman** | Shaman | 19/32/0 (then; 18/31/2 since round 80) | **838.8** |
 | BM Hunter | Hunter | 31/20/0 | 968.2 | | Moonkin | Druid | 41/0/10 (then; 38/0/13 since round 78) | 820.3 |
 | Cat Druid | Druid | 9/34/8 (then; 9/32/10 since 1.60.1.70707) | 966.9 | | Ele Shaman | Shaman | 32/11/8 | 792.8 |
-| Seal Twist Ret | Paladin | 15/0/36 (then; 16/0/35 since round 78) | 948.6 | | Pure Hemo | Rogue | 19/8/24 | 775.9 |
+| Seal Twist Ret | Paladin | 15/0/36 (then; 12/8/31 since 1.60.1.70707) | 948.6 | | Pure Hemo | Rogue | 19/8/24 | 775.9 |
 | Hawk Melee | Hunter | 16/11/24 | 937.6 | | Venom Rogue | Rogue | 33/16/2 | 771.6 |
-| Shockadin 2H | Paladin | 23/0/28 | 935.2 | | SM/DS | Warlock | 35/11/5 | 769.4 |
+| Shockadin 2H | Paladin | 23/0/28 (then; 21/0/30 since 1.60.1.70707) | 935.2 | | SM/DS | Warlock | 35/11/5 | 769.4 |
 | Shadow Priest | Priest | 14/2/35 | 931.0 | | Rupture Rogue | Rogue | 12/8/31 | 754.9 |
-| 2H Arms | Warrior | 39/10/2 | 927.0 | | Prot Pally | Paladin | 8/34/9 | 551.1 |
+| 2H Arms | Warrior | 39/10/2 | 927.0 | | Prot Pally | Paladin | 8/34/9 (then; 10/31/10 since 1.60.1.70707) | 551.1 |
 elock | Warlock | 5/11/35 | 910.5 | | Prot Warr | Warrior | 17/0/34 (then; 17/2/32 since round 78) | 499.5 |
 | Combat Rogue | Rogue | 18/33/0 | 899.5 | | Bear Druid | Druid | 9/42/0 (then; 9/37/5 since 1.60.1.70707) | 432.8 |
 

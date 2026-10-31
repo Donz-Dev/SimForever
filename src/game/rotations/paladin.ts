@@ -9,11 +9,11 @@ import {
   compileRotation,
   fightRemaining,
   not,
-  ready,
   resourceFraction,
   selfHas,
   selfHealth,
   selfMissing,
+  selfStacks,
   selfTime,
   swungWithin,
 } from './apl';
@@ -88,11 +88,11 @@ const healthAtMostFraction = (fraction: number) => selfHealth('atMost', fraction
  * than quietly corrected -- this commit changes no behaviour, and the Paladin
  * lists only ask it about Judgement, which every build has.
  */
-const abilityOnCooldown = (abilityId: string) => not(ready(abilityId));
 
 /**
- * "...and the build made this ability INSTANT", which only Instrument of Law
- * at 2/2 does, and only to Hammer of Wrath.
+ * "...and the build made this ability INSTANT", which only Champion of the
+ * Light at 5/5 does, and only to Hammer of Wrath (Instrument of Law until
+ * 1.60.1.70707, when that talent was removed and its cast time moved here).
  *
  * ----------------------------------------------------------------------------
  * THE RULE READS THE ABILITY RATHER THAN THE BUILD, which is how Vanguard gates
@@ -110,6 +110,14 @@ const abilityOnCooldown = (abilityId: string) => not(ready(abilityId));
 
 
 const either = any;
+
+/**
+ * Seal Twist's cycle, the owner's choice of three measured: three attacks under
+ * Seal of Righteousness, then one under Seal of Command, counted as the copies
+ * each has STORED -- every landed attack stores one, so a copy is an attack.
+ */
+export const SEAL_TWIST_RIGHTEOUSNESS_ATTACKS = 3;
+export const SEAL_TWIST_COMMAND_ATTACKS = 1;
 
 /*
  * ----------------------------------------------------------------------------
@@ -231,16 +239,16 @@ export const PALADIN_RETRIBUTION: AplList = {
   ...paladinPotionPair({ manaFraction: 0.3, spellblastingSeconds: 30 }),
   ...CONSUMABLE_HEALS,
   /*
-   * HAMMER OF WRATH, AND ONLY THE INSTANT ONE. Instrument of Law at 2/2 takes
-   * the whole second off its cast, and the ruleset owner's ruling is that what
-   * is left is an instant RANGED attack scaling with SPELL POWER. This build
-   * takes the talent at 2/2.
+   * HAMMER OF WRATH, AND ONLY THE INSTANT ONE. Champion of the Light at 5/5
+   * takes the whole second off its cast (Instrument of Law did, until
+   * 1.60.1.70707), and the ruleset owner's ruling is that what is left is an
+   * instant RANGED attack scaling with SPELL POWER.
    *
-   * THE CONDITION IS FOR THE BUILD THAT DOES NOT. At 1/2 or 0/2 the ability
+   * THE CONDITION IS FOR THE BUILD THAT DOES NOT. Short of 5/5 the ability
    * still has a cast, and a cast on a melee Paladin throws away the swing in
    * progress -- a different ability at a different price, which the owner has
    * not asked this list to pay. **The Shockadin's entry is deliberately NOT
-   * gated**: that build takes no Instrument of Law, casts the one-second version
+   * gated**: that build does not reach 5/5, casts the one-second version
    * about twice a fight, and the owner's instruction named this profile.
    */
   /*
@@ -253,42 +261,45 @@ export const PALADIN_RETRIBUTION: AplList = {
   { abilityId: 'holy_strike' },
   { abilityId: 'consecration' },
   /*
-   * THE TWIST, AND IT IS THE LAST TWO ENTRIES RATHER THAN THE FIRST. Each seal
-   * is cast only while the OTHER one is up and its own echo is not -- so the
-   * pair alternates, and neither can fire twice in a row or overwrite an echo
-   * that has not been spent.
+   * THE TWIST, UNDER UNSEALED WRATH (1.60.1.70707): THREE ATTACKS UNDER SEAL OF
+   * RIGHTEOUSNESS, THEN ONE UNDER SEAL OF COMMAND, REPEAT. Every landed attack
+   * stores a copy of the active seal; an attack under the other seal fires every
+   * stored copy. So Command goes up once Righteousness has stored three copies,
+   * and its one attack fires all three as Righteousness hits -- Righteousness
+   * hits on every attack, so a copy of it is a guaranteed hit -- and stores one
+   * Command copy, which the first attack back under Righteousness rolls.
    *
-   * `echo_<sealId>` is what replacing a seal leaves behind, and the next melee
-   * attack applies the REPLACED seal's effects on top of the new one's. That is
-   * why a Paladin with the capstone wants to keep swapping rather than settle,
-   * and why these two entries are a cycle rather than a preference.
+   * THE OWNER CHOSE IT OUT OF THREE, measured paired at 400 fights against
+   * "3 Command then 1 Righteousness":
+   *
+   *   3 Righteousness, 1 Command    +84.50 (60 s)   +80.31 (120 s)   +77.34 (240 s)
+   *   1 Command, then 3 and 3       +48.89          +42.37           +59.93
+   *
+   * so it wins at every clock. `tools/optimise/sealTwist707.ts`.
+   *
+   * THE SEED IS RIGHTEOUSNESS: with neither seal up, it starts the cycle -- and
+   * the opener puts it up last before the pull, so the fight starts under it.
    */
   {
     abilityId: 'seal_of_command',
-    condition: either(
-      /*
-       * THE SEED, and without it the cycle below can never start. The owner's
-       * two conditions are mutually dependent -- Command wants Righteousness
-       * up, Righteousness wants Command up -- and after the opening Seal of
-       * the Crusader NEITHER is, so both entries fired zero times and the
-       * profile named "Seal Twist" ran a whole fight on one seal.
-       *
-       * Nothing errored. Two tests caught it only because they assert the
-       * invariant that every Paladin build keeps a seal up and judges it.
-       *
-       * The ruleset owner chose Command to start the cycle. This clause is the
-       * only addition to their order.
-       */
-      all(not(selfActive('seal_of_command')), not(selfActive('seal_of_righteousness'))),
-      all(
-        selfActive('seal_of_righteousness'),
-        not(selfActive('echo_seal_of_righteousness')),
+    condition: all(
+      selfActive('seal_of_righteousness'),
+      selfStacks(
+        'atLeast',
+        SEAL_TWIST_RIGHTEOUSNESS_ATTACKS,
+        'unsealed_wrath_seal_of_righteousness',
       ),
     ),
   },
   {
     abilityId: 'seal_of_righteousness',
-    condition: all(selfActive('seal_of_command'), not(selfActive('echo_seal_of_command'))),
+    condition: either(
+      all(not(selfActive('seal_of_command')), not(selfActive('seal_of_righteousness'))),
+      all(
+        selfActive('seal_of_command'),
+        selfStacks('atLeast', SEAL_TWIST_COMMAND_ATTACKS, 'unsealed_wrath_seal_of_command'),
+      ),
+    ),
   },
   ],
 };
@@ -301,8 +312,8 @@ export const PALADIN_RETRIBUTION: AplList = {
  * is healing, crit chance and mana.
  *
  * SO IT IS RETRIBUTION'S LIST WITH HOLY SHOCK IN IT, which is an honest
- * description of the build rather than a shortcut. It has no Twist of Light --
- * that is a 31-point Retribution talent and this build stops at 28 -- so the
+ * description of the build rather than a shortcut. It has no Unsealed Wrath --
+ * that is the 31-point Retribution talent and this build stops short -- so the
  * seal swapping above buys it nothing, and it puts up one seal and leaves it.
  *
  * IT IS ALSO THE LIST AN UNTALENTED PALADIN RUNS, because every ability in it
@@ -468,10 +479,8 @@ export const PALADIN_PROTECTION: AplList = {
     condition: selfMissing('seal_of_righteousness'),
   },
   /*
-   * RIGHTEOUS FURY: +90% threat from Holy attacks, tracked since round 47 --
-   * this said "+60%, and threat is permanently out of scope" until then. The
-   * Protection Paladin casts it at the pull, which is also what switches
-   * Instrument of Law's reduction OFF for a build that takes that talent.
+   * RIGHTEOUS FURY: +33% on all threat and a further 90% on Holy since
+   * 1.60.1.70707. The Protection Paladin casts it at the pull.
    */
   { abilityId: 'righteous_fury', condition: selfExpired('righteous_fury') },
   { abilityId: 'holy_shield', condition: selfExpired('holy_shield') },
@@ -560,10 +569,15 @@ export const PALADIN_PROTECTION: AplList = {
    * specification read literally disabling itself, and both looked fine.
    * ==========================================================================
    */
-  {
-    abilityId: 'swift_judgement',
-    condition: all(abilityOnCooldown('judgement'), selfHas('seal_of_righteousness')),
-  },
+  /*
+   * AND SINCE 1.60.1.70707 SWIFT JUDGEMENT IS A JUDGEMENT IN ITS OWN RIGHT --
+   * "Does not share a cooldown with your Judgement ability" -- rather than a
+   * reset of the one above, so it no longer waits for Judgement to be on
+   * cooldown: it is cast whenever its own minute is up. Judgement's `canCast`
+   * already refuses without a seal, which is the half of the old gate that
+   * still says something.
+   */
+  { abilityId: 'swift_judgement' },
   { abilityId: 'holy_strike' },
   { abilityId: 'consecration' },
     /*
@@ -686,6 +700,20 @@ export const PALADIN_HOLY: AplList = {
       note: "Raid healer: on the lowest party, whenever none of your Light's Vigils is up.",
     },
     /*
+     * OATH OF LIGHT ON THE TANK, kept up for its five minutes (1.60.1.70707).
+     * The tank is the one target of every Holy Light in this list and of most
+     * Flashes, so it is where 400 / 115 / 229 more healing lands; the cost is
+     * Boundless Light's crit on the tank's Holy Shocks. The target is this
+     * project's choice, flagged for the owner. BELOW the Vigil, so the owner's
+     * raid chain still opens with the Vigil at the pull and the Oath takes the
+     * next global cooldown.
+     */
+    {
+      abilityId: 'oath_of_light',
+      target: { kind: 'tank' },
+      condition: { kind: 'aura', on: 'target', auraId: 'oath_of_light', present: false },
+    },
+    /*
      * ROUND 80, AN ADDITION ABOVE THE OWNER'S FOUR LINES, TANK HEALER FIGHT
      * ONLY: under 60% mana, the cheap heal on whoever is below full instead of
      * Holy Light. +2.52 +/- 1.34 HPS at 120 s over 400 paired fights (40%:
@@ -765,15 +793,17 @@ export const PALADIN_PROTECTION_ROTATION: Rotation = compileRotation(PALADIN_PRO
  * PROTECTION BY ITS CAPSTONE, the Rogue's test: Holy Shield is a 31-point
  * Protection talent and no other build can reach it.
  *
- * THEN THE TWO RETRIBUTION BUILDS BY THEIRS. Seal Twist takes Twist of Light
+ * THEN THE TWO RETRIBUTION BUILDS BY THEIRS. Seal Twist takes Unsealed Wrath
  * at 31 points; Shockadin stops at 28 and takes Holy Shock instead. Both tests
  * name a capstone rather than counting points, because here a capstone
  * genuinely does separate them -- unlike the Mage, whose Frostfire build has
  * none at all.
  */
 export function paladinRotation(talents: TalentAllocation): Rotation | undefined {
+  // Holy Shield is a row 5 talent since 1.60.1.70707 rather than the capstone,
+  // and still only a Protection build spends that deep in the tree.
   if ((talents.holy_shield ?? 0) > 0) return PALADIN_PROTECTION_ROTATION;
-  if ((talents.twist_of_light ?? 0) > 0) return PALADIN_RETRIBUTION_ROTATION;
+  if ((talents.unsealed_wrath ?? 0) > 0) return PALADIN_RETRIBUTION_ROTATION;
   // The Holy capstone: a 31-point Holy build heals (round 52).
   if ((talents.light_s_vigil ?? 0) > 0) return PALADIN_HOLY_ROTATION;
   if ((talents.holy_shock ?? 0) > 0) return PALADIN_SHOCKADIN_ROTATION;

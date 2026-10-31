@@ -1649,51 +1649,43 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
 };
 
 /**
- * THE THREE PALADIN BUILDS, decoded from the owner's URLs. 15/0/36, 23/0/28
- * and 8/34/9, each exactly 51 points.
+ * THE FOUR PALADIN BUILDS AT CLIENT BUILD 1.60.1.70707, the owner's, read off
+ * their foreverchanges.pro URLs -- 12/8/31, 21/0/30, 10/31/10 and 32/11/8, each
+ * exactly 51 points. Read off the calculator page rather than decoded, because
+ * that site's `b=` is one digit per GRID CELL and not per talent, which
+ * `decode_talent_build.mjs` does not speak:
  *
- * EACH HAS A DIFFERENT CAPSTONE, which is what lets the rotation tell them
- * apart: Twist of Light, Holy Shock and Holy Shield belong to exactly one
- * build each.
+ *   Seal Twist Ret  b=0500050000000000002-00300000000000005-0520303120103315011
+ *   Shockadin 2H    b=0500050120201210002--0520303120103305002
+ *   Prot Pally      b=050005-0532213221001531-5020003
+ *   Holy Pal        b=00035001222512105102-00120000200010005-05003
  *
- * ----------------------------------------------------------------------------
- * ALL THREE WERE RE-SPECIFIED AT CLIENT BUILD 1.60.1.70170, AND THE PATCH NOTES
- * NAME NEITHER TALENT THAT FORCED IT. The client dropped IMPROVED HOLY STRIKE
- * from Holy and CRUSADE from Retribution; all three builds spent two points in
- * the first and two of them spent two in the second, so none of the three URLs
- * decoded any more -- 4, 4 and 2 points with nowhere to be.
- *
- * WHICH IS A DECISION AND NOT A TRANSCRIPTION, so it was asked rather than
- * guessed: the owner supplied three new URLs. What they bought is recorded here
- * because "where did these points go" is the first question a reader of the
- * baseline table will have. Retribution took Divine Intellect to 5 and two of
- * Unyielding Faith; the Shockadin took Divine Strength to 5 and two of
- * Vindication; Protection took Divine Strength to 5 and two of Holy Conduit,
- * paying for the second with a point each off Anticipation and Reckoning.
- * ----------------------------------------------------------------------------
+ * EACH STILL HAS A DIFFERENT CAPSTONE, which is what lets the rotation tell
+ * them apart: Unsealed Wrath (Seal Twist), Holy Shock (Shockadin, which stops
+ * at 30 Retribution points), Holy Shield (Protection) and Light's Vigil (Holy).
  */
 const PALADIN_RETRIBUTION_TALENTS: TalentAllocation = {
+  // Holy, 12
   divine_strength: 5,
+  improved_seals: 5,
+  holy_conduit: 2,
+  // Protection, 8
   divine_intellect: 5,
-  improved_seals: 3,
-  // Unyielding Faith's two points moved to Reverence, by the owner (round 37).
-  // Round 78: a third, out of Pursuit of Justice (movement speed, dead here).
-  // At 120 s this build is mana-bound, and 3/3 measured +12.51 +/- 4.86.
-  reverence: 3,
+  precision: 3,
+  // Retribution, 31
   benediction: 5,
   improved_judgement: 2,
-  holy_conduit: 2,
-  conviction: 5,
-  vindication: 3,
+  conviction: 3,
   sanctified_judgement: 3,
+  unyielding_faith: 1,
   seal_of_command: 1,
-  pursuit_of_justice: 1,
+  pursuit_of_justice: 2,
   sacred_arbiter: 1,
   two_handed_weapon_specialization: 3,
+  repentance: 1,
   vengeance: 3,
-  champion_of_the_light: 3,
-  instrument_of_law: 2,
-  twist_of_light: 1,
+  champion_of_the_light: 5,
+  unsealed_wrath: 1,
 };
 
 /*
@@ -1740,40 +1732,6 @@ const PALADIN_RETRIBUTION_TALENTS: TalentAllocation = {
  * ============================================================================
  */
 
-/** Holy tiers 0-15: the twenty points that open tier 20. */
-const SHOCKADIN_HOLY_BELOW_20: TalentAllocation = {
-  divine_strength: 5,
-  divine_intellect: 5,
-  improved_seals: 3,
-  /*
-   * SIX OF THESE NINE ARE FILLER AND EVERY CANDIDATE IS DEAD. Holy's tiers 5
-   * and 10 offer healing, fear duration, a dispel, cast pushback and mana
-   * regeneration while casting; twenty points have to be here to reach Holy
-   * Shock at all. Reverence and Healing Light are what the owner's own build
-   * used, so they stay.
-   */
-  reverence: 3,
-  healing_light: 3,
-  /*
-   * DIVINE FAVOR IS TIER 15 AND THEREFORE PART OF THE TWENTY, which is what
-   * makes it free: the point is one the tier requirement needs anyway, and the
-   * ability it grants is worth **+9.7** now that it starts no global cooldown.
-   */
-  divine_favor: 1,
-};
-
-/** Retribution tiers 0-15: the twenty that open tier 20. */
-const SHOCKADIN_RET_BELOW_20: TalentAllocation = {
-  improved_judgement: 2,
-  conviction: 5,
-  vindication: 3,
-  sanctified_judgement: 3,
-  sacred_arbiter: 1,
-  // Six of filler. See the note above on why none of it can pay.
-  benediction: 5,
-  holy_conduit: 1,
-};
-
 /**
  * 1H AND SHIELD -- 23 Holy / 28 Retribution.
  *
@@ -1793,27 +1751,29 @@ const SHOCKADIN_RET_BELOW_20: TalentAllocation = {
  * Duty and Improved Seal of Fury -- a healer standing in a raid, not a tank.
  */
 const HOLY_PAL_TALENTS: TalentAllocation = {
-  // Holy, 31
-  divine_intellect: 5,
+  // Holy, 32
+  spiritual_focus: 5,
   healing_light: 3,
-  spiritual_focus: 2,
-  unyielding_faith: 2,
-  voice_of_truth: 1,
-  reverence: 3,
-  infusion_of_light: 2,
-  illumination: 5,
+  reverence: 2,
+  purifying_power: 2,
   divine_favor: 1,
+  illumination: 5,
+  divine_precision: 2,
+  infusion_of_light: 2,
+  oath_of_light: 1,
   holy_shock: 1,
+  boundless_light: 2,
   holy_power: 5,
   light_s_vigil: 1,
-  // Protection, 13
-  toughness: 5,
-  anticipation: 5,
-  improved_seal_of_fury: 1,
+  // Protection, 11
+  divine_intellect: 5,
+  precision: 1,
+  guardian_s_favor: 2,
   sacred_duty: 2,
-  // Retribution, 7
+  templar_s_bulwark: 1,
+  // Retribution, 8
   benediction: 5,
-  holy_conduit: 2,
+  conviction: 3,
 };
 
 /**
@@ -1826,36 +1786,52 @@ const HOLY_PAL_TALENTS: TalentAllocation = {
  * the shield build has two -- so Consecrated Ground is 1/2 here and 2/2 there.
  */
 const PALADIN_SHOCKADIN_2H_TALENTS: TalentAllocation = {
-  ...SHOCKADIN_HOLY_BELOW_20,
+  // Holy, 21
+  divine_strength: 5,
+  reverence: 2,
+  improved_seals: 5,
+  divine_favor: 1,
+  holy_conduit: 2,
+  divine_precision: 2,
+  infusion_of_light: 2,
+  oath_of_light: 1,
   holy_shock: 1,
-  // One point from Two-Handed Weapon Specialization, by the owner (round 37).
-  consecrated_ground: 2,
-  ...SHOCKADIN_RET_BELOW_20,
+  // Retribution, 30
+  benediction: 5,
+  improved_judgement: 2,
+  conviction: 3,
+  sanctified_judgement: 3,
+  unyielding_faith: 2,
+  seal_of_command: 1,
+  pursuit_of_justice: 2,
+  sacred_arbiter: 1,
+  two_handed_weapon_specialization: 3,
   vengeance: 3,
-  two_handed_weapon_specialization: 2,
-  champion_of_the_light: 3,
+  champion_of_the_light: 5,
 };
 
 const PALADIN_PROTECTION_TALENTS: TalentAllocation = {
+  // Holy, 10
   divine_strength: 5,
-  improved_seals: 3,
+  improved_seals: 5,
+  // Protection, 31
   redoubt: 5,
   precision: 3,
-  // Round 80: 3 (was 2) and Reckoning 5 (was 4), out of Sacred Duty 2: +18.71
-  // +/- 4.23 TPS on the weighted score, deaths -0.08 +/- 0.17 at 120 s.
-  anticipation: 3,
-  improved_seal_of_fury: 1,
-  improved_righteous_fury: 3,
-  shield_specialization: 3,
-  swift_judgement: 1,
-  one_handed_weapon_specialization: 3,
+  guardian_s_favor: 2,
+  sacred_duty: 2,
   templar_s_bulwark: 1,
-  reckoning: 5,
-  iron_creed: 5,
+  shield_specialization: 2,
+  swift_judgement: 1,
+  improved_righteous_fury: 3,
+  anticipation: 2,
   holy_shield: 1,
+  reckoning: 5,
+  iron_creed: 3,
+  shieldsworn: 1,
+  // Retribution, 10
   deflection: 5,
   improved_judgement: 2,
-  holy_conduit: 2,
+  sanctified_judgement: 3,
 };
 
 /**
@@ -3905,8 +3881,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * no entry point of its own when both seals were gated on each other.
        */
       precombat: [
-        ...before(3, 'seal_of_righteousness'),
-        ...before(1.5, 'seal_of_command'),
+        /*
+         * SEAL OF RIGHTEOUSNESS LAST, so the fight opens under it: the Seal
+         * Twist cycle is three attacks under Righteousness, then one under
+         * Command (1.60.1.70707). The owner's opener had the two the other way
+         * round, for the cycle that started under Command.
+         */
+        ...before(3, 'seal_of_command'),
+        ...before(1.5, 'seal_of_righteousness'),
         ...before(0, 'judgement'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },

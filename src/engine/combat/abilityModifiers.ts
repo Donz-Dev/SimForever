@@ -61,6 +61,23 @@ export interface AbilityModifier {
    * --------------------------------------------------------------------------
    */
   readonly critMultiplierFactor?: number;
+  /**
+   * Added to a HEAL's crit multiplier, and read by nothing that deals damage.
+   *
+   * Holy Power at 1.60.1.70707 is "increases the critical strike HEALING bonus
+   * of your Holy spells by 50%", and Holy Shock both heals and hurts under one
+   * ability id -- so `critMultiplierBonus` would raise its damage crits too.
+   * The bonus half rule is the same one: a heal crits for 1.5, the bonus is
+   * 0.5, and "+50%" adds 0.25.
+   */
+  readonly healingCritMultiplierBonus?: number;
+  /**
+   * Added to a HEAL's crit chance, in percentage points, and read by nothing
+   * that deals damage -- the chance-side twin of `healingCritMultiplierBonus`.
+   * Boundless Light is "+30% critical strike chance for Holy Shock on allies",
+   * and Holy Shock's damage shares its id.
+   */
+  readonly healingCritBonus?: number;
   /** Multiplies the ability's final damage. 1.2 is +20%. */
   readonly damageMultiplier?: number;
   /**
@@ -406,6 +423,9 @@ function combine(a: SchoolModifier, b: SchoolModifier): SchoolModifier {
   return {
     critBonus: (a.critBonus ?? 0) + (b.critBonus ?? 0),
     critMultiplierBonus: (a.critMultiplierBonus ?? 0) + (b.critMultiplierBonus ?? 0),
+    healingCritMultiplierBonus:
+      (a.healingCritMultiplierBonus ?? 0) + (b.healingCritMultiplierBonus ?? 0),
+    healingCritBonus: (a.healingCritBonus ?? 0) + (b.healingCritBonus ?? 0),
     // A FACTOR MULTIPLIES, like the damage multiplier beside it.
     critMultiplierFactor: (a.critMultiplierFactor ?? 1) * (b.critMultiplierFactor ?? 1),
     damageMultiplier: (a.damageMultiplier ?? 1) * (b.damageMultiplier ?? 1),
@@ -493,6 +513,8 @@ export function scaleByStacks(
   return {
     critBonus: (modifier.critBonus ?? 0) * stacks,
     critMultiplierBonus: (modifier.critMultiplierBonus ?? 0) * stacks,
+    healingCritMultiplierBonus: (modifier.healingCritMultiplierBonus ?? 0) * stacks,
+    healingCritBonus: (modifier.healingCritBonus ?? 0) * stacks,
     critMultiplierFactor: (modifier.critMultiplierFactor ?? 1) ** stacks,
     damageMultiplier: stackedMultiplier(modifier.damageMultiplier ?? 1, stacks, additiveDamage),
     directDamageMultiplier: stackedMultiplier(

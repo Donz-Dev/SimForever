@@ -1,5 +1,5 @@
 import type { AuraDefinition, Combatant } from '../../engine';
-import { RATING_PER_PERCENT, dealDamage, flat, percent, seconds, spellPowerFor } from '../../engine';
+import { RATING_PER_PERCENT, dealDamage, flat, seconds, spellPowerFor } from '../../engine';
 import {
   CONSECRATION_TICK_SP_COEFFICIENT,
   SEAL_OF_FURY_SP_COEFFICIENT,
@@ -265,33 +265,6 @@ export const SEAL_OF_FURY: AuraDefinition = {
   refreshBehaviour: 'reset',
 };
 
-/**
- * Improved Seal of Fury: "When Seal of Fury's shield is fully absorbed, restore
- * 60 Mana, increased by 15% per level the attacker is above you, up to 45%."
- */
-/**
- * The flag Improved Seal of Fury sets on the Seal of Fury ABILITY.
- *
- * The Twist of Light pattern: `applyTalentChanges` hands each character its own
- * copy of the ability, so a flag read off it is per character by construction. A
- * module-level set keyed on the character would leak the talent across a Monte
- * Carlo batch, which is the exact bug that copy exists to prevent.
- */
-export const IMPROVED_SEAL_OF_FURY_FLAG = 'improvedSealOfFury';
-
-export const IMPROVED_SEAL_OF_FURY_MANA = 60;
-export const IMPROVED_SEAL_OF_FURY_PER_LEVEL = 0.15;
-export const IMPROVED_SEAL_OF_FURY_MAX_BONUS = 0.45;
-
-/** The mana Improved Seal of Fury returns against an attacker N levels above. */
-export function improvedSealOfFuryMana(levelsAbove: number): number {
-  const bonus = Math.min(
-    IMPROVED_SEAL_OF_FURY_MAX_BONUS,
-    IMPROVED_SEAL_OF_FURY_PER_LEVEL * Math.max(0, levelsAbove),
-  );
-  return IMPROVED_SEAL_OF_FURY_MANA * (1 + bonus);
-}
-
 /*
  * ============================================================================
  * SEAL OF FURY'S SHIELD: "each attack also grants an absorb shield equal to 50%
@@ -322,7 +295,7 @@ export function improvedSealOfFuryMana(levelsAbove: number): number {
  */
 export const SEAL_OF_FURY_SHIELD_ID = 'seal_of_fury_shield';
 
-export function sealOfFuryShield(manaOnFullAbsorb: number): AuraDefinition {
+export function sealOfFuryShield(): AuraDefinition {
   return {
     id: SEAL_OF_FURY_SHIELD_ID,
     name: 'Seal of Fury (shield)',
@@ -337,26 +310,10 @@ export function sealOfFuryShield(manaOnFullAbsorb: number): AuraDefinition {
      */
     removedOnDeath: true,
     /*
-     * "FULLY ABSORBED" IS TOLD APART FROM "EXPIRED" BY THE POOL, and no engine
-     * hook was needed for it: `consumeAbsorb` removes a shield the moment it
-     * reaches zero, and a shield that ran out of TIME still has some left. So
-     * `onExpire` plus one comparison is the whole of Improved Seal of Fury.
-     *
-     * `manaOnFullAbsorb` IS ZERO WITHOUT THE TALENT, which is why it is a
-     * parameter rather than a lookup: the aura does not have to know what a
-     * talent is, and a build without the talent carries a shield that returns
-     * nothing rather than a second aura definition.
+     * IMPROVED SEAL OF FURY IS GONE (1.60.1.70707), and with it the mana this
+     * shield returned when it was fully absorbed -- the `onExpire` that told
+     * "fully absorbed" from "expired" by the pool left with the talent.
      */
-    onExpire: (context, aura) => {
-      if (manaOnFullAbsorb <= 0) return;
-      if (aura.absorbRemaining > 0) return;
-      const owner = context.combatant(aura.targetId);
-      if (!owner) return;
-      context.grantResource(owner, 'mana', manaOnFullAbsorb, {
-        id: 'improved_seal_of_fury',
-        name: 'Improved Seal of Fury',
-      });
-    },
   };
 }
 
@@ -420,38 +377,41 @@ export const JUDGEMENT_OF_THE_CRUSADER: AuraDefinition = {
 // ---------------------------------------------------------------------------
 
 /**
- * Twist of Light, the Retribution capstone and the reason a profile is called
- * "Seal Twist":
+ * Unsealed Wrath, the Retribution capstone since 1.60.1.70707 -- Twist of
+ * Light renamed and reworked:
  *
- *   "When you replace your Seal of Command, Seal of Righteousness, Seal of
- *    Fury, or Seal of Justice with a different Seal, gain an Echo. Your next
- *    melee attack applies the replaced Seal's effects, consuming the Echo."
+ *   "Your melee attacks store a copy of your active Seal for 15 sec, stacking
+ *    up to 3 times. Landing an attack with a different Seal consumes all
+ *    stacks, giving the stored Seal its normal chance to activate once per
+ *    stack."
  *
  * ----------------------------------------------------------------------------
- * SEAL TWISTING AS A TALENT RATHER THAN AS A TECHNIQUE. In Classic this was a
- * timing trick -- swap seals in the window before a swing lands and both
- * resolve. Forever has made it an explicit effect with an explicit trigger,
- * which means it can be modelled exactly instead of being approximated by a
- * rotation that pretends to have millisecond hands.
+ * ONE AURA PER SEAL, holding the copies as STACKS, so a reaction reads which
+ * seal is stored off the id and how many off the count. Only one is ever up:
+ * an attack under a different seal spends the stored one before it stores its
+ * own -- see `unsealedWrathProc`.
  *
- * ONE CHARGE, consumed by the next melee attack. Carried as an aura holding
- * the id of the seal it echoes, so the reaction knows which effect to apply
- * without the talent having to enumerate them.
+ * WHAT IT REPLACED: Twist of Light's single Echo, granted when a seal was
+ * REPLACED and spent by the next attack. Unsealed Wrath is granted by the
+ * ATTACKS and spent by a change of seal, so the cycle it rewards is three
+ * swings under one seal and then a swap, rather than a swap every swing.
  * ----------------------------------------------------------------------------
  */
-export const ECHO_DURATION_MS = seconds(30);
+export const UNSEALED_WRATH_DURATION_MS = seconds(15);
+export const UNSEALED_WRATH_MAX_STACKS = 3;
 
-export function echoAura(replacedSealId: string): AuraDefinition {
+export function unsealedWrathAura(storedSealId: string): AuraDefinition {
   return {
-    id: `echo_${replacedSealId}`,
-    name: 'Echo',
-    durationMs: ECHO_DURATION_MS,
+    id: `unsealed_wrath_${storedSealId}`,
+    name: 'Unsealed Wrath',
+    durationMs: UNSEALED_WRATH_DURATION_MS,
     refreshBehaviour: 'reset',
+    maxStacks: UNSEALED_WRATH_MAX_STACKS,
   };
 }
 
-/** Every echo aura, so a reaction can find whichever one is up. */
-export const ECHO_AURA_IDS = SEAL_AURA_IDS.map((id) => `echo_${id}`);
+/** Every stored-seal aura, so a reaction can find whichever one is up. */
+export const UNSEALED_WRATH_AURA_IDS = SEAL_AURA_IDS.map((id) => `unsealed_wrath_${id}`);
 
 /**
  * Vengeance: "Increases your Physical and Holy damage dealt by {0}% for 30 sec
@@ -604,6 +564,17 @@ export const TEMPLARS_BULWARK: AuraDefinition = {
  */
 export const RIGHTEOUS_FURY_THREAT_PERCENT = 90;
 
+/*
+ * AND 33% ON ALL THREAT SINCE 1.60.1.70707: "Increases all threat generated by
+ * 33%, and all threat generated by your Holy attacks by an additional 90%." Two
+ * modifiers rather than one, because the second is scoped to a school and the
+ * first is not -- and they MULTIPLY, on the owner's standing ruling that every
+ * threat factor does, so Holy threat is 1.33 x 1.9. "An additional 90%" read as
+ * ADDING to the 33 would be 2.23 rather than 2.527; flagged where the threat
+ * rule lives rather than decided on the wording.
+ */
+export const RIGHTEOUS_FURY_ALL_THREAT_PERCENT = 33;
+
 /**
  * The percentage Improved Righteous Fury carries to the ability, as a key.
  *
@@ -642,6 +613,7 @@ export function righteousFury(damageTakenReductionPercent = 0): AuraDefinition {
     name: 'Righteous Fury',
     durationMs: 0,
     threatModifiers: [
+      { multiplier: 1 + RIGHTEOUS_FURY_ALL_THREAT_PERCENT / 100 },
       { multiplier: 1 + RIGHTEOUS_FURY_THREAT_PERCENT / 100, schools: ['holy'] },
     ],
     ...(damageTakenReductionPercent > 0
@@ -782,16 +754,6 @@ export const INFUSION_OF_LIGHT_KEY = 'infusionOfLight';
  */
 export const VINDICATION_CHANCE = 10;
 export const VINDICATION_DURATION_MS = seconds(30);
-
-export function vindicationSelfAura(attackPowerPercent: number): AuraDefinition {
-  return {
-    id: 'vindication',
-    name: 'Vindication',
-    durationMs: VINDICATION_DURATION_MS,
-    refreshBehaviour: 'reset',
-    statModifiers: [percent('attackPower', attackPowerPercent / 100)],
-  };
-}
 
 export function vindicationDebuff(attackPowerTaken: number): AuraDefinition {
   return {
@@ -984,6 +946,51 @@ export function consecrationGround(
 export const CONSECRATION_GROUND: AuraDefinition = consecrationGround();
 
 /**
+ * Oath of Light (1.60.1.70707), the owner's figures: "swear an Oath on one ally
+ * for 5 minutes. On that ally, your Holy Light heals for up to 400 more, Flash of
+ * Light for up to 115 more and Holy Shock for up to 229 more. One Oath at a time,
+ * and it costs 8% of base mana."
+ *
+ * ----------------------------------------------------------------------------
+ * "UP TO" IS HEALING POWER, AND EACH HEAL SCALES IT BY ITS OWN COEFFICIENT --
+ * the reading the owner's ruling on Judgement of the Crusader's "up to 161" gave
+ * the phrase, applied to the healing side. So Holy Light at 2.5 / 3.5 takes 286
+ * of its 400. THE OWNER HAS RULED IT: "Keep Oath of Light scaled by each heal's
+ * coefficient." Added outright the three would be the full 400, 115 and 229 --
+ * which is the reading this ruling closes, so do not re-ask it. The heal
+ * coefficients themselves are still placeholders, and the Oath moves with them.
+ *
+ * "YOUR" HEALS: only the Paladin who swore it collects, which is why the bonus is
+ * read in `paladinHeal` against the aura's source rather than off the target.
+ *
+ * AND IT CARRIES BOUNDLESS LIGHT'S EXCEPTION. "+30% critical strike chance for
+ * Holy Shock on allies NOT affected by your Oath of Light": the talent is a
+ * standing modifier on the caster, so the Oath target hands it back as a
+ * negative one, sized at the cast from what the caster actually has.
+ * ----------------------------------------------------------------------------
+ */
+export const OATH_OF_LIGHT_DURATION_MS = seconds(300);
+
+/** "Up to" this much more healing on the Oath target, per ability. */
+export const OATH_OF_LIGHT_HEALING: Readonly<Record<string, number>> = {
+  holy_light: 400,
+  flash_of_light: 115,
+  holy_shock: 229,
+};
+
+export function oathOfLight(boundlessLightPercent = 0): AuraDefinition {
+  return {
+    id: 'oath_of_light',
+    name: 'Oath of Light',
+    durationMs: OATH_OF_LIGHT_DURATION_MS,
+    refreshBehaviour: 'reset',
+    ...(boundlessLightPercent > 0
+      ? { attackerAbilityModifiers: { holy_shock: { healingCritBonus: -boundlessLightPercent } } }
+      : {}),
+  };
+}
+
+/**
  * Light's Vigil (round 61): "Applies Light's Vigil to the target for 30 sec.
  * Your next Holy Shock cast on them triggers no cooldown and ..." The aura is
  * the mark and nothing else; what it does is read by Holy Shock, which spends
@@ -1019,8 +1026,9 @@ export const LIGHTS_VIGIL: AuraDefinition = {
 export const CATALOG_AURAS: readonly AuraDefinition[] = [
   vengeanceAura(0),
   ironCreedAura(0),
-  vindicationSelfAura(0),
   vindicationDebuff(0),
   redoubtAura(0),
   infusionOfLight(1),
+  oathOfLight(),
+  ...SEAL_AURA_IDS.map(unsealedWrathAura),
 ];

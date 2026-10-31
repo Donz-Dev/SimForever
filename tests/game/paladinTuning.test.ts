@@ -22,17 +22,6 @@ import {
   PALADIN_SHOCKADIN,
 } from '../../src/game/rotations/paladin';
 import { talentNumber } from '../../src/game/talents/talentValues';
-import type { AplCondition } from '../../src/game/rotations/apl';
-import { compileCondition } from '../../src/game/rotations/apl';
-
-/*
- * A condition is DATA now. `compileCondition` turns one back into the closure
- * the engine runs, which is what these assertions have always been calling --
- * the step used to be implicit because a list held closures directly.
- */
-const compiled = (condition: AplCondition | undefined) =>
-  condition ? compileCondition(condition) : undefined;
-
 /*
  * ==============================================================================
  * SIX THINGS THE RULESET OWNER FOUND BY READING THE RESULTS PAGE, and five of
@@ -127,9 +116,15 @@ describe('Sacred Arbiter, which was dropped for want of a number', () => {
 
 /* -------------------------------------------------------------------------- */
 
-describe('Instrument of Law, and the Hammer of Wrath it makes', () => {
-  it('takes the whole second off at 2/2, so the ability is instant', () => {
-    expect(talentNumber('paladin', 'instrument_of_law', 2, 0)).toBe(1);
+/*
+ * INSTRUMENT OF LAW IS GONE (1.60.1.70707) and Champion of the Light carries its
+ * Hammer of Wrath second, 0.2 a rank at index 1 -- so these are the same
+ * assertions about the same ability, at the new talent's ranks.
+ */
+describe('Champion of the Light, and the Hammer of Wrath it makes', () => {
+  it('takes the whole second off at 5/5, so the ability is instant', () => {
+    expect(talentNumber('paladin', 'champion_of_the_light', 5, 1)).toBe(1);
+    expect(talentNumber('paladin', 'champion_of_the_light', 5, 0)).toBe(60);
     expect(HAMMER_OF_WRATH_CAST_MS).toBe(seconds(1));
 
     const ret = abilityOf('pally_ret', 'hammer_of_wrath')!;
@@ -137,13 +132,15 @@ describe('Instrument of Law, and the Hammer of Wrath it makes', () => {
     expect(isInstantHammerOfWrath(ret)).toBe(true);
   });
 
-  it('leaves a cast at 1/2, which is why the rank matters', () => {
+  it('leaves a cast below 5/5, which is why the rank matters', () => {
     /*
-     * HALF A SECOND IS STILL A CAST, and a cast on a melee Paladin interrupts
-     * the swing in progress. The rank is the whole difference between an ability
-     * the Retribution list wants and one it does not.
+     * A FIFTH OF A SECOND IS STILL A CAST, and a cast on a melee Paladin
+     * interrupts the swing in progress. The rank is the whole difference between
+     * an ability the Retribution list wants and one it does not.
      */
-    expect(talentNumber('paladin', 'instrument_of_law', 1, 0)).toBe(0.5);
+    expect(talentNumber('paladin', 'champion_of_the_light', 4, 1)).toBe(0.8);
+    const atThree = bookWith({ champion_of_the_light: 3 }).find((a) => a.id === 'hammer_of_wrath');
+    expect(atThree?.castTimeMs).toBeGreaterThan(0);
   });
 
   it('is a one-second cast for a build with no points in it', () => {
@@ -158,25 +155,14 @@ describe('Instrument of Law, and the Hammer of Wrath it makes', () => {
     expect(hammerOfWrathTable(plain)).toBe('spell');
   });
 
-  it('is out of reach for the Shockadin, which is a TIER fact and not a preference', () => {
+  it('is instant for BOTH damage builds since 1.60.1.70707', () => {
     /*
-     * ==========================================================================
-     * IT WAS BRIEFLY IN BOTH TREES AND MEASURED **+18**, and it is unaffordable:
-     * Instrument of Law is tier 25 in Retribution, so it needs twenty-five
-     * points below it on top of Champion of the Light's three, and neither
-     * Shockadin has five spare -- the shield build has two free points and the
-     * two-hander one. Taking it costs both of Holy's tier-20 slots, which
-     * measured **-41** on the shield build.
-     *
-     * SO THE RET PALADIN KEEPS ITS INSTANT HAMMER OF WRATH AND THE SHOCKADINS
-     * DO NOT, which is what makes the assertion above about the TALENT rather
-     * than about the ability.
-     *
-     * The shield build is no longer a preset (round 82), so the two-hander is
-     * the one left to assert on.
-     * ==========================================================================
+     * THE SHOCKADIN REACHES IT NOW. Instrument of Law was tier 25 in
+     * Retribution and out of its reach; Champion of the Light 5/5 is where the
+     * second lives now, and the owner's Shockadin takes it -- so the two damage
+     * builds both have the instant, ranged Hammer of Wrath.
      */
-    expect(isInstantHammerOfWrath(abilityOf('pally_shockadin_2h', 'hammer_of_wrath')!)).toBe(false);
+    expect(isInstantHammerOfWrath(abilityOf('pally_shockadin_2h', 'hammer_of_wrath')!)).toBe(true);
     expect(isInstantHammerOfWrath(abilityOf('pally_ret', 'hammer_of_wrath')!)).toBe(true);
   });
 
@@ -220,8 +206,10 @@ describe('Instrument of Law, and the Hammer of Wrath it makes', () => {
     expect(ret?.condition).toEqual({ kind: 'castsInstantly', abilityId: 'hammer_of_wrath' });
 
     /*
-     * THE SHOCKADIN'S IS NOT THE RETRIBUTION GATE. That build takes no
-     * Instrument of Law and casts the one-second version, so it is gated on
+     * THE SHOCKADIN'S IS NOT THE RETRIBUTION GATE. It was written for a build
+     * casting the version WITH a cast -- the owner's 1.60.1.70707 Shockadin is
+     * instant now, so the timing gate is the owner's list kept as written -- and
+     * it is gated on
      * TIMING instead -- within 300ms of a main-hand swing, the owner's call
      * (round 56b), because a cast holds the swing timer at zero until it ends.
      * The Retribution gate here would delete an entry that fires.
@@ -234,14 +222,15 @@ describe('Instrument of Law, and the Hammer of Wrath it makes', () => {
 /* -------------------------------------------------------------------------- */
 
 describe('Improved Righteous Fury', () => {
-  it('reduces all damage taken by 6% at 3/3, which the Protection build takes', () => {
-    expect(talentNumber('paladin', 'improved_righteous_fury', 3, 0)).toBe(6);
-    expect(righteousFury(6).damageTakenMultiplier).toBeCloseTo(0.94, 10);
+  it('reduces all damage taken by 9% at 3/3, which the Protection build takes', () => {
+    // 9% since 1.60.1.70707; it was 6%.
+    expect(talentNumber('paladin', 'improved_righteous_fury', 3, 0)).toBe(9);
+    expect(righteousFury(9).damageTakenMultiplier).toBeCloseTo(0.91, 10);
   });
 
   it('carries its percentage on the ability, so an untalented cast is plain', () => {
     const prot = abilityOf('prot_pally', 'righteous_fury')!;
-    expect(prot.bonuses?.[IMPROVED_RIGHTEOUS_FURY_FLAG]).toBe(6);
+    expect(prot.bonuses?.[IMPROVED_RIGHTEOUS_FURY_FLAG]).toBe(9);
 
     const ret = abilityOf('pally_ret', 'righteous_fury')!;
     expect(ret.bonuses?.[IMPROVED_RIGHTEOUS_FURY_FLAG]).toBeUndefined();
@@ -262,18 +251,19 @@ describe('Improved Righteous Fury', () => {
     expect(
       castAbility(simulation, actor, actor.abilities.get('righteous_fury')!, undefined),
     ).toEqual({ ok: true });
-    expect(actor.damageTakenMultiplierFor('physical')).toBeCloseTo(0.94, 10);
+    expect(actor.damageTakenMultiplierFor('physical')).toBeCloseTo(0.91, 10);
   });
 });
 
 /* -------------------------------------------------------------------------- */
 
 describe('Iron Creed', () => {
-  it('is 10% for 6 seconds at 5/5, from the talent and the aura', () => {
-    expect(talentNumber('paladin', 'iron_creed', 5, 1)).toBe(10);
-    expect(talentNumber('paladin', 'iron_creed', 5, 2)).toBe(6);
+  it('is 6% for 6 seconds at 3/3, from the talent and the aura', () => {
+    // Three ranks since 1.60.1.70707, 6% where it was 10% at 5/5.
+    expect(talentNumber('paladin', 'iron_creed', 3, 1)).toBe(6);
+    expect(talentNumber('paladin', 'iron_creed', 3, 2)).toBe(6);
     expect(IRON_CREED_DURATION_MS).toBe(seconds(6));
-    expect(ironCreedAura(10).damageTakenMultiplier).toBeCloseTo(0.9, 10);
+    expect(ironCreedAura(6).damageTakenMultiplier).toBeCloseTo(0.94, 10);
   });
 
   it('is registered as a cast reaction on the build that takes it, and nowhere else', () => {
@@ -320,35 +310,26 @@ describe('Iron Creed', () => {
 
     /*
      * AND THE TWO REDUCTIONS MULTIPLY, which is the rule every other
-     * damage-taken multiplier here follows: 0.94 x 0.90.
+     * damage-taken multiplier here follows: 0.91 x 0.94.
      */
-    expect(actor.damageTakenMultiplierFor('physical')).toBeCloseTo(0.94 * 0.9, 10);
+    expect(actor.damageTakenMultiplierFor('physical')).toBeCloseTo(0.91 * 0.94, 10);
 
     // Six seconds, then back to Righteous Fury's alone.
     simulation.advanceTo(seconds(29));
     expect(actor.auras.has('iron_creed')).toBe(false);
-    expect(actor.damageTakenMultiplierFor('physical')).toBeCloseTo(0.94, 10);
+    expect(actor.damageTakenMultiplierFor('physical')).toBeCloseTo(0.91, 10);
   });
 });
 
 /* -------------------------------------------------------------------------- */
 
-describe('Swift Judgement, which is meant to double-cast a Judgement', () => {
+describe('Swift Judgement, a second Judgement on its own cooldown', () => {
   /*
    * ==========================================================================
-   * THIS TEST HAS NOW BEEN REWRITTEN TWICE BY THE SAME CLAUSE MOVING, and both
-   * times the thing it protects was the same: **the entry can actually fire in
-   * the window it exists for.**
-   *
-   * It first read "is gated on Seal of Fury" and that cost the back-to-back --
-   * the opener judged under a different seal, so at the first moment Judgement
-   * was on cooldown the named seal was not up. It then read "ANY seal". The
-   * owner has now narrowed it to SEAL OF RIGHTEOUSNESS, which is the only seal
-   * their new list applies, so the two select the same states for this build.
-   *
-   * WHAT IS PINNED IS THE INVARIANT AND NOT THE CLAUSE. A gate on a seal the
-   * list never applies is an entry that CANNOT FIRE -- this project's commonest
-   * rotation bug, and the one that leaves nothing behind to notice.
+   * REWORKED AT 1.60.1.70707: "Unleash the energy of a Seal spell upon an
+   * enemy. Does not consume the Seal. ... Does not share a cooldown with your
+   * Judgement ability." It used to RESET Judgement's cooldown; it is now a
+   * Judgement in its own right, free, on a one minute cooldown.
    * ==========================================================================
    */
   const protectionActor = () => {
@@ -362,62 +343,47 @@ describe('Swift Judgement, which is meant to double-cast a Judgement', () => {
     return { actor, target, simulation: buildSimulation([actor, target]) };
   };
 
-  it('fires in the window it is for, under the seal the list actually applies', () => {
-    const entry = PALADIN_PROTECTION.entries.find((e) => e.abilityId === 'swift_judgement')!;
-    const { actor, target, simulation } = protectionActor();
-
-    // The seal this list applies, Judgement spent: the window it is for.
-    castAbility(simulation, actor, actor.abilities.get('seal_of_righteousness')!, undefined);
-    simulation.advanceTo(seconds(2));
-    castAbility(simulation, actor, actor.abilities.get('judgement')!, target);
-    simulation.advanceTo(seconds(4));
-
-    expect(compiled(entry.condition)?.(simulation, actor, target)).toBe(true);
-  });
-
-  it('names a seal the Protection list can actually put up', () => {
-    /*
-     * THE STRUCTURAL HALF, AND IT IS WHAT WOULD HAVE CAUGHT BOTH REWRITES. The
-     * entry's condition is checked against the seals this list has entries
-     * for, so a gate on a seal the list never casts fails here rather than
-     * silently reading false for a whole fight.
-     */
-    const sealsTheListApplies = new Set(
-      PALADIN_PROTECTION.entries
-        .map((e) => e.abilityId)
-        .filter((id) => id.startsWith('seal_of_')),
-    );
-    expect(sealsTheListApplies).toEqual(new Set(['seal_of_righteousness']));
-
-    const entry = PALADIN_PROTECTION.entries.find((e) => e.abilityId === 'swift_judgement')!;
-    const named = JSON.stringify(entry.condition).match(/seal_of_[a-z_]+/g) ?? [];
-    expect(named.length).toBeGreaterThan(0);
-    for (const seal of named) expect(sealsTheListApplies.has(seal), seal).toBe(true);
-  });
-
-  it('takes no global cooldown, which is the owner’s ruling', () => {
-    /*
-     * ASSERT THE MECHANISM. An ability wrongly taking a global cooldown still
-     * has the right cooldown, the right cost and the right effect -- the
-     * mistake is invisible in everything except the figure, which is why this
-     * is pinned rather than measured.
-     *
-     * BEING OFF IT MEANS ONE THING: the cast does not START a global cooldown.
-     * It is still BLOCKED by one already running, which is the half that is
-     * easy to assert the wrong way round.
-     */
+  it('judges the seal, costs nothing, and leaves Judgement alone', () => {
     const { actor, target, simulation } = protectionActor();
     castAbility(simulation, actor, actor.abilities.get('seal_of_righteousness')!, undefined);
     simulation.advanceTo(seconds(2));
-    castAbility(simulation, actor, actor.abilities.get('judgement')!, target);
-    simulation.advanceTo(seconds(4));
 
-    const before = actor.gcdReadyAt;
-    expect(
-      castAbility(simulation, actor, actor.abilities.get('swift_judgement')!, undefined),
-    ).toEqual({ ok: true });
-    expect(actor.gcdReadyAt).toBe(before);
-    // And the Judgement it reset is available in the same instant.
+    const swift = actor.abilities.get('swift_judgement')!;
+    expect(swift.cost).toBeUndefined();
+    expect(swift.cooldownMs).toBe(seconds(60));
+
+    const before = target.health.current;
+    expect(castAbility(simulation, actor, swift, target)).toEqual({ ok: true });
+    // A judgement of Seal of Righteousness deals damage, and the seal stays up.
+    expect(target.health.current).toBeLessThan(before);
+    expect(actor.auras.has('seal_of_righteousness')).toBe(true);
+    // And Judgement's own cooldown is untouched: it is still ready.
     expect(actor.abilities.isReady('judgement', simulation.clock.now())).toBe(true);
+  });
+
+  it('is refused with no seal up, as Judgement is', () => {
+    const { actor, target, simulation } = protectionActor();
+    expect(castAbility(simulation, actor, actor.abilities.get('swift_judgement')!, target)).toEqual({
+      ok: false,
+      reason: 'condition_failed',
+    });
+  });
+
+  it('takes no global cooldown, which is the owner’s ruling about this ability', () => {
+    const { actor, target, simulation } = protectionActor();
+    castAbility(simulation, actor, actor.abilities.get('seal_of_righteousness')!, undefined);
+    simulation.advanceTo(seconds(2));
+    const before = actor.gcdReadyAt;
+    expect(castAbility(simulation, actor, actor.abilities.get('swift_judgement')!, target)).toEqual({
+      ok: true,
+    });
+    expect(actor.gcdReadyAt).toBe(before);
+  });
+
+  it('is an ungated entry in the Protection list, after Judgement', () => {
+    const ids = PALADIN_PROTECTION.entries.map((e) => e.abilityId);
+    const entry = PALADIN_PROTECTION.entries.find((e) => e.abilityId === 'swift_judgement')!;
+    expect(entry.condition).toBeUndefined();
+    expect(ids.indexOf('swift_judgement')).toBeGreaterThan(ids.indexOf('judgement'));
   });
 });

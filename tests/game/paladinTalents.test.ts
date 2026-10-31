@@ -23,8 +23,6 @@ import {
   DIVINE_FAVOR_CRIT_BONUS,
   HOLY_SHIELD_CHARGES,
   HOLY_SHIELD_DAMAGE,
-  IMPROVED_SEAL_OF_FURY_FLAG,
-  IMPROVED_SEAL_OF_FURY_MANA,
   JUDGEMENT_OF_THE_CRUSADER,
   JUDGEMENT_OF_THE_CRUSADER_BONUS,
   SEAL_OF_FURY_ABSORB_FRACTION,
@@ -32,7 +30,7 @@ import {
   SEAL_OF_THE_CRUSADER_SWING_MULTIPLIER,
   VINDICATION_CHANCE,
   consecrationGround,
-  improvedSealOfFuryMana,
+  sealOfFuryShield,
 } from '../../src/game/auras/paladin';
 import { DIVINE_FAVOR_ABILITY } from '../../src/game/abilities/paladin';
 import { SANCTIFIED_JUDGEMENT_SHARE_PERCENT } from '../../src/game/reactions/paladinCasts';
@@ -59,6 +57,7 @@ import { HAND_OF_JUSTICE_ICD_MS } from '../../src/game/items/procs';
 import { PALADIN_TALENT_EFFECTS } from '../../src/game/talents/paladinEffects';
 import { talentNumber } from '../../src/game/talents/talentValues';
 import { legalise } from '../helpers/legalTalents';
+import { talentBuild } from '../../src/game/talents/talentBuild';
 import { armorFromItems } from '../../src/game/items/equipment';
 import { PALADIN_SHOCKADIN } from '../../src/game/rotations/paladin';
 
@@ -1151,14 +1150,13 @@ describe('Toughness, which is where itemArmorPercent now lives', () => {
     expect(naked.stats.effective.armor).toBe(plain.stats.effective.armor);
   });
 
-  it('is taken by no damage or tank Paladin preset, which is a BUILD cause', () => {
+  it('is taken by no Paladin preset, which is a BUILD cause', () => {
     /*
-     * The Prot Pally spends its 34 Protection points elsewhere, so this talent
-     * is correctly worth zero to every damage and tank profile -- and that is
-     * why the tests above build their own character rather than reading one.
-     * (Holy Pal takes 5/5, and is a healer nothing attacks.)
+     * The owner's 1.60.1.70707 builds spend no point here -- the Prot Pally
+     * opens row 3 with Templar's Bulwark and Shield Specialization instead -- so
+     * the tests above build their own character rather than reading one.
      */
-    for (const preset of ['pally_ret', 'pally_shockadin_2h', 'prot_pally']) {
+    for (const preset of ['pally_ret', 'pally_shockadin_2h', 'prot_pally', 'holy_pal']) {
       expect(built(preset).talents.toughness, preset).toBeUndefined();
     }
   });
@@ -1169,20 +1167,17 @@ describe('Vindication', () => {
     expect(VINDICATION_CHANCE).toBe(10);
   });
 
-  it('is registered on the two builds that take it and not on the tank', () => {
+  it('is registered from the allocation, and no preset takes it since 1.60.1.70707', () => {
     /*
-     * THE SHOCKADIN TOOK IT UP AT CLIENT BUILD 1.60.1.70170, which is a BUILD
-     * change rather than a talent one: Improved Holy Strike and Crusade were
-     * removed from the tree, and the owner's new Shockadin URL spends two of the
-     * four freed points here.
-     *
-     * The tank still does not, so the assertion still says something: this is
-     * about the TALENT being registered from the allocation rather than about
-     * every Paladin having it.
+     * THE OWNER'S 1.60.1.70707 BUILDS DROPPED IT, which is the right reading of
+     * the patch: its attack power gain is gone and the debuff reaches nothing
+     * here. So the registration is asserted on an allocation that takes it.
      */
-    expect(presetPlayer('pally_ret').reactions.map((r) => r.id)).toContain('vindication');
-    expect(presetPlayer('pally_shockadin_2h').reactions.map((r) => r.id)).toContain('vindication');
-    expect(presetPlayer('prot_pally').reactions.map((r) => r.id)).not.toContain('vindication');
+    for (const preset of ['pally_ret', 'pally_shockadin_2h', 'prot_pally', 'holy_pal']) {
+      expect(presetPlayer(preset).reactions.map((r) => r.id), preset).not.toContain('vindication');
+    }
+    const build = talentBuild('paladin', legalise({ vindication: 3 }, 'paladin'));
+    expect(build.reactions.map((r) => r.id)).toContain('vindication');
   });
 });
 
@@ -1220,21 +1215,11 @@ describe("Seal of Fury's shield", () => {
     expect(SEAL_OF_FURY_ABSORB_FRACTION).toBe(0.5);
   });
 
-  it('returns 60 mana plus 15% a level, capped at 45%, when fully absorbed', () => {
-    // A level 63 boss against a level 60 Paladin is three levels, which is the
-    // cap: 60 x 1.45 = 87.
-    expect(IMPROVED_SEAL_OF_FURY_MANA).toBe(60);
-    expect(improvedSealOfFuryMana(0)).toBe(60);
-    expect(improvedSealOfFuryMana(1)).toBeCloseTo(69, 6);
-    expect(improvedSealOfFuryMana(3)).toBeCloseTo(87, 6);
-    expect(improvedSealOfFuryMana(10)).toBeCloseTo(87, 6);
-  });
-
-  it('is flagged onto the seal ABILITY, so it is per character', () => {
-    const prot = bareBuild('prot_pally');
-    expect(prot.abilities.get('seal_of_fury')?.bonuses?.[IMPROVED_SEAL_OF_FURY_FLAG]).toBe(1);
-    const ret = bareBuild('pally_ret');
-    expect(ret.abilities.get('seal_of_fury')?.bonuses?.[IMPROVED_SEAL_OF_FURY_FLAG]).toBeUndefined();
+  it('returns no mana when fully absorbed, since Improved Seal of Fury is gone', () => {
+    // The talent left the tree at 1.60.1.70707 and with it the shield's
+    // "restore 60 Mana, increased by 15% per level" on full absorption.
+    expect(sealOfFuryShield().onExpire).toBeUndefined();
+    expect(PALADIN_TALENT_EFFECTS.improved_seal_of_fury).toBeUndefined();
   });
 });
 
@@ -1293,23 +1278,25 @@ describe("Templar's Bulwark, whose reason had simply expired", () => {
   });
 
   it('is shortened by Sacred Duty, which names it explicitly', () => {
-    // 2/2 is 60 seconds off a 300 second cooldown. Index 1: index 0 is the
-    // stamina percentage, and taking it would shorten the cooldown by four
-    // SECONDS -- a plausible number and the wrong one.
-    //
-    // ROUND 80: the Prot Pally preset no longer takes Sacred Duty (its two
-    // points went to Reckoning and Anticipation), so the talent is asserted on
-    // an allocation that does, and the preset's own plain cooldown beside it.
+    // 2/2 is 60 seconds off a 300 second cooldown. INDEX 0 since 1.60.1.70707:
+    // the stamina that sat in front of it is gone and Forbearance's 10 seconds
+    // is index 1 -- reading that would shorten the cooldown by ten SECONDS, a
+    // plausible number and the wrong one.
+    expect(talentNumber('paladin', 'sacred_duty', 2, 0)).toBe(60);
+    expect(talentNumber('paladin', 'sacred_duty', 2, 1)).toBe(10);
     const p = built('prot_pally');
-    expect(p.talents.sacred_duty ?? 0).toBe(0);
-    const talents = { ...p.talents, reckoning: 4, anticipation: 2, sacred_duty: 2 };
-    const withDuty = makeAttacker({
-      autoAttack: 'none',
-      abilities: abilitiesForClass('paladin', p.character.combatStyle as never, talents),
-      resources: [{ type: 'mana', maximum: 100_000 }],
-    });
-    expect(withDuty.abilities.get('templars_bulwark')!.cooldownMs).toBe(seconds(240));
-    expect(bareBuild('prot_pally').abilities.get('templars_bulwark')!.cooldownMs).toBe(seconds(300));
+    const book = (talents: Record<string, number>) =>
+      makeAttacker({
+        autoAttack: 'none',
+        abilities: abilitiesForClass('paladin', p.character.combatStyle as never, talents),
+        resources: [{ type: 'mana', maximum: 100_000 }],
+      });
+    const { sacred_duty: _dropped, ...without } = p.talents;
+    expect(p.talents.sacred_duty).toBe(2);
+    expect(book(p.talents).abilities.get('templars_bulwark')!.cooldownMs).toBe(seconds(240));
+    expect(
+      book({ ...without, guardian_s_favor: 2 }).abilities.get('templars_bulwark')!.cooldownMs,
+    ).toBe(seconds(300));
   });
 });
 
@@ -1328,13 +1315,14 @@ describe('the two block talents moved in OPPOSITE directions', () => {
    * cannot drift apart, and from the tooltips rather than from the constants.
    * ----------------------------------------------------------------------------
    */
-  it('cuts Redoubt from 30% to 20% at 5/5, and keeps its chance at ten', () => {
+  it('puts Redoubt back to 30% at 5/5 (1.60.1.70707), and keeps its chance at ten', () => {
     // The row is [chance, block bonus, ...], and only the BONUS moves per rank --
     // which is why the effect passes `valueIndex: 1`. Index 0 is ten at every
     // rank, so a reader checking the resulting block chance alone cannot tell.
+    // 1.60.1.70170 cut it to 20%; 1.60.1.70707 restored the 30.
     expect(talentNumber('paladin', 'redoubt', 5, 0)).toBe(10);
-    expect(talentNumber('paladin', 'redoubt', 5, 1)).toBe(20);
-    expect(talentNumber('paladin', 'redoubt', 1, 1)).toBe(4);
+    expect(talentNumber('paladin', 'redoubt', 5, 1)).toBe(30);
+    expect(talentNumber('paladin', 'redoubt', 1, 1)).toBe(6);
   });
 
   it('raises Holy Shield from 20% to 30%, which raises its DAMAGE too', () => {

@@ -346,6 +346,27 @@ export type TalentEffect =
    * Shock both damages and heals, and a heal talent must not raise the damage.
    */
   | { readonly kind: 'abilityHealing'; readonly abilityId: string; readonly valueIndex?: number }
+  /**
+   * Raises the crit HEALING bonus of the named abilities, and not their damage
+   * crits. Holy Power at 1.60.1.70707: "increases the critical strike healing
+   * bonus of your Holy spells by {0}%". The bonus HALF, as every crit damage
+   * effect here: a heal crits for 1.5, so "+50%" is 1.75.
+   */
+  /**
+   * Raises the crit CHANCE of the named abilities' heals only. Boundless Light
+   * (1.60.1.70707): "+{0}% critical strike chance for Holy Shock on allies not
+   * affected by your Oath of Light".
+   */
+  | {
+      readonly kind: 'abilityHealingCrit';
+      readonly abilityIds: readonly string[];
+      readonly valueIndex?: number;
+    }
+  | {
+      readonly kind: 'abilityHealingCritDamage';
+      readonly abilityIds: readonly string[];
+      readonly valueIndex?: number;
+    }
   | {
       readonly kind: 'abilityDamage';
       readonly abilityId: string;
