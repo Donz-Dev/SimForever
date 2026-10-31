@@ -107,7 +107,8 @@ const SHOCKADIN_AOE_PRECOMBAT = [
  */
 const PROTECTION_AOE_PRECOMBAT = [
   { abilityId: 'righteous_fury', secondsBefore: 4.5 },
-  { abilityId: 'seal_of_righteousness', secondsBefore: 3 },
+  // Seal of Fury since round 90, as the Single Target opener.
+  { abilityId: 'seal_of_fury', secondsBefore: 3 },
   { abilityId: 'holy_shield', secondsBefore: 1.5 },
   { abilityId: 'judgement', secondsBefore: 0 },
   { abilityId: 'consecration', secondsBefore: 0 },

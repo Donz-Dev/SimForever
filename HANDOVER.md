@@ -107,6 +107,30 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 90: Prot Pally on Seal of Fury
+
+**PROT PALLY RUNS SEAL OF FURY NOW**, the owner's instruction: "ensure Prot
+Pally is using Seal of Fury instead of Seal of Righteousness and that the absorb
+is working correctly". The list's seal entry, the Single Target opener and the
+Multi Target opener all moved. **Protribution follows**, because it derives its
+list and opener from Prot Pally's -- which is what "copy from Prot Pally to the
+maximum extent" asked for.
+
+**THE ABSORB WORKS, CHECKED HIT BY HIT** (a one-off probe, 40 fights a
+tier). One grant per landed seal hit; a pool of `0.5 x (35 + 10% Holy
+SP)` -- 39.9, 45.8 and 48.3 at B55, E65 and E75; each grant REPLACES the last;
+the next boss hit spends it. Zero disagreements and zero stacked hits at every
+tier. `tests/game/sealOfFuryAbsorb.test.ts` drives the real fight and fails 2 of
+3 with the shield reaction removed. **Two traps in reading it**, both the
+engine's correct behaviour: a spent shield is removed in the SAME millisecond as
+the hit and logged first, and with Templar's Bulwark also up the shields are
+spent in the order they were applied, so a hit can leave either one standing.
+
+**IT IS A SMALL SHIELD AND IT COSTS THREAT.** Paired against Righteousness on the
+same 200 fights a cell, Fury is **-115 to -185 TPS** (about 9%) for **-1 to -29
+DTPS** and +10 to +23 absorbed a second; mana is unchanged. Recorded for the
+owner rather than acted on -- the seal was their call.
+
 ## Round 89: the Holy Pal's mana
 
 **A CANCELLED HOLY LIGHT COSTS NOTHING, AND ALREADY DID.** The owner asked to

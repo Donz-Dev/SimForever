@@ -303,16 +303,10 @@ export function sealOfCommandProc(): Reaction {
 /**
  * Seal of Fury: a flat 35 Holy damage on every melee attack.
  *
- * ITS ABSORB CLAUSE IS NOT MODELLED. "While a shield is equipped, each attack
- * also grants an absorb shield equal to 50% of the Holy damage dealt" -- the
- * engine has absorbs, and what it has no shape for is a shield that is granted
- * per swing and consumed per hit taken. Only the Protection profile would use
- * it, and it says so.
+ * ITS ABSORB IS `sealOfFuryShieldProc` below, registered for a shield-holding
+ * Paladin only. A note here used to say the absorb was not modelled, with an
+ * exported reason nothing read; both outlived the shield being built.
  */
-export const SEAL_OF_FURY_UNMODELLED =
-  'Its absorb clause is not modelled: a shield granted on every swing and ' +
-  'spent on every hit taken has no declaration. The 35 Holy damage applies.';
-
 export function sealOfFuryProc(): Reaction {
   return {
     id: 'seal_of_fury',

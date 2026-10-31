@@ -4073,7 +4073,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       precombat: [
         ...before(4.5, 'righteous_fury'),
-        ...before(3, 'seal_of_righteousness'),
+        // Seal of Fury since round 90, the owner's: its absorb is a tank's seal.
+        ...before(3, 'seal_of_fury'),
         ...before(1.5, 'holy_shield'),
         ...before(0, 'judgement'),
       ],
