@@ -111,6 +111,20 @@ describe('the catalog covers what the stock lists ask about', () => {
     }
   });
 
+  it('offers each stored seal of Unsealed Wrath under its own name', () => {
+    // The dropdown is labelled by NAME, so four auras sharing "Unsealed Wrath"
+    // were four indistinguishable rows -- a list could not be told to swap to
+    // Command at three Righteousness stacks without reading ids back.
+    const byId = new Map(aurasForClass('paladin').map((aura) => [aura.id, aura.name]));
+    expect(byId.get('unsealed_wrath_seal_of_righteousness')).toBe(
+      'Unsealed Wrath - Righteousness',
+    );
+    expect(byId.get('unsealed_wrath_seal_of_command')).toBe('Unsealed Wrath - Command');
+    expect(byId.get('unsealed_wrath_seal_of_the_crusader')).toBe('Unsealed Wrath - Crusader');
+    expect(byId.get('unsealed_wrath_seal_of_fury')).toBe('Unsealed Wrath - Fury');
+    expect(auraName('unsealed_wrath_seal_of_command')).toBe('Unsealed Wrath - Command');
+  });
+
   it('does not offer one class the talent auras of another', () => {
     // `TALENT_AURAS` is keyed by TALENT id, and talent ids are unique only
     // WITHIN a class -- so a first version handed every class the Warrior's

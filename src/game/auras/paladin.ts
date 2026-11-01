@@ -400,10 +400,25 @@ export const JUDGEMENT_OF_THE_CRUSADER: AuraDefinition = {
 export const UNSEALED_WRATH_DURATION_MS = seconds(15);
 export const UNSEALED_WRATH_MAX_STACKS = 3;
 
+/*
+ * NAMED FOR THE SEAL IT STORES, by the owner's instruction: the stacks need an
+ * identifier in the APL so a list can say "Seal of Command if Unsealed Wrath -
+ * Righteousness >= 3". The four auras always had their own ids; what they
+ * shared was the NAME, and the APL panel's buff dropdown is labelled by name --
+ * so it offered four identical "Unsealed Wrath" rows and the only way to tell
+ * them apart was to pick one and read the id back.
+ */
+const UNSEALED_WRATH_SEAL_NAMES: Readonly<Record<string, string>> = {
+  seal_of_righteousness: 'Righteousness',
+  seal_of_command: 'Command',
+  seal_of_the_crusader: 'Crusader',
+  seal_of_fury: 'Fury',
+};
+
 export function unsealedWrathAura(storedSealId: string): AuraDefinition {
   return {
     id: `unsealed_wrath_${storedSealId}`,
-    name: 'Unsealed Wrath',
+    name: `Unsealed Wrath - ${UNSEALED_WRATH_SEAL_NAMES[storedSealId] ?? storedSealId}`,
     durationMs: UNSEALED_WRATH_DURATION_MS,
     refreshBehaviour: 'reset',
     maxStacks: UNSEALED_WRATH_MAX_STACKS,
