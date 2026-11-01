@@ -32,6 +32,7 @@ const identity: NameLookup = (id) => id;
 export interface DescribeNames {
   readonly aura?: NameLookup;
   readonly ability?: NameLookup;
+  readonly talent?: NameLookup;
 }
 
 /** "at least", "under", and so on -- in the direction a person would say it. */
@@ -66,6 +67,7 @@ function subjectWord(on: 'self' | 'target' | 'pet'): string {
 export function describeCondition(condition: AplCondition, names: DescribeNames = {}): string {
   const auraName = names.aura ?? identity;
   const abilityName = names.ability ?? identity;
+  const talentName = names.talent ?? identity;
 
   switch (condition.kind) {
     case 'all':
@@ -169,6 +171,9 @@ export function describeCondition(condition: AplCondition, names: DescribeNames 
 
     case 'hasReaction':
       return `your build has ${condition.reactionId.replace(/_/g, ' ')}`;
+
+    case 'talentRank':
+      return `talent ${talentName(condition.talentId)} is ${comparison(condition.compare)} ${condition.rank}`;
 
     case 'castsInstantly':
       return `${abilityName(condition.abilityId)} is instant`;

@@ -213,6 +213,17 @@ export type AplCondition =
    * talent leaves behind, so the rule cannot drift from the talent granting it.
    */
   | { readonly kind: 'hasReaction'; readonly reactionId: string }
+  /**
+   * A TALENT'S RANK, compared to a number -- "Champion of the Light is 5". A
+   * question about the build, constant for the fight, read off the ranks the
+   * character was built with. A talent the build did not take is rank 0.
+   */
+  | {
+      readonly kind: 'talentRank';
+      readonly talentId: string;
+      readonly compare: AplCompare;
+      readonly rank: number;
+    }
   /** Whether an ability's cast time is zero -- a Paladin's Twist of Light. */
   | { readonly kind: 'castsInstantly'; readonly abilityId: string }
   | { readonly kind: 'all'; readonly of: readonly AplCondition[] }

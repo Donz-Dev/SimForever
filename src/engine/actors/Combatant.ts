@@ -355,6 +355,14 @@ export interface CombatantOptions {
    */
   readonly reactions?: readonly Reaction[];
   /**
+   * Named ranks the BUILD settled before the pull -- a character's talent
+   * points, keyed by talent id. The engine attaches no behaviour to them; a
+   * priority list reads them ("Hammer of Wrath if Champion of the Light is
+   * 5"), so a rule about the build can be written as data rather than as a
+   * closure. Absent means rank 0.
+   */
+  readonly buildRanks?: Readonly<Record<string, number>>;
+  /**
    * Reactions to a cast rather than to an attack.
    *
    * A separate list because a cast event is not an attack event -- see
@@ -569,6 +577,8 @@ export class Combatant {
   readonly regeneration: readonly ResourceRegen[];
   readonly resourceOnDamageTaken: ResourceGeneration | undefined;
   readonly reactions: readonly Reaction[];
+  /** See the option. Empty for anything that is not a built player. */
+  readonly buildRanks: Readonly<Record<string, number>>;
   readonly castReactions: readonly CastReaction[];
   readonly abilityModifiers: AbilityModifiers;
   /** Per-school crit, crit damage and damage. See `SchoolModifiers`. */
@@ -769,6 +779,7 @@ export class Combatant {
     this.regeneration = options.regeneration ?? [];
     this.resourceOnDamageTaken = options.resourceOnDamageTaken;
     this.reactions = options.reactions ?? [];
+    this.buildRanks = options.buildRanks ?? {};
     this.castReactions = options.castReactions ?? [];
     this.abilityModifiers = options.abilityModifiers ?? new AbilityModifiers();
     this.schoolModifiers = options.schoolModifiers ?? new SchoolModifiers();

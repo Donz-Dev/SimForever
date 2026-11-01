@@ -5,7 +5,6 @@ import { CONSUMABLE_HEALS, consumableCooldowns } from './consumableCooldowns';
 import {
   all,
   any,
-  castsInstantly,
   compileRotation,
   fightRemaining,
   not,
@@ -16,6 +15,7 @@ import {
   selfStacks,
   selfTime,
   swungWithin,
+  talentRank,
 } from './apl';
 import type { TalentAllocation } from '../talents/Talent';
 
@@ -250,13 +250,18 @@ export const PALADIN_RETRIBUTION: AplList = {
    * not asked this list to pay. **The Shockadin's entry is deliberately NOT
    * gated**: that build does not reach 5/5, casts the one-second version
    * about twice a fight, and the owner's instruction named this profile.
+   *
+   * WRITTEN AS THE TALENT, by the owner's instruction: "Use: Hammer of Wrath
+   * If: Talent: Champion of the Light = 5". It read the built ability's cast
+   * time (`castsInstantly`), which is the same answer and showed in the panel
+   * as a fixed sentence nobody could edit.
    */
   /*
    * ABOVE JUDGEMENT SINCE ROUND 78: it is legal only in the last fifth of the
    * fight, on a six second cooldown, and at 120 s it is the best damage per
    * mana this build has -- +3.73 +/- 2.07 paired over 400 fights at 120 s.
    */
-  { abilityId: 'hammer_of_wrath', condition: castsInstantly('hammer_of_wrath') },
+  { abilityId: 'hammer_of_wrath', condition: talentRank('champion_of_the_light', 'exactly', 5) },
   { abilityId: 'judgement' },
   { abilityId: 'holy_strike' },
   { abilityId: 'consecration' },
@@ -624,7 +629,7 @@ export const PALADIN_PROTECTION: AplList = {
  * Protribution takes Champion of the Light 5/5, so its Hammer is instant and
  * ranged.
  *
- * ABOVE JUDGEMENT, AND GATED ON BEING INSTANT, exactly as the Retribution list
+ * ABOVE JUDGEMENT, AND GATED ON CHAMPION OF THE LIGHT 5/5, exactly as the Retribution list
  * places and gates it: it is legal only in the last fifth of the fight, on a
  * six second cooldown.
  */
@@ -632,7 +637,7 @@ export const PALADIN_PROTRIBUTION: AplList = {
   name: 'Paladin (Protribution)',
   entries: PALADIN_PROTECTION.entries.flatMap((entry): AplEntry[] =>
     entry.abilityId === 'judgement'
-      ? [{ abilityId: 'hammer_of_wrath', condition: castsInstantly('hammer_of_wrath') }, entry]
+      ? [{ abilityId: 'hammer_of_wrath', condition: talentRank('champion_of_the_light', 'exactly', 5) }, entry]
       : [entry],
   ),
 };

@@ -1,6 +1,6 @@
 import type { AplSection } from '../../profiles/aplSections';
 import { setSection, withSection } from '../../profiles/aplSections';
-import { useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { CharacterProfile } from '../../profiles';
 import { defaultRotationFor, rotationMatchesBuild, stockListFor } from '../../profiles/rotation';
@@ -30,6 +30,7 @@ import { RACIAL_ABILITIES, racialsFor } from '../../game/racials';
 import { consumableAbilities } from '../../game/buffs/consumables';
 import type { CatalogAura } from '../../game/auras/auraCatalog';
 import { aurasForClass } from '../../game/auras/auraCatalog';
+import { talentsForClass } from '../../game/talents/talentData';
 import type { Clause, ClauseKind, ConditionNode, GroupNode, NodePath } from './aplEditing';
 import {
   addEntry,
@@ -103,6 +104,22 @@ interface ShownList {
  * Fire Mage that ran the Arcane list and produced a perfectly ordinary number.
  * ============================================================================
  */
+/**
+ * The talents a `talent` clause may name -- the class's own, by name. A
+ * context rather than one more prop threaded through every editor between the
+ * panel and the clause, the arrangement `AbilityCardContext` already uses.
+ */
+const TalentChoicesContext = createContext<readonly { readonly id: string; readonly name: string }[]>(
+  [],
+);
+
+/** A class's talents in tree order, for the talent clause's dropdown. */
+function talentChoicesFor(profile: CharacterProfile) {
+  return (talentsForClass(profile.character.characterClass)?.trees ?? []).flatMap((tree) =>
+    tree.talents.map((talent) => ({ id: talent.id, name: talent.name })),
+  );
+}
+
 export function AplPanel({ profile: whole, onChange: change, section }: AplPanelProps) {
   /*
    * ONE SECTION AT A TIME (round 64): the section's lists are swapped into the
@@ -164,6 +181,7 @@ export function AplPanel({ profile: whole, onChange: change, section }: AplPanel
 
   return (
     <AbilityCardContext.Provider value={cardSource}>
+    <TalentChoicesContext.Provider value={talentChoicesFor(profile)}>
     <Panel
       title={SECTION_TITLE[section]}
       // The list's name, which fights run it and its entry count are gone from
@@ -252,6 +270,7 @@ export function AplPanel({ profile: whole, onChange: change, section }: AplPanel
 
       <AddEntry abilities={abilities} onAdd={(id) => update(addEntry(list.entries, id))} />
     </Panel>
+    </TalentChoicesContext.Provider>
     </AbilityCardContext.Provider>
   );
 }
@@ -780,7 +799,6 @@ export function AplEntries({
                 }
               />
             ) : null}
-            {entry.note ? <span className="apl-note">{entry.note}</span> : null}
           </div>
           <InterruptToggle
             entry={entry}
@@ -1180,6 +1198,7 @@ function GroupEditor({
             <option value="targets">Number of targets</option>
             <option value="injured">Members needing healing</option>
             <option value="raidSize">Raid members to heal</option>
+            <option value="talent">Talent</option>
           </select>
           {/*
             * A NESTED GROUP IS WHAT MAKES "a and (b or c)" SAYABLE, which is
@@ -1408,6 +1427,7 @@ function ClauseRow({
   readonly onRemove: () => void;
 }) {
   const set = (patch: Partial<Clause>) => onChange({ ...clause, ...patch });
+  const talents = useContext(TalentChoicesContext);
   const numberField = (value: number | undefined, suffix?: string) => (
     <>
       <input
@@ -1710,6 +1730,39 @@ function ClauseRow({
         </>
       ) : null}
 
+      {clause.kind === 'talent' ? (
+        <>
+          <span className="apl-unit">Talent:</span>
+          <select
+            className="apl-aura"
+            value={clause.talentId ?? ''}
+            aria-label="Talent"
+            onChange={(event) => set({ talentId: event.target.value })}
+          >
+            <option value="">(choose)</option>
+            {talents.some((talent) => talent.id === clause.talentId) || !clause.talentId ? null : (
+              <option value={clause.talentId}>{clause.talentId}</option>
+            )}
+            {talents.map((talent) => (
+              <option key={talent.id} value={talent.id}>
+                {talent.name}
+              </option>
+            ))}
+          </select>
+          {compareField(true)}
+          <input
+            type="number"
+            step="1"
+            min="0"
+            max="5"
+            className="apl-number"
+            value={clause.value ?? 0}
+            aria-label="Talent rank"
+            onChange={(event) => set({ value: Math.round(Number(event.target.value)) })}
+          />
+        </>
+      ) : null}
+
       {clause.kind === 'targets' ? (
         <>
           {/* One word, so the clause reads "targets >= 3" on one line. */}
@@ -1873,7 +1926,9 @@ export function aplNamesFor(profile: CharacterProfile): {
     abilityBookFor(profile).map((ability) => [ability.id, ability.name]),
   );
   const nameOf = (id: string) => abilityNames.get(id) ?? prettify(id);
-  return { names: { ability: nameOf, aura: nameOf }, nameOf };
+  const talents = talentsForClass(profile.character.characterClass)?.byId;
+  const talent = (id: string) => talents?.get(id)?.name ?? prettify(id);
+  return { names: { ability: nameOf, aura: nameOf, talent }, nameOf };
 }
 
 /** `shadow_word_pain` to `Shadow Word Pain`. */

@@ -955,6 +955,12 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // because the target dodged) and the gear (Vis'kag, Crusader, Hand of
     // Justice). Gear procs are built per character rather than shared, because
     // Hand of Justice carries its own internal cooldown.
+    /*
+     * THE LEGAL ALLOCATION, NOT THE DECLARED ONE: a rank `legalAllocation`
+     * stripped is a rank the character does not have, and a list asking about
+     * it must read zero.
+     */
+    buildRanks: legal.allocation,
     reactions: [
       // The LEGAL allocation, not the declared one: an unearned Elemental
       // Weapons must not scale Windfury Weapon any more than an unearned

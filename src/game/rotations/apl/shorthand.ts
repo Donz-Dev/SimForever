@@ -202,6 +202,12 @@ export const hasReaction = (reactionId: string): AplCondition => ({
   reactionId,
 });
 
+export const talentRank = (
+  talentId: string,
+  compare: AplCompare,
+  rank: number,
+): AplCondition => ({ kind: 'talentRank', talentId, compare, rank });
+
 export const castsInstantly = (abilityId: string): AplCondition => ({
   kind: 'castsInstantly',
   abilityId,

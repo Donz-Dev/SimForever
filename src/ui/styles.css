@@ -2467,13 +2467,6 @@ button:disabled {
   width: 4.5em;
 }
 
-.apl-note {
-  flex-basis: 100%;
-  font-size: 11px;
-  color: var(--text-muted);
-  font-style: italic;
-}
-
 .apl-flag {
   flex-shrink: 0;
   font-size: 10px;

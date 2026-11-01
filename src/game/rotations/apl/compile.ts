@@ -420,6 +420,11 @@ export function compileCondition(condition: AplCondition): Condition {
       return (_context, actor) => actor.reactions.some((reaction) => reaction.id === reactionId);
     }
 
+    case 'talentRank': {
+      const { talentId, compare: how, rank } = condition;
+      return (_context, actor) => compare(actor.buildRanks[talentId] ?? 0, how, rank);
+    }
+
     case 'castsInstantly': {
       const { abilityId } = condition;
       return (_context, actor) => (actor.abilities.get(abilityId)?.castTimeMs ?? 0) <= 0;
