@@ -28,6 +28,7 @@ export {
   resourceFraction,
   selfExpired,
   selfHas,
+  talentRank,
   targetCount,
   selfHealth,
   selfMissing,

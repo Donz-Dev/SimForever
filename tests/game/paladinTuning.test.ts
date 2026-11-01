@@ -203,7 +203,15 @@ describe('Champion of the Light, and the Hammer of Wrath it makes', () => {
 
   it('is in the Retribution list under that condition, and woven after a swing in the Shockadin', () => {
     const ret = PALADIN_RETRIBUTION.entries.find((e) => e.abilityId === 'hammer_of_wrath');
-    expect(ret?.condition).toEqual({ kind: 'castsInstantly', abilityId: 'hammer_of_wrath' });
+    // A TALENT condition the panel can edit, by the owner's instruction --
+    // "Use: Hammer of Wrath If: Talent: Champion of the Light = 5" -- where it
+    // was a fixed `castsInstantly` reading of the built ability.
+    expect(ret?.condition).toEqual({
+      kind: 'talentRank',
+      talentId: 'champion_of_the_light',
+      compare: 'exactly',
+      rank: 5,
+    });
 
     /*
      * THE SHOCKADIN'S IS NOT THE RETRIBUTION GATE. It was written for a build
@@ -216,6 +224,25 @@ describe('Champion of the Light, and the Hammer of Wrath it makes', () => {
      */
     const shockadin = PALADIN_SHOCKADIN.entries.find((e) => e.abilityId === 'hammer_of_wrath');
     expect(shockadin?.condition).toEqual({ kind: 'swungWithin', slot: 'mainHand', withinMs: 300 });
+  });
+
+  it('reads the rank the character was BUILT with, and zero for a talent not taken', () => {
+    const ret = PRESETS_BY_ID.get('pally_ret')!.build();
+    const actor = createPlayer({
+      race: ret.character.race,
+      characterClass: 'paladin',
+      talents: ret.talents,
+    });
+    expect(actor.buildRanks.champion_of_the_light).toBe(5);
+    expect(actor.buildRanks.holy_shock ?? 0).toBe(0);
+
+    // An illegal rank is stripped before the fight, so a list must read zero.
+    const stripped = createPlayer({
+      race: ret.character.race,
+      characterClass: 'paladin',
+      talents: { champion_of_the_light: 5 },
+    });
+    expect(stripped.buildRanks.champion_of_the_light ?? 0).toBe(0);
   });
 });
 

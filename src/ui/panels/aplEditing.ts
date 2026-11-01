@@ -272,7 +272,9 @@ export type ClauseKind =
   // How many friendlies need healing (round 60). `value` is the count.
   | 'injured'
   // How many raid members there are to heal (round 61). `value` is the count.
-  | 'raidSize';
+  | 'raidSize'
+  // A talent's rank -- "Champion of the Light = 5". `value` is the rank.
+  | 'talent';
 
 /** Which weapon's swing timer a `swing` clause reads. */
 export type SwingSlot = 'mainHand' | 'offHand' | 'ranged';
@@ -347,6 +349,8 @@ export interface Clause {
   /** injured: whose group, and the health share under which a member counts. */
   readonly injuredOf?: 'targetParty' | 'raid';
   readonly belowPercent?: number;
+  /** talent: which talent. The rank is `value`. */
+  readonly talentId?: string;
 }
 
 /** Whose health a `health` clause reads. See `Clause.who`. */
@@ -703,6 +707,13 @@ function toClause(condition: AplCondition): Clause | undefined {
         compare: condition.compare,
         value: condition.milliseconds / 1000,
       };
+    case 'talentRank':
+      return {
+        kind: 'talent',
+        talentId: condition.talentId,
+        compare: condition.compare,
+        value: condition.rank,
+      };
     default:
       // `builtin`, `swungWithin`, `hasReaction`, `castsInstantly`.
       // Shown as a sentence, kept exactly, not drawn with controls.
@@ -778,6 +789,8 @@ export function fromClause(clause: Clause): AplCondition {
       };
     case 'targets':
       return { kind: 'targetCount', compare, count: value };
+    case 'talent':
+      return { kind: 'talentRank', talentId: clause.talentId ?? '', compare, rank: value };
     case 'raidSize':
       return { kind: 'raidSize', compare, count: value };
     case 'injured':
@@ -860,6 +873,8 @@ export function blankClause(kind: ClauseKind): Clause {
     case 'raidSize':
       // "At least six": more than one party, which is the raid healer fight.
       return { kind: 'raidSize', compare: 'atLeast', value: 6 };
+    case 'talent':
+      return { kind: 'talent', talentId: '', compare: 'exactly', value: 1 };
   }
 }
 
