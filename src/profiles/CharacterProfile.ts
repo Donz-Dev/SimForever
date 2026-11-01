@@ -267,6 +267,13 @@ export interface CharacterProfile {
    */
   readonly raidBuffValues?: Readonly<Record<string, number>>;
   /**
+   * Set bonuses switched on BY ID, with no items behind them -- see
+   * `game/items/setBonuses.ts`. Not offered on any panel and set by no preset,
+   * by the owner's instruction: a background mechanism until there is enough
+   * information for a real set bonus controller. Absent means none.
+   */
+  readonly setBonuses?: readonly string[];
+  /**
    * Which poison coats which weapon. A Rogue's, and nobody else's.
    *
    * ----------------------------------------------------------------------------
@@ -596,6 +603,7 @@ export function cloneProfile(profile: CharacterProfile): CharacterProfile {
     encounter: { ...profile.encounter },
     raidBuffs: [...profile.raidBuffs],
     ...(profile.raidBuffValues ? { raidBuffValues: { ...profile.raidBuffValues } } : {}),
+    ...(profile.setBonuses ? { setBonuses: [...profile.setBonuses] } : {}),
     /*
      * The entries are copied so two profiles never share a list -- reordering
      * one would otherwise reorder the other. The ENTRIES THEMSELVES are not

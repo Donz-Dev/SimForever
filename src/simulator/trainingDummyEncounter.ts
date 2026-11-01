@@ -25,6 +25,7 @@ import { sacrificedDemon } from '../game/rotations/warlock';
 import { demonicSacrificeAura } from '../game/auras/warlock';
 import { DUNGEON_ROUTE_DURATION_MS } from '../game/encounters/dungeonRoute';
 import { compileRotation } from '../game/rotations/apl';
+import { setBonusReactions } from '../game/items/setBonuses';
 import {
   DUNGEON_ROUTE_SEGMENTS,
   FIRST_PULL_TARGETS,
@@ -415,7 +416,11 @@ export function createPlayerFor(
      * different questions -- and reading `onPlayer` here answered the wrong
      * one. Windfury is unaffected: it is a player buff either way.
      */
-    extraReactions: builtReactions.flatMap((built) => (built.damage ? [built.damage] : [])),
+    extraReactions: [
+      ...builtReactions.flatMap((built) => (built.damage ? [built.damage] : [])),
+      // SET BONUSES SWITCHED ON BY ID -- a background mechanism with no panel.
+      ...setBonusReactions(profile.setBonuses),
+    ],
     extraCastReactions: builtReactions.flatMap((built) => (built.cast ? [built.cast] : [])),
     /*
      * THE POOLS HAVE TO KNOW ABOUT THE BUFFS, and nothing else does.

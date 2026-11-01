@@ -318,6 +318,15 @@ export function validateProfile(value: unknown): ValidationResult {
     issues.push({ path: 'raidBuffValues', message: 'Must map buff ids to numbers.' });
   }
 
+  // OPTIONAL: set bonus ids. An unknown one builds nothing.
+  const setBonuses = value.setBonuses;
+  if (
+    setBonuses !== undefined &&
+    (!Array.isArray(setBonuses) || setBonuses.some((id) => typeof id !== 'string'))
+  ) {
+    issues.push({ path: 'setBonuses', message: 'Must be a list of set bonus ids.' });
+  }
+
   /*
    * A MAP OF CATEGORY ID TO CONSUMABLE ID, and the shape is checked here while
    * the ids are not.
@@ -512,6 +521,8 @@ export function validateProfile(value: unknown): ValidationResult {
       ...(validated.raidBuffValues
         ? { raidBuffValues: { ...validated.raidBuffValues } }
         : {}),
+      // NAMED, or the rebuild drops it.
+      ...(validated.setBonuses ? { setBonuses: [...validated.setBonuses] } : {}),
       // Rebuilt with a fallback for the same reason `poisons` is: validation
       // runs on anything a person can paste, and a hand-edited file missing the
       // field should load as a character with no consumables rather than
