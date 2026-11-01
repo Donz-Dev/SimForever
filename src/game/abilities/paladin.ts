@@ -225,6 +225,16 @@ export const JUDGEMENT: Ability = {
   cost: { resource: 'mana', amount: shareOfBase(0.06) },
   cooldownMs: seconds(10),
   /*
+   * OFF THE GLOBAL COOLDOWN, by the owner's instruction: "Verify that
+   * Judgement does not trigger the global cooldown for all Paladin profiles."
+   * It had no declaration, so it took the engine's default and every Judgement
+   * cost the 1.5s after it. The 10 second cooldown above is what
+   * `freeCastChain.test.ts` asks of an off-GCD ability, so it cannot win the
+   * list twice in one instant. SWIFT_JUDGEMENT spreads this definition and
+   * already said the same.
+   */
+  triggersGcd: false,
+  /*
    * THE MELEE TABLE, by the Judgement balance pass: "42.9% Spell Power
    * Coefficient. 2x Crit Multiplier. Melee Combat Table." It was `spell`, so it
    * missed on the 17% spell miss, crit at spell crit for 1.5x, and procced
