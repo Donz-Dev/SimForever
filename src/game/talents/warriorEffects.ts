@@ -275,10 +275,17 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * THE THREE SECONDS DO NOT SCALE WITH RANK -- both ranks state 3 -- which is
    * what the values file records and is why the sheet-style "one varying number"
    * assumption does not hold here.
+   *
+   * AND AT 1.60.1.70755 THE ROW TURNED ROUND, which is exactly the hazard the
+   * paragraph above names: "Reduces the cooldown of your Slam ability by {0}
+   * sec, the cast time and global cooldown by {1} sec" -- `[2.5, 0.25]` and
+   * `[5, 0.5]`, the cooldown first and now scaling with rank ("Improved Slam's
+   * reduction to Slam's cooldown changed to 2.5/5 seconds"). Unchanged indices
+   * would have taken 2.5 seconds off a 1.5-second cast.
    */
   improved_slam: [
-    { kind: 'abilityCastTime', abilityId: 'slam', valueIndex: 0 },
-    { kind: 'abilityGcd', abilityId: 'slam', valueIndex: 0 },
+    { kind: 'abilityCastTime', abilityId: 'slam', valueIndex: 1 },
+    { kind: 'abilityGcd', abilityId: 'slam', valueIndex: 1 },
     /*
      * ------------------------------------------------------------------------
      * `continue`, NOT `hold`: THE SWING LANDS DURING THE SLAM. The ruleset
@@ -304,7 +311,7 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * ------------------------------------------------------------------------
      */
     { kind: 'abilitySwingTimer', abilityId: 'slam', mode: 'continue' },
-    { kind: 'abilityCooldown', abilityId: 'slam', unit: 'seconds', valueIndex: 1 },
+    { kind: 'abilityCooldown', abilityId: 'slam', unit: 'seconds', valueIndex: 0 },
   ],
 
   improved_hamstring: [
@@ -509,31 +516,10 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   /*
-   * "Reduces the Rage cost of your Cleave and Whirlwind abilities by 3."
-   *
-   * ----------------------------------------------------------------------
-   * IT WAS A COST REDUCTION AND AN OFF-HAND STRIKE, AND THE STRIKE IS NOW FREE.
-   * Client build 1.60.1.70170: "Raging Blows no longer causes your Whirlwind to
-   * strike with your offhand. Whirlwind will now always strike with both weapons
-   * without requiring a talent point", and "Raging Blows now reduces the Rage
-   * cost of your Cleave and Whirlwind abilities by 3."
-   *
-   * So the `abilityFlag` is gone -- `WHIRLWIND` reads its own off hand now, and
-   * the only question left there is whether one is equipped -- and the cost
-   * reduction gained a second ability and a third rage. It took over Improved
-   * Cleave's job in the same patch that deleted Improved Cleave.
-   *
-   * A FLAT AMOUNT, so `abilityCost` is right, where Booming Voice's percentage
-   * needed `grantCastModifier`. Still a single-rank talent, so its value is
-   * hand-filled in `values/warrior.json` with a note: the importer cannot
-   * identify a variable in a sentence with no `{0}` placeholder, and an effect
-   * that reads no value is dropped in silence.
-   * ----------------------------------------------------------------------
+   * RAGING BLOWS IS GONE at 1.60.1.70755 -- not in the tree. It was "reduces the
+   * Rage cost of your Cleave and Whirlwind abilities by 3" and, before
+   * 1.60.1.70170, Whirlwind's off-hand strike. `git log` has both.
    */
-  raging_blows: [
-    { kind: 'abilityCost', abilityId: 'cleave' },
-    { kind: 'abilityCost', abilityId: 'whirlwind' },
-  ],
 
   /*
    * FULLY MODELLED. A 30% chance on being hit to deal 2-10% more physical
@@ -670,6 +656,26 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * the one that build passed over.
    */
   flurry: [{ kind: 'reaction', reactionId: 'flurry' }],
+
+  /*
+   * RECKLESS SWINGS (1.60.1.70755): an active talent, so the talent grants the
+   * ability and the reaction that pays its rage. See `RECKLESS_SWINGS_ABILITY`.
+   */
+  reckless_swings: [
+    { kind: 'grantAbility', abilityId: 'reckless_swings' },
+    { kind: 'reaction', reactionId: 'reckless_swings', valueless: true },
+  ],
+
+  /*
+   * IMPROVED WHIRLWIND (1.60.1.70755): "Reduces the cooldown of your Whirlwind
+   * ability by {0} sec and increases the damage it deals to the closest enemy
+   * by {1}%" -- `[1, 15]` and `[2, 30]`. The damage is read by WHIRLWIND for
+   * its first target only; see `IMPROVED_WHIRLWIND_DAMAGE_BONUS`.
+   */
+  improved_whirlwind: [
+    { kind: 'abilityCooldown', abilityId: 'whirlwind', unit: 'seconds', valueIndex: 0 },
+    { kind: 'abilityBonus', abilityId: 'whirlwind', key: 'improvedWhirlwindDamage', valueIndex: 1 },
+  ],
 
   /*
    * GORE DRINKER, new at client build 1.60.1.70170: "Your Enrage, Berserker

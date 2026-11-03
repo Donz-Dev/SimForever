@@ -327,6 +327,23 @@ export const RECKLESSNESS: AuraDefinition = {
  */
 export const BERSERKER_RAGE_DURATION_MS = seconds(10);
 
+/** Reckless Swings: "your next 4 melee attacks generate 5 additional Rage". */
+export const RECKLESS_SWINGS_RAGE = 5;
+export const RECKLESS_SWINGS_CHARGES = 4;
+
+/**
+ * The window Reckless Swings opens: eight seconds or four landed swings,
+ * whichever ends first. Its rage is granted and its charges spent by
+ * `recklessSwingsReaction`.
+ */
+export const RECKLESS_SWINGS: AuraDefinition = {
+  id: 'reckless_swings',
+  name: 'Reckless Swings',
+  durationMs: seconds(8),
+  maxStacks: RECKLESS_SWINGS_CHARGES,
+  chargesOnApply: RECKLESS_SWINGS_CHARGES,
+};
+
 export const BERSERKER_RAGE: AuraDefinition = {
   id: 'berserker_rage',
   name: 'Berserker Rage',

@@ -284,25 +284,34 @@ const before = (
  * for the first time -- and both are rage at the pull rather than throughput.
  * ----------------------------------------------------------------------------
  */
+/*
+ * 1.60.1.70755 SHRANK TWO OF ITS TALENTS, and this is OUR edit, flagged for the
+ * owner to replace: Improved Tactical Mastery 5 -> 3 ranks and Bloodthrill
+ * 5 -> 2, so five points came free. They went to LINGERING RAGE 5/5, the one
+ * reachable talent worth anything here -- rage decay starts ten seconds later
+ * between the Dungeon Route's pulls; on a single target it is inert. Arms
+ * 39 -> 34 still reaches Mortal Strike with 33 above it. Spread 34/15/2.
+ */
 const TWO_HAND_ARMS_TALENTS: TalentAllocation = {
-  // Arms, 39
+  // Arms, 34
   improved_heroic_strike: 3,
   improved_rend: 3,
   improved_charge: 2,
-  improved_tactical_mastery: 5,
+  improved_tactical_mastery: 3,
   improved_overpower: 2,
   anger_management: 1,
   deep_wounds: 3,
   spearing_strike: 1,
   two_handed_weapon_specialization: 3,
   impale: 2,
-  bloodthrill: 5,
+  bloodthrill: 2,
   sweeping_strikes: 1,
   weaponmaster: 5,
   improved_slam: 2,
   mortal_strike: 1,
-  // Fury, 10
+  // Fury, 15
   cruelty: 5,
+  lingering_rage: 5,
   unbridled_wrath: 5,
   // Protection, 2
   improved_bloodrage: 2,
@@ -328,11 +337,22 @@ const TWO_HAND_ARMS_TALENTS: TalentAllocation = {
  * talent that DOES require Enrage 5, is not taken.
  * ----------------------------------------------------------------------------
  */
+/*
+ * 1.60.1.70755 TOOK FIVE POINTS OUT, and where they went is OUR edit, flagged
+ * for the owner to replace: Improved Tactical Mastery 5 -> 3, Flurry 5 -> 3 at
+ * 30% (more haste for fewer points), and Raging Blows removed. Anger
+ * Management and Impale then sat two points short of their rows, so IMPROVED
+ * CHARGE 2 holds the Arms side up (and adds rage to the opening Charge). The
+ * rest went to the patch's two new Fury talents -- RECKLESS SWINGS 1 (twenty
+ * rage a cast, and the list casts it) and IMPROVED WHIRLWIND 2 (a second off
+ * Whirlwind and +30% on its main target). Spread 17/34/0.
+ */
 const DW_FURY_TALENTS: TalentAllocation = {
   // Arms, 17
   improved_heroic_strike: 3,
   improved_rend: 3,
-  improved_tactical_mastery: 5,
+  improved_charge: 2,
+  improved_tactical_mastery: 3,
   anger_management: 1,
   deep_wounds: 3,
   impale: 2,
@@ -342,7 +362,8 @@ const DW_FURY_TALENTS: TalentAllocation = {
   unbridled_wrath: 5,
   furious_precision: 3,
   dual_wield_specialization: 5,
-  raging_blows: 1,
+  reckless_swings: 1,
+  improved_whirlwind: 2,
   /*
    * ENRAGE 4 -> 2, AND THE TWO POINTS BUY IMPROVED BERSERKER RAGE.
    *
@@ -389,7 +410,7 @@ const DW_FURY_TALENTS: TalentAllocation = {
    */
   improved_berserker_rage: 2,
   death_wish: 1,
-  flurry: 5,
+  flurry: 3,
   bloodthirst: 1,
 };
 
@@ -484,7 +505,15 @@ const FURY_PROT_TALENTS: TalentAllocation = {
   enrage: 5,
   improved_execute: 2,
   death_wish: 1,
-  flurry: 5,
+  /*
+   * 1.60.1.70755: Flurry is three ranks (30%), which left Bloodthirst two
+   * points short of its thirty, and GORE DRINKER moved under Blood Craze --
+   * which this build already holds at 3/3. Our edit, flagged for the owner: the
+   * two points buy Gore Drinker, the one Fury sink with value to a tank (it
+   * heals on the triggers this list casts). Fury stays 31.
+   */
+  gore_drinker: 2,
+  flurry: 3,
   bloodthirst: 1,
   // Protection, 15
   shield_specialization: 5,

@@ -756,6 +756,13 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: AplList = {
    * and what it collects is free.
    * --------------------------------------------------------------------------
    */
+  /*
+   * RECKLESS SWINGS (1.60.1.70755), a rage grant on its own fifteen-second
+   * cooldown: four landed swings at five extra each. At the bottom beside
+   * Berserker Rage for the same reason -- it fires when nothing that spends
+   * rage can. Placed by us, not measured; a question for the owner.
+   */
+  { abilityId: 'reckless_swings' },
   { abilityId: 'berserker_rage_cast' },
   ],
 };
