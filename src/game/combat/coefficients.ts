@@ -720,7 +720,12 @@ export const IMMOLATE_TICK_SP_COEFFICIENT = 0.13;
  * `abilities/warlock.ts`.
  * ----------------------------------------------------------------------------
  */
-export const WRACK_TICK_SP_COEFFICIENT = 0.143;
+/*
+ * DOUBLED AT 1.60.1.70755: "Spell damage coefficient doubled, to match the
+ * expected coefficient per cast time of 0.286 per second." So 28.6% a tick,
+ * 1.716 over the six-second channel.
+ */
+export const WRACK_TICK_SP_COEFFICIENT = 0.286;
 
 // ---------------------------------------------------------------------------
 // Druid
