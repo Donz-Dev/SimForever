@@ -443,10 +443,17 @@ const flametongueTotem: RaidBuff = {
   buildReactions: () => ({ damage: flametongueTotemReaction() }),
 };
 
+/*
+ * 100 AT RANK 5, NOT 50: foreverchanges.pro's Hunter diff, pasted by the
+ * ruleset owner (2026-11-02) -- "Gives party and raid members 20, 35, 50, 75
+ * and 100 ranged attack power by rank instead of 15, 22, 30, 40 and 50."
+ */
+export const TRUESHOT_AURA_RANGED_ATTACK_POWER = 100;
+
 const trueshotAura: RaidBuff = {
   id: 'trueshot_aura',
   name: 'Trueshot Aura',
-  detail: '+50 ranged attack power',
+  detail: `+${TRUESHOT_AURA_RANGED_ATTACK_POWER} ranged attack power`,
   source: 'Hunter',
   appliesTo: 'player',
   aura: {
@@ -455,7 +462,7 @@ const trueshotAura: RaidBuff = {
     // An aura the hunter simply has up. No duration is stated and none would
     // mean anything: it lasts as long as the hunter is there.
     durationMs: 0,
-    statModifiers: [flat('rangedAttackPower', 50)],
+    statModifiers: [flat('rangedAttackPower', TRUESHOT_AURA_RANGED_ATTACK_POWER)],
   },
 };
 

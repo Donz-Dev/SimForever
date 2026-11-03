@@ -831,16 +831,21 @@ describe('the Hunter, whose numbers are Forever numbers', () => {
      * Reading any of these from Classic would be wrong in both directions at
      * once, which is why each is pinned against its Classic value too.
      */
-    expect(ARCANE_SHOT_DAMAGE).toBe(217);
-    expect(ARCANE_SHOT_DAMAGE).not.toBe(183);
+    /*
+     * AND THREE OF THEM MOVED AGAIN (2026-11-02): foreverchanges.pro's Hunter
+     * diff, pasted by the owner, gives Arcane Shot 280, Aimed Shot 350 and
+     * Serpent Sting 675 at max rank -- each "instead of" the capture's figure.
+     */
+    expect(ARCANE_SHOT_DAMAGE).toBe(280);
+    expect(ARCANE_SHOT_DAMAGE).not.toBe(217);
 
-    expect(AIMED_SHOT_BONUS).toBe(166);
+    expect(AIMED_SHOT_BONUS).toBe(350);
     expect(AIMED_SHOT_BONUS).toBeLessThan(600);
 
     expect(RAPTOR_STRIKE_BONUS).toBe(70);
     expect(RAPTOR_STRIKE_BONUS).toBeLessThan(140);
 
-    expect(SERPENT_STING_TOTAL).toBe(555);
+    expect(SERPENT_STING_TOTAL).toBe(675);
   });
 
   it('arms Raptor Strike on the next swing, and therefore takes no GCD', () => {

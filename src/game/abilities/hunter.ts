@@ -136,7 +136,13 @@ export const ASPECT_OF_THE_BEAST_ABILITY: Ability = {
  * is gone, so reading this from Classic would have scaled it off a stat a
  * Hunter does not stack.
  */
-export const ARCANE_SHOT_DAMAGE = 217;
+/*
+ * 280, NOT THE CAPTURE'S 217: foreverchanges.pro's Hunter diff, pasted by the ruleset owner (2026-11-02) --
+ * "Deals 25, 35, 50, 85, 120, 175, 220 and 280 Arcane damage by rank instead
+ * of 20, 26, 39, 65, 94, 134, 170 and 217." foreverchanges.pro wins where the
+ * two sources disagree, by the owner's standing rule.
+ */
+export const ARCANE_SHOT_DAMAGE = 280;
 export const ARCANE_SHOT_RAP_COEFFICIENT = 0.1;
 
 export const ARCANE_SHOT: Ability = {
@@ -215,7 +221,12 @@ export const ARCANE_SHOT: Ability = {
  * also cut by more than two thirds, 600 to 166, which is the largest single
  * change in the class.
  */
-export const AIMED_SHOT_BONUS = 166;
+/*
+ * 350, NOT THE CAPTURE'S 166: foreverchanges.pro's Hunter diff, pasted by the ruleset owner (2026-11-02) --
+ * "Increases ranged damage by 40, 70, 115, 185, 260 and 350 by rank instead of
+ * 20, 34, 55, 89, 125 and 166."
+ */
+export const AIMED_SHOT_BONUS = 350;
 
 export const AIMED_SHOT: Ability = {
   id: 'aimed_shot',
@@ -358,7 +369,12 @@ export const SERPENT_STING_ABILITY: Ability = {
  * instant and needs measuring again. See `docs/source-cross-checks.md`.
  * ----------------------------------------------------------------------------
  */
-export const SNIPER_SHOT_BONUS = 295;
+/*
+ * 590, NOT THE CAPTURE'S 295: foreverchanges.pro's Hunter diff, pasted by the ruleset owner (2026-11-02) --
+ * "Deals ranged damage plus 320, 450 and 590 by rank instead of 160, 225 and
+ * 295."
+ */
+export const SNIPER_SHOT_BONUS = 590;
 export const SNIPER_SHOT_CAST_MS = seconds(4);
 
 export const SNIPER_SHOT: Ability = {

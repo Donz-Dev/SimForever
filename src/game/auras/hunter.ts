@@ -126,7 +126,12 @@ export const ASPECT_OF_THE_BEAST: AuraDefinition = {
  * names directly.
  * ----------------------------------------------------------------------------
  */
-export const SERPENT_STING_TOTAL = 555;
+/*
+ * 675, NOT THE CAPTURE'S 555: foreverchanges.pro's Hunter diff, pasted by the ruleset owner (2026-11-02) --
+ * "Deals 15, 35, 70, 130, 200, 290, 375, 500 and 675 Nature damage over 15 sec
+ * by rank instead of 10, 30, 60, 110, 170, 240, 320, 415 and 555."
+ */
+export const SERPENT_STING_TOTAL = 675;
 export const SERPENT_STING_DURATION_MS = seconds(15);
 export const SERPENT_STING_TICK_INTERVAL_MS = seconds(3);
 export const SERPENT_STING_RAP_PER_TICK = 0.03;
