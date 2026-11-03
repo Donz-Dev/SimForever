@@ -1015,6 +1015,9 @@ export const CLEARCASTING: AuraDefinition = {
     consumedByCast: 'all',
     requiresCost: true,
     requiresAttackTable: true,
+    // 1.60.1.70755: "Clearcasting is no longer consumed on Arcane Missiles if
+    // Missile Barrage is active at the same time" -- the Barrage makes it free.
+    exceptAbilitiesWhileAura: { auraId: 'missile_barrage', abilityIds: ['arcane_missiles'] },
   },
 };
 

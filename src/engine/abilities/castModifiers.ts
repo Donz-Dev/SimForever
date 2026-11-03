@@ -84,6 +84,9 @@ function matches(caster: Combatant, instance: AuraInstance, ability: Ability): b
    * spent, refusing here is the whole of it. See `exceptWhileAura`.
    */
   if (modifier.exceptWhileAura && caster.auras.has(modifier.exceptWhileAura)) return false;
+  // The same, for named abilities only. See `exceptAbilitiesWhileAura`.
+  const narrow = modifier.exceptAbilitiesWhileAura;
+  if (narrow && narrow.abilityIds.includes(ability.id) && caster.auras.has(narrow.auraId)) return false;
   return true;
 }
 
