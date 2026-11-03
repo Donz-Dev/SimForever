@@ -2,9 +2,8 @@ import type { Ability, Combatant, SimulationContext } from '../../engine';
 import { applyHealing, dealDamage, seconds } from '../../engine';
 import { areaTargets } from '../combat/multiTarget';
 import {
-  ELEMENTAL_MASTERY_AURA,
+  LIGHTNING_MASTERY_AURA,
   FLAME_SHOCK_COEFFICIENTS,
-  FLAME_SHOCK_DOT,
   flameShockDot,
   RAGE_OF_THE_FARSEER,
   SEARING_TOTEM_DOT,
@@ -29,12 +28,10 @@ import {
   EARTH_SHOCK_SP_COEFFICIENT,
   FIRE_NOVA_SP_COEFFICIENT,
   FROST_SHOCK_SP_COEFFICIENT,
-  LAVA_BURST_SP_COEFFICIENT,
   LIGHTNING_BOLT_SP_COEFFICIENT,
   CHAIN_HEAL_HEAL_COEFFICIENT,
   HEALING_WAVE_HEAL_COEFFICIENT,
   LESSER_HEALING_WAVE_HEAL_COEFFICIENT,
-  RIPTIDE_HEAL_COEFFICIENT,
 } from '../combat/coefficients';
 import { baseManaFor } from '../character';
 
@@ -102,12 +99,12 @@ export const SHAMAN_BASE_MANA = baseManaFor('troll', 'shaman');
 const shareOfBase = (fraction: number) => Math.round(SHAMAN_BASE_MANA * fraction);
 
 /**
- * The max-rank cost, 35% off the capture's 485. See the ability.
- *
- * Named and rounded ONCE rather than written inline, so the arithmetic is
- * visible and the day the real figure arrives there is one line to change.
+ * The max-rank cost: 495 since 1.60.1.70755, "Mana cost increased to
+ * approximately 225% of comparable rank Lightning Bolt Mana cost", read off
+ * foreverchanges.pro. It was 35% off the old capture's 485, which a later
+ * capture confirmed at 315.
  */
-export const CHAIN_LIGHTNING_MANA = Math.round(485 * (1 - 0.35));
+export const CHAIN_LIGHTNING_MANA = 495;
 
 /**
  * Spend Stormstrike's debuff, if it is up, and report the multiplier.
@@ -128,10 +125,15 @@ function spendStormstrike(simulation: SimulationContext, target: Combatant): num
 // Elemental
 // ---------------------------------------------------------------------------
 
-// Three figures from foreverchanges.pro against our capture at the same build:
-// Lightning Bolt 185-207 (ours 189-211), Chain Lightning 116-130 (119-133) and
-// Frost Shock 275-291 (278-294).
-export const LIGHTNING_BOLT_DAMAGE = midpoint(185, 207);
+/*
+ * 1.60.1.70755 RAISED LIGHTNING BOLT AND CHAIN LIGHTNING AND REVERTED THE
+ * SHOCKS TO CLASSIC'S: "Base damage of all ranks increased ... Max rank was
+ * increased by 80%", "Primary target base damage increased to approximately
+ * 145% of comparable rank Lightning Bolt base damage", "All shock base damage
+ * reverted to match Classic Era values". The figures are foreverchanges.pro's
+ * at max rank. (They were 185-207, 116-130, 293-309, 166 + 176 and 275-291.)
+ */
+export const LIGHTNING_BOLT_DAMAGE = midpoint(342, 381);
 export const LIGHTNING_BOLT_CAST_MS = seconds(2.5);
 export const LIGHTNING_BOLT_COEFFICIENT = LIGHTNING_BOLT_SP_COEFFICIENT;
 
@@ -220,9 +222,10 @@ export const CHAIN_LIGHTNING_JUMP_FACTOR = 0.7;
  * cost, cast time and cooldown matching and only these damage ranges apart.
  * ==============================================================================
  */
-export const CHAIN_LIGHTNING_DAMAGE = midpoint(116, 130);
+export const CHAIN_LIGHTNING_DAMAGE = midpoint(495, 552);
 export const CHAIN_LIGHTNING_TARGETS = 3;
-export const CHAIN_LIGHTNING_CAST_MS = seconds(2);
+// 2.5 seconds since 1.60.1.70755 ("Chain Lightning cast time increased to 2.5 seconds").
+export const CHAIN_LIGHTNING_CAST_MS = seconds(2.5);
 export const CHAIN_LIGHTNING_COEFFICIENT = CHAIN_LIGHTNING_SP_COEFFICIENT;
 
 export const CHAIN_LIGHTNING: Ability = {
@@ -297,7 +300,7 @@ export const CHAIN_LIGHTNING: Ability = {
  */
 export const SHOCK_COOLDOWN_GROUP = 'shaman_shock';
 
-export const EARTH_SHOCK_DAMAGE = midpoint(293, 309);
+export const EARTH_SHOCK_DAMAGE = midpoint(517, 545);
 export const EARTH_SHOCK_COEFFICIENT = EARTH_SHOCK_SP_COEFFICIENT;
 
 export const EARTH_SHOCK: Ability = {
@@ -325,7 +328,7 @@ export const EARTH_SHOCK: Ability = {
     'a cast.',
 };
 
-export const FLAME_SHOCK_DIRECT = 166;
+export const FLAME_SHOCK_DIRECT = 292;
 
 /**
  * Call of Flame's added burn duration, in SECONDS, handed to the cast.
@@ -380,7 +383,7 @@ export const FLAME_SHOCK: Ability = {
   },
 };
 
-export const FROST_SHOCK_DAMAGE = midpoint(275, 291);
+export const FROST_SHOCK_DAMAGE = midpoint(495, 524);
 export const FROST_SHOCK_COEFFICIENT = FROST_SHOCK_SP_COEFFICIENT;
 
 export const FROST_SHOCK: Ability = {
@@ -406,60 +409,11 @@ export const FROST_SHOCK: Ability = {
   unmodelled: 'Its slow does nothing; nothing here moves.',
 };
 
-/**
- * Lava Burst, granted by the 31-point Elemental talent.
- *
- * THE TALENT TOOLTIP SAYS 150 TO 192 AND THE SPELLBOOK SAYS 192 TO 248, and
- * they do not disagree: the talent shows RANK 1 and a level 60 trains rank 3.
- * The project rule, and the fourth time it has come up.
- *
- * THE TALENT'S FIGURE MOVED AT CLIENT BUILD 1.60.1.70170 AND THE SPELLBOOK'S DID
- * NOT -- rank 1 went 106-134 to 150-192 while rank 3 stayed at 192-248, which the
- * patch notes do not mention. So Forever buffed the low ranks and left the one
- * this project casts alone, and the figure here is unchanged. Recorded because
- * the two sources now look CLOSER together, and a reader who remembers the old
- * gap could easily read 192-248 as the talent's new number rather than the
- * spellbook's unchanged one.
- *
- * The Flame Shock clause is read off the target at cast time, which makes the
- * priority list's order load-bearing -- Flame Shock sits above it for exactly
- * this reason.
+/*
+ * LAVA BURST IS GONE (1.60.1.70755): "Removed. Replaced with Call of Thunder,
+ * which increases critical strike chance of Lightning Bolt and Chain Lightning
+ * by 5%. All references to Lava Burst removed." `git log` has the ability.
  */
-export const LAVA_BURST_DAMAGE = midpoint(192, 248);
-export const LAVA_BURST_FLAME_SHOCK_BONUS = 1.2;
-export const LAVA_BURST_CAST_MS = seconds(2.5);
-export const LAVA_BURST_COEFFICIENT = LAVA_BURST_SP_COEFFICIENT;
-
-export const LAVA_BURST: Ability = {
-  id: 'lava_burst',
-  name: 'Lava Burst',
-  cost: { resource: 'mana', amount: 265 },
-  castTimeMs: LAVA_BURST_CAST_MS,
-  cooldownMs: seconds(10),
-  attackTable: 'spell',
-  onCast: ({ simulation, caster, target, ability }) => {
-    if (!target) return;
-    const burning = target.auras.has(FLAME_SHOCK_DOT.id);
-    dealDamage(simulation, {
-      source: caster,
-      target,
-      abilityId: ability.id,
-      abilityName: ability.name,
-      school: 'fire',
-      baseAmount: LAVA_BURST_DAMAGE * (burning ? LAVA_BURST_FLAME_SHOCK_BONUS : 1),
-      /*
-       * THE FLAME SHOCK BONUS MULTIPLIES THE BASE AND NOT THE COEFFICIENT,
-       * which is a choice and is stated because both readings are plausible.
-       * "Deals 20% more damage if the target is affected by Flame Shock" is
-       * read as a bonus to the spell's own damage; scaling the coefficient as
-       * well would make the bonus grow with gear, which the tooltip does not
-       * say.
-       */
-      powerCoefficient: LAVA_BURST_COEFFICIENT,
-      attackTable: ability.attackTable,
-    });
-  },
-};
 
 /*
  * ============================================================================
@@ -567,6 +521,8 @@ export const FIRE_NOVA: Ability = {
  * weapon, so `isWeaponUse` counts it and Windfury Weapon can proc from it --
  * the ruleset owner's rule, applied rather than re-derived.
  */
+export const STORMSTRIKE_WEAPON_FRACTION = 1.5;
+
 export const STORMSTRIKE: Ability = {
   id: 'stormstrike',
   name: 'Stormstrike',
@@ -584,7 +540,8 @@ export const STORMSTRIKE: Ability = {
    * is sustain rather than casts -- `probe_resources.ts` is where that shows.
    */
   cost: { resource: 'mana', amount: shareOfBase(0.08) },
-  cooldownMs: seconds(8),
+  // 6 seconds since 1.60.1.70755 ("Cooldown reduced to 6 seconds from 8 seconds").
+  cooldownMs: seconds(6),
   attackTable: 'melee-special',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -595,7 +552,8 @@ export const STORMSTRIKE: Ability = {
       abilityName: ability.name,
       school: PHYSICAL,
       baseAmount: 0,
-      weaponScaling: { slot: MAIN_HAND, normalized: true },
+      // 150% normalized weapon damage since 1.60.1.70755 ("up from 100%").
+      weaponScaling: { slot: MAIN_HAND, normalized: true, fraction: STORMSTRIKE_WEAPON_FRACTION },
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });
@@ -764,17 +722,23 @@ export const SEARING_TOTEM: Ability = {
  * nobody granted.
  * ==============================================================================
  */
-export const ELEMENTAL_MASTERY_COOLDOWN_MS = seconds(180);
+export const LIGHTNING_MASTERY_COOLDOWN_MS = seconds(180);
 
-export const ELEMENTAL_MASTERY: Ability = {
-  id: 'elemental_mastery',
+/*
+ * RENAMED LIGHTNING MASTERY AT 1.60.1.70755, AND IT LOST LAVA BURST WITH THE
+ * SPELL: "Gain mastery over Lightning, reducing the cast time of your Lightning
+ * Bolt spell by 0.5 sec, and removing the cooldown from your Chain Lightning
+ * spell. Lasts 15 sec." The id follows the name, because the talent's id did.
+ */
+export const LIGHTNING_MASTERY: Ability = {
+  id: 'lightning_mastery',
   // A spell with no cost and no table: its GCD is hasted (round 81).
   spell: true,
-  name: 'Elemental Mastery',
-  cooldownMs: ELEMENTAL_MASTERY_COOLDOWN_MS,
+  name: 'Lightning Mastery',
+  cooldownMs: LIGHTNING_MASTERY_COOLDOWN_MS,
   requiresTarget: false,
   onCast: ({ simulation, caster }) => {
-    simulation.applyAura(caster, ELEMENTAL_MASTERY_AURA, caster.id);
+    simulation.applyAura(caster, LIGHTNING_MASTERY_AURA, caster.id);
   },
 };
 
@@ -960,22 +924,23 @@ export const CHAIN_HEAL: Ability = {
 
 /**
  * Riptide, rank 3, granted by the Restoration talent: "Heals a friendly target
- * for 799 to 883, an additional 805 over 15 sec, and increases the
- * effectiveness of your Chain Heal casts directly on that target by 25%." 385
- * mana, instant, a 6 second cooldown. 21.4% of healing power on the hit, the
- * owner's; the heal over time is `RIPTIDE_HOT`.
+ * for 805 over 15 sec, and increases the effectiveness of your Chain Heal casts
+ * directly on that target by 25%." 230 mana, instant, a 12 second cooldown.
+ *
+ * NO DIRECT HEAL SINCE 1.60.1.70755: "Mana cost reduced by about 40%. Cooldown
+ * increased to 12 seconds from 6 seconds. Riptide no longer deals any initial
+ * healing, just healing over time." It was 799 to 883 up front for 385 mana on
+ * six seconds. The heal over time is `RIPTIDE_HOT`.
  */
-export const RIPTIDE_HEAL = midpoint(799, 883);
 
 export const RIPTIDE: Ability = {
   id: 'riptide',
   name: 'Riptide',
   heals: true,
-  cost: { resource: 'mana', amount: 385 },
-  cooldownMs: seconds(6),
-  onCast: ({ simulation, caster, target, ability }) => {
+  cost: { resource: 'mana', amount: 230 },
+  cooldownMs: seconds(12),
+  onCast: ({ simulation, caster, target }) => {
     if (!isFriendly(caster, target)) return;
-    shamanHeal(simulation, caster, target, ability, RIPTIDE_HEAL, RIPTIDE_HEAL_COEFFICIENT);
     simulation.applyAura(target, RIPTIDE_HOT, caster.id);
   },
 };
@@ -1022,12 +987,11 @@ export const WATER_SHIELD_ABILITY: Ability = {
 export const SHAMAN_ABILITIES: readonly Ability[] = [
   MAGMA_TOTEM,
   LIGHTNING_BOLT,
-  ELEMENTAL_MASTERY,
+  LIGHTNING_MASTERY,
   CHAIN_LIGHTNING,
   EARTH_SHOCK,
   FLAME_SHOCK,
   FROST_SHOCK,
-  LAVA_BURST,
   FIRE_NOVA,
   STORMSTRIKE,
   WINDFURY_WEAPON,

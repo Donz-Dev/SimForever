@@ -166,8 +166,10 @@
    "tree": "elemental",
    "ranks": 1,
    "text": "Increases the critical strike chance of your Lightning Bolt and Chain Lightning spells by 5%.",
-   "values": null,
-   "note": "single rank"
+   "values": [
+    5
+   ],
+   "note": "single rank; the value filled in by hand per this directory README -- a single-rank talent has no variable the importer can identify from its own text"
   },
   "lightning_overload": {
    "name": "Lightning Overload",

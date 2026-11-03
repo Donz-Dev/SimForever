@@ -146,7 +146,6 @@ export const SPELLHANCE_SINGLE: AplList = {
     secondaryPotion('major_spellblasting_potion'),
     { abilityId: 'fire_nova' },
     { abilityId: 'chain_lightning', condition: swingAtLeast(2000) },
-    { abilityId: 'lava_burst', condition: swingAtLeast(2000) },
     { abilityId: 'flame_shock', condition: targetExpired('flame_shock') },
     { abilityId: 'magma_totem', condition: targetExpired('magma_totem') },
     { abilityId: 'stormstrike' },
@@ -168,7 +167,6 @@ export const SPELLHANCE_MULTI: AplList = {
     { abilityId: 'magma_totem', condition: targetExpired('magma_totem') },
     { abilityId: 'stormstrike' },
     { abilityId: 'earth_shock' },
-    { abilityId: 'lava_burst', condition: swingAtLeast(2000) },
     { abilityId: 'lightning_bolt', condition: swingAtLeast(2000) },
   ],
 };

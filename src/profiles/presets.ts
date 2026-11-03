@@ -1058,7 +1058,9 @@ const SHAMAN_ELEMENTAL_TALENTS: TalentAllocation = {
   // Elemental, 32
   concussion: 5, convection: 5, elemental_warding: 3, call_of_flame: 3,
   elemental_focus: 1, elemental_alacrity: 3, trial_by_fire: 2,
-  elemental_mastery: 1, lightning_overload: 3, elemental_fury: 5, lava_burst: 1,
+  // 1.60.1.70755: Lava Burst's point to Call of Thunder in its slot, Elemental
+  // Mastery's to Lightning Mastery, its rename. Ours, flagged for the owner.
+  lightning_mastery: 1, lightning_overload: 3, elemental_fury: 5, call_of_thunder: 1,
   // Enhancement, 10
   thundering_strikes: 5, ancestral_knowledge: 5,
   // Restoration, 9
@@ -1214,10 +1216,11 @@ const MAGE_FROST_TALENTS: TalentAllocation = {
  * https://talentsforever.com/shaman/60/-055002-5333023315013151-RViknqportvuwxSlj-8?b=70425h&d=261024
  */
 const SHAMAN_RESTORATION_TALENTS: TalentAllocation = {
-  // Enhancement, 12
+  // Enhancement, 12. Improved Ghost Wolf moved to row 4 at 1.60.1.70755, out of
+  // reach; its two points go to Guardian Totems in row 2, equally inert. Ours.
   thundering_strikes: 5,
   ancestral_knowledge: 5,
-  improved_ghost_wolf: 2,
+  guardian_totems: 2,
   // Restoration, 39
   improved_healing_wave: 5,
   tidal_focus: 3,
@@ -3437,7 +3440,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         // Lightning Bolt is off the opener, by the owner -- which also clears
         // this profile's Gate B failure: Flame Shock at 0s is the one cast.
         ...before(1.5, 'searing_totem'),
-        ...before(0, 'elemental_mastery'),
+        ...before(0, 'lightning_mastery'),
         ...before(0, 'flame_shock'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
@@ -3602,7 +3605,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: {
         concussion: 5, convection: 2, reverberation: 2, elemental_devastation: 3, elemental_alacrity: 3,
-        call_of_flame: 3, elemental_focus: 1, trial_by_fire: 2, lava_burst: 1, lightning_overload: 3,
+        // Lava Burst's point to Call of Thunder in its slot (1.60.1.70755, ours).
+        call_of_flame: 3, elemental_focus: 1, trial_by_fire: 2, call_of_thunder: 1, lightning_overload: 3,
         elemental_fury: 4, thundering_strikes: 5, ancestral_knowledge: 3, mental_dexterity: 3,
         elemental_weapons: 3, shamanistic_focus: 1, flurry: 4, stormstrike: 1, mental_quickness: 2,
       },

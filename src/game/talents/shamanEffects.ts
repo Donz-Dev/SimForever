@@ -93,7 +93,6 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
         'frost_shock',
         'lightning_bolt',
         'chain_lightning',
-        'lava_burst',
       ],
       property: 'costFraction',
     },
@@ -125,7 +124,6 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'abilityDamage', abilityId: 'flame_shock' },
     // The aura id is the DoT's, which is how a periodic tick is reached: a
     // tick carries the aura's id rather than the cast's.
-    { kind: 'abilityDamage', abilityId: 'lava_burst' },
     /*
      * ITS FIRE TOTEM CLAUSE NOW REACHES SOMETHING. Searing Totem is modelled
      * as a damage-over-time effect by the owner's ruling, and "considered a
@@ -297,6 +295,10 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   /*
    * ==========================================================================
+   * LIGHTNING MASTERY SINCE 1.60.1.70755 -- Elemental Mastery renamed, its
+   * Lava Burst clause gone with the spell. What follows is the 1.60.1.70425
+   * history.
+   *
    * ELEMENTAL MASTERY REPLACES CALL OF THUNDER, AND IT IS THE NEW ELEMENTAL
    * CAPSTONE -- the structural half of this patch for the Shaman. Lava Burst
    * dropped from row 6 to row 4 and lost its Lightning Overload prerequisite,
@@ -319,7 +321,17 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * ==========================================================================
    */
   // All three clauses are on the aura, Chain Lightning's cooldown since round 57.
-  elemental_mastery: [{ kind: 'grantAbility', abilityId: 'elemental_mastery' }],
+  lightning_mastery: [{ kind: 'grantAbility', abilityId: 'lightning_mastery' }],
+
+  /*
+   * CALL OF THUNDER IS BACK (1.60.1.70755), in Lava Burst's slot: "Increases
+   * the critical strike chance of your Lightning Bolt and Chain Lightning
+   * spells by 5%." Single rank, so its 5 is hand-filled in the values file.
+   */
+  call_of_thunder: [
+    { kind: 'abilityCrit', abilityId: 'lightning_bolt' },
+    { kind: 'abilityCrit', abilityId: 'chain_lightning' },
+  ],
 
   elemental_reach: [{ kind: 'unmodelled', scope: 'positioning', reason: 'Range, and nothing here has a position.' }],
 
@@ -341,10 +353,8 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   elemental_alacrity: [
     { kind: 'abilityCastTime', abilityId: 'lightning_bolt' },
     { kind: 'abilityCastTime', abilityId: 'chain_lightning' },
-    { kind: 'abilityCastTime', abilityId: 'lava_burst' },
   ],
 
-  lava_burst: [{ kind: 'grantAbility', abilityId: 'lava_burst' }],
 
   // --- Enhancement ---------------------------------------------------------
 
