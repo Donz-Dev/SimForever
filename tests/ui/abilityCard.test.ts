@@ -23,6 +23,11 @@ const NOT_IN_A_CLASS_CAPTURE = new Set([
   // New at client build 1.60.1.70707, after the Paladin spellbook capture was
   // taken -- so its card falls back to what the simulator declares.
   'oath_of_light',
+  // New or renamed at 1.60.1.70755, likewise after the captures this reads.
+  'reckless_swings',
+  'shank',
+  'death_mark',
+  'lightning_mastery',
   ...Object.keys(RACIAL_ABILITIES),
 ]);
 const isNotClassSpell = (ability: Ability) =>

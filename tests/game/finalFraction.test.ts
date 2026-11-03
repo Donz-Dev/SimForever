@@ -12,9 +12,10 @@ import { makeAttacker, makeTarget } from '../helpers/actors';
  * ============================================================================
  * A PER-ABILITY MODIFIER CONDITIONAL ON THE FIGHT CLOCK.
  *
- * Two callers and they are in different classes: the Priest's Early Demise
+ * Two callers and they were in different classes: the Priest's Early Demise
  * ("+30% critical strike chance on targets at or below 20% health") and the
- * Rogue's Quietus ("+10% damage against targets below 35% health"). Neither is
+ * Rogue's Quietus ("+10% damage against targets below 35% health"), which
+ * 1.60.1.70755 removed. Neither is
  * a statement about the target. This project rules a low-health threshold to
  * be the last fraction of the PLANNED duration -- the ruling made for Execute
  * and deliberately shared -- and three entries had explained a silence as "the
@@ -170,36 +171,22 @@ describe('Early Demise', () => {
   });
 });
 
+/*
+ * QUIETUS IS GONE at 1.60.1.70755, so Early Demise is the registry's only
+ * caller. The 35% window it opened is still pinned below through
+ * `dealDamage`, as a mechanism rather than as a talent.
+ */
 describe('Quietus', () => {
-  it('is no longer unmodelled', () => {
-    expect(ROGUE_TALENT_EFFECTS.quietus.some((e) => e.kind === 'unmodelled')).toBe(false);
+  it('is removed from the tree and from the effect table', () => {
+    expect(ROGUE_TALENT_EFFECTS.quietus).toBeUndefined();
+    expect(talentNumber('rogue', 'quietus', 1, 0)).toBeUndefined();
   });
 
-  it('names all three of its abilities', () => {
+  it('registers nothing if a stale allocation still names it', () => {
     const build = talentBuild('rogue', { quietus: 5 });
     for (const id of ['sinister_strike', 'ghostly_strike', 'hemorrhage']) {
-      expect(build.abilityModifiers.forWhileFinalFraction(id, 0.1)?.damageMultiplier).toBeCloseTo(
-        1.1,
-      );
+      expect(build.abilityModifiers.forWhileFinalFraction(id, 0)).toBeUndefined();
     }
-  });
-
-  /*
-   * THE OWNER SAID 35% AND THE CAPTURE SAYS 35, which is corroboration rather
-   * than one of them being transcribed from the other -- so the effect reads
-   * the data and this pins that the two still agree.
-   */
-  it('opens at the 35% the owner ruled, which its own data also states', () => {
-    expect(talentNumber('rogue', 'quietus', 5, 1)).toBe(35);
-
-    const build = talentBuild('rogue', { quietus: 5 });
-    expect(build.abilityModifiers.forWhileFinalFraction('hemorrhage', 0.36)).toBeUndefined();
-    expect(build.abilityModifiers.forWhileFinalFraction('hemorrhage', 0.35)).toBeDefined();
-  });
-
-  it('leaves an ability the tooltip does not name alone', () => {
-    const build = talentBuild('rogue', { quietus: 5 });
-    expect(build.abilityModifiers.forWhileFinalFraction('eviscerate', 0)).toBeUndefined();
   });
 });
 

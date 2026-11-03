@@ -448,7 +448,7 @@ describe('Wrack, scaling now, and still not worth casting', () => {
    * not, so that one keeps its own words and is asserted to still say so.
    * --------------------------------------------------------------------------
    */
-  it('ticks six times a second for a flat 36 plus 14.3% spell power each', () => {
+  it('ticks six times a second for a flat 86 plus 28.6% spell power each', () => {
     /*
      * WRITTEN OUT BY HAND from the owner's own message: "14.3% of spell power
      * each tick, ticks every second for 6 seconds, 6 total ticks."
@@ -457,10 +457,12 @@ describe('Wrack, scaling now, and still not worth casting', () => {
      * coefficient in the project this one cannot be re-checked against
      * `WoWSimWorksheet.xlsx`, and the provenance is recorded beside the
      * constant rather than only here.
+     *
+     * 1.60.1.70755 took the flat 36 to 86 and doubled the coefficient to 0.286.
      */
-    expect(WRACK_TICK_DAMAGE).toBe(36);
+    expect(WRACK_TICK_DAMAGE).toBe(86);
     expect(WRACK_TICKS).toBe(6);
-    expect(WRACK_TICK_SP_COEFFICIENT).toBe(0.143);
+    expect(WRACK_TICK_SP_COEFFICIENT).toBe(0.286);
     expect(WRACK.castTimeMs).toBe(seconds(6));
     expect(WRACK.channelTicks).toBe(6);
     expect(WRACK.cost).toEqual({ resource: 'mana', amount: 200 });
@@ -474,13 +476,13 @@ describe('Wrack, scaling now, and still not worth casting', () => {
      * ability damage doesn't get lost" -- and the risk is not the pipeline but
      * an edit that overwrites a `baseAmount` while setting a coefficient. So
      * this casts at ZERO spell power, where the coefficient contributes nothing
-     * and what is left is the flat 36 a tick.
+     * and what is left is the flat 86 a tick.
      */
     expect(damageFrom(WRACK, 0)).toBeCloseTo(WRACK_TICK_DAMAGE * WRACK_TICKS, 6);
 
     /*
-     * AND AT REAL SPELL POWER the six ticks carry 0.858 between them, which is
-     * Shadow Bolt's 0.857 delivered in twice the time. Asserted as the TOTAL
+     * AND AT REAL SPELL POWER the six ticks carry 1.716 between them (0.858 before
+     * 1.60.1.70755, Shadow Bolt's 0.857 in twice the time). Asserted as the TOTAL
      * across the channel, because per-tick is what the constant states and the
      * total is what a reader compares against another spell.
      */

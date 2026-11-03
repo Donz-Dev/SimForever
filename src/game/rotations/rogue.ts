@@ -1317,10 +1317,16 @@ export function rogueRotation(
    * built around the Venom finisher, so a Mutilate build WITHOUT the talent
    * cannot run it at all -- its second entry would be dead. Combat Mut takes
    * Mutilate and Seal Fate and spends on Eviscerate instead.
+   *
+   * 1.60.1.70755 PUT MUTILATE UNDER VENOM, so every legal Mutilate build has
+   * Venom and the old test sent both to the Venom list. AGGRESSION separates
+   * them now: Combat Mut takes it (Sinister Strike and Eviscerate, the Combat
+   * half of its list) and the Venom build does not. That is a reading of the
+   * two presets rather than an owner ruling.
    * ==========================================================================
    */
   if ((talents.mutilate ?? 0) > 0) {
-    return (talents.venom ?? 0) > 0 ? ROGUE_VENOM_ROTATION : ROGUE_COMBAT_MUT_ROTATION;
+    return (talents.aggression ?? 0) > 0 ? ROGUE_COMBAT_MUT_ROTATION : ROGUE_VENOM_ROTATION;
   }
   /*
    * TWO SUBTLETY BUILDS NOW, AND HEMORRHAGE NO LONGER SEPARATES THEM -- both

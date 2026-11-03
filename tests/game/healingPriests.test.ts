@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { Combatant, TelemetryEvent } from '../../src/engine';
 import { Combatant as CombatantClass, Simulation, castAbility, dealDamage, seconds } from '../../src/engine';
 import {
-  BINDING_HEAL,
-  BINDING_HEAL_HEAL,
+  HOLY_BINDING_KEY,
+  HOLY_BINDING_SHARE,
   DIVINE_AEGIS_KEY,
   FLASH_HEAL,
   FLASH_HEAL_HEAL,
@@ -63,7 +63,7 @@ function member(id: string, party: number | undefined, healthFraction: number): 
   return actor;
 }
 
-const ALL = [FLASH_HEAL, GREATER_HEAL, BINDING_HEAL, PRAYER_OF_HEALING, RENEW, POWER_WORD_SHIELD, PRAYER_OF_MENDING, PENANCE];
+const ALL = [FLASH_HEAL, GREATER_HEAL, PRAYER_OF_HEALING, RENEW, POWER_WORD_SHIELD, PRAYER_OF_MENDING, PENANCE];
 
 function priest(healingPower = 0, crit = -100, abilities = ALL) {
   return makeAttacker({
@@ -102,7 +102,6 @@ describe("the owner's coefficients and the capture's ranks", () => {
 
   it("uses foreverchanges.pro's figures, which win a tie with the capture", () => {
     expect(FLASH_HEAL_HEAL).toBe((774 + 910) / 2);
-    expect(BINDING_HEAL_HEAL).toBe((774 + 910) / 2);
     expect(GREATER_HEAL_HEAL).toBe((1853 + 2067) / 2);
     expect(PRAYER_OF_HEALING_HEAL).toBe((631 + 667) / 2);
     expect(RENEW_TICK).toBe(830 / 5);
@@ -140,16 +139,28 @@ describe('the heals, untalented', () => {
     for (const e of healed) expect(raw(e)).toBeCloseTo(PRAYER_OF_HEALING_HEAL + 0.286 * 1000, 6);
   });
 
-  it('Binding Heal heals the target and the Priest, each the full amount', () => {
-    const caster = priest(0);
+  it('Holy Binding: a Flash Heal on another heals the Priest for half (1.60.1.70755)', () => {
+    // Binding Heal is gone; Holy Binding is a flag on Flash Heal.
+    const bound = { ...FLASH_HEAL, bonuses: { [HOLY_BINDING_KEY]: 1 } };
+    const caster = priest(0, -100, [bound]);
     caster.health.set(10_000);
     const t = member('t', 1, 0.1);
     const { simulation, events } = watch(caster, [t]);
-    castAbility(simulation, caster, caster.abilities.get('binding_heal')!, t);
+    castAbility(simulation, caster, caster.abilities.get('flash_heal')!, t);
     simulation.advanceTo(seconds(2));
     const healed = heals(events);
-    expect(healed.map((e) => e.targetId).sort()).toEqual(['priest', 't']);
-    for (const e of healed) expect(raw(e)).toBeCloseTo(BINDING_HEAL_HEAL, 6);
+    const onTarget = healed.find((e) => e.targetId === 't')!;
+    const onPriest = healed.find((e) => e.targetId === 'priest')!;
+    expect(onPriest.abilityName).toBe('Holy Binding');
+    expect(raw(onPriest)).toBeCloseTo(onTarget.amount * HOLY_BINDING_SHARE, 6);
+
+    // On himself, nothing extra.
+    const self = priest(0, -100, [bound]);
+    self.health.set(10_000);
+    const solo = watch(self, []);
+    castAbility(solo.simulation, self, self.abilities.get('flash_heal')!, self);
+    solo.simulation.advanceTo(seconds(2));
+    expect(heals(solo.events).filter((e) => e.abilityName === 'Holy Binding')).toHaveLength(0);
   });
 
   it('Renew ticks five times over fifteen seconds at 166 plus 20%', () => {
@@ -337,10 +348,11 @@ describe("the owner's talents, on the built characters", () => {
     }
   });
 
-  it('Holy knows Prayer of Mending and Binding Heal; Disc knows Penance and Inner Focus', () => {
+  it('Holy knows Prayer of Mending and Holy Binding; Disc knows Penance and Inner Focus', () => {
     const holy = build('priest_holy').player;
     const disc = build('priest_disc').player;
-    expect(['prayer_of_mending', 'binding_heal'].every((id) => holy.abilities.has(id))).toBe(true);
+    expect(holy.abilities.has('prayer_of_mending')).toBe(true);
+    expect(holy.abilities.get('flash_heal')?.bonuses?.[HOLY_BINDING_KEY]).toBe(1);
     expect(holy.abilities.has('penance')).toBe(false);
     expect(['penance', 'inner_focus'].every((id) => disc.abilities.has(id))).toBe(true);
     expect(disc.abilities.has('prayer_of_mending')).toBe(false);

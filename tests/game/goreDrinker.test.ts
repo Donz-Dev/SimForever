@@ -262,7 +262,7 @@ describe('what it is worth to the profiles, which is nothing', () => {
     }
   });
 
-  it('is the talent DW Fury passed over when Flurry stopped needing Enrage 5', () => {
+  it('sits under Blood Craze 3, and Flurry needs nothing', () => {
     /*
      * --------------------------------------------------------------------------
      * ASSERTED FROM THE TREE DATA, NOT FROM THE PRESET, and it used to read
@@ -275,23 +275,28 @@ describe('what it is worth to the profiles, which is nothing', () => {
      * Death Wish 1/1 since this patch -- so a build can hold Flurry at 5/5
      * without maxing Enrage at all, which is what makes the choice between the
      * two talents visible rather than forced.
+     *
+     * AT 1.60.1.70755 BOTH MOVED: Gore Drinker requires BLOOD CRAZE 3/3 (was
+     * Enrage 5/5), and Flurry -- three ranks now -- requires nothing, with
+     * Bloodthirst taking Death Wish as its prerequisite instead.
      * --------------------------------------------------------------------------
      */
     const tree = talentsForClass('warrior')!;
     const gore = tree.byId.get('gore_drinker')!;
-    expect(gore.requires).toBe('enrage');
-    expect(gore.requiresRanks).toBe(5);
+    expect(gore.requires).toBe('blood_craze');
+    expect(gore.requiresRanks).toBe(3);
 
     const flurry = tree.byId.get('flurry')!;
-    expect(flurry.requires).toBe('death_wish');
-    expect(flurry.requiresRanks).toBe(1);
+    expect(flurry.requires).toBeUndefined();
+    expect(flurry.ranks).toBe(3);
   });
 
-  it('is passed over by a build that holds Flurry on less than Enrage 5', () => {
-    // The BUILD half of the claim above, asserted apart from the rule.
+  it('is passed over by a build that holds Flurry on less than Blood Craze 3', () => {
+    // The BUILD half of the claim above, asserted apart from the rule. Flurry
+    // is 3/3 at 1.60.1.70755 (was 5/5).
     const talents = PRESETS_BY_ID.get('dw_fury')!.build().talents;
-    expect(talents.flurry).toBe(5);
-    expect(talents.enrage).toBeLessThan(5);
+    expect(talents.flurry).toBe(3);
+    expect(talents.blood_craze ?? 0).toBeLessThan(3);
     expect(talents.gore_drinker).toBeUndefined();
   });
 });

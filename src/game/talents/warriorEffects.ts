@@ -272,9 +272,9 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * four say which number they take. See CLAUDE.md on `valueIndex`: four Druid
    * talents and one Priest talent have been found reading the wrong one.
    *
-   * THE THREE SECONDS DO NOT SCALE WITH RANK -- both ranks state 3 -- which is
-   * what the values file records and is why the sheet-style "one varying number"
-   * assumption does not hold here.
+   * THE THREE SECONDS DID NOT SCALE WITH RANK before 1.60.1.70755 -- both ranks stated 3 -- which was
+   * what the values file recorded and why the sheet-style "one varying number"
+   * assumption did not hold here.
    *
    * AND AT 1.60.1.70755 THE ROW TURNED ROUND, which is exactly the hazard the
    * paragraph above names: "Reduces the cooldown of your Slam ability by {0}

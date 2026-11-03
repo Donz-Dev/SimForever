@@ -169,10 +169,11 @@ describe('the five abilities a change to this formula would move', () => {
    * Ambush) and Venom (Mutilate).
    */
   it('states each fraction, and that it is not 1', () => {
-    expect(MUTILATE_WEAPON_FRACTION).toBe(0.75);
-    expect(CLAW_WEAPON_FRACTION).toBe(1.1);
+    // 90% since 1.60.1.70755 (was 75%).
+    expect(MUTILATE_WEAPON_FRACTION).toBe(0.9);
+    expect(CLAW_WEAPON_FRACTION).toBe(1.4); // 1.60.1.70755, was 1.1
     expect(BACKSTAB_WEAPON_FRACTION).toBe(1.5);
-    expect(SHRED_WEAPON_FRACTION).toBe(1.55);
+    expect(SHRED_WEAPON_FRACTION).toBe(2); // 1.60.1.70755, was 1.55
     expect(AMBUSH_WEAPON_FRACTION).toBe(2.5);
   });
 });

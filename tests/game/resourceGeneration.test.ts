@@ -447,6 +447,10 @@ describe('energy', () => {
   it('is not affected by spending, unlike mana', () => {
     // There is no five second rule for energy.
     const player = rogue();
+    // Strip the priority list: since 1.60.1.70755 the stock Rogue list opens on
+    // Shank, which costs 5 and returns 25 on a hit, so the rotation was what
+    // moved the pool and not the regeneration rule.
+    (player as { rotation?: unknown }).rotation = undefined;
     const energy = player.resources.require('energy');
     const sim = buildSimulation([player, makeTarget()], { durationMs: seconds(60) });
 

@@ -14,8 +14,8 @@ import {
   SINISTER_STRIKE_BASE_DAMAGE,
 } from '../../src/game/abilities/rogue';
 import {
-  CUTTHROAT,
-  CUTTHROAT_DURATION_MS,
+  GHOSTLY_STRIKE_OPENER,
+  GHOSTLY_STRIKE_OPENER_DURATION_MS,
   EXPOSE_ARMOR_PER_COMBO_POINT,
   RUPTURE_BY_COMBO_POINT,
   SLICE_AND_DICE_DURATIONS_MS,
@@ -24,13 +24,11 @@ import {
   sliceAndDiceAura,
 } from '../../src/game/auras/rogue';
 import { ROGUE_TALENT_EFFECTS } from '../../src/game/talents/rogueEffects';
-import { cutthroat } from '../../src/game/reactions/rogueTalents';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import { castAbility, checkCast, seconds } from '../../src/engine';
 import { comboPointsOn } from '../../src/game/combat/comboPoints';
-import { talentNumber } from '../../src/game/talents/talentValues';
 import { THISTLE_TEA_ABILITY } from '../../src/game/abilities/consumables';
 import { BLOOD_FURY_ABILITY } from '../../src/game/racials/abilities';
 import { ruptureRogueProfile } from '../helpers/ruptureRogue';
@@ -118,10 +116,11 @@ describe('the class is wired up', () => {
     expect(player.resources.has('comboPoints')).toBe(true);
   });
 
-  it('declares an effect for every one of the 53 talents', () => {
+  it('declares an effect for every one of the 54 talents', () => {
     // A talent with no entry is indistinguishable from one that silently does
-    // nothing, which is the whole reason this table is exhaustive.
-    expect(Object.keys(ROGUE_TALENT_EFFECTS)).toHaveLength(53);
+    // nothing, which is the whole reason this table is exhaustive. 54 since
+    // 1.60.1.70755 (five removed, six added).
+    expect(Object.keys(ROGUE_TALENT_EFFECTS)).toHaveLength(54);
   });
 
   it('picks each build list from its capstone, not from a tree total', () => {
@@ -132,7 +131,10 @@ describe('the class is wired up', () => {
      */
     expect(batchOf('rogue_venom', 1, 1).rotationName).toContain('Venom');
     expect(batchOf('rogue_combat', 1, 1).rotationName).toContain('Combat');
-    expect(batchOf('rogue_rupture', 1, 1).rotationName).toContain('Rupture');
+    // Cutthroat, which sent a build to the Rupture list, is gone at
+    // 1.60.1.70755, so the old Rupture build now runs the Hemo list.
+    expect(batchOf('rogue_hemo', 1, 1).rotationName).toContain('Hemo');
+    expect(batchOf('rogue_rupture', 1, 1).rotationName).not.toContain('Rupture');
   });
 
   it('Sinister Strike is 68 on top of the weapon, and is what the list runs on', () => {
@@ -210,7 +212,10 @@ describe('the finishers it can now afford', () => {
      * Asserted through the ENERGY LEDGER rather than by counting procs, so it
      * measures the thing the rotation actually feels.
      */
-    const batch = batchOf('rogue_combat', 60, 11);
+    // Venom, not Combat: the Combat build stopped taking Relentless Strikes
+    // when 1.60.1.70755 made it five ranks.
+    expect(PRESETS_BY_ID.get('rogue_combat')!.build().talents.relentless_strikes ?? 0).toBe(0);
+    const batch = batchOf('rogue_venom', 60, 11);
     // ENERGY, not rage: Relentless Strikes restores energy. This read the
     // pooled totals before they were keyed by resource.
     const returned = resourceFlowOf(batch, 'energy').gained.find((row) => row.sourceId === 'relentless_strikes');
@@ -402,7 +407,7 @@ describe('Preparation, and cooldown reset as an engine capability', () => {
   });
 });
 
-describe('Cutthroat, Ambush and Premeditation, none of which needed stealth', () => {
+describe("Ghostly Strike's window, Ambush and Premeditation, none of which needed stealth", () => {
   /*
    * --------------------------------------------------------------------------
    * TWO OF THE ELEVEN "STEALTH MAKES THIS INERT" TALENTS WERE NEVER THAT.
@@ -421,36 +426,11 @@ describe('Cutthroat, Ambush and Premeditation, none of which needed stealth', ()
    * Forever ability.
    * --------------------------------------------------------------------------
    */
-  const subtletyRogue = () => {
-    // The Rupture build, rebuilt by hand since its preset went (round 82).
-    const built = ruptureRogueProfile();
-    return { built, book: abilitiesForClass('rogue', 'dual_wield', built.talents) };
-  };
-
-  it('reads Cutthroat at 15% and a ten second window from the values file', () => {
-    // Rank 5 of 5, which is what the Rupture build takes. Written out by hand.
-    expect(talentNumber('rogue', 'cutthroat', 5, 0)).toBe(15);
-    expect(talentNumber('rogue', 'cutthroat', 5, 1)).toBe(10);
-    expect(CUTTHROAT_DURATION_MS).toBe(seconds(10));
-    // A second proc starts a fresh window rather than extending the one running.
-    expect(CUTTHROAT.refreshBehaviour).toBe('reset');
-  });
-
-  it('procs only off Backstab, and only when it connected', () => {
-    const reaction = cutthroat(100);
-    expect(reaction.on).toBe('dealt');
-    // A Backstab that was dodged is not a Backstab that happened.
-    expect(reaction.outcomes).toEqual(['hit', 'crit']);
-
-    const actor = makeAttacker({ autoAttack: 'none' });
-    const simulation = buildSimulation([actor, makeTarget()]);
-    simulation.begin();
-
-    const attack = (abilityId: string) =>
-      reaction.canTrigger?.(simulation, actor, { abilityId } as never) ?? true;
-    expect(attack('backstab')).toBe(true);
-    expect(attack('sinister_strike')).toBe(false);
-    expect(attack('hemorrhage')).toBe(false);
+  it("opens Ghostly Strike's seven second window, which took Cutthroat's place (1.60.1.70755)", () => {
+    // "causes your next Ambush or Garrote cast within 7 sec to not require Stealth".
+    expect(GHOSTLY_STRIKE_OPENER_DURATION_MS).toBe(seconds(7));
+    expect(GHOSTLY_STRIKE_OPENER.refreshBehaviour).toBe('reset');
+    expect(ROGUE_TALENT_EFFECTS.cutthroat).toBeUndefined();
   });
 
   it('makes Ambush castable ONLY while the buff is up, and spends it on cast', () => {
@@ -475,18 +455,18 @@ describe('Cutthroat, Ambush and Premeditation, none of which needed stealth', ()
       reason: 'condition_failed',
     });
 
-    simulation.applyAura(actor, CUTTHROAT, actor.id);
+    simulation.applyAura(actor, GHOSTLY_STRIKE_OPENER, actor.id);
     expect(checkCast(simulation, actor, AMBUSH, target)).toEqual({ ok: true });
 
     castAbility(simulation, actor, AMBUSH, target);
-    expect(actor.auras.has('cutthroat')).toBe(false);
+    expect(actor.auras.has(GHOSTLY_STRIKE_OPENER.id)).toBe(false);
   });
 
   it('is in every Rogue book and castable by one build, which is correct', () => {
     /*
      * Ambush is a TRAINER ability rather than a talent, so a Venom or Combat
      * Rogue carries one it can never cast. That is the honest state of the
-     * ability: the thing that gates it is Cutthroat, and they do not take it.
+     * ability: the things that gate it are stealth and Ghostly Strike's window.
      */
     for (const preset of ['rogue_venom', 'rogue_combat', 'rogue_hemo']) {
       const built = PRESETS_BY_ID.get(preset)!.build();
@@ -495,10 +475,12 @@ describe('Cutthroat, Ambush and Premeditation, none of which needed stealth', ()
     }
 
     // Premeditation IS a talent, and only the build that takes it has it.
-    const { built } = subtletyRogue();
+    // Hemo Dagger, not the old Rupture build: that one names talents removed
+    // at 1.60.1.70755, so its Subtlety tree no longer reaches Premeditation.
+    const built = PRESETS_BY_ID.get('rogue_hemo')!.build();
     expect(built.talents.premeditation).toBe(1);
-    const rupture = abilitiesForClass('rogue', 'dual_wield', built.talents).map((a) => a.id);
-    expect(rupture).toContain('premeditation');
+    const hemo = abilitiesForClass('rogue', 'dual_wield', built.talents).map((a) => a.id);
+    expect(hemo).toContain('premeditation');
 
     const combat = PRESETS_BY_ID.get('rogue_combat')!.build();
     expect(
@@ -539,7 +521,7 @@ describe('Cutthroat, Ambush and Premeditation, none of which needed stealth', ()
   });
 
   it('no longer reports either talent as stealth-blocked', () => {
-    for (const id of ['cutthroat', 'premeditation']) {
+    for (const id of ['premeditation']) {
       for (const effect of ROGUE_TALENT_EFFECTS[id]) {
         expect(effect.kind, id).not.toBe('unmodelled');
       }

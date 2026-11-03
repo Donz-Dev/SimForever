@@ -360,7 +360,8 @@ describe("the owner's openers are transcribed exactly", () => {
   > = {
     shaman_elemental: [
       [1.5, 'searing_totem', '+11.0 -- the Enhancement opener already did this'],
-      [0, 'elemental_mastery', '+13.9 -- a new capstone, claimed for no GCD'],
+      // Elemental Mastery became Lightning Mastery at 1.60.1.70755.
+      [0, 'lightning_mastery', '+13.9 -- a new capstone, claimed for no GCD'],
     ],
     /*
      * `mage_frostfire` HAS NO ADDITIONS, AND IT HELD ONE.
@@ -538,6 +539,19 @@ describe('every declared action actually happens', () => {
    * what it applied and rewinding its own cooldown.
    * ============================================================================
    */
+  /*
+   * AN OWNER LINE THE TREE HAS MADE UNREACHABLE, KEPT AND ASKED ABOUT RATHER
+   * THAN DELETED. 1.60.1.70755 put Mutilate at tier 30 under Venom and left
+   * Blade Flurry at Combat tier 20, so a Mutilate build needs 31 Assassination
+   * points and Blade Flurry 21 Combat ones -- 52 of 51. Combat Mut's opener
+   * line therefore cannot fire on any legal build. It is asserted NOT to fire,
+   * so the day a tree change makes it reachable this fails and the exception
+   * comes out.
+   */
+  const UNREACHABLE_SINCE_70755: Readonly<Record<string, readonly string[]>> = {
+    rogue_combat_mut: ['blade_flurry'],
+  };
+
   for (const [id, opener] of Object.entries(OWNER_OPENERS)) {
     if (opener.length === 0) continue;
 
@@ -555,6 +569,10 @@ describe('every declared action actually happens', () => {
         if (state) continue;
 
         const found = casts.filter((cast) => cast.id === abilityId);
+        if (UNREACHABLE_SINCE_70755[id]?.includes(abilityId)) {
+          expect(found.length, `${id}: ${abilityId} became reachable again`).toBe(0);
+          continue;
+        }
         expect(found.length, `${id}: ${abilityId} never happened`).toBeGreaterThan(0);
         expect(found[0].at, `${id}: ${abilityId} was not at the pull`).toBe(0);
       }

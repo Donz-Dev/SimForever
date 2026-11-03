@@ -118,7 +118,7 @@ describe('Prowl', () => {
 });
 
 describe('Ravage', () => {
-  it('is 350% of weapon damage plus 343, outside the fraction', () => {
+  it('is 435% of weapon damage plus 343, outside the fraction', () => {
     /*
      * THE OWNER'S RULING ABOUT FLAT DAMAGE, which is what makes the two halves
      * checkable separately: "75% weapon damage plus an additional 50" is
@@ -128,7 +128,8 @@ describe('Ravage', () => {
      * Ravage being built like its neighbour rather than a second copy of the
      * rule.
      */
-    expect(RAVAGE_WEAPON_FRACTION).toBe(3.5);
+    // 435% since 1.60.1.70755 (was 350%).
+    expect(RAVAGE_WEAPON_FRACTION).toBe(4.35);
     expect(RAVAGE_BASE_DAMAGE).toBe(343);
     expect(RAVAGE.cost).toEqual({ resource: 'energy', amount: 60 });
     expect(RAVAGE.castTimeMs ?? 0).toBe(0);
@@ -136,8 +137,8 @@ describe('Ravage', () => {
     expect(RAVAGE.attackTable).toBe('melee-special');
 
     // And it is more than twice Shred, which is the cheap sanity check on a
-    // transcribed fraction: 350% against 155%.
-    expect(RAVAGE_WEAPON_FRACTION / SHRED_WEAPON_FRACTION).toBeCloseTo(3.5 / 1.55, 6);
+    // transcribed fraction: 435% against 200% at 1.60.1.70755.
+    expect(RAVAGE_WEAPON_FRACTION / SHRED_WEAPON_FRACTION).toBeCloseTo(4.35 / 2, 6);
     expect(RAVAGE_BASE_DAMAGE).toBeGreaterThan(SHRED_BASE_DAMAGE);
     expect(SHRED.cost).toEqual(RAVAGE.cost);
   });

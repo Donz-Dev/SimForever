@@ -306,12 +306,11 @@ describe('the preset catalogue', () => {
     expect(lists.filter(([id]) => TANKS.has(id))).toHaveLength(5);
 
     /*
-     * AND BOTH DRUID AURAS ARE ON EVERY PRESET, which is the owner's ruling and
-     * the inverse of what this asserted: it checked that the Moonkin was the
-     * only profile of the twenty-four selecting Moonkin Aura.
+     * AND LEADER OF THE PACK ALONE OF THE DRUID PAIR, since 1.60.1.70755 made
+     * the two one exclusive 3% again. Both were on every preset before.
      */
     for (const [id, buffs] of lists) {
-      expect(buffs, `${id} moonkin_form`).toContain('moonkin_form');
+      expect(buffs, `${id} moonkin_form`).not.toContain('moonkin_form');
       expect(buffs, `${id} leader_of_the_pack`).toContain('leader_of_the_pack');
     }
     expect(createDefaultProfile().raidBuffs).toEqual([]);
@@ -352,11 +351,13 @@ describe('the preset catalogue', () => {
       'thorns',
       // Default off by the owner's ruling, and exclusive with Windfury Totem.
       'flametongue_totem',
+      // Exclusive with Leader of the Pack again at 1.60.1.70755.
+      'moonkin_form',
     ]);
     // Every id selected is a real buff, which a hand-written list could get
     // wrong in the other direction.
     for (const id of selected) expect(catalogue, id).toContain(id);
-    expect(selected).toHaveLength(catalogue.length - 4);
+    expect(selected).toHaveLength(catalogue.length - 5);
   });
 
   it('starts the target at five Sunders, so the list only refreshes', () => {
@@ -481,16 +482,22 @@ describe('DW Fury', () => {
     const t = profile().talents;
     expect(t.improved_heroic_strike).toBe(3);
     expect(t.improved_rend).toBe(3);
-    expect(t.improved_tactical_mastery).toBe(5);
+    // 1.60.1.70755: Improved Tactical Mastery and Flurry are three ranks now,
+    // and Raging Blows is gone; Improved Charge 2, Reckless Swings and
+    // Improved Whirlwind 2 take the freed points.
+    expect(t.improved_tactical_mastery).toBe(3);
+    expect(t.improved_charge).toBe(2);
     expect(t.anger_management).toBe(1);
     expect(t.deep_wounds).toBe(3);
     expect(t.impale).toBe(2);
     expect(t.cruelty).toBe(5);
     expect(t.unbridled_wrath).toBe(5);
     expect(t.dual_wield_specialization).toBe(5);
-    expect(t.raging_blows).toBe(1);
+    expect(t.raging_blows).toBeUndefined();
+    expect(t.reckless_swings).toBe(1);
+    expect(t.improved_whirlwind).toBe(2);
     expect(t.death_wish).toBe(1);
-    expect(t.flurry).toBe(5);
+    expect(t.flurry).toBe(3);
     expect(t.bloodthirst).toBe(1);
     /*
      * THE FIVE THAT CHANGED AT CLIENT BUILD 1.60.1.70170, asserted together so
@@ -716,20 +723,22 @@ describe('2H Arms', () => {
     expect(p.encounter.targetAttacks).toBe(false);
   });
 
-  it('spends 39 in Arms, 10 in Fury and 2 in Protection', () => {
+  it('spends 34 in Arms, 15 in Fury and 2 in Protection', () => {
     // Hand-counted from the owner's list, re-specified at client build
     // 1.60.1.70170. It was 38/13/0: Improved Cleave was removed, and its three
     // points bought a second rank of Improved Charge and two of Improved
     // Bloodrage -- which puts a 2H Arms warrior in the Protection tree for the
     // first time.
+    // 39/10/2 until 1.60.1.70755 cut Improved Tactical Mastery to 3 ranks and
+    // Bloodthrill to 2; Lingering Rage 5 took the five points.
     const talents = profile().talents;
     const inTree = (id: string) =>
       Object.entries(talents)
         .filter(([talentId]) => tree.byId.get(talentId)?.tree === id)
         .reduce((total, rank) => total + rank[1], 0);
 
-    expect(inTree('arms')).toBe(39);
-    expect(inTree('fury')).toBe(10);
+    expect(inTree('arms')).toBe(34);
+    expect(inTree('fury')).toBe(15);
     expect(inTree('protection')).toBe(2);
     expect(pointsRemaining(talents)).toBe(0);
   });
@@ -759,20 +768,21 @@ describe('2H Arms', () => {
     expect(t.improved_heroic_strike).toBe(3);
     expect(t.improved_rend).toBe(3);
     expect(t.improved_charge).toBe(2);
-    expect(t.improved_tactical_mastery).toBe(5);
+    expect(t.improved_tactical_mastery).toBe(3); // 5 before 1.60.1.70755
     expect(t.improved_overpower).toBe(2);
     expect(t.anger_management).toBe(1);
     expect(t.deep_wounds).toBe(3);
     expect(t.spearing_strike).toBe(1);
     expect(t.two_handed_weapon_specialization).toBe(3);
     expect(t.impale).toBe(2);
-    expect(t.bloodthrill).toBe(5);
+    expect(t.bloodthrill).toBe(2); // 5 before 1.60.1.70755
     expect(t.sweeping_strikes).toBe(1);
     expect(t.weaponmaster).toBe(5);
     expect(t.improved_slam).toBe(2);
     expect(t.mortal_strike).toBe(1);
     expect(t.cruelty).toBe(5);
     expect(t.unbridled_wrath).toBe(5);
+    expect(t.lingering_rage).toBe(5); // new at 1.60.1.70755
   });
 
   it('holds one enchanted two-hander and no off hand', () => {

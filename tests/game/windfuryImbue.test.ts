@@ -181,6 +181,8 @@ describe('the raid selection after the owner filled it in', () => {
       'retribution_aura',
       'thorns',
       'flametongue_totem',
+      // Exclusive with Leader of the Pack again at 1.60.1.70755.
+      'moonkin_form',
     ]);
   });
 });

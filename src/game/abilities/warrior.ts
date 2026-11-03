@@ -49,7 +49,7 @@ import {
  *
  *   - `weaponScaling`                 "Weapon Damage" — a swing, plus the
  *                                     ability's own flat damage
- *   - `weaponScaling` with a fraction "40% Weapon Damage" (Spearing Strike)
+ *   - `weaponScaling` with a fraction "75% Weapon Damage" (40% before 1.60.1.70755) (Spearing Strike)
  *   - `powerCoefficient`              a stated number (Bloodthirst, 0.35)
  *   - neither                         a stated "0" — flat damage only, which is
  *                                     most of the utility strikes
@@ -408,7 +408,7 @@ export const RECKLESS_SWINGS_ABILITY: Ability = {
 export const SPEARING_STRIKE_WEAPON_FRACTION = 0.75;
 
 /**
- * "40% Weapon Damage", 15 rage, 20 second cooldown. No base damage.
+ * "75% Weapon Damage" (40% before 1.60.1.70755), 15 rage, 20 second cooldown. No base damage.
  *
  * ----------------------------------------------------------------------------
  * IT NEEDS BATTLE STANCE, AND IT USED TO NEED A TWO-HANDED WEAPON.

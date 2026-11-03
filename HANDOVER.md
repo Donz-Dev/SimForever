@@ -7050,7 +7050,7 @@ from a single entry neither list had.
 
 | | spread | was | ships at | with Recklessness enabled |
 | --- | --- | --- | --- | --- |
-| **2H Arms** | 39/10/2 | 849.7 | **872.8** | **897.2** |
+| **2H Arms** | 34/15/2 | 849.7 | **872.8** | **897.2** |
 | **DW Fury** | 17/34/0 | 989.6 | **997.3** | **1092.6** |
 
 **RECKLESSNESS IS FREE, BERSERKER STANCE, AND +100 CRIT CHANCE FOR FIFTEEN
@@ -12717,18 +12717,18 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Arcane Mage | Mage | 48/3/0 (then; 32/16/3 since round 80) | 1123.4 | | LW Melee | Hunter | 5/13/33 | 878.8 |
 | Frostfire Mage | Mage | 0/29/22 | 1086.4 | | Shockadin | Paladin | 23/0/28 | 867.8 |
-| DW Fury | Warrior | 17/34/0 | 1068.4 | | Combat Mut | Rogue | 30/21/0 | 848.0 |
+| DW Fury | Warrior | 17/34/0 | 1068.4 | | Combat Mut | Rogue | 33/18/0 | 848.0 |
 | LW Ranged | Hunter | 5/41/5 | 1021.0 | | Hemo Dagger | Rogue | 17/3/31 (then; 20/0/31 since round 78) | 840.2 |
 | Fire Mage | Mage | 14/34/3 (then; 12/36/3 since round 80) | 1020.7 | | **Enh Shaman** | Shaman | 19/32/0 (then; 18/31/2 since round 80) | **838.8** |
 | BM Hunter | Hunter | 31/20/0 | 968.2 | | Moonkin | Druid | 41/0/10 (then; 38/0/13 since round 78) | 820.3 |
 | Cat Druid | Druid | 9/34/8 (then; 9/32/10 since 1.60.1.70707) | 966.9 | | Ele Shaman | Shaman | 32/11/8 | 792.8 |
 | Seal Twist Ret | Paladin | 15/0/36 (then; 12/8/31 since 1.60.1.70707) | 948.6 | | Pure Hemo | Rogue | 19/8/24 | 775.9 |
-| Hawk Melee | Hunter | 16/11/24 | 937.6 | | Venom Rogue | Rogue | 33/16/2 | 771.6 |
+| Hawk Melee | Hunter | 16/11/24 | 937.6 | | Venom Rogue | Rogue | 36/11/4 | 771.6 |
 | Shockadin 2H | Paladin | 23/0/28 (then; 21/0/30 since 1.60.1.70707) | 935.2 | | SM/DS | Warlock | 35/11/5 | 769.4 |
 | Shadow Priest | Priest | 14/2/35 | 931.0 | | Rupture Rogue | Rogue | 12/8/31 | 754.9 |
-| 2H Arms | Warrior | 39/10/2 | 927.0 | | Prot Pally | Paladin | 8/34/9 (then; 10/31/10 since 1.60.1.70707) | 551.1 |
+| 2H Arms | Warrior | 34/15/2 | 927.0 | | Prot Pally | Paladin | 8/34/9 (then; 10/31/10 since 1.60.1.70707) | 551.1 |
 elock | Warlock | 5/11/35 | 910.5 | | Prot Warr | Warrior | 17/0/34 (then; 17/2/32 since round 78) | 499.5 |
-| Combat Rogue | Rogue | 18/33/0 | 899.5 | | Bear Druid | Druid | 9/42/0 (then; 9/37/5 since 1.60.1.70707) | 432.8 |
+| Combat Rogue | Rogue | 16/35/0 | 899.5 | | Bear Druid | Druid | 9/42/0 (then; 9/37/5 since 1.60.1.70707) | 432.8 |
 
 The mean across **28** is **863.8**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.

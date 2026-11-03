@@ -176,7 +176,7 @@ finding.
 
 | | spread | was | ships at | with Recklessness enabled |
 | --- | --- | --- | --- | --- |
-| **2H Arms** | 39/10/2 | 849.7 | **872.8** | **897.2** |
+| **2H Arms** | 34/15/2 | 849.7 | **872.8** | **897.2** |
 | **DW Fury** | 17/34/0 | 989.6 | **997.3** | **1092.6** |
 
 **THE TWO COLUMNS ARE THE OWNER'S RULING AND NOT A HEDGE**: Recklessness is in
@@ -518,7 +518,7 @@ Full record, with the method: [source-cross-checks.md](../source-cross-checks.md
 | Profile | Talents | DPS | List | Style / stance |
 | --- | --- | --- | --- | --- |
 | DW Fury | 17/34/0 | **667.5** | `WARRIOR_DUAL_WIELD_BERSERKER` | dual wield, Berserker |
-| 2H Arms | 39/10/2 | **621.1** | `WARRIOR_TWO_HAND_BATTLE` | two-hander, Battle |
+| 2H Arms | 34/15/2 | **621.1** | `WARRIOR_TWO_HAND_BATTLE` | two-hander, Battle |
 | Prot Warr | 17/2/32 | **457.0** | `WARRIOR_SHIELD_DEFENSIVE` | 1H & shield, Defensive, **target attacks back** |
 
 **DW Fury and 2H Arms are the two highest profiles in the project.** Prot Warr is

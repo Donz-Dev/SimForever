@@ -26,7 +26,7 @@ import {
   CHAIN_LIGHTNING_DAMAGE,
   CHAIN_LIGHTNING_JUMP_FACTOR,
 } from '../../src/game/abilities/shaman';
-import { ELEMENTAL_MASTERY_AURA } from '../../src/game/auras/shaman';
+import { LIGHTNING_MASTERY_AURA } from '../../src/game/auras/shaman';
 import {
   LIGHTNING_OVERLOAD_FRACTION,
   lightningOverload,
@@ -323,16 +323,17 @@ describe('Chain Lightning jumps', () => {
     expect([...struckBy(run.events, 'chain_lightning')]).toEqual(['dummy_1']);
   });
 
-  it('has no cooldown while Elemental Mastery is up', () => {
+  it('has no cooldown while Lightning Mastery is up', () => {
     const run = fight(3, { abilities: [CHAIN_LIGHTNING] });
     run.simulation.advanceTo(0);
     const chain = run.caster.abilities.get('chain_lightning')!;
     castAbility(run.simulation, run.caster, chain, run.enemies[0]);
-    run.simulation.advanceTo(seconds(2.1));
+    // A 2.5 second cast since 1.60.1.70755.
+    run.simulation.advanceTo(seconds(2.6));
     expect(run.simulation.castRejection(run.caster, chain, run.enemies[0], { ignoreGcd: true })).toBe(
       'on_cooldown',
     );
-    run.simulation.applyAura(run.caster, ELEMENTAL_MASTERY_AURA, run.caster.id);
+    run.simulation.applyAura(run.caster, LIGHTNING_MASTERY_AURA, run.caster.id);
     expect(run.simulation.castRejection(run.caster, chain, run.enemies[0], { ignoreGcd: true })).toBeUndefined();
   });
 });

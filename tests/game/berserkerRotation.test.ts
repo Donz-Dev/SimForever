@@ -328,7 +328,12 @@ const OWNER_ORDER = [
    * BERSERKER RAGE LAST, which closes the Warrior's last live gap -- a LIST
    * cause, not an engine one. Worth +6.02 WITH Improved Berserker Rage and
    * -1.13 without it; see `DW_FURY_TALENTS`.
+   *
+   * RECKLESS SWINGS ABOVE IT, new at 1.60.1.70755 and placed by us rather than
+   * the owner: a rage grant on its own cooldown, at the bottom for the same
+   * reason Berserker Rage is.
    */
+  'reckless_swings',
   'berserker_rage_cast',
 ];
 
@@ -347,6 +352,7 @@ const ORC_FURY_ORDER = [
   'heroic_strike',
   'bloodthirst',
   'whirlwind',
+  'reckless_swings',
   'berserker_rage_cast',
 ];
 
@@ -357,7 +363,7 @@ describe('the Berserker list order', () => {
     );
   });
 
-  it('narrows to thirteen entries for the preset that runs it', () => {
+  it('narrows to fourteen entries for the preset that runs it', () => {
     /*
      * THE PANEL IS WHAT THE OWNER READ, and it shows the NARROWED list: every
      * stock list names all four racial cooldowns and all nine consumables, and

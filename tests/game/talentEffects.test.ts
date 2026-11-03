@@ -30,7 +30,8 @@ const HAND_TRANSCRIBED: Record<string, readonly number[]> = {
   improved_intercept: [5, 10],
   improved_rend: [12, 23, 35],
   improved_disarm: [7, 13, 20],
-  flurry: [5, 10, 15, 20, 25],
+  // Three ranks at 10/20/30 since 1.60.1.70755; it was 5/10/15/20/25.
+  flurry: [10, 20, 30],
   /*
    * PRECISION AND BOUNDLESS RAGE WERE HERE AND FOREVER REMOVED BOTH at client
    * build 1.60.1.70170 -- `precision: [1, 2, 3]` and

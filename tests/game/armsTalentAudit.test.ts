@@ -62,16 +62,17 @@ describe('changing stance costs rage', () => {
   });
 
   /*
-   * "Tactical Mastery lets you retain up to an ADDITIONAL 3/6/9/12/15 Rage
-   * when you change stances", so the floor is 10 plus the talent's value and
-   * max rank keeps 25 -- the figure the ruleset owner gave.
+   * "Tactical Mastery lets you retain up to an ADDITIONAL {0} Rage when you
+   * change stances", so the floor is 10 plus the talent's value and max rank
+   * keeps 25 -- the figure the ruleset owner gave. 1.60.1.70755 made it three
+   * ranks at 5/10/15 (was five at 3/6/9/12/15), so the total is unchanged.
    */
-  it('retains an additional three rage at one rank', () => {
-    expect(swapAndRead(legalise({ improved_tactical_mastery: 1 }))).toBe(13);
+  it('retains an additional five rage at one rank', () => {
+    expect(swapAndRead(legalise({ improved_tactical_mastery: 1 }))).toBe(15);
   });
 
   it('retains twenty-five in total at max rank', () => {
-    expect(swapAndRead(legalise({ improved_tactical_mastery: 5 }))).toBe(25);
+    expect(swapAndRead(legalise({ improved_tactical_mastery: 3 }))).toBe(25);
   });
 
   it('takes nothing when there was less than the floor to begin with', () => {
@@ -130,13 +131,13 @@ describe('damage multipliers compound rather than adding', () => {
     expect(compounded).not.toBeCloseTo(1.3, 3);
   });
 
-  it('applies Two-Handed Weapon Specialization as one multiplier of 1.03', () => {
-    // Three ranks is "+3%", which is 1.03 -- not three multipliers of 1.01,
-    // and not an addition of 3 to something.
+  it('applies Two-Handed Weapon Specialization as one multiplier of 1.06', () => {
+    // Three ranks is "+6%" since 1.60.1.70755 (2/4/6, was 1/2/3), which is
+    // 1.06 -- not three multipliers of 1.02, and not an addition of 6.
     const build = talentBuild('warrior', legalise({ two_handed_weapon_specialization: 3 }), {
       mainHand: { name: 'Two-hander', twoHanded: true } as never,
     });
-    expect(build.damageMultiplier).toBeCloseTo(1.03, 6);
+    expect(build.damageMultiplier).toBeCloseTo(1.06, 6);
   });
 
   it('does not apply it with a one-handed weapon, and says why', () => {
@@ -236,7 +237,8 @@ describe('the Overpower window', () => {
    * that only look alike.
    */
   it('is opened by Bloodthrill as well as by a dodge', () => {
-    const build = talentBuild('warrior', legalise({ bloodthrill: 5 }));
+    // Two ranks since 1.60.1.70755.
+    const build = talentBuild('warrior', legalise({ bloodthrill: 2 }));
     const reaction = build.reactions.find((r) => r.id === 'bloodthrill');
     expect(reaction).toBeDefined();
     expect(reaction?.on).toBe('dealt');
@@ -422,7 +424,7 @@ describe('Bloodthrill is MAIN HAND only now, at twice the chance', () => {
       characterClass: 'warrior',
       combatStyle: 'dual_wield',
       stance: 'berserker',
-      talents: legalise({ bloodthrill: 5 }),
+      talents: legalise({ bloodthrill: 2 }),
     });
     const target = createTrainingDummy();
     const simulation = buildSimulation([actor, target]);
@@ -448,7 +450,7 @@ describe('Bloodthrill is MAIN HAND only now, at twice the chance', () => {
     critical: false,
   });
 
-  it('states 4/8/12/16/20, and the "for 1 attack" number is gone from the row', () => {
+  it('states 10/20 at two ranks, and the "for 1 attack" number is gone from the row', () => {
     /*
      * ------------------------------------------------------------------------
      * AND THE 6 IS GONE NOW, WHICH IS WHAT THIS TEST'S NAME ALREADY ASKED FOR.
@@ -462,10 +464,13 @@ describe('Bloodthrill is MAIN HAND only now, at twice the chance', () => {
      * A BARE ROW MEANS INDEX 1 IS `undefined`, which is strictly safer: any
      * effect here reading the wrong index now reads nothing and is dropped,
      * where before it would have read a plausible 6.
+     *
+     * 1.60.1.70755 cut it to two ranks at 10/20, the same 20% at max rank.
      * ------------------------------------------------------------------------
      */
-    expect(talentValue('warrior', 'bloodthrill', 1)).toBe(4);
-    expect(talentValue('warrior', 'bloodthrill', 5)).toBe(20);
+    expect(talentValue('warrior', 'bloodthrill', 1)).toBe(10);
+    expect(talentValue('warrior', 'bloodthrill', 2)).toBe(20);
+    expect(talentValue('warrior', 'bloodthrill', 3)).toBeUndefined();
   });
 
   it('accepts a main-hand use and refuses the off hand', () => {
@@ -500,7 +505,7 @@ describe('Bloodthrill is MAIN HAND only now, at twice the chance', () => {
       characterClass: 'warrior',
       combatStyle: 'dual_wield',
       stance: 'berserker',
-      talents: legalise({ bloodthrill: 5 }),
+      talents: legalise({ bloodthrill: 2 }),
     });
     const target = createTrainingDummy();
     const simulation = buildSimulation([actor, target]);
@@ -527,13 +532,15 @@ describe('Improved Slam gained a cooldown clause', () => {
    * were reading it by default -- correct by accident, and wrong the moment a
    * fourth effect wanted something else.
    *
-   * THE THREE SECONDS DO NOT SCALE: both ranks state 3, which is what the values
-   * file records and what breaks the "one varying number" assumption.
+   * AT 1.60.1.70755 THE ROW TURNED ROUND AND THE COOLDOWN SCALES: "Reduces the
+   * cooldown of your Slam ability by {0} sec, the cast time and global cooldown
+   * by {1} sec", `[2.5, 0.25]` and `[5, 0.5]`. It was `[0.25, 3]` and
+   * `[0.5, 3]`, a flat three seconds at both ranks.
    * ----------------------------------------------------------------------------
    */
-  it('states a half second and a flat three seconds, at both ranks', () => {
-    expect(talentValue('warrior', 'improved_slam', 1)).toEqual([0.25, 3]);
-    expect(talentValue('warrior', 'improved_slam', 2)).toEqual([0.5, 3]);
+  it('states the cooldown first and the cast time second, both per rank', () => {
+    expect(talentValue('warrior', 'improved_slam', 1)).toEqual([2.5, 0.25]);
+    expect(talentValue('warrior', 'improved_slam', 2)).toEqual([5, 0.5]);
   });
 
   it('names an index on every effect, including the three that want zero', () => {
@@ -544,7 +551,7 @@ describe('Improved Slam gained a cooldown clause', () => {
     }
   });
 
-  it('takes three seconds off an eighteen-second cooldown and a half off the cast', () => {
+  it('takes five seconds off a fifteen-second cooldown and a half off the cast', () => {
     const base = createPlayer({
       race: 'orc',
       characterClass: 'warrior',
@@ -559,19 +566,19 @@ describe('Improved Slam gained a cooldown clause', () => {
       talents: legalise({ improved_slam: 2 }),
     }).abilities.get('slam')!;
 
-    // Written out from the tooltip: 1.5s cast and an 18s cooldown become 1.0 and
-    // 15, and the swing is not interrupted OR DELAYED -- `continue`, on the
-    // owner's ruling. It was `hold` here, which is the first verb only; see
-    // `slamSwingTimer.test.ts`, which owns that half.
+    // Written out from the tooltip: 1.5s cast and a 15s cooldown (18 before
+    // 1.60.1.70755) become 1.0 and 10, and the swing is not interrupted OR
+    // DELAYED -- `continue`, on the owner's ruling. It was `hold` here, which
+    // is the first verb only; see `slamSwingTimer.test.ts`, which owns that half.
     expect(base.castTimeMs).toBe(1_500);
-    expect(base.cooldownMs).toBe(18_000);
+    expect(base.cooldownMs).toBe(15_000);
     expect(base.swingTimer).toBeUndefined();
     expect(talented.castTimeMs).toBe(1_000);
-    expect(talented.cooldownMs).toBe(15_000);
+    expect(talented.cooldownMs).toBe(10_000);
     expect(talented.swingTimer).toBe('continue');
   });
 
-  it('scales the cast time per rank and does NOT scale the cooldown', () => {
+  it('scales the cast time AND the cooldown per rank', () => {
     const slam = (rank: number) =>
       createPlayer({
         race: 'orc',
@@ -583,9 +590,9 @@ describe('Improved Slam gained a cooldown clause', () => {
 
     expect(slam(1).castTimeMs).toBe(1_250);
     expect(slam(2).castTimeMs).toBe(1_000);
-    // Three seconds at BOTH ranks, which is the half a per-rank reading gets
-    // wrong -- and reading index 0 would have taken a quarter second off instead.
-    expect(slam(1).cooldownMs).toBe(15_000);
-    expect(slam(2).cooldownMs).toBe(15_000);
+    // 2.5 and 5 seconds since 1.60.1.70755 (a flat 3 before). Reading the old
+    // indices would have taken a quarter second off the cooldown instead.
+    expect(slam(1).cooldownMs).toBe(12_500);
+    expect(slam(2).cooldownMs).toBe(10_000);
   });
 });

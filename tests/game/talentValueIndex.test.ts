@@ -154,7 +154,8 @@ const BLANKET_MULTIPLIERS: readonly {
     cls: 'warrior',
     talentId: 'two_handed_weapon_specialization',
     index: 0,
-    atRankOne: 1,
+    // 2/4/6 since 1.60.1.70755; it was 1 a rank.
+    atRankOne: 2,
     wants: 'damage with two-handed melee weapons',
   },
   {

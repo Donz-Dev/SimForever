@@ -38,7 +38,8 @@ function fight(chances: typeof NO_CHANCES = NEVER_CRIT) {
     race: 'orc',
     characterClass: 'warrior',
     combatStyle: 'dual_wield',
-    talents: legalise({ flurry: 5 }),
+    // Three ranks since 1.60.1.70755 (was five).
+    talents: legalise({ flurry: 3 }),
     equipment: startingEquipmentFor('warrior', 'dual_wield'),
   });
   const dummy = createTrainingDummy({ name: 'D', health: 1e9, armor: 0, level: 63 });

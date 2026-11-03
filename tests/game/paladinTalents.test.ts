@@ -1347,7 +1347,7 @@ describe('the two block talents moved in OPPOSITE directions', () => {
   });
 });
 
-describe('Vengeance stacks three times now, and says non-periodic', () => {
+describe('Vengeance stacks five times again, and says non-periodic', () => {
   /*
    * ----------------------------------------------------------------------------
    * NEITHER CHANGE IS IN THE PATCH NOTES. The tooltip went from "after landing a
@@ -1359,22 +1359,25 @@ describe('Vengeance stacks three times now, and says non-periodic', () => {
    * so a tick is never shown to one -- the "non-periodic" wording is a narrowing
    * of the tooltip and not of the behaviour. The stack cap is where the figure
    * moved: at 3% a stack the ceiling went from 1.15x to 1.09x.
+   *
+   * AND 1.60.1.70755 PUT IT BACK TO FIVE ("Was stacking up to 3 times"), so
+   * the ceiling is 1.159x again. The row's third number carries the cap.
    * ----------------------------------------------------------------------------
    */
-  it('caps at three stacks, so the ceiling is 1.09x rather than 1.15x', () => {
-    expect(VENGEANCE_MAX_STACKS).toBe(3);
+  it('caps at five stacks, so the ceiling is 1.159x rather than 1.09x', () => {
+    expect(VENGEANCE_MAX_STACKS).toBe(5);
     expect(talentNumber('paladin', 'vengeance', 3, 0)).toBe(3);
-    expect(talentNumber('paladin', 'vengeance', 3, 2)).toBe(3);
+    expect(talentNumber('paladin', 'vengeance', 3, 2)).toBe(5);
 
     const aura = vengeanceAura(3);
-    expect(aura.maxStacks).toBe(3);
+    expect(aura.maxStacks).toBe(5);
     expect(aura.modifiersScaleWithStacks).toBe(true);
-    // A three-stack 1.03 is 1.0927, not 1.09 -- `scaleByStacks` takes damage to
+    // A five-stack 1.03 is 1.1593, not 1.15 -- `scaleByStacks` takes damage to
     // the POWER of the count, which is what every other reader of that flag does.
-    expect(aura.damageDoneMultiplier! ** 3).toBeCloseTo(1.092727, 5);
+    expect(aura.damageDoneMultiplier! ** 5).toBeCloseTo(1.159274, 5);
   });
 
-  it('reaches three stacks and no more in a real fight', () => {
+  it('reaches five stacks and no more in a real fight', () => {
     /*
      * THE MEASURED HALF. A stack cap written on the aura and not honoured by
      * `AuraCollection` would read as a working buff with visible uptime, which is
@@ -1401,6 +1404,6 @@ describe('Vengeance stacks three times now, and says non-periodic', () => {
       simulation.run();
     }
     expect(seen).toBeGreaterThan(0);
-    expect(peak).toBe(3);
+    expect(peak).toBe(5);
   }, 20_000);
 });

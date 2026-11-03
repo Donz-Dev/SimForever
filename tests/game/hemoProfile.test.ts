@@ -39,7 +39,9 @@ describe('the Hemo build', () => {
     const talents = talentsOf('rogue_hemo');
     expect(talents.cutthroat ?? 0).toBe(0);
     expect(talents.puncturing_wounds ?? 0).toBe(0);
-    expect(talents.ghostly_strike ?? 0).toBe(0);
+    // Ghostly Strike is TAKEN since 1.60.1.70755: its opener window is the
+    // in-combat Ambush route that Cutthroat used to be.
+    expect(talents.ghostly_strike ?? 0).toBe(1);
   });
 
   // "Matches the Rupture preset in every field except the talents" went with
@@ -163,8 +165,9 @@ describe('which list a Subtlety Rogue runs', () => {
    * life without erroring. A claim about which list a build runs is worth a test.
    * ============================================================================
    */
-  it('sends a Hemorrhage build WITH Cutthroat to the Rupture list', () => {
-    expect(rogueRotation({ hemorrhage: 1, cutthroat: 5 }).name).toContain('Rupture');
+  it('no longer reaches the Rupture list by dispatch, because Cutthroat is gone', () => {
+    // 1.60.1.70755 removed Cutthroat, so a name that still carries it is ignored.
+    expect(rogueRotation({ hemorrhage: 1, cutthroat: 5 }).name).toContain('Hemo');
   });
 
   it('sends a Hemorrhage build WITHOUT Cutthroat to the Hemo list', () => {
@@ -189,7 +192,8 @@ describe('which list a Subtlety Rogue runs', () => {
      * ==========================================================================
      */
     expect(rogueRotation({ mutilate: 1, venom: 1, hemorrhage: 1 }).name).toContain('Venom');
-    expect(rogueRotation({ mutilate: 1, hemorrhage: 1 }).name).toContain('Combat Mut');
+    // 1.60.1.70755 put Mutilate under Venom, so AGGRESSION is what marks Combat Mut.
+    expect(rogueRotation({ mutilate: 1, venom: 1, aggression: 3, hemorrhage: 1 }).name).toContain('Combat Mut');
     expect(rogueRotation({ adrenaline_rush: 1 }).name).toContain('Combat');
   });
 
@@ -198,8 +202,9 @@ describe('which list a Subtlety Rogue runs', () => {
       rogueRotation(talentsOf(id) as Readonly<Record<string, number>>).name;
     expect(listFor('rogue_venom')).toContain('Venom');
     expect(listFor('rogue_combat')).toContain('Combat');
-    // The Rupture preset is gone (round 82); its talents still select its list.
-    expect(rogueRotation(RUPTURE_TALENTS).name).toContain('Rupture');
+    // The Rupture preset is gone (round 82), and with Cutthroat gone too
+    // (1.60.1.70755) its old talents run the Hemo list.
+    expect(rogueRotation(RUPTURE_TALENTS).name).toContain('Hemo');
     expect(listFor('rogue_hemo')).toContain('Hemo');
     // The fifth, and the one that forced the capstone clause into the dispatch.
     expect(listFor('rogue_combat_mut')).toContain('Combat Mut');

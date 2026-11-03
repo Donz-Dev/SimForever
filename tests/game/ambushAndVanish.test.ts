@@ -4,7 +4,10 @@ import { createPlayer } from '../../src/game/actors/createPlayer';
 import { ROGUE_ABILITIES } from '../../src/game/abilities/rogue';
 import { ROGUE_TALENT_EFFECTS } from '../../src/game/talents/rogueEffects';
 import { ROGUE_TALENT_REACTIONS } from '../../src/game/reactions/rogueTalents';
-import { STEALTH, CUTTHROAT } from '../../src/game/auras/rogue';
+import { STEALTH, GHOSTLY_STRIKE_OPENER as CUTTHROAT } from '../../src/game/auras/rogue';
+// Ghostly Strike's opener window took Cutthroat's place in Ambush's gate at
+// 1.60.1.70755, with Cutthroat's rule: a proc window Ambush spends. The tests
+// below were written for Cutthroat and hold for its successor unchanged.
 import { ROGUE_RUPTURE } from '../../src/game/rotations/rogue';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';

@@ -225,6 +225,9 @@ describe('Raging Blows', () => {
    * asserted the strike was ABSENT without the talent, and that is now false by
    * design. What takes its place asserts the condition that is actually left, and
    * it needs a two-hander to show the negative case.
+   *
+   * AND AT 1.60.1.70755 THE TALENT ITSELF IS GONE, so the last test asserts the
+   * removal.
    * ----------------------------------------------------------------------------
    */
   it('gives Whirlwind a second strike with the off hand, with no talent spent', () => {
@@ -232,7 +235,6 @@ describe('Raging Blows', () => {
       runProfileBatch(profile(talents)).abilities.map((row) => row.abilityName);
 
     expect(names({})).toContain(WHIRLWIND_OFF_HAND_NAME);
-    expect(names(legalise({ raging_blows: 1 }))).toContain(WHIRLWIND_OFF_HAND_NAME);
   });
 
   it('lands the off-hand strike as often as the main-hand one', () => {
@@ -284,31 +286,18 @@ describe('Raging Blows', () => {
     expect(specced).toBeGreaterThan(plain * 1.15);
   });
 
-  it('takes three rage off Cleave AND off Whirlwind', () => {
+  it('is gone at 1.60.1.70755, so Cleave and Whirlwind pay their full cost', () => {
     /*
-     * WHAT IS LEFT OF THE TALENT, AND IT GREW. Client build 1.60.1.70170:
-     * "Raging Blows now reduces the Rage cost of your Cleave and Whirlwind
-     * abilities by 3", where it was two rage off Cleave alone.
-     *
-     * It took over the job of IMPROVED CLEAVE, which the same patch deleted.
-     *
-     * Still single rank, so the three is hand-filled in the values file with a
-     * note. Written out here from the tooltip rather than read back from either
-     * the values file or the ability -- a test that asks the data what the data
-     * says passes whatever the data says.
+     * Raging Blows was "reduces the Rage cost of your Cleave and Whirlwind
+     * abilities by 3" and is not in the 1.60.1.70755 tree at all. Its effects,
+     * its value row and its discount all go with it.
      */
-    const build = talentBuild('warrior', legalise({ raging_blows: 1 }));
-    expect(build.abilityCostReduction.get('cleave')).toBe(3);
-    expect(build.abilityCostReduction.get('whirlwind')).toBe(3);
+    expect(WARRIOR_TALENT_EFFECTS.raging_blows).toBeUndefined();
+    expect(talentValue('warrior', 'raging_blows', 1)).toBeUndefined();
+    const build = talentBuild('warrior', legalise({}));
+    expect(build.abilityCostReduction.get('cleave')).toBeUndefined();
+    expect(build.abilityCostReduction.get('whirlwind')).toBeUndefined();
     expect(CLEAVE.cost?.amount).toBe(20);
-  });
-
-  it('reports nothing about itself as unmodelled any more', () => {
-    const kinds = WARRIOR_TALENT_EFFECTS.raging_blows.map((effect) => effect.kind);
-    expect(kinds).not.toContain('unmodelled');
-    // Two costs rather than a flag and a cost: the flag's work is now the
-    // ability's own.
-    expect(kinds).toEqual(['abilityCost', 'abilityCost']);
   });
 });
 

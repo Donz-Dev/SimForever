@@ -149,13 +149,14 @@ describe('2. Rend and Tear reaches every point of melee damage', () => {
     expect(DRUID_TALENT_EFFECTS.rend_and_tear).toEqual([
       { kind: 'bleedingTargetDamage', tables: ['melee-auto', 'melee-special'] },
     ]);
-    expect(talentNumber('druid', 'rend_and_tear', 5, 0)).toBe(10);
+    // 15 at 5/5 since 1.60.1.70755 (3/6/9/12/15; was 2/4/6/8/10).
+    expect(talentNumber('druid', 'rend_and_tear', 5, 0)).toBe(15);
   });
 
-  it('registers +10% on both tables for the Cat', () => {
+  it('registers +15% on both tables for the Cat', () => {
     const bleeding = buildIn('cat').bleedingTargetModifiers;
     for (const table of ['melee-auto', 'melee-special'] as const) {
-      expect(bleeding.for(table).damageMultiplier, table).toBeCloseTo(1.1, 10);
+      expect(bleeding.for(table).damageMultiplier, table).toBeCloseTo(1.15, 10);
     }
     // And on no other table: this is a MELEE talent.
     for (const table of ['spell', 'ranged-auto', 'ranged-special'] as const) {
@@ -246,15 +247,16 @@ describe("4. Rake's tick scales at 5.5% and its hit still at 1%", () => {
      * Warrior ability spreadsheet. The HIT is the half to be careful about:
      * reading "Rake is 5.5%" and setting both would inflate the direct damage.
      */
-    expect(RAKE_AP_COEFFICIENT).toBe(0.01);
-    expect(RAKE_TICK_AP_COEFFICIENT).toBe(0.055);
+    // 1.60.1.70755 raised both a quarter: 1% -> 1.25%, 5.5% -> 6.875%.
+    expect(RAKE_AP_COEFFICIENT).toBe(0.0125);
+    expect(RAKE_TICK_AP_COEFFICIENT).toBe(0.06875);
   });
 
   it('is worth more than the hit, which is the point of the change', () => {
     expect(RAKE_TICK_AP_COEFFICIENT).toBeGreaterThan(RAKE_AP_COEFFICIENT);
-    // Three ticks over nine seconds, so 16.5% of attack power across the bleed
-    // against 1% on the hit -- written out so the magnitude is visible.
-    expect(RAKE_TICK_AP_COEFFICIENT * 3).toBeCloseTo(0.165, 10);
+    // Three ticks over nine seconds, so 20.625% of attack power across the
+    // bleed against 1.25% on the hit -- written out so the magnitude is visible.
+    expect(RAKE_TICK_AP_COEFFICIENT * 3).toBeCloseTo(0.20625, 10);
   });
 });
 

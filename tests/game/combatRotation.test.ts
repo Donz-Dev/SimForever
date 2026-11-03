@@ -39,6 +39,8 @@ const OWNER_ORDER = [
   'healthstone',
   'adrenaline_rush',
   'blade_flurry',
+  // Shank, new at 1.60.1.70755, placed by us below the two cooldowns.
+  'shank',
   'slice_and_dice',
   // Cold Blood paired with a five-point Eviscerate, as one sequence (round 37).
   'cold_blood',
@@ -58,6 +60,8 @@ const COMBAT_ORDER = [
   'major_healing_potion',
   'adrenaline_rush',
   'blade_flurry',
+  // Shank, new at 1.60.1.70755, placed by us below the two cooldowns.
+  'shank',
   'slice_and_dice',
   // Cold Blood paired with a five-point Eviscerate, as one sequence (round 37).
   'cold_blood',
