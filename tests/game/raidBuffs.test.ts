@@ -276,7 +276,8 @@ describe('buffs on the character', () => {
   it('give Trueshot Aura ranged attack power and nothing else', () => {
     const plain = sheet([]);
     const buffed = sheet(['trueshot_aura']);
-    expect(buffed.stats.get('rangedAttackPower')).toBe(plain.stats.get('rangedAttackPower') + 50);
+    // 100 at rank 5, foreverchanges.pro's figure (2026-11-02); it was 50.
+    expect(buffed.stats.get('rangedAttackPower')).toBe(plain.stats.get('rangedAttackPower') + 100);
     expect(buffed.stats.get('attackPower')).toBe(plain.stats.get('attackPower'));
   });
 
