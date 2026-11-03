@@ -59,9 +59,9 @@ const NOT_ATTACKED =
  * here because several healing talents reach "your heals" and a list is the
  * only way to say which: a heal has no school, so no school-scoped effect can.
  */
-const HEALS = ['flash_heal', 'greater_heal', 'binding_heal', 'prayer_of_healing', 'renew', 'prayer_of_mending', 'penance'] as const;
+const HEALS = ['flash_heal', 'greater_heal', 'prayer_of_healing', 'renew', 'prayer_of_mending', 'penance'] as const;
 /** The heals that land at once, which is what a "non-periodic critical heal" is. */
-const DIRECT_HEALS = ['flash_heal', 'greater_heal', 'binding_heal', 'prayer_of_healing', 'prayer_of_mending', 'penance'] as const;
+const DIRECT_HEALS = ['flash_heal', 'greater_heal', 'prayer_of_healing', 'prayer_of_mending', 'penance'] as const;
 /** The instant ones, for Twin Disciplines. Penance is a channel and is not. */
 const INSTANT_HEALS = ['renew', 'prayer_of_mending'] as const;
 
@@ -223,7 +223,7 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    */
   renewed_hope: [
     { kind: 'abilityBonus', abilityId: 'power_word_shield', key: 'renewedHopeCrit', valueIndex: 0 },
-    ...(['flash_heal', 'binding_heal', 'greater_heal', 'penance'] as const).map((abilityId) => ({
+    ...(['flash_heal', 'greater_heal', 'penance'] as const).map((abilityId) => ({
       kind: 'abilityBonus' as const,
       abilityId,
       key: 'renewedHopeSeconds',
@@ -306,7 +306,8 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   searing_light: [{ kind: 'schoolDamage', schools: ['holy'] }],
 
-  binding_heal: [{ kind: 'grantAbility', abilityId: 'binding_heal' }],
+  // HOLY BINDING replaced Binding Heal at 1.60.1.70755. See `FLASH_HEAL`.
+  holy_binding: [{ kind: 'abilityFlag', abilityId: 'flash_heal', key: 'holyBinding' }],
   litany_of_light: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
 
   spirit_of_redemption: [

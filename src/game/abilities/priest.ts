@@ -1,8 +1,7 @@
-import type { Ability, Combatant, SimulationContext } from '../../engine';
+import type { Ability, Combatant, HealResolution, SimulationContext } from '../../engine';
 import { applyHealing, dealDamage, rollApplication, seconds } from '../../engine';
 import { areaTargets } from '../combat/multiTarget';
 import {
-  BINDING_HEAL_HEAL_COEFFICIENT,
   FLASH_HEAL_HEAL_COEFFICIENT,
   GREATER_HEAL_HEAL_COEFFICIENT,
   HOLY_NOVA_SP_COEFFICIENT,
@@ -348,11 +347,13 @@ export const DEVOURING_PLAGUE_ABILITY: Ability = {
  * look free.
  * ----------------------------------------------------------------------------
  */
-// 434 to 462, from foreverchanges.pro by the same rule, against our capture's
-// 444 to 472 at the same rank 4 and build. The 10% backlash is unchanged and both
-// sources state it.
-export const SHADOW_WORD_DEATH_DAMAGE = midpoint(434, 462);
-export const SHADOW_WORD_DEATH_BACKLASH_FRACTION = 0.1;
+// 444 to 472, foreverchanges.pro's figure at 1.60.1.70755 (it read 434 to 462
+// before). The backlash is 30% since that build: "Shadow Word: Death now causes
+// 30% of maximum Health damage to the Priest if it fails to kill the target, up
+// from 10%. Shadow Word: Death will no longer damage the Priest when the spell
+// misses."
+export const SHADOW_WORD_DEATH_DAMAGE = midpoint(444, 472);
+export const SHADOW_WORD_DEATH_BACKLASH_FRACTION = 0.3;
 export const SHADOW_WORD_DEATH_COEFFICIENT = SHADOW_WORD_DEATH_SP_COEFFICIENT;
 
 /**
@@ -392,7 +393,7 @@ export const SHADOW_WORD_DEATH: Ability = {
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
-    dealDamage(simulation, {
+    const result = dealDamage(simulation, {
       source: caster,
       target,
       abilityId: ability.id,
@@ -403,13 +404,15 @@ export const SHADOW_WORD_DEATH: Ability = {
       attackTable: ability.attackTable,
     });
 
-    // The target is never killed, so the backlash is never avoided.
+    // The target is never killed, so a landed Shadow Word: Death always
+    // backlashes -- and a MISS no longer does (1.60.1.70755).
+    if (result.avoided) return;
     caster.health.spend(caster.health.maximum * SHADOW_WORD_DEATH_BACKLASH_FRACTION);
   },
   unmodelled:
     'Its BACKLASH ALWAYS LANDS: the target is a damage sink that survives ' +
-    'every fight, so "if your target is not killed" is always true. A tenth ' +
-    'of the Priest’s maximum health every fifteen seconds, with no healer, ' +
+    'every fight, so "if your target is not killed" is always true. 30% of ' +
+    'the Priest’s maximum health on every landed cast, with no healer, ' +
     'and it is taken from the pool directly -- so it does NOT appear in the ' +
     'damage-taken panel, which reports what attacked the character. The ' +
     'health is really gone; only its accounting is missing.',
@@ -598,7 +601,7 @@ export function priestHeal(
   ability: Ability,
   amount: number,
   coefficient: number,
-): void {
+): HealResolution {
   const bonuses = ability.bonuses ?? {};
   const result = applyHealing(simulation, {
     source: caster,
@@ -615,7 +618,7 @@ export function priestHeal(
     if (soul.expiresAt - simulation.clock.now() <= seconds(cut)) target.auras.remove(simulation, WEAKENED_SOUL.id);
     else target.auras.rewindWindow(simulation, soul, seconds(cut));
   }
-  if (!result.critical) return;
+  if (!result.critical) return result;
   const aegis = bonuses[DIVINE_AEGIS_KEY] ?? 0;
   if (aegis > 0) {
     const existing = target.auras.get('divine_aegis');
@@ -624,6 +627,7 @@ export function priestHeal(
     simulation.applyAura(target, divineAegisAura(shield), caster.id);
   }
   if ((bonuses[INSPIRATION_KEY] ?? 0) > 0) simulation.applyAura(target, INSPIRATION, caster.id);
+  return result;
 }
 
 /** Flash Heal, rank 7: "Heals a friendly target for 774 to 910." 380 mana, 1.5s. */
@@ -637,9 +641,29 @@ export const FLASH_HEAL: Ability = {
   castTimeMs: seconds(1.5),
   onCast: ({ simulation, caster, target, ability }) => {
     if (!isFriendly(caster, target)) return;
-    priestHeal(simulation, caster, target, ability, FLASH_HEAL_HEAL, FLASH_HEAL_HEAL_COEFFICIENT);
+    const result = priestHeal(simulation, caster, target, ability, FLASH_HEAL_HEAL, FLASH_HEAL_HEAL_COEFFICIENT);
+    /*
+     * HOLY BINDING (1.60.1.70755), Binding Heal's replacement: "Each time you
+     * heal a target other than yourself with Flash Heal, you are healed for 50%
+     * as much. This healing generates no threat." Half of what the heal DID,
+     * landed on the Priest with no roll of its own.
+     */
+    if (ability.bonuses?.[HOLY_BINDING_KEY] && target !== caster && result.amount > 0) {
+      applyHealing(simulation, {
+        source: caster,
+        target: caster,
+        abilityId: 'holy_binding',
+        abilityName: 'Holy Binding',
+        baseAmount: result.amount * HOLY_BINDING_SHARE,
+        canCrit: false,
+      });
+    }
   },
 };
+
+/** Holy Binding's flag on Flash Heal, and its share. */
+export const HOLY_BINDING_KEY = 'holyBinding';
+export const HOLY_BINDING_SHARE = 0.5;
 
 /** Greater Heal, rank 5: "heals a single target for 1,853 to 2,067." 710 mana, 3s. */
 export const GREATER_HEAL_HEAL = midpoint(1853, 2067);
@@ -656,27 +680,10 @@ export const GREATER_HEAL: Ability = {
   },
 };
 
-/**
- * Binding Heal, rank 6, granted by the talent: "Heal yourself and a friendly
- * target for 774 to 910." 380 mana, 1.5s. The full amount on each, 42.9% of
- * healing power on each.
+/*
+ * BINDING HEAL IS GONE (1.60.1.70755); Holy Binding took its slot. See
+ * `FLASH_HEAL`.
  */
-export const BINDING_HEAL_HEAL = midpoint(774, 910);
-
-export const BINDING_HEAL: Ability = {
-  id: 'binding_heal',
-  name: 'Binding Heal',
-  heals: true,
-  cost: { resource: 'mana', amount: 380 },
-  castTimeMs: seconds(1.5),
-  onCast: ({ simulation, caster, target, ability }) => {
-    if (!isFriendly(caster, target)) return;
-    priestHeal(simulation, caster, target, ability, BINDING_HEAL_HEAL, BINDING_HEAL_HEAL_COEFFICIENT);
-    if (target !== caster) {
-      priestHeal(simulation, caster, caster, ability, BINDING_HEAL_HEAL, BINDING_HEAL_HEAL_COEFFICIENT);
-    }
-  },
-};
 
 /**
  * Prayer of Healing, rank 5: "heals the target and their party for 631 to
@@ -817,7 +824,6 @@ export const PRIEST_ABILITIES: readonly Ability[] = [
   RENEW,
   POWER_WORD_SHIELD,
   // Talent-granted.
-  BINDING_HEAL,
   PRAYER_OF_MENDING,
   PENANCE,
 ];

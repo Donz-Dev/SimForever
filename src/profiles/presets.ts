@@ -1265,7 +1265,8 @@ const PRIEST_HOLY_TALENTS: TalentAllocation = {
   divine_fury: 5,
   inspiration: 3,
   improved_healing: 3,
-  binding_heal: 1,
+  // Holy Binding in Binding Heal's slot (1.60.1.70755). Ours, flagged.
+  holy_binding: 1,
   spirit_of_redemption: 1,
   spiritual_guidance: 5,
   spiritual_healing: 3,
