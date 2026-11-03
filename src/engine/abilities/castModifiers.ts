@@ -69,6 +69,8 @@ function matches(caster: Combatant, instance: AuraInstance, ability: Ability): b
   if (modifier.excludesChannel && spreadsEffectAcrossCast(ability)) return false;
   // Nor must a free ability eat one meant for something that costs.
   if (modifier.requiresCost && (ability.cost?.amount ?? 0) <= 0) return false;
+  // Nor one paid in another resource: Poised is "your next ENERGY ability".
+  if (modifier.requiresResource && ability.cost?.resource !== modifier.requiresResource) return false;
   /*
    * "OFFENSIVE" IS THE OWNER'S DEFINITION: processed through a combat table.
    * A Druid's Demoralizing Roar costs ten rage and rolls nothing, which is the

@@ -24,7 +24,6 @@ import { ResultsPanel } from './panels/ResultsPanel';
 import { TimelinePanel } from './panels/TimelinePanel';
 import { ProfileRail } from './panels/ProfileRail';
 import type { RunKind, StatWeightSelection } from './panels/SimulationPanel';
-import { withSalvationFor } from '../game/buffs/raidBuffs';
 import { NO_STAT_WEIGHTS, SimulationPanel } from './panels/SimulationPanel';
 import { StatWeightsPanel } from './panels/StatWeightsPanel';
 import { TankStatWeightsPanel } from './panels/TankStatWeightsPanel';
@@ -168,10 +167,10 @@ export function App() {
    *
    * DPS AND TANK ARE THE OLD CHECKBOX, MOVED ONTO THE BUTTON. "Target attacks
    * back" is still what the engine reads -- the attacks-received table, the
-   * ramp, the assumed healer, Salvation -- so the button SETS it on the profile
-   * and then runs, which also keeps the character sheet and Sim History saying
-   * which kind of fight the result came from. Salvation follows it exactly as
-   * the checkbox did, so a tank never carries -30% threat.
+   * ramp, the assumed healer -- so the button SETS it on the profile and then
+   * runs, which also keeps the character sheet and Sim History saying which
+   * kind of fight the result came from. (It carried Salvation with it until
+   * 1.60.1.70755 removed the spell.)
    *
    * HEALER RUNS THE TWO HEALER FIGHTS, and stat weights do not apply to it:
    * they price a stat in DPS or in deaths, and a healer run is neither.
@@ -189,7 +188,6 @@ export function App() {
         : {
             ...profile,
             encounter: { ...profile.encounter, targetAttacks: attacks },
-            raidBuffs: [...withSalvationFor(profile.raidBuffs, attacks)],
           };
     if (next !== profile) editProfile(next);
     if (statWeights.enabled && statWeights.stats.length > 0) {

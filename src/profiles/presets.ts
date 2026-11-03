@@ -143,8 +143,6 @@ const PRESET_RAID_BUFFS: readonly string[] = [
   'blessing_of_wisdom',
   'blessing_of_kings',
   'blessing_of_might',
-  // On every profile whose target does not attack back -- so not the tanks'.
-  'salvation',
   // On every profile, by the owner's instruction.
   'devotion_aura',
   'judgement_of_the_crusader',
@@ -156,8 +154,12 @@ const PRESET_RAID_BUFFS: readonly string[] = [
   'mana_spring_totem',
   'windfury_totem',
   'trueshot_aura',
+  /*
+   * ONE OF THE PAIR, because 1.60.1.70755 made them the same exclusive 3% again;
+   * Leader of the Pack is the one kept. Both were selected while they were
+   * separate buffs.
+   */
   'leader_of_the_pack',
-  'moonkin_form',
 ];
 
 /**
@@ -167,10 +169,7 @@ const PRESET_RAID_BUFFS: readonly string[] = [
  * everywhere else they would be a ticked box worth exactly nothing. In
  * catalogue order, like the list above.
  */
-const TANK_RAID_BUFFS: readonly string[] = presetRaidBuffsWith(['thorns', 'retribution_aura']).filter(
-  // A tank's target attacks back, so it carries no Salvation (round 47).
-  (id) => id !== 'salvation',
-);
+const TANK_RAID_BUFFS: readonly string[] = presetRaidBuffsWith(['thorns', 'retribution_aura']);
 
 function presetRaidBuffsWith(extra: readonly string[]): readonly string[] {
   const chosen = new Set([...PRESET_RAID_BUFFS, ...extra]);

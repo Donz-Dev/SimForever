@@ -55,6 +55,12 @@ import { WARRIOR_STANCES } from '../auras/warrior';
 import { TALENT_AURAS } from '../auras/talentAuras';
 // The Rogue's opening stealth window. See `openingAuras` below.
 import { STEALTH } from '../auras/rogue';
+import {
+  COMPOSURE_BONUS_KEY,
+  POISED_BONUS_ABILITY,
+  learnsPoised,
+  poisedAura,
+} from '../auras/poised';
 import { EXTERNAL_HEALER } from '../encounters/externalHealer';
 import { talentBuild, talentContextFor } from '../talents/talentBuild';
 import { RACIAL_ABILITIES, racialBuild } from '../racials';
@@ -1062,6 +1068,14 @@ export function createPlayer(options: PlayerOptions): Combatant {
        * and cannot drift. See `STEALTH` on why both carry Vanish's ten seconds.
        */
       ...(characterClass === 'rogue' ? [STEALTH] : []),
+      /*
+       * POISED (1.60.1.70755): a Rogue or a Druid arrives at the pull out of
+       * combat at full energy, so it has Poised. A route grants it again at a
+       * pull whose gap refilled the pool -- `dungeonRouteHooks`.
+       */
+      ...(learnsPoised(characterClass)
+        ? [poisedAura(build.abilityBonuses.get(POISED_BONUS_ABILITY)?.[COMPOSURE_BONUS_KEY] ?? 0)]
+        : []),
       /*
        * Auras a TALENT grants, for passives that do something on a timer
        * rather than adding a number. Anger Management ticks a rage every

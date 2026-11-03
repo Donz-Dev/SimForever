@@ -1,4 +1,5 @@
 import type { AuraDefinition } from '../../engine';
+import { poisedAura } from './poised';
 import {
   ALL_ABILITIES,
   RATING_PER_PERCENT,
@@ -196,8 +197,24 @@ export const PROWL: AuraDefinition = {
  * ============================================================================
  */
 
-/** Moonkin Aura: SPELL critical strike chance, and nothing else. */
-export const MOONKIN_AURA_ID = 'moonkin_aura';
+/*
+ * ============================================================================
+ * MOONKIN AURA AND LEADER OF THE PACK ARE ONE BUFF AGAIN (1.60.1.70755):
+ * "The critical strike bonus from this talent is again an increase to all
+ * types of critical strikes and is again exclusive with Leader of the Pack" --
+ * and the same sentence the other way round on the Feral talent.
+ *
+ * SO ONE AURA AND ONE ID, which is the arrangement before the split: every
+ * source -- both talents and both raid buff entries -- applies the same aura,
+ * `AuraCollection.apply` refreshes a matching id rather than stacking, and no
+ * combination is worth more than 3%. The two ids below are kept as names for
+ * the same id, so nothing that already names one has to change.
+ * ============================================================================
+ */
+export const PARTY_CRIT_AURA_ID = 'party_crit_aura';
+
+/** Moonkin Aura: the shared party crit aura since 1.60.1.70755. */
+export const MOONKIN_AURA_ID = PARTY_CRIT_AURA_ID;
 
 /**
  * Leader of the Pack: MELEE AND RANGED critical strike chance.
@@ -207,7 +224,7 @@ export const MOONKIN_AURA_ID = 'moonkin_aura';
  * one crit function -- so "melee and ranged" is exactly that stat and naming
  * two would be naming it twice.
  */
-export const LEADER_OF_THE_PACK_AURA_ID = 'leader_of_the_pack_aura';
+export const LEADER_OF_THE_PACK_AURA_ID = PARTY_CRIT_AURA_ID;
 
 /**
  * Crit in this engine is percentage POINTS, and melee and spells are separate
@@ -303,20 +320,23 @@ export const CLEARCASTING: AuraDefinition = {
   },
 };
 
-export const MOONKIN_AURA: AuraDefinition = {
-  id: MOONKIN_AURA_ID,
-  name: 'Moonkin Aura',
+/**
+ * "+3% Critical Strike chance" of every type: melee and ranged read
+ * `critChance` and spells read `spellCritChance`, so it is both.
+ */
+export const PARTY_CRIT_AURA: AuraDefinition = {
+  id: PARTY_CRIT_AURA_ID,
+  name: 'Leader of the Pack / Moonkin Aura',
   // As long as the druid is there, which is the whole fight.
   durationMs: 0,
-  statModifiers: [flat('spellCritChance', PARTY_CRIT_AURA_PERCENT)],
+  statModifiers: [
+    flat('critChance', PARTY_CRIT_AURA_PERCENT),
+    flat('spellCritChance', PARTY_CRIT_AURA_PERCENT),
+  ],
 };
 
-export const LEADER_OF_THE_PACK_AURA: AuraDefinition = {
-  id: LEADER_OF_THE_PACK_AURA_ID,
-  name: 'Leader of the Pack',
-  durationMs: 0,
-  statModifiers: [flat('critChance', PARTY_CRIT_AURA_PERCENT)],
-};
+export const MOONKIN_AURA: AuraDefinition = PARTY_CRIT_AURA;
+export const LEADER_OF_THE_PACK_AURA: AuraDefinition = PARTY_CRIT_AURA;
 
 // ---------------------------------------------------------------------------
 // Balance
@@ -1242,4 +1262,6 @@ export const INNERVATE_AURA: AuraDefinition = {
 
 export const CATALOG_AURAS: readonly AuraDefinition[] = [
   ripAura(0),
+  // Poised (1.60.1.70755), a Druid and Rogue passive declared in `poised.ts`.
+  poisedAura(),
 ];

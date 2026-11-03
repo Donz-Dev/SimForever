@@ -109,8 +109,7 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
 
       {/*
         * THE "TARGET ATTACKS BACK" CHECKBOX IS GONE (round 52): the Simulation
-        * panel's Run Tank Simulation button is that switch now, and it carries
-        * Salvation with it exactly as the checkbox did. The swing figures stay
+        * panel's Run Tank Simulation button is that switch now. The swing figures stay
         * here, always shown, because both a tank run and the Tank Healer fight
         * read them.
         */}

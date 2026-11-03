@@ -185,6 +185,14 @@ export interface CastModifier {
    */
   readonly requiresCost?: boolean;
   /**
+   * Only match an ability whose cost is paid in THIS resource.
+   *
+   * Poised is "your next ENERGY ability", and a Druid owns mana, rage and
+   * energy at once -- so `requiresCost` alone would let a mana spell eat a
+   * charge meant for a Shred.
+   */
+  readonly requiresResource?: ResourceType;
+  /**
    * Only match an ability that ROLLS A COMBAT TABLE.
    *
    * ----------------------------------------------------------------------------

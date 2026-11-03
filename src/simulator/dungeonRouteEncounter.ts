@@ -12,6 +12,13 @@ import {
 } from '../game/encounters/dungeonRoute';
 import { drinkingAura, outOfCombatAura } from '../game/auras/dungeon';
 import { talentBuild } from '../game/talents/talentBuild';
+import {
+  COMPOSURE_BONUS_KEY,
+  POISED_BONUS_ABILITY,
+  atMaximumEnergy,
+  learnsPoised,
+  poisedAura,
+} from '../game/auras/poised';
 
 /**
  * THE DUNGEON ROUTE AS AN ENCOUNTER: the owner's timeline of pulls and gaps
@@ -100,6 +107,7 @@ export function dungeonRouteHooks(
   const decayRate = Math.max(0, 1 - build.rageDecayReductionPercent / 100);
   const decayDelayMs = seconds(build.rageDecayDelaySeconds);
   const pullStartingAt = new Map(PULLS.map((step) => [routeTimeMs(step.start), step]));
+  const composure = build.abilityBonuses.get(POISED_BONUS_ABILITY)?.[COMPOSURE_BONUS_KEY] ?? 0;
 
   return {
     onSegmentStart: (context, segment, index) => {
@@ -118,6 +126,14 @@ export function dungeonRouteHooks(
          */
         for (const player of players) {
           if (rotations) player.rotation = step.count > 1 ? rotations.multi : rotations.single;
+          /*
+           * POISED, if the gap left the pool full: "when you are not in combat
+           * and have your maximum Energy". The pull's first instant is the last
+           * out-of-combat moment, so this is where the state is read.
+           */
+          if (index > 0 && learnsPoised(profile.character.characterClass) && atMaximumEnergy(player)) {
+            context.applyAura(player, poisedAura(composure), player.id);
+          }
         }
         const primary = context.combatant(enemyId(0));
         if (primary && index > 0) {

@@ -1,4 +1,5 @@
 import type { AuraDefinition } from '../../engine';
+import { poisedAura } from './poised';
 import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
 import {
   DEADLY_POISON_TICK_AP_COEFFICIENT,
@@ -759,6 +760,8 @@ export function venomAura(comboPoints: number): AuraDefinition {
  * ----------------------------------------------------------------------------
  */
 export const CATALOG_AURAS: readonly AuraDefinition[] = [
+  // Poised (1.60.1.70755), a Rogue and Druid passive declared in `poised.ts`.
+  poisedAura(),
   /*
    * ADDED BY THE AURA-CATALOGUE AUDIT, which found these reachable ONLY through
    * `aurasForClass`'s stock-list safety net -- "anything a stock list names must
