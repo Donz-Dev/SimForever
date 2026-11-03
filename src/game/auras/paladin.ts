@@ -458,14 +458,19 @@ export const VENGEANCE_DURATION_MS = seconds(30);
  * narrowing of the tooltip and a no-op here, which is worth saying rather than
  * leaving a reader to wonder which of the two changes was implemented.
  */
-export const VENGEANCE_MAX_STACKS = 3;
+/*
+ * AND BACK TO FIVE AT 1.60.1.70755: "Vengeance changed to stacking up to 5
+ * times (Was stacking up to 3 times)". The row carries it -- `[percent, 30,
+ * stacks]` -- so the reaction reads index 2 and this is only the default.
+ */
+export const VENGEANCE_MAX_STACKS = 5;
 
-export function vengeanceAura(percentPerStack: number): AuraDefinition {
+export function vengeanceAura(percentPerStack: number, maxStacks = VENGEANCE_MAX_STACKS): AuraDefinition {
   return {
     id: 'vengeance',
     name: 'Vengeance',
     durationMs: VENGEANCE_DURATION_MS,
-    maxStacks: VENGEANCE_MAX_STACKS,
+    maxStacks,
     refreshBehaviour: 'reset',
     modifiersScaleWithStacks: true,
     damageDoneMultiplier: 1 + percentPerStack / 100,
