@@ -1,6 +1,6 @@
 {
  "class": "priest",
- "source": "https://talentsforever.com/talents.js",
+ "source": "https://foreverchanges.pro/talents/priest",
  "structure": "src/data/talents/priest.json",
  "talents": {
   "power_in_light": {
@@ -189,7 +189,7 @@
    "name": "Penance",
    "tree": "discipline",
    "ranks": 1,
-   "text": "Launches a volley of holy light at the target, causing 44 Holy damage to an enemy, or 133 healing to an ally, instantly and every 1 sec for 2 sec.",
+   "text": "Launches a volley of holy light at the target, causing 45 Holy damage to an enemy, or 134 healing to an ally, instantly and every 1 sec for 2 sec.",
    "values": null,
    "note": "single rank"
   },
@@ -197,7 +197,7 @@
    "name": "Renewed Hope",
    "tree": "discipline",
    "ranks": 5,
-   "text": "Your heals from Flash Heal, Binding Heal, Lesser Heal, Heal, Greater Heal, and Penance gain {0}% increased critical strike chance when cast on targets with Weakened Soul, and reduce the remaining duration of Weakened Soul on their target by {1} sec.",
+   "text": "Your heals from Flash Heal, Lesser Heal, Heal, Greater Heal, and Penance gain {0}% increased critical strike chance when cast on targets with Weakened Soul, and reduce the remaining duration of Weakened Soul on their target by {1} sec.",
    "values": [
     [
      2,
@@ -225,24 +225,21 @@
    "name": "Divine Aegis",
    "tree": "discipline",
    "ranks": 3,
-   "text": "Your non-periodic critical heals create a protective shield on the target, absorbing {0}% of the amount healed. Shields up to {1},{2} damage and lasts {3} sec.",
+   "text": "Your non-periodic critical heals create a protective shield on the target, absorbing {0}% of the amount healed. Shields up to {1} damage and lasts {2} sec.",
    "values": [
     [
      5,
-     1,
-     200,
+     1200,
      12
     ],
     [
      10,
-     1,
-     200,
+     1200,
      12
     ],
     [
      15,
-     1,
-     200,
+     1200,
      12
     ]
    ]
@@ -259,7 +256,7 @@
    "name": "Twilight Focus",
    "tree": "holy",
    "ranks": 3,
-   "text": "Gives you a {0}% chance to avoid interruption caused by damage while casting any spell.",
+   "text": "Gives your spells a {0}% chance to not lose casting time when you take damage.",
    "values": [
     23,
     47,
@@ -320,7 +317,7 @@
    "name": "Holy Nova",
    "tree": "holy",
    "ranks": 1,
-   "text": "Causes an explosion of holy light around the caster, causing 26 to 30 Holy damage to all enemy targets within 10 yards and healing all party members within 10 yards for 49 to 57. These effects cause no threat.",
+   "text": "Causes an explosion of holy light around the caster, causing 26 to 30 Holy damage to all enemy targets within 10 yards and healing all party members within 10 yards for 50 to 57. These effects cause no threat.",
    "values": null,
    "note": "single rank"
   },
@@ -404,11 +401,11 @@
     ]
    ]
   },
-  "binding_heal": {
-   "name": "Binding Heal",
+  "holy_binding": {
+   "name": "Holy Binding",
    "tree": "holy",
    "ranks": 1,
-   "text": "Heals a friendly target and the caster for 236 to 284. Low threat.",
+   "text": "Each time you heal a target other than yourself with Flash Heal, you are healed for 50% as much. This healing generates no threat.",
    "values": null,
    "note": "single rank"
   },
@@ -479,7 +476,7 @@
   },
   "shadow_focus": {
    "name": "Shadow Focus",
-   "tree": "shadow",
+   "tree": "shadow_magic",
    "ranks": 5,
    "text": "Improves your chance to hit with Shadow spells by {0}%.",
    "values": [
@@ -492,7 +489,7 @@
   },
   "blackout": {
    "name": "Blackout",
-   "tree": "shadow",
+   "tree": "shadow_magic",
    "ranks": 5,
    "text": "Gives your Shadow damage spells a {0}% chance to stun the target for {1} sec.",
    "values": [
@@ -520,7 +517,7 @@
   },
   "spirit_tap": {
    "name": "Spirit Tap",
-   "tree": "shadow",
+   "tree": "shadow_magic",
    "ranks": 5,
    "text": "Gives you a {0}% chance to increase your Spirit by {1}% for {2} sec after killing a non-trivial target or when an enemy afflicted by your Vampiric Embrace dies. For the duration, {3}% of your Mana regeneration will continue while casting.",
    "values": [
@@ -558,7 +555,7 @@
   },
   "improved_mind_blast": {
    "name": "Improved Mind Blast",
-   "tree": "shadow",
+   "tree": "shadow_magic",
    "ranks": 5,
    "text": "Reduces the cooldown of your Mind Blast spell by {0} sec.",
    "values": [
@@ -571,7 +568,7 @@
   },
   "improved_shadow_word_pain": {
    "name": "Improved Shadow Word: Pain",
-   "tree": "shadow",
+   "tree": "shadow_magic",
    "ranks": 2,
    "text": "Increases the duration of your Shadow Word: Pain spell by {0} sec.",
    "values": [
@@ -581,7 +578,7 @@
   },
   "shadow_reach": {
    "name": "Shadow Reach",
-   "tree": "shadow",
+   "tree": "shadow_magic",
    "ranks": 2,
    "text": "Increases the range of your offensive Shadow spells by {0}%.",
    "values": [
@@ -591,7 +588,7 @@
   },
   "improved_psychic_scream": {
    "name": "Improved Psychic Scream",
-   "tree": "shadow",
+   "tree": "shadow_magic",
    "ranks": 2,
    "text": "Reduces the cooldown of your Psychic Scream spell by {0} sec.",
    "values": [
@@ -601,7 +598,7 @@
   },
   "mind_flay": {
    "name": "Mind Flay",
-   "tree": "shadow",
+   "tree": "shadow_magic",
    "ranks": 1,
    "text": "Assault the target's mind with Shadow energy, causing 63 Shadow damage over 3 sec and slowing their movement speed by 50%.",
    "values": null,
@@ -609,7 +606,7 @@
   },
   "improved_mind_flay": {
    "name": "Improved Mind Flay",
-   "tree": "shadow",
+   "tree": "shadow_magic",
    "ranks": 2,
    "text": "Each instance of damage of Mind Flay deals {0}% more damage than its previous instance of damage.",
    "values": [
@@ -619,7 +616,7 @@
   },
   "dark_inspiration": {
    "name": "Dark Inspiration",
-   "tree": "shadow",
+   "tree": "shadow_magic",
    "ranks": 5,
    "text": "Your Mind Blast and fully channeled Mind Flay causes Dark Inspiration, increasing yours and your party's Spirit by {0}% for {1} sec.",
    "values": [
@@ -647,7 +644,7 @@
   },
   "vampiric_embrace": {
    "name": "Vampiric Embrace",
-   "tree": "shadow",
+   "tree": "shadow_magic",
    "ranks": 1,
    "text": "Afflicts your target with Shadow energy that causes all party members to be healed for 20% of any Shadow spell damage you deal for 30 sec.",
    "values": null,
@@ -655,7 +652,7 @@
   },
   "shadow_weaving": {
    "name": "Shadow Weaving",
-   "tree": "shadow",
+   "tree": "shadow_magic",
    "ranks": 3,
    "text": "Your Shadow damage spells have a {0}% chance to increase the Shadow damage the target takes from you by {1}% for {2} sec, stacking up to {3} times.",
    "values": [
@@ -681,7 +678,7 @@
   },
   "silence": {
    "name": "Silence",
-   "tree": "shadow",
+   "tree": "shadow_magic",
    "ranks": 1,
    "text": "Silences the target, preventing them from casting spells for 5 sec and interrupting their spellcasts for 3 sec.",
    "values": null,
@@ -689,7 +686,7 @@
   },
   "devouring_contagion": {
    "name": "Devouring Contagion",
-   "tree": "shadow",
+   "tree": "shadow_magic",
    "ranks": 2,
    "text": "Reduces the mana cost of your Devouring Plague by {0}%.\n\nTargets that die while Devouring Plague is active spreads it, jumping to {1} nearby enemies within {2} yds for the remaining duration.",
    "values": [
@@ -707,7 +704,7 @@
   },
   "early_demise": {
    "name": "Early Demise",
-   "tree": "shadow",
+   "tree": "shadow_magic",
    "ranks": 2,
    "text": "Increases Shadow Word: Death's critical strike chance on targets at or below {0}% health by {1}%.",
    "values": [
@@ -723,7 +720,7 @@
   },
   "darkness": {
    "name": "Darkness",
-   "tree": "shadow",
+   "tree": "shadow_magic",
    "ranks": 5,
    "text": "Increases your Shadow damage done by {0}%.",
    "values": [
@@ -736,7 +733,7 @@
   },
   "shadowform": {
    "name": "Shadowform",
-   "tree": "shadow",
+   "tree": "shadow_magic",
    "ranks": 1,
    "text": "Assume Shadowform, increasing your Shadow damage by 10%, reducing the Mana cost of all Shadow spells by 50%, increasing the critical strike damage bonus of your Shadow spells by 100%, and reducing Physical damage taken by you by 15%. However, you may not cast healing spells while in this form.",
    "values": [

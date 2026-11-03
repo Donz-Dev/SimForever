@@ -522,7 +522,7 @@
      "tier": 15,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases the physical damage you deal by 6%, and reduces all threat you generate by 20% while a two-handed melee weapon is equipped."
+     "description": "Increases the Physical and Holy damage you deal by 6%, and reduces all threat you generate by 20% while a two-handed melee weapon is equipped."
     },
     {
      "row": 4,
@@ -555,7 +555,7 @@
      "tier": 20,
      "requires": "Seal of Command",
      "requiresRanks": 1,
-     "description": "Increases your Physical and Holy damage dealt by 3% for 30 sec after landing a non-periodic critical strike. Stacks up to 3 times."
+     "description": "Increases your Physical and Holy damage dealt by 3% for 30 sec after landing a non-periodic critical strike. Stacks up to 5 times."
     },
     {
      "row": 5,

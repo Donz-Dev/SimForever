@@ -1,6 +1,6 @@
 {
  "class": "hunter",
- "source": "https://talentsforever.com/talents.js",
+ "source": "https://foreverchanges.pro/talents/hunter",
  "structure": "src/data/talents/hunter.json",
  "talents": {
   "deadly_aspects": {
@@ -94,16 +94,6 @@
     ]
    ]
   },
-  "pathfinding": {
-   "name": "Pathfinding",
-   "tree": "beast_mastery",
-   "ranks": 2,
-   "text": "Increases the speed bonus of your Aspect of the Cheetah and Aspect of the Pack by {0}%.",
-   "values": [
-    3,
-    6
-   ]
-  },
   "improved_revive_pet": {
    "name": "Improved Revive Pet",
    "tree": "beast_mastery",
@@ -120,6 +110,16 @@
      40,
      30
     ]
+   ]
+  },
+  "pathfinding": {
+   "name": "Pathfinding",
+   "tree": "beast_mastery",
+   "ranks": 2,
+   "text": "Increases the speed bonus of your Aspect of the Cheetah and Aspect of the Pack by {0}%.",
+   "values": [
+    3,
+    6
    ]
   },
   "bestial_swiftness": {
@@ -178,7 +178,7 @@
    "name": "Summon Hawk",
    "tree": "beast_mastery",
    "ranks": 1,
-   "text": "Command a hawk to dive-bomb your targeted enemy, dealing 32 plus 5% of your Ranged Attack Power Physical damage and continuing its assault for 18 sec. Only 2 hawks can be active at once. Summon Hawk shares its cooldown with Arcane Shot.",
+   "text": "Command a hawk to dive-bomb your targeted enemy, dealing 34 Physical damage and continuing its assault for 18 sec. Only 2 hawks can be active at once. Summon Hawk shares its cooldown with Arcane Shot.",
    "values": null,
    "note": "single rank"
   },
@@ -407,7 +407,7 @@
    "name": "Trueshot Aura",
    "tree": "marksmanship",
    "ranks": 1,
-   "text": "Increases the Ranged Attack Power of party or raid members within 45 yds by 30.",
+   "text": "Increases the Ranged Attack Power of party or raid members within 45 yds by 20.",
    "values": null,
    "note": "single rank"
   },
@@ -448,9 +448,9 @@
    "ranks": 3,
    "text": "Increases the damage done by your Multi-Shot, Aimed Shot, and Volley abilities by {0}%.",
    "values": [
-    3,
-    7,
-    10
+    5,
+    10,
+    15
    ]
   },
   "scatter_shot": {
@@ -478,7 +478,7 @@
    "name": "Sniper Shot",
    "tree": "marksmanship",
    "ranks": 1,
-   "text": "A long-range shot that deals ranged damage plus 160 and increases the range of your next 3 Shots by 10 yards for 10 sec.",
+   "text": "A long-range shot that deals ranged damage plus 320 and increases the range of your next 3 Shots by 10 yards for 10 sec.",
    "values": null,
    "note": "single rank"
   },
@@ -650,7 +650,7 @@
    "name": "Counterattack",
    "tree": "survival",
    "ranks": 1,
-   "text": "A strike that becomes active after parrying an opponent's attack. This attack deals 50% weapon damage plus 13 and immobilizes the target for 5 sec. Counterattack cannot be blocked, dodged, or parried.",
+   "text": "A strike that becomes active after parrying an opponent's attack. This attack deals 50% weapon damage plus 26 and immobilizes the target for 5 sec. Counterattack cannot be blocked, dodged, or parried.",
    "values": null,
    "note": "single rank"
   },
@@ -714,11 +714,11 @@
    "ranks": 5,
    "text": "Increases your Agility by {0}%.",
    "values": [
-    2,
-    4,
+    3,
     6,
-    8,
-    10
+    9,
+    12,
+    15
    ]
   },
   "lacerating_strikes": {

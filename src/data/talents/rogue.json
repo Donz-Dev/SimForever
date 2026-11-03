@@ -1,6 +1,6 @@
 {
  "class": "rogue",
- "source": "https://talentsforever.com/talents.js",
+ "source": "https://foreverchanges.pro/talents/rogue",
  "trees": [
   {
    "id": "assassination",
@@ -54,12 +54,12 @@
      "row": 1,
      "col": 1,
      "ranks": 2,
-     "name": "Murder",
-     "icon": "spell_shadow_deathscream",
+     "name": "Improved Expose Armor",
+     "icon": "ability_warrior_riposte",
      "tier": 5,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases all damage dealt by 4% against Humanoid and Giant targets."
+     "description": "Reduces the Energy cost of your Expose Armor ability by 10, and refunds 2 Combo Points when cast with 5 Combo Points."
     },
     {
      "row": 1,
@@ -75,29 +75,29 @@
     {
      "row": 2,
      "col": 0,
-     "ranks": 1,
-     "name": "Relentless Strikes",
-     "icon": "ability_warrior_decisivestrike",
+     "ranks": 2,
+     "name": "Vigor",
+     "icon": "spell_nature_earthbindtotem",
      "tier": 10,
      "requires": null,
      "requiresRanks": null,
-     "description": "Your finishing moves have a 20% chance per Combo Point to restore 25 Energy."
+     "description": "Increases your maximum Energy by 10."
     },
     {
      "row": 2,
      "col": 1,
-     "ranks": 2,
-     "name": "Improved Expose Armor",
-     "icon": "ability_warrior_riposte",
+     "ranks": 1,
+     "name": "Blood Splatter",
+     "icon": "ability_rogue_rupture",
      "tier": 10,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces the Energy cost of your Expose Armor ability by 10, and refunds 2 Combo Points when cast with 5 Combo Points."
+     "description": "Increases the duration of your Rupture ability by 6 sec and your Garrote ability by 9 sec."
     },
     {
      "row": 2,
      "col": 2,
-     "ranks": 5,
+     "ranks": 2,
      "name": "Lethality",
      "icon": "ability_criticalstrike",
      "tier": 10,
@@ -141,24 +141,24 @@
     {
      "row": 4,
      "col": 0,
-     "ranks": 2,
-     "name": "Vigor",
-     "icon": "spell_nature_earthbindtotem",
+     "ranks": 5,
+     "name": "Relentless Strikes",
+     "icon": "ability_warrior_decisivestrike",
      "tier": 20,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases your maximum Energy by 10."
+     "description": "Your finishing moves have a 20% chance per Combo Point to restore 25 Energy."
     },
     {
      "row": 4,
      "col": 1,
      "ranks": 1,
-     "name": "Mutilate",
-     "icon": "ability_rogue_deadlybrew",
+     "name": "Venom",
+     "icon": "inv_sword_31",
      "tier": 20,
      "requires": null,
      "requiresRanks": null,
-     "description": "Instantly attacks with both weapons for 75% weapon damage plus an additional 13 with each weapon. Damage increased by 20% against Poisoned targets. Awards 2 Combo Points."
+     "description": "Causes your Shank ability to increase your Poison damage by 30% and your chance to apply Poisons by 20% for 6 sec."
     },
     {
      "row": 4,
@@ -174,7 +174,7 @@
     {
      "row": 5,
      "col": 2,
-     "ranks": 5,
+     "ranks": 3,
      "name": "Seal Fate",
      "icon": "spell_shadow_chilltouch",
      "tier": 25,
@@ -186,12 +186,12 @@
      "row": 6,
      "col": 1,
      "ranks": 1,
-     "name": "Venom",
-     "icon": "inv_sword_31",
+     "name": "Mutilate",
+     "icon": "ability_rogue_deadlybrew",
      "tier": 30,
-     "requires": "Mutilate",
+     "requires": "Venom",
      "requiresRanks": 1,
-     "description": "Finishing move that increases the damage of your Poisons by 30% and your chance to apply Poisons by 10%. Lasts longer per combo point:\n 1 point : 9 sec\n 2 points: 12 sec\n 3 points: 15 sec\n 4 points: 18 sec\n 5 points: 21 sec"
+     "description": "Instantly attacks with both weapons for 90% weapon damage plus an additional 40 with each weapon. Damage increased by 20% against Poisoned targets. Awards 2 Combo Points."
     }
    ]
   },
@@ -203,23 +203,23 @@
      "row": 0,
      "col": 0,
      "ranks": 3,
-     "name": "Improved Eviscerate",
+     "name": "Coup de Grace",
      "icon": "ability_rogue_eviscerate",
      "tier": 0,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases the damage done by your Eviscerate ability by 20%."
+     "description": "Increases the damage done by your Eviscerate ability by 20%, and the damage and storage rate of your Death Mark ability by 20%."
     },
     {
      "row": 0,
      "col": 1,
      "ranks": 2,
-     "name": "Improved Sinister Strike",
+     "name": "Efficient Strikes",
      "icon": "spell_shadow_ritualofsacrifice",
      "tier": 0,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces the Energy cost of your Sinister Strike ability by 5."
+     "description": "Reduces the Energy cost of your Sinister Strike and Hemorrhage abilities by 5."
     },
     {
      "row": 0,
@@ -266,6 +266,17 @@
      "description": "Improves your chance to hit by 3%."
     },
     {
+     "row": 1,
+     "col": 3,
+     "ranks": 2,
+     "name": "Improved Sprint",
+     "icon": "ability_rogue_sprint",
+     "tier": 5,
+     "requires": null,
+     "requiresRanks": null,
+     "description": "Gives a 100% chance to remove all movement impairing effects when you activate your Sprint ability."
+    },
+    {
      "row": 2,
      "col": 0,
      "ranks": 2,
@@ -291,12 +302,12 @@
      "row": 2,
      "col": 3,
      "ranks": 2,
-     "name": "Improved Sprint",
-     "icon": "ability_rogue_sprint",
+     "name": "Composure",
+     "icon": "ability_rogue_fleetfooted",
      "tier": 10,
      "requires": null,
      "requiresRanks": null,
-     "description": "Gives a 100% chance to remove all movement impairing effects when you activate your Sprint ability."
+     "description": "Increases the Energy cost reduction of your Poised ability by 10."
     },
     {
      "row": 3,
@@ -318,18 +329,40 @@
      "tier": 15,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces the Energy cost of your Eviscerate ability by 10."
+     "description": "Reduces the Energy cost of your Eviscerate ability by 15."
     },
     {
      "row": 3,
      "col": 2,
-     "ranks": 5,
-     "name": "Dual Wield Specialization",
-     "icon": "ability_dualwield",
+     "ranks": 2,
+     "name": "Weapon Expertise",
+     "icon": "spell_holy_blessingofstrength",
      "tier": 15,
      "requires": "Precision",
      "requiresRanks": 3,
-     "description": "Increases the damage done by your off-hand weapon by 25%."
+     "description": "Reduces the chance for your attacks to be Dodged or Parried by 2%."
+    },
+    {
+     "row": 3,
+     "col": 3,
+     "ranks": 3,
+     "name": "Aggression",
+     "icon": "ability_racial_avatar",
+     "tier": 15,
+     "requires": null,
+     "requiresRanks": null,
+     "description": "Increases the damage of your Sinister Strike and Eviscerate abilities by 15%."
+    },
+    {
+     "row": 4,
+     "col": 0,
+     "ranks": 2,
+     "name": "Dual Wield Specialization",
+     "icon": "ability_dualwield",
+     "tier": 20,
+     "requires": null,
+     "requiresRanks": null,
+     "description": "Increases the damage done by your off-hand weapon by 50%."
     },
     {
      "row": 4,
@@ -351,29 +384,18 @@
      "tier": 20,
      "requires": null,
      "requiresRanks": null,
-     "description": "Gives your melee weapon attacks a benefit depending on the weapon.\n\n Axe/Sword: Your successful\n melee attacks have a 5% chance\n to trigger an extra attack on the \n target.\n\n Dagger/Fist: Increases your\n critical strike chance by 5%.\n\n Mace: Your attacks ignore 15% of\n your target's armor."
-    },
-    {
-     "row": 5,
-     "col": 1,
-     "ranks": 2,
-     "name": "Weapon Expertise",
-     "icon": "spell_holy_blessingofstrength",
-     "tier": 25,
-     "requires": "Blade Flurry",
-     "requiresRanks": 1,
-     "description": "Reduces the chance for your attacks to be Dodged or Parried by 2%."
+     "description": "Gives your melee weapon attacks a benefit depending on the weapon.\n\nAxe/Sword: Your successful\nmelee attacks have a 5% chance\nto trigger an extra attack on the\ntarget.\n\nDagger/Fist: Increases your\ncritical strike chance by 5%.\n\nMace: Your attacks ignore 15% of\nyour target's armor."
     },
     {
      "row": 5,
      "col": 2,
-     "ranks": 3,
-     "name": "Aggression",
-     "icon": "ability_racial_avatar",
+     "ranks": 5,
+     "name": "Flash of Steel",
+     "icon": "ability_rogue_restlessblades",
      "tier": 25,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases the damage of your Sinister Strike, Backstab, and Eviscerate abilities by 6%."
+     "description": "Increases the Energy generated by your Shank ability by 15 and reduces its cooldown by 2.0 sec."
     },
     {
      "row": 6,
@@ -382,8 +404,8 @@
      "name": "Adrenaline Rush",
      "icon": "spell_shadow_shadowworddominate",
      "tier": 30,
-     "requires": null,
-     "requiresRanks": null,
+     "requires": "Blade Flurry",
+     "requiresRanks": 1,
      "description": "Increases your Energy regeneration rate by 100% for 15 sec."
     }
    ]
@@ -395,13 +417,13 @@
     {
      "row": 0,
      "col": 0,
-     "ranks": 5,
-     "name": "Camouflage",
-     "icon": "ability_stealth",
+     "ranks": 3,
+     "name": "Setup",
+     "icon": "spell_nature_mirrorimage",
      "tier": 0,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces your speed penalty from your Stealth ability by 15% and reduces its cooldown by 6 sec."
+     "description": "Gives you a 45% chance to add a Combo Point to your target after Dodging their attack or fully resisting one of their spells."
     },
     {
      "row": 0,
@@ -417,50 +439,39 @@
     {
      "row": 0,
      "col": 2,
-     "ranks": 2,
+     "ranks": 5,
      "name": "Opportunity",
      "icon": "ability_warrior_warcry",
      "tier": 0,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases the damage dealt by your Backstab, Garrote, Ambush, and Mutilate abilities by 10%."
+     "description": "Increases the damage dealt by your Backstab, Garrote, Ambush, and Mutilate abilities by 20%."
     },
     {
      "row": 1,
      "col": 0,
-     "ranks": 3,
-     "name": "Setup",
-     "icon": "spell_nature_mirrorimage",
+     "ranks": 2,
+     "name": "Dirty Deeds",
+     "icon": "spell_shadow_summonsuccubus",
      "tier": 5,
      "requires": null,
      "requiresRanks": null,
-     "description": "Gives you a 100% chance to add a Combo Point to your target after Dodging one of their attacks or fully resisting one of their spells."
+     "description": "Reduces the Energy cost of your Cheap Shot and Garrote abilities by 20, and your Garrote ability no longer requires you to be behind your target."
     },
     {
      "row": 1,
      "col": 1,
-     "ranks": 2,
-     "name": "Elusiveness",
-     "icon": "spell_magic_lesserinvisibilty",
+     "ranks": 3,
+     "name": "Camouflage",
+     "icon": "ability_stealth",
      "tier": 5,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces the cooldown of your Vanish and Blind abilities by 90 sec."
+     "description": "Reduces your speed penalty from your Stealth ability by 15% and reduces its cooldown by 6 sec."
     },
     {
      "row": 1,
      "col": 2,
-     "ranks": 2,
-     "name": "Dirty Tricks",
-     "icon": "ability_sap",
-     "tier": 5,
-     "requires": null,
-     "requiresRanks": null,
-     "description": "Reduces the Energy cost of your Sap and Blind abilities by 50%."
-    },
-    {
-     "row": 1,
-     "col": 3,
      "ranks": 3,
      "name": "Improved Ambush",
      "icon": "ability_rogue_ambush",
@@ -468,6 +479,17 @@
      "requires": null,
      "requiresRanks": null,
      "description": "Increases the critical strike chance of your Ambush ability by 45%."
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "ranks": 2,
+     "name": "Dirty Tricks",
+     "icon": "ability_sap",
+     "tier": 5,
+     "requires": null,
+     "requiresRanks": null,
+     "description": "Reduces the Energy cost of your Sap and Blind abilities by 50%."
     },
     {
      "row": 2,
@@ -484,67 +506,67 @@
      "row": 2,
      "col": 1,
      "ranks": 1,
-     "name": "Ghostly Strike",
-     "icon": "spell_shadow_curse",
-     "tier": 10,
-     "requires": null,
-     "requiresRanks": null,
-     "description": "A strike that deals 125% (180% if a Dagger is equipped in your Main Hand) weapon damage and increases your chance to dodge by 15% for 7 sec. Awards 1 combo point."
-    },
-    {
-     "row": 2,
-     "col": 2,
-     "ranks": 2,
-     "name": "Improved Distract",
-     "icon": "ability_rogue_distract",
-     "tier": 10,
-     "requires": null,
-     "requiresRanks": null,
-     "description": "Increases the radius of your Distract ability by 5 yds, and further reduces the Stealth detection of distracted enemies as though they were an additional 2 levels lower."
-    },
-    {
-     "row": 3,
-     "col": 0,
-     "ranks": 2,
-     "name": "Heightened Senses",
-     "icon": "ability_ambush",
-     "tier": 15,
-     "requires": null,
-     "requiresRanks": null,
-     "description": "Increases your Stealth detection as if you were 3 levels higher and reduces your chance to be hit by spells and ranged attacks by 4%."
-    },
-    {
-     "row": 3,
-     "col": 1,
-     "ranks": 1,
      "name": "Premeditation",
      "icon": "spell_shadow_possession",
-     "tier": 15,
+     "tier": 10,
      "requires": null,
      "requiresRanks": null,
      "description": "Adds 2 Combo Points to your target. You must add to or use those combo points within 20 sec or the combo points are lost."
     },
     {
-     "row": 3,
+     "row": 2,
      "col": 2,
      "ranks": 3,
      "name": "Serrated Blades",
      "icon": "inv_sword_17",
-     "tier": 15,
+     "tier": 10,
      "requires": null,
      "requiresRanks": null,
      "description": "Causes your attacks to ignore 9% of your target's Armor and increases the damage dealt by your Rupture ability by 30%."
     },
     {
+     "row": 3,
+     "col": 0,
+     "ranks": 2,
+     "name": "Elusiveness",
+     "icon": "spell_magic_lesserinvisibilty",
+     "tier": 15,
+     "requires": null,
+     "requiresRanks": null,
+     "description": "Reduces the cooldown of your Vanish and Blind abilities by 90 sec."
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "ranks": 1,
+     "name": "Ghostly Strike",
+     "icon": "spell_shadow_curse",
+     "tier": 15,
+     "requires": null,
+     "requiresRanks": null,
+     "description": "A strike that deals 125% (180% if a Dagger is equipped in your Main Hand) weapon damage, increases your chance to dodge by 15% for 7 sec, and causes your next Ambush or Garrote cast within 7 sec to not require Stealth. Awards 1 combo points."
+    },
+    {
+     "row": 3,
+     "col": 3,
+     "ranks": 2,
+     "name": "Quick Getaway",
+     "icon": "ability_rogue_blackjack",
+     "tier": 15,
+     "requires": "Dirty Tricks",
+     "requiresRanks": 2,
+     "description": "Increases the maximum number of targets you may have Sapped by 1, and increases your movement speed by 30% for 3 sec after Sapping a target."
+    },
+    {
      "row": 4,
      "col": 0,
      "ranks": 2,
-     "name": "Dirty Deeds",
-     "icon": "spell_shadow_summonsuccubus",
+     "name": "Heightened Senses",
+     "icon": "ability_ambush",
      "tier": 20,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces the Energy cost of your Cheap Shot and Garrote abilities by 20, and your Garrote ability no longer requires you to be behind your target."
+     "description": "Increases your Stealth detection as if you were 3 levels higher and reduces your chance to be hit by spells and ranged attacks by 4%."
     },
     {
      "row": 4,
@@ -566,40 +588,29 @@
      "tier": 20,
      "requires": "Serrated Blades",
      "requiresRanks": 3,
-     "description": "An instant strike that deals 100% weapon damage (145% if a Dagger is equipped) and causes the target to take 15% increased Rupture damage from the Rogue. Lasts 15 sec. Awards 1 Combo Point."
-    },
-    {
-     "row": 5,
-     "col": 0,
-     "ranks": 5,
-     "name": "Quietus",
-     "icon": "ability_rogue_garrote",
-     "tier": 25,
-     "requires": "Dirty Deeds",
-     "requiresRanks": 2,
-     "description": "Your Sinister Strike, Ghostly Strike, and Hemorrhage abilities cause 10% more damage against targets below 35% health."
+     "description": "An instant strike that deals 100% weapon damage (145% if a Dagger is equipped) and causes the target to take 15% increased Rupture and Garrote damage from the Rogue. Lasts 15 sec. Awards 1 Combo Points."
     },
     {
      "row": 5,
      "col": 2,
      "ranks": 5,
-     "name": "Cutthroat",
-     "icon": "classicon_rogue",
+     "name": "Boot Knife",
+     "icon": "inv_sword_32",
      "tier": 25,
      "requires": null,
      "requiresRanks": null,
-     "description": "Your Backstab has a 15% chance to cause your next Ambush within 10 sec to not require Stealth."
+     "description": "Grants your Shank ability a 100% chance to add 2 Combo Points to the target."
     },
     {
      "row": 6,
      "col": 1,
      "ranks": 1,
-     "name": "Thousand Cuts",
-     "icon": "ability_rogue_rupture",
+     "name": "Death Mark",
+     "icon": "ability_creature_cursed_02",
      "tier": 30,
      "requires": "Preparation",
      "requiresRanks": 1,
-     "description": "When your Rupture ability deals periodic damage, the Energy cost of your next Hemorrhage or Backstab ability within 10 sec is reduced by 3, stacking up to 5 times."
+     "description": "Finishing move that marks the target, storing a portion of the damage dealt by your attacks per Combo Point. Garrote and Rupture damage is stored at twice the rate. After 6 sec, the stored damage is dealt, up to a maximum increased by Attack Power and Critical Strike chance:\n1 point : 12% stored, (169.95 + 4.12% of attack power) damage cap\n2 points: 24% stored, (275.01 + 8.24% of attack power) damage cap\n3 points: 36% stored, (380.07 + 12.36% of attack power) damage cap\n4 points: 48% stored, (485.13 + 16.48% of attack power) damage cap\n5 points: 60% stored, (590.19 + 20.6% of attack power) damage cap"
     }
    ]
   }

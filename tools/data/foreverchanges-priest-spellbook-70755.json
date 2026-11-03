@@ -1,0 +1,1009 @@
+{
+ "class": "priest",
+ "source": "https://foreverchanges.pro/spellbook/priest",
+ "build": "1.60.1.70755",
+ "note": "Max rank of each spell, read off the page in a browser and hashed there and on disk. A reference: nothing imports it.",
+ "spells": [
+  {
+   "name": "Power Word: Fortitude",
+   "tab": "Discipline",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 10938,
+    "cost": "1695 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Power infuses the target, increasing their Stamina by 70 for 1 hr.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Power Word: Shield",
+   "tab": "Discipline",
+   "status": "changed",
+   "reasons": [
+    "Ranks 2 to 10 differ from Classic"
+   ],
+   "maxRank": 10,
+   "top": {
+    "rank": 10,
+    "spell_id": 10901,
+    "cost": "500 Mana",
+    "range": "40 yd range",
+    "cast": "Instant",
+    "cooldown": "4 sec cooldown",
+    "text": "Draws on the soul of the party member to shield them, absorbing 928 damage. Lasts 30 sec. While the shield holds, spellcasting will not be interrupted by damage. Once shielded, the target cannot be shielded again for 15 sec.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Confounding Flash",
+   "tab": "Discipline",
+   "status": "new",
+   "reasons": [
+    "Not in Classic"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 1277455,
+    "cost": "3% of base mana",
+    "range": null,
+    "cast": "0.5 sec cast",
+    "cooldown": "2 min cooldown",
+    "text": "Confuses up to 5 enemies within 8 yds for 3 sec. Any damage taken will break the effect.",
+    "level": 10
+   }
+  },
+  {
+   "name": "Starshards",
+   "tab": "Discipline",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 7,
+   "top": {
+    "rank": 7,
+    "spell_id": 19305,
+    "cost": "350 Mana",
+    "range": "30 yd range",
+    "cast": "Channeled",
+    "cooldown": "30 sec cooldown",
+    "text": "Rains starshards down on the enemy target's head, causing 1800 Arcane damage over 6 sec.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Inner Fire",
+   "tab": "Discipline",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 10952,
+    "cost": "315 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "A burst of Holy energy fills the caster, increasing armor by 1395. Each melee or ranged damage hit against the priest will remove one charge. Lasts 10 min or until 20 charges are used.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Dispel Magic",
+   "tab": "Discipline",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 2,
+   "top": {
+    "rank": 2,
+    "spell_id": 988,
+    "cost": "18% of base mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Dispels magic on the target, removing 2 harmful spells from a friend or 2 beneficial spells from an enemy.",
+    "level": 36
+   }
+  },
+  {
+   "name": "Contingency Plan",
+   "tab": "Discipline",
+   "status": "new",
+   "reasons": [
+    "Not in Classic"
+   ],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 1277640,
+    "cost": null,
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": "10 min cooldown",
+    "text": "Place a Holy ward on an ally for 30 sec. The next time this ally takes damage dropping their Health below 35%, they will gain a shield absorbing 926 damage and begin healing for 670 Health over 15 sec. A target may be affected by only one Contingency Plan.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Elune's Grace",
+   "tab": "Discipline",
+   "status": "changed",
+   "reasons": [
+    "Ranks 2 to 5 gone (Classic goes to rank 5)"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 2651,
+    "cost": "3% of base mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "5 min cooldown",
+    "text": "Reduces the chance you'll be hit by melee and ranged attacks by 50% for 15 sec or until you are missed 3 times.",
+    "level": 20
+   }
+  },
+  {
+   "name": "Feedback",
+   "tab": "Discipline",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 19275,
+    "cost": "230 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "3 min cooldown",
+    "text": "The priest becomes surrounded with anti-magic energy. Any successful spell cast against the priest will burn 105 of the attacker's Mana, causing 1 Shadow damage for each point of Mana burned. Lasts 15 sec.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Shackle Undead",
+   "tab": "Discipline",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 10955,
+    "cost": "150 Mana",
+    "range": "30 yd range",
+    "cast": "1.5 sec cast",
+    "cooldown": null,
+    "text": "Shackles the target undead enemy for up to 50 sec. The shackled unit is unable to move, attack or cast spells. Any damage caused will release the target. Only one target can be shackled at a time.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Mana Burn",
+   "tab": "Discipline",
+   "status": "changed",
+   "reasons": [
+    "Ranks 1, 4, 5 differ from Classic"
+   ],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 10876,
+    "cost": "270 Mana",
+    "range": "30 yd range",
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Drains 746 to 788 mana from a target. For each mana drained in this way, the target takes 0.5 Shadow damage.",
+    "level": 56
+   }
+  },
+  {
+   "name": "Divine Spirit",
+   "tab": "Discipline",
+   "status": "baseline",
+   "reasons": [
+    "A Discipline talent in Classic; trained without one now"
+   ],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 27841,
+    "cost": "970 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Holy power infuses the target, increasing their Spirit by 40 for 1 hr.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Penance",
+   "tab": "Discipline",
+   "status": "talent",
+   "reasons": [
+    "Not in Classic; its first rank comes from a Forever talent",
+    "Season of Discovery had a spell by this name"
+   ],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 1316995,
+    "cost": "385 Mana",
+    "range": "36 yd range",
+    "cast": "Channeled",
+    "cooldown": "12 sec cooldown",
+    "text": "Launches a volley of holy light at the target, causing 92 Holy damage to an enemy, or 425 healing to an ally, instantly and every 1 sec for 2 sec.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Levitate",
+   "tab": "Discipline",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 1706,
+    "cost": "100 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Allows the caster to levitate, floating a few feet above the ground. While levitating, you will fall at a reduced speed and travel over water-like surfaces. Mounting or any damage taken will cancel the effect. Lasts 2 min.",
+    "level": 34
+   }
+  },
+  {
+   "name": "Prayer of Fortitude",
+   "tab": "Discipline",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 2,
+   "top": {
+    "rank": 2,
+    "spell_id": 21564,
+    "cost": "3400 Mana",
+    "range": "40 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Power infuses all party and raid members, increasing their Stamina by 70 for 1 hr.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Prayer of Spirit",
+   "tab": "Discipline",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 1,
+   "top": {
+    "rank": 1,
+    "spell_id": 27681,
+    "cost": "1940 Mana",
+    "range": "40 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Power infuses all party and raid members, increasing their Spirit by 40 for 1 hr.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Inner Focus",
+   "tab": "Discipline",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 14751,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "3 min cooldown",
+    "text": "When activated, reduces the Mana cost of your next spell by 100% and increases its critical effect chance by 25% if it is a non-periodic spell and capable of a critical effect."
+   }
+  },
+  {
+   "name": "Power Infusion",
+   "tab": "Discipline",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 10060,
+    "cost": "20% of base mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": "3 min cooldown",
+    "text": "Infuses the target with power, increasing their spell damage and healing done by 20% for 15 sec."
+   }
+  },
+  {
+   "name": "Lesser Heal",
+   "tab": "Holy",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 2053,
+    "cost": "75 Mana",
+    "range": "40 yd range",
+    "cast": "2.5 sec cast",
+    "cooldown": null,
+    "text": "Heal your target for 157 to 181.",
+    "level": 10
+   }
+  },
+  {
+   "name": "Smite",
+   "tab": "Holy",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 8,
+   "top": {
+    "rank": 8,
+    "spell_id": 10934,
+    "cost": "280 Mana",
+    "range": "30 yd range",
+    "cast": "2.5 sec cast",
+    "cooldown": null,
+    "text": "Smite an enemy for 167 to 186 Holy damage.",
+    "level": 54
+   }
+  },
+  {
+   "name": "Renew",
+   "tab": "Holy",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 10,
+   "top": {
+    "rank": 10,
+    "spell_id": 25315,
+    "cost": "410 Mana",
+    "range": "40 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Heals the target of 830 damage over 15 sec.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Desperate Prayer",
+   "tab": "Holy",
+   "status": "race",
+   "reasons": [
+    "No longer for Human"
+   ],
+   "maxRank": 7,
+   "top": {
+    "rank": 7,
+    "spell_id": 19243,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "10 min cooldown",
+    "text": "Instantly heals the caster for 1285 to 1513.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Divine Grace",
+   "tab": "Holy",
+   "status": "new",
+   "reasons": [
+    "Not in Classic"
+   ],
+   "maxRank": 7,
+   "top": {
+    "rank": 7,
+    "spell_id": 1277378,
+    "cost": null,
+    "range": "40 yd range",
+    "cast": "Instant",
+    "cooldown": "10 min cooldown",
+    "text": "Instantly heals a friendly target below 50% Health for 1285 to 1513 and removes Weakened Soul from that target. Cannot be cast on self.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Resurrection",
+   "tab": "Holy",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 20770,
+    "cost": "75% of base mana",
+    "range": "30 yd range",
+    "cast": "10 sec cast",
+    "cooldown": null,
+    "text": "Brings a dead player back to life with 750 health and 1000 mana. Cannot be cast when in combat.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Cure Disease",
+   "tab": "Holy",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 528,
+    "cost": "15% of base mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Removes 1 disease from the friendly target.",
+    "level": 14
+   }
+  },
+  {
+   "name": "Heal",
+   "tab": "Holy",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 6064,
+    "cost": "305 Mana",
+    "range": "40 yd range",
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Heal your target for 634 to 713.",
+    "level": 34
+   }
+  },
+  {
+   "name": "Chastise",
+   "tab": "Holy",
+   "status": "new",
+   "reasons": [
+    "Not in Classic"
+   ],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 1277335,
+    "cost": "225 Mana",
+    "range": "20 yd range",
+    "cast": "Instant",
+    "cooldown": "2 min cooldown",
+    "text": "Chastise the target, causing 272 to 306 Holy damage and Immobilizing them for up to 2 sec. Only works against Humanoids. This spell causes very low threat.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Fear Ward",
+   "tab": "Holy",
+   "status": "race",
+   "reasons": [
+    "Human, Night Elf, Troll and Undead can learn it too (Classic: Dwarf only)"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 6346,
+    "cost": "100 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": "3 min cooldown",
+    "text": "Wards the friendly target against Fear. The next Fear effect used against the target will fail, using up the ward. Lasts 3 min.",
+    "level": 20
+   }
+  },
+  {
+   "name": "Flash Heal",
+   "tab": "Holy",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 7,
+   "top": {
+    "rank": 7,
+    "spell_id": 10917,
+    "cost": "380 Mana",
+    "range": "40 yd range",
+    "cast": "1.5 sec cast",
+    "cooldown": null,
+    "text": "Heals a friendly target for 774 to 910.",
+    "level": 56
+   }
+  },
+  {
+   "name": "Holy Fire",
+   "tab": "Holy",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 8,
+   "top": {
+    "rank": 8,
+    "spell_id": 15261,
+    "cost": "255 Mana",
+    "range": "30 yd range",
+    "cast": "3.5 sec cast",
+    "cooldown": null,
+    "text": "Consumes the enemy in holy flames that cause 184 to 232 Holy damage and an additional 75 Holy damage over 10 sec.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Holy Nova",
+   "tab": "Holy",
+   "status": "talent",
+   "reasons": [
+    "A talent in Classic and in Forever"
+   ],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 27801,
+    "cost": "750 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Causes an explosion of holy light around the caster, causing 174 to 200 Holy damage to all enemy targets within 10 yards and healing all party members within 10 yards for 288 to 334. These effects cause no threat.\n\nEach time Holy Fire deals damage, you have a 5% chance for your next Holy Nova to cost no Mana.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Prayer of Healing",
+   "tab": "Holy",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 25316,
+    "cost": "1070 Mana",
+    "range": "40 yd range",
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "A powerful prayer that heals the target and their party for 631 to 667. Party members must be within 40 yards of target.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Abolish Disease",
+   "tab": "Holy",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 552,
+    "cost": "15% of base mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Attempts to cure 1 disease effect on the target, and 1 more disease effect every 5 seconds for 20 sec.",
+    "level": 32
+   }
+  },
+  {
+   "name": "Greater Heal",
+   "tab": "Holy",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 25314,
+    "cost": "710 Mana",
+    "range": "40 yd range",
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "A slow casting spell that heals a single target for 1853 to 2067.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Lightwell",
+   "tab": "Holy",
+   "status": "baseline",
+   "reasons": [
+    "A Holy talent in Classic; trained without one now"
+   ],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 27871,
+    "cost": "365 Mana",
+    "range": null,
+    "cast": "1.5 sec cast",
+    "cooldown": "10 min cooldown",
+    "text": "Creates a holy Lightwell near the priest. Members of your raid or party can click the Lightwell to restore 1600 health over 10 sec. Being attacked cancels the effect. Lightwell lasts for 3 min or 5 charges.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Lightwell Renew",
+   "tab": "Holy",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 27874,
+    "cost": null,
+    "range": "5 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": null,
+    "level": 60
+   }
+  },
+  {
+   "name": "Prayer of Mending",
+   "tab": "Holy",
+   "status": "talent",
+   "reasons": [
+    "Not in Classic; its first rank comes from a Forever talent",
+    "Season of Discovery had a spell by this name"
+   ],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 1240827,
+    "cost": "390 Mana",
+    "range": "40 yd range",
+    "cast": "Instant",
+    "cooldown": "10 sec cooldown",
+    "text": "Places a spell on the target that heals them for 413 the next time they take damage or receive non-periodic healing. When the heal occurs, Prayer of Mending jumps to a party or raid member within 20 yds. Jumps up to 5 times and lasts 30 sec after each jump. This spell can only be placed on one target at a time per caster.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Shadow Word: Pain",
+   "tab": "Shadow Magic",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 8,
+   "top": {
+    "rank": 8,
+    "spell_id": 10894,
+    "cost": "470 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "A word of darkness that causes 762 Shadow damage over 18 sec.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Fade",
+   "tab": "Shadow Magic",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 10942,
+    "cost": "275 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "30 sec cooldown",
+    "text": "Fade out, discouraging enemies from attacking you for 10 sec. More effective than Fade (rank 5).",
+    "level": 60
+   }
+  },
+  {
+   "name": "Hex of Weakness",
+   "tab": "Shadow Magic",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 19285,
+    "cost": "240 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Weakens the target enemy, reducing melee attack power by 204 and reducing the effectiveness of any healing by 20%. Lasts 2 min",
+    "level": 60
+   }
+  },
+  {
+   "name": "Mind Blast",
+   "tab": "Shadow Magic",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 9,
+   "top": {
+    "rank": 9,
+    "spell_id": 10947,
+    "cost": "350 Mana",
+    "range": "30 yd range",
+    "cast": "1.5 sec cast",
+    "cooldown": "8 sec cooldown",
+    "text": "Blasts the target for 477 to 503 Shadow damage, but causes a high amount of threat.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Touch of Weakness",
+   "tab": "Shadow Magic",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 19266,
+    "cost": "195 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "The next melee attack on the caster will cause 56 Shadow damage and reduce the attacker's melee attack power by the attacker by 204 for 2 min.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Psychic Scream",
+   "tab": "Shadow Magic",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 10890,
+    "cost": "210 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "30 sec cooldown",
+    "text": "The caster lets out a psychic scream, causing 5 enemies within 8 yards to flee for 8 sec. Damage caused may interrupt the effect.",
+    "level": 56
+   }
+  },
+  {
+   "name": "Dark Sacrifice",
+   "tab": "Shadow Magic",
+   "status": "new",
+   "reasons": [
+    "Not in Classic"
+   ],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 1277328,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "10 min cooldown",
+    "text": "Cannibalize 1600 of your own Health over 15 sec to gain 1920 Mana.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Devouring Plague",
+   "tab": "Shadow Magic",
+   "status": "race",
+   "reasons": [
+    "Dwarf, Human, Night Elf and Troll can learn it too (Classic: Undead only)"
+   ],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 19280,
+    "cost": "985 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": "24 sec cooldown",
+    "text": "Afflicts the target with a disease that causes 848 Shadow damage over 24 sec. Damage caused by the Devouring Plague heals the caster.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Mind Flay",
+   "tab": "Shadow Magic",
+   "status": "talent",
+   "reasons": [
+    "A talent in Classic and in Forever"
+   ],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 18807,
+    "cost": "205 Mana",
+    "range": "20 yd range",
+    "cast": "Channeled",
+    "cooldown": null,
+    "text": "Assault the target's mind with Shadow energy, causing 390 Shadow damage over 3 sec and slowing their movement speed by 50%.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Mind Soothe",
+   "tab": "Shadow Magic",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 10953,
+    "cost": "90 Mana",
+    "range": "40 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Soothes the target, reducing the range at which it will attack you by 10 yards. Only affects Humanoid targets level 70 or lower. Lasts 15 sec.",
+    "level": 52
+   }
+  },
+  {
+   "name": "Shadowguard",
+   "tab": "Shadow Magic",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 19312,
+    "cost": "250 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "The caster is surrounded by shadows. When a spell, melee or ranged attack hits the caster, the attacker will be struck for 96 Shadow damage. Attackers can only be damaged once every few seconds. This damage causes no threat. 3 charges. Lasts 10 min.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Mind Vision",
+   "tab": "Shadow Magic",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 2,
+   "top": {
+    "rank": 2,
+    "spell_id": 10909,
+    "cost": "150 Mana",
+    "range": "50000 yd range",
+    "cast": "Channeled",
+    "cooldown": null,
+    "text": "Allows the caster to see through the target's eyes for 1 min. Will not work if the target is in another instance or on another continent.",
+    "level": 44
+   }
+  },
+  {
+   "name": "Mind Control",
+   "tab": "Shadow Magic",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 10912,
+    "cost": "750 Mana",
+    "range": "20 yd range",
+    "cast": "Channeled",
+    "cooldown": null,
+    "text": "Controls a humanoid mind up to level 64, but increases the time between attacks by 25%. Lasts up to 1 min.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Shadow Protection",
+   "tab": "Shadow Magic",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 10958,
+    "cost": "650 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Increases the target's resistance to Shadow spells by 60 for 10 min.",
+    "level": 56
+   }
+  },
+  {
+   "name": "Shadow Word: Death",
+   "tab": "Shadow Magic",
+   "status": "new",
+   "reasons": [
+    "Not in Classic",
+    "Season of Discovery had a spell by this name"
+   ],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 1309636,
+    "cost": "340 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": "18 sec cooldown",
+    "text": "A word of dark binding that inflicts 444 to 472 Shadow damage to the target. If your target is not killed by Shadow Word: Death, you take backlash damage equal to 30% of your maximum health.",
+    "level": 56
+   }
+  },
+  {
+   "name": "Prayer of Shadow Protection",
+   "tab": "Shadow Magic",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 27683,
+    "cost": "1300 Mana",
+    "range": "40 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Power infuses all party and raid members, increasing their Shadow resistance by 60 for 20 min.",
+    "level": 56
+   }
+  },
+  {
+   "name": "Vampiric Embrace",
+   "tab": "Shadow Magic",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 15286,
+    "cost": "40 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": "30 sec cooldown",
+    "text": "Afflicts your target with Shadow energy that causes all party members to be healed for 20% of any Shadow spell damage you deal for 30 sec."
+   }
+  },
+  {
+   "name": "Silence",
+   "tab": "Shadow Magic",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 15487,
+    "cost": "225 Mana",
+    "range": "20 yd range",
+    "cast": "Instant",
+    "cooldown": "45 sec cooldown",
+    "text": "Silences the target, preventing them from casting spells for 5 sec and interrupting their spellcasts for 3 sec."
+   }
+  },
+  {
+   "name": "Shadowform",
+   "tab": "Shadow Magic",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 15473,
+    "cost": "40% of base mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "1.5 sec cooldown",
+    "text": "Assume Shadowform, increasing your Shadow damage by 10%, reducing the Mana cost of all Shadow spells by 50%, increasing the critical strike damage bonus of your Shadow spells by 100%, and reducing Physical damage taken by you by 15%. However, you may not cast healing spells while in this form."
+   }
+  }
+ ]
+}

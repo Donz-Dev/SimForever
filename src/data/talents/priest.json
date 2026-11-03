@@ -1,6 +1,6 @@
 {
  "class": "priest",
- "source": "https://talentsforever.com/talents.js",
+ "source": "https://foreverchanges.pro/talents/priest",
  "trees": [
   {
    "id": "discipline",
@@ -169,7 +169,7 @@
      "tier": 20,
      "requires": null,
      "requiresRanks": null,
-     "description": "Launches a volley of holy light at the target, causing 44 Holy damage to an enemy, or 133 healing to an ally, instantly and every 1 sec for 2 sec."
+     "description": "Launches a volley of holy light at the target, causing 45 Holy damage to an enemy, or 134 healing to an ally, instantly and every 1 sec for 2 sec."
     },
     {
      "row": 4,
@@ -180,7 +180,7 @@
      "tier": 20,
      "requires": "Soul Warding",
      "requiresRanks": 1,
-     "description": "Your heals from Flash Heal, Binding Heal, Lesser Heal, Heal, Greater Heal, and Penance gain 10% increased critical strike chance when cast on targets with Weakened Soul, and reduce the remaining duration of Weakened Soul on their target by 5 sec."
+     "description": "Your heals from Flash Heal, Lesser Heal, Heal, Greater Heal, and Penance gain 10% increased critical strike chance when cast on targets with Weakened Soul, and reduce the remaining duration of Weakened Soul on their target by 5 sec."
     },
     {
      "row": 5,
@@ -191,7 +191,7 @@
      "tier": 25,
      "requires": null,
      "requiresRanks": null,
-     "description": "Your non-periodic critical heals create a protective shield on the target, absorbing 15% of the amount healed. Shields up to 1,200 damage and lasts 12 sec."
+     "description": "Your non-periodic critical heals create a protective shield on the target, absorbing 15% of the amount healed. Shields up to 1200 damage and lasts 12 sec."
     },
     {
      "row": 6,
@@ -219,7 +219,7 @@
      "tier": 0,
      "requires": null,
      "requiresRanks": null,
-     "description": "Gives you a 70% chance to avoid interruption caused by damage while casting any spell."
+     "description": "Gives your spells a 70% chance to not lose casting time when you take damage."
     },
     {
      "row": 0,
@@ -274,7 +274,7 @@
      "tier": 10,
      "requires": null,
      "requiresRanks": null,
-     "description": "Causes an explosion of holy light around the caster, causing 26 to 30 Holy damage to all enemy targets within 10 yards and healing all party members within 10 yards for 49 to 57. These effects cause no threat."
+     "description": "Causes an explosion of holy light around the caster, causing 26 to 30 Holy damage to all enemy targets within 10 yards and healing all party members within 10 yards for 50 to 57. These effects cause no threat."
     },
     {
      "row": 2,
@@ -335,12 +335,12 @@
      "row": 3,
      "col": 3,
      "ranks": 1,
-     "name": "Binding Heal",
+     "name": "Holy Binding",
      "icon": "spell_holy_blindingheal",
      "tier": 15,
      "requires": null,
      "requiresRanks": null,
-     "description": "Heals a friendly target and the caster for 236 to 284. Low threat."
+     "description": "Each time you heal a target other than yourself with Flash Heal, you are healed for 50% as much. This healing generates no threat."
     },
     {
      "row": 4,
@@ -400,8 +400,8 @@
    ]
   },
   {
-   "id": "shadow",
-   "name": "Shadow",
+   "id": "shadow_magic",
+   "name": "Shadow Magic",
    "talents": [
     {
      "row": 0,
@@ -551,7 +551,7 @@
      "col": 2,
      "ranks": 2,
      "name": "Devouring Contagion",
-     "icon": "spell_shadow_devouringplague",
+     "icon": "spell_shadow_devouringplague.",
      "tier": 20,
      "requires": null,
      "requiresRanks": null,

@@ -1,0 +1,1080 @@
+{
+ "class": "mage",
+ "source": "https://foreverchanges.pro/spellbook/mage",
+ "build": "1.60.1.70755",
+ "note": "Max rank of each spell, read off the page in a browser and hashed there and on disk. A reference: nothing imports it.",
+ "spells": [
+  {
+   "name": "Arcane Intellect",
+   "tab": "Arcane",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 10157,
+    "cost": "1510 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Increases the target's Intellect by 31 for 1 hr.",
+    "level": 56
+   }
+  },
+  {
+   "name": "Conjure Water",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 7,
+   "top": {
+    "rank": 7,
+    "spell_id": 10140,
+    "cost": "780 Mana",
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Conjures 10 bottles of crystal water, providing the mage and his allies with something to drink.\n\nConjured items disappear if logged out for more than 15 minutes.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Conjure Food",
+   "tab": "Arcane",
+   "status": "changed",
+   "reasons": [
+    "Rank 6 differ from Classic"
+   ],
+   "maxRank": 7,
+   "top": {
+    "rank": 7,
+    "spell_id": 28612,
+    "cost": "705 Mana",
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Conjures 10 cinnamon rolls, providing the mage and his allies with something to eat.\n\nConjured items disappear if logged out for more than 15 minutes.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Arcane Missiles",
+   "tab": "Arcane",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 8,
+   "top": {
+    "rank": 8,
+    "spell_id": 25345,
+    "cost": "655 Mana",
+    "range": "30 yd range",
+    "cast": "Channeled",
+    "cooldown": null,
+    "text": "Launches Arcane Missiles at the enemy, causing 209 Arcane damage each second for 5 sec.",
+    "level": 56
+   }
+  },
+  {
+   "name": "Polymorph",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 12826,
+    "cost": "150 Mana",
+    "range": "30 yd range",
+    "cast": "1.5 sec cast",
+    "cooldown": null,
+    "text": "Transforms the enemy into a sheep, forcing it to wander around for up to 50 sec. While wandering, the sheep cannot attack or cast spells but will regenerate very quickly. Any damage will transform the target back into its normal form. Only one target can be polymorphed at a time. Only works on Beasts, Humanoids and Critters.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Dampen Magic",
+   "tab": "Arcane",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 10174,
+    "cost": "500 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Dampens magic used against the targeted party member, decreasing damage taken from spells by up to 135 and healing spells by up to 270. Lasts 10 min.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Slow Fall",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 130,
+    "cost": "40 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Slows falling speed for 30 sec.",
+    "level": 12
+   }
+  },
+  {
+   "name": "Arcane Explosion",
+   "tab": "Arcane",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 10202,
+    "cost": "390 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Causes an explosion of arcane magic around the caster, causing 239 to 258 Arcane damage to all targets within 10 yards.",
+    "level": 54
+   }
+  },
+  {
+   "name": "Amplify Magic",
+   "tab": "Arcane",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 10170,
+    "cost": "450 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Amplifies magic used against the targeted party member, increasing damage taken from spells by up to 113 and healing spells by up to 225. Lasts 10 min.",
+    "level": 54
+   }
+  },
+  {
+   "name": "Remove Lesser Curse",
+   "tab": "Arcane",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 475,
+    "cost": "10% of base mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Removes 1 Curse or Bane from a friendly target.",
+    "level": 18
+   }
+  },
+  {
+   "name": "Arcane Blast",
+   "tab": "Arcane",
+   "status": "talent",
+   "reasons": [
+    "Not in Classic; its first rank comes from a Forever talent",
+    "Season of Discovery had a spell by this name"
+   ],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 1239700,
+    "cost": "15% of base mana",
+    "range": "30 yd range",
+    "cast": "1.5 sec cast",
+    "cooldown": null,
+    "text": "Blasts the target with energy, dealing 218 to 254 Arcane damage. Each time you cast Arcane Blast, you gain 12% of your Intellect as Spell Damage and the mana cost of Arcane Blast is increased by 100%. Effect stacks up to 4 times and lasts 18 sec from time of initial application.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Blink",
+   "tab": "Arcane",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 1953,
+    "cost": "35% of base mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "15 sec cooldown",
+    "text": "Teleports the caster 20 yards forward, unless something is in the way. Also frees the caster from Stuns and Immobilizes.",
+    "level": 20
+   }
+  },
+  {
+   "name": "Evocation",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 12051,
+    "cost": null,
+    "range": null,
+    "cast": "Channeled",
+    "cooldown": "8 min cooldown",
+    "text": "While channeling this spell, your mana regeneration is active and increased by 1500%. Lasts 8 sec.",
+    "level": 20
+   }
+  },
+  {
+   "name": "Mana Shield",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 10193,
+    "cost": "140 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Absorbs 570 physical damage, draining mana instead. Drains 2 mana per damage absorbed. Lasts 1 min.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Teleport: Ironforge",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 3562,
+    "cost": "120 Mana",
+    "range": null,
+    "cast": "10 sec cast",
+    "cooldown": null,
+    "text": "Teleports the caster to Ironforge.",
+    "level": 20
+   }
+  },
+  {
+   "name": "Teleport: Orgrimmar",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 3567,
+    "cost": "120 Mana",
+    "range": null,
+    "cast": "10 sec cast",
+    "cooldown": null,
+    "text": "Teleports the caster to Orgrimmar.",
+    "level": 20
+   }
+  },
+  {
+   "name": "Teleport: Stormwind",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 3561,
+    "cost": "120 Mana",
+    "range": null,
+    "cast": "10 sec cast",
+    "cooldown": null,
+    "text": "Teleports the caster to Stormwind.",
+    "level": 20
+   }
+  },
+  {
+   "name": "Teleport: Undercity",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 3563,
+    "cost": "120 Mana",
+    "range": null,
+    "cast": "10 sec cast",
+    "cooldown": null,
+    "text": "Teleports the caster to Undercity.",
+    "level": 20
+   }
+  },
+  {
+   "name": "Counterspell",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 2139,
+    "cost": "100 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": "30 sec cooldown",
+    "text": "Counters the enemy's spellcast, preventing any spell from that school of magic from being cast for 10 sec. Generates a high amount of threat.",
+    "level": 24
+   }
+  },
+  {
+   "name": "Arcane Wrath",
+   "tab": "Arcane",
+   "status": "talent",
+   "reasons": [
+    "Not in Classic; its first rank comes from a Forever talent"
+   ],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 1326082,
+    "cost": "395 Mana",
+    "range": "30 yd range",
+    "cast": "3.5 sec cast",
+    "cooldown": "6 sec cooldown",
+    "text": "Launches a projectile of pure Arcane energy at the enemy target, causing 406 to 496 Arcane damage. This spell gains additional Spell Damage equal to 5% of your maximum Mana.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Conjure Mana Agate",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 759,
+    "cost": "530 Mana",
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Conjures a mana agate that can be used to instantly restore 375 to 425 mana.\n\nConjured items disappear if logged out for more than 15 minutes.",
+    "level": 28
+   }
+  },
+  {
+   "name": "Teleport: Darnassus",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 3565,
+    "cost": "120 Mana",
+    "range": null,
+    "cast": "10 sec cast",
+    "cooldown": null,
+    "text": "Teleports the caster to Darnassus.",
+    "level": 30
+   }
+  },
+  {
+   "name": "Teleport: Thunder Bluff",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 3566,
+    "cost": "120 Mana",
+    "range": null,
+    "cast": "10 sec cast",
+    "cooldown": null,
+    "text": "Teleports the caster to Thunder Bluff.",
+    "level": 30
+   }
+  },
+  {
+   "name": "Mage Armor",
+   "tab": "Arcane",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 22783,
+    "cost": "490 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Increases your resistance to all magic by 15 and allows 50% of your mana regeneration to continue while casting. Only one type of Armor spell can be active on the Mage at any time. Lasts 30 min.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Conjure Mana Jade",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 3552,
+    "cost": "800 Mana",
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Conjures a mana jade that can be used to instantly restore 550 to 650 mana.\n\nConjured items disappear if logged out for more than 15 minutes.",
+    "level": 38
+   }
+  },
+  {
+   "name": "Portal: Ironforge",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 11416,
+    "cost": "850 Mana",
+    "range": "10 yd range",
+    "cast": "10 sec cast",
+    "cooldown": "1 min cooldown",
+    "text": "Creates a portal, teleporting group members that use it to Ironforge.",
+    "level": 40
+   }
+  },
+  {
+   "name": "Portal: Orgrimmar",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 11417,
+    "cost": "850 Mana",
+    "range": "10 yd range",
+    "cast": "10 sec cast",
+    "cooldown": "1 min cooldown",
+    "text": "Creates a portal, teleporting group members that use it to Orgrimmar.",
+    "level": 40
+   }
+  },
+  {
+   "name": "Portal: Stormwind",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 10059,
+    "cost": "850 Mana",
+    "range": "10 yd range",
+    "cast": "10 sec cast",
+    "cooldown": "1 min cooldown",
+    "text": "Creates a portal, teleporting group members that use it to Stormwind.",
+    "level": 40
+   }
+  },
+  {
+   "name": "Portal: Undercity",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 11418,
+    "cost": "850 Mana",
+    "range": "10 yd range",
+    "cast": "10 sec cast",
+    "cooldown": "1 min cooldown",
+    "text": "Creates a portal, teleporting group members that use it to Undercity.",
+    "level": 40
+   }
+  },
+  {
+   "name": "Conjure Mana Citrine",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 10053,
+    "cost": "1130 Mana",
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Conjures a mana citrine that can be used to instantly restore 775 to 925 mana.\n\nConjured items disappear if logged out for more than 15 minutes.",
+    "level": 48
+   }
+  },
+  {
+   "name": "Portal: Darnassus",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 11419,
+    "cost": "850 Mana",
+    "range": "10 yd range",
+    "cast": "10 sec cast",
+    "cooldown": "1 min cooldown",
+    "text": "Creates a portal, teleporting group members that use it to Darnassus.",
+    "level": 50
+   }
+  },
+  {
+   "name": "Portal: Thunder Bluff",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 11420,
+    "cost": "850 Mana",
+    "range": "10 yd range",
+    "cast": "10 sec cast",
+    "cooldown": "1 min cooldown",
+    "text": "Creates a portal, teleporting group members that use it to Thunder Bluff.",
+    "level": 50
+   }
+  },
+  {
+   "name": "Teleport: Dalaran",
+   "tab": "Arcane",
+   "status": "new",
+   "reasons": [
+    "Not in Classic"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 1297659,
+    "cost": "120 Mana",
+    "range": null,
+    "cast": "10 sec cast",
+    "cooldown": null,
+    "text": "Teleports the caster to Dalaran.",
+    "level": 50
+   }
+  },
+  {
+   "name": "Arcane Brilliance",
+   "tab": "Arcane",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 23028,
+    "cost": "3400 Mana",
+    "range": "40 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Infuses the target's party and raid with brilliance, increasing their Intellect by 31 for 1 hr.",
+    "level": 56
+   }
+  },
+  {
+   "name": "Conjure Mana Ruby",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 10054,
+    "cost": "1470 Mana",
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Conjures a mana ruby that can be used to instantly restore 1000 to 1200 mana.\n\nConjured items disappear if logged out for more than 15 minutes.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Polymorph: Cow",
+   "tab": "Arcane",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 28270,
+    "cost": "150 Mana",
+    "range": "30 yd range",
+    "cast": "1.5 sec cast",
+    "cooldown": null,
+    "text": "Transforms the enemy into a cow, forcing it to wander around for up to 50 sec. While wandering, the cow cannot attack or cast spells but will regenerate very quickly. Any damage will transform the target back into its normal form. Only one target can be polymorphed at a time. Only works on Beasts, Humanoids and Critters.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Presence of Mind",
+   "tab": "Arcane",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 12043,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "3 min cooldown",
+    "text": "When activated, your next Mage spell with a casting time less than 10 sec becomes an instant cast spell."
+   }
+  },
+  {
+   "name": "Arcane Power",
+   "tab": "Arcane",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 12042,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "3 min cooldown",
+    "text": "For the next 15 sec, your spells deal 30% more damage while costing 30% more mana to cast."
+   }
+  },
+  {
+   "name": "Fireball",
+   "tab": "Fire",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 12,
+   "top": {
+    "rank": 12,
+    "spell_id": 25306,
+    "cost": "410 Mana",
+    "range": "35 yd range",
+    "cast": "3.5 sec cast",
+    "cooldown": null,
+    "text": "Hurls a fiery ball that causes 425 to 541 Fire damage and an additional 60 Fire damage over 8 sec.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Fire Blast",
+   "tab": "Fire",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 7,
+   "top": {
+    "rank": 7,
+    "spell_id": 10199,
+    "cost": "340 Mana",
+    "range": "20 yd range",
+    "cast": "Instant",
+    "cooldown": "8 sec cooldown",
+    "text": "Blasts the enemy for 417 to 489 Fire damage.",
+    "level": 54
+   }
+  },
+  {
+   "name": "Flamestrike",
+   "tab": "Fire",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 10216,
+    "cost": "990 Mana",
+    "range": "30 yd range",
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Calls down a pillar of fire, burning all enemies within the area for 382 to 466 Fire damage and an additional 332 Fire damage over 8 sec. Only one Flamestrike can be active per Mage at a time.",
+    "level": 56
+   }
+  },
+  {
+   "name": "Fire Ward",
+   "tab": "Fire",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 10225,
+    "cost": "320 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "30 sec cooldown",
+    "text": "Absorbs 913 Fire damage. Lasts 30 sec.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Pyroblast",
+   "tab": "Fire",
+   "status": "talent",
+   "reasons": [
+    "A talent in Classic and in Forever"
+   ],
+   "maxRank": 8,
+   "top": {
+    "rank": 8,
+    "spell_id": 18809,
+    "cost": "440 Mana",
+    "range": "35 yd range",
+    "cast": "6 sec cast",
+    "cooldown": null,
+    "text": "Hurls an immense fiery boulder that causes 520 to 646 Fire damage and an additional 212 Fire damage over 12 sec.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Scorch",
+   "tab": "Fire",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 7,
+   "top": {
+    "rank": 7,
+    "spell_id": 10207,
+    "cost": "150 Mana",
+    "range": "30 yd range",
+    "cast": "1.5 sec cast",
+    "cooldown": null,
+    "text": "Scorch the enemy for 167 to 196 Fire damage.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Blast Wave",
+   "tab": "Fire",
+   "status": "talent",
+   "reasons": [
+    "A talent in Classic and in Forever"
+   ],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 13021,
+    "cost": "545 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "45 sec cooldown",
+    "text": "A wave of flame radiates outward from the caster, damaging all enemies caught within the blast for 453 to 533 Fire damage, and Dazing them for 50% reduced movement speed for 6 sec.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Frostfire Bolt",
+   "tab": "Fire",
+   "status": "new",
+   "reasons": [
+    "Not in Classic",
+    "Season of Discovery had a spell by this name"
+   ],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 1237313,
+    "cost": "370 Mana",
+    "range": "35 yd range",
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Launches a bolt of frostfire at the enemy, causing 270 to 314 Frostfire damage, slowing movement speed by 40% and causing an additional 57 Frostfire damage over 9 sec. This spell will be checked against the lower of the target's Frost and Fire resists and counts as both Frost and Fire damage.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Felfire",
+   "tab": "Fire",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 24530,
+    "cost": "100 Mana",
+    "range": "100 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Blasts the enemy for 500 Fire damage.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Combustion",
+   "tab": "Fire",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 11129,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "3 min cooldown",
+    "text": "When activated, this spell causes each of your Fire damage spell hits to increase your critical strike chance with Fire damage spells by 10%. This effect lasts until you have caused 3 non-periodic critical strikes with Fire spells."
+   }
+  },
+  {
+   "name": "Frost Armor",
+   "tab": "Frost",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 7301,
+    "cost": "170 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Increases Armor by 200. If an enemy strikes the caster, they may have their movement slowed by 30% and the time between their attacks increased by 25% for 5 sec. Only one type of Armor spell can be active on the Mage at any time. Lasts 30 min.",
+    "level": 20
+   }
+  },
+  {
+   "name": "Frostbolt",
+   "tab": "Frost",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 11,
+   "top": {
+    "rank": 11,
+    "spell_id": 25304,
+    "cost": "290 Mana",
+    "range": "30 yd range",
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Launches a bolt of frost at the enemy, causing 457 to 493 Frost damage and slowing movement speed by 40% for 9 sec.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Frost Nova",
+   "tab": "Frost",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 10230,
+    "cost": "145 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "25 sec cooldown",
+    "text": "Blasts enemies near the caster for 72 to 79 Frost damage and freezes them in place for up to 8 sec. Damage caused may interrupt the effect.",
+    "level": 54
+   }
+  },
+  {
+   "name": "Blizzard",
+   "tab": "Frost",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 10187,
+    "cost": "1400 Mana",
+    "range": "30 yd range",
+    "cast": "Channeled",
+    "cooldown": null,
+    "text": "Ice shards pelt the target area doing 1168 Frost damage over 8 sec.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Ice Lance",
+   "tab": "Frost",
+   "status": "talent",
+   "reasons": [
+    "Not in Classic; its first rank comes from a Forever talent",
+    "Season of Discovery had a spell by this name"
+   ],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 1240047,
+    "cost": "160 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": "8 sec cooldown",
+    "text": "Deals 137 to 161 Frost damage to an enemy target. Deals 300% increased damage to Frozen targets.",
+    "level": 56
+   }
+  },
+  {
+   "name": "Frost Ward",
+   "tab": "Frost",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 28609,
+    "cost": "320 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "30 sec cooldown",
+    "text": "Absorbs 1004 Frost damage. Lasts 30 sec.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Cone of Cold",
+   "tab": "Frost",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 10161,
+    "cost": "555 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "10 sec cooldown",
+    "text": "Targets in a cone in front of the caster take 328 to 358 Frost damage and are slowed by 40% for 6 sec. The first 4 targets hit by this cone are slowed by an additional 10% for an additional 3 sec.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Ice Armor",
+   "tab": "Frost",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 10220,
+    "cost": "500 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Increases Armor by 560 and frost resistance by 15. If an enemy strikes the caster, they may have their movement slowed by 30% and the time between their attacks increased by 25% for 5 sec. Only one type of Armor spell can be active on the Mage at any time. Lasts 30 min.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Ice Barrier",
+   "tab": "Frost",
+   "status": "talent",
+   "reasons": [
+    "A talent in Classic and in Forever"
+   ],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 13033,
+    "cost": "480 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "30 sec cooldown",
+    "text": "Shield yourself, absorbing 901 damage and increasing your Frost damage by 15% for 1 min. While shielded, your Frost damage is increased by an additional 5% and you do not lose casting time when you take damage.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Ice Block",
+   "tab": "Frost",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 11958,
+    "cost": "15 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "5 min cooldown",
+    "text": "You become encased in a block of ice, protecting you from all physical attacks and spells for 10 sec, but during that time you cannot attack, move, or cast spells."
+   }
+  },
+  {
+   "name": "Cold Snap",
+   "tab": "Frost",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 12472,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "10 min cooldown",
+    "text": "Finishes the remaining cooldown on all your other Frost spells."
+   }
+  },
+  {
+   "name": "Comprehend Scroll",
+   "tab": "Comprehension",
+   "status": "new",
+   "reasons": [
+    "Not in Classic"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": "Comprehension",
+    "spell_id": 1296017,
+    "cost": null,
+    "range": "5 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Decipher an untranslated scroll.",
+    "level": 6
+   }
+  },
+  {
+   "name": "Study",
+   "tab": "Comprehension",
+   "status": "new",
+   "reasons": [
+    "Not in Classic"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": "Comprehension",
+    "spell_id": 1302508,
+    "cost": null,
+    "range": null,
+    "cast": "6 sec cast",
+    "cooldown": "1 hr cooldown",
+    "text": "Perform spell research, resulting in a bundle of scrolls. Requires a suitable library.",
+    "level": 6
+   }
+  }
+ ]
+}

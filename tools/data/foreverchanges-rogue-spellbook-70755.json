@@ -1,0 +1,1086 @@
+{
+ "class": "rogue",
+ "source": "https://foreverchanges.pro/spellbook/rogue",
+ "build": "1.60.1.70755",
+ "note": "Max rank of each spell, read off the page in a browser and hashed there and on disk. A reference: nothing imports it.",
+ "spells": [
+  {
+   "name": "Eviscerate",
+   "tab": "Assassination",
+   "status": "changed",
+   "reasons": [
+    "Rank 6 differ from Classic"
+   ],
+   "maxRank": 9,
+   "top": {
+    "rank": 9,
+    "spell_id": 31016,
+    "cost": "35 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Finishing move that causes damage per combo point, increased by Attack Power:\n1 point : 224-332 damage\n2 points: 394-502 damage\n3 points: 564-672 damage\n4 points: 734-842 damage\n5 points: 904-1012 damage\n\nRequires Melee Weapon",
+    "level": 60
+   }
+  },
+  {
+   "name": "Slice and Dice",
+   "tab": "Assassination",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 2,
+   "top": {
+    "rank": 2,
+    "spell_id": 6774,
+    "cost": "25 Energy",
+    "range": "100 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Finishing move that increases melee attack speed by 30%. Lasts longer per combo point:\n1 point : 9 seconds\n2 points: 12 seconds\n3 points: 15 seconds\n4 points: 18 seconds\n5 points: 21 seconds",
+    "level": 42
+   }
+  },
+  {
+   "name": "Expose Armor",
+   "tab": "Assassination",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 11198,
+    "cost": "25 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Finishing move that exposes the target for 30 sec, reducing Armor per combo point:\n1 point : 450 Armor\n2 points: 900 Armor\n3 points: 1350 Armor\n4 points: 1800 Armor\n5 points: 2250 Armor\n\nRequires Melee Weapon",
+    "level": 56
+   }
+  },
+  {
+   "name": "Garrote",
+   "tab": "Assassination",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 11290,
+    "cost": "50 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Garrote the enemy, causing 552 damage over 18 sec, increased by your Attack Power. Must be stealthed and behind the target. Awards 1 combo points.\n\nRequires Stealth",
+    "level": 54
+   }
+  },
+  {
+   "name": "Ambush",
+   "tab": "Assassination",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 11269,
+    "cost": "60 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Ambush the target, causing 250% weapon damage plus 290 to the target. Must be stealthed and behind the target. Requires a dagger in the main hand. Awards 1 combo points.\n\nRequires Daggers\nRequires Stealth",
+    "level": 58
+   }
+  },
+  {
+   "name": "Rupture",
+   "tab": "Assassination",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 11275,
+    "cost": "25 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Finishing move that causes damage over time, increased by your Attack Power. Lasts longer per combo point:\n1 point : 159 damage over 8 secs\n2 points: 222 damage over 10 secs\n3 points: 295 damage over 12 secs\n4 points: 377 damage over 14 secs\n5 points: 469 damage over 16 secs\n\nRequires Melee Weapon",
+    "level": 60
+   }
+  },
+  {
+   "name": "Cheap Shot",
+   "tab": "Assassination",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 1833,
+    "cost": "60 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Stuns the target for 4 sec. Must be stealthed. Awards 2 combo points.\n\nRequires Melee Weapon\nRequires Stealth",
+    "level": 26
+   }
+  },
+  {
+   "name": "Kidney Shot",
+   "tab": "Assassination",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 2,
+   "top": {
+    "rank": 2,
+    "spell_id": 8643,
+    "cost": "25 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "20 sec cooldown",
+    "text": "Finishing move that stuns the target. Lasts longer per combo point:\n1 point : 2 seconds\n2 points: 3 seconds\n3 points: 4 seconds\n4 points: 5 seconds\n5 points: 6 seconds\n\nRequires Melee Weapon",
+    "level": 50
+   }
+  },
+  {
+   "name": "Mutilate",
+   "tab": "Assassination",
+   "status": "talent",
+   "reasons": [
+    "Not in Classic; its first rank comes from a Forever talent",
+    "Season of Discovery had a spell by this name"
+   ],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 1241584,
+    "cost": "60 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Instantly attacks with both weapons for 90% weapon damage plus an additional 79 with each weapon. Damage increased by 20% against Poisoned targets. Awards 2 Combo Points.\n\nRequires Daggers",
+    "level": 60
+   }
+  },
+  {
+   "name": "Cold Blood",
+   "tab": "Assassination",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 14177,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "3 min cooldown",
+    "text": "When activated, increases the critical strike chance of your next Sinister Strike, Backstab, Ambush, Eviscerate, or Mutilate by 100%."
+   }
+  },
+  {
+   "name": "Sinister Strike",
+   "tab": "Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 8,
+   "top": {
+    "rank": 8,
+    "spell_id": 11294,
+    "cost": "45 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "An instant strike that causes 68 damage in addition to your normal weapon damage. Awards 1 combo points.\n\nRequires Melee Weapon",
+    "level": 54
+   }
+  },
+  {
+   "name": "Backstab",
+   "tab": "Combat",
+   "status": "same",
+   "reasons": [
+    "Same damage as in Classic: Forever's tooltip shows the bonus before the 150%, Classic's after it"
+   ],
+   "maxRank": 9,
+   "top": {
+    "rank": 9,
+    "spell_id": 25300,
+    "cost": "60 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Backstab the target, causing 150% weapon damage plus 150 to the target. Must be behind the target. Requires a dagger in the main hand. Awards 1 combo points.\n\nRequires Daggers",
+    "level": 60
+   }
+  },
+  {
+   "name": "Gouge",
+   "tab": "Combat",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 11286,
+    "cost": "45 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "10 sec cooldown",
+    "text": "Causes 75 damage, stops your attack, and incapacitates the target for 4 sec. The target must be facing you. Any damage taken will break the effect. Awards 1 combo points.\n\nRequires Melee Weapon",
+    "level": 60
+   }
+  },
+  {
+   "name": "Evasion",
+   "tab": "Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 5277,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "5 min cooldown",
+    "text": "The rogue's dodge chance will increase by 50% for 15 sec.",
+    "level": 8
+   }
+  },
+  {
+   "name": "Sprint",
+   "tab": "Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 11305,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "5 min cooldown",
+    "text": "Increases the rogue's movement speed by 70% for 15 sec. Does not break stealth.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Kick",
+   "tab": "Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 1769,
+    "cost": "25 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "10 sec cooldown",
+    "text": "A quick kick that injures a single foe for 80 damage. It also interrupts spellcasting and prevents any spell in that school from being cast for 5 sec.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Feint",
+   "tab": "Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 25302,
+    "cost": "20 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "10 sec cooldown",
+    "text": "Performs a feint, causing no damage but lowering your threat by a large amount, making the enemy less likely to attack you.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Shank",
+   "tab": "Combat",
+   "status": "new",
+   "reasons": [
+    "Not in Classic"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 1329283,
+    "cost": "5 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "10 sec cooldown",
+    "text": "Instantly strike with your off-hand weapon, dealing 50% weapon damage and generating 15 Energy. Shank cannot Miss.\n\nRequires Melee Weapon",
+    "level": 24
+   }
+  },
+  {
+   "name": "Riposte",
+   "tab": "Combat",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 14251,
+    "cost": "10 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "6 sec cooldown",
+    "text": "A strike that becomes active after parrying an opponent's attack. This attack deals 150% weapon damage and disarms the target for 6 sec."
+   }
+  },
+  {
+   "name": "Blade Flurry",
+   "tab": "Combat",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 13877,
+    "cost": "25 Energy",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "2 min cooldown",
+    "text": "Increases your melee attack speed by 20% and your melee attacks strike an additional nearby opponent. Lasts 15 sec."
+   }
+  },
+  {
+   "name": "Adrenaline Rush",
+   "tab": "Combat",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 13750,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "5 min cooldown",
+    "text": "Increases your Energy regeneration rate by 100% for 15 sec."
+   }
+  },
+  {
+   "name": "Stealth",
+   "tab": "Subtlety",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 1787,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "10 sec cooldown",
+    "text": "Allows the rogue to sneak around, but reduces your speed by 30%. Lasts until cancelled.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Pick Pocket",
+   "tab": "Subtlety",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 921,
+    "cost": null,
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Pick the target's pocket.\n\nRequires Stealth",
+    "level": 4
+   }
+  },
+  {
+   "name": "Sap",
+   "tab": "Subtlety",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 11297,
+    "cost": "65 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Incapacitates the target for up to 45 sec. Only works on Humanoids that are not in combat. Any damage taken will break the effect. Only 1 target may be sapped at a time. Does not break Stealth.\n\nRequires Melee Weapon\nRequires Stealth",
+    "level": 48
+   }
+  },
+  {
+   "name": "Poised",
+   "tab": "Subtlety",
+   "status": "new",
+   "reasons": [
+    "Not in Classic"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": "Passive",
+    "spell_id": 1328825,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "While at maximum Energy, and out of combat, reduce the Energy cost of your next ability by 10.",
+    "level": 18
+   }
+  },
+  {
+   "name": "Distract",
+   "tab": "Subtlety",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 1725,
+    "cost": "30 Energy",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": "30 sec cooldown",
+    "text": "Throws a distraction, attracting the attention of all nearby enemies and reducing their Stealth detection as if they were 1 level lower for 10 seconds. Does not break stealth.",
+    "level": 22
+   }
+  },
+  {
+   "name": "Vanish",
+   "tab": "Subtlety",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 2,
+   "top": {
+    "rank": 2,
+    "spell_id": 1857,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "5 min cooldown",
+    "text": "Allows the rogue to vanish from sight, entering an improved stealth mode for 10 sec. Also breaks movement impairing effects. More effective than Vanish (Rank 1).",
+    "level": 42
+   }
+  },
+  {
+   "name": "Detect Traps",
+   "tab": "Subtlety",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": "Passive",
+    "spell_id": 2836,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Greatly increased chance to detect traps.",
+    "level": 24
+   }
+  },
+  {
+   "name": "Disarm Trap",
+   "tab": "Subtlety",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 1842,
+    "cost": null,
+    "range": "5 yd range",
+    "cast": "2 sec cast",
+    "cooldown": null,
+    "text": "Sneak up on the trap in order to disarm it. Don't get too close or the trap will go off.",
+    "level": 30
+   }
+  },
+  {
+   "name": "Blind",
+   "tab": "Subtlety",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 2094,
+    "cost": "30 Energy",
+    "range": "10 yd range",
+    "cast": "Instant",
+    "cooldown": "5 min cooldown",
+    "text": "Blinds the target, causing it to wander disoriented for up to 10 sec. Any damage caused will remove the effect.",
+    "level": 34
+   }
+  },
+  {
+   "name": "Death Mark",
+   "tab": "Subtlety",
+   "status": "talent",
+   "reasons": [
+    "Not in Classic; its first rank comes from a Forever talent"
+   ],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 1325758,
+    "cost": "25 Energy",
+    "range": "20 yd range",
+    "cast": "Instant",
+    "cooldown": "10 sec cooldown",
+    "text": "Finishing move that marks the target, storing a portion of the damage dealt by your attacks per Combo Point. Garrote and Rupture damage is stored at twice the rate. After 6 sec, the stored damage is dealt, up to a maximum increased by Attack Power and Critical Strike chance:\n1 point : 12% stored, (401 + 4% of attack power) damage cap\n2 points: 24% stored, (646 + 8% of attack power) damage cap\n3 points: 36% stored, (891 + 12% of attack power) damage cap\n4 points: 48% stored, (1136 + 16% of attack power) damage cap\n5 points: 60% stored, (1381 + 20% of attack power) damage cap",
+    "level": 60
+   }
+  },
+  {
+   "name": "Safe Fall",
+   "tab": "Subtlety",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": "Passive",
+    "spell_id": 1860,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Reduces damage from falling.",
+    "level": 40
+   }
+  },
+  {
+   "name": "Premeditation",
+   "tab": "Subtlety",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 14183,
+    "cost": null,
+    "range": "20 yd range",
+    "cast": "Instant",
+    "cooldown": "2 min cooldown",
+    "text": "Adds 2 Combo Points to your target. You must add to or use those combo points within 20 sec or the combo points are lost."
+   }
+  },
+  {
+   "name": "Ghostly Strike",
+   "tab": "Subtlety",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 14278,
+    "cost": "40 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "20 sec cooldown",
+    "text": "A strike that deals 125% (180% if a Dagger is equipped in your Main Hand) weapon damage, increases your chance to dodge by 15% for 7 sec, and causes your next Ambush or Garrote cast within 7 sec to not require Stealth. Awards 1 combo points.\n\nRequires Melee Weapon"
+   }
+  },
+  {
+   "name": "Preparation",
+   "tab": "Subtlety",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 14185,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "10 min cooldown",
+    "text": "When activated, this ability immediately finishes the cooldown on your other Rogue abilities."
+   }
+  },
+  {
+   "name": "Hemorrhage",
+   "tab": "Subtlety",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 16511,
+    "cost": "35 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "An instant strike that deals 100% weapon damage (145% if a Dagger is equipped) and causes the target to take 15% increased Rupture and Garrote damage from the Rogue. Lasts 15 sec. Awards 1 Combo Points.\n\nRequires Melee Weapon"
+   }
+  },
+  {
+   "name": "Pick Lock",
+   "tab": "Lockpicking",
+   "status": "changed",
+   "reasons": [
+    "Part of the Lockpicking secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 1804,
+    "cost": null,
+    "range": "5 yd range",
+    "cast": "5 sec cast",
+    "cooldown": null,
+    "text": "Allows opening of locked chests and doors.",
+    "level": 1
+   }
+  },
+  {
+   "name": "Crippling Poison",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": 1,
+    "spell_id": 3420,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 30% chance of poisoning the enemy, slowing their movement speed by 50% for 12 sec.",
+    "level": 20
+   }
+  },
+  {
+   "name": "Instant Poison",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": 1,
+    "spell_id": 8681,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 20% chance of poisoning the enemy which instantly inflicts 13 to 17 Nature damage. 60 charges.",
+    "level": 20
+   }
+  },
+  {
+   "name": "Poisons",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 2842,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "You can create and mix poisons, with both found and storebought ingredients.",
+    "level": 20
+   }
+  },
+  {
+   "name": "Mind-numbing Poison",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": 1,
+    "spell_id": 5763,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 20% chance of poisoning the enemy, increasing their casting time by 40% for 10 sec. 75 charges.",
+    "level": 24
+   }
+  },
+  {
+   "name": "Instant Poison II",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 2,
+   "top": {
+    "rank": 2,
+    "spell_id": 8687,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 20% chance of poisoning the enemy which instantly inflicts 20 to 26 Nature damage. 85 charges.",
+    "level": 28
+   }
+  },
+  {
+   "name": "Deadly Poison",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": 1,
+    "spell_id": 2835,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 30% chance of poisoning the enemy for 24 Nature damage over 12 sec. Stacks up to 5 times on a single target. 90 charges.",
+    "level": 30
+   }
+  },
+  {
+   "name": "Wound Poison",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": 1,
+    "spell_id": 13220,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 30% chance of poisoning the enemy, reducing all healing effects used on them by 67 for 15 sec. Stacks up to 5 times on a single target. 90 charges.",
+    "level": 32
+   }
+  },
+  {
+   "name": "Blinding Powder",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 6510,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Create the reagent for the Blind ability.",
+    "level": 34
+   }
+  },
+  {
+   "name": "Instant Poison III",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 8691,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 20% chance of poisoning the enemy which instantly inflicts 29 to 37 Nature damage. 105 charges.",
+    "level": 36
+   }
+  },
+  {
+   "name": "Deadly Poison II",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 2,
+   "top": {
+    "rank": 2,
+    "spell_id": 2837,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 30% chance of poisoning the enemy for 36 Nature damage over 12 sec. Stacks up to 5 times on a single target. 115 charges.",
+    "level": 38
+   }
+  },
+  {
+   "name": "Mind-numbing Poison II",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 2,
+   "top": {
+    "rank": 2,
+    "spell_id": 8694,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 20% chance of poisoning the enemy, increasing their casting time by 50% for 12 sec. 115 charges.",
+    "level": 38
+   }
+  },
+  {
+   "name": "Wound Poison II",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 2,
+   "top": {
+    "rank": 2,
+    "spell_id": 13228,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 30% chance of poisoning the enemy, reducing all healing effects used on them by 92 for 15 sec. Stacks up to 5 times on a single target. 115 charges.",
+    "level": 40
+   }
+  },
+  {
+   "name": "Instant Poison IV",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 11341,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 20% chance of poisoning the enemy which instantly inflicts 45 to 57 Nature damage. 1800 charges.",
+    "level": 44
+   }
+  },
+  {
+   "name": "Deadly Poison III",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 11357,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 30% chance of poisoning the enemy for 56 Nature damage over 12 sec. Stacks up to 5 times on a single target. 135 charges.",
+    "level": 46
+   }
+  },
+  {
+   "name": "Wound Poison III",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 13229,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 30% chance of poisoning the enemy, reducing all healing effects used on them by 128 for 15 sec. Stacks up to 5 times on a single target. 135 charges.",
+    "level": 48
+   }
+  },
+  {
+   "name": "Crippling Poison II",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 2,
+   "top": {
+    "rank": 2,
+    "spell_id": 3421,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 30% chance of poisoning the enemy, slowing their movement speed by 70% for 12 sec.",
+    "level": 50
+   }
+  },
+  {
+   "name": "Instant Poison V",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 11342,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 20% chance of poisoning the enemy which instantly inflicts 62 to 80 Nature damage. 150 charges.",
+    "level": 52
+   }
+  },
+  {
+   "name": "Mind-numbing Poison III",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 11400,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 20% chance of poisoning the enemy, increasing their casting time by 60% for 14 sec. 225 charges.",
+    "level": 52
+   }
+  },
+  {
+   "name": "Deadly Poison IV",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 11358,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 30% chance of poisoning the enemy for 72 Nature damage over 12 sec. Stacks up to 5 times on a single target. 240 charges.",
+    "level": 54
+   }
+  },
+  {
+   "name": "Wound Poison IV",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 13230,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 30% chance of poisoning the enemy, reducing all healing effects used on them by 165 for 15 sec. Stacks up to 5 times on a single target. 240 charges.",
+    "level": 56
+   }
+  },
+  {
+   "name": "Deadly Poison V",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 25347,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 30% chance of poisoning the enemy for 92 Nature damage over 12 sec. Stacks up to 5 times on a single target. 240 charges.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Instant Poison VI",
+   "tab": "Poisons",
+   "status": "changed",
+   "reasons": [
+    "Part of the Poisons secondary skill in Forever, like First Aid; a Rogue skill in Classic"
+   ],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 11343,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Coats a weapon with poison that lasts for 30 minutes.\nEach strike has a 20% chance of poisoning the enemy which instantly inflicts 76 to 100 Nature damage. 250 charges.",
+    "level": 60
+   }
+  }
+ ]
+}
