@@ -126,8 +126,17 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * nowhere; `WoWSimWorksheet.xlsx` has no coefficient row for either, so a
      * declaration needs the ruleset owner and belongs to the SPELL list rather
      * than to this talent.
+     *
+     * AND IT NO LONGER REACHES WRACK (1.60.1.70755): "Improved Drains: Now
+     * increases Drain Mana's amount of Mana drained but no longer increases
+     * Wrack damage." Drain Mana is not declared, so the talent is inert here.
      */
-    { kind: 'abilityDamage', abilityId: 'wrack' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'Drain Life, Drain Soul and Drain Mana, none of which is declared -- ' +
+        'Wrack left the list at 1.60.1.70755. A missing declaration, not a ruling.',
+    },
   ],
 
   improved_bane_of_agony: [{ kind: 'abilityDamage', abilityId: 'bane_of_agony' }],

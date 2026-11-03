@@ -42,7 +42,8 @@ const OWNER_ORDER = [
   'major_healing_potion',
   'healthstone',
   'slice_and_dice',
-  'venom',
+  // The Venom finisher became Shank's passive at 1.60.1.70755; Shank takes its slot.
+  'shank',
   'cold_blood',
   'eviscerate',
   'mutilate',
@@ -56,7 +57,8 @@ const VENOM_ORDER = [
   // Round 80's Secondary Potion, behind its health gate.
   'major_healing_potion',
   'slice_and_dice',
-  'venom',
+  // The Venom finisher became Shank's passive at 1.60.1.70755; Shank takes its slot.
+  'shank',
   'cold_blood',
   'eviscerate',
   'mutilate',
@@ -150,7 +152,9 @@ describe('the Venom list', () => {
         { kind: 'comboPoints', compare: 'atLeast', points: 1 },
       ],
     });
-    for (const id of ['venom', 'eviscerate']) {
+    // Shank, in the old Venom finisher's slot, is ungated (1.60.1.70755).
+    expect(entryFor('shank').condition).toBeUndefined();
+    for (const id of ['eviscerate']) {
       const condition = JSON.stringify(entryFor(id).condition);
       expect(condition, id).toContain('"comboPoints","compare":"atLeast","points":3');
     }
@@ -162,7 +166,7 @@ describe('the Venom list', () => {
     expect(entryFor('cold_blood').sequence).toEqual(['eviscerate']);
   });
 
-  it('holds both finishers behind a three-second FLOOR on the two buffs', () => {
+  it('holds both finishers behind a three-second FLOOR on Slice and Dice', () => {
     /*
      * A FLOOR, NOT A REFRESH WINDOW -- the opposite polarity, and it reads
      * almost the same. Spend on damage only while both buffs have plenty of
@@ -170,11 +174,10 @@ describe('the Venom list', () => {
      */
     for (const id of ['cold_blood', 'eviscerate']) {
       const condition = JSON.stringify(entryFor(id).condition);
-      for (const auraId of ['slice_and_dice', 'venom']) {
-        expect(condition, `${id}/${auraId}`).toContain(
-          `"auraId":"${auraId}","compare":"atLeast","seconds":3`,
-        );
-      }
+      expect(condition, id).toContain('"auraId":"slice_and_dice","compare":"atLeast","seconds":3');
+      // Venom's floor went at 1.60.1.70755: it is Shank's window now, which no
+      // finisher can extend.
+      expect(condition, id).not.toContain('"auraId":"venom"');
     }
   });
 
@@ -280,7 +283,7 @@ describe('every entry in the list fires', () => {
     const batch = venom();
     const uses = (name: string) =>
       batch.abilities.find((row) => row.abilityName === name)?.uses ?? 0;
-    for (const name of ['Slice and Dice', 'Venom', 'Cold Blood', 'Eviscerate', 'Mutilate']) {
+    for (const name of ['Slice and Dice', 'Shank', 'Cold Blood', 'Eviscerate', 'Mutilate']) {
       expect(uses(name), name).toBeGreaterThan(0);
     }
   });

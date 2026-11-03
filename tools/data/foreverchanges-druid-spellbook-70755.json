@@ -1,0 +1,1065 @@
+{
+ "class": "druid",
+ "source": "https://foreverchanges.pro/spellbook/druid",
+ "build": "1.60.1.70755",
+ "note": "Max rank of each spell, read off the page in a browser and hashed there and on disk. A reference: nothing imports it.",
+ "spells": [
+  {
+   "name": "Wrath",
+   "tab": "Balance",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 8,
+   "top": {
+    "rank": 8,
+    "spell_id": 9912,
+    "cost": "120 Mana",
+    "range": "30 yd range",
+    "cast": "2 sec cast",
+    "cooldown": null,
+    "text": "Causes 92 to 102 Nature damage to the target.",
+    "level": 54
+   }
+  },
+  {
+   "name": "Moonfire",
+   "tab": "Balance",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 10,
+   "top": {
+    "rank": 10,
+    "spell_id": 9835,
+    "cost": "375 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Burns the enemy for 129 to 150 Arcane damage and then an additional 240 Arcane damage over 12 sec.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Thorns",
+   "tab": "Balance",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 9910,
+    "cost": "320 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Thorns sprout from the friendly target causing 18 Nature damage to attackers when hit. Lasts 10 min.",
+    "level": 54
+   }
+  },
+  {
+   "name": "Entangling Roots",
+   "tab": "Balance",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 9853,
+    "cost": "125 Mana",
+    "range": "30 yd range",
+    "cast": "1.5 sec cast",
+    "cooldown": null,
+    "text": "Roots the target in place and causes 234 Nature damage over 27 sec. Damage caused may interrupt the effect. You may only have 1 target Rooted at a time.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Nature's Grasp",
+   "tab": "Balance",
+   "status": "baseline",
+   "reasons": [
+    "A Balance talent in Classic; trained without one now"
+   ],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 17329,
+    "cost": "125 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "1 min cooldown",
+    "text": "The next 1 melee attacks that strike the caster will afflict the attacker with Entangling Roots (Rank 6). Castable while shapeshifted. Lasts 45 sec.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Teleport: Moonglade",
+   "tab": "Balance",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 18960,
+    "cost": "120 Mana",
+    "range": null,
+    "cast": "10 sec cast",
+    "cooldown": null,
+    "text": "Teleports the caster to the Moonglade.",
+    "level": 10
+   }
+  },
+  {
+   "name": "Faerie Fire",
+   "tab": "Balance",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 9907,
+    "cost": "115 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Decrease the armor of the target by 505 for 40 sec. While affected, the target cannot stealth or turn invisible.",
+    "level": 54
+   }
+  },
+  {
+   "name": "Hibernate",
+   "tab": "Balance",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 18658,
+    "cost": "150 Mana",
+    "range": "30 yd range",
+    "cast": "1.5 sec cast",
+    "cooldown": null,
+    "text": "Forces the enemy target to sleep for up to 40 sec. Any damage will awaken the target. Only one target can be forced to hibernate at a time. Only works on Beasts and Dragonkin.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Omen of Clarity",
+   "tab": "Balance",
+   "status": "baseline",
+   "reasons": [
+    "A Balance talent in Classic; trained without one now"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 16864,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Your spells and attacks have a chance to grant you Clearcasting, reducing the Mana, Rage, or Energy cost of your next damage or healing spell or offensive ability by 100%. Clearcasting is not consumed by Wrath or by spells or abilities that cost no resources.",
+    "level": 20
+   }
+  },
+  {
+   "name": "Starfire",
+   "tab": "Balance",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 7,
+   "top": {
+    "rank": 7,
+    "spell_id": 25298,
+    "cost": "340 Mana",
+    "range": "30 yd range",
+    "cast": "3.5 sec cast",
+    "cooldown": null,
+    "text": "Causes 490 to 576 Arcane damage to the target.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Soothe Animal",
+   "tab": "Balance",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 9901,
+    "cost": "100 Mana",
+    "range": "40 yd range",
+    "cast": "1.5 sec cast",
+    "cooldown": null,
+    "text": "Soothes the target beast, reducing the range at which it will attack you by 10 yards. Only affects Beast targets level 70 or lower. Lasts 15 sec.",
+    "level": 54
+   }
+  },
+  {
+   "name": "Insect Swarm",
+   "tab": "Balance",
+   "status": "talent",
+   "reasons": [
+    "A talent in Classic and in Forever"
+   ],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 24977,
+    "cost": "160 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "The enemy target is swarmed by insects, decreasing their chance to hit with attacks by 2% and causing 186 Nature damage over 12 sec.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Hurricane",
+   "tab": "Balance",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 17402,
+    "cost": "1495 Mana",
+    "range": "30 yd range",
+    "cast": "Channeled",
+    "cooldown": null,
+    "text": "Creates a violent storm in the target area causing 132 Nature damage to enemies every 1 sec, and increasing the time between attacks by 20%. Lasts 10 sec. Druid must channel to maintain the spell.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Barkskin",
+   "tab": "Balance",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 22812,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "1 min cooldown",
+    "text": "Your skin becomes as tough as bark. Physical damage taken is reduced by 20%. While you are protected, damaging attacks will not cause spellcasting delays. Lasts 15 sec.",
+    "level": 44
+   }
+  },
+  {
+   "name": "Moonkin Form",
+   "tab": "Balance",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 24858,
+    "cost": "35% of base mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Shapeshift into Moonkin Form, increasing Omen of Clarity's chance to trigger by 100%, Armor contribution from items by 360%, and all party or raid members within 45 yards have their Critical Strike chance increased by 3%. Also protects the caster from Polymorph effects and prevents the use of healing spells.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects."
+   }
+  },
+  {
+   "name": "Frenzied Regeneration",
+   "tab": "Feral Combat",
+   "status": "changed",
+   "reasons": [
+    "Rank 1 new (Classic stops at rank 3)",
+    "Ranks 2 to 3 gone (Classic goes to rank 3)"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 22845,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": null,
+    "level": null
+   }
+  },
+  {
+   "name": "Bear Form",
+   "tab": "Feral Combat",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": "Shapeshift",
+    "spell_id": 5487,
+    "cost": "55% of base mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Shapeshift into Bear Form, increasing Attack Power by 120, Armor contribution from items by 180%, and Health by 180. Also protects the caster from Polymorph effects and allows the use of various bear abilities.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects.",
+    "level": 10
+   }
+  },
+  {
+   "name": "Demoralizing Roar",
+   "tab": "Feral Combat",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 9898,
+    "cost": "10 Rage",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "The druid roars, decreasing nearby enemies' melee attack power by 204. Lasts 30 sec.\n\nRequires Bear Form, Dire Bear Form",
+    "level": 52
+   }
+  },
+  {
+   "name": "Growl",
+   "tab": "Feral Combat",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 6795,
+    "cost": null,
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "8 sec cooldown",
+    "text": "Taunts the target to attack you, but has no effect if the target is already attacking you.\n\nRequires Bear Form, Dire Bear Form",
+    "level": 10
+   }
+  },
+  {
+   "name": "Maul",
+   "tab": "Feral Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 7,
+   "top": {
+    "rank": 7,
+    "spell_id": 9881,
+    "cost": "15 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Increases the druid's next attack by 128 damage.\n\nRequires Bear Form, Dire Bear Form",
+    "level": 58
+   }
+  },
+  {
+   "name": "Enrage",
+   "tab": "Feral Combat",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 5229,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "1 min cooldown",
+    "text": "Instantly generates 10 Rage and another 20 Rage over 10 sec, but reduces base armor by 27% in Bear Form and 16% in Dire Bear Form. The druid is considered in combat for the duration.\n\nRequires Bear Form, Dire Bear Form",
+    "level": 12
+   }
+  },
+  {
+   "name": "Bash",
+   "tab": "Feral Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 8983,
+    "cost": "10 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "1 min cooldown",
+    "text": "Stuns the target for 4 sec.\n\nRequires Bear Form, Dire Bear Form",
+    "level": 46
+   }
+  },
+  {
+   "name": "Aquatic Form",
+   "tab": "Feral Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": "Shapeshift",
+    "spell_id": 1066,
+    "cost": "20% of base mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Shapeshift into Aquatic Form, increasing swim speed by 50% and allowing the druid to breathe underwater. Also protects the caster from Polymorph effects.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects.",
+    "level": 16
+   }
+  },
+  {
+   "name": "Swipe",
+   "tab": "Feral Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 9908,
+    "cost": "20 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Swipe 3 nearby enemies, inflicting 83 damage.\n\nRequires Bear Form, Dire Bear Form",
+    "level": 54
+   }
+  },
+  {
+   "name": "Cat Form",
+   "tab": "Feral Combat",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": "Shapeshift",
+    "spell_id": 768,
+    "cost": "55% of base mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Shapeshift into Cat Form, increasing Attack Power by 12 plus Agility. Also protects the caster from Polymorph effects and allows the use of various cat abilities.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects.",
+    "level": 20
+   }
+  },
+  {
+   "name": "Claw",
+   "tab": "Feral Combat",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 9850,
+    "cost": "45 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Claw the enemy for 140% normal damage plus 115. Awards 1 combo points.\n\nRequires Cat Form",
+    "level": 58
+   }
+  },
+  {
+   "name": "Prowl",
+   "tab": "Feral Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 9913,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "10 sec cooldown",
+    "text": "Allows the Druid to prowl around, but reduces your movement speed by 30%. Lasts until cancelled.\n\nRequires Cat Form",
+    "level": 60
+   }
+  },
+  {
+   "name": "Rip",
+   "tab": "Feral Combat",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 9896,
+    "cost": "30 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Finishing move that causes damage over time. Damage increases per combo point and by your Attack Power:\n1 point : 305 damage over 12 sec.\n2 points: 497 damage over 12 sec.\n3 points: 688 damage over 12 sec.\n4 points: 880 damage over 12 sec.\n5 points: 1071 damage over 12 sec.\n\nRequires Cat Form",
+    "level": 60
+   }
+  },
+  {
+   "name": "Shred",
+   "tab": "Feral Combat",
+   "status": "earlier",
+   "reasons": [
+    "Rank 1 trained earlier than in Classic"
+   ],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 9830,
+    "cost": "60 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Shred the target, causing 200% damage plus 80 to the target. Must be behind the target. Awards 1 combo points.\n\nRequires Cat Form",
+    "level": 54
+   }
+  },
+  {
+   "name": "Ferocious Bite",
+   "tab": "Feral Combat",
+   "status": "earlier",
+   "reasons": [
+    "Ranks 1 to 5 trained earlier than in Classic",
+    "Rank 6 new (Classic stops at rank 5)"
+   ],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 31018,
+    "cost": "35 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Finishing move that causes damage per combo point and converts each extra point of energy into 3.3 additional damage. Damage is increased by your Attack Power.\n1 point : 245-321 damage\n2 points: 426-502 damage\n3 points: 607-683 damage\n4 points: 788-864 damage\n5 points: 969-1045 damage\n\nRequires Cat Form",
+    "level": 60
+   }
+  },
+  {
+   "name": "Rake",
+   "tab": "Feral Combat",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 9904,
+    "cost": "40 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Rake the target for 76 damage and an additional 126 damage over 9 sec. Awards 1 combo points.\n\nRequires Cat Form",
+    "level": 54
+   }
+  },
+  {
+   "name": "Lacerate",
+   "tab": "Feral Combat",
+   "status": "talent",
+   "reasons": [
+    "Not in Classic; its first rank comes from a Forever talent",
+    "Season of Discovery had a spell by this name"
+   ],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 1235827,
+    "cost": "15 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Lacerates the enemy target, making them bleed for 75 damage over 15 sec plus 10% weapon damage per existing application of Lacerate on the target. Causes a high amount of threat. This effect stacks up to 5 times on the same target.\n\nRequires Bear Form, Dire Bear Form",
+    "level": 58
+   }
+  },
+  {
+   "name": "Dash",
+   "tab": "Feral Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 2,
+   "top": {
+    "rank": 2,
+    "spell_id": 9821,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "5 min cooldown",
+    "text": "Increases movement speed by 60% for 15 sec. Does not break prowling.\n\nRequires Cat Form",
+    "level": 46
+   }
+  },
+  {
+   "name": "Challenging Roar",
+   "tab": "Feral Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 5209,
+    "cost": "15 Rage",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "10 min cooldown",
+    "text": "Forces all nearby enemies to focus attacks on you for 6 sec.\n\nRequires Bear Form, Dire Bear Form",
+    "level": 28
+   }
+  },
+  {
+   "name": "Cower",
+   "tab": "Feral Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 9892,
+    "cost": "20 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "10 sec cooldown",
+    "text": "Cower, causing no damage but lowering your threat a large amount, making the enemy less likely to attack you.\n\nRequires Cat Form",
+    "level": 52
+   }
+  },
+  {
+   "name": "Travel Form",
+   "tab": "Feral Combat",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": "Shapeshift",
+    "spell_id": 783,
+    "cost": "20% of base mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Shapeshift into Travel Form, increasing movement speed by 40%. Also protects the caster from Polymorph effects. Only useable outdoors.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects.",
+    "level": 30
+   }
+  },
+  {
+   "name": "Poised",
+   "tab": "Feral Combat",
+   "status": "new",
+   "reasons": [
+    "Not in Classic"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": "Passive",
+    "spell_id": 1328829,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "While at maximum Energy, and out of combat, reduce the Energy cost of your next ability by 10.",
+    "level": 32
+   }
+  },
+  {
+   "name": "Ravage",
+   "tab": "Feral Combat",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 9867,
+    "cost": "60 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Ravage the target, causing 435% damage plus 343 to the target. Must be prowling and behind the target. Awards 1 combo points.\n\nRequires Cat Form",
+    "level": 58
+   }
+  },
+  {
+   "name": "Track Humanoids",
+   "tab": "Feral Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 5225,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Shows the location of all nearby humanoids on the minimap. Only one type of thing can be tracked at a time.\n\nRequires Cat Form",
+    "level": 32
+   }
+  },
+  {
+   "name": "Pounce",
+   "tab": "Feral Combat",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 9827,
+    "cost": "50 Energy",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Pounce, stunning the target for 2 sec and causing 186 damage over 18 sec. Must be prowling and behind the target. Awards 1 combo points.\n\nRequires Cat Form",
+    "level": 56
+   }
+  },
+  {
+   "name": "Dire Bear Form",
+   "tab": "Feral Combat",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": "Shapeshift",
+    "spell_id": 9634,
+    "cost": "55% of base mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Shapeshift into Dire Bear Form, increasing Attack Power by 180, Armor contribution from items by 360%, and Health by 1240. Also protects the caster from Polymorph effects and allows the use of various bear abilities.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects.",
+    "level": 40
+   }
+  },
+  {
+   "name": "Feline Grace",
+   "tab": "Feral Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": "Passive",
+    "spell_id": 20719,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Reduces damage from falling.",
+    "level": 40
+   }
+  },
+  {
+   "name": "Primal Bite",
+   "tab": "Feral Combat",
+   "status": "talent",
+   "reasons": [
+    "Not in Classic; its first rank comes from a Forever talent"
+   ],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 1238070,
+    "cost": "20 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "6 sec cooldown",
+    "text": "Bite the target, dealing 100% normal damage plus 77 and generating a high amount of threat.\n\nRequires Bear Form, Dire Bear Form",
+    "level": 60
+   }
+  },
+  {
+   "name": "Feral Charge",
+   "tab": "Feral Combat",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 1238122,
+    "cost": "5 Rage",
+    "range": "25 yd range",
+    "cast": "Instant",
+    "cooldown": "15 sec cooldown",
+    "text": "Requires Bear Form, Dire Bear Form\nCharge an enemy, immobilizing them and interrupting any spell they are casting for 4 sec.\n\nLeap behind an enemy.\n\nRequires Cat Form, Bear Form, Dire Bear Form"
+   }
+  },
+  {
+   "name": "Shifting Power",
+   "tab": "Feral Combat",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "Not a talent in Classic"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 1322605,
+    "cost": "55% of base mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "8 sec cooldown",
+    "text": "Instantly convert 55% of base Mana into 40 Energy. Shifting Power's cost is reduced by effects that reduce the cost of Shapeshifting.\n\nRequires Cat Form"
+   }
+  },
+  {
+   "name": "Healing Touch",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 11,
+   "top": {
+    "rank": 11,
+    "spell_id": 25297,
+    "cost": "840 Mana",
+    "range": "40 yd range",
+    "cast": "3.5 sec cast",
+    "cooldown": null,
+    "text": "Heals a friendly target for 2139 to 2525.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Mark of the Wild",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 7,
+   "top": {
+    "rank": 7,
+    "spell_id": 9885,
+    "cost": "445 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Increases the friendly target's armor by 385, all attributes by 16 and all resistances by 27 for 1 hr.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Rejuvenation",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 11,
+   "top": {
+    "rank": 11,
+    "spell_id": 25299,
+    "cost": "360 Mana",
+    "range": "40 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Heals the target for 776 over 12 sec.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Regrowth",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 9,
+   "top": {
+    "rank": 9,
+    "spell_id": 9858,
+    "cost": "525 Mana",
+    "range": "40 yd range",
+    "cast": "2 sec cast",
+    "cooldown": null,
+    "text": "Heals a friendly target for 965 to 1077 and another 994 over 21 sec.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Revive",
+   "tab": "Restoration",
+   "status": "new",
+   "reasons": [
+    "Not in Classic",
+    "Season of Discovery had a spell by this name"
+   ],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 1237951,
+    "cost": "75% of base mana",
+    "range": "30 yd range",
+    "cast": "10 sec cast",
+    "cooldown": null,
+    "text": "Brings a dead player back to life with 750 health and 1000 mana. Cannot be cast when in combat.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Cure Poison",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 8946,
+    "cost": "16% of base mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Cures 1 poison effects on the target.",
+    "level": 14
+   }
+  },
+  {
+   "name": "Rebirth",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 20748,
+    "cost": "85% of base mana",
+    "range": "30 yd range",
+    "cast": "2 sec cast",
+    "cooldown": "30 min cooldown",
+    "text": "Returns the spirit to the body, restoring a dead target to life with 2200 health and 2800 mana.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Remove Curse",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 2782,
+    "cost": "10% of base mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Dispels 1 Curse or Bane from a friendly target.",
+    "level": 24
+   }
+  },
+  {
+   "name": "Abolish Poison",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 2893,
+    "cost": "16% of base mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Attempts to cure 1 poison effect on the target, and 1 more poison effect every 2 seconds for 8 sec.",
+    "level": 26
+   }
+  },
+  {
+   "name": "Tranquility",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 9863,
+    "cost": "925 Mana",
+    "range": null,
+    "cast": "Channeled",
+    "cooldown": "5 min cooldown",
+    "text": "Regenerates all nearby party members within 20 yards for 285 every 2 sec for 10 sec. Druid must channel to maintain the spell.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Innervate",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 29166,
+    "cost": "5% of base mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": "6 min cooldown",
+    "text": "Increases the target's Mana regeneration by 400% and allows 100% of the target's Mana regeneration to continue while casting. Lasts 20 sec.",
+    "level": 40
+   }
+  },
+  {
+   "name": "Wild Growth",
+   "tab": "Restoration",
+   "status": "talent",
+   "reasons": [
+    "Not in Classic; its first rank comes from a Forever talent",
+    "Season of Discovery had a spell by this name"
+   ],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 1238215,
+    "cost": "1050 Mana",
+    "range": "40 yd range",
+    "cast": "3 sec cast",
+    "cooldown": "6 sec cooldown",
+    "text": "Heals the target and their party for 679 over 7 sec. Party members must be within 43.5 yds of target. The amount healed is applied quickly at first, and slows down as Wild Growth reaches its full duration.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Gift of the Wild",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 2,
+   "top": {
+    "rank": 2,
+    "spell_id": 21850,
+    "cost": "1200 Mana",
+    "range": "40 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Gives the Gift of the Wild to all party and raid members, increasing armor by 385, all attributes by 16 and all resistances by 27 for 1 hr.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Swiftmend",
+   "tab": "Restoration",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 18562,
+    "cost": "20% of base mana",
+    "range": "40 yd range",
+    "cast": "Instant",
+    "cooldown": "15 sec cooldown",
+    "text": "Instantly heals a target with your active Rejuvenation or Regrowth effect for an amount equal to the full duration of the periodic effect of the consumed spell."
+   }
+  },
+  {
+   "name": "Nature's Swiftness",
+   "tab": "Restoration",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 17116,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "3 min cooldown",
+    "text": "When activated, your next Nature spell becomes an instant cast spell."
+   }
+  }
+ ]
+}

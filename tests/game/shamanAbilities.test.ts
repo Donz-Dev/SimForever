@@ -13,8 +13,6 @@ import {
   FLAME_SHOCK_DIRECT,
   FROST_SHOCK,
   FROST_SHOCK_DAMAGE,
-  LAVA_BURST_DAMAGE,
-  LAVA_BURST_FLAME_SHOCK_BONUS,
   LIGHTNING_BOLT,
   LIGHTNING_BOLT_DAMAGE,
   SEARING_TOTEM,
@@ -124,12 +122,13 @@ const presetPlayer = (preset: string) => {
 
 describe('the numbers', () => {
   it('takes the midpoint of each stated range, at MAX RANK', () => {
-    // "185 to 207", "116 to 130", "293 to 309", "275 to 291", "192 to 248".
+    // 1.60.1.70755: "342 to 381", "495 to 552", and the shocks back to Classic --
+    // "517 to 545", "495 to 524". Lava Burst is removed.
     // Figures that follow foreverchanges.pro where it and our own capture
     // disagree, by the ruleset owner's standing rule. Written out by hand
     // from the source and carrying the ruling, not only the number. See
     // docs/source-cross-checks.md.
-    expect(LIGHTNING_BOLT_DAMAGE).toBe(196);
+    expect(LIGHTNING_BOLT_DAMAGE).toBe((342 + 381) / 2);
     /*
      * 123 IS `midpoint(116, 130)` AND NOT THE CAPTURE'S 119-133, the same way
      * Lightning Bolt's 196 is `midpoint(185, 207)` against a capture reading
@@ -141,25 +140,9 @@ describe('the numbers', () => {
      * a figure out by hand: the line above it passed, so one of two constants
      * resolved by one ruling had moved and the other had not.
      */
-    expect(CHAIN_LIGHTNING_DAMAGE).toBe(123);
-    expect(EARTH_SHOCK_DAMAGE).toBe(301);
-    expect(FROST_SHOCK_DAMAGE).toBe(283);
-    expect(LAVA_BURST_DAMAGE).toBe(220);
-  });
-
-  it('reads Lava Burst at rank 3, not the rank 1 its talent tooltip shows', () => {
-    /*
-     * THE RANK-1 RULE, for the fourth time in this project. The Elemental
-     * capstone's tooltip says "106 to 134 Fire damage" because a talent shows
-     * rank 1 of the ability it grants; a level 60 trains rank 3, which the
-     * spellbook states outright as "192 to 248".
-     *
-     * Pinned as an inequality against the rank-1 figure rather than only as a
-     * number, so the reason survives alongside the value.
-     */
-    const RANK_ONE_MIDPOINT = (106 + 134) / 2;
-    expect(LAVA_BURST_DAMAGE).toBeGreaterThan(RANK_ONE_MIDPOINT);
-    expect(LAVA_BURST_DAMAGE).toBe(220);
+    expect(CHAIN_LIGHTNING_DAMAGE).toBe((495 + 552) / 2);
+    expect(EARTH_SHOCK_DAMAGE).toBe((517 + 545) / 2);
+    expect(FROST_SHOCK_DAMAGE).toBe((495 + 524) / 2);
   });
 
   it('divides Flame Shock evenly by its cadence, which is why the cadence is 3', () => {
@@ -173,10 +156,9 @@ describe('the numbers', () => {
      */
     const ticks = FLAME_SHOCK_DOT_DURATION_MS / FLAME_SHOCK_TICK_INTERVAL_MS;
     expect(ticks).toBe(4);
-    expect(FLAME_SHOCK_DOT_TOTAL / ticks).toBe(44);
-    expect(Number.isInteger(FLAME_SHOCK_DOT_TOTAL / 6)).toBe(false);
-    expect(Number.isInteger(FLAME_SHOCK_DOT_TOTAL / 3)).toBe(false);
-    expect(FLAME_SHOCK_DIRECT).toBe(166);
+    // 292 + 320 since 1.60.1.70755 (Classic's again): four ticks of 80.
+    expect(FLAME_SHOCK_DOT_TOTAL / ticks).toBe(80);
+    expect(FLAME_SHOCK_DIRECT).toBe(292);
   });
 
   it('states Windfury Weapon as TWO extra attacks, unlike the totem', () => {
@@ -209,13 +191,15 @@ describe('the two builds, and what their talents actually do', () => {
     const elemental = presetPlayer('shaman_elemental').abilities.all.map((a) => a.id);
     const enhancement = presetPlayer('shaman_enhancement').abilities.all.map((a) => a.id);
 
-    expect(elemental).toContain('lava_burst');
+    // Lightning Mastery since 1.60.1.70755; Lava Burst is removed.
+    expect(elemental).toContain('lightning_mastery');
+    expect(elemental).not.toContain('lava_burst');
     expect(enhancement).toContain('stormstrike');
     expect(enhancement).toContain('rage_of_the_farseer');
 
     // And each is gated on the talent: the other build does not get it.
     expect(elemental).not.toContain('stormstrike');
-    expect(enhancement).not.toContain('lava_burst');
+    expect(enhancement).not.toContain('lightning_mastery');
   });
 
   it('applies Elemental Alacrity to the three spells it names and no others', () => {
@@ -225,8 +209,8 @@ describe('the two builds, and what their talents actually do', () => {
       abilitiesForClass('shaman', 'caster', built.talents).map((a) => [a.id, a]),
     );
     expect(book.get('lightning_bolt')!.castTimeMs).toBe(2000);
-    expect(book.get('chain_lightning')!.castTimeMs).toBe(1500);
-    expect(book.get('lava_burst')!.castTimeMs).toBe(2000);
+    // 2.5 seconds since 1.60.1.70755, so 2.0 with the talent.
+    expect(book.get('chain_lightning')!.castTimeMs).toBe(2000);
   });
 
   it('applies Reverberation to the shocks, in SECONDS', () => {
@@ -285,18 +269,6 @@ describe('the two builds, and what their talents actually do', () => {
 });
 
 describe('the fights', () => {
-  it('holds Flame Shock up so Lava Burst finds it, which is why the order is that way', () => {
-    const batch = batchOf('shaman_elemental', 40, 5);
-    const used = (name: string) =>
-      batch.abilities.find((a) => a.abilityName === name)?.uses ?? 0;
-
-    expect(used('Flame Shock')).toBeGreaterThan(1);
-    expect(used('Lava Burst')).toBeGreaterThan(1);
-    // The bonus is real and stated, so the priority order is load-bearing
-    // rather than cosmetic.
-    expect(LAVA_BURST_FLAME_SHOCK_BONUS).toBe(1.2);
-  });
-
   it('imbues Flametongue once, before the pull, and never Windfury', () => {
     /*
      * The owner's round 37: Flametongue in the opener where Windfury was, and
@@ -1153,12 +1125,13 @@ describe('Fire Nova, which was blocked on the wrong thing for the whole project'
 describe('the two owner rulings that replaced placeholders', () => {
   it('normalises Maelstrom Weapon by weapon speed, which a flat chance does not', () => {
     /*
-     * FIVE PROCS PER MINUTE, the owner's figure. The SHAPE changed and not only
+     * FIVE PROCS PER MINUTE, the owner's figure (ten since 1.60.1.70755). The SHAPE changed and not only
      * the number: a flat per-hit chance is worth more to a FAST weapon, and PPM
      * removes exactly that. Asserted as the normalisation rather than as a
      * percentage, because that is the property the two readings disagree about.
      */
-    expect(MAELSTROM_WEAPON_PPM).toBe(5);
+    // 10 since 1.60.1.70755, which doubled it.
+    expect(MAELSTROM_WEAPON_PPM).toBe(10);
 
     const slow = ppmChance(3.4, MAELSTROM_WEAPON_PPM);
     const fast = ppmChance(1.7, MAELSTROM_WEAPON_PPM);

@@ -373,7 +373,7 @@
      "tier": 25,
      "requires": "Predatory Strikes",
      "requiresRanks": 3,
-     "description": "Increases damage done by your melee abilities on Bleeding targets by 10%."
+     "description": "Increases damage done by your melee abilities on Bleeding targets by 15%."
     },
     {
      "row": 5,

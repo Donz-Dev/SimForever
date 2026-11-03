@@ -1,5 +1,4 @@
 import type { AuraDefinition, CastReaction, Reaction, Stats } from '../../engine';
-import { SALVATION_THREAT_MULTIPLIER } from '../combat/threat';
 import { flat, percentMultiplicative, seconds } from '../../engine';
 import {
   BATTLE_SHOUT,
@@ -279,35 +278,6 @@ const blessingOfKings: RaidBuff = {
   },
 };
 
-/**
- * Blessing of Salvation: "Reduces all threat generated ... by 30%" (round 47).
- *
- * ----------------------------------------------------------------------------
- * ON EXACTLY WHEN THE TARGET DOES NOT SWING BACK, by the owner's instruction:
- * a DPS profile takes it and a tank never does. The selection follows the
- * encounter -- `withTargetAttacks` turns it on and off with the switch -- and
- * the presets carry it the same way, which a test pins.
- *
- * ONE FACTOR LIKE EVERY OTHER, so it multiplies a stance, a talent and an
- * enchant rather than summing with them.
- * ----------------------------------------------------------------------------
- */
-export const SALVATION_RAID_BUFF_ID = 'salvation';
-
-const salvation: RaidBuff = {
-  id: SALVATION_RAID_BUFF_ID,
-  name: 'Salvation',
-  detail: '-30% threat from all sources. On when the target does not attack back',
-  source: 'Paladin',
-  appliesTo: 'player',
-  aura: {
-    id: 'salvation',
-    name: 'Salvation',
-    durationMs: HOUR,
-    threatModifiers: [{ multiplier: SALVATION_THREAT_MULTIPLIER }],
-  },
-};
-
 const blessingOfMight: RaidBuff = {
   id: 'blessing_of_might',
   name: 'Blessing of Might',
@@ -469,41 +439,28 @@ const trueshotAura: RaidBuff = {
 const leaderOfThePack: RaidBuff = {
   id: 'leader_of_the_pack',
   name: 'Leader of the Pack',
-  detail: `+${PARTY_CRIT_AURA_PERCENT}% critical strike chance, melee and ranged`,
+  detail: `+${PARTY_CRIT_AURA_PERCENT}% critical strike chance, all types`,
   source: 'Druid',
   appliesTo: 'player',
   /*
-   * MELEE AND RANGED ONLY SINCE THE PATCH: "Leader of the Pack now only
-   * increases Melee and Ranged Critical Strike chance." It and Moonkin Aura
-   * used to share ONE aura id because the owner ruled them the same 3% -- they
-   * are different buffs now, so they are two ids and they stack with each
-   * other.
-   *
-   * THE SHARED ID SURVIVES WITHIN EACH, which is the half of that ruling that
-   * was about double-dipping: this entry applies the same aura the Druid's own
-   * `leader_of_the_pack` TALENT grants, so a feral Druid in a raid that ticks
-   * the box reads 3% and not 6%. Enforcing that at the chooser instead is what
-   * produced the +6% bug.
-   *
-   * AND IT NO LONGER CARRIES `exclusiveWith`, on the owner's ruling: "Moonkin
-   * and Leader of the Pack are no longer exclusive. And all profiles should
-   * have both enabled by default in the raid buffs." The declaration was made
-   * when the two were the same 3%; the split made them different buffs, so the
-   * raid simply has a feral druid AND a moonkin. See `MOONKIN_AURA_ID` in
-   * `auras/druid.ts`.
+   * ALL CRIT AND EXCLUSIVE WITH MOONKIN FORM AGAIN (1.60.1.70755), the split
+   * that made them two buffs undone. One aura id for every source, so the two
+   * entries and the two talents can never add up to more than 3% -- and
+   * `exclusiveWith` makes the panel switch one entry off when the other goes
+   * on, which is what "exclusive" says to somebody reading the checkboxes.
    */
+  exclusiveWith: 'moonkin_form',
   aura: LEADER_OF_THE_PACK_AURA,
 };
 
 const moonkinForm: RaidBuff = {
   id: 'moonkin_form',
   name: 'Moonkin Form',
-  detail: `+${PARTY_CRIT_AURA_PERCENT}% SPELL critical strike chance`,
+  detail: `+${PARTY_CRIT_AURA_PERCENT}% critical strike chance, all types`,
   source: 'Druid',
   appliesTo: 'player',
-  // Spell crit only since the patch, and the same aura the Moonkin Form talent
-  // grants -- one id per buff, so a Moonkin with both sources reads 3%. Not
-  // exclusive with Leader of the Pack any more; see that entry.
+  // The same aura as Leader of the Pack; see that entry.
+  exclusiveWith: 'leader_of_the_pack',
   aura: MOONKIN_AURA,
 };
 
@@ -864,7 +821,6 @@ export const RAID_BUFFS: readonly RaidBuff[] = [
   blessingOfWisdom,
   blessingOfKings,
   blessingOfMight,
-  salvation,
   devotionAura,
   retributionAura,
   faerieFire,
@@ -913,19 +869,6 @@ export function raidForcedAuraIds(ids: readonly string[]): readonly string[] {
   return ids
     .map((id) => RAID_BUFFS_BY_ID.get(id)?.aura?.id)
     .filter((id): id is string => id !== undefined);
-}
-
-/**
- * The selection with Salvation on exactly when the target does not attack back.
- *
- * In catalogue order, like `withRaidBuff`, so flipping the switch twice is the
- * same file it started as.
- */
-export function withSalvationFor(ids: readonly string[], targetAttacks: boolean): readonly string[] {
-  const chosen = new Set(ids);
-  if (targetAttacks) chosen.delete(SALVATION_RAID_BUFF_ID);
-  else chosen.add(SALVATION_RAID_BUFF_ID);
-  return RAID_BUFFS.filter((entry) => chosen.has(entry.id)).map((entry) => entry.id);
 }
 
 /**

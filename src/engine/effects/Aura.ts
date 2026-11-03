@@ -185,6 +185,14 @@ export interface CastModifier {
    */
   readonly requiresCost?: boolean;
   /**
+   * Only match an ability whose cost is paid in THIS resource.
+   *
+   * Poised is "your next ENERGY ability", and a Druid owns mana, rage and
+   * energy at once -- so `requiresCost` alone would let a mana spell eat a
+   * charge meant for a Shred.
+   */
+  readonly requiresResource?: ResourceType;
+  /**
    * Only match an ability that ROLLS A COMBAT TABLE.
    *
    * ----------------------------------------------------------------------------
@@ -327,6 +335,19 @@ export interface CastModifier {
    * ==========================================================================
    */
   readonly exceptWhileAura?: string;
+  /**
+   * Does not apply to, and is not consumed by, THESE abilities while the caster
+   * carries THAT aura -- `exceptWhileAura` narrowed to a list of abilities.
+   *
+   * The Mage's Clearcasting at 1.60.1.70755: "Clearcasting is no longer
+   * consumed on Arcane Missiles if Missile Barrage is active at the same time."
+   * A catch-all modifier that must step aside for ONE ability while another
+   * aura is up; `exceptWhileAura` alone would stand it aside for every spell.
+   */
+  readonly exceptAbilitiesWhileAura?: {
+    readonly auraId: string;
+    readonly abilityIds: readonly string[];
+  };
 }
 
 /**

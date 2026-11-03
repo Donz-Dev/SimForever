@@ -120,8 +120,8 @@ const SHEET: readonly SheetRow[] = [
   { id: 'sunder_armor_cast', name: 'Sunder Armor', rageCost: 15, cooldownSeconds: 0, castSeconds: 0, attackTable: 'melee-special' },
   { id: 'execute', name: 'Execute', rageCost: 15, cooldownSeconds: 0, castSeconds: 0, attackTable: 'melee-special' },
   // OVERRIDDEN, see above: the sheet says 0, the owner said 15, and Forever
-  // has since moved it to 18.
-  { id: 'slam', name: 'Slam', rageCost: 15, cooldownSeconds: 18, castSeconds: 1.5, attackTable: 'melee-special' },
+  // moved it to 18, and 1.60.1.70755 to 15.
+  { id: 'slam', name: 'Slam', rageCost: 15, cooldownSeconds: 15, castSeconds: 1.5, attackTable: 'melee-special' },
   { id: 'hamstring', name: 'Hamstring', rageCost: 10, cooldownSeconds: 0, castSeconds: 0, attackTable: 'melee-special' },
   { id: 'demoralizing_shout_cast', name: 'Demoralizing Shout', rageCost: 10, cooldownSeconds: 0, castSeconds: 0, attackTable: undefined },
   { id: 'intercept', name: 'Intercept', rageCost: 10, cooldownSeconds: 30, castSeconds: 0, attackTable: 'ranged-special' },
@@ -158,7 +158,7 @@ describe('warrior abilities match the spreadsheet', () => {
 
   it('defines every row in the sheet, and nothing the sources do not have', () => {
     /*
-     * FOUR are defined that the spreadsheet does not contain, and each has a
+     * FIVE are defined that the spreadsheet does not contain, and each has a
      * source.
      *
      * Battle Stance: not in the spreadsheet, defined anyway because two stances
@@ -169,10 +169,13 @@ describe('warrior abilities match the spreadsheet', () => {
      * spreadsheet has no rows for them at all. Their numbers come from Forever
      * directly -- see docs/warrior.md.
      *
-     * Listed by hand rather than derived, so adding a fifth is a deliberate act
+     * Reckless Swings: a Fury talent new at 1.60.1.70755, numbers from its
+     * tooltip.
+     *
+     * Listed by hand rather than derived, so adding another is a deliberate act
      * that fails this test until someone writes down where it came from.
      */
-    const beyondTheSheet = ['battle_stance_cast', 'death_wish', 'last_stand', 'sweeping_strikes'];
+    const beyondTheSheet = ['battle_stance_cast', 'death_wish', 'last_stand', 'sweeping_strikes', 'reckless_swings'];
     const defined = WARRIOR_ABILITIES.map((ability) => ability.id).sort();
     const expected = [...SHEET.map((row) => row.id), ...beyondTheSheet].sort();
 
@@ -274,8 +277,8 @@ describe('the weapon damage formula', () => {
       1,
     );
 
-    // 40% of 210
-    expect(amount).toBeCloseTo(84, 6);
+    // 75% of 210 since 1.60.1.70755 (was the sheet's 40%)
+    expect(amount).toBeCloseTo(157.5, 6);
   });
 
   it('applies the off-hand penalty ONCE to the finished total, not to the weapon alone', () => {

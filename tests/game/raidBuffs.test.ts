@@ -98,8 +98,9 @@ describe('the catalogue', () => {
      * FLAMETONGUE TOTEM, an option the owner asked for default OFF.
      */
     // And three more from round 36: Devotion Aura, Retribution Aura, Thorns.
-    // And Salvation from round 47, on whenever the target does not attack back.
-    expect(RAID_BUFFS).toHaveLength(28);
+    // And Salvation from round 47 -- removed from the game at 1.60.1.70755.
+    expect(RAID_BUFFS).toHaveLength(27);
+    expect(RAID_BUFFS_BY_ID.has('blessing_of_salvation')).toBe(false);
     expect(RAID_BUFFS_BY_ID.has('demoralizing_shout')).toBe(false);
     expect(RAID_BUFFS_BY_ID.has('judgement_of_wisdom')).toBe(true);
     expect(RAID_BUFFS_BY_ID.has('judgement_of_the_crusader')).toBe(true);
@@ -234,43 +235,28 @@ describe('buffs on the character', () => {
     expect(kings.health.maximum).toBeGreaterThan(plain.health.maximum);
   });
 
-  it('put Leader of the Pack on MELEE and ranged, and not on spells', () => {
+  it('put Leader of the Pack on every kind of crit', () => {
     /*
-     * ========================================================================
-     * IT USED TO REACH SPELLS TOO AND THE PATCH TOOK THAT AWAY: "Leader of the
-     * Pack now only increases Melee and Ranged Critical Strike chance."
-     *
-     * Ranged reads the same `critChance` stat melee does -- `critChanceFrom`
-     * is the engine's one crit function -- so "melee and ranged" is that one
-     * stat, and spell crit is a genuinely separate one that no longer moves.
-     *
-     * THE SPELL ASSERTION IS THE WHOLE TEST NOW. Every preset but the Moonkin
-     * carries this buff, so the 3% spell crit it used to hand every CASTER
-     * profile is gone -- which is what the note says should happen, and is the
-     * largest single consequence of the Druid half of this patch. Asserted as
-     * "unchanged" rather than deleted, because a merge that left the old
-     * `spellCritChance` modifier on the aura would pass a test that had merely
-     * stopped looking.
-     * ========================================================================
+     * 1.60.1.70755 undid the split: Moonkin Aura and Leader of the Pack are one
+     * 3% to every crit type again, one aura id for all four sources.
      */
     const plain = sheet([]);
     const pack = sheet(['leader_of_the_pack']);
     expect(pack.stats.get('critChance')).toBeCloseTo(plain.stats.get('critChance') + 3, 6);
     expect(pack.stats.get('spellCritChance')).toBeCloseTo(
-      plain.stats.get('spellCritChance'),
+      plain.stats.get('spellCritChance') + 3,
       6,
     );
   });
 
-  it('put Moonkin Aura on SPELLS, and not on melee or ranged', () => {
-    // The mirror of the above, and the other half of the split.
+  it('put Moonkin Aura on every kind of crit, the same aura', () => {
     const plain = sheet([]);
     const moonkin = sheet(['moonkin_form']);
     expect(moonkin.stats.get('spellCritChance')).toBeCloseTo(
       plain.stats.get('spellCritChance') + 3,
       6,
     );
-    expect(moonkin.stats.get('critChance')).toBeCloseTo(plain.stats.get('critChance'), 6);
+    expect(moonkin.stats.get('critChance')).toBeCloseTo(plain.stats.get('critChance') + 3, 6);
   });
 
   it('give Trueshot Aura ranged attack power and nothing else', () => {
@@ -547,112 +533,60 @@ describe('Judgement of Wisdom and Judgement of the Crusader', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Entries that cannot sit beside each other, of which there are none
+// Entries that cannot sit beside each other
 // ---------------------------------------------------------------------------
 
 describe('Leader of the Pack and Moonkin Form', () => {
-  it('are NOT exclusive, and neither is anything else in the catalogue', () => {
+  it('are exclusive again, beside Flametongue and Windfury Totem', () => {
     /*
-     * ========================================================================
-     * THIS DESCRIBE BLOCK WAS "Entries that cannot sit beside each other" AND
-     * THE CATALOGUE NOW HAS NONE.
-     *
-     * The pair was declared exclusive on the owner's ruling that the two are
-     * "the same exclusive 3% global critical strike chance and do not stack".
-     * A patch then split them -- Moonkin Aura spell crit, Leader of the Pack
-     * melee and ranged -- and these tests were left pinning the declaration
-     * with the question written on them: two buffs that no longer overlap have
-     * no obvious reason to exclude each other, and removing it is a RAID
-     * COMPOSITION decision that moves every profile's figure. The owner's
-     * answer: "Moonkin and Leader of the Pack are no longer exclusive. And all
-     * profiles should have both enabled by default in the raid buffs."
-     *
-     * THE ASSERTION IS OVER THE WHOLE CATALOGUE AND NOT JUST THIS PAIR,
-     * because that is the fact that has to stay visible: `areExclusive` now
-     * answers false for every pair there is, and **a selection rule with no
-     * declaration reads exactly like one that sometimes fires**. The field is
-     * kept on purpose -- the next exclusive pair should be one line rather
-     * than a re-implementation -- so something has to say it reaches nothing,
-     * which is the guard `RacialRequirement.weaponTypes` got for the same
-     * reason one patch earlier.
-     * ========================================================================
+     * 1.60.1.70755: one exclusive 3% to every crit type again, so the pair is
+     * `exclusiveWith` each other. Asserted as the WHOLE set of exclusive
+     * pairs, so a declaration that quietly reaches something else fails here.
      */
     const pack = RAID_BUFFS_BY_ID.get('leader_of_the_pack')!;
     const moonkin = RAID_BUFFS_BY_ID.get('moonkin_form')!;
-    expect(areExclusive(pack, moonkin)).toBe(false);
-    expect(areExclusive(moonkin, pack)).toBe(false);
+    expect(areExclusive(pack, moonkin)).toBe(true);
+    expect(areExclusive(moonkin, pack)).toBe(true);
 
-    /*
-     * ONE PAIR NOW, AND IT IS NOT THIS ONE: Flametongue Totem against Windfury
-     * Totem, the owner's "mutually exclusive". Asserted as the WHOLE set of
-     * exclusive pairs, so a declaration that quietly reaches something else
-     * still fails here.
-     */
-    expect(RAID_BUFFS.filter((buff) => buff.exclusiveWith !== undefined).map((buff) => buff.id)).toEqual([
-      'flametongue_totem',
-    ]);
+    expect(
+      RAID_BUFFS.filter((buff) => buff.exclusiveWith !== undefined)
+        .map((buff) => buff.id)
+        .sort(),
+    ).toEqual(['flametongue_totem', 'leader_of_the_pack', 'moonkin_form']);
     const exclusivePairs: string[] = [];
     for (const a of RAID_BUFFS) {
       for (const b of RAID_BUFFS) {
         if (a.id < b.id && areExclusive(a, b)) exclusivePairs.push(`${a.id}/${b.id}`);
       }
     }
-    expect(exclusivePairs).toEqual(['flametongue_totem/windfury_totem']);
+    expect(exclusivePairs.sort()).toEqual([
+      'flametongue_totem/windfury_totem',
+      'leader_of_the_pack/moonkin_form',
+    ]);
   });
 
-  it('sit beside each other when selected, where one used to replace the other', () => {
-    /*
-     * THE INVERSE OF "replace each other when selected", and the test that
-     * would have caught the ruling being half-applied: dropping
-     * `exclusiveWith` from one entry only would leave `areExclusive` true in
-     * BOTH directions, because it is read in both.
-     */
+  it('replace each other when selected', () => {
     const withPack = withRaidBuff(['battle_shout'], 'leader_of_the_pack');
     expect(withPack).toEqual(['battle_shout', 'leader_of_the_pack']);
 
-    const both = withRaidBuff(withPack, 'moonkin_form');
-    expect(both).toContain('moonkin_form');
-    expect(both).toContain('leader_of_the_pack');
-    expect(both).toContain('battle_shout');
-    // And in catalogue order, which is the other half of what this does.
-    expect(both).toEqual(['battle_shout', 'leader_of_the_pack', 'moonkin_form']);
+    const swapped = withRaidBuff(withPack, 'moonkin_form');
+    expect(swapped).toEqual(['battle_shout', 'moonkin_form']);
+    expect(withRaidBuff(swapped, 'leader_of_the_pack')).toEqual(['battle_shout', 'leader_of_the_pack']);
   });
 
-  it('give three percent of EACH kind of crit, and three of neither twice', () => {
+  it('give three percent of each kind of crit, and never six', () => {
     /*
-     * ------------------------------------------------------------------------
-     * THE NO-DOUBLE-DIP CHECK, NOW THAT THE SELECTION CAN HOLD BOTH.
-     *
-     * It used to read "three percent of ONE kind of crit, never six of it",
-     * because `withRaidBuff` replaced one with the other and only one could be
-     * measured. The honest figure now is one 3% on each STAT -- which is two
-     * buffs doing two different things, and is exactly what the split was for.
-     *
-     * SELECTING EITHER ONE TWICE IS STILL WORTH 3%, which is the half of the
-     * old ruling that survived it: each aura has one id shared with the TALENT
-     * that grants it, so nothing can hold two instances. That is asserted here
-     * on the selection and in `druidTalents.test.ts` on the talent.
-     * ------------------------------------------------------------------------
+     * The no-double-dip check. A selection cannot hold both, and a profile
+     * loaded with both ids -- which skips `withRaidBuff` -- still reads 3%,
+     * because the two entries apply one aura id.
      */
     const plain = sheet([]);
-    const selection = withRaidBuff(withRaidBuff([], 'leader_of_the_pack'), 'moonkin_form');
-    expect(selection).toContain('moonkin_form');
-    expect(selection).toContain('leader_of_the_pack');
-
-    const both = sheet(selection);
+    const both = sheet(['leader_of_the_pack', 'moonkin_form']);
     expect(both.stats.get('spellCritChance')).toBeCloseTo(
       plain.stats.get('spellCritChance') + 3,
       6,
     );
     expect(both.stats.get('critChance')).toBeCloseTo(plain.stats.get('critChance') + 3, 6);
-
-    // And each alone moves ONE of the two stats and leaves the other alone.
-    const packOnly = sheet(withRaidBuff([], 'leader_of_the_pack'));
-    expect(packOnly.stats.get('critChance')).toBeCloseTo(plain.stats.get('critChance') + 3, 6);
-    expect(packOnly.stats.get('spellCritChance')).toBeCloseTo(
-      plain.stats.get('spellCritChance'),
-      6,
-    );
   });
 
   it('keeps the selection in catalogue order', () => {

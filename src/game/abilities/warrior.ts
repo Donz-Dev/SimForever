@@ -27,6 +27,7 @@ import {
   DEATH_WISH,
   LAST_STAND,
   SWEEPING_STRIKES,
+  RECKLESS_SWINGS,
 } from '../auras/warrior';
 import {
   REVENGE_AP_COEFFICIENT,
@@ -48,7 +49,7 @@ import {
  *
  *   - `weaponScaling`                 "Weapon Damage" — a swing, plus the
  *                                     ability's own flat damage
- *   - `weaponScaling` with a fraction "40% Weapon Damage" (Spearing Strike)
+ *   - `weaponScaling` with a fraction "75% Weapon Damage" (40% before 1.60.1.70755) (Spearing Strike)
  *   - `powerCoefficient`              a stated number (Bloodthirst, 0.35)
  *   - neither                         a stated "0" — flat damage only, which is
  *                                     most of the utility strikes
@@ -237,7 +238,8 @@ export const BLOODTHIRST: Ability = {
  * ----------------------------------------------------------------------------
  */
 export const SLAM_BASE_DAMAGE = 87;
-export const SLAM_COOLDOWN_MS = seconds(18);
+/** 15 seconds since 1.60.1.70755 ("The cooldown of Slam has been reduced to 15 seconds (was 18 seconds)"). */
+export const SLAM_COOLDOWN_MS = seconds(15);
 
 export const SLAM: Ability = {
   id: 'slam',
@@ -300,6 +302,14 @@ export const WHIRLWIND: Ability = {
   targets: { maxTargets: WHIRLWIND_MAX_TARGETS },
   onCast: ({ simulation, caster, ability }) => {
     const targets = simulation.enemiesOf(caster).slice(0, WHIRLWIND_MAX_TARGETS);
+    /*
+     * IMPROVED WHIRLWIND (1.60.1.70755): "increases the damage it deals to the
+     * closest enemy by 15/30%". The closest is the first enemy -- the one the
+     * fight is about -- so the fraction rides on that target's strikes only,
+     * both hands.
+     */
+    const closest = targets[0];
+    const closestFraction = 1 + (ability.bonuses?.[IMPROVED_WHIRLWIND_DAMAGE_BONUS] ?? 0) / 100;
     for (const target of targets) {
       dealDamage(simulation, {
         source: caster,
@@ -308,7 +318,11 @@ export const WHIRLWIND: Ability = {
         abilityName: ability.name,
         school: PHYSICAL,
         baseAmount: 0,
-        weaponScaling: { slot: MAIN_HAND, normalized: true },
+        weaponScaling: {
+          slot: MAIN_HAND,
+          normalized: true,
+          ...(target === closest ? { fraction: closestFraction } : {}),
+        },
         attackTable: ability.attackTable,
         weaponSlot: MAIN_HAND,
       });
@@ -339,7 +353,11 @@ export const WHIRLWIND: Ability = {
         abilityName: WHIRLWIND_OFF_HAND_NAME,
         school: PHYSICAL,
         baseAmount: 0,
-        weaponScaling: { slot: OFF_HAND, normalized: true },
+        weaponScaling: {
+          slot: OFF_HAND,
+          normalized: true,
+          ...(target === closest ? { fraction: closestFraction } : {}),
+        },
         attackTable: ability.attackTable,
         weaponSlot: OFF_HAND,
       });
@@ -347,11 +365,50 @@ export const WHIRLWIND: Ability = {
   },
 };
 
-/** The fraction of weapon damage Spearing Strike deals, per the sheet. */
-export const SPEARING_STRIKE_WEAPON_FRACTION = 0.4;
+/** The `abilityBonus` key Improved Whirlwind's damage percentage arrives under. */
+export const IMPROVED_WHIRLWIND_DAMAGE_BONUS = 'improvedWhirlwindDamage';
 
 /**
- * "40% Weapon Damage", 15 rage, 20 second cooldown. No base damage.
+ * Reckless Swings, a Fury talent at 1.60.1.70755: "Your next 4 melee attacks
+ * generate 5 additional Rage. Lasts 8 sec." 15 second cooldown, costs 25% of
+ * base health.
+ *
+ * ----------------------------------------------------------------------------
+ * "MELEE ATTACKS" ARE THE SWINGS, because only a swing generates rage here and
+ * the clause is about rage it generates in addition. So the aura carries four
+ * charges and a reaction on a LANDED auto-attack grants five and spends one --
+ * a miss generates no rage and spends nothing.
+ *
+ * THE HEALTH COST IS NOT MODELLED, which overstates it the way Bloodrage's is
+ * overstated: nothing reads the warrior's health in a fight where the target
+ * does not swing, and a tank is healed by the assumed healer.
+ *
+ * ON THE GLOBAL COOLDOWN, the default, because nothing says otherwise --
+ * Bloodrage is off it by the owner's ruling and that ruling named Bloodrage. A
+ * question for the owner.
+ * ----------------------------------------------------------------------------
+ */
+export const RECKLESS_SWINGS_ABILITY: Ability = {
+  id: 'reckless_swings',
+  name: 'Reckless Swings',
+  cooldownMs: seconds(15),
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, RECKLESS_SWINGS, caster.id);
+  },
+};
+
+/**
+ * The fraction of weapon damage Spearing Strike deals: 75% since 1.60.1.70755,
+ * read off foreverchanges.pro's spellbook ("deals 75% weapon damage. Deals an
+ * additional 75% weapon damage against Giants, Dragonkin, and mounted
+ * targets"). It was the sheet's 40%. The additional 75% needs a target type no
+ * encounter here has, so it is not applied.
+ */
+export const SPEARING_STRIKE_WEAPON_FRACTION = 0.75;
+
+/**
+ * "75% Weapon Damage" (40% before 1.60.1.70755), 15 rage, 20 second cooldown. No base damage.
  *
  * ----------------------------------------------------------------------------
  * IT NEEDS BATTLE STANCE, AND IT USED TO NEED A TWO-HANDED WEAPON.
@@ -1463,6 +1520,7 @@ export const WARRIOR_ABILITIES: readonly Ability[] = [
   DEATH_WISH_ABILITY,
   LAST_STAND_ABILITY,
   SWEEPING_STRIKES_ABILITY,
+  RECKLESS_SWINGS_ABILITY,
 ];
 
 /** Look one up by id, for tests and for the rotation. */

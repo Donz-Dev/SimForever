@@ -65,6 +65,8 @@ const ABILITY_GRANTING_TALENTS = [
   { talent: 'sweeping_strikes', ability: 'sweeping_strikes', tree: 'arms', implemented: true },
   { talent: 'bloodthirst', ability: 'bloodthirst', tree: 'fury', implemented: true },
   { talent: 'death_wish', ability: 'death_wish', tree: 'fury', implemented: true },
+  // New at 1.60.1.70755.
+  { talent: 'reckless_swings', ability: 'reckless_swings', tree: 'fury', implemented: true },
   { talent: 'shield_slam', ability: 'shield_slam', tree: 'protection', implemented: true },
   { talent: 'last_stand', ability: 'last_stand', tree: 'protection', implemented: true },
   { talent: 'concussion_blow', ability: 'concussion_blow', tree: 'protection', implemented: false },

@@ -107,6 +107,135 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 91: the 1.60.1.70755 patch, round one
+
+**THIS IS ROUND ONE OF THE PATCH, AND THE TABLE BELOW HAS ROOM FOR MORE.** The
+notes are implemented; what they produce is the question list at the end, and
+the answers to those are the next rounds. Add a row rather than a closing line.
+
+| | what it was | largest effect |
+| --- | --- | --- |
+| 1 | the notes, plus tree changes the capture found | SM/DS **+269.0**, Ele Shaman **+252.0** |
+
+**THE SOURCE IS `foreverchanges.pro` AT BUILD 1.60.1.70755**, captured from
+each page's own payload, hashed in the browser and re-hashed on disk:
+`tools/data/foreverchanges-<class>-talents-70755.json` and
+`foreverchanges-<class>-spellbook-70755.json`, nine of each. The
+talentsforever.com refresh was refused. It served 1.60.1.70630, older than
+the patch, and would have regressed the Paladin. The importer maps two
+renamed trees back ('Shadow Magic' to Shadow, 'Elemental Combat' to
+Elemental), so the tree ids did not move.
+
+**WHAT CHANGED, BY CLASS** -- the commits on the branch carry the detail:
+
+- **Shared:** Blessing of Salvation is gone, from the raid buffs and from
+  `withSalvationFor`. Defensive Stance threat is x1.8 and Bear Form x2.15.
+  Moonkin Aura and Leader of the Pack raise all crit again and are exclusive
+  again: one `party_crit_aura`, and the presets carry Leader of the Pack.
+  **Poised** is a new passive for Rogues and Druids: 10 energy off the next
+  energy ability at full energy out of combat, re-granted at each pull of a
+  route.
+- **Warrior:** Slam's cooldown is 15 s. Improved Slam's row turned round, so
+  index 0 is the cooldown. Raging Blows is removed. Spearing Strike does 75%
+  weapon damage. Two new talents, **Reckless Swings** and **Improved
+  Whirlwind**.
+- **Rogue:** the trees were remade.
+  - New: **Shank**, a 5 energy off-hand strike that cannot miss and returns
+    25 energy. **Death Mark**, a finisher that stores damage.
+  - Removed: the Venom finisher (Venom is now Shank's passive), Cutthroat,
+    Murder, Quietus, Thousand Cuts and Improved Distract.
+  - Ghostly Strike opens Ambush and Garrote for 7 s.
+  - Blood Splatter adds 6 s to Rupture and 9 s to Garrote.
+  - The poison coefficients doubled. Mutilate is 90% weapon damage plus 79.
+- **Shaman:** new figures for Lightning Bolt, Chain Lightning and the shocks.
+  Lava Burst is removed and Call of Thunder replaces it. Elemental Mastery is
+  now **Lightning Mastery**. Maelstrom Weapon is 10 PPM. Stormstrike does
+  150% weapon damage on a 6 s cooldown. Riptide has no direct heal.
+- **Mage:** Frost Blast is removed. Clearcasting is not consumed by Arcane
+  Missiles while Missile Barrage is up. Ignite applies to Flamestrike's ticks.
+  Ice Lance does 137-161.
+- **Paladin:** Vengeance stacks five times again.
+- **Priest:** Shadow Word: Death's backlash is 30%, and none on a miss.
+  Binding Heal is now **Holy Binding**, carried by Flash Heal.
+- **Hunter:** Arcane Shot's coefficient is 0.15 and Serpent Sting's 5% a tick.
+  Hunter's Mark is 143. The two traps share a cooldown. The patch-note value
+  layer is deleted, because the client now ships what it carried.
+- **Warlock:** Wrack is 86 a tick with its coefficient doubled. Improved
+  Drains no longer reaches Wrack.
+- **Druid:** the cat figures changed (Shred, Claw, Ravage, Rake, Rip,
+  Ferocious Bite), Starfire is 490-576, and the feral coefficients moved.
+- **Races:** nothing to change. Round 79 had already applied them.
+
+**THE MUTILATE DISPATCH NEEDED A NEW DISCRIMINATOR.** Mutilate requires Venom
+now, so every legal Mutilate build carries Venom and Combat Mut ran the Venom
+list. The dispatch reads **Aggression** now. That is a reading of the two
+presets, not an owner ruling.
+
+**THE MEASUREMENT** -- 300 fights a profile, against `main` at `83e088f`:
+
+| | was | now | |
+| --- | --- | --- | --- |
+| 2H Arms | 863.2 | 920.4 | +57.3 |
+| DW Fury | 1060.7 | 1142.7 | +82.0 |
+| Prot Warr | 605.2 | 605.2 | 0.0 |
+| Fury Prot | 721.9 | 721.6 | -0.3 noise |
+| Venom | 793.7 | 947.6 | +154.0 |
+| Combat Mut | 840.0 | 940.4 | +100.4 |
+| Combat | 919.7 | 1079.4 | +159.7 |
+| Hemo Dagger | 791.4 | 844.9 | +53.5 |
+| Pure Hemo | 806.8 | 896.6 | +89.8 |
+| Moonkin | 932.0 | 998.4 | +66.4 |
+| Cat | 1022.4 | 1159.2 | +136.8 |
+| Bear | 478.4 | 496.2 | +17.8 |
+| Ele Shaman | 771.8 | 1023.8 | +252.0 |
+| Enh Shaman | 890.4 | 1130.1 | +239.7 |
+| Spellhance | 854.0 | 1038.8 | +184.8 |
+| Frostfire | 1027.3 | 1027.3 | 0.0 |
+| Arcane | 1100.3 | 1100.4 | +0.1 noise |
+| Fire | 1126.6 | 1126.3 | -0.3 noise |
+| Seal Twist Ret | 979.7 | 1019.0 | +39.4 |
+| Shockadin 2H | 913.7 | 956.5 | +42.8 |
+| Prot Pally | 583.8 | 583.8 | 0.0 |
+| Protribution | 574.2 | 591.2 | +17.0 |
+| BM Hunter | 1143.4 | 1196.7 | +53.3 |
+| LW Ranged | 1301.7 | 1399.5 | +97.8 |
+| LW Melee | 1214.6 | 1292.1 | +77.5 |
+| Hawk Melee | 1099.2 | 1138.6 | +39.4 |
+| Survival Weave | 1293.3 | 1360.8 | +67.5 |
+| SM/DS | 856.4 | 1125.4 | +269.0 |
+| SM Ruin | 1008.0 | 1008.0 | 0.0 |
+| Firelock | 982.6 | 1068.4 | +85.8 |
+| Fire Demo | 1104.0 | 1104.0 | 0.0 |
+| Shadow | 923.1 | 924.0 | +0.9 noise |
+| Frost Mage | 1076.5 | 1077.8 | +1.3 noise |
+
+**23 ROWS ROSE, NONE FELL, AND TEN DID NOT MOVE** (counted, not estimated).
+The ten are within 1.5 of their old figure and are profiles the patch does
+not reach: three tanks' damage, five casters whose spells were untouched,
+Fury Prot and Shadow. The five healer profiles read 0 DPS in both runs.
+
+**QUESTIONS FOR THE OWNER -- each is a reading or our own build, flagged:**
+
+1. **Thirteen builds were respecified by us**, because the tree change left
+   the old URLs illegal. They are the four Rogue damage builds and Pure Hemo,
+   2H Arms, DW Fury, Fury Prot, Hawk Melee (Pathfinding became Endurance
+   Training 2), Ele, Spellhance, Resto Shaman and Holy Priest. Every spread
+   is ours, not the owner's.
+2. **Combat Mut's opener presses Blade Flurry, and no legal Mutilate build can
+   reach it**: 31 Assassination points plus 21 Combat is 52. The line is
+   kept, and `precombatOpeners.test.ts` pins it as NOT firing.
+3. **Shred's flat 80** is the capture's figure. The notes say only "200%".
+4. **Cat Form reads "12"** in the capture where it read 120. It is flagged and
+   not applied.
+5. **Reckless Swings is on the global cooldown.** Nothing says it is off.
+6. **Where Shank, Death Mark and Reckless Swings sit in each list** is our
+   placement.
+7. **Death Mark's crit-cap term is not modelled.** The cap is the stated
+   figure plus 4% of attack power per point.
+8. **Mutilate's tooltip in the talent capture reads "an additional 40 with
+   each weapon"**, while the spellbook and the notes give 79. 79 is
+   implemented.
+
 ## Round 90: Prot Pally on Seal of Fury
 
 **PROT PALLY RUNS SEAL OF FURY NOW**, the owner's instruction: "ensure Prot
@@ -7050,7 +7179,7 @@ from a single entry neither list had.
 
 | | spread | was | ships at | with Recklessness enabled |
 | --- | --- | --- | --- | --- |
-| **2H Arms** | 39/10/2 | 849.7 | **872.8** | **897.2** |
+| **2H Arms** | 34/15/2 | 849.7 | **872.8** | **897.2** |
 | **DW Fury** | 17/34/0 | 989.6 | **997.3** | **1092.6** |
 
 **RECKLESSNESS IS FREE, BERSERKER STANCE, AND +100 CRIT CHANCE FOR FIFTEEN
@@ -12717,18 +12846,18 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Arcane Mage | Mage | 48/3/0 (then; 32/16/3 since round 80) | 1123.4 | | LW Melee | Hunter | 5/13/33 | 878.8 |
 | Frostfire Mage | Mage | 0/29/22 | 1086.4 | | Shockadin | Paladin | 23/0/28 | 867.8 |
-| DW Fury | Warrior | 17/34/0 | 1068.4 | | Combat Mut | Rogue | 30/21/0 | 848.0 |
+| DW Fury | Warrior | 17/34/0 | 1068.4 | | Combat Mut | Rogue | 33/18/0 | 848.0 |
 | LW Ranged | Hunter | 5/41/5 | 1021.0 | | Hemo Dagger | Rogue | 17/3/31 (then; 20/0/31 since round 78) | 840.2 |
 | Fire Mage | Mage | 14/34/3 (then; 12/36/3 since round 80) | 1020.7 | | **Enh Shaman** | Shaman | 19/32/0 (then; 18/31/2 since round 80) | **838.8** |
 | BM Hunter | Hunter | 31/20/0 | 968.2 | | Moonkin | Druid | 41/0/10 (then; 38/0/13 since round 78) | 820.3 |
 | Cat Druid | Druid | 9/34/8 (then; 9/32/10 since 1.60.1.70707) | 966.9 | | Ele Shaman | Shaman | 32/11/8 | 792.8 |
 | Seal Twist Ret | Paladin | 15/0/36 (then; 12/8/31 since 1.60.1.70707) | 948.6 | | Pure Hemo | Rogue | 19/8/24 | 775.9 |
-| Hawk Melee | Hunter | 16/11/24 | 937.6 | | Venom Rogue | Rogue | 33/16/2 | 771.6 |
+| Hawk Melee | Hunter | 16/11/24 | 937.6 | | Venom Rogue | Rogue | 36/11/4 | 771.6 |
 | Shockadin 2H | Paladin | 23/0/28 (then; 21/0/30 since 1.60.1.70707) | 935.2 | | SM/DS | Warlock | 35/11/5 | 769.4 |
 | Shadow Priest | Priest | 14/2/35 | 931.0 | | Rupture Rogue | Rogue | 12/8/31 | 754.9 |
-| 2H Arms | Warrior | 39/10/2 | 927.0 | | Prot Pally | Paladin | 8/34/9 (then; 10/31/10 since 1.60.1.70707) | 551.1 |
+| 2H Arms | Warrior | 34/15/2 | 927.0 | | Prot Pally | Paladin | 8/34/9 (then; 10/31/10 since 1.60.1.70707) | 551.1 |
 elock | Warlock | 5/11/35 | 910.5 | | Prot Warr | Warrior | 17/0/34 (then; 17/2/32 since round 78) | 499.5 |
-| Combat Rogue | Rogue | 18/33/0 | 899.5 | | Bear Druid | Druid | 9/42/0 (then; 9/37/5 since 1.60.1.70707) | 432.8 |
+| Combat Rogue | Rogue | 16/35/0 | 899.5 | | Bear Druid | Druid | 9/42/0 (then; 9/37/5 since 1.60.1.70707) | 432.8 |
 
 The mean across **28** is **863.8**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.

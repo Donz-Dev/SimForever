@@ -218,20 +218,24 @@ describe('the owner’s own case', () => {
      * have happened by timestamp zero.
      */
     /*
-     * 85 FOR BOTH: Combat was a Gnome in round 78 (Expansive Mind's 105 pool
-     * gave 90) and is an Orc again since round 80, so both open on 100, spend
-     * 25 on Blade Flurry and bank the same ten.
+     * 1.60.1.70755: Combat opens on 110 (Vigor), and Poised plus Composure 2/2
+     * take Blade Flurry from 25 to 5 -- so 105 after the spend, and the ten it
+     * banks over the lead are clipped to the cap: 110, where no credit is 105.
      */
-    const banked: Record<string, number> = { rogue_combat: 85, rogue_combat_mut: 85 };
-    for (const presetId of ['rogue_combat', 'rogue_combat_mut']) {
+    const begin = (presetId: string) => {
       const profile = PRESETS_BY_ID.get(presetId)!.build();
       const simulation = new Simulation(trainingDummyEncounter(profile, 4242));
       simulation.begin();
-      const player = simulation.combatants.find((actor) => actor.kind === 'player')!;
+      return simulation.combatants.find((actor) => actor.kind === 'player')!;
+    };
+    const player = begin('rogue_combat');
+    const energy = player.resources.get('energy')!;
+    expect(energy.maximum).toBe(110);
+    expect(energy.current, 'rogue_combat banked the lead').toBeCloseTo(Math.min(110, 110 - (25 - 20) + 10), 6);
+    expect(player.lastSpentAt('energy'), 'rogue_combat spent a second early').toBe(-seconds(1));
 
-      const energy = player.resources.get('energy')!;
-      expect(energy.current, `${presetId} banked the lead`).toBeCloseTo(banked[presetId], 6);
-      expect(player.lastSpentAt('energy'), `${presetId} spent a second early`).toBe(-seconds(1));
-    }
+    // Combat Mut's respecified build cannot reach Blade Flurry (1.60.1.70755),
+    // so its opener line spends nothing.
+    expect(begin('rogue_combat_mut').lastSpentAt('energy')).toBeUndefined();
   });
 });

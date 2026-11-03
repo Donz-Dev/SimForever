@@ -1,6 +1,6 @@
 {
  "class": "warlock",
- "source": "https://talentsforever.com/talents.js",
+ "source": "https://foreverchanges.pro/talents/warlock",
  "structure": "src/data/talents/warlock.json",
  "talents": {
   "improved_life_tap": {
@@ -101,7 +101,7 @@
    "name": "Improved Drains",
    "tree": "affliction",
    "ranks": 3,
-   "text": "Increases health drained or damage done by your Drain Life, Drain Soul, and Wrack spells by {0}%.",
+   "text": "Increases Health drained, damage done, or Mana drained by your Drain Life, Drain Soul, and Drain Mana spells by {0}%.",
    "values": [
     7,
     13,
@@ -122,7 +122,7 @@
    "name": "Fel Concentration",
    "tree": "affliction",
    "ranks": 3,
-   "text": "Gives you a {0}% chance to avoid interruption caused by damage while channeling or casting your Drain Life, Drain Mana, Drain Soul, or Wrack spells.",
+   "text": "Gives your Drain Life, Drain Mana, Drain Soul, and Wrack spells a {0}% chance to not lose casting time when you take damage.",
    "values": [
     23,
     47,
@@ -133,7 +133,7 @@
    "name": "Amplify Curse",
    "tree": "affliction",
    "ranks": 1,
-   "text": "Increases the effect of your next Curse of Weakness or Bane of Agony by 50%, or your next Curse of Exhaustion by 50%. Lasts 30 sec.",
+   "text": "Increases the effect of your next Curse of Weakness or Bane of Agony by 50%, or your next Curse of Exhaustion by 20%. Lasts 30 sec.",
    "values": null,
    "note": "single rank"
   },
@@ -230,7 +230,7 @@
    "name": "Wrack",
    "tree": "affliction",
    "ranks": 1,
-   "text": "Tears the target apart from within, inflicting 36 Shadow damage every 1 sec and increasing the damage they take from your other Shadow damage over time effects by 10% for 6 sec.",
+   "text": "Tears the target apart from within, inflicting 86 Shadow damage every 1 sec and increasing the damage they take from your other Shadow damage over time effects by 10% for 6 sec.",
    "values": null,
    "note": "single rank"
   },
@@ -379,7 +379,7 @@
    "name": "Demonic Sacrifice",
    "tree": "demonology",
    "ranks": 1,
-   "text": "When activated, sacrifices your summoned Demon to enhance the opposing aspect of your power, granting you an effect that lasts 2 hrs. The effect is canceled if any Demon is summoned.\n\nImp: Increases your Shadow damage by 15%.\n\nVoidwalker: Restores 2% of your total Mana every 4 sec.\n\nSuccubus/Incubus: Increases your Fire damage by 15%.\n\nFelhunter: Restores 3% of your total Health every 4 sec.",
+   "text": "When activated, sacrifices your summoned Demon to enhance the opposing aspect of your power, granting you an effect that lasts 2 hr. The effect is canceled if any Demon is summoned.\n\nImp: Increases your Shadow damage by 15%.\n\nVoidwalker: Restores 2% of your total Mana every 4 sec.\n\nSuccubus/Incubus: Increases your Fire damage by 15%.\n\nFelhunter: Restores 3% of your total Health every 4 sec.",
    "values": null,
    "note": "single rank"
   },
@@ -439,22 +439,22 @@
      17,
      10,
      2,
-     65,
-     68
+     1,
+     1
     ],
     [
      33,
      10,
      4,
-     65,
-     68
+     1,
+     1
     ],
     [
      50,
      10,
      6,
-     65,
-     68
+     1,
+     1
     ]
    ]
   },
@@ -690,7 +690,7 @@
    "name": "Shadowburn",
    "tree": "destruction",
    "ranks": 1,
-   "text": "Instantly blasts the target for 65 to 73 Shadow damage. If a non-trivial target dies within 8 sec of being hit with Shadowburn, the caster gains a Soul Shard.",
+   "text": "Instantly blasts the target for 65 to 74 Shadow damage. If a non-trivial target dies within 8 sec of being hit with Shadowburn, the caster gains a Soul Shard.",
    "values": null,
    "note": "single rank"
   },
@@ -698,7 +698,7 @@
    "name": "Intensity",
    "tree": "destruction",
    "ranks": 3,
-   "text": "Gives you a {0}% chance to resist interruption caused by damage while casting or channeling any Destruction spell.",
+   "text": "Gives your Destruction spells a {0}% chance to not lose casting time when you take damage.",
    "values": [
     23,
     47,
@@ -729,7 +729,7 @@
    "name": "Conflagrate",
    "tree": "destruction",
    "ranks": 1,
-   "text": "Ignites a target that is already afflicted by your Immolate spell, dealing 88 to 110 Fire damage and consuming your Immolate effect.",
+   "text": "Ignites a target that is already afflicted by your Immolate spell, dealing 88 to 111 Fire damage and consuming your Immolate effect.",
    "values": null,
    "note": "single rank"
   },
@@ -779,41 +779,41 @@
    "text": "Hitting an enemy with Conflagrate increases all Shadow damage you deal by {0}% for {1} sec, and hitting an enemy with Shadowburn increases all Fire damage you deal by {2}% for {3} sec. In addition, Conflagrate has a {4}% chance not to consume Immolate, and Shadowburn has a {5}% chance to instantly refund a Soul Shard.",
    "values": [
     [
-     2,
+     4,
      20,
-     2,
+     4,
      20,
      20,
      20
     ],
     [
-     4,
+     8,
      20,
-     4,
+     8,
      20,
      40,
      40
     ],
     [
-     6,
+     12,
      20,
-     6,
+     12,
      20,
      60,
      60
     ],
     [
-     8,
+     16,
      20,
-     8,
+     16,
      20,
      80,
      80
     ],
     [
-     10,
      20,
-     10,
+     20,
+     20,
      20,
      100,
      100
@@ -824,7 +824,7 @@
    "name": "Incinerate",
    "tree": "destruction",
    "ranks": 1,
-   "text": "Deals 99 to 113 Fire damage to your target and an additional 25% damage if the target is afflicted by Immolate.",
+   "text": "Deals 100 to 114 Fire damage to your target and an additional 25% damage if the target is afflicted by Immolate.",
    "values": null,
    "note": "single rank"
   }

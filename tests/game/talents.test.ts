@@ -149,9 +149,12 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
   },
   rogue: {
     trees: [
-      ['assassination', 17, 'Venom'],
-      ['combat', 17, 'Adrenaline Rush'],
-      ['subtlety', 19, 'Thousand Cuts'],
+      // 1.60.1.70755: Mutilate is the Assassination capstone, Combat 17 -> 19
+      // and Subtlety 19 -> 18 with Death Mark at the bottom (Thousand Cuts,
+      // Murder and Quietus out).
+      ['assassination', 17, 'Mutilate'],
+      ['combat', 19, 'Adrenaline Rush'],
+      ['subtlety', 18, 'Death Mark'],
     ],
   },
   shaman: {
@@ -169,7 +172,9 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
        * shape and it cannot see a swap; **this is the second time that has been
        * true in two patches**, and both times the second column was what failed.
        */
-      ['elemental', 16, 'Elemental Mastery'],
+      // 1.60.1.70755: Elemental Mastery became LIGHTNING MASTERY, Lava Burst
+      // out and Call of Thunder back -- the size again did not move.
+      ['elemental', 16, 'Lightning Mastery'],
       ['enhancement', 18, 'Rage of the Farseer'],
       ['restoration', 16, 'Riptide'],
     ],
@@ -190,7 +195,8 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
        * notes -- Iron Will moved out to Protection, and Lingering Rage, Furious
        * Precision and Gore Drinker added. Four out, three in.
        */
-      ['fury', 17, 'Bloodthirst'],
+      // 18 at 1.60.1.70755.
+      ['fury', 18, 'Bloodthirst'],
       /*
        * 18, and it stayed 18 through a patch that moved six of its rows:
        * Toughness out, Iron Will in from Fury.
@@ -233,10 +239,11 @@ describe('every class has its trees', () => {
     expect(classesWithTalents()).toEqual([...CLASS_IDS].sort());
   });
 
-  it('adds up to 465 talents', () => {
+  it('adds up to 467 talents', () => {
     // 466 until round 51's refresh removed the Mage's Piercing Ice; 465 at
-    // 1.60.1.70707, where the Mage lost Arcane Focus.
-    expect(TOTAL_TALENTS).toBe(465);
+    // 1.60.1.70707, where the Mage lost Arcane Focus; 467 at 1.60.1.70755,
+    // where Warrior and Rogue each gained one.
+    expect(TOTAL_TALENTS).toBe(467);
     const loaded = CLASS_IDS.reduce(
       (sum, id) => sum + talentsOf(id).trees.reduce((n, tree) => n + tree.talents.length, 0),
       0,
@@ -278,12 +285,9 @@ describe('every class has its trees', () => {
        * still served the old tree, so it was read off foreverchanges.pro with
        * `--capture` -- see the importer.
        */
-      // AND THE PALADIN AND THE MAGE, for the same reason, at the same build.
-      expect(talentsOf(classId).source).toBe(
-        classId === 'druid' || classId === 'paladin' || classId === 'mage'
-          ? `https://foreverchanges.pro/talents/${classId}`
-          : 'https://talentsforever.com/talents.js',
-      );
+      // AND THE PALADIN AND THE MAGE, for the same reason, at the same build
+      // -- and all nine at 1.60.1.70755.
+      expect(talentsOf(classId).source).toBe(`https://foreverchanges.pro/talents/${classId}`);
     }
   });
 });
@@ -406,12 +410,13 @@ describe('spending points', () => {
   it('refuses a talent whose prerequisite is not maxed', () => {
     let alloc = spendMany(warrior, {}, 'improved_heroic_strike', 3);
     alloc = spendMany(warrior, alloc, 'deflection', 5);
-    alloc = spendMany(warrior, alloc, 'improved_tactical_mastery', 4);
+    // Improved Tactical Mastery is three ranks at 1.60.1.70755, not five.
+    alloc = spendMany(warrior, alloc, 'improved_tactical_mastery', 2);
 
     expect(canSpend(warrior, alloc, 'anger_management')).toBe(false);
 
     alloc = spendMany(warrior, alloc, 'improved_tactical_mastery', 1);
-    expect(alloc.improved_tactical_mastery).toBe(5);
+    expect(alloc.improved_tactical_mastery).toBe(3);
     expect(canSpend(warrior, alloc, 'anger_management')).toBe(true);
   });
 
@@ -457,7 +462,8 @@ describe('spending points', () => {
    * Wrath's. The arithmetic a reader should be able to follow:
    *
    *   arms  11   improved_heroic_strike 3, deflection 5, improved_rend 3,
-   *              and improved_tactical_mastery 5 on top of them (tier 5)
+   *              and improved_tactical_mastery 3 plus improved_charge 2 on
+   *              top of them (tier 5) -- ITM went 5 ranks to 3 at 1.60.1.70755
    *   fury  10   cruelty 5, booming_voice 5, with unbridled_wrath 5 at tier 5
    *   prot  10   iron_will 5, shield_specialization 5 at tier 0, then
    *              anticipation 5, improved_revenge 3 and improved_bloodrage 2
@@ -472,7 +478,8 @@ describe('spending points', () => {
     alloc = spendMany(warrior, alloc, 'improved_rend', 3);
     alloc = spendMany(warrior, alloc, 'shield_specialization', 5);
     alloc = spendMany(warrior, alloc, 'anticipation', 5);
-    alloc = spendMany(warrior, alloc, 'improved_tactical_mastery', 5);
+    alloc = spendMany(warrior, alloc, 'improved_tactical_mastery', 3);
+    alloc = spendMany(warrior, alloc, 'improved_charge', 2);
     alloc = spendMany(warrior, alloc, 'improved_revenge', 3);
     alloc = spendMany(warrior, alloc, 'improved_bloodrage', 2);
 

@@ -106,13 +106,13 @@ describe('Predatory Discipline', () => {
     // leaves the other 65 in the bar.
     expect(kept.energyLeft).toBe(100 - BITE_COST);
     expect(spent.energyLeft).toBe(0);
-    // And the damage is the same bite: the 2.7 a point is read off the bar
+    // And the damage is the same bite: the 3.3 a point is read off the bar
     // whether or not the bar is then emptied.
     expect(kept.damage).toBeGreaterThan(0);
     expect(kept.damage).toBeCloseTo(spent.damage, 6);
   });
 
-  it('pays 2.7 for every point above the cost, so a fuller bar bites harder', () => {
+  it('pays 3.3 for every point above the cost, so a fuller bar bites harder', () => {
     const setup = fight(() => cat({ predatory_discipline: 1 }));
     const full = biteAtFullBar(setup, seconds(2));
 
@@ -130,12 +130,12 @@ describe('Predatory Discipline', () => {
       .filter((e) => e.type === 'damage' && (e as { abilityId?: string }).abilityId === 'ferocious_bite')
       .reduce((n, e) => n + (e as unknown as { amount: number }).amount, 0);
 
-    // 2.7 is written out by hand as well as read, so a change to the constant
+    // 3.3 (2.7 before 1.60.1.70755) is written out by hand as well as read, so a change to the constant
     // has to be made twice to pass. The difference carries the character's
     // blanket multipliers (Naturalist from the padding), so it is bounded
     // below by the raw figure rather than equal to it.
-    expect(FEROCIOUS_BITE_DAMAGE_PER_ENERGY).toBe(2.7);
-    const raw = (100 - BITE_COST) * 2.7;
+    expect(FEROCIOUS_BITE_DAMAGE_PER_ENERGY).toBe(3.3);
+    const raw = (100 - BITE_COST) * 3.3;
     expect(full.damage - bare).toBeGreaterThanOrEqual(raw - 1e-6);
     expect(full.damage - bare).toBeLessThan(raw * 1.25);
   });

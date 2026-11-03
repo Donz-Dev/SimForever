@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import type { Combatant } from '../../src/engine';
 import { Simulation, TelemetryRecorder, threatMultiplierFor } from '../../src/engine';
 import { createPlayer } from '../../src/game/actors/createPlayer';
-import { withSalvationFor } from '../../src/game/buffs/raidBuffs';
 import {
   FOREVER_THREAT_RULES,
   HEROIC_STRIKE_FLAT_THREAT,
@@ -29,15 +28,16 @@ function atPull(presetId: string): Combatant {
 }
 
 describe('class and form', () => {
-  it('gives a Rogue x0.71, confirmed by the owner, before Salvation', () => {
+  it('gives a Rogue x0.71, confirmed by the owner', () => {
     const rogue = createPlayer({ race: 'human', characterClass: 'rogue' });
     expect(threatMultiplierFor(rogue, all)).toBeCloseTo(0.71, 10);
   });
 
-  it('gives Bear Form x1.5 -- Dire Bear included, one style -- and Cat Form x0.71', () => {
+  it('gives Bear Form x2.15 -- Dire Bear included, one style -- and Cat Form x0.71', () => {
+    // +115% since 1.60.1.70755, "to compensate for Blessing of Salvation being removed".
     const bear = createPlayer({ race: 'tauren', characterClass: 'druid', combatStyle: 'bear' });
     const cat = createPlayer({ race: 'tauren', characterClass: 'druid', combatStyle: 'cat' });
-    expect(threatMultiplierFor(bear, all)).toBeCloseTo(1.5, 10);
+    expect(threatMultiplierFor(bear, all)).toBeCloseTo(2.15, 10);
     expect(threatMultiplierFor(cat, all)).toBeCloseTo(0.71, 10);
   });
 });
@@ -47,45 +47,42 @@ describe('the presets at the pull', () => {
     const warrior = atPull('prot_warr');
     const defiance = warrior.threatModifiers.some((m) => m.whileAura === 'defensive_stance');
     expect(warrior.auras.has('salvation')).toBe(false);
-    // 1.3 for the stance, times whatever the build's Defiance and gloves add.
-    expect(threatMultiplierFor(warrior, all)).toBeGreaterThanOrEqual(1.3);
+    // 1.8 for the stance since 1.60.1.70755, times whatever Defiance and gloves add.
+    expect(threatMultiplierFor(warrior, all)).toBeGreaterThanOrEqual(1.8);
     expect(defiance).toBe(true);
   });
 
-  it('give a Retribution Paladin Instrument of Law x Salvation, with no Righteous Fury', () => {
-    /*
-     * THE OWNER'S READING (round 47b): with Righteous Fury OFF the talent is a
-     * reduction; with it ON there is no reduction AND the Fury adds +90% to
-     * Holy. The Retribution list never casts the Fury, so the -20% applies.
-     */
+  it('give a Retribution Paladin Two-Handed Weapon Specialization, with no Righteous Fury', () => {
+    // 20% off all threat while a two-hander is held (1.60.1.70707). The
+    // Retribution list never casts the Fury, and there is no Salvation since
+    // 1.60.1.70755 removed the spell.
     const paladin = atPull('pally_ret');
     expect(paladin.auras.has('righteous_fury')).toBe(false);
-    expect(threatMultiplierFor(paladin, all)).toBeCloseTo(0.8 * 0.7, 6);
-    expect(
-      threatMultiplierFor(paladin, { kind: 'damage', school: 'holy', table: 'spell' }),
-    ).toBeCloseTo(0.8 * 0.7, 6);
+    expect(paladin.auras.has('salvation')).toBe(false);
+    expect(threatMultiplierFor(paladin, all)).toBeCloseTo(0.8, 6);
   });
 
-  it('give a DPS Warrior Berserker Stance x Salvation: 0.8 x 0.7', () => {
+  it('give a DPS Warrior Berserker Stance alone: 0.8, with no Salvation', () => {
     const warrior = atPull('dw_fury');
-    expect(warrior.auras.has('salvation')).toBe(true);
-    expect(threatMultiplierFor(warrior, all)).toBeCloseTo(0.8 * 0.7, 6);
+    expect(warrior.auras.has('salvation')).toBe(false);
+    expect(threatMultiplierFor(warrior, all)).toBeCloseTo(0.8, 6);
   });
 
-  it('multiply Arcane Subtlety, Salvation and the -2% cloak on the Arcane Mage', () => {
+  it('multiply Arcane Subtlety and the -2% cloak on the Arcane Mage', () => {
     /*
      * THE CLOAK WAS THE THIRD FACTOR AND THE FIRST DRAFT OF THIS TEST MISSED IT:
      * eleven caster presets wear "-2% Threat", which did nothing until threat
-     * was tracked. 0.7 x 0.7 x 0.98, and Arcane Subtlety only on Arcane.
+     * was tracked. 0.7 x 0.98, and Arcane Subtlety only on Arcane. (Salvation's
+     * 0.7 was a third factor until 1.60.1.70755 removed it.)
      */
     const mage = atPull('mage_arcane');
     expect(
       threatMultiplierFor(mage, { kind: 'damage', school: 'arcane', table: 'spell' }),
-    ).toBeCloseTo(0.7 * 0.7 * 0.98, 6);
+    ).toBeCloseTo(0.7 * 0.98, 6);
     // And Burning Soul 1/3 since round 80 (the 32/16/3 tree's Fire tier tax):
     // 10% off Fire threat.
     expect(threatMultiplierFor(mage, { kind: 'damage', school: 'fire', table: 'spell' })).toBeCloseTo(
-      0.7 * 0.98 * 0.9,
+      0.98 * 0.9,
       6,
     );
   });
@@ -93,8 +90,9 @@ describe('the presets at the pull', () => {
 
 describe('talents', () => {
   it('reads Defiance only with a shield', () => {
+    // 7/13/20% since 1.60.1.70755.
     expect(talentBuild('warrior', { defiance: 3 }, { hasShield: true }).threatModifiers).toEqual([
-      { multiplier: 1.15, whileAura: 'defensive_stance' },
+      { multiplier: 1.2, whileAura: 'defensive_stance' },
     ]);
     expect(talentBuild('warrior', { defiance: 3 }).threatModifiers).toEqual([]);
   });
@@ -126,13 +124,6 @@ describe('ability threat', () => {
   it('gives Sunder Armor 206 plus 5% of attack power', () => {
     const warrior = createPlayer({ race: 'human', characterClass: 'warrior' });
     expect(sunderArmorThreat(warrior)).toBeCloseTo(206 + 0.05 * warrior.stats.get('attackPower'), 6);
-  });
-});
-
-describe('Salvation follows the target', () => {
-  it('turns on when the target does not attack back and off when it does', () => {
-    expect(withSalvationFor(['battle_shout'], false)).toContain('salvation');
-    expect(withSalvationFor(['battle_shout', 'salvation'], true)).not.toContain('salvation');
   });
 });
 

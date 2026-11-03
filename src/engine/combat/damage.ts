@@ -281,6 +281,16 @@ export interface DamageRequest {
    */
   readonly cannotCrit?: boolean;
   /**
+   * The attack cannot MISS -- the miss slice goes to zero after every modifier.
+   * Dodge, parry and block are untouched.
+   *
+   * Shank (1.60.1.70755): "Shank cannot Miss." It says miss and nothing else,
+   * so a Shank can still be dodged; zeroing the miss slice is exactly the
+   * clause. Applied last, like `cannotCrit`, because a negative hit bonus
+   * would otherwise add miss back.
+   */
+  readonly cannotMiss?: boolean;
+  /**
    * Roll for a critical strike even though there is no attack table.
    *
    * RULESET: in Forever, every damage-over-time effect can crit. A tick does
@@ -896,12 +906,21 @@ function rollTable(
      * modifier -- because each of those can ADD crit and a zero handed in
      * earlier would be added to. See `DamageRequest.cannotCrit`.
      */
-    withoutCrit(
-      withModifier(withCritTable(chances, request, context), modifier),
-      request.cannotCrit === true,
+    withoutMiss(
+      withoutCrit(
+        withModifier(withCritTable(chances, request, context), modifier),
+        request.cannotCrit === true,
+      ),
+      request.cannotMiss === true,
     ),
     context.rng,
   );
+}
+
+/** Remove the miss slice, for an attack that cannot miss. The rest is a hit. */
+function withoutMiss(chances: AttackChances, cannotMiss: boolean): AttackChances {
+  if (!cannotMiss) return chances;
+  return { ...chances, miss: 0 };
 }
 
 /**

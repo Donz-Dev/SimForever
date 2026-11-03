@@ -1,7 +1,7 @@
-import type { AbilityCastEvent, CastReaction, Reaction } from '../../engine';
+import type { AbilityCastEvent, AttackEvent, CastReaction, Combatant, Reaction } from '../../engine';
 import { isWeaponUse } from '../../engine';
 import type { TalentReactionBuilder } from './warriorTalents';
-import { CUTTHROAT } from '../auras/rogue';
+import { DEATH_MARK_BLEED_IDS, DEATH_MARK_BLEED_MULTIPLIER, DEATH_MARK_ID, isDeathMarkAura } from '../auras/rogue';
 import { awardComboPoint } from '../combat/comboPoints';
 
 /**
@@ -80,20 +80,19 @@ export const ruthlessness = (chancePercent: number): CastReaction => ({
 });
 
 /**
- * Improved Expose Armor: "refunds 2 Combo Points when cast with 5 Combo Points".
- *
- * The refund is FIXED at two and does not scale with rank -- the rank scales
- * the energy reduction, which is a separate effect on the same talent. Bound to
- * the one ability by `abilityId`, so it cannot fire off another finisher.
+ * Improved Expose Armor: "refunds {1} Combo Points when cast with {2} Combo
+ * Points" -- 1 at rank 1 and 2 at rank 2 since 1.60.1.70755, when the refund
+ * started scaling with rank. It was a fixed two. Bound to the one ability by
+ * `abilityId`, so it cannot fire off another finisher.
  */
 export const IMPROVED_EXPOSE_ARMOR_REFUND = 2;
 
-export const improvedExposeArmor = (): CastReaction => ({
+export const improvedExposeArmor = (refund: number): CastReaction => ({
   id: 'improved_expose_armor',
   abilityId: 'expose_armor',
   canTrigger: (_context, _actor, cast) => comboPointsSpent(cast) >= 5,
   onTrigger: (context, actor) => {
-    context.grantResource(actor, 'comboPoints', IMPROVED_EXPOSE_ARMOR_REFUND, {
+    context.grantResource(actor, 'comboPoints', refund, {
       id: 'improved_expose_armor',
       name: 'Improved Expose Armor',
     });
@@ -179,32 +178,39 @@ export const ROGUE_CAST_REACTIONS: Readonly<Record<string, (value: number) => Ca
   improved_expose_armor: improvedExposeArmor,
 };
 
-/**
- * Cutthroat: "Your Backstab has a {0}% chance to cause your next Ambush within
- * 10 sec to not require Stealth."
- *
- * ----------------------------------------------------------------------------
- * AN ORDINARY DAMAGE REACTION ON ONE ABILITY, which is all it ever needed. The
- * talent was recorded as inert alongside the ten Rogue talents that genuinely
- * are -- every fight here opens in combat, so nothing is ever stealthed -- and
- * this one is the exception in the same list: it exists to remove the stealth
- * requirement, so a fight that is never stealthed is the case it was written
- * for rather than the case that kills it.
- *
- * ON A HIT OR A CRIT, and not on an avoided Backstab: the tooltip says "your
- * Backstab has a chance", and a Backstab that was dodged is not one that
- * happened. Same reading Improved Scorch takes.
- * ----------------------------------------------------------------------------
+/*
+ * CUTTHROAT IS GONE at 1.60.1.70755, removed from the Subtlety tree. Ghostly
+ * Strike's opener window took its job; see `GHOSTLY_STRIKE_OPENER`.
  */
-export const cutthroat = (chancePercent: number): Reaction => ({
-  id: 'cutthroat',
+
+/**
+ * Death Mark's store: the share of every hit and every Rogue bleed tick the
+ * mark keeps, Garrote and Rupture at twice the rate. Two reactions, a hit half
+ * and a tick half, because a `dealt` reaction never sees a tick -- the reason
+ * `periodicDealt` exists. Only the mark the SAME Rogue placed collects, and the
+ * burst itself (a tick of the mark) is not stored back into it.
+ */
+function storeInDeathMark(actor: Combatant, attack: AttackEvent): void {
+  if (attack.abilityId === DEATH_MARK_ID || attack.amount <= 0) return;
+  const mark = attack.defender.auras.get(DEATH_MARK_ID);
+  if (!mark || mark.sourceId !== actor.id || !isDeathMarkAura(mark.definition)) return;
+  const state = mark.definition.deathMark;
+  const bleed = attack.abilityId !== undefined && DEATH_MARK_BLEED_IDS.has(attack.abilityId);
+  state.stored += attack.amount * state.rate * (bleed ? DEATH_MARK_BLEED_MULTIPLIER : 1);
+}
+
+export const deathMarkHits: TalentReactionBuilder = () => ({
+  id: 'death_mark_hits',
   on: 'dealt',
+  outcomes: ['hit', 'crit', 'glance', 'crush'],
+  onTrigger: (_context, actor, attack) => storeInDeathMark(actor, attack),
+});
+
+export const deathMarkTicks: TalentReactionBuilder = () => ({
+  id: 'death_mark_ticks',
+  on: 'periodicDealt',
   outcomes: ['hit', 'crit'],
-  canTrigger: (context, _actor, attack) =>
-    attack.abilityId === 'backstab' && context.rng.rollChance(chancePercent / 100),
-  onTrigger: (context, actor) => {
-    context.applyAura(actor, CUTTHROAT, actor.id);
-  },
+  onTrigger: (_context, actor, attack) => storeInDeathMark(actor, attack),
 });
 
 /**
@@ -323,7 +329,8 @@ export const hackAndSlash = (chancePercent: number): Reaction => ({
 /** Procs that fire on an attack, by the talent that grants them. */
 export const ROGUE_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
   seal_fate: sealFate,
-  cutthroat,
+  death_mark_hits: deathMarkHits,
+  death_mark_ticks: deathMarkTicks,
   initiative,
   puncturing_wounds: puncturingWounds,
   hack_and_slash: hackAndSlash,

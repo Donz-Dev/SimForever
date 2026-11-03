@@ -400,7 +400,8 @@ export const FROSTFIRE_BOLT: Ability = {
  * with the checked-in capture reads as drift without the ruling beside it.
  * ============================================================================
  */
-export const ICE_LANCE_DAMAGE = midpoint(133, 157);
+// 137-161 at 1.60.1.70755, foreverchanges.pro's own figure now (it was 133-157).
+export const ICE_LANCE_DAMAGE = midpoint(137, 161);
 /*
  * ============================================================================
  * "N% INCREASED" IS `1 + N/100`, AND GETTING THAT WRONG HAS NOW COST FIVE

@@ -1,0 +1,995 @@
+{
+ "class": "shaman",
+ "source": "https://foreverchanges.pro/spellbook/shaman",
+ "build": "1.60.1.70755",
+ "note": "Max rank of each spell, read off the page in a browser and hashed there and on disk. A reference: nothing imports it.",
+ "spells": [
+  {
+   "name": "Lightning Bolt",
+   "tab": "Elemental Combat",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 10,
+   "top": {
+    "rank": 10,
+    "spell_id": 15208,
+    "cost": "220 Mana",
+    "range": "30 yd range",
+    "cast": "2.5 sec cast",
+    "cooldown": null,
+    "text": "Casts a bolt of lightning at the target for 342 to 381 Nature damage.",
+    "level": 56
+   }
+  },
+  {
+   "name": "Earth Shock",
+   "tab": "Elemental Combat",
+   "status": "changed",
+   "reasons": [
+    "Ranks 1 to 6 differ from Classic"
+   ],
+   "maxRank": 7,
+   "top": {
+    "rank": 7,
+    "spell_id": 10414,
+    "cost": "450 Mana",
+    "range": "20 yd range",
+    "cast": "Instant",
+    "cooldown": "6 sec cooldown",
+    "text": "Instantly shocks the target with concussive force, causing 517 to 545 Nature damage. It also interrupts spellcasting and prevents any spell in that school from being cast for 2 sec. Causes a high amount of threat.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Earthbind Totem",
+   "tab": "Elemental Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 2484,
+    "cost": "6% of base mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "15 sec cooldown",
+    "text": "Summons an Earthbind Totem with 5 health at the feet of the caster for 45 sec that slows the movement speed of enemies within 10 yards.",
+    "level": 6
+   }
+  },
+  {
+   "name": "Stoneclaw Totem",
+   "tab": "Elemental Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 10428,
+    "cost": "140 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "30 sec cooldown",
+    "text": "Summons a Stoneclaw Totem with 480 health at the feet of the caster for 15 sec that taunts creatures within 8 yards to attack it.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Flame Shock",
+   "tab": "Elemental Combat",
+   "status": "changed",
+   "reasons": [
+    "Ranks 1 to 5 differ from Classic"
+   ],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 29228,
+    "cost": "410 Mana",
+    "range": "20 yd range",
+    "cast": "Instant",
+    "cooldown": "6 sec cooldown",
+    "text": "Instantly sears the target with fire, causing 292 Fire damage immediately and 320 Fire damage over 12 sec.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Searing Totem",
+   "tab": "Elemental Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 10438,
+    "cost": "170 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Summons a Searing Totem with 5 health at your feet for 55 sec that repeatedly attacks an enemy within 20 yards for 40 to 54 Fire damage.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Fire Nova",
+   "tab": "Elemental Combat",
+   "status": "renamed",
+   "reasons": [
+    "Called Fire Nova Totem in Classic"
+   ],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 408345,
+    "cost": "375 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": "10 sec cooldown",
+    "text": "Instantly inflicts 232 to 259 fire damage to enemies within 10 yd of your active Fire totem.",
+    "level": 52
+   }
+  },
+  {
+   "name": "Purge",
+   "tab": "Elemental Combat",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 2,
+   "top": {
+    "rank": 2,
+    "spell_id": 8012,
+    "cost": "10% of base mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Purges the enemy target, removing 2 beneficial magic effects.",
+    "level": 32
+   }
+  },
+  {
+   "name": "Call of the Elements",
+   "tab": "Elemental Combat",
+   "status": "new",
+   "reasons": [
+    "Not in Classic"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 66842,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Simultaneously places up to 4 totems specified in the Totem Bar.",
+    "level": 20
+   }
+  },
+  {
+   "name": "Frost Shock",
+   "tab": "Elemental Combat",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 10473,
+    "cost": "430 Mana",
+    "range": "20 yd range",
+    "cast": "Instant",
+    "cooldown": "6 sec cooldown",
+    "text": "Instantly shocks the target with frost, causing 495 to 524 Frost damage and slowing movement speed by 50%. Lasts 8 sec.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Totemic Recall",
+   "tab": "Elemental Combat",
+   "status": "new",
+   "reasons": [
+    "Not in Classic"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 36936,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Returns your totems to the earth, giving you 25% of the mana required to cast each totem destroyed by Totemic Recall.",
+    "level": 20
+   }
+  },
+  {
+   "name": "Magma Totem",
+   "tab": "Elemental Combat",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 10587,
+    "cost": "650 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Summons a Magma Totem with 5 health at the feet of the caster for 20 sec that causes 73 Fire damage to creatures within 8 yards every 2 seconds.",
+    "level": 56
+   }
+  },
+  {
+   "name": "Call of the Ancestors",
+   "tab": "Elemental Combat",
+   "status": "new",
+   "reasons": [
+    "Not in Classic"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 66843,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Simultaneously places up to 4 totems specified in the Totem Bar. Can call different totems than Call of the Elements.",
+    "level": 30
+   }
+  },
+  {
+   "name": "Chain Lightning",
+   "tab": "Elemental Combat",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 10605,
+    "cost": "495 Mana",
+    "range": "30 yd range",
+    "cast": "2.5 sec cast",
+    "cooldown": "6 sec cooldown",
+    "text": "Hurls a lightning bolt at the enemy, dealing 495 to 552 Nature damage and then jumping to additional nearby enemies. Each jump reduces the damage by 30%. Affects 3 total targets.",
+    "level": 56
+   }
+  },
+  {
+   "name": "Call of the Spirits",
+   "tab": "Elemental Combat",
+   "status": "new",
+   "reasons": [
+    "Not in Classic"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 66844,
+    "cost": null,
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Simultaneously places up to 4 totems specified in the Totem Bar. Can call different totems than Call of the Elements or Call of the Ancestors.",
+    "level": 40
+   }
+  },
+  {
+   "name": "Lightning Mastery",
+   "tab": "Elemental Combat",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 16166,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "3 min cooldown",
+    "text": "Gain mastery over Lightning, reducing the cast time of your Lightning Bolt spell by 0.5 sec, and removing the cooldown from your Chain Lightning spell. Lasts 15 sec."
+   }
+  },
+  {
+   "name": "Rockbiter Weapon",
+   "tab": "Enhancement",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 7,
+   "top": {
+    "rank": 7,
+    "spell_id": 16316,
+    "cost": "150 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Imbue the Shaman's weapon, increasing melee attack power by 653 and allowing melee attacks to cause additional threat when using that weapon. Lasts for 60 minutes.\n\nRequires Melee Weapon",
+    "level": 54
+   }
+  },
+  {
+   "name": "Stoneskin Totem",
+   "tab": "Enhancement",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 10408,
+    "cost": "210 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Summons a Stoneskin Totem with 5 health at the feet of the caster. The totem protects party members within 30 yards, reducing Physical damage taken by 30. Lasts 5 min.",
+    "level": 54
+   }
+  },
+  {
+   "name": "Lightning Shield",
+   "tab": "Enhancement",
+   "status": "changed",
+   "reasons": [
+    "Ranks 2 to 7 differ from Classic"
+   ],
+   "maxRank": 7,
+   "top": {
+    "rank": 7,
+    "spell_id": 10432,
+    "cost": "370 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "The caster is surrounded by 3 balls of lightning. When a spell, melee or ranged attack hits the caster, the attacker will be struck for 178 Nature damage. This expends one lightning ball. Only one ball will fire every few seconds. Lasts 10 min.",
+    "level": 56
+   }
+  },
+  {
+   "name": "Flametongue Weapon",
+   "tab": "Enhancement",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 16342,
+    "cost": "155 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Imbue the Shaman's weapon with fire. Each hit causes 35 to 112 additional Fire damage, based on the speed of the weapon. Slower weapons cause more fire damage per swing. When applied to main hand, disables any benefit you personally receive from Flametongue Totem. Lasts for 60 minutes.\n\nRequires Melee Weapon",
+    "level": 56
+   }
+  },
+  {
+   "name": "Strength of Earth Totem",
+   "tab": "Enhancement",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 25361,
+    "cost": "275 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Summons a Strength of Earth Totem with 5 health at the feet of the caster. The totem increases the strength of party or raid members within 30 yards by 53. Lasts 5 min.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Frostbrand Weapon",
+   "tab": "Enhancement",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 16356,
+    "cost": "160 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Imbue the Shaman's weapon with frost. Each hit has a chance of causing 169 additional Frost damage and slowing the target's movement speed by 25% for 8 sec. Lasts for 60 minutes.\n\nRequires Melee Weapon",
+    "level": 58
+   }
+  },
+  {
+   "name": "Ghost Wolf",
+   "tab": "Enhancement",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 2645,
+    "cost": "100 Mana",
+    "range": null,
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Turns the Shaman into a Ghost Wolf, increasing speed by 40%. Only useable outdoors.",
+    "level": 20
+   }
+  },
+  {
+   "name": "Totemic Call",
+   "tab": "Enhancement",
+   "status": "new",
+   "reasons": [
+    "Not in Classic"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 437009,
+    "cost": "25% of base mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": "30 sec cooldown",
+    "text": "Relocates your active totems to your location.",
+    "level": 22
+   }
+  },
+  {
+   "name": "Water Breathing",
+   "tab": "Enhancement",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 131,
+    "cost": "50 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Allows the target to breathe underwater for 10 min.",
+    "level": 22
+   }
+  },
+  {
+   "name": "Frost Resistance Totem",
+   "tab": "Enhancement",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 10479,
+    "cost": "180 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Summons a Frost Resistance Totem with 5 health at the feet of the caster for 5 min. The totem increases party and raid members' frost resistance by 60, if within 30 yards.",
+    "level": 54
+   }
+  },
+  {
+   "name": "Far Sight",
+   "tab": "Enhancement",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 6196,
+    "cost": "80 Mana",
+    "range": "50000 yd range",
+    "cast": "Channeled",
+    "cooldown": null,
+    "text": "Changes the caster's viewpoint to the targeted location. Lasts 1 min. Only useable outdoors.",
+    "level": 26
+   }
+  },
+  {
+   "name": "Fire Resistance Totem",
+   "tab": "Enhancement",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 10538,
+    "cost": "180 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Summons a Fire Resistance Totem with 5 health at the feet of the caster for 5 min that increases the fire resistance of party or raid members within 30 yards by 60.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Flametongue Totem",
+   "tab": "Enhancement",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 16387,
+    "cost": "275 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Summons a Flametongue Totem with 5 health at the feet of the caster. The totem enhances the melee attacks of all party or raid members within 30 yards. Each main hand hit causes 17 to 55 additional Fire damage, based on the speed of the weapon. Slower weapons cause more fire damage per swing. Lasts 5 min.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Water Walking",
+   "tab": "Enhancement",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 546,
+    "cost": "95 Mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Allows the friendly target to walk across water for 10 min. Any damage will cancel the effect.",
+    "level": 28
+   }
+  },
+  {
+   "name": "Astral Recall",
+   "tab": "Enhancement",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 556,
+    "cost": "150 Mana",
+    "range": null,
+    "cast": "10 sec cast",
+    "cooldown": "15 min cooldown",
+    "text": "Yanks the caster through the twisting nether back to your home location. Speak to an Innkeeper in a different place to change your home location.",
+    "level": 30
+   }
+  },
+  {
+   "name": "Grounding Totem",
+   "tab": "Enhancement",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 8177,
+    "cost": "6% of base mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "15 sec cooldown",
+    "text": "Summons a Grounding Totem with 5 health at the feet of the caster that will redirect one harmful spell cast on a nearby party member to itself every 10 seconds. Will not redirect area of effect spells. Lasts 45 sec.",
+    "level": 30
+   }
+  },
+  {
+   "name": "Nature Resistance Totem",
+   "tab": "Enhancement",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 10601,
+    "cost": "180 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Summons a Nature Resistance Totem with 5 health at the feet of the caster for 5 min that increases the nature resistance of party and raid members within 30 yards by 60.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Windfury Weapon",
+   "tab": "Enhancement",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 16362,
+    "cost": "165 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Imbue the Shaman's weapon with wind. Each hit has a 20% chance of granting you 2 extra attacks with 333 extra melee attack power. When applied to main hand, disables any benefit you personally receive from Windfury Totem. Lasts for 60 minutes.\n\nRequires Melee Weapon",
+    "level": 60
+   }
+  },
+  {
+   "name": "Windfury Totem",
+   "tab": "Enhancement",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 10614,
+    "cost": "250 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Summons a Windfury Totem with 5 health at the feet of the caster. The totem enhances the melee attacks of all party or raid members within 30 yards. Each main hand hit has a 20% chance of granting the attacker 1 extra attack with 246 extra melee attack power. Lasts 5 min.",
+    "level": 52
+   }
+  },
+  {
+   "name": "Sentry Totem",
+   "tab": "Enhancement",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 6495,
+    "cost": "65 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Summons an immobile Sentry Totem with 100 health at your feet for 5 min that allows vision of nearby area and warns of enemies that attack it. Right-Click on buff to switch back and forth between totem sight and Shaman sight.",
+    "level": 34
+   }
+  },
+  {
+   "name": "Windwall Totem",
+   "tab": "Enhancement",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 15112,
+    "cost": "225 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Summons a Windwall Totem with 5 health at the feet of the caster. The totem protects party members within 30 yards, reducing ranged damage taken by 64. Lasts 5 min.",
+    "level": 56
+   }
+  },
+  {
+   "name": "Grace of Air Totem",
+   "tab": "Enhancement",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 25359,
+    "cost": "310 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Summons a Grace of Air Totem with 5 health at the feet of the caster. The totem increases the agility of party or raid members within 30 yards by 89. Lasts 5 min.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Stormstrike",
+   "tab": "Enhancement",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 17364,
+    "cost": "8% of base mana",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "6 sec cooldown",
+    "text": "Instantly strike for 150% weapon damage and increase the damage you deal to the target with your next Lightning Bolt, Chain Lightning, or Earth Shock spell by 20% for 12 sec."
+   }
+  },
+  {
+   "name": "Rage of the Farseer",
+   "tab": "Enhancement",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "Not a talent in Classic"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 425336,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "3 min cooldown",
+    "text": "Increases your attack speed by 30% for 25 sec."
+   }
+  },
+  {
+   "name": "Healing Wave",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 10,
+   "top": {
+    "rank": 10,
+    "spell_id": 25357,
+    "cost": "620 Mana",
+    "range": "40 yd range",
+    "cast": "3 sec cast",
+    "cooldown": null,
+    "text": "Heals a friendly target for 1508 to 1722.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Ancestral Spirit",
+   "tab": "Restoration",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 20777,
+    "cost": "90% of base mana",
+    "range": "30 yd range",
+    "cast": "10 sec cast",
+    "cooldown": null,
+    "text": "Returns the spirit to the body, restoring a dead target to life with 600 health and 800 mana. Cannot be cast when in combat.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Cure Poison",
+   "tab": "Restoration",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 526,
+    "cost": "9% of base mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Cures 1 poison effects on the target.",
+    "level": 16
+   }
+  },
+  {
+   "name": "Tremor Totem",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 8143,
+    "cost": "60 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Summons a Tremor Totem with 5 health at the feet of the caster that shakes the ground around it, removing Fear, Charm and Sleep effects from party members within 30 yards. Lasts 5 min.",
+    "level": 18
+   }
+  },
+  {
+   "name": "Healing Stream Totem",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 10463,
+    "cost": "80 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Summons a Healing Stream Totem with 5 health at the feet of the caster for 5 min that heals group members within 30 yards for 11 every 2 seconds.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Lesser Healing Wave",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 10468,
+    "cost": "380 Mana",
+    "range": "40 yd range",
+    "cast": "1.5 sec cast",
+    "cooldown": null,
+    "text": "Heals a friendly target for 775 to 865.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Cure Disease",
+   "tab": "Restoration",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 2870,
+    "cost": "9% of base mana",
+    "range": "30 yd range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Cures 1 disease on the target.",
+    "level": 22
+   }
+  },
+  {
+   "name": "Poison Cleansing Totem",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 8166,
+    "cost": "10% of base mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Summons a Poison Cleansing Totem with 5 health at the feet of the caster that attempts to remove 1 poison effect from party members within 30 yards every 5 seconds. Lasts 5 min.",
+    "level": 22
+   }
+  },
+  {
+   "name": "Mana Tide Totem",
+   "tab": "Restoration",
+   "status": "talent",
+   "reasons": [
+    "A talent in Classic and in Forever",
+    "Ranks 1 to 3 trained earlier than in Classic",
+    "Rank 4 new (Classic stops at rank 3)"
+   ],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 1325256,
+    "cost": "60 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "5 min cooldown",
+    "text": "Summons a Mana Tide Totem with 5 health at the feet of the caster for 12 sec that restores 290 mana every 3 seconds to group members within 30 yards.",
+    "level": 58
+   }
+  },
+  {
+   "name": "Mana Spring Totem",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 10497,
+    "cost": "100 Mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Summons a Mana Spring Totem with 5 health at the feet of the caster for 5 min that restores 10 mana every 2 seconds to group members within 30 yards.",
+    "level": 56
+   }
+  },
+  {
+   "name": "Reincarnation",
+   "tab": "Restoration",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": "Passive",
+    "spell_id": 20608,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "1 hr cooldown",
+    "text": "Allows you to resurrect yourself upon death with 20% health and mana.",
+    "level": 30
+   }
+  },
+  {
+   "name": "Disease Cleansing Totem",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 8170,
+    "cost": "10% of base mana",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Summons a Disease Cleansing Totem with 5 health at the feet of the caster that attempts to remove 1 disease effect from party members within 30 yards every 5 seconds. Lasts 5 min.",
+    "level": 38
+   }
+  },
+  {
+   "name": "Chain Heal",
+   "tab": "Restoration",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 10623,
+    "cost": "405 Mana",
+    "range": "40 yd range",
+    "cast": "2.5 sec cast",
+    "cooldown": null,
+    "text": "Heals the friendly target for 474 to 539, then jumps to heal additional nearby targets. If cast on a party member, the heal will only jump to other party members. Each jump is 50% as effective as the previous target. Heals 3 total targets.",
+    "level": 54
+   }
+  },
+  {
+   "name": "Riptide",
+   "tab": "Restoration",
+   "status": "talent",
+   "reasons": [
+    "Not in Classic; its first rank comes from a Forever talent",
+    "Season of Discovery had a spell by this name"
+   ],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 1239243,
+    "cost": "230 Mana",
+    "range": "40 yd range",
+    "cast": "Instant",
+    "cooldown": "12 sec cooldown",
+    "text": "Heals a friendly target for 805 over 15 sec, and increases the effectiveness of your Chain Heal casts directly on that target by 25%.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Water Shield",
+   "tab": "Restoration",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "Not a talent in Classic"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 408510,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "The caster is surrounded by 3 globes of water. When a spell, melee, or ranged attack hits the caster or when one of the caster's spells gets a critical result, 2% of maximum mana is restored to the caster, expending one water globe. Only one globe will activate every few seconds. Lasts 10 min.\n\nOnly one Elemental Shield can be active on the Shaman at any one time."
+   }
+  },
+  {
+   "name": "Nature's Swiftness",
+   "tab": "Restoration",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 16188,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "3 min cooldown",
+    "text": "When activated, your next Nature spell with a casting time less than 10 sec. becomes an instant cast spell."
+   }
+  }
+ ]
+}

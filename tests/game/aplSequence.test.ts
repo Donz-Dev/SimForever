@@ -111,16 +111,21 @@ describe('an entry can combine abilities into ONE action', () => {
      * and here the identity was real and the TEST was wrong -- it was not
      * constructing a contested gap at all.
      *
-     * SO THE GATE IS 45 RATHER THAN 35, which is the smallest change that
-     * makes Sinister Strike affordable in the gap. One variable differs
-     * between the two runs below: whether the entry carries a `sequence`.
+     * SO THE GATE IS SINISTER STRIKE'S COST RATHER THAN 35, which is the
+     * smallest change that makes it affordable in the gap. One variable
+     * differs between the two runs below: whether the entry carries a
+     * `sequence`.
+     *
+     * 40 SINCE 1.60.1.70755, NOT 45: the Venom build takes Efficient Strikes
+     * 2/2, so Sinister Strike costs 40 -- and at a 45 gate it took the pool at
+     * 40 every time and Cold Blood never fired at all.
      * ========================================================================
      */
     const gate: AplList['entries'][number]['condition'] = {
       kind: 'all',
       of: [
         { kind: 'comboPoints', compare: 'atLeast', points: 5 },
-        { kind: 'resource', resource: 'energy', compare: 'atLeast', amount: 45 },
+        { kind: 'resource', resource: 'energy', compare: 'atLeast', amount: 40 },
       ],
     };
     const listWith: AplList = {

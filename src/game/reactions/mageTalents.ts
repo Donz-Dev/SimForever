@@ -67,6 +67,25 @@ const DAMAGE_SPELLS = new Set(MAGE_DAMAGE_SPELL_IDS);
  * DoT's. Without it Ignite's own ticks would crit and re-apply Ignite, which
  * compounds forever off a single lucky roll.
  */
+/**
+ * Ignite off FLAMESTRIKE'S TICKS (1.60.1.70755): "Fixed an issue where Ignite
+ * was not applying to Flamestrike damage past the initial instance." A tick is
+ * not seen by `dealt`, so this is the `periodicDealt` half, scoped to the one
+ * DoT the fix names -- every other Fire tick still cannot ignite, which is the
+ * guard against Ignite's own ticks compounding.
+ */
+export const igniteFlamestrikeTicks: TalentReactionBuilder = (percentOfDamage) => ({
+  id: 'ignite_flamestrike_ticks',
+  on: 'periodicDealt',
+  outcomes: ['crit'],
+  canTrigger: (_context, _actor, attack) => attack.abilityId === 'flamestrike' && attack.amount > 0,
+  onTrigger: (context, actor, attack) => {
+    const target = context.combatant(attack.defender.id);
+    if (!target) return;
+    context.applyAura(target, igniteAura((attack.amount * percentOfDamage) / 100), actor.id);
+  },
+});
+
 export const ignite: TalentReactionBuilder = (percentOfDamage) => ({
   id: 'ignite',
   on: 'dealt',
@@ -307,9 +326,7 @@ export const MISSILE_BARRAGE_OTHER_SPELL_IDS: readonly string[] = [
   'fireball',
   'frostbolt',
   'frostfire_bolt',
-  // Frost Blast joined the list at 1.60.1.70707 and is not declared here, so it
-  // is named for the day it is rather than silently left out.
-  'frost_blast',
+  // Frost Blast joined at 1.60.1.70707 and the spell was removed at 1.60.1.70755.
 ];
 
 const MISSILE_BARRAGE_OTHERS = new Set(MISSILE_BARRAGE_OTHER_SPELL_IDS);
@@ -432,7 +449,8 @@ const WINTERS_CHILL_MAX_STACKS_INDEX = 3;
  * Frostfire Bolt, Cone of Cold and Blizzard no longer do, and Ice Lance only
  * while Fingers of Frost is up. Frost Blast is not declared here.
  */
-export const WINTERS_CHILL_APPLIER_IDS: readonly string[] = ['frostbolt', 'frost_blast'];
+// Frost Blast left with the spell at 1.60.1.70755.
+export const WINTERS_CHILL_APPLIER_IDS: readonly string[] = ['frostbolt'];
 
 export const wintersChill: TalentReactionBuilder = (chancePercent, values) => {
   /*
@@ -634,6 +652,7 @@ export const MAGE_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilde
   master_of_elements: masterOfElements,
   heating_up: heatingUp,
   arcane_concentration: arcaneConcentration,
+  ignite_flamestrike_ticks: igniteFlamestrikeTicks,
   missile_barrage: missileBarrage,
   improved_scorch: improvedScorchReaction,
   fingers_of_frost: fingersOfFrost,

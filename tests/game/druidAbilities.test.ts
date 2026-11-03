@@ -119,7 +119,8 @@ describe('the numbers', () => {
     // 62 to 68 was right at build 1.60.1.69876 and the client buffed it. Both
     // current sources agree it gained about 40% and disagree on the figure.
     expect(WRATH_DAMAGE).toBe(91);
-    expect(STARFIRE_DAMAGE).toBe(381);
+    // 490 to 576 since 1.60.1.70755 (was 350 to 412).
+    expect(STARFIRE_DAMAGE).toBe(533);
     expect(MOONFIRE_DIRECT).toBe(135);
   });
 
@@ -135,28 +136,31 @@ describe('the numbers', () => {
 
   it('scales Rip by combo point but NOT its duration, unlike the Rogue Rupture', () => {
     /*
-     * Twelve seconds at every rank, and the damage steps by exactly 153. The
-     * Rogue's Rupture scaled both halves, which is the kind of difference that
-     * gets assumed away.
+     * Twelve seconds at every rank, and the damage steps by 191 or 192 -- the
+     * 1.60.1.70755 figures (was 243..855 in steps of 153). The Rogue's Rupture
+     * scaled both halves, which is the kind of difference that gets assumed
+     * away.
      */
-    expect(RIP_BY_COMBO_POINT).toEqual([243, 396, 549, 702, 855]);
+    expect(RIP_BY_COMBO_POINT).toEqual([305, 497, 688, 880, 1071]);
     for (let i = 1; i < RIP_BY_COMBO_POINT.length; i += 1) {
-      expect(RIP_BY_COMBO_POINT[i] - RIP_BY_COMBO_POINT[i - 1]).toBe(153);
+      expect(RIP_BY_COMBO_POINT[i] - RIP_BY_COMBO_POINT[i - 1]).toBeGreaterThanOrEqual(191);
+      expect(RIP_BY_COMBO_POINT[i] - RIP_BY_COMBO_POINT[i - 1]).toBeLessThanOrEqual(192);
     }
     for (const points of [1, 3, 5]) {
       expect(ripAura(points).durationMs).toBe(RIP_DURATION_MS);
     }
   });
 
-  it('steps Ferocious Bite by 147 a point', () => {
-    expect(FEROCIOUS_BITE_BY_COMBO_POINT).toEqual([229, 376, 523, 670, 817]);
+  it('steps Ferocious Bite by 181 a point', () => {
+    // 1.60.1.70755 midpoints (was 229..817 in steps of 147).
+    expect(FEROCIOUS_BITE_BY_COMBO_POINT).toEqual([283, 464, 645, 826, 1007]);
     for (let i = 1; i < FEROCIOUS_BITE_BY_COMBO_POINT.length; i += 1) {
-      expect(FEROCIOUS_BITE_BY_COMBO_POINT[i] - FEROCIOUS_BITE_BY_COMBO_POINT[i - 1]).toBe(147);
+      expect(FEROCIOUS_BITE_BY_COMBO_POINT[i] - FEROCIOUS_BITE_BY_COMBO_POINT[i - 1]).toBe(181);
     }
   });
 });
 
-describe('Rip pays 4% of attack power a point OVER ITS DURATION, not per tick', () => {
+describe('Rip pays 5% of attack power a point OVER ITS DURATION, not per tick', () => {
   /*
    * --------------------------------------------------------------------------
    * THE RULESET OWNER REPORTED THE CAT AS TOO HIGH AND NAMED RIP: "rip should
@@ -203,7 +207,7 @@ describe('Rip pays 4% of attack power a point OVER ITS DURATION, not per tick', 
       .map((event) => event.amount);
   }
 
-  it('is 20% of attack power across six ticks at five points, not 120%', () => {
+  it('is 25% of attack power across six ticks at five points, not 150%', () => {
     const ticks = ripDamage(5);
 
     /*
@@ -214,15 +218,16 @@ describe('Rip pays 4% of attack power a point OVER ITS DURATION, not per tick', 
     expect(RIP_TICK_COUNT).toBe(6);
 
     /*
-     * 855 flat plus 20% of 1400 = 1135. The old behaviour paid 855 + 1680 =
-     * 2535, and Rip was 35.3% of the Cat's damage.
+     * 1071 flat plus 25% of 1400 = 1421 (5% a point since 1.60.1.70755, was
+     * 4%). The per-tick reading paid six times the attack power share, and Rip
+     * was 35.3% of the Cat's damage.
      */
     const fromAp = ticks.reduce((a, b) => a + b, 0) - RIP_BY_COMBO_POINT[4];
     expect(fromAp).toBeCloseTo(RIP_AP * RIP_AP_COEFFICIENT_PER_COMBO_POINT * 5, 4);
-    expect(fromAp).toBeCloseTo(280, 4);
+    expect(fromAp).toBeCloseTo(350, 4);
   });
 
-  it('scales with the points SPENT, at 4% each, at every allocation', () => {
+  it('scales with the points SPENT, at 5% each, at every allocation', () => {
     for (const points of [1, 2, 3, 4, 5]) {
       const ticks = ripDamage(points);
       expect(ticks, `${points} points`).toHaveLength(6);
@@ -248,8 +253,8 @@ describe('Rip pays 4% of attack power a point OVER ITS DURATION, not per tick', 
     const perTick = (RIP_BY_COMBO_POINT[2] + RIP_AP * RIP_AP_COEFFICIENT_PER_COMBO_POINT * 3) /
       RIP_TICK_COUNT;
     for (const amount of ticks) expect(amount).toBeCloseTo(perTick, 4);
-    // 549/6 = 91.5 flat and (4% x 3 x 1400)/6 = 28 from attack power.
-    expect(perTick).toBeCloseTo(119.5, 6);
+    // 688/6 = 114.67 flat and (5% x 3 x 1400)/6 = 35 from attack power.
+    expect(perTick).toBeCloseTo(688 / 6 + 35, 6);
   });
 });
 

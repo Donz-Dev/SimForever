@@ -371,7 +371,6 @@ export const INNER_FOCUS_CRITTABLE = [
   'shadow_word_death',
   'flash_heal',
   'greater_heal',
-  'binding_heal',
   'prayer_of_healing',
   'penance',
 ] as const;
@@ -380,7 +379,6 @@ export const INNER_FOCUS_CRITTABLE = [
 export const PRIEST_HEALS = [
   'flash_heal',
   'greater_heal',
-  'binding_heal',
   'prayer_of_healing',
   'renew',
   'power_word_shield',
@@ -515,7 +513,7 @@ export const RENEW_HOT: AuraDefinition = {
  * Priest with the talent puts on a Weakened Soul carrying it.
  */
 export const WEAKENED_SOUL_DURATION_MS = seconds(15);
-export const RENEWED_HOPE_HEALS = ['flash_heal', 'binding_heal', 'greater_heal', 'penance'] as const;
+export const RENEWED_HOPE_HEALS = ['flash_heal', 'greater_heal', 'penance'] as const;
 
 export const WEAKENED_SOUL: AuraDefinition = {
   id: 'weakened_soul',

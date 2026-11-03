@@ -9,22 +9,15 @@ import {
   HEMORRHAGE_DEBUFF,
   HEMORRHAGE_RUPTURE_BONUS,
   MUTILATE_POISONED_BONUS,
-  THOUSAND_CUTS_BONUS,
-  THOUSAND_CUTS_MAX_STACKS,
   deadlyPoisonAura,
   ruptureAura,
-  thousandCutsAura,
 } from '../../src/game/auras/rogue';
 import { HEMORRHAGE, RUPTURE } from '../../src/game/abilities/rogue';
-import {
-  EXECUTE_PHASE_FRACTION,
-  QUIETUS_HEALTH_FRACTION,
-} from '../../src/game/combat/executePhase';
 import {
   COMBAT_CONSTANTS,
   createForeverAttackChances,
 } from '../../src/game/combat/attackChances';
-import { armorReduction, resolveCast, seconds, toRollUnits } from '../../src/engine';
+import { armorReduction, seconds, toRollUnits } from '../../src/engine';
 import type { AttackEvent, WeaponProfile } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
@@ -85,13 +78,14 @@ const rogueWith = (talents: Record<string, number>) =>
  * 4/8/12/16/20.
  */
 describe('Lethality raises crit DAMAGE for a list of named abilities', () => {
-  it('states 20% at five points', () => {
-    expect(talentNumber('rogue', 'lethality', 5)).toBe(20);
-    expect(talentNumber('rogue', 'lethality', 2)).toBe(8);
+  it('states 20% at two points', () => {
+    // Two ranks of 10/20 since 1.60.1.70755 (was five of 4..20).
+    expect(talentNumber('rogue', 'lethality', 2)).toBe(20);
+    expect(talentNumber('rogue', 'lethality', 1)).toBe(10);
   });
 
   it('adds the BONUS half, so a x2 melee crit becomes x2.2 and never x2.4', () => {
-    const build = talentBuild('rogue', { malice: 5, lethality: 5 });
+    const build = talentBuild('rogue', { malice: 5, lethality: 2 });
     /*
      * 20% OF THE BONUS, and the bonus of a x2 crit is 1.0 -- so +0.2, giving
      * 2.2. Reading it as "multiply the whole thing by 1.2" gives 2.4 and
@@ -113,7 +107,7 @@ describe('Lethality raises crit DAMAGE for a list of named abilities', () => {
     const rogue = createPlayer({
       race: 'orc',
       characterClass: 'rogue',
-      talents: legalise({ malice: 5, lethality: 5 }, 'rogue'),
+      talents: legalise({ malice: 5, lethality: 2 }, 'rogue'),
     });
     for (const id of [
       'sinister_strike',
@@ -131,8 +125,8 @@ describe('Lethality raises crit DAMAGE for a list of named abilities', () => {
   });
 
   it('scales with rank rather than being on or off', () => {
-    const two = talentBuild('rogue', { malice: 5, lethality: 2 });
-    expect(two.abilityModifiers.for('backstab').critMultiplierBonus).toBeCloseTo(0.08, 10);
+    const one = talentBuild('rogue', { malice: 5, lethality: 1 });
+    expect(one.abilityModifiers.for('backstab').critMultiplierBonus).toBeCloseTo(0.1, 10);
   });
 
   it('leaves Gouge out and says so, because Gouge is ruled out of scope', () => {
@@ -417,200 +411,42 @@ describe('Serrated Blades, both clauses', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Thousand Cuts
+// 1.60.1.70755: Thousand Cuts, Quietus and Murder are gone; Shank's three
+// talents, Blood Splatter and Death Mark are new.
 // ---------------------------------------------------------------------------
 
-/*
- * "When your Rupture ability deals periodic damage, the Energy cost of your
- * next Hemorrhage or Backstab ability within 10 sec is reduced by 3, stacking
- * up to 5 times." One rank.
- */
-describe('Thousand Cuts, applied by a Rupture tick', () => {
-  it('has a hand-filled value, because a single-rank talent has none', () => {
-    expect(talentNumber('rogue', 'thousand_cuts', 1)).toBe(3);
-  });
-
-  it('travels to the bleed as a named bonus on Rupture', () => {
-    const rogue = rogueWith({ thousand_cuts: 1 });
-    expect(rogue.abilities.get('rupture')?.bonuses?.[THOUSAND_CUTS_BONUS]).toBe(3);
-    // And a Rogue without the talent carries nothing, so the tick applies none.
-    const plain = createPlayer({ race: 'orc', characterClass: 'rogue' });
-    expect(plain.abilities.get('rupture')?.bonuses?.[THOUSAND_CUTS_BONUS] ?? 0).toBe(0);
-  });
-
-  it('is a FLAT reduction on two named abilities, stacking to five', () => {
-    const aura = thousandCutsAura(3);
-    expect(aura.maxStacks).toBe(THOUSAND_CUTS_MAX_STACKS);
-    expect(aura.maxStacks).toBe(5);
-    expect(aura.durationMs).toBe(seconds(10));
-    expect(aura.castModifier?.abilityIds).toEqual(['hemorrhage', 'backstab']);
-    expect(aura.castModifier?.costReduction).toBe(3);
-    expect(aura.castModifier?.scalesWithStacks).toBe(true);
-    // A fraction would be wrong for energy: three is three at any cost.
-    expect(aura.castModifier?.costFraction).toBeUndefined();
-  });
-
-  it('is spent by ONE cast however many stacks it holds', () => {
-    /*
-     * "Your NEXT Hemorrhage or Backstab" is one cast that every stack paid
-     * for. Spending a single stack would leave four behind and make the talent
-     * worth several times what it is -- a bigger number and no error.
-     */
-    expect(thousandCutsAura(3).castModifier?.consumedByCast).toBe('all');
-  });
-
-  it('takes 3 an application off Hemorrhage’s 35 energy', () => {
-    const rogue = makeAttacker();
-    const simulation = buildSimulation([rogue, makeTarget()]);
-    expect(HEMORRHAGE.cost?.amount).toBe(35);
-
-    simulation.applyAura(rogue, thousandCutsAura(3), rogue.id);
-    expect(resolveCast(rogue, HEMORRHAGE).costAmount).toBe(32);
-
-    for (let i = 0; i < 4; i += 1) simulation.applyAura(rogue, thousandCutsAura(3), rogue.id);
-    expect(rogue.auras.stacksOf('thousand_cuts')).toBe(5);
-    expect(resolveCast(rogue, HEMORRHAGE).costAmount).toBe(20);
-  });
-
-  it('does not make any other ability cheaper', () => {
-    const rogue = makeAttacker();
-    const simulation = buildSimulation([rogue, makeTarget()]);
-    simulation.applyAura(rogue, thousandCutsAura(3), rogue.id);
-    expect(resolveCast(rogue, RUPTURE).costAmount).toBe(RUPTURE.cost!.amount);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Quietus, and the clock
-// ---------------------------------------------------------------------------
-
-/*
- * "Your Sinister Strike, Ghostly Strike, and Hemorrhage abilities cause 10%
- * more damage against targets below 35% health." 5 ranks, 2/4/6/8/10, and the
- * owner has ruled the 35% is 35% of the FIGHT.
- */
-describe('Quietus is a clock, not a health bar', () => {
-  it('keeps its own fraction rather than borrowing the execute one', () => {
-    expect(QUIETUS_HEALTH_FRACTION).toBe(0.35);
-    expect(EXECUTE_PHASE_FRACTION).toBe(0.2);
-    expect(QUIETUS_HEALTH_FRACTION).not.toBe(EXECUTE_PHASE_FRACTION);
-    // The values file states the same 35 beside the percentage at every rank.
-    expect(talentNumber('rogue', 'quietus', 5, 1)).toBe(35);
-    expect(talentNumber('rogue', 'quietus', 5, 0)).toBe(10);
-  });
-
-  it('is worth nothing before the window and +10% inside it', () => {
-    const rogue = rogueWith({ quietus: 5 });
-    /*
-
-     * THE REMAINING FRACTION, which is the shape main's `abilityModifierFor`
-
-     * takes. This dive passed a `{ plannedDurationMs, clock }` object and main
-
-     * computes the fraction in `Combatant` instead -- same clock, one number.
-
-     */
-
-    const clock = (nowMs: number) => (seconds(100) - nowMs) / seconds(100);
-
-    // 64 seconds in, 36% of the fight is left: outside the window.
-    expect(
-      rogue.abilityModifierFor('hemorrhage', clock(seconds(64))).damageMultiplier ?? 1,
-    ).toBeCloseTo(1, 10);
-    // 66 seconds in, 34% is left: inside it.
-    expect(
-      rogue.abilityModifierFor('hemorrhage', clock(seconds(66))).damageMultiplier ?? 1,
-    ).toBeCloseTo(1.1, 10);
-  });
-
-  it('reaches only the three abilities it names', () => {
-    const rogue = rogueWith({ quietus: 5 });
-    const early = 1.0;
-    const late = 0.1;
-    for (const id of ['sinister_strike', 'ghostly_strike', 'hemorrhage']) {
-      expect(rogue.abilityModifierFor(id, late).damageMultiplier).toBeCloseTo(1.1, 10);
-    }
-    /*
-     * BACKSTAB IS COMPARED EARLY AGAINST LATE rather than against 1, because
-     * the filler `legalise` spends to open the Subtlety tier includes
-     * Opportunity, which is a real +10% on Backstab all fight. Asserting a
-     * flat 1 would fail on a talent that is working correctly -- so the claim
-     * under test is the one that is actually Quietus': that the window does
-     * not change it.
-     */
-    const backstabEarly = rogue.abilityModifierFor('backstab', early).damageMultiplier ?? 1;
-    const backstabLate = rogue.abilityModifierFor('backstab', late).damageMultiplier ?? 1;
-    expect(backstabLate).toBeCloseTo(backstabEarly, 10);
-  });
-
-  /*
-   * THE SILENT CASE, MADE ASSERTABLE. A caller with no clock cannot evaluate a
-   * clock condition and gets nothing -- which is correct, and is exactly the
-   * shape of failure this project keeps meeting, so it is asked about rather
-   * than hoped about. `dealDamage` passes the clock on both legs of the
-   * pipeline; only a test calling `resolveDamage` directly omits it.
-   */
-  it('THROWS when a caller cannot evaluate its condition', () => {
-    /*
-     * ------------------------------------------------------------------------
-     * THIS DIVE MADE IT A PREDICATE AND MAIN MAKES IT A THROW, which is the
-     * stronger of the two and is what the merged project keeps: a caller that
-     * forgets to pass the clock finds out at the call rather than by asking.
-     * The hazard is the same either way -- a character carrying a modifier
-     * conditional on the fight clock, asked for its modifiers without one, must
-     * not silently answer "nothing".
-     *
-     * A CHARACTER WITHOUT ANY SUCH MODIFIER IS STILL FINE WITHOUT A CLOCK,
-     * which is the second half and the reason the check cannot just be
-     * mandatory: almost every character in the project has none.
-     * ------------------------------------------------------------------------
-     */
-    const rogue = rogueWith({ quietus: 5 });
-    expect(() => rogue.abilityModifierFor('hemorrhage')).toThrow(/fight clock/i);
-    expect(() => rogue.abilityModifierFor('hemorrhage', 1)).not.toThrow();
-
-    const plain = createPlayer({ race: 'orc', characterClass: 'rogue' });
-    expect(() => plain.abilityModifierFor('hemorrhage')).not.toThrow();
-  });
-
-  it('is taken by no Rogue profile, so it moves none of the three figures', () => {
-    // The Rupture preset went in round 82; Hemo Dagger DOES take Quietus 5/5, so
-    // it is the one Rogue preset left out of this list.
-    for (const id of ['rogue_venom', 'rogue_combat', 'rogue_combat_mut', 'rogue_pure_hemo']) {
-      const built = PRESETS_BY_ID.get(id)!.build();
-      expect(built.talents?.quietus ?? 0).toBe(0);
+describe('the 1.60.1.70755 Rogue talents', () => {
+  it('removed Thousand Cuts, Quietus, Murder and Cutthroat from the table', () => {
+    for (const id of ['thousand_cuts', 'quietus', 'murder', 'cutthroat', 'improved_distract']) {
+      expect(ROGUE_TALENT_EFFECTS[id], id).toBeUndefined();
     }
   });
-});
 
-// ---------------------------------------------------------------------------
-// Murder
-// ---------------------------------------------------------------------------
-
-describe('Murder, on the owner’s ruling that the target is neither type', () => {
-  /*
-   * ROUND 37 REVERSED THE EARLIER RULING. It applied to every target as +4% to
-   * all damage; the owner: "it is unrealistic to think you will always be
-   * fighting a humanoid or giant". So it is a TARGET cause now -- inert, and it
-   * expires only if an encounter declares a creature type.
-   */
-  it('grants nothing, auto attacks included', () => {
-    expect(talentNumber('rogue', 'murder', 2)).toBe(4);
-    const build = talentBuild('rogue', { murder: 2 });
-    expect(build.damageMultiplier).toBeCloseTo(1, 10);
+  it('hands Shank its three talents as bonuses, read off the right indices', () => {
+    const rogue = rogueWith({ flash_of_steel: 5, boot_knife: 5, venom: 1 });
+    const shank = rogue.abilities.get('shank')!;
+    // Flash of Steel `[energy, seconds]`, Boot Knife `[chance, points]`.
+    expect(shank.bonuses?.flashOfSteelEnergy).toBe(15);
+    expect(shank.bonuses?.bootKnifeChance).toBe(100);
+    expect(shank.bonuses?.bootKnifePoints).toBe(2);
+    expect(shank.bonuses?.venom).toBe(1);
+    // Ten seconds less two.
+    expect(shank.cooldownMs).toBe(seconds(8));
   });
 
-  it('says why, as a target cause rather than a scope', () => {
-    const stated = ROGUE_TALENT_EFFECTS.murder.find((e) => e.kind === 'unmodelled');
-    expect(stated && stated.kind === 'unmodelled' && stated.reason).toMatch(/humanoid or giant/);
-    // A target cause, not a scope: the encounter could change and this would too.
-    expect(stated && stated.kind === 'unmodelled' && stated.scope).toBeUndefined();
+  it('lengthens Rupture and Garrote with Blood Splatter, as ticks', () => {
+    const rogue = rogueWith({ blood_splatter: 1 });
+    expect(rogue.abilities.get('rupture')?.bonuses?.bloodSplatter).toBe(1);
+    expect(rogue.abilities.get('garrote')?.bonuses?.bloodSplatter).toBe(1);
+  });
+
+  it('grants Death Mark with its store reactions', () => {
+    const build = talentBuild('rogue', legalise({ death_mark: 1 }, 'rogue'));
+    const ids = build.reactions.map((reaction) => reaction.id);
+    expect(ids).toContain('death_mark_hits');
+    expect(ids).toContain('death_mark_ticks');
   });
 });
-
-// ---------------------------------------------------------------------------
-// Mutilate against a poisoned target
-// ---------------------------------------------------------------------------
 
 describe('Mutilate’s "+20% against Poisoned targets"', () => {
   it('rides on the poison DEBUFF, which is what makes a target poisoned', () => {

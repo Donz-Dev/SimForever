@@ -97,7 +97,11 @@ export const elementalDevastation: TalentReactionBuilder = (critPercent) => ({
  * below.
  * ----------------------------------------------------------------------------
  */
-export const MAELSTROM_WEAPON_PPM = 5;
+/*
+ * TEN SINCE 1.60.1.70755: "Maelstrom Weapon: Chance to trigger doubled." The
+ * owner's five, doubled.
+ */
+export const MAELSTROM_WEAPON_PPM = 10;
 
 export const maelstromWeapon: TalentReactionBuilder = (reductionPercentPerStack) => ({
   id: 'maelstrom_weapon',

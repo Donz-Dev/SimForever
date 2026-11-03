@@ -60,6 +60,9 @@ const barePriest = () =>
 
 describe('the numbers', () => {
   /*
+   * 1.60.1.70755: Shadow Word: Death is 444-472, so both sources' figures below
+   * are history; it reads foreverchanges.pro's range now.
+   *
    * TWO OF THESE THREE FOLLOW foreverchanges.pro AGAINST OUR OWN CAPTURE, by the
    * ruleset owner's standing rule that it wins a disagreement. Both sources were
    * read at build 1.60.1.70009 and disagree by five on Mind Blast (472-498
@@ -71,7 +74,7 @@ describe('the numbers', () => {
    */
   it('takes the midpoint of each stated range, at MAX RANK', () => {
     expect(MIND_BLAST_DAMAGE).toBe(485);
-    expect(SHADOW_WORD_DEATH_DAMAGE).toBe(448);
+    expect(SHADOW_WORD_DEATH_DAMAGE).toBe(458);
     expect(SHADOW_WORD_PAIN_TOTAL).toBe(762);
   });
 
@@ -426,13 +429,14 @@ describe('the fight', () => {
      * the encounter is. The target is a damage sink that survives every fight
      * by design, so "if your target is not killed" is always true.
      *
-     * A tenth of the Priest's health every fifteen seconds, with no healer.
+     * 30% of the Priest's health a cast since 1.60.1.70755 (was a tenth), with
+     * no healer -- and none on a miss.
      * Asserted as health actually LOST, because the ability takes it from the
      * pool directly and it does not appear in the damage-taken panel -- which
      * the ability says.
      * ------------------------------------------------------------------------
      */
-    expect(SHADOW_WORD_DEATH_BACKLASH_FRACTION).toBe(0.1);
+    expect(SHADOW_WORD_DEATH_BACKLASH_FRACTION).toBe(0.3);
 
     const actor = createPlayer({
       race: 'troll',

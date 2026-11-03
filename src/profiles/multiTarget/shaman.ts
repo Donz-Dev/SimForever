@@ -1,7 +1,7 @@
 import { SPELLHANCE_MULTI } from '../ownerLists';
 import type { MultiTargetDefaults } from './types';
 import type { AplCondition, AplEntry } from '../../game/rotations/apl';
-import { all, not, selfHas, selfStacks, targetCount, targetExpired, targetHas, targetTime } from '../../game/rotations/apl';
+import { all, not, selfHas, selfStacks, targetCount, targetExpired, targetTime } from '../../game/rotations/apl';
 import { RACIAL_COOLDOWNS } from '../../game/rotations/racialCooldowns';
 import { SHAMAN_ELEMENTAL, SHAMAN_ENHANCEMENT, SHAMAN_RESTORATION } from '../../game/rotations/shaman';
 import { MAELSTROM_WEAPON_MAX_STACKS } from '../../game/auras/shaman';
@@ -73,9 +73,9 @@ const ELEMENTAL_AOE: readonly AplEntry[] = [
     multiDot: 5,
   },
   ...RACIAL_COOLDOWNS,
-  { abilityId: 'elemental_mastery' },
+  // Lightning Mastery since 1.60.1.70755; Lava Burst is gone.
+  { abilityId: 'lightning_mastery' },
   { abilityId: 'chain_lightning' },
-  { abilityId: 'lava_burst', condition: targetHas('flame_shock') },
   { abilityId: 'lightning_bolt' },
 ];
 
@@ -165,7 +165,7 @@ export const SHAMAN_MULTI_TARGET: MultiTargetDefaults = {
     entries: ELEMENTAL_AOE,
     precombat: [
       { abilityId: 'magma_totem', secondsBefore: 0 },
-      { abilityId: 'elemental_mastery', secondsBefore: 0 },
+      { abilityId: 'lightning_mastery', secondsBefore: 0 },
       { abilityId: 'flame_shock', secondsBefore: 0 },
     ],
   },

@@ -149,7 +149,7 @@ function iceLanceDamage(spellPower: number, frozen: boolean): number {
  * The coefficient the ability ACTUALLY applies, derived from two spell powers.
  *
  * Two points rather than one, so the flat half cancels: `(d2 - d1) / (p2 - p1)`
- * is the slope whatever the base damage is. Ice Lance rolls 133-157, so a single
+ * is the slope whatever the base damage is. Ice Lance rolls 137-161, so a single
  * reading could not be divided at all.
  *
  * ----------------------------------------------------------------------------
@@ -287,17 +287,18 @@ describe('what the spell actually applies, measured from damage', () => {
      * ability, repeated here because this file EDITS a coefficient and that is
      * precisely the edit that overwrites a `baseAmount`.
      *
-     * The roll is 133-157, so the band is asserted rather than the midpoint.
+     * The roll is 137-161 since 1.60.1.70755 (was 133-157), so the band is
+     * asserted rather than the midpoint.
      */
     const flat = iceLanceDamage(0, false);
-    expect(flat).toBeGreaterThanOrEqual(133);
-    expect(flat).toBeLessThanOrEqual(157);
-    expect(ICE_LANCE_DAMAGE).toBe(145);
+    expect(flat).toBeGreaterThanOrEqual(137);
+    expect(flat).toBeLessThanOrEqual(161);
+    expect(ICE_LANCE_DAMAGE).toBe(149);
 
     // And the frozen case multiplies the flat half too.
     const frozenFlat = iceLanceDamage(0, true);
-    expect(frozenFlat).toBeGreaterThanOrEqual(133 * ICE_LANCE_FROZEN_MULTIPLIER);
-    expect(frozenFlat).toBeLessThanOrEqual(157 * ICE_LANCE_FROZEN_MULTIPLIER);
+    expect(frozenFlat).toBeGreaterThanOrEqual(137 * ICE_LANCE_FROZEN_MULTIPLIER);
+    expect(frozenFlat).toBeLessThanOrEqual(161 * ICE_LANCE_FROZEN_MULTIPLIER);
   });
 });
 

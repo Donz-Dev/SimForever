@@ -61,7 +61,13 @@ const hasteFromPercent = (percent: number) =>
  * refreshed. `canCast` refuses while it is up, so the entry falls through.
  * ------------------------------------------------------------------------------
  */
-export const HUNTERS_MARK_RANGED_ATTACK_POWER = 71;
+/*
+ * 143 at 1.60.1.70755, foreverchanges.pro's max rank -- "increasing the Ranged
+ * Attack Power of all attackers against that target by 143", where it read 71.
+ * The notes: "Fixed an issue where Rank 4 Hunter's Mark was providing less
+ * Ranged Attack Power than Rank 3."
+ */
+export const HUNTERS_MARK_RANGED_ATTACK_POWER = 143;
 export const HUNTERS_MARK_DURATION_MS = seconds(120);
 
 export const HUNTERS_MARK: AuraDefinition = {
@@ -134,7 +140,8 @@ export const ASPECT_OF_THE_BEAST: AuraDefinition = {
 export const SERPENT_STING_TOTAL = 675;
 export const SERPENT_STING_DURATION_MS = seconds(15);
 export const SERPENT_STING_TICK_INTERVAL_MS = seconds(3);
-export const SERPENT_STING_RAP_PER_TICK = 0.03;
+// 5% since 1.60.1.70755: "Attack Power coefficient per tick increased to 5% from 3%."
+export const SERPENT_STING_RAP_PER_TICK = 0.05;
 
 export const SERPENT_STING: AuraDefinition = {
   id: 'serpent_sting',

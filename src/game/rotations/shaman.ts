@@ -13,7 +13,6 @@ import {
   resourceFraction,
   selfStacks,
   targetExpired,
-  targetHas,
   targetTime,
 } from './apl';
 import type { CombatStyleId } from '../character';
@@ -77,8 +76,6 @@ const targetAuraAtLeast = (auraId: string, secondsLeft: number) =>
 
 const atStacks = (auraId: string, stacks: number) => selfStacks('atLeast', stacks, auraId);
 
-/** "<debuff> is on the target" -- `auras.has`, not a reading of the clock. */
-const hasDebuff = targetHas;
 
 // ---------------------------------------------------------------------------
 
@@ -304,8 +301,11 @@ export const SHAMAN_ELEMENTAL: AplList = {
    * does nothing for a totem or a shock.
    * ==========================================================================
    */
-  { abilityId: 'elemental_mastery' },
-  { abilityId: 'lava_burst', condition: hasDebuff('flame_shock') },
+  /*
+   * LIGHTNING MASTERY AND NO LAVA BURST (1.60.1.70755): the capstone renamed,
+   * and the spell removed. The window shortens Lightning Bolt alone now.
+   */
+  { abilityId: 'lightning_mastery' },
   { abilityId: 'lightning_bolt' },
   ],
 };

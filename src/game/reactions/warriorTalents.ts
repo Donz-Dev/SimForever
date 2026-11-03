@@ -1,6 +1,13 @@
 import type { CastReaction, Reaction } from '../../engine';
 import { applyHealing, isWeaponUse, isWeaponUseOf } from '../../engine';
-import { ENRAGE_TRIGGER_CHANCE, OVERPOWER_READY, REND, enrageAura } from '../auras/warrior';
+import {
+  ENRAGE_TRIGGER_CHANCE,
+  OVERPOWER_READY,
+  RECKLESS_SWINGS,
+  RECKLESS_SWINGS_RAGE,
+  REND,
+  enrageAura,
+} from '../auras/warrior';
 import {
   GORE_DRINKER_ID,
   bloodCrazeAura,
@@ -479,7 +486,28 @@ export const goreDrinkerHeal: TalentReactionBuilder = (percentOfMaxHealth) => ({
 });
 
 /** Every Warrior talent that grants a reaction, by talent id. */
+/**
+ * Reckless Swings' rage: a LANDED swing while the window is open grants five
+ * more rage and spends one of its four charges. See `RECKLESS_SWINGS_ABILITY`.
+ * Valueless -- the five and the four are on the ability, not in a values row.
+ */
+export const recklessSwings: TalentReactionBuilder = () => ({
+  id: 'reckless_swings',
+  on: 'dealt',
+  outcomes: ['hit', 'crit', 'glance', 'crush'],
+  canTrigger: (_context, actor, attack) =>
+    attack.attackTable === 'melee-auto' && attack.amount > 0 && actor.auras.has(RECKLESS_SWINGS.id),
+  onTrigger: (context, actor) => {
+    context.grantResource(actor, 'rage', RECKLESS_SWINGS_RAGE, {
+      id: 'reckless_swings',
+      name: 'Reckless Swings',
+    });
+    actor.auras.consumeStack(context, RECKLESS_SWINGS.id);
+  },
+});
+
 export const WARRIOR_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
+  reckless_swings: recklessSwings,
   deep_wounds: deepWounds,
   /*
    * Two entries for ONE talent, which the effect table reaches by declaring

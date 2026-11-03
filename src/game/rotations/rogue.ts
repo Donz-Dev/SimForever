@@ -1,5 +1,5 @@
 import type { Rotation, WeaponType } from '../../engine';
-import type { AplCondition, AplList } from './apl';
+import type { AplCondition, AplEntry, AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
 import {
   COMBAT_THISTLE_TEA_ENERGY_THRESHOLD,
@@ -192,6 +192,20 @@ const abilityOnCooldown = onCooldown;
 /** "<buff> is active", on the Rogue. */
 const selfActive = selfHas;
 
+/*
+ * ============================================================================
+ * SHANK, IN EVERY ROGUE LIST AT 1.60.1.70755, and placed by us rather than the
+ * owner -- a question for them.
+ *
+ * Five energy for twenty-five back, on a ten second cooldown: twenty net energy
+ * and a one second global, which is cheaper than any builder and pays for most
+ * of one. So it sits above the builders and below the finishers that spend what
+ * it gives, and it carries Venom's window and Boot Knife's points for a build
+ * that takes them. It needs an off hand, which every Rogue preset holds.
+ * ============================================================================
+ */
+const SHANK_ENTRY: AplEntry = { abilityId: 'shank' };
+
 /** Inverts a condition, so a cheap entry can be held rather than duplicated. */
 
 /**
@@ -223,7 +237,8 @@ const selfActive = selfHas;
  * ----------------------------------------------------------------------------
  */
 const poolingForAmbush: AplCondition = all(
-  selfHas('cutthroat'),
+  // Ghostly Strike's opener window took Cutthroat's place at 1.60.1.70755.
+  selfHas('ghostly_strike_opener'),
   // A STRICT `<`, which is what the closure wrote: at exactly the cost the
   // Rogue is not pooling any more, it can afford the Ambush.
   resource('below', AMBUSH_ENERGY_COST, 'energy'),
@@ -310,7 +325,6 @@ const atLeastEnergy = (minimum: number) => resource('atLeast', minimum, 'energy'
  * ----------------------------------------------------------------------------
  */
 const VENOM_SLICE_AND_DICE_POINTS = 1;
-const VENOM_BUFF_COMBO_POINTS = 3;
 const VENOM_FINISHER_COMBO_POINTS = 3;
 const VENOM_MAINTENANCE_FLOOR_SECONDS = 3;
 
@@ -347,8 +361,10 @@ export const ROGUE_VENOM: AplList = {
     exclude: ['major_frenzy_potion'],
   }),
   /*
-   * MAJOR FRENZY POTION, ON THE OWNER'S CONDITION: "when Slice and Dice + Venom are both active". It replaces the shared
-   * ungated entry, which `consumableCooldowns` is told to leave out.
+   * MAJOR FRENZY POTION, ON THE OWNER'S CONDITION: "when Slice and Dice + Venom
+   * are both active". It replaces the shared ungated entry, which
+   * `consumableCooldowns` is told to leave out. Venom is Shank's six-second
+   * window since 1.60.1.70755, so the potion waits for a Shank.
    */
   { abilityId: 'major_frenzy_potion', condition: all(selfHas('slice_and_dice'), selfHas(VENOM_AURA_ID)) },
 
@@ -386,26 +402,12 @@ export const ROGUE_VENOM: AplList = {
     condition: all(selfAuraDown('slice_and_dice'), atLeastPoints(VENOM_SLICE_AND_DICE_POINTS)),
   },
   /*
-   * VENOM NEXT, AND RUPTURE IS GONE FROM THIS LIST.
-   *
-   * ==========================================================================
-   * THAT REVERSES A MEASURED DECISION OF OURS, AND THE OWNER IS WHO REVERSED
-   * IT. Rupture was worth +16.7 here and was put in precisely because the
-   * build's points were overflowing -- Seal Fate at 5/5 and a Mutilate that
-   * crits twice gives about 28.5 points a fight, of which 7.21 were being
-   * wasted at the cap. **The overflow is real and it has a different outlet
-   * now**: Eviscerate comes back at three points below, where the old version
-   * gated it at five and it fired 0.3 times a fight.
-   *
-   * SO THE POINTS STILL HAVE SOMEWHERE TO GO, which is the half of the old
-   * argument that had to survive. What changed is which finisher they go to,
-   * and that is the owner's call rather than a measurement's.
-   * ==========================================================================
+   * THE VENOM FINISHER IS GONE (1.60.1.70755): Venom is a passive on Shank now,
+   * so SHANK takes its place -- and the two finishers below no longer wait for
+   * a Venom window, which Shank keeps up 60% of the time and no finisher can
+   * extend. Rupture stays out of this list, the owner's call.
    */
-  {
-    abilityId: 'venom',
-    condition: all(selfAuraDown(VENOM_AURA_ID), atLeastPoints(VENOM_BUFF_COMBO_POINTS)),
-  },
+  SHANK_ENTRY,
   /*
    * COLD BLOOD, AND IT NOW AIMS AT THE EVISCERATE BELOW IT RATHER THAN AT A
    * MUTILATE.
@@ -438,7 +440,6 @@ export const ROGUE_VENOM: AplList = {
       atLeastPoints(VENOM_COLD_BLOOD_COMBO_POINTS),
       atLeastEnergy(VENOM_COLD_BLOOD_ENERGY),
       selfAuraAtLeast('slice_and_dice', VENOM_MAINTENANCE_FLOOR_SECONDS),
-      selfAuraAtLeast(VENOM_AURA_ID, VENOM_MAINTENANCE_FLOOR_SECONDS),
     ),
   },
   /*
@@ -464,7 +465,6 @@ export const ROGUE_VENOM: AplList = {
     condition: all(
       atLeastPoints(VENOM_FINISHER_COMBO_POINTS),
       selfAuraAtLeast('slice_and_dice', VENOM_MAINTENANCE_FLOOR_SECONDS),
-      selfAuraAtLeast(VENOM_AURA_ID, VENOM_MAINTENANCE_FLOOR_SECONDS),
     ),
   },
   { abilityId: 'mutilate' },
@@ -545,6 +545,7 @@ export const ROGUE_COMBAT_MUT: AplList = {
    */
   thistleTeaCooldown(TIGHT_THISTLE_TEA_ENERGY_THRESHOLD),
   { abilityId: 'blade_flurry' },
+  SHANK_ENTRY,
   ...consumableCooldowns({ exclude: ['thistle_tea', 'major_frenzy_potion'] }),
   /*
    * MAJOR FRENZY POTION, ON THE OWNER'S CONDITION: "when Slice and Dice is active". It replaces the shared
@@ -666,6 +667,7 @@ export const ROGUE_COMBAT: AplList = {
    */
   { abilityId: 'adrenaline_rush' },
   { abilityId: 'blade_flurry' },
+  SHANK_ENTRY,
   /*
    * THE OWNER'S "IF NOT ACTIVE" STAYS, AND A REFRESH WINDOW WAS MEASURED AND
    * REJECTED. Recorded here so it is not re-run.
@@ -846,8 +848,9 @@ export const ROGUE_RUPTURE: AplList = {
   {
     abilityId: 'vanish',
     sequence: ['premeditation', 'ambush'],
-    condition: all(atMostPoints(3), atLeastEnergy(AMBUSH_ENERGY_COST), not(selfActive('cutthroat'))),
+    condition: all(atMostPoints(3), atLeastEnergy(AMBUSH_ENERGY_COST), not(selfActive('ghostly_strike_opener'))),
   },
+  SHANK_ENTRY,
   {
     abilityId: 'slice_and_dice',
     condition: all(
@@ -1034,12 +1037,13 @@ export const ROGUE_HEMO: AplList = {
   {
     abilityId: 'vanish',
     sequence: ['premeditation', 'ambush'],
-    condition: all(atMostPoints(3), atLeastEnergy(AMBUSH_ENERGY_COST), not(selfActive('cutthroat'))),
+    condition: all(atMostPoints(3), atLeastEnergy(AMBUSH_ENERGY_COST), not(selfActive('ghostly_strike_opener'))),
   },
   {
     abilityId: 'slice_and_dice',
     condition: all(selfAuraDown('slice_and_dice'), atLeastPoints(HEMO_SLICE_AND_DICE_POINTS)),
   },
+  SHANK_ENTRY,
   /*
    * RUPTURE AT THREE, AND WITH NO HEMORRHAGE CLAUSE -- both of which separate
    * it from the Rupture list, where it waits for four points AND for the
@@ -1091,6 +1095,20 @@ export const ROGUE_HEMO: AplList = {
       selfAuraAtLeast('slice_and_dice', HEMO_FLOOR_SECONDS),
     ),
   },
+  /*
+   * DEATH MARK (1.60.1.70755), the new capstone, ahead of the Eviscerate and on
+   * its gate: five points with both buffs up. It stores what the next six
+   * seconds deal, so it wants the points that buy the biggest share. Placed by
+   * us, not measured -- a question for the owner.
+   */
+  {
+    abilityId: 'death_mark',
+    condition: all(
+      exactlyPoints(MAX_COMBO_POINTS),
+      targetAuraAtLeast('rupture', HEMO_FLOOR_SECONDS),
+      selfAuraAtLeast('slice_and_dice', HEMO_FLOOR_SECONDS),
+    ),
+  },
   {
     abilityId: 'eviscerate',
     condition: all(
@@ -1120,6 +1138,12 @@ export const ROGUE_HEMO: AplList = {
    * SO IT MAINTAINS AND BUILDS, and the gate's own justification went with
    * Backstab rather than being a second opinion about the owner's list.
    */
+  /*
+   * GHOSTLY STRIKE ABOVE IT (1.60.1.70755), placed by us: it builds a point and
+   * opens a seven-second window in which the Ambush at the top of the list
+   * needs no stealth -- Cutthroat's old job. On its twenty-second cooldown.
+   */
+  { abilityId: 'ghostly_strike' },
   { abilityId: 'hemorrhage' },
   ],
 };
@@ -1186,6 +1210,7 @@ export const ROGUE_PURE_HEMO: AplList = {
    * profile test counts its casts rather than trusting the gate.
    * ==========================================================================
    */
+  SHANK_ENTRY,
   {
     abilityId: 'rupture',
     condition: all(
@@ -1292,10 +1317,16 @@ export function rogueRotation(
    * built around the Venom finisher, so a Mutilate build WITHOUT the talent
    * cannot run it at all -- its second entry would be dead. Combat Mut takes
    * Mutilate and Seal Fate and spends on Eviscerate instead.
+   *
+   * 1.60.1.70755 PUT MUTILATE UNDER VENOM, so every legal Mutilate build has
+   * Venom and the old test sent both to the Venom list. AGGRESSION separates
+   * them now: Combat Mut takes it (Sinister Strike and Eviscerate, the Combat
+   * half of its list) and the Venom build does not. That is a reading of the
+   * two presets rather than an owner ruling.
    * ==========================================================================
    */
   if ((talents.mutilate ?? 0) > 0) {
-    return (talents.venom ?? 0) > 0 ? ROGUE_VENOM_ROTATION : ROGUE_COMBAT_MUT_ROTATION;
+    return (talents.aggression ?? 0) > 0 ? ROGUE_COMBAT_MUT_ROTATION : ROGUE_VENOM_ROTATION;
   }
   /*
    * TWO SUBTLETY BUILDS NOW, AND HEMORRHAGE NO LONGER SEPARATES THEM -- both
@@ -1312,7 +1343,11 @@ export function rogueRotation(
    * about which list can function.
    */
   if ((talents.hemorrhage ?? 0) > 0) {
-    if ((talents.cutthroat ?? 0) > 0) return ROGUE_RUPTURE_ROTATION;
+    /*
+     * CUTTHROAT, WHICH SENT A BUILD TO THE RUPTURE LIST, IS GONE (1.60.1.70755),
+     * so no build reaches that list by dispatch any more. It is kept for a
+     * profile that names it.
+     */
     /*
      * ========================================================================
      * AND THE TWO HEMORRHAGE BUILDS BY THE WEAPON IN THE MAIN HAND, which is

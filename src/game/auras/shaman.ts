@@ -61,7 +61,8 @@ const hasteFromPercent = (percent: number) =>
  * FIRE, AND THEREFORE NOT REDUCED BY ARMOR, which is true of every magical
  * school. It still crits, at the crit chance of the event that applied it.
  */
-export const FLAME_SHOCK_DOT_TOTAL = 176;
+// 320 since 1.60.1.70755, Classic's figure again (it was 176). See LIGHTNING_BOLT_DAMAGE.
+export const FLAME_SHOCK_DOT_TOTAL = 320;
 export const FLAME_SHOCK_DOT_DURATION_MS = seconds(12);
 export const FLAME_SHOCK_TICK_INTERVAL_MS = seconds(3);
 
@@ -201,7 +202,6 @@ export const SHAMAN_DAMAGE_SPELL_IDS: readonly string[] = [
   'earth_shock',
   'flame_shock',
   'frost_shock',
-  'lava_burst',
   'fire_nova',
 ];
 
@@ -724,16 +724,17 @@ export function maelstromWeaponAura(reductionPercentPerStack: number): AuraDefin
  * re-read until multiple targets made Chain Lightning worth casting.
  * ==============================================================================
  */
-export const ELEMENTAL_MASTERY_DURATION_MS = seconds(15);
-export const ELEMENTAL_MASTERY_CAST_REDUCTION_MS = 500;
+export const LIGHTNING_MASTERY_DURATION_MS = seconds(15);
+export const LIGHTNING_MASTERY_CAST_REDUCTION_MS = 500;
 
-export const ELEMENTAL_MASTERY_AURA: AuraDefinition = {
-  id: 'elemental_mastery',
-  name: 'Elemental Mastery',
-  durationMs: ELEMENTAL_MASTERY_DURATION_MS,
+/** Lightning Mastery since 1.60.1.70755: Lightning Bolt only, Lava Burst being gone. */
+export const LIGHTNING_MASTERY_AURA: AuraDefinition = {
+  id: 'lightning_mastery',
+  name: 'Lightning Mastery',
+  durationMs: LIGHTNING_MASTERY_DURATION_MS,
   castModifier: {
-    abilityIds: ['lightning_bolt', 'lava_burst'],
-    castTimeReductionMs: ELEMENTAL_MASTERY_CAST_REDUCTION_MS,
+    abilityIds: ['lightning_bolt'],
+    castTimeReductionMs: LIGHTNING_MASTERY_CAST_REDUCTION_MS,
   },
   suppressesCooldownOf: ['chain_lightning'],
 };

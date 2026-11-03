@@ -170,7 +170,8 @@ describe('the numbers', () => {
      * because it was written as arithmetic rather than as a literal.
      */
     expect(ARCANE_BLAST_DAMAGE).toBe(236);
-    expect(ICE_LANCE_DAMAGE).toBe(145);
+    // 137 to 161 since 1.60.1.70755 (was 133 to 157).
+    expect(ICE_LANCE_DAMAGE).toBe(149);
   });
 
   it('reads Pyroblast at rank 8, not the rank 1 its talent tooltip shows', () => {

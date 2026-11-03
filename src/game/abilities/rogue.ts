@@ -3,18 +3,24 @@ import { dealDamage, rollApplication, seconds } from '../../engine';
 import {
   ADRENALINE_RUSH,
   BLADE_FLURRY,
+  BLOOD_SPLATTER_FLAG,
+  BLOOD_SPLATTER_GARROTE_MS,
+  BLOOD_SPLATTER_RUPTURE_MS,
   COLD_BLOOD,
   COLD_BLOOD_ABILITIES,
-  CUTTHROAT,
-  GARROTE,
+  DEATH_MARK_CAP_AP_PER_POINT,
+  DEATH_MARK_CAP_BY_COMBO_POINT,
+  DEATH_MARK_STORED_PER_POINT,
+  GHOSTLY_STRIKE_OPENER,
   STEALTH,
   GHOSTLY_STRIKE_DODGE_AURA,
   HEMORRHAGE_DEBUFF,
-  THOUSAND_CUTS_BONUS,
+  VENOM,
+  deathMarkAura,
   exposeArmorAura,
+  garroteAura,
   ruptureAura,
   sliceAndDiceAura,
-  venomAura,
 } from '../auras/rogue';
 import { awardComboPoint, hasComboPoints, spendComboPoints } from '../combat/comboPoints';
 import { EVISCERATE_AP_COEFFICIENT_PER_COMBO_POINT } from '../combat/coefficients';
@@ -219,10 +225,14 @@ export const BACKSTAB: Ability = {
  * poison system landing turned it into a live 20% on the signature ability of
  * the build that takes it without anybody touching this file.
  */
-// 50 and not 38, from foreverchanges.pro by the same rule -- "an additional 50
-// with each weapon" against our capture's 38, same rank 4, same build.
-export const MUTILATE_BASE_DAMAGE = 50;
-export const MUTILATE_WEAPON_FRACTION = 0.75;
+/*
+ * 90% AND +79 SINCE 1.60.1.70755: "Mutilate's damage increased to 90% of weapon
+ * damage plus an additional amount that was also increased", and
+ * foreverchanges.pro states the amount at max rank -- "90% weapon damage plus
+ * an additional 79 with each weapon". It was 75% and 50.
+ */
+export const MUTILATE_BASE_DAMAGE = 79;
+export const MUTILATE_WEAPON_FRACTION = 0.9;
 export const MUTILATE_COMBO_POINTS = 2;
 
 export const MUTILATE: Ability = {
@@ -339,6 +349,12 @@ export const GHOSTLY_STRIKE: Ability = {
     // The dodge goes up whether or not the strike landed: it is a state the
     // cast confers, not a rider on the hit.
     simulation.applyAura(caster, GHOSTLY_STRIKE_DODGE_AURA, caster.id);
+    /*
+     * AND SO DOES THE OPENER WINDOW (1.60.1.70755): "causes your next Ambush or
+     * Garrote cast within 7 sec to not require Stealth" -- the same reading, a
+     * state the cast confers. It took Cutthroat's job, which was removed.
+     */
+    simulation.applyAura(caster, GHOSTLY_STRIKE_OPENER, caster.id);
     if (!result.avoided) awardComboPoint(simulation, caster, target, ability.id, ability.name);
   },
 };
@@ -421,14 +437,8 @@ export const RUPTURE: Ability = {
     });
     if (spent <= 0) return;
 
-    /*
-     * THOUSAND CUTS TRAVELS WITH THE BLEED. The talent fires off a Rupture
-     * TICK, and a tick runs no reactions -- so the aura it applies has to be
-     * built here, where the talent's value is reachable as a named bonus, and
-     * carried into the aura. Zero for a Rogue without the talent, which
-     * `ruptureAura` reads as "apply nothing".
-     */
-    const thousandCuts = ability.bonuses?.[THOUSAND_CUTS_BONUS] ?? 0;
+    // Blood Splatter's six seconds (1.60.1.70755), for a Rogue who took it.
+    const extra = ability.bonuses?.[BLOOD_SPLATTER_FLAG] ? BLOOD_SPLATTER_RUPTURE_MS : 0;
 
     /*
      * Rolled ONCE here rather than per tick, exactly as Rend is: whether the
@@ -440,7 +450,7 @@ export const RUPTURE: Ability = {
     });
     if (roll.avoided) return;
 
-    simulation.applyAura(target, ruptureAura(spent, thousandCuts), caster.id);
+    simulation.applyAura(target, ruptureAura(spent, extra), caster.id);
   },
 };
 
@@ -478,35 +488,10 @@ export const SLICE_AND_DICE: Ability = {
   },
 };
 
-/**
- * Venom, granted by the Assassination talent.
- *
- * A finisher that buffs POISONS and deals no damage of its own, which makes it
- * the only Rogue finisher whose worth depends entirely on another system. It
- * was `unmodelled` for exactly as long as poisons were.
+/*
+ * VENOM IS NOT A FINISHER ANY MORE (1.60.1.70755): it is a passive that rides
+ * on Shank -- see `SHANK` and `VENOM` in `auras/rogue.ts`.
  */
-export const VENOM: Ability = {
-  id: 'venom',
-  name: 'Venom',
-  cost: { resource: 'energy', amount: 25 },
-  requiresTarget: false,
-  /*
-   * A SELF-BUFF FINISHER, so it spends the pool WITHOUT naming a target.
-   * The points are on the enemy; the buff is on the Rogue. `requiresTarget`
-   * is false and there is no target to check them against, which is exactly
-   * the case `spendComboPoints` leaves the argument optional for.
-   */
-  canCast: ({ caster }) => hasComboPoints(caster),
-  onCast: ({ simulation, caster, ability }) => {
-    const spent = spendComboPoints(caster, undefined, {
-      context: simulation,
-      abilityId: ability.id,
-      abilityName: ability.name,
-    });
-    if (spent <= 0) return;
-    simulation.applyAura(caster, venomAura(spent), caster.id);
-  },
-};
 
 export const EXPOSE_ARMOR: Ability = {
   id: 'expose_armor',
@@ -752,11 +737,16 @@ export const GARROTE_ABILITY: Ability = {
   comboPointsAwarded: 1,
   cost: { resource: 'energy', amount: GARROTE_ENERGY_COST },
   attackTable: 'melee-special',
-  canCast: ({ caster }) => caster.auras.has(STEALTH.id),
+  // Stealth, or Ghostly Strike's window since 1.60.1.70755.
+  canCast: ({ caster }) => caster.auras.has(STEALTH.id) || caster.auras.has(GHOSTLY_STRIKE_OPENER.id),
   // Vanish opens the stealth gate, so a Vanish-led sequence may name Garrote.
-  enabledBy: ['vanish'],
+  enabledBy: ['vanish', 'ghostly_strike'],
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
+    // "Your NEXT Ambush or Garrote": the window is this cast's, landed or not.
+    if (caster.auras.has(GHOSTLY_STRIKE_OPENER.id)) {
+      caster.auras.remove(simulation, GHOSTLY_STRIKE_OPENER.id);
+    }
     const roll = rollApplication(simulation, {
       source: caster,
       target,
@@ -766,7 +756,8 @@ export const GARROTE_ABILITY: Ability = {
       attackTable: 'melee-special',
     });
     if (roll.avoided) return;
-    simulation.applyAura(target, GARROTE, caster.id);
+    const extra = ability.bonuses?.[BLOOD_SPLATTER_FLAG] ? BLOOD_SPLATTER_GARROTE_MS : 0;
+    simulation.applyAura(target, garroteAura(extra), caster.id);
     awardComboPoint(simulation, caster, target, ability.id, ability.name);
     const initiative = ability.bonuses?.[GARROTE_INITIATIVE_CHANCE] ?? 0;
     if (initiative > 0 && simulation.rng.rollChance(initiative / 100)) {
@@ -788,9 +779,9 @@ export const AMBUSH: Ability = {
   attackTable: 'melee-special',
   canCast: ({ caster }) =>
     caster.weapons.mainHand?.weaponType === 'dagger' &&
-    (caster.auras.has(CUTTHROAT.id) || caster.auras.has(STEALTH.id)),
+    (caster.auras.has(GHOSTLY_STRIKE_OPENER.id) || caster.auras.has(STEALTH.id)),
   // Vanish opens the stealth gate, so a Vanish-led sequence may name Ambush.
-  enabledBy: ['vanish'],
+  enabledBy: ['vanish', 'ghostly_strike'],
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
     /*
@@ -812,7 +803,14 @@ export const AMBUSH: Ability = {
      * rule says and what the `else` was quietly preventing.
      * ======================================================================
      */
-    if (caster.auras.has(CUTTHROAT.id)) caster.auras.remove(simulation, CUTTHROAT.id);
+    /*
+     * GHOSTLY STRIKE'S WINDOW HAS CUTTHROAT'S PLACE AND CUTTHROAT'S RULE
+     * (1.60.1.70755): a proc window this ability spends, while stealth is a
+     * state the attack ends -- with both up, both go.
+     */
+    if (caster.auras.has(GHOSTLY_STRIKE_OPENER.id)) {
+      caster.auras.remove(simulation, GHOSTLY_STRIKE_OPENER.id);
+    }
     const result = dealDamage(simulation, {
       source: caster,
       target,
@@ -911,6 +909,122 @@ export const PREMEDITATION: Ability = {
     'list that follows it with a builder.',
 };
 
+/**
+ * Shank, a trainer ability at 1.60.1.70755: "Instantly strike with your
+ * off-hand weapon, dealing 50% weapon damage and generating 15 Energy. Shank
+ * cannot Miss." 5 energy, 10 second cooldown, learned at 24 -- "Rank 2 learned
+ * at level 44 and generates 25 Energy".
+ *
+ * ----------------------------------------------------------------------------
+ * 25 ENERGY, RANK 2's, from the patch note: the simulator runs at 60. The
+ * spellbook page shows only the rank-1 15, which is the page opening on rank 1
+ * rather than a disagreement.
+ *
+ * THE ENERGY IS GRANTED ON A LANDED STRIKE. It cannot miss but can be dodged,
+ * and a dodged builder builds nothing here -- the reading every combo-point
+ * builder in this file takes. A reading, flagged.
+ *
+ * THREE TALENTS HANG OFF IT and each arrives as a bonus on this ability:
+ *   Flash of Steel  +3..15 energy and 0.4..2 s off the cooldown
+ *   Boot Knife      20..100% chance to add 2 combo points
+ *   Venom           the 6 second poison window
+ * It awards no combo point of its own -- nothing says it does -- so Boot Knife
+ * is its only route to one.
+ * ----------------------------------------------------------------------------
+ */
+export const SHANK_ENERGY = 25;
+export const SHANK_WEAPON_FRACTION = 0.5;
+/** `abilityBonus` keys the talents use. */
+export const SHANK_ENERGY_BONUS = 'flashOfSteelEnergy';
+export const SHANK_BOOT_KNIFE_CHANCE = 'bootKnifeChance';
+export const SHANK_BOOT_KNIFE_POINTS = 'bootKnifePoints';
+export const SHANK_VENOM_FLAG = 'venom';
+
+export const SHANK: Ability = {
+  id: 'shank',
+  name: 'Shank',
+  cost: { resource: 'energy', amount: 5 },
+  cooldownMs: seconds(10),
+  attackTable: 'melee-special',
+  canCast: ({ caster }) => caster.weapons.offHand !== undefined,
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    const result = dealDamage(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: PHYSICAL,
+      baseAmount: 0,
+      weaponScaling: { slot: OFF_HAND, fraction: SHANK_WEAPON_FRACTION, normalized: true },
+      attackTable: ability.attackTable,
+      weaponSlot: OFF_HAND,
+      cannotMiss: true,
+    });
+    if (ability.bonuses?.[SHANK_VENOM_FLAG]) simulation.applyAura(caster, VENOM, caster.id);
+    if (result.avoided) return;
+    simulation.grantResource(
+      caster,
+      'energy',
+      SHANK_ENERGY + (ability.bonuses?.[SHANK_ENERGY_BONUS] ?? 0),
+      { id: 'shank', name: 'Shank' },
+    );
+    const bootKnife = ability.bonuses?.[SHANK_BOOT_KNIFE_CHANCE] ?? 0;
+    if (bootKnife > 0 && simulation.rng.rollChance(Math.min(bootKnife, 100) / 100)) {
+      awardComboPoint(
+        simulation,
+        caster,
+        target,
+        'boot_knife',
+        'Boot Knife',
+        ability.bonuses?.[SHANK_BOOT_KNIFE_POINTS] ?? 2,
+      );
+    }
+  },
+};
+
+/**
+ * Death Mark, the Subtlety capstone at 1.60.1.70755. 25 energy, 10 second
+ * cooldown, a finisher. The store, the cap and what is not modelled are in
+ * `auras/rogue.ts`; Coup de Grace's storage half arrives as a bonus here and
+ * its damage half as an ordinary `abilityDamage` on the burst's id.
+ */
+export const DEATH_MARK_STORAGE_BONUS = 'coupDeGraceStorage';
+
+export const DEATH_MARK: Ability = {
+  id: 'death_mark',
+  name: 'Death Mark',
+  cost: { resource: 'energy', amount: 25 },
+  cooldownMs: seconds(10),
+  canCast: ({ caster, target }) => hasComboPoints(caster, target),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    const spent = spendComboPoints(caster, target, {
+      context: simulation,
+      abilityId: ability.id,
+      abilityName: ability.name,
+    });
+    if (spent <= 0) return;
+    const points = Math.max(1, Math.min(5, spent));
+    const storage = 1 + (ability.bonuses?.[DEATH_MARK_STORAGE_BONUS] ?? 0) / 100;
+    simulation.applyAura(
+      target,
+      deathMarkAura({
+        stored: 0,
+        rate: DEATH_MARK_STORED_PER_POINT * points * storage,
+        cap:
+          DEATH_MARK_CAP_BY_COMBO_POINT[points - 1] +
+          DEATH_MARK_CAP_AP_PER_POINT * points * caster.stats.get('attackPower'),
+      }),
+      caster.id,
+    );
+  },
+  unmodelled:
+    'Its cap is "increased by Attack Power and Critical Strike chance"; the ' +
+    'Attack Power part is stated per combo point and applied, and no source ' +
+    'states how crit chance raises it, so it does not.',
+};
+
 export const ROGUE_ABILITIES: readonly Ability[] = [
   SINISTER_STRIKE,
   BACKSTAB,
@@ -920,9 +1034,11 @@ export const ROGUE_ABILITIES: readonly Ability[] = [
   EVISCERATE,
   RUPTURE,
   SLICE_AND_DICE,
-  // Granted by the Assassination talent; `grantsByAbility` gates it.
-  VENOM,
   EXPOSE_ARMOR,
+  // A trainer ability at 1.60.1.70755: every Rogue has it.
+  SHANK,
+  // Granted by the Subtlety capstone.
+  DEATH_MARK,
   ADRENALINE_RUSH_ABILITY,
   BLADE_FLURRY_ABILITY,
   COLD_BLOOD_ABILITY,

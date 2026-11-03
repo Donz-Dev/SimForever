@@ -1,6 +1,6 @@
 {
  "class": "warlock",
- "source": "https://talentsforever.com/talents.js",
+ "source": "https://foreverchanges.pro/talents/warlock",
  "trees": [
   {
    "id": "affliction",
@@ -70,7 +70,7 @@
      "tier": 5,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases health drained or damage done by your Drain Life, Drain Soul, and Wrack spells by 20%."
+     "description": "Increases Health drained, damage done, or Mana drained by your Drain Life, Drain Soul, and Drain Mana spells by 20%."
     },
     {
      "row": 2,
@@ -92,7 +92,7 @@
      "tier": 10,
      "requires": null,
      "requiresRanks": null,
-     "description": "Gives you a 70% chance to avoid interruption caused by damage while channeling or casting your Drain Life, Drain Mana, Drain Soul, or Wrack spells."
+     "description": "Gives your Drain Life, Drain Mana, Drain Soul, and Wrack spells a 70% chance to not lose casting time when you take damage."
     },
     {
      "row": 2,
@@ -103,7 +103,7 @@
      "tier": 10,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases the effect of your next Curse of Weakness or Bane of Agony by 50%, or your next Curse of Exhaustion by 50%. Lasts 30 sec."
+     "description": "Increases the effect of your next Curse of Weakness or Bane of Agony by 50%, or your next Curse of Exhaustion by 20%. Lasts 30 sec."
     },
     {
      "row": 2,
@@ -191,7 +191,7 @@
      "tier": 30,
      "requires": "Siphon Life",
      "requiresRanks": 1,
-     "description": "Tears the target apart from within, inflicting 36 Shadow damage every 1 sec and increasing the damage they take from your other Shadow damage over time effects by 10% for 6 sec."
+     "description": "Tears the target apart from within, inflicting 86 Shadow damage every 1 sec and increasing the damage they take from your other Shadow damage over time effects by 10% for 6 sec."
     }
    ]
   },
@@ -307,7 +307,7 @@
      "tier": 10,
      "requires": null,
      "requiresRanks": null,
-     "description": "When activated, sacrifices your summoned Demon to enhance the opposing aspect of your power, granting you an effect that lasts 2 hrs. The effect is canceled if any Demon is summoned.\n\nImp: Increases your Shadow damage by 15%.\n\nVoidwalker: Restores 2% of your total Mana every 4 sec.\n\nSuccubus/Incubus: Increases your Fire damage by 15%.\n\nFelhunter: Restores 3% of your total Health every 4 sec."
+     "description": "When activated, sacrifices your summoned Demon to enhance the opposing aspect of your power, granting you an effect that lasts 2 hr. The effect is canceled if any Demon is summoned.\n\nImp: Increases your Shadow damage by 15%.\n\nVoidwalker: Restores 2% of your total Mana every 4 sec.\n\nSuccubus/Incubus: Increases your Fire damage by 15%.\n\nFelhunter: Restores 3% of your total Health every 4 sec."
     },
     {
      "row": 2,
@@ -351,7 +351,7 @@
      "tier": 15,
      "requires": null,
      "requiresRanks": null,
-     "description": "Your Searing Pain generates 50% less threat and brands the target for 10 sec. Your pet's next 6 attacks against the target deal 65 to 68 Fire or Shadow damage based on the pet. If Shadow damage is dealt, it has high threat."
+     "description": "Your Searing Pain generates 50% less threat and brands the target for 10 sec. Your pet's next 6 attacks against the target deal 1 to 1 Fire or Shadow damage based on the pet. If Shadow damage is dealt, it has high threat."
     },
     {
      "row": 4,
@@ -500,7 +500,7 @@
      "tier": 10,
      "requires": null,
      "requiresRanks": null,
-     "description": "Instantly blasts the target for 65 to 73 Shadow damage. If a non-trivial target dies within 8 sec of being hit with Shadowburn, the caster gains a Soul Shard."
+     "description": "Instantly blasts the target for 65 to 74 Shadow damage. If a non-trivial target dies within 8 sec of being hit with Shadowburn, the caster gains a Soul Shard."
     },
     {
      "row": 3,
@@ -511,7 +511,7 @@
      "tier": 15,
      "requires": null,
      "requiresRanks": null,
-     "description": "Gives you a 70% chance to resist interruption caused by damage while casting or channeling any Destruction spell."
+     "description": "Gives your Destruction spells a 70% chance to not lose casting time when you take damage."
     },
     {
      "row": 3,
@@ -533,7 +533,7 @@
      "tier": 15,
      "requires": null,
      "requiresRanks": null,
-     "description": "Ignites a target that is already afflicted by your Immolate spell, dealing 88 to 110 Fire damage and consuming your Immolate effect."
+     "description": "Ignites a target that is already afflicted by your Immolate spell, dealing 88 to 111 Fire damage and consuming your Immolate effect."
     },
     {
      "row": 4,
@@ -577,7 +577,7 @@
      "tier": 25,
      "requires": null,
      "requiresRanks": null,
-     "description": "Hitting an enemy with Conflagrate increases all Shadow damage you deal by 10% for 20 sec, and hitting an enemy with Shadowburn increases all Fire damage you deal by 10% for 20 sec. In addition, Conflagrate has a 100% chance not to consume Immolate, and Shadowburn has a 100% chance to instantly refund a Soul Shard."
+     "description": "Hitting an enemy with Conflagrate increases all Shadow damage you deal by 20% for 20 sec, and hitting an enemy with Shadowburn increases all Fire damage you deal by 20% for 20 sec. In addition, Conflagrate has a 100% chance not to consume Immolate, and Shadowburn has a 100% chance to instantly refund a Soul Shard."
     },
     {
      "row": 6,
@@ -588,7 +588,7 @@
      "tier": 30,
      "requires": "Bane of Havoc",
      "requiresRanks": 1,
-     "description": "Deals 99 to 113 Fire damage to your target and an additional 25% damage if the target is afflicted by Immolate."
+     "description": "Deals 100 to 114 Fire damage to your target and an additional 25% damage if the target is afflicted by Immolate."
     }
    ]
   }

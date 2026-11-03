@@ -759,7 +759,12 @@ export const SEARING_PAIN: Ability = {
  * method -- one batch of ten read +12.9, more than twice the truth.
  * ----------------------------------------------------------------------------
  */
-export const WRACK_TICK_DAMAGE = 36;
+/*
+ * 86 A SECOND SINCE 1.60.1.70755: "Base damage per second now increases with
+ * each level by 2.5. Base damage per second at level 60 effectively increased
+ * from 36 to 86." foreverchanges.pro says 86 too.
+ */
+export const WRACK_TICK_DAMAGE = 86;
 export const WRACK_TICKS = 6;
 export const WRACK_CHANNEL_MS = seconds(WRACK_TICKS);
 

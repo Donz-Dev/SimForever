@@ -1,6 +1,6 @@
 {
  "class": "rogue",
- "source": "https://talentsforever.com/talents.js",
+ "source": "https://foreverchanges.pro/talents/rogue",
  "structure": "src/data/talents/rogue.json",
  "talents": {
   "improved_gouge": {
@@ -54,42 +54,11 @@
     60
    ]
   },
-  "murder": {
-   "name": "Murder",
-   "tree": "assassination",
-   "ranks": 2,
-   "text": "Increases all damage dealt by {0}% against Humanoid and Giant targets.",
-   "values": [
-    2,
-    4
-   ]
-  },
-  "improved_slice_and_dice": {
-   "name": "Improved Slice and Dice",
-   "tree": "assassination",
-   "ranks": 3,
-   "text": "Increases the duration of your Slice and Dice ability by {0}%.",
-   "values": [
-    15,
-    30,
-    45
-   ]
-  },
-  "relentless_strikes": {
-   "name": "Relentless Strikes",
-   "tree": "assassination",
-   "ranks": 1,
-   "text": "Your finishing moves have a {0}% chance per Combo Point to restore 25 Energy.",
-   "values": [
-    20
-   ],
-   "note": "single rank; the value filled in by hand per this directory README -- a single-rank talent has no variable the importer can identify from its own text"
-  },
   "improved_expose_armor": {
    "name": "Improved Expose Armor",
    "tree": "assassination",
    "ranks": 2,
-   "text": "Reduces the Energy cost of your Expose Armor ability by {0}, and refunds {1} Combo Point when cast with {2} Combo Points.",
+   "text": "Reduces the Energy cost of your Expose Armor ability by {0}, and refunds {1} Combo Points when cast with {2} Combo Points.",
    "values": [
     [
      5,
@@ -103,16 +72,42 @@
     ]
    ]
   },
+  "improved_slice_and_dice": {
+   "name": "Improved Slice and Dice",
+   "tree": "assassination",
+   "ranks": 3,
+   "text": "Increases the duration of your Slice and Dice ability by {0}%.",
+   "values": [
+    15,
+    30,
+    45
+   ]
+  },
+  "vigor": {
+   "name": "Vigor",
+   "tree": "assassination",
+   "ranks": 2,
+   "text": "Increases your maximum Energy by {0}.",
+   "values": [
+    5,
+    10
+   ]
+  },
+  "blood_splatter": {
+   "name": "Blood Splatter",
+   "tree": "assassination",
+   "ranks": 1,
+   "text": "Increases the duration of your Rupture ability by 6 sec and your Garrote ability by 9 sec.",
+   "values": null,
+   "note": "single rank"
+  },
   "lethality": {
    "name": "Lethality",
    "tree": "assassination",
-   "ranks": 5,
+   "ranks": 2,
    "text": "Increases the critical strike damage bonus of your Sinister Strike, Gouge, Backstab, Mutilate, Ghostly Strike, and Hemorrhage abilities by {0}%.",
    "values": [
-    4,
-    8,
-    12,
-    16,
+    10,
     20
    ]
   },
@@ -180,21 +175,39 @@
     ]
    ]
   },
-  "vigor": {
-   "name": "Vigor",
+  "relentless_strikes": {
+   "name": "Relentless Strikes",
    "tree": "assassination",
-   "ranks": 2,
-   "text": "Increases your maximum Energy by {0}.",
+   "ranks": 5,
+   "text": "Your finishing moves have a {0}% chance per Combo Point to restore {1} Energy.",
    "values": [
-    5,
-    10
+    [
+     4,
+     25
+    ],
+    [
+     8,
+     25
+    ],
+    [
+     12,
+     25
+    ],
+    [
+     16,
+     25
+    ],
+    [
+     20,
+     25
+    ]
    ]
   },
-  "mutilate": {
-   "name": "Mutilate",
+  "venom": {
+   "name": "Venom",
    "tree": "assassination",
    "ranks": 1,
-   "text": "Instantly attacks with both weapons for 75% weapon damage plus an additional 13 with each weapon. Damage increased by 20% against Poisoned targets. Awards 2 Combo Points.",
+   "text": "Causes your Shank ability to increase your Poison damage by 30% and your chance to apply Poisons by 20% for 6 sec.",
    "values": null,
    "note": "single rank"
   },
@@ -211,40 +224,47 @@
   "seal_fate": {
    "name": "Seal Fate",
    "tree": "assassination",
-   "ranks": 5,
+   "ranks": 3,
    "text": "Your critical strikes from abilities that add Combo Points have a {0}% chance to add an additional Combo Point.",
    "values": [
-    20,
-    40,
-    60,
-    80,
+    33,
+    66,
     100
    ]
   },
-  "venom": {
-   "name": "Venom",
+  "mutilate": {
+   "name": "Mutilate",
    "tree": "assassination",
    "ranks": 1,
-   "text": "Finishing move that increases the damage of your Poisons by 30% and your chance to apply Poisons by 10%. Lasts longer per combo point:\n 1 point : 9 sec\n 2 points: 12 sec\n 3 points: 15 sec\n 4 points: 18 sec\n 5 points: 21 sec",
+   "text": "Instantly attacks with both weapons for 90% weapon damage plus an additional 40 with each weapon. Damage increased by 20% against Poisoned targets. Awards 2 Combo Points.",
    "values": null,
    "note": "single rank"
   },
-  "improved_eviscerate": {
-   "name": "Improved Eviscerate",
+  "coup_de_grace": {
+   "name": "Coup de Grace",
    "tree": "combat",
    "ranks": 3,
-   "text": "Increases the damage done by your Eviscerate ability by {0}%.",
+   "text": "Increases the damage done by your Eviscerate ability by {0}%, and the damage and storage rate of your Death Mark ability by {1}%.",
    "values": [
-    7,
-    13,
-    20
+    [
+     7,
+     7
+    ],
+    [
+     13,
+     13
+    ],
+    [
+     20,
+     20
+    ]
    ]
   },
-  "improved_sinister_strike": {
-   "name": "Improved Sinister Strike",
+  "efficient_strikes": {
+   "name": "Efficient Strikes",
    "tree": "combat",
    "ranks": 2,
-   "text": "Reduces the Energy cost of your Sinister Strike ability by {0}.",
+   "text": "Reduces the Energy cost of your Sinister Strike and Hemorrhage abilities by {0}.",
    "values": [
     3,
     5
@@ -308,6 +328,16 @@
     3
    ]
   },
+  "improved_sprint": {
+   "name": "Improved Sprint",
+   "tree": "combat",
+   "ranks": 2,
+   "text": "Gives a {0}% chance to remove all movement impairing effects when you activate your Sprint ability.",
+   "values": [
+    50,
+    100
+   ]
+  },
   "endurance": {
    "name": "Endurance",
    "tree": "combat",
@@ -326,14 +356,14 @@
    "values": null,
    "note": "single rank"
   },
-  "improved_sprint": {
-   "name": "Improved Sprint",
+  "composure": {
+   "name": "Composure",
    "tree": "combat",
    "ranks": 2,
-   "text": "Gives a {0}% chance to remove all movement impairing effects when you activate your Sprint ability.",
+   "text": "Increases the Energy cost reduction of your Poised ability by {0}.",
    "values": [
-    50,
-    100
+    5,
+    10
    ]
   },
   "improved_kick": {
@@ -358,21 +388,39 @@
    "ranks": 1,
    "text": "Reduces the Energy cost of your Eviscerate ability by {0}.",
    "values": [
-    10
+    15
    ],
-   "note": "single rank; the value filled in by hand per this directory README -- a single-rank talent has no variable the importer can identify from its own text"
+   "note": "single rank; 15 since 1.60.1.70755 (\"Flawless Execution energy cost reduction increased to 15 (was 10)\"). The value filled in by hand per this directory README -- a single-rank talent has no variable the importer can identify from its own text"
+  },
+  "weapon_expertise": {
+   "name": "Weapon Expertise",
+   "tree": "combat",
+   "ranks": 2,
+   "text": "Reduces the chance for your attacks to be Dodged or Parried by {0}%.",
+   "values": [
+    1,
+    2
+   ]
+  },
+  "aggression": {
+   "name": "Aggression",
+   "tree": "combat",
+   "ranks": 3,
+   "text": "Increases the damage of your Sinister Strike and Eviscerate abilities by {0}%.",
+   "values": [
+    5,
+    10,
+    15
+   ]
   },
   "dual_wield_specialization": {
    "name": "Dual Wield Specialization",
    "tree": "combat",
-   "ranks": 5,
+   "ranks": 2,
    "text": "Increases the damage done by your off-hand weapon by {0}%.",
    "values": [
-    5,
-    10,
-    15,
-    20,
-    25
+    25,
+    50
    ]
   },
   "blade_flurry": {
@@ -387,7 +435,7 @@
    "name": "Hack and Slash",
    "tree": "combat",
    "ranks": 5,
-   "text": "Gives your melee weapon attacks a benefit depending on the weapon.\n\n Axe/Sword: Your successful\n melee attacks have a {0}% chance\n to trigger an extra attack on the \n target.\n\n Dagger/Fist: Increases your\n critical strike chance by {1}%.\n\n Mace: Your attacks ignore {2}% of\n your target's armor.",
+   "text": "Gives your melee weapon attacks a benefit depending on the weapon.\n\nAxe/Sword: Your successful\nmelee attacks have a {0}% chance\nto trigger an extra attack on the\ntarget.\n\nDagger/Fist: Increases your\ncritical strike chance by {1}%.\n\nMace: Your attacks ignore {2}% of\nyour target's armor.",
    "values": [
     [
      1,
@@ -416,25 +464,32 @@
     ]
    ]
   },
-  "weapon_expertise": {
-   "name": "Weapon Expertise",
+  "flash_of_steel": {
+   "name": "Flash of Steel",
    "tree": "combat",
-   "ranks": 2,
-   "text": "Reduces the chance for your attacks to be Dodged or Parried by {0}%.",
+   "ranks": 5,
+   "text": "Increases the Energy generated by your Shank ability by {0} and reduces its cooldown by {1} sec.",
    "values": [
-    1,
-    2
-   ]
-  },
-  "aggression": {
-   "name": "Aggression",
-   "tree": "combat",
-   "ranks": 3,
-   "text": "Increases the damage of your Sinister Strike, Backstab, and Eviscerate abilities by {0}%.",
-   "values": [
-    2,
-    4,
-    6
+    [
+     3,
+     0.4
+    ],
+    [
+     6,
+     0.8
+    ],
+    [
+     9,
+     1.2
+    ],
+    [
+     12,
+     1.6
+    ],
+    [
+     15,
+     2
+    ]
    ]
   },
   "adrenaline_rush": {
@@ -445,32 +500,15 @@
    "values": null,
    "note": "single rank"
   },
-  "camouflage": {
-   "name": "Camouflage",
+  "setup": {
+   "name": "Setup",
    "tree": "subtlety",
-   "ranks": 5,
-   "text": "Reduces your speed penalty from your Stealth ability by {0}% and reduces its cooldown by {1} sec.",
+   "ranks": 3,
+   "text": "Gives you a {0}% chance to add a Combo Point to your target after Dodging their attack or fully resisting one of their spells.",
    "values": [
-    [
-     3,
-     2
-    ],
-    [
-     6,
-     3
-    ],
-    [
-     9,
-     4
-    ],
-    [
-     12,
-     5
-    ],
-    [
-     15,
-     6
-    ]
+    15,
+    30,
+    45
    ]
   },
   "master_of_deception": {
@@ -487,42 +525,44 @@
   "opportunity": {
    "name": "Opportunity",
    "tree": "subtlety",
-   "ranks": 2,
+   "ranks": 5,
    "text": "Increases the damage dealt by your Backstab, Garrote, Ambush, and Mutilate abilities by {0}%.",
    "values": [
-    5,
-    10
+    4,
+    8,
+    12,
+    16,
+    20
    ]
   },
-  "setup": {
-   "name": "Setup",
+  "dirty_deeds": {
+   "name": "Dirty Deeds",
+   "tree": "subtlety",
+   "ranks": 2,
+   "text": "Reduces the Energy cost of your Cheap Shot and Garrote abilities by {0}, and your Garrote ability no longer requires you to be behind your target.",
+   "values": [
+    10,
+    20
+   ]
+  },
+  "camouflage": {
+   "name": "Camouflage",
    "tree": "subtlety",
    "ranks": 3,
-   "text": "Gives you a {0}% chance to add a Combo Point to your target after Dodging one of their attacks or fully resisting one of their spells.",
+   "text": "Reduces your speed penalty from your Stealth ability by {0}% and reduces its cooldown by {1} sec.",
    "values": [
-    33,
-    67,
-    100
-   ]
-  },
-  "elusiveness": {
-   "name": "Elusiveness",
-   "tree": "subtlety",
-   "ranks": 2,
-   "text": "Reduces the cooldown of your Vanish and Blind abilities by {0} sec.",
-   "values": [
-    45,
-    90
-   ]
-  },
-  "dirty_tricks": {
-   "name": "Dirty Tricks",
-   "tree": "subtlety",
-   "ranks": 2,
-   "text": "Reduces the Energy cost of your Sap and Blind abilities by {0}%.",
-   "values": [
-    25,
-    50
+    [
+     5,
+     2
+    ],
+    [
+     10,
+     4
+    ],
+    [
+     15,
+     6
+    ]
    ]
   },
   "improved_ambush": {
@@ -536,6 +576,16 @@
     45
    ]
   },
+  "dirty_tricks": {
+   "name": "Dirty Tricks",
+   "tree": "subtlety",
+   "ranks": 2,
+   "text": "Reduces the Energy cost of your Sap and Blind abilities by {0}%.",
+   "values": [
+    25,
+    50
+   ]
+  },
   "initiative": {
    "name": "Initiative",
    "tree": "subtlety",
@@ -545,46 +595,6 @@
     33,
     67,
     100
-   ]
-  },
-  "ghostly_strike": {
-   "name": "Ghostly Strike",
-   "tree": "subtlety",
-   "ranks": 1,
-   "text": "A strike that deals 125% (180% if a Dagger is equipped in your Main Hand) weapon damage and increases your chance to dodge by 15% for 7 sec. Awards 1 combo point.",
-   "values": null,
-   "note": "single rank"
-  },
-  "improved_distract": {
-   "name": "Improved Distract",
-   "tree": "subtlety",
-   "ranks": 2,
-   "text": "Increases the radius of your Distract ability by {0} yds, and further reduces the Stealth detection of distracted enemies as though they were an additional {1} level lower.",
-   "values": [
-    [
-     3,
-     1
-    ],
-    [
-     5,
-     2
-    ]
-   ]
-  },
-  "heightened_senses": {
-   "name": "Heightened Senses",
-   "tree": "subtlety",
-   "ranks": 2,
-   "text": "Increases your Stealth detection as if you were {0} level higher and reduces your chance to be hit by spells and ranged attacks by {1}%.",
-   "values": [
-    [
-     1,
-     2
-    ],
-    [
-     3,
-     4
-    ]
    ]
   },
   "premeditation": {
@@ -615,14 +625,56 @@
     ]
    ]
   },
-  "dirty_deeds": {
-   "name": "Dirty Deeds",
+  "elusiveness": {
+   "name": "Elusiveness",
    "tree": "subtlety",
    "ranks": 2,
-   "text": "Reduces the Energy cost of your Cheap Shot and Garrote abilities by {0}, and your Garrote ability no longer requires you to be behind your target.",
+   "text": "Reduces the cooldown of your Vanish and Blind abilities by {0} sec.",
    "values": [
-    10,
-    20
+    45,
+    90
+   ]
+  },
+  "ghostly_strike": {
+   "name": "Ghostly Strike",
+   "tree": "subtlety",
+   "ranks": 1,
+   "text": "A strike that deals 125% (180% if a Dagger is equipped in your Main Hand) weapon damage, increases your chance to dodge by 15% for 7 sec, and causes your next Ambush or Garrote cast within 7 sec to not require Stealth. Awards 1 combo points.",
+   "values": null,
+   "note": "single rank"
+  },
+  "quick_getaway": {
+   "name": "Quick Getaway",
+   "tree": "subtlety",
+   "ranks": 2,
+   "text": "Increases the maximum number of targets you may have Sapped by {0}, and increases your movement speed by {1}% for {2} sec after Sapping a target.",
+   "values": [
+    [
+     1,
+     15,
+     3
+    ],
+    [
+     1,
+     30,
+     3
+    ]
+   ]
+  },
+  "heightened_senses": {
+   "name": "Heightened Senses",
+   "tree": "subtlety",
+   "ranks": 2,
+   "text": "Increases your Stealth detection as if you were {0} level higher and reduces your chance to be hit by spells and ranged attacks by {1}%.",
+   "values": [
+    [
+     1,
+     2
+    ],
+    [
+     3,
+     4
+    ]
    ]
   },
   "preparation": {
@@ -637,75 +689,45 @@
    "name": "Hemorrhage",
    "tree": "subtlety",
    "ranks": 1,
-   "text": "An instant strike that deals 100% weapon damage (145% if a Dagger is equipped) and causes the target to take 15% increased Rupture damage from the Rogue. Lasts 15 sec. Awards 1 Combo Point.",
+   "text": "An instant strike that deals 100% weapon damage (145% if a Dagger is equipped) and causes the target to take 15% increased Rupture and Garrote damage from the Rogue. Lasts 15 sec. Awards 1 Combo Points.",
    "values": null,
    "note": "single rank"
   },
-  "quietus": {
-   "name": "Quietus",
+  "boot_knife": {
+   "name": "Boot Knife",
    "tree": "subtlety",
    "ranks": 5,
-   "text": "Your Sinister Strike, Ghostly Strike, and Hemorrhage abilities cause {0}% more damage against targets below {1}% health.",
+   "text": "Grants your Shank ability a {0}% chance to add {1} Combo Points to the target.",
    "values": [
     [
-     2,
-     35
+     20,
+     2
     ],
     [
-     4,
-     35
+     40,
+     2
     ],
     [
-     6,
-     35
+     60,
+     2
     ],
     [
-     8,
-     35
+     80,
+     2
     ],
     [
-     10,
-     35
+     100,
+     2
     ]
    ]
   },
-  "cutthroat": {
-   "name": "Cutthroat",
-   "tree": "subtlety",
-   "ranks": 5,
-   "text": "Your Backstab has a {0}% chance to cause your next Ambush within {1} sec to not require Stealth.",
-   "values": [
-    [
-     3,
-     10
-    ],
-    [
-     6,
-     10
-    ],
-    [
-     9,
-     10
-    ],
-    [
-     12,
-     10
-    ],
-    [
-     15,
-     10
-    ]
-   ]
-  },
-  "thousand_cuts": {
-   "name": "Thousand Cuts",
+  "death_mark": {
+   "name": "Death Mark",
    "tree": "subtlety",
    "ranks": 1,
-   "text": "When your Rupture ability deals periodic damage, the Energy cost of your next Hemorrhage or Backstab ability within 10 sec is reduced by 3, stacking up to 5 times.",
-   "values": [
-    3
-   ],
-   "note": "single rank; the 3 filled in by hand per this directory's README -- a single-rank talent has no variable the importer can identify from its own text, and this text states its numbers literally rather than through a {0} placeholder. The 3 is the ENERGY the next Hemorrhage or Backstab is cheaper by, which is the one an effect reads. Its other two -- the 10 second window and the 5 stack cap -- are named constants beside the aura in game/auras/rogue.ts, exactly as Nature's Grace keeps its 3 seconds there. WITHOUT THIS the abilityBonus reads no value and talentBuild drops it in SILENCE, which reads as a talent that never said it was inert."
+   "text": "Finishing move that marks the target, storing a portion of the damage dealt by your attacks per Combo Point. Garrote and Rupture damage is stored at twice the rate. After 6 sec, the stored damage is dealt, up to a maximum increased by Attack Power and Critical Strike chance:\n1 point : 12% stored, (169.95 + 4.12% of attack power) damage cap\n2 points: 24% stored, (275.01 + 8.24% of attack power) damage cap\n3 points: 36% stored, (380.07 + 12.36% of attack power) damage cap\n4 points: 48% stored, (485.13 + 16.48% of attack power) damage cap\n5 points: 60% stored, (590.19 + 20.6% of attack power) damage cap",
+   "values": null,
+   "note": "single rank"
   }
  }
 }

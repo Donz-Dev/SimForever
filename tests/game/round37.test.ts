@@ -77,8 +77,12 @@ describe('a Vanish sequence opens its own stealth gate', () => {
    * refuse every one of them. `Ability.enabledBy` names the step that opens the
    * gate, and the sequence check forgives that refusal and no other.
    */
-  it('casts Vanish, Premeditation and Ambush in one instant on Rupture', () => {
-    const casts = castsIn('rogue_rupture');
+  it('casts Vanish, Premeditation and Ambush in one instant on Hemo Dagger', () => {
+    // It was the Rupture build; its hand-kept talents no longer reach
+    // Premeditation on the 1.60.1.70755 tree (Camouflage 5 is 3 ranks now, and
+    // Cutthroat and Thousand Cuts are gone), so the live preset that runs the
+    // same sequence is the subject.
+    const casts = castsIn('rogue_hemo');
     const vanishes = casts.filter((cast) => cast.id === 'vanish');
     expect(vanishes.length).toBeGreaterThan(0);
     for (const vanish of vanishes) {

@@ -1,0 +1,769 @@
+{
+ "class": "warrior",
+ "source": "https://foreverchanges.pro/spellbook/warrior",
+ "build": "1.60.1.70755",
+ "note": "Max rank of each spell, read off the page in a browser and hashed there and on disk. A reference: nothing imports it.",
+ "spells": [
+  {
+   "name": "Battle Stance",
+   "tab": "Arms",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 2457,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "1 sec cooldown",
+    "text": "A balanced combat stance.",
+    "level": 1
+   }
+  },
+  {
+   "name": "Heroic Strike",
+   "tab": "Arms",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 9,
+   "top": {
+    "rank": 9,
+    "spell_id": 25286,
+    "cost": "15 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "A strong attack that increases melee damage by 157 and causes a high amount of threat.\n\nRequires Melee Weapon",
+    "level": 60
+   }
+  },
+  {
+   "name": "Charge",
+   "tab": "Arms",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 11578,
+    "cost": null,
+    "range": "25 yd range",
+    "cast": "Instant",
+    "cooldown": "15 sec cooldown",
+    "text": "Charge an enemy, generate 15 Rage, and Stun it for 1 sec. Cannot be used in combat.\n\nRequires Battle Stance",
+    "level": 46
+   }
+  },
+  {
+   "name": "Rend",
+   "tab": "Arms",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 7,
+   "top": {
+    "rank": 7,
+    "spell_id": 11574,
+    "cost": "10 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Wounds the target causing them to bleed for 147 damage over 21 sec.\n\nRequires Melee Weapon\nRequires Battle Stance, Defensive Stance",
+    "level": 60
+   }
+  },
+  {
+   "name": "Thunder Clap",
+   "tab": "Arms",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 11581,
+    "cost": "20 Rage",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "6 sec cooldown",
+    "text": "Blasts nearby enemies with thunder, increasing the time between their attacks by 20% for 30 sec and doing 103 damage to them. Will affect up to 4 targets.\n\nRequires Battle Stance, Defensive Stance",
+    "level": 58
+   }
+  },
+  {
+   "name": "Hamstring",
+   "tab": "Arms",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 7373,
+    "cost": "10 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Maims the enemy, causing 45 damage and slowing the enemy's movement by 50% for 15 sec.\n\nRequires Melee Weapon\nRequires Battle Stance, Berserker Stance",
+    "level": 54
+   }
+  },
+  {
+   "name": "Overpower",
+   "tab": "Arms",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 11585,
+    "cost": "5 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "5 sec cooldown",
+    "text": "Instantly overpower the enemy, causing weapon damage plus 35. Only useable after the target dodges. The Overpower cannot be blocked, dodged or parried.\n\nRequires Melee Weapon\nRequires Battle Stance",
+    "level": 60
+   }
+  },
+  {
+   "name": "Tactical Mastery",
+   "tab": "Arms",
+   "status": "baseline",
+   "reasons": [
+    "An Arms talent in Classic; trained without one now"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 1310185,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "You retain up to 10 Rage when you change Stances.",
+    "level": 14
+   }
+  },
+  {
+   "name": "Mocking Blow",
+   "tab": "Arms",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 20560,
+    "cost": "10 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "2 min cooldown",
+    "text": "A mocking attack that causes 93 damage, a moderate amount of threat and forces the target to focus attacks on you for 6 sec.\n\nRequires Melee Weapon\nRequires Battle Stance",
+    "level": 56
+   }
+  },
+  {
+   "name": "Retaliation",
+   "tab": "Arms",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 20230,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "15 min cooldown",
+    "text": "Instantly counterattack any enemy that strikes you in melee for 15 sec. Melee attacks made from behind cannot be counterattacked. A maximum of 30 attacks will cause retaliation.\n\nRequires Battle Stance",
+    "level": 20
+   }
+  },
+  {
+   "name": "Victory Rush",
+   "tab": "Arms",
+   "status": "new",
+   "reasons": [
+    "Not in Classic",
+    "Season of Discovery had a spell by this name"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 402927,
+    "cost": null,
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "30 sec cooldown",
+    "text": "Instantly attack the target causing (1 + 15% of attack power) damage and healing you for 10% of your maximum health. Only useable within 20 sec after you kill a non-trivial enemy.",
+    "level": 20
+   }
+  },
+  {
+   "name": "Mortal Strike",
+   "tab": "Arms",
+   "status": "talent",
+   "reasons": [
+    "A talent in Classic and in Forever"
+   ],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 21553,
+    "cost": "30 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "6 sec cooldown",
+    "text": "A vicious strike that deals weapon damage plus 160 and wounds the target, reducing the effectiveness of any healing by 50% for 10 sec.\n\nRequires Melee Weapon",
+    "level": 60
+   }
+  },
+  {
+   "name": "Spearing Strike",
+   "tab": "Arms",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "Not a talent in Classic"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 1310222,
+    "cost": "15 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "20 sec cooldown",
+    "text": "A brutal attack that deals 75% weapon damage. Deals an additional 75% weapon damage against Giants, Dragonkin, and mounted targets. Mounted targets are dismounted.\n\nRequires Melee Weapon\nRequires Battle Stance"
+   }
+  },
+  {
+   "name": "Sweeping Strikes",
+   "tab": "Arms",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 12292,
+    "cost": "30 Rage",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "30 sec cooldown",
+    "text": "Your next 5 melee attacks strike an additional nearby opponent.\n\nRequires Battle Stance"
+   }
+  },
+  {
+   "name": "Battle Shout",
+   "tab": "Fury",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 7,
+   "top": {
+    "rank": 7,
+    "spell_id": 25289,
+    "cost": "10 Rage",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "The warrior shouts, increasing the melee attack power of all party or raid members within 20 yards by 139. Lasts 3 min.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Demoralizing Shout",
+   "tab": "Fury",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 11556,
+    "cost": "10 Rage",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Reduces the melee attack power of all enemies within 10 yards by 204 for 45 sec.",
+    "level": 54
+   }
+  },
+  {
+   "name": "Cleave",
+   "tab": "Fury",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 20569,
+    "cost": "20 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "A sweeping attack that does your weapon damage plus 50 to the target and a second nearby enemy.\n\nRequires Melee Weapon",
+    "level": 60
+   }
+  },
+  {
+   "name": "Slam",
+   "tab": "Fury",
+   "status": "earlier",
+   "reasons": [
+    "Ranks 1 to 4 trained earlier than in Classic",
+    "Rank 5 new (Classic stops at rank 4)"
+   ],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 11605,
+    "cost": "15 Rage",
+    "range": "Melee range",
+    "cast": "1.5 sec cast",
+    "cooldown": "15 sec cooldown",
+    "text": "Slams the opponent, causing weapon damage plus 87.\n\nRequires Melee Weapon",
+    "level": 54
+   }
+  },
+  {
+   "name": "Intimidating Shout",
+   "tab": "Fury",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 5246,
+    "cost": "25 Rage",
+    "range": "10 yd range",
+    "cast": "Instant",
+    "cooldown": "3 min cooldown",
+    "text": "The warrior shouts, causing the targeted enemy to cower in fear. Up to 5 enemies within 8 yds will flee in fear. Lasts 8 sec.",
+    "level": 22
+   }
+  },
+  {
+   "name": "Execute",
+   "tab": "Fury",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 20662,
+    "cost": "15 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Attempt to finish off a wounded foe, causing 600 damage and converting each extra point of rage into 15 additional damage. Only usable on enemies that have 20% or less health.\n\nRequires Melee Weapon\nRequires Battle Stance, Berserker Stance",
+    "level": 56
+   }
+  },
+  {
+   "name": "Challenging Shout",
+   "tab": "Fury",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 1161,
+    "cost": "5 Rage",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "10 min cooldown",
+    "text": "Forces all nearby enemies within 10 yards to focus attacks on you for 6 sec.",
+    "level": 26
+   }
+  },
+  {
+   "name": "Berserker Rage",
+   "tab": "Fury",
+   "status": "earlier",
+   "reasons": [
+    "Rank 1 trained earlier than in Classic"
+   ],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 18499,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "30 sec cooldown",
+    "text": "The warrior enters a berserker rage, becoming immune to Fear and Incapacitate effects and generating extra rage when taking damage. Lasts 10 sec.\n\nRequires Berserker Stance",
+    "level": 30
+   }
+  },
+  {
+   "name": "Berserker Stance",
+   "tab": "Fury",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 2458,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "1 sec cooldown",
+    "text": "An aggressive stance. Critical strike chance increased by 3% and all damage taken is increased by 10%.",
+    "level": 30
+   }
+  },
+  {
+   "name": "Intercept",
+   "tab": "Fury",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 20617,
+    "cost": "10 Rage",
+    "range": "25 yd range",
+    "cast": "Instant",
+    "cooldown": "30 sec cooldown",
+    "text": "Charge an enemy, causing 65 damage and stunning it for 3 sec.\n\nRequires Berserker Stance",
+    "level": 52
+   }
+  },
+  {
+   "name": "Whirlwind",
+   "tab": "Fury",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 1680,
+    "cost": "25 Rage",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "10 sec cooldown",
+    "text": "In a whirlwind of steel you attack up to 4 enemies within 8 yards, causing weapon damage from both melee weapons to each enemy.\n\nRequires Melee Weapon\nRequires Berserker Stance",
+    "level": 36
+   }
+  },
+  {
+   "name": "Pummel",
+   "tab": "Fury",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 2,
+   "top": {
+    "rank": 2,
+    "spell_id": 6554,
+    "cost": "10 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "10 sec cooldown",
+    "text": "Pummel the target for 50 damage. It also interrupts spellcasting and prevents any spell in that school from being cast for 4 sec.\n\nRequires Berserker Stance",
+    "level": 58
+   }
+  },
+  {
+   "name": "Bloodthirst",
+   "tab": "Fury",
+   "status": "talent",
+   "reasons": [
+    "A talent in Classic and in Forever"
+   ],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 23894,
+    "cost": "30 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "6 sec cooldown",
+    "text": "Instantly attack the target causing damage equal to 45% of your Attack Power plus 48 and increasing your movement speed by 10% for 10 sec.",
+    "level": 60
+   }
+  },
+  {
+   "name": "Recklessness",
+   "tab": "Fury",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 1719,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "30 min cooldown",
+    "text": "The warrior will gain 100% increased critical strike chance and will be immune to Fear effects for the next 15 sec, but all damage taken is increased by 20%.\n\nRequires Berserker Stance",
+    "level": 50
+   }
+  },
+  {
+   "name": "Piercing Howl",
+   "tab": "Fury",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 12323,
+    "cost": "10 Rage",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Causes all enemies within 10 yds to be Dazed, reducing movement speed by 50% for 6 sec."
+   }
+  },
+  {
+   "name": "Reckless Swings",
+   "tab": "Fury",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "Not a talent in Classic"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 1329555,
+    "cost": "25% of base health",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "15 sec cooldown",
+    "text": "Your next 4 melee attacks generate 5 additional Rage. Lasts 8 sec."
+   }
+  },
+  {
+   "name": "Death Wish",
+   "tab": "Fury",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 12328,
+    "cost": "10 Rage",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "3 min cooldown",
+    "text": "When activated, increases your Physical damage done by 20% and makes you immune to Fear effects, but increases all damage you take by 5%. Lasts 30 sec."
+   }
+  },
+  {
+   "name": "Bloodrage",
+   "tab": "Protection",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 2687,
+    "cost": "20% of base health",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "1 min cooldown",
+    "text": "Generates 10 rage at the cost of health, and then generates an additional 10 rage over 10 sec.",
+    "level": 10
+   }
+  },
+  {
+   "name": "Defensive Stance",
+   "tab": "Protection",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 71,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "1 sec cooldown",
+    "text": "A defensive combat stance. Decreases damage taken by 10% and damage caused by 10%. Increases all threat generated by 80%.",
+    "level": 10
+   }
+  },
+  {
+   "name": "Sunder Armor",
+   "tab": "Protection",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 5,
+   "top": {
+    "rank": 5,
+    "spell_id": 11597,
+    "cost": "15 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": null,
+    "text": "Sunders the target's armor, reducing it by 450 per Sunder Armor and causes a high amount of threat. Can be applied up to 5 times. Lasts 30 sec.\n\nRequires Melee Weapon",
+    "level": 58
+   }
+  },
+  {
+   "name": "Taunt",
+   "tab": "Protection",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 355,
+    "cost": null,
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "8 sec cooldown",
+    "text": "Taunts the target to attack you, but has no effect if the target is already attacking you.\n\nRequires Defensive Stance",
+    "level": 10
+   }
+  },
+  {
+   "name": "Shield Bash",
+   "tab": "Protection",
+   "status": "same",
+   "reasons": [],
+   "maxRank": 3,
+   "top": {
+    "rank": 3,
+    "spell_id": 1672,
+    "cost": "10 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "12 sec cooldown",
+    "text": "Bashes the target with your shield for 45 damage. It also interrupts spellcasting and prevents any spell in that school from being cast for 6 sec.\n\nRequires Shields\nRequires Battle Stance, Defensive Stance",
+    "level": 52
+   }
+  },
+  {
+   "name": "Revenge",
+   "tab": "Protection",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": 6,
+   "top": {
+    "rank": 6,
+    "spell_id": 25288,
+    "cost": "5 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "5 sec cooldown",
+    "text": "Instantly counterattack an enemy for (138 + 22.5% of attack power) to (168 + 22.5% of attack power) damage and a high amount of threat. Revenge must follow a block, dodge or parry.\n\nRequires Melee Weapon\nRequires Defensive Stance",
+    "level": 60
+   }
+  },
+  {
+   "name": "Shield Block",
+   "tab": "Protection",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 2565,
+    "cost": "10 Rage",
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "5 sec cooldown",
+    "text": "Increases chance to block by 75% for 7 sec, but will only block 2 attacks.\n\nRequires Shields\nRequires Defensive Stance",
+    "level": 16
+   }
+  },
+  {
+   "name": "Disarm",
+   "tab": "Protection",
+   "status": "same",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 676,
+    "cost": "20 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "1 min cooldown",
+    "text": "Disarm the enemy's weapon for 10 sec.\n\nRequires Defensive Stance",
+    "level": 18
+   }
+  },
+  {
+   "name": "Shield Wall",
+   "tab": "Protection",
+   "status": "changed",
+   "reasons": [],
+   "maxRank": null,
+   "top": {
+    "rank": null,
+    "spell_id": 871,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "15 min cooldown",
+    "text": "Reduces the damage taken from all attacks by 60% for 12 sec.\n\nRequires Shields\nRequires Defensive Stance",
+    "level": 28
+   }
+  },
+  {
+   "name": "Shield Slam",
+   "tab": "Protection",
+   "status": "talent",
+   "reasons": [
+    "A talent in Classic and in Forever"
+   ],
+   "maxRank": 4,
+   "top": {
+    "rank": 4,
+    "spell_id": 23925,
+    "cost": "20 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "6 sec cooldown",
+    "text": "Slam the target with your shield, causing 640 to 670 damage, increased by your Block Value, and has a 50% chance of dispelling 1 magic effect on the target. Causes a very high amount of threat.\n\nRequires Shields",
+    "level": 60
+   }
+  },
+  {
+   "name": "Last Stand",
+   "tab": "Protection",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 12975,
+    "cost": null,
+    "range": null,
+    "cast": "Instant",
+    "cooldown": "3 min cooldown",
+    "text": "When activated, this ability temporarily grants you 30% of your maximum health for 20 sec. After the effect expires, the health is lost."
+   }
+  },
+  {
+   "name": "Concussion Blow",
+   "tab": "Protection",
+   "status": "talent",
+   "reasons": [
+    "A talent: it comes with the talent point, no trainer teaches it",
+    "A talent in Classic too"
+   ],
+   "maxRank": 1,
+   "top": {
+    "rank": null,
+    "spell_id": 12809,
+    "cost": "10 Rage",
+    "range": "Melee range",
+    "cast": "Instant",
+    "cooldown": "45 sec cooldown",
+    "text": "Stuns the target for 5 sec.\n\nRequires Melee Weapon"
+   }
+  }
+ ]
+}

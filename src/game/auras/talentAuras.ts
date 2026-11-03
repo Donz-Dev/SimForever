@@ -2,8 +2,6 @@ import type { AuraDefinition } from '../../engine';
 import { LONE_WOLF } from './hunter';
 import { ANGER_MANAGEMENT } from './warrior';
 import {
-  LEADER_OF_THE_PACK_AURA,
-  LEADER_OF_THE_PACK_AURA_ID,
   MOONKIN_AURA,
   MOONKIN_AURA_ID,
   PREDATORY_DISCIPLINE_AURA,
@@ -44,8 +42,8 @@ export const TALENT_AURAS: Readonly<Record<string, AuraDefinition>> = {
    * same value: a talent names what it grants, and two talents granting the
    * same thing is exactly what this is.
    */
+  // ONE KEY since 1.60.1.70755: both ids are `PARTY_CRIT_AURA_ID` again.
   [MOONKIN_AURA_ID]: MOONKIN_AURA,
-  [LEADER_OF_THE_PACK_AURA_ID]: LEADER_OF_THE_PACK_AURA,
   // Ferocious Bite reads it; see the aura.
   [PREDATORY_DISCIPLINE_AURA_ID]: PREDATORY_DISCIPLINE_AURA,
   /*

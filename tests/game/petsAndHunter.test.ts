@@ -624,14 +624,14 @@ const BLOOD_FURY_POWER_FRACTION = 0.1;
 describe("Hunter's Mark", () => {
   it('grants the ranged attack power the spellbook states', () => {
     /*
-     * 71, and Forever's own number: the spellbook marks the spell
-     * `versusClassic: "changed"`. Modelled as a buff on the HUNTER though it
-     * is really a debuff on the target -- with one attacker the two are the
+     * 143 since 1.60.1.70755, foreverchanges.pro's max-rank figure (it read
+     * 71; the notes fix rank 4 giving less than rank 3). Modelled as a buff on
+     * the HUNTER though it is really a debuff on the target -- with one attacker the two are the
      * same number, and a stat modifier applies to whoever holds it.
      */
-    expect(HUNTERS_MARK_RANGED_ATTACK_POWER).toBe(71);
+    expect(HUNTERS_MARK_RANGED_ATTACK_POWER).toBe(143);
     expect(HUNTERS_MARK.statModifiers).toEqual([
-      { stat: 'rangedAttackPower', operation: 'flat', value: 71 },
+      { stat: 'rangedAttackPower', operation: 'flat', value: 143 },
     ]);
 
     /*
@@ -659,10 +659,10 @@ describe("Hunter's Mark", () => {
 
     /*
      * BOTH OPENERS ARE UP BY NOW and they STACK -- the Aspect's 120 and the
-     * Mark's 71. Asserted together rather than isolating one, because the
+     * Mark's 143. Asserted together rather than isolating one, because the
      * stacking is the thing worth pinning: they are separate flat modifiers on
      * the same stat, and the rotation opens with both precisely so that the
-     * bow reads 191 more than it would bare.
+     * bow reads 263 more than it would bare.
      */
     expect(atPull.auras.has('aspect_of_the_hawk')).toBe(true);
 
@@ -874,19 +874,20 @@ describe('the Hunter, whose numbers are Forever numbers', () => {
     expect(RAPTOR_STRIKE.cooldownMs).toBe(seconds(6));
   });
 
-  it('scales Serpent Sting at 3% a tick, which is 15% over the duration', () => {
+  it('scales Serpent Sting at 5% a tick, which is 25% over the duration', () => {
     /*
-     * The wiki states both: "scales with 15% RAP over the full duration" and
-     * "each tick gains 3% RAP". Five ticks of 3% is 15%, so the two agree --
-     * and that agreement is what fixes the cadence at three seconds.
+     * 5% a tick since 1.60.1.70755 (the wiki's was 3% a tick, 15% over the
+     * duration). Five ticks at a three-second cadence is still the shape.
      */
     const ticks = SERPENT_STING_DURATION_MS / SERPENT_STING_TICK_INTERVAL_MS;
     expect(ticks).toBe(5);
-    expect(SERPENT_STING_RAP_PER_TICK * ticks).toBeCloseTo(0.15, 6);
+    expect(SERPENT_STING_RAP_PER_TICK).toBeCloseTo(0.05, 6);
+    expect(SERPENT_STING_RAP_PER_TICK * ticks).toBeCloseTo(0.25, 6);
   });
 
   it('gives Arcane Shot a ranged attack power coefficient', () => {
-    expect(ARCANE_SHOT_RAP_COEFFICIENT).toBe(0.1);
+    // 0.15 since 1.60.1.70755 (was 0.1).
+    expect(ARCANE_SHOT_RAP_COEFFICIENT).toBe(0.15);
   });
 
   it('makes an Aspect exclusive, like a stance', () => {
@@ -1166,12 +1167,15 @@ describe('Hawk Melee takes BOTH Lone Wolf and Summon Hawk', () => {
      * ROUND 78 MOVED TWO OF ITS POINTS, so this is the owner's build with one
      * edit: Survivalist 5 -> 3 and Clever Traps 2, +17.4 at a 120 second fight
      * (+30% to the trap; Survivalist is health on a profile nothing attacks).
+     *
+     * 1.60.1.70755 moved Pathfinding to row 3, where it stranded Unleashed
+     * Fury and Summon Hawk, so its two points went to Endurance Training.
      */
     const profile = PRESETS_BY_ID.get('hawk_melee')!.build();
     expect(profile.talents).toEqual({
       deadly_aspects: 5,
       improved_aspect_of_the_monkey: 3,
-      pathfinding: 2,
+      endurance_training: 2,
       unleashed_fury: 5,
       summon_hawk: 1,
       lethal_attacks: 5,
@@ -1196,19 +1200,22 @@ describe('Hawk Melee takes BOTH Lone Wolf and Summon Hawk', () => {
      * RECORDED RATHER THAN QUIETLY RE-SPENT. The allocation is the owner's, and
      * a preset that improved on it would stop being the build they specified --
      * so the honest thing is a test saying which points are inert and why, that
-     * FAILS if either talent ever becomes modelled. `pathfinding` carries a
-     * `scope`, so it is a permanent ruling; Improved Aspect of the Monkey does
-     * not, so it is a live gap nothing is likely to reach.
+     * FAILS if either talent ever becomes modelled. Improved Aspect of the
+     * Monkey is a live gap nothing is likely to reach; Endurance Training
+     * (which replaced Pathfinding at 1.60.1.70755) is pet stats on a build
+     * with no pet.
      */
     const monkey = HUNTER_TALENT_EFFECTS.improved_aspect_of_the_monkey;
-    const pathfinding = HUNTER_TALENT_EFFECTS.pathfinding;
+    const endurance = HUNTER_TALENT_EFFECTS.endurance_training;
     expect(monkey.every((e) => e.kind === 'unmodelled')).toBe(true);
-    expect(pathfinding.every((e) => e.kind === 'unmodelled')).toBe(true);
-    expect(pathfinding.some((e) => e.kind === 'unmodelled' && e.scope === 'positioning')).toBe(true);
+    expect(endurance.every((e) => e.kind === 'petStat')).toBe(true);
 
     const profile = PRESETS_BY_ID.get('hawk_melee')!.build();
+    expect(bringsPet('hunter', profile.talents ?? {})).toBe(false);
+    expect(profile.talents?.pathfinding).toBeUndefined();
     expect(
-      (profile.talents?.improved_aspect_of_the_monkey ?? 0) + (profile.talents?.pathfinding ?? 0),
+      (profile.talents?.improved_aspect_of_the_monkey ?? 0) +
+        (profile.talents?.endurance_training ?? 0),
     ).toBe(5);
   });
 

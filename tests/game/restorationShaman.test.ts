@@ -82,7 +82,8 @@ describe("the owner's coefficients", () => {
     expect([LESSER_HEALING_WAVE.cost?.amount, LESSER_HEALING_WAVE.castTimeMs]).toEqual([380, 1500]);
     expect([HEALING_WAVE.cost?.amount, HEALING_WAVE.castTimeMs]).toEqual([620, 3000]);
     expect([CHAIN_HEAL.cost?.amount, CHAIN_HEAL.castTimeMs]).toEqual([405, 2500]);
-    expect([RIPTIDE.cost?.amount, RIPTIDE.cooldownMs]).toEqual([385, 6000]);
+    // 230 mana on 12 s since 1.60.1.70755; it was 385 on 6 s.
+    expect([RIPTIDE.cost?.amount, RIPTIDE.cooldownMs]).toEqual([230, 12_000]);
     expect([MANA_TIDE_TOTEM.cost?.amount, MANA_TIDE_TOTEM.cooldownMs]).toEqual([60, 300_000]);
     expect([NATURES_SWIFTNESS_ABILITY.cooldownMs, NATURES_SWIFTNESS_ABILITY.triggersGcd]).toEqual([180_000, false]);
   });
@@ -130,7 +131,7 @@ describe('Chain Heal', () => {
 });
 
 describe('Riptide', () => {
-  it('heals at once and then five times over fifteen seconds', () => {
+  it('heals five times over fifteen seconds, and nothing at once', () => {
     const caster = shaman(-100);
     const target = member('a', 1, 0.1);
     const events: TelemetryEvent[] = [];
@@ -140,6 +141,8 @@ describe('Riptide', () => {
     simulation.advanceTo(seconds(20));
     const ticks = heals(events).filter((e) => e.abilityId === 'riptide' && e.periodic);
     expect(ticks).toHaveLength(5);
+    // No initial heal since 1.60.1.70755.
+    expect(heals(events).filter((e) => e.abilityId === 'riptide' && !e.periodic)).toHaveLength(0);
     for (const tick of ticks) expect(tick.amount + tick.overhealing).toBeCloseTo(RIPTIDE_HOT_TOTAL / 5, 6);
   });
 });
@@ -153,10 +156,13 @@ describe('Water Shield and Ancestral Healing', () => {
     simulation.begin();
     castAbility(simulation, caster, caster.abilities.get('water_shield')!, undefined);
     simulation.advanceTo(seconds(2));
+    castAbility(simulation, caster, caster.abilities.get('lesser_healing_wave')!, target);
+    simulation.advanceTo(seconds(4));
     castAbility(simulation, caster, caster.abilities.get('riptide')!, target);
-    simulation.advanceTo(seconds(20));
+    simulation.advanceTo(seconds(22));
     const gains = events.filter((e) => e.type === 'resource_gained' && e.source === 'water_shield');
-    // One direct crit (the Riptide hit); five ticks that crit too, and none of them count.
+    // One direct crit (the Lesser Healing Wave -- Riptide has had no direct heal
+    // since 1.60.1.70755); five Riptide ticks that crit too, and none count.
     expect(gains).toHaveLength(1);
     expect(gains[0].type === 'resource_gained' && gains[0].amount + gains[0].wasted).toBeCloseTo(
       10_000 * WATER_SHIELD_MANA_FRACTION,

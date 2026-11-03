@@ -503,11 +503,11 @@
    "ranks": 5,
    "text": "Increases damage done by your melee abilities on Bleeding targets by {0}%.",
    "values": [
-    2,
-    4,
+    3,
     6,
-    8,
-    10
+    9,
+    12,
+    15
    ]
   },
   "natural_reaction": {

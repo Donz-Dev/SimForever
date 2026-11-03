@@ -143,8 +143,6 @@ const PRESET_RAID_BUFFS: readonly string[] = [
   'blessing_of_wisdom',
   'blessing_of_kings',
   'blessing_of_might',
-  // On every profile whose target does not attack back -- so not the tanks'.
-  'salvation',
   // On every profile, by the owner's instruction.
   'devotion_aura',
   'judgement_of_the_crusader',
@@ -156,8 +154,12 @@ const PRESET_RAID_BUFFS: readonly string[] = [
   'mana_spring_totem',
   'windfury_totem',
   'trueshot_aura',
+  /*
+   * ONE OF THE PAIR, because 1.60.1.70755 made them the same exclusive 3% again;
+   * Leader of the Pack is the one kept. Both were selected while they were
+   * separate buffs.
+   */
   'leader_of_the_pack',
-  'moonkin_form',
 ];
 
 /**
@@ -167,10 +169,7 @@ const PRESET_RAID_BUFFS: readonly string[] = [
  * everywhere else they would be a ticked box worth exactly nothing. In
  * catalogue order, like the list above.
  */
-const TANK_RAID_BUFFS: readonly string[] = presetRaidBuffsWith(['thorns', 'retribution_aura']).filter(
-  // A tank's target attacks back, so it carries no Salvation (round 47).
-  (id) => id !== 'salvation',
-);
+const TANK_RAID_BUFFS: readonly string[] = presetRaidBuffsWith(['thorns', 'retribution_aura']);
 
 function presetRaidBuffsWith(extra: readonly string[]): readonly string[] {
   const chosen = new Set([...PRESET_RAID_BUFFS, ...extra]);
@@ -285,25 +284,34 @@ const before = (
  * for the first time -- and both are rage at the pull rather than throughput.
  * ----------------------------------------------------------------------------
  */
+/*
+ * 1.60.1.70755 SHRANK TWO OF ITS TALENTS, and this is OUR edit, flagged for the
+ * owner to replace: Improved Tactical Mastery 5 -> 3 ranks and Bloodthrill
+ * 5 -> 2, so five points came free. They went to LINGERING RAGE 5/5, the one
+ * reachable talent worth anything here -- rage decay starts ten seconds later
+ * between the Dungeon Route's pulls; on a single target it is inert. Arms
+ * 39 -> 34 still reaches Mortal Strike with 33 above it. Spread 34/15/2.
+ */
 const TWO_HAND_ARMS_TALENTS: TalentAllocation = {
-  // Arms, 39
+  // Arms, 34
   improved_heroic_strike: 3,
   improved_rend: 3,
   improved_charge: 2,
-  improved_tactical_mastery: 5,
+  improved_tactical_mastery: 3,
   improved_overpower: 2,
   anger_management: 1,
   deep_wounds: 3,
   spearing_strike: 1,
   two_handed_weapon_specialization: 3,
   impale: 2,
-  bloodthrill: 5,
+  bloodthrill: 2,
   sweeping_strikes: 1,
   weaponmaster: 5,
   improved_slam: 2,
   mortal_strike: 1,
-  // Fury, 10
+  // Fury, 15
   cruelty: 5,
+  lingering_rage: 5,
   unbridled_wrath: 5,
   // Protection, 2
   improved_bloodrage: 2,
@@ -329,11 +337,22 @@ const TWO_HAND_ARMS_TALENTS: TalentAllocation = {
  * talent that DOES require Enrage 5, is not taken.
  * ----------------------------------------------------------------------------
  */
+/*
+ * 1.60.1.70755 TOOK FIVE POINTS OUT, and where they went is OUR edit, flagged
+ * for the owner to replace: Improved Tactical Mastery 5 -> 3, Flurry 5 -> 3 at
+ * 30% (more haste for fewer points), and Raging Blows removed. Anger
+ * Management and Impale then sat two points short of their rows, so IMPROVED
+ * CHARGE 2 holds the Arms side up (and adds rage to the opening Charge). The
+ * rest went to the patch's two new Fury talents -- RECKLESS SWINGS 1 (twenty
+ * rage a cast, and the list casts it) and IMPROVED WHIRLWIND 2 (a second off
+ * Whirlwind and +30% on its main target). Spread 17/34/0.
+ */
 const DW_FURY_TALENTS: TalentAllocation = {
   // Arms, 17
   improved_heroic_strike: 3,
   improved_rend: 3,
-  improved_tactical_mastery: 5,
+  improved_charge: 2,
+  improved_tactical_mastery: 3,
   anger_management: 1,
   deep_wounds: 3,
   impale: 2,
@@ -343,7 +362,8 @@ const DW_FURY_TALENTS: TalentAllocation = {
   unbridled_wrath: 5,
   furious_precision: 3,
   dual_wield_specialization: 5,
-  raging_blows: 1,
+  reckless_swings: 1,
+  improved_whirlwind: 2,
   /*
    * ENRAGE 4 -> 2, AND THE TWO POINTS BUY IMPROVED BERSERKER RAGE.
    *
@@ -390,7 +410,7 @@ const DW_FURY_TALENTS: TalentAllocation = {
    */
   improved_berserker_rage: 2,
   death_wish: 1,
-  flurry: 5,
+  flurry: 3,
   bloodthirst: 1,
 };
 
@@ -485,7 +505,15 @@ const FURY_PROT_TALENTS: TalentAllocation = {
   enrage: 5,
   improved_execute: 2,
   death_wish: 1,
-  flurry: 5,
+  /*
+   * 1.60.1.70755: Flurry is three ranks (30%), which left Bloodthirst two
+   * points short of its thirty, and GORE DRINKER moved under Blood Craze --
+   * which this build already holds at 3/3. Our edit, flagged for the owner: the
+   * two points buy Gore Drinker, the one Fury sink with value to a tank (it
+   * heals on the triggers this list casts). Fury stays 31.
+   */
+  gore_drinker: 2,
+  flurry: 3,
   bloodthirst: 1,
   // Protection, 15
   shield_specialization: 5,
@@ -523,51 +551,67 @@ const FURY_PROT_TALENTS: TalentAllocation = {
  */
 const ROGUE_SECONDARY_POTION = 'secondary_major_healing_potion';
 
+/*
+ * 1.60.1.70755 REMADE THE ROGUE TREES -- Murder, Quietus, Cutthroat, Thousand
+ * Cuts and Improved Distract gone; Lethality, Seal Fate, Dual Wield
+ * Specialization and Camouflage shrunk; Relentless Strikes five ranks; Venom a
+ * Shank passive; Mutilate under Venom. So THIS BUILD IS OURS, the smallest
+ * legal edit keeping the profile's identity, and flagged for the owner to
+ * replace with their own URL.
+ */
 const ROGUE_VENOM_TALENTS: TalentAllocation = {
-  // The owner's respecification, decoded from https://talentsforever.com/rogue/60/00530210541501051-30230320201-002-CFD2I2GDIJ3KLNPQRTWUZXbkJ-7
-  malice: 5,
-  ruthlessness: 3,
-  improved_slice_and_dice: 2,
-  relentless_strikes: 1,
-  lethality: 5,
-  vile_poisons: 4,
-  cold_blood: 1,
-  improved_poisons: 5,
-  mutilate: 1,
-  seal_fate: 5,
-  venom: 1,
-  improved_eviscerate: 3,
-  lightning_reflexes: 2,
-  puncturing_wounds: 3,
-  precision: 3,
-  endurance: 2,
-  improved_sprint: 2,
-  flawless_execution: 1,
-  opportunity: 2,
-};
-
-/** Combat -- Assassination 18 / Combat 33. Sinister Strike and the cooldowns. */
-const ROGUE_COMBAT_TALENTS: TalentAllocation = {
-  // The owner's respecification, decoded from https://talentsforever.com/rogue/60/00530310501-32003311201515231--CFDGIKRSWVYZXbcdefgh-7
+  // Assassination, 36. Vigor holds the poison row up: it needs 15 above it.
   malice: 5,
   ruthlessness: 3,
   improved_slice_and_dice: 3,
-  relentless_strikes: 1,
-  lethality: 5,
+  lethality: 2,
+  vigor: 2,
+  vile_poisons: 5,
   cold_blood: 1,
-  improved_eviscerate: 3,
-  improved_sinister_strike: 2,
-  deflection: 3,
+  improved_poisons: 5,
+  relentless_strikes: 5,
+  venom: 1,
+  seal_fate: 3,
+  mutilate: 1,
+  // Combat, 11: row 1 needs five above it.
+  coup_de_grace: 3,
+  efficient_strikes: 2,
+  puncturing_wounds: 3,
   precision: 3,
-  endurance: 1,
-  riposte: 1,
-  improved_sprint: 2,
+  // Subtlety, 4: Opportunity is 4% a rank to Mutilate now.
+  opportunity: 4,
+};
+
+/** Combat -- Assassination 18 / Combat 33. Sinister Strike and the cooldowns. */
+/*
+ * 1.60.1.70755 REMADE THE ROGUE TREES -- Murder, Quietus, Cutthroat, Thousand
+ * Cuts and Improved Distract gone; Lethality, Seal Fate, Dual Wield
+ * Specialization and Camouflage shrunk; Relentless Strikes five ranks; Venom a
+ * Shank passive; Mutilate under Venom. So THIS BUILD IS OURS, the smallest
+ * legal edit keeping the profile's identity, and flagged for the owner to
+ * replace with their own URL.
+ */
+const ROGUE_COMBAT_TALENTS: TalentAllocation = {
+  // Assassination, 16
+  malice: 5,
+  ruthlessness: 3,
+  improved_slice_and_dice: 3,
+  lethality: 2,
+  vigor: 2,
+  cold_blood: 1,
+  // Combat, 35: Adrenaline Rush with Flash of Steel under it.
+  coup_de_grace: 3,
+  efficient_strikes: 2,
+  lightning_reflexes: 5,
+  precision: 3,
+  composure: 2,
   flawless_execution: 1,
-  dual_wield_specialization: 5,
-  blade_flurry: 1,
-  hack_and_slash: 5,
   weapon_expertise: 2,
   aggression: 3,
+  dual_wield_specialization: 2,
+  blade_flurry: 1,
+  hack_and_slash: 5,
+  flash_of_steel: 5,
   adrenaline_rush: 1,
 };
 
@@ -596,27 +640,36 @@ const ROGUE_COMBAT_TALENTS: TalentAllocation = {
  * reads to tell the two apart.
  * ============================================================================
  */
+/*
+ * 1.60.1.70755 REMADE THE ROGUE TREES -- Murder, Quietus, Cutthroat, Thousand
+ * Cuts and Improved Distract gone; Lethality, Seal Fate, Dual Wield
+ * Specialization and Camouflage shrunk; Relentless Strikes five ranks; Venom a
+ * Shank passive; Mutilate under Venom. So THIS BUILD IS OURS, the smallest
+ * legal edit keeping the profile's identity, and flagged for the owner to
+ * replace with their own URL.
+ */
 const ROGUE_COMBAT_MUT_TALENTS: TalentAllocation = {
-  // The owner's respecification, decoded from https://talentsforever.com/rogue/60/0053031051150105-3023032020141--CF2D2I2GDIJKLNP4RTWUZXbcdFP-7
+  // Assassination, 33: Mutilate sits under Venom now, and Vigor holds row 3 up.
   malice: 5,
   ruthlessness: 3,
   improved_slice_and_dice: 3,
-  relentless_strikes: 1,
-  lethality: 5,
-  vile_poisons: 1,
-  cold_blood: 1,
+  lethality: 2,
+  vigor: 2,
+  vile_poisons: 2,
   improved_poisons: 5,
+  cold_blood: 1,
+  relentless_strikes: 5,
+  venom: 1,
+  seal_fate: 3,
   mutilate: 1,
-  seal_fate: 5,
-  improved_eviscerate: 3,
-  lightning_reflexes: 2,
+  // Combat, 18. Blade Flurry is out of reach, so its entry is inert.
+  coup_de_grace: 3,
+  efficient_strikes: 1,
+  lightning_reflexes: 3,
   puncturing_wounds: 3,
   precision: 3,
-  endurance: 2,
-  improved_sprint: 2,
-  flawless_execution: 1,
-  dual_wield_specialization: 4,
-  blade_flurry: 1,
+  composure: 2,
+  aggression: 3,
 };
 
 /**
@@ -639,29 +692,39 @@ const ROGUE_COMBAT_MUT_TALENTS: TalentAllocation = {
  * Relentless Strikes, Ruthlessness, Cold Blood and Precision.
  * ============================================================================
  */
+/*
+ * 1.60.1.70755 REMADE THE ROGUE TREES -- Murder, Quietus, Cutthroat, Thousand
+ * Cuts and Improved Distract gone; Lethality, Seal Fate, Dual Wield
+ * Specialization and Camouflage shrunk; Relentless Strikes five ranks; Venom a
+ * Shank passive; Mutilate under Venom. So THIS BUILD IS OURS, the smallest
+ * legal edit keeping the profile's identity, and flagged for the owner to
+ * replace with their own URL.
+ */
 const ROGUE_PURE_HEMO_TALENTS: TalentAllocation = {
-  // The owner's respecification, decoded from https://talentsforever.com/rogue/60/005303105011-302003-5320200310013211-RTWi4kjm1pmituqwxCFDGIKvL-7
+  // Assassination, 19
   malice: 5,
   ruthlessness: 3,
   improved_slice_and_dice: 3,
-  relentless_strikes: 1,
-  lethality: 5,
+  lethality: 2,
+  vigor: 2,
   cold_blood: 1,
-  improved_poisons: 1,
-  improved_eviscerate: 3,
-  lightning_reflexes: 2,
+  improved_poisons: 3,
+  // Combat, 8: Efficient Strikes takes 5 energy off every Hemorrhage.
+  coup_de_grace: 3,
+  efficient_strikes: 2,
   precision: 3,
-  camouflage: 5,
-  master_of_deception: 3,
-  opportunity: 2,
-  elusiveness: 2,
+  // Subtlety, 24
+  opportunity: 5,
+  camouflage: 3,
+  dirty_deeds: 2,
   initiative: 3,
-  ghostly_strike: 1,
   premeditation: 1,
   serrated_blades: 3,
-  dirty_deeds: 2,
+  ghostly_strike: 1,
+  elusiveness: 2,
   preparation: 1,
   hemorrhage: 1,
+  heightened_senses: 2,
 };
 
 /**
@@ -695,72 +758,37 @@ const ROGUE_PURE_HEMO_TALENTS: TalentAllocation = {
  * both its abilities are stealth openers the owner has ruled out for good.
  * ----------------------------------------------------------------------------
  */
+/*
+ * 1.60.1.70755 REMADE THE ROGUE TREES -- Murder, Quietus, Cutthroat, Thousand
+ * Cuts and Improved Distract gone; Lethality, Seal Fate, Dual Wield
+ * Specialization and Camouflage shrunk; Relentless Strikes five ranks; Venom a
+ * Shank passive; Mutilate under Venom. So THIS BUILD IS OURS, the smallest
+ * legal edit keeping the profile's identity, and flagged for the owner to
+ * replace with their own URL.
+ */
 const ROGUE_HEMO_TALENTS: TalentAllocation = {
-  // Assassination, 17
+  // Assassination, 20
   malice: 5,
   ruthlessness: 3,
-  improved_slice_and_dice: 2,
-  relentless_strikes: 1,
-  lethality: 5,
-  /*
-   * COLD BLOOD IS THE NEW POINT, and it is what the respecified list needs:
-   * the owner's Hemo Dagger APL has a Cold Blood entry, and this build did not
-   * take the talent. A list naming an ability the build cannot cast is skipped
-   * IN SILENCE, so the two halves of the respecification only work together.
-   *
-   * IT IS PAID FOR OUT OF IMPROVED SLICE AND DICE, 3 -> 2, for a net of zero.
-   * That is the cheapest place it could have come from on this build: the list
-   * casts Slice and Dice at ONE combo point and only when the buff is DOWN, so
-   * what the talent buys is duration on a buff whose uptime is already the
-   * thing being managed.
-   */
+  improved_slice_and_dice: 3,
+  lethality: 2,
+  vigor: 2,
   cold_blood: 1,
-  /*
-   * IMPROVED POISONS 3, WHERE THE OWNER'S URL SPENT THREE POINTS IN COMBAT ON
-   * IMPROVED EVISCERATE -- round 78's optimisation.
-   *
-   * Eviscerate is about 2% of this build's damage (0.5 casts a minute, behind
-   * a five-point gate with two four-second floors), so +20% to it is worth
-   * almost nothing; three more ranks of poison application reach every swing
-   * of both daggers. Paired over 1,200 fights at 120s it is +14.06 +/- 2.86,
-   * +13.72 +/- 5.40 at five targets for 60s and +9.32 +/- 3.85 at 240s.
-   * Improved Slice and Dice 3 + Improved Poisons 2 measured the same (+14.04)
-   * and Vile Poisons 3 only +5.95. The owner's spread is `HEMO_TREE` in
-   * `tools/optimise/rogueVariants.ts`, one line to restore.
-   *
-   * ASSASSINATION 20 / COMBAT 0 / SUBTLETY 31 NOW. Improved Poisons is tier 15
-   * and the 17 points below it clear the gate.
-   */
-  improved_poisons: 3,
-  /*
-   * ==========================================================================
-   * SUBTLETY IS UNCHANGED, ON THE OWNER'S INSTRUCTION, AND THEIR SCREENSHOT
-   * DISAGREES WITH IT.
-   *
-   * The panel they sent shows Improved Ambush at 0/3 against the 3/3 below,
-   * and states a tree total of 31 either way -- so three points moved inside
-   * Subtlety and the icons were not legible enough to say where to. Asked
-   * which, the owner chose to keep this tree as it is.
-   *
-   * RECORDED RATHER THAN SILENTLY RESOLVED, because it is the one part of this
-   * build that is a READING rather than a statement: if the figure looks wrong
-   * later, this is the first thing to re-ask, and the build URL run through
-   * `decode_talent_build.mjs` is what would settle it in one command.
-   * ==========================================================================
-   */
-  camouflage: 5,
-  master_of_deception: 3,
-  opportunity: 2,
+  improved_poisons: 4,
+  // Subtlety, 31: Death Mark, with Boot Knife on Shank beneath it.
+  opportunity: 5,
   improved_ambush: 3,
+  camouflage: 3,
+  dirty_deeds: 2,
   initiative: 3,
-  improved_distract: 1,
   premeditation: 1,
   serrated_blades: 3,
-  dirty_deeds: 2,
+  ghostly_strike: 1,
+  elusiveness: 2,
   preparation: 1,
   hemorrhage: 1,
-  quietus: 5,
-  thousand_cuts: 1,
+  boot_knife: 5,
+  death_mark: 1,
 };
 
 /** Venom and Rupture: two daggers, which is what those builds are written for. */
@@ -1030,7 +1058,9 @@ const SHAMAN_ELEMENTAL_TALENTS: TalentAllocation = {
   // Elemental, 32
   concussion: 5, convection: 5, elemental_warding: 3, call_of_flame: 3,
   elemental_focus: 1, elemental_alacrity: 3, trial_by_fire: 2,
-  elemental_mastery: 1, lightning_overload: 3, elemental_fury: 5, lava_burst: 1,
+  // 1.60.1.70755: Lava Burst's point to Call of Thunder in its slot, Elemental
+  // Mastery's to Lightning Mastery, its rename. Ours, flagged for the owner.
+  lightning_mastery: 1, lightning_overload: 3, elemental_fury: 5, call_of_thunder: 1,
   // Enhancement, 10
   thundering_strikes: 5, ancestral_knowledge: 5,
   // Restoration, 9
@@ -1186,10 +1216,11 @@ const MAGE_FROST_TALENTS: TalentAllocation = {
  * https://talentsforever.com/shaman/60/-055002-5333023315013151-RViknqportvuwxSlj-8?b=70425h&d=261024
  */
 const SHAMAN_RESTORATION_TALENTS: TalentAllocation = {
-  // Enhancement, 12
+  // Enhancement, 12. Improved Ghost Wolf moved to row 4 at 1.60.1.70755, out of
+  // reach; its two points go to Guardian Totems in row 2, equally inert. Ours.
   thundering_strikes: 5,
   ancestral_knowledge: 5,
-  improved_ghost_wolf: 2,
+  guardian_totems: 2,
   // Restoration, 39
   improved_healing_wave: 5,
   tidal_focus: 3,
@@ -1234,7 +1265,8 @@ const PRIEST_HOLY_TALENTS: TalentAllocation = {
   divine_fury: 5,
   inspiration: 3,
   improved_healing: 3,
-  binding_heal: 1,
+  // Holy Binding in Binding Heal's slot (1.60.1.70755). Ours, flagged.
+  holy_binding: 1,
   spirit_of_redemption: 1,
   spiritual_guidance: 5,
   spiritual_healing: 3,
@@ -2074,7 +2106,12 @@ const HUNTER_LONE_WOLF_RANGED_TALENTS: TalentAllocation = {
 const HUNTER_HAWK_MELEE_TALENTS: TalentAllocation = {
   deadly_aspects: 5,
   improved_aspect_of_the_monkey: 3,
-  pathfinding: 2,
+  /*
+   * PATHFINDING MOVED TO ROW 3 AT 1.60.1.70755 and stranded Unleashed Fury and
+   * Summon Hawk under it; its two points go to Endurance Training in row 1,
+   * which holds the tree up. Ours, flagged for the owner.
+   */
+  endurance_training: 2,
   unleashed_fury: 5,
   summon_hawk: 1,
   lethal_attacks: 5,
@@ -3409,7 +3446,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
         // Lightning Bolt is off the opener, by the owner -- which also clears
         // this profile's Gate B failure: Flame Shock at 0s is the one cast.
         ...before(1.5, 'searing_totem'),
-        ...before(0, 'elemental_mastery'),
+        ...before(0, 'lightning_mastery'),
         ...before(0, 'flame_shock'),
       ],
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
@@ -3574,7 +3611,8 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: {
         concussion: 5, convection: 2, reverberation: 2, elemental_devastation: 3, elemental_alacrity: 3,
-        call_of_flame: 3, elemental_focus: 1, trial_by_fire: 2, lava_burst: 1, lightning_overload: 3,
+        // Lava Burst's point to Call of Thunder in its slot (1.60.1.70755, ours).
+        call_of_flame: 3, elemental_focus: 1, trial_by_fire: 2, call_of_thunder: 1, lightning_overload: 3,
         elemental_fury: 4, thundering_strikes: 5, ancestral_knowledge: 3, mental_dexterity: 3,
         elemental_weapons: 3, shamanistic_focus: 1, flurry: 4, stormstrike: 1, mental_quickness: 2,
       },

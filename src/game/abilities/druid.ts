@@ -183,7 +183,8 @@ export const WRATH: Ability = {
   },
 };
 
-export const STARFIRE_DAMAGE = midpoint(350, 412);
+// 490-576 since 1.60.1.70755: "Base damage points increased by about 40%" (was 350-412).
+export const STARFIRE_DAMAGE = midpoint(490, 576);
 export const STARFIRE_CAST_MS = seconds(3.5);
 export const STARFIRE_COEFFICIENT = STARFIRE_SP_COEFFICIENT;
 
@@ -261,9 +262,15 @@ export const INSECT_SWARM_ABILITY: Ability = {
 // Feral: Cat
 // ---------------------------------------------------------------------------
 
-/** "155% damage plus 180. Must be behind the target." */
-export const SHRED_BASE_DAMAGE = 180;
-export const SHRED_WEAPON_FRACTION = 1.55;
+/**
+ * "200% damage plus 80. Must be behind the target." 1.60.1.70755: "Shred:
+ * Weapon damage percent increased to 200% from 155%". The 80 is
+ * foreverchanges.pro's figure at max rank, which wins; this file carried 180
+ * from round 70 and the old capture said 124, so the flat part is the reading
+ * to check first if Shred comes in low.
+ */
+export const SHRED_BASE_DAMAGE = 80;
+export const SHRED_WEAPON_FRACTION = 2;
 
 export const SHRED: Ability = {
   id: 'shred',
@@ -380,7 +387,8 @@ export const PROWL_ABILITY: Ability = {
 };
 
 export const RAVAGE_BASE_DAMAGE = 343;
-export const RAVAGE_WEAPON_FRACTION = 3.5;
+// 435% since 1.60.1.70755 ("increased from 350% to 435%").
+export const RAVAGE_WEAPON_FRACTION = 4.35;
 
 export const RAVAGE: Ability = {
   id: 'ravage',
@@ -410,7 +418,8 @@ export const RAVAGE: Ability = {
 // 115 from foreverchanges.pro against our capture's 126, same rank 5, same
 // build. Its 110% weapon fraction agrees on both sides.
 export const CLAW_BASE_DAMAGE = 115;
-export const CLAW_WEAPON_FRACTION = 1.1;
+// 140% since 1.60.1.70755 ("increased to 140% from 110%").
+export const CLAW_WEAPON_FRACTION = 1.4;
 
 export const CLAW: Ability = {
   id: 'claw',
@@ -436,7 +445,8 @@ export const CLAW: Ability = {
 };
 
 /** "61 damage and an additional 102 damage over 9 sec." */
-export const RAKE_DIRECT_DAMAGE = 61;
+// 76 since 1.60.1.70755 (Rake's base points "+25%", foreverchanges.pro's figure).
+export const RAKE_DIRECT_DAMAGE = 76;
 
 export const RAKE: Ability = {
   id: 'rake',
@@ -483,8 +493,14 @@ export const RAKE: Ability = {
  * half of the cost was absent from the resource breakdown. Both go through
  * `simulation.spendResource` now.
  */
-export const FEROCIOUS_BITE_BY_COMBO_POINT: readonly number[] = [229, 376, 523, 670, 817];
-export const FEROCIOUS_BITE_DAMAGE_PER_ENERGY = 2.7;
+/*
+ * 1.60.1.70755: a new rank 1 relabelled every rank one higher, and "base points
+ * and attack power scaling increased by about 25%" -- at max rank 245-321 to
+ * 969-1045, and 3.3 a point of extra energy (was 2.7), read off
+ * foreverchanges.pro. The midpoints, as before.
+ */
+export const FEROCIOUS_BITE_BY_COMBO_POINT: readonly number[] = [283, 464, 645, 826, 1007];
+export const FEROCIOUS_BITE_DAMAGE_PER_ENERGY = 3.3;
 
 export const FEROCIOUS_BITE: Ability = {
   id: 'ferocious_bite',

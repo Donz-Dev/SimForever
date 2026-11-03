@@ -632,7 +632,7 @@
    "name": "Two-Handed Weapon Specialization",
    "tree": "retribution",
    "ranks": 3,
-   "text": "Increases the physical damage you deal by {0}%, and reduces all threat you generate by {1}% while a two-handed melee weapon is equipped.",
+   "text": "Increases the Physical and Holy damage you deal by {0}%, and reduces all threat you generate by {1}% while a two-handed melee weapon is equipped.",
    "values": [
     [
      2,
@@ -681,17 +681,17 @@
     [
      1,
      30,
-     3
+     5
     ],
     [
      2,
      30,
-     3
+     5
     ],
     [
      3,
      30,
-     3
+     5
     ]
    ]
   },

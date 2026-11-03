@@ -14,7 +14,8 @@ import {
   DEADLY_POISON_MAX_STACKS,
   DEADLY_POISON_TICKS,
   deadlyPoisonAura,
-  venomAura,
+  VENOM,
+  VENOM_DURATION_MS,
   VENOM_POISON_CHANCE_BONUS,
   VENOM_POISON_DAMAGE_BONUS,
 } from '../../src/game/auras/rogue';
@@ -57,8 +58,9 @@ describe('the numbers, from the capture', () => {
   });
 
   it('carries the sheet’s coefficients', () => {
-    expect(INSTANT_POISON_AP_COEFFICIENT).toBe(0.005);
-    expect(DEADLY_POISON_TICK_AP_COEFFICIENT).toBe(0.0045);
+    // Both doubled at 1.60.1.70755 (were 0.005 and 0.0045).
+    expect(INSTANT_POISON_AP_COEFFICIENT).toBe(0.01);
+    expect(DEADLY_POISON_TICK_AP_COEFFICIENT).toBe(0.009);
   });
 
   it('makes a full stack 460 over twelve seconds, ticking 115', () => {
@@ -186,11 +188,10 @@ describe('Venom, the finisher that buffs them', () => {
    * coefficient moves, adding one line to a list re-measures it honestly.
    * ----------------------------------------------------------------------------
    */
-  it('lasts nine to twenty-one seconds, by combo points spent', () => {
-    // The same five durations Slice and Dice uses; the source states both.
-    expect(venomAura(1).durationMs).toBe(9000);
-    expect(venomAura(3).durationMs).toBe(15_000);
-    expect(venomAura(5).durationMs).toBe(21_000);
+  it('lasts six seconds from a Shank (1.60.1.70755)', () => {
+    // A passive on Shank now; it was a finisher lasting 9..21 s by points.
+    expect(VENOM.durationMs).toBe(6000);
+    expect(VENOM_DURATION_MS).toBe(6000);
   });
 
   it('ADDS its bonuses rather than multiplying them, per the owner', () => {
@@ -200,33 +201,33 @@ describe('Venom, the finisher that buffs them', () => {
      * ruling was asked for and why it is pinned here.
      */
     expect(VENOM_POISON_DAMAGE_BONUS).toBe(0.3);
-    expect(VENOM_POISON_CHANCE_BONUS).toBe(0.1);
+    // 20 points since 1.60.1.70755 (it was 10).
+    expect(VENOM_POISON_CHANCE_BONUS).toBe(0.2);
 
     const talented = poisonTalentBonuses({ vile_poisons: 5 }).damageMultiplier;
     expect(talented + VENOM_POISON_DAMAGE_BONUS).toBeCloseTo(1.5, 6);
     expect(talented + VENOM_POISON_DAMAGE_BONUS).not.toBeCloseTo(1.2 * 1.3, 3);
 
-    // And the apply chance gains twenty POINTS, not ten of each in turn.
+    // And the apply chance gains thirty POINTS, not ten and twenty in turn.
     const chance =
       INSTANT_POISON_CHANCE +
       poisonTalentBonuses({ improved_poisons: 5 }).extraChance +
       VENOM_POISON_CHANCE_BONUS;
-    expect(chance).toBeCloseTo(0.4, 6);
+    expect(chance).toBeCloseTo(0.5, 6);
   });
 
-  it('is granted by the talent and by nothing else', () => {
-    const knows = (preset: string) =>
+  it('is a flag on Shank from the talent and from nothing else', () => {
+    const venomOnShank = (preset: string) =>
       abilitiesForClass(
         'rogue',
         PRESETS_BY_ID.get(preset)!.build().character.combatStyle as never,
         PRESETS_BY_ID.get(preset)!.build().talents,
-      ).some((ability) => ability.id === 'venom');
+      ).find((ability) => ability.id === 'shank')?.bonuses?.venom === 1;
 
-    // Only the Assassination build takes it.
-    expect(knows('rogue_venom')).toBe(true);
-    expect(knows('rogue_combat')).toBe(false);
-    // Hemo Dagger stands in for the Rupture preset, removed in round 82.
-    expect(knows('rogue_hemo')).toBe(false);
+    // The Mutilate builds take it; Mutilate sits under it now.
+    expect(venomOnShank('rogue_venom')).toBe(true);
+    expect(venomOnShank('rogue_combat')).toBe(false);
+    expect(venomOnShank('rogue_hemo')).toBe(false);
   });
 
   it('really does raise poison damage when it is up', () => {

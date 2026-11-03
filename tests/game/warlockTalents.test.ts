@@ -166,41 +166,19 @@ describe('Ruin and Agonizing Flames, which select a TREE and not a school', () =
   });
 });
 
-describe('Improved Drains and Soul Siphon, which reach Wrack and nothing else', () => {
+describe('Improved Drains and Soul Siphon, and which of them still reaches Wrack', () => {
   const smds = playerFor('warlock_smds');
 
-  it('Improved Drains reaches Wrack ALONE now, because Malediction is gone', () => {
+  it('Improved Drains no longer reaches Wrack, at 1.60.1.70755', () => {
     /*
-     * ------------------------------------------------------------------------
-     * 1.2, AND IT WAS 1.2 x 1.05 FOR EXACTLY ONE RELEASE.
-     *
-     * Improved Drains names "Drain Life, Drain Soul, and Wrack" and is the only
-     * one of those three this project declares. MALEDICTION was the other
-     * factor -- "all periodic damage done by your Warlock spells", with the
-     * owner's ruling that a channel's ticks count for it -- and client build
-     * 1.60.1.70425 DELETED THE TALENT, putting GRIM REACH in its slot at two
-     * ranks.
-     *
-     * SO THIS ASSERTION HAS NOW BEEN 1.2, THEN THE PRODUCT, THEN 1.2 AGAIN, and
-     * the middle state is the one worth keeping a record of: the factor was a
-     * RULING rather than a reading, so losing it is the ruleset changing its
-     * mind about the talent rather than this project changing its mind about
-     * the ruling. The owner's answer still stands for any future talent that
-     * says "periodic".
-     *
-     * THEY MULTIPLIED RATHER THAN ADDING, which is `combineAbilityModifiers`'
-     * rule for damage and the same one `SchoolModifiers` uses: two independent
-     * +10% effects are +21%. Nothing exercises that on Wrack any more, which is
-     * why the negative assertion below is here -- a product collapsing to one
-     * factor reads exactly like a second factor that stopped being wired up.
-     * ------------------------------------------------------------------------
+     * "Now increases Drain Mana's amount of Mana drained but no longer
+     * increases Wrack damage." It read 1.2, then 1.2 x 1.05 while Malediction
+     * existed, then 1.2 again; now nothing reaches Wrack at all. The spells
+     * it still names are undeclared, so the talent is inert and says so.
      */
-    const improvedDrains = 1.2;
-    expect(smds.abilityModifiers.for('wrack').damageMultiplier).toBeCloseTo(improvedDrains, 6);
-    // And NOT the old product, which is what a half-reverted removal would give.
-    expect(smds.abilityModifiers.for('wrack').damageMultiplier).not.toBeCloseTo(
-      improvedDrains * 1.05,
-      6,
+    expect(smds.abilityModifiers.for('wrack').damageMultiplier ?? 1).toBe(1);
+    expect(WARLOCK_TALENT_EFFECTS.improved_drains.every((e) => e.kind === 'unmodelled')).toBe(
+      true,
     );
   });
 

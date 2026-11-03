@@ -8,6 +8,7 @@ import {
   SHIELD_SPECIALIZATION_USED,
   VINDICATION_CHANCE,
   redoubtAura,
+  VENGEANCE_MAX_STACKS,
   vengeanceAura,
   vindicationDebuff,
 } from '../auras/paladin';
@@ -71,15 +72,19 @@ const LANDED = ['hit', 'crit', 'glance', 'crush', 'block'] as const;
  * ITS STACK CAP WENT 5 TO 3 IN THE SAME PATCH, which is where the figure moved.
  * See `VENGEANCE_MAX_STACKS`.
  */
-export const vengeance: TalentReactionBuilder = (percentPerStack) => ({
-  id: 'vengeance',
-  on: 'dealt',
-  outcomes: ['crit'],
-  canTrigger: (_context, _actor, attack) => attack.amount > 0,
-  onTrigger: (context, actor) => {
-    context.applyAura(actor, vengeanceAura(percentPerStack), actor.id);
-  },
-});
+export const vengeance: TalentReactionBuilder = (percentPerStack, values) => {
+  // The cap is the row's third number: 5 since 1.60.1.70755, 3 before it.
+  const maxStacks = values?.[2] ?? VENGEANCE_MAX_STACKS;
+  return {
+    id: 'vengeance',
+    on: 'dealt',
+    outcomes: ['crit'],
+    canTrigger: (_context, _actor, attack) => attack.amount > 0,
+    onTrigger: (context, actor) => {
+      context.applyAura(actor, vengeanceAura(percentPerStack, maxStacks), actor.id);
+    },
+  };
+};
 
 /**
  * Redoubt: a damaging melee attack against the Paladin may raise block chance.

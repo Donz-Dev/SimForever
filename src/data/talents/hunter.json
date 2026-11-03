@@ -1,6 +1,6 @@
 {
  "class": "hunter",
- "source": "https://talentsforever.com/talents.js",
+ "source": "https://foreverchanges.pro/talents/hunter",
  "trees": [
   {
    "id": "beast_mastery",
@@ -54,23 +54,23 @@
      "row": 1,
      "col": 2,
      "ranks": 2,
-     "name": "Pathfinding",
-     "icon": "ability_mount_jungletiger",
-     "tier": 5,
-     "requires": null,
-     "requiresRanks": null,
-     "description": "Increases the speed bonus of your Aspect of the Cheetah and Aspect of the Pack by 6%."
-    },
-    {
-     "row": 1,
-     "col": 3,
-     "ranks": 2,
      "name": "Improved Revive Pet",
      "icon": "ability_hunter_beastsoothe",
      "tier": 5,
      "requires": null,
      "requiresRanks": null,
      "description": "Revive Pet's casting time is reduced by 6 sec, mana cost is reduced by 40%, and increases the health your pet returns with by an additional 30%."
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "ranks": 2,
+     "name": "Pathfinding",
+     "icon": "ability_mount_jungletiger",
+     "tier": 10,
+     "requires": null,
+     "requiresRanks": null,
+     "description": "Increases the speed bonus of your Aspect of the Cheetah and Aspect of the Pack by 6%."
     },
     {
      "row": 2,
@@ -125,7 +125,7 @@
      "tier": 15,
      "requires": null,
      "requiresRanks": null,
-     "description": "Command a hawk to dive-bomb your targeted enemy, dealing 32 plus 5% of your Ranged Attack Power Physical damage and continuing its assault for 18 sec. Only 2 hawks can be active at once. Summon Hawk shares its cooldown with Arcane Shot."
+     "description": "Command a hawk to dive-bomb your targeted enemy, dealing 34 Physical damage and continuing its assault for 18 sec. Only 2 hawks can be active at once. Summon Hawk shares its cooldown with Arcane Shot."
     },
     {
      "row": 4,
@@ -296,7 +296,7 @@
      "tier": 15,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases the Ranged Attack Power of party or raid members within 45 yds by 30."
+     "description": "Increases the Ranged Attack Power of party or raid members within 45 yds by 20."
     },
     {
      "row": 3,
@@ -329,7 +329,7 @@
      "tier": 20,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases the damage done by your Multi-Shot, Aimed Shot, and Volley abilities by 10%."
+     "description": "Increases the damage done by your Multi-Shot, Aimed Shot, and Volley abilities by 15%."
     },
     {
      "row": 4,
@@ -362,7 +362,7 @@
      "tier": 30,
      "requires": "Trueshot Aura",
      "requiresRanks": 1,
-     "description": "A long-range shot that deals ranged damage plus 160 and increases the range of your next 3 Shots by 10 yards for 10 sec."
+     "description": "A long-range shot that deals ranged damage plus 320 and increases the range of your next 3 Shots by 10 yards for 10 sec."
     }
    ]
   },
@@ -500,7 +500,7 @@
      "tier": 15,
      "requires": "Deterrence",
      "requiresRanks": 1,
-     "description": "A strike that becomes active after parrying an opponent's attack. This attack deals 50% weapon damage plus 13 and immobilizes the target for 5 sec. Counterattack cannot be blocked, dodged, or parried."
+     "description": "A strike that becomes active after parrying an opponent's attack. This attack deals 50% weapon damage plus 26 and immobilizes the target for 5 sec. Counterattack cannot be blocked, dodged, or parried."
     },
     {
      "row": 4,
@@ -555,7 +555,7 @@
      "tier": 25,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases your Agility by 10%."
+     "description": "Increases your Agility by 15%."
     },
     {
      "row": 6,

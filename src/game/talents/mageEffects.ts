@@ -247,7 +247,11 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'abilityCastTime', abilityId: 'arcane_wrath' },
   ],
 
-  ignite: [{ kind: 'reaction', reactionId: 'ignite' }],
+  ignite: [
+    { kind: 'reaction', reactionId: 'ignite' },
+    // Flamestrike's ticks too, since 1.60.1.70755. See `igniteFlamestrikeTicks`.
+    { kind: 'reaction', reactionId: 'ignite_flamestrike_ticks' },
+  ],
 
   flame_throwing: [{ kind: 'unmodelled', scope: 'positioning', reason: NO_POSITION }],
 
