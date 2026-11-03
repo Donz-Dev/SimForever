@@ -731,8 +731,13 @@ export const WRACK_TICK_SP_COEFFICIENT = 0.286;
 // Druid
 // ---------------------------------------------------------------------------
 
-/** Ferocious Bite: 3% of attack power per combo point spent. */
-export const FEROCIOUS_BITE_AP_COEFFICIENT_PER_COMBO_POINT = 0.03;
+/**
+ * Ferocious Bite: 3.75% of attack power per combo point spent -- the sheet's 3%
+ * raised 25% at 1.60.1.70755 ("base points and attack power scaling increased
+ * by about 25%"). "About" is taken as exactly a quarter; Rip, Rake and Pounce
+ * were raised by the same sentence and get the same treatment.
+ */
+export const FEROCIOUS_BITE_AP_COEFFICIENT_PER_COMBO_POINT = 0.0375;
 
 /**
  * Rip: 4% of attack power per combo point spent, OVER THE WHOLE DURATION.
@@ -761,7 +766,8 @@ export const FEROCIOUS_BITE_AP_COEFFICIENT_PER_COMBO_POINT = 0.03;
  * inconsistency between the two halves of the same effect was the tell.
  * ----------------------------------------------------------------------------
  */
-export const RIP_AP_COEFFICIENT_PER_COMBO_POINT = 0.04;
+// 5% since 1.60.1.70755, the 4% raised a quarter. See Ferocious Bite's.
+export const RIP_AP_COEFFICIENT_PER_COMBO_POINT = 0.05;
 
 export const STARFIRE_SP_COEFFICIENT = 1;
 export const WRATH_SP_COEFFICIENT = 0.57;
@@ -790,8 +796,9 @@ export const MOONFIRE_TICK_SP_COEFFICIENT = 0.13;
  * sheet would otherwise read this as drift.
  * ----------------------------------------------------------------------------
  */
-export const RAKE_AP_COEFFICIENT = 0.01;
-export const RAKE_TICK_AP_COEFFICIENT = 0.055;
+// Both raised a quarter at 1.60.1.70755. See Ferocious Bite's.
+export const RAKE_AP_COEFFICIENT = 0.0125;
+export const RAKE_TICK_AP_COEFFICIENT = 0.06875;
 
 /**
  * Swipe: 3% of attack power.

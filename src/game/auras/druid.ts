@@ -493,7 +493,8 @@ export function eclipseAura(reductionSeconds: number): AuraDefinition {
  * Nine seconds at a three-second cadence is three ticks, which divides evenly
  * -- the reading that reproduces the stated total.
  */
-export const RAKE_DOT_TOTAL = 102;
+// 126 since 1.60.1.70755 (+25%, foreverchanges.pro's figure).
+export const RAKE_DOT_TOTAL = 126;
 export const RAKE_DOT_DURATION_MS = seconds(9);
 export const RAKE_TICK_INTERVAL_MS = seconds(3);
 
@@ -534,7 +535,8 @@ export const RAKE_DOT: AuraDefinition = {
  */
 export const RIP_DURATION_MS = seconds(12);
 export const RIP_TICK_INTERVAL_MS = seconds(2);
-export const RIP_BY_COMBO_POINT: readonly number[] = [243, 396, 549, 702, 855];
+// +25% at 1.60.1.70755, foreverchanges.pro's figures (were 243 ... 855).
+export const RIP_BY_COMBO_POINT: readonly number[] = [305, 497, 688, 880, 1071];
 
 /**
  * SIX. Twelve seconds at two, and the divisor for BOTH halves of a tick.
