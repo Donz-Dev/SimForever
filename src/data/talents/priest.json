@@ -400,8 +400,8 @@
    ]
   },
   {
-   "id": "shadow_magic",
-   "name": "Shadow Magic",
+   "id": "shadow",
+   "name": "Shadow",
    "talents": [
     {
      "row": 0,

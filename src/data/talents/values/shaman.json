@@ -5,7 +5,7 @@
  "talents": {
   "convection": {
    "name": "Convection",
-   "tree": "elemental_combat",
+   "tree": "elemental",
    "ranks": 5,
    "text": "Reduces the mana cost of your Shock, Lightning Bolt, and Chain Lightning spells by {0}%.",
    "values": [
@@ -18,7 +18,7 @@
   },
   "concussion": {
    "name": "Concussion",
-   "tree": "elemental_combat",
+   "tree": "elemental",
    "ranks": 5,
    "text": "Increases the damage done by your Lightning Bolt, Chain Lightning, and Earth Shock spells by {0}%.",
    "values": [
@@ -31,7 +31,7 @@
   },
   "elemental_devastation": {
    "name": "Elemental Devastation",
-   "tree": "elemental_combat",
+   "tree": "elemental",
    "ranks": 3,
    "text": "Your Critical Strikes with direct damage spells increase your chance to get a Critical Strike with melee attacks by {0}% for {1} sec.",
    "values": [
@@ -51,7 +51,7 @@
   },
   "reverberation": {
    "name": "Reverberation",
-   "tree": "elemental_combat",
+   "tree": "elemental",
    "ranks": 5,
    "text": "Reduces the cooldown of your Shock spells by {0} sec.",
    "values": [
@@ -64,7 +64,7 @@
   },
   "elemental_alacrity": {
    "name": "Elemental Alacrity",
-   "tree": "elemental_combat",
+   "tree": "elemental",
    "ranks": 3,
    "text": "Reduces the cast time of your Lightning Bolt and Chain Lightning spells by {0} sec.",
    "values": [
@@ -75,7 +75,7 @@
   },
   "call_of_flame": {
    "name": "Call of Flame",
-   "tree": "elemental_combat",
+   "tree": "elemental",
    "ranks": 3,
    "text": "Increases the damage done by your Fire Totems and by your Flame Shock and Fire Nova spells by {0}%, as well as increases the duration of your Flame Shock spell by {1} sec.",
    "values": [
@@ -95,7 +95,7 @@
   },
   "elemental_focus": {
    "name": "Elemental Focus",
-   "tree": "elemental_combat",
+   "tree": "elemental",
    "ranks": 1,
    "text": "Gives you a 10% chance to enter a Clearcasting state after casting any Fire, Frost, or Nature damage spell. The Clearcasting state reduces the mana cost of your next damage spell by 100%.",
    "values": [
@@ -105,7 +105,7 @@
   },
   "elemental_warding": {
    "name": "Elemental Warding",
-   "tree": "elemental_combat",
+   "tree": "elemental",
    "ranks": 3,
    "text": "Reduces damage taken from Fire, Frost, and Nature effects by {0}%.",
    "values": [
@@ -116,7 +116,7 @@
   },
   "trial_by_fire": {
    "name": "Trial by Fire",
-   "tree": "elemental_combat",
+   "tree": "elemental",
    "ranks": 2,
    "text": "Increases the damage done by your Fire Nova spell by {0}% and reduces its cooldown by {1} sec, and increases the duration of your Magma Totem by {2} sec.",
    "values": [
@@ -134,7 +134,7 @@
   },
   "eye_of_the_storm": {
    "name": "Eye of the Storm",
-   "tree": "elemental_combat",
+   "tree": "elemental",
    "ranks": 3,
    "text": "Gives your Lightning Bolt and Chain Lightning spells a {0}% chance to not lose casting time when you take damage.",
    "values": [
@@ -145,7 +145,7 @@
   },
   "earthbound": {
    "name": "Earthbound",
-   "tree": "elemental_combat",
+   "tree": "elemental",
    "ranks": 1,
    "text": "Your Earthbind Totem Immobilizes nearby targets for 5 sec when cast.",
    "values": null,
@@ -153,7 +153,7 @@
   },
   "elemental_reach": {
    "name": "Elemental Reach",
-   "tree": "elemental_combat",
+   "tree": "elemental",
    "ranks": 2,
    "text": "Increases the range of your Lightning Bolt, Chain Lightning, and Fire Nova spells by {0} yards.",
    "values": [
@@ -163,7 +163,7 @@
   },
   "call_of_thunder": {
    "name": "Call of Thunder",
-   "tree": "elemental_combat",
+   "tree": "elemental",
    "ranks": 1,
    "text": "Increases the critical strike chance of your Lightning Bolt and Chain Lightning spells by 5%.",
    "values": null,
@@ -171,7 +171,7 @@
   },
   "lightning_overload": {
    "name": "Lightning Overload",
-   "tree": "elemental_combat",
+   "tree": "elemental",
    "ranks": 3,
    "text": "Gives your Lightning Bolt and Chain Lightning spells a {0}% chance to cast a second, similar spell on the same target at no additional cost that causes half damage and no threat.",
    "values": [
@@ -182,7 +182,7 @@
   },
   "elemental_fury": {
    "name": "Elemental Fury",
-   "tree": "elemental_combat",
+   "tree": "elemental",
    "ranks": 5,
    "text": "Increases the critical strike damage bonus of your Searing and Magma Totems and your Fire, Frost, and Nature spells by {0}%.",
    "values": [
@@ -195,7 +195,7 @@
   },
   "lightning_mastery": {
    "name": "Lightning Mastery",
-   "tree": "elemental_combat",
+   "tree": "elemental",
    "ranks": 1,
    "text": "Gain mastery over Lightning, reducing the cast time of your Lightning Bolt spell by 0.5 sec, and removing the cooldown from your Chain Lightning spell. Lasts 15 sec.",
    "values": null,

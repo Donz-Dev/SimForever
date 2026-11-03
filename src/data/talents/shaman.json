@@ -3,8 +3,8 @@
  "source": "https://foreverchanges.pro/talents/shaman",
  "trees": [
   {
-   "id": "elemental_combat",
-   "name": "Elemental Combat",
+   "id": "elemental",
+   "name": "Elemental",
    "talents": [
     {
      "row": 0,

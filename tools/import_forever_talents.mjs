@@ -236,6 +236,20 @@ const CAPTURE_CORRECTIONS = {
 };
 
 /**
+ * foreverchanges.pro's TREE names where they differ from the client's own.
+ *
+ * At 1.60.1.70755 the site calls two trees "Shadow Magic" and "Elemental
+ * Combat" -- the spellbook tab names -- where the client's talent frame, and
+ * every file on disk, says "Shadow" and "Elemental". The tree id is slugified
+ * from the name, so taking the site's word would rename two trees and leave
+ * every allocation, build URL and test naming them pointing at nothing.
+ */
+const CAPTURE_TREE_NAMES = {
+  'Shadow Magic': 'Shadow',
+  'Elemental Combat': 'Elemental',
+};
+
+/**
  * A foreverchanges.pro capture, as the talentsforever payload shape.
  *
  * Trees in the order they first appear, talents by row then column -- which is
@@ -246,8 +260,9 @@ function fromCapture(path) {
   const captured = JSON.parse(readFileSync(path, 'utf8'));
   const trees = [];
   for (const t of captured) {
-    let tree = trees.find((x) => x.name === t.tree);
-    if (!tree) trees.push((tree = { name: t.tree, talents: [] }));
+    const treeName = CAPTURE_TREE_NAMES[t.tree] ?? t.tree;
+    let tree = trees.find((x) => x.name === treeName);
+    if (!tree) trees.push((tree = { name: treeName, talents: [] }));
     tree.talents.push({
       name: t.name,
       row: t.tier + 1,
