@@ -8,7 +8,6 @@ import hunterValues from '../../data/talents/values/hunter.json';
 import warlockValues from '../../data/talents/values/warlock.json';
 import priestValues from '../../data/talents/values/priest.json';
 import type { ClassId } from '../character';
-import { patchNoteValue } from './patchNoteValues';
 
 /**
  * The per-rank numbers behind talent effects.
@@ -112,22 +111,11 @@ export function talentValue(
   rank: number,
 ): TalentValue | undefined {
   /*
-   * ==========================================================================
-   * A SOURCE THAT RUNS AHEAD OF THE CLIENT OUTRANKS THE GENERATED VALUE, AND
-   * IT IS CONSULTED HERE RATHER THAN AT EACH READER.
-   *
-   * THIS IS THE ROOT AND THAT IS THE WHOLE REASON IT IS HERE. `talentNumber`,
-   * `talentNumbers` and `talentDescription` all come through this function, so
-   * the override reaches the fight AND the Talent panel together.
-   *
-   * Built, deleted, rebuilt and deleted again as the client caught up; rebuilt
-   * a third time for two Hunter talents foreverchanges.pro states ahead of the
-   * talentsforever.com capture. `patchNoteValues.test.ts` fails the moment a
-   * refresh moves a generated row, which is how it expires.
-   * ==========================================================================
+   * THE PATCH-NOTE OVERRIDE LAYER IS GONE A THIRD TIME: its two rows, Barrage
+   * and Lightning Reflexes, ship at 1.60.1.70755 exactly as foreverchanges.pro
+   * stated them a day earlier. `git log` has the shape for the next note that
+   * runs ahead of the client.
    */
-  const overridden = patchNoteValue(characterClass, talentId, rank);
-  if (overridden !== undefined) return overridden;
 
   const entry = FILES[characterClass]?.talents[talentId];
   if (!entry?.values) return undefined;

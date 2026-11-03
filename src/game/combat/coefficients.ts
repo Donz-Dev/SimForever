@@ -328,11 +328,11 @@ export const HAMMER_OF_WRATH_SP_COEFFICIENT = 0.4285714285714286;
 // Hunter — every row unchanged by the sheet, and transcribed to say so.
 // ---------------------------------------------------------------------------
 
-/** Serpent Sting: 15% of ranged attack power over its duration. */
-export const SERPENT_STING_RAP_COEFFICIENT = 0.15;
+/** Serpent Sting: 25% of ranged attack power over its duration -- 5% a tick since 1.60.1.70755. */
+export const SERPENT_STING_RAP_COEFFICIENT = 0.25;
 
-/** Arcane Shot: 10% of ranged attack power. */
-export const ARCANE_SHOT_RAP_COEFFICIENT = 0.1;
+/** Arcane Shot: 15% of ranged attack power since 1.60.1.70755 (was 10%). */
+export const ARCANE_SHOT_RAP_COEFFICIENT = 0.15;
 
 // ---------------------------------------------------------------------------
 // Rogue

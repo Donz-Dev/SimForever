@@ -143,7 +143,8 @@ export const ASPECT_OF_THE_BEAST_ABILITY: Ability = {
  * two sources disagree, by the owner's standing rule.
  */
 export const ARCANE_SHOT_DAMAGE = 280;
-export const ARCANE_SHOT_RAP_COEFFICIENT = 0.1;
+// 0.15 since 1.60.1.70755: "Attack Power coefficient raised from 0.1 to 0.15".
+export const ARCANE_SHOT_RAP_COEFFICIENT = 0.15;
 
 export const ARCANE_SHOT: Ability = {
   id: 'arcane_shot',
@@ -646,11 +647,17 @@ export const SUMMON_HAWK: Ability = {
  * enforces against a single target.
  * ----------------------------------------------------------------------------
  */
+export const HUNTER_TRAP_COOLDOWN_GROUP = 'hunter_trap';
+
 export const IMMOLATION_TRAP_ABILITY: Ability = {
   id: 'immolation_trap',
   name: 'Immolation Trap',
   cost: { resource: 'mana', amount: 245 },
   cooldownMs: seconds(30),
+  // ONE COOLDOWN FOR EVERY TRAP since 1.60.1.70755: "All types of Hunter traps
+  // now have the same shared 30 second cooldown, instead of separate cooldowns
+  // for Fire-based and Frost-based traps."
+  cooldownGroup: HUNTER_TRAP_COOLDOWN_GROUP,
   onCast: ({ simulation, caster, target }) => {
     if (!target) return;
     simulation.applyAura(target, IMMOLATION_TRAP, caster.id);
@@ -731,6 +738,7 @@ export const EXPLOSIVE_TRAP_ABILITY: Ability = {
   name: 'Explosive Trap',
   cost: { resource: 'mana', amount: 520 },
   cooldownMs: seconds(30),
+  cooldownGroup: HUNTER_TRAP_COOLDOWN_GROUP,
   // "to all within 10 yards", which is every target in the fight (round 57).
   targets: { maxTargets: Infinity },
   onCast: ({ simulation, caster, target, ability }) => {

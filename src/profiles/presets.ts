@@ -2106,7 +2106,12 @@ const HUNTER_LONE_WOLF_RANGED_TALENTS: TalentAllocation = {
 const HUNTER_HAWK_MELEE_TALENTS: TalentAllocation = {
   deadly_aspects: 5,
   improved_aspect_of_the_monkey: 3,
-  pathfinding: 2,
+  /*
+   * PATHFINDING MOVED TO ROW 3 AT 1.60.1.70755 and stranded Unleashed Fury and
+   * Summon Hawk under it; its two points go to Endurance Training in row 1,
+   * which holds the tree up. Ours, flagged for the owner.
+   */
+  endurance_training: 2,
   unleashed_fury: 5,
   summon_hawk: 1,
   lethal_attacks: 5,
