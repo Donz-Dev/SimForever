@@ -551,51 +551,67 @@ const FURY_PROT_TALENTS: TalentAllocation = {
  */
 const ROGUE_SECONDARY_POTION = 'secondary_major_healing_potion';
 
+/*
+ * 1.60.1.70755 REMADE THE ROGUE TREES -- Murder, Quietus, Cutthroat, Thousand
+ * Cuts and Improved Distract gone; Lethality, Seal Fate, Dual Wield
+ * Specialization and Camouflage shrunk; Relentless Strikes five ranks; Venom a
+ * Shank passive; Mutilate under Venom. So THIS BUILD IS OURS, the smallest
+ * legal edit keeping the profile's identity, and flagged for the owner to
+ * replace with their own URL.
+ */
 const ROGUE_VENOM_TALENTS: TalentAllocation = {
-  // The owner's respecification, decoded from https://talentsforever.com/rogue/60/00530210541501051-30230320201-002-CFD2I2GDIJ3KLNPQRTWUZXbkJ-7
-  malice: 5,
-  ruthlessness: 3,
-  improved_slice_and_dice: 2,
-  relentless_strikes: 1,
-  lethality: 5,
-  vile_poisons: 4,
-  cold_blood: 1,
-  improved_poisons: 5,
-  mutilate: 1,
-  seal_fate: 5,
-  venom: 1,
-  improved_eviscerate: 3,
-  lightning_reflexes: 2,
-  puncturing_wounds: 3,
-  precision: 3,
-  endurance: 2,
-  improved_sprint: 2,
-  flawless_execution: 1,
-  opportunity: 2,
-};
-
-/** Combat -- Assassination 18 / Combat 33. Sinister Strike and the cooldowns. */
-const ROGUE_COMBAT_TALENTS: TalentAllocation = {
-  // The owner's respecification, decoded from https://talentsforever.com/rogue/60/00530310501-32003311201515231--CFDGIKRSWVYZXbcdefgh-7
+  // Assassination, 36. Vigor holds the poison row up: it needs 15 above it.
   malice: 5,
   ruthlessness: 3,
   improved_slice_and_dice: 3,
-  relentless_strikes: 1,
-  lethality: 5,
+  lethality: 2,
+  vigor: 2,
+  vile_poisons: 5,
   cold_blood: 1,
-  improved_eviscerate: 3,
-  improved_sinister_strike: 2,
-  deflection: 3,
+  improved_poisons: 5,
+  relentless_strikes: 5,
+  venom: 1,
+  seal_fate: 3,
+  mutilate: 1,
+  // Combat, 11: row 1 needs five above it.
+  coup_de_grace: 3,
+  efficient_strikes: 2,
+  puncturing_wounds: 3,
   precision: 3,
-  endurance: 1,
-  riposte: 1,
-  improved_sprint: 2,
+  // Subtlety, 4: Opportunity is 4% a rank to Mutilate now.
+  opportunity: 4,
+};
+
+/** Combat -- Assassination 18 / Combat 33. Sinister Strike and the cooldowns. */
+/*
+ * 1.60.1.70755 REMADE THE ROGUE TREES -- Murder, Quietus, Cutthroat, Thousand
+ * Cuts and Improved Distract gone; Lethality, Seal Fate, Dual Wield
+ * Specialization and Camouflage shrunk; Relentless Strikes five ranks; Venom a
+ * Shank passive; Mutilate under Venom. So THIS BUILD IS OURS, the smallest
+ * legal edit keeping the profile's identity, and flagged for the owner to
+ * replace with their own URL.
+ */
+const ROGUE_COMBAT_TALENTS: TalentAllocation = {
+  // Assassination, 16
+  malice: 5,
+  ruthlessness: 3,
+  improved_slice_and_dice: 3,
+  lethality: 2,
+  vigor: 2,
+  cold_blood: 1,
+  // Combat, 35: Adrenaline Rush with Flash of Steel under it.
+  coup_de_grace: 3,
+  efficient_strikes: 2,
+  lightning_reflexes: 5,
+  precision: 3,
+  composure: 2,
   flawless_execution: 1,
-  dual_wield_specialization: 5,
-  blade_flurry: 1,
-  hack_and_slash: 5,
   weapon_expertise: 2,
   aggression: 3,
+  dual_wield_specialization: 2,
+  blade_flurry: 1,
+  hack_and_slash: 5,
+  flash_of_steel: 5,
   adrenaline_rush: 1,
 };
 
@@ -624,27 +640,36 @@ const ROGUE_COMBAT_TALENTS: TalentAllocation = {
  * reads to tell the two apart.
  * ============================================================================
  */
+/*
+ * 1.60.1.70755 REMADE THE ROGUE TREES -- Murder, Quietus, Cutthroat, Thousand
+ * Cuts and Improved Distract gone; Lethality, Seal Fate, Dual Wield
+ * Specialization and Camouflage shrunk; Relentless Strikes five ranks; Venom a
+ * Shank passive; Mutilate under Venom. So THIS BUILD IS OURS, the smallest
+ * legal edit keeping the profile's identity, and flagged for the owner to
+ * replace with their own URL.
+ */
 const ROGUE_COMBAT_MUT_TALENTS: TalentAllocation = {
-  // The owner's respecification, decoded from https://talentsforever.com/rogue/60/0053031051150105-3023032020141--CF2D2I2GDIJKLNP4RTWUZXbcdFP-7
+  // Assassination, 33: Mutilate sits under Venom now, and Vigor holds row 3 up.
   malice: 5,
   ruthlessness: 3,
   improved_slice_and_dice: 3,
-  relentless_strikes: 1,
-  lethality: 5,
-  vile_poisons: 1,
-  cold_blood: 1,
+  lethality: 2,
+  vigor: 2,
+  vile_poisons: 2,
   improved_poisons: 5,
+  cold_blood: 1,
+  relentless_strikes: 5,
+  venom: 1,
+  seal_fate: 3,
   mutilate: 1,
-  seal_fate: 5,
-  improved_eviscerate: 3,
-  lightning_reflexes: 2,
+  // Combat, 18. Blade Flurry is out of reach, so its entry is inert.
+  coup_de_grace: 3,
+  efficient_strikes: 1,
+  lightning_reflexes: 3,
   puncturing_wounds: 3,
   precision: 3,
-  endurance: 2,
-  improved_sprint: 2,
-  flawless_execution: 1,
-  dual_wield_specialization: 4,
-  blade_flurry: 1,
+  composure: 2,
+  aggression: 3,
 };
 
 /**
@@ -667,29 +692,39 @@ const ROGUE_COMBAT_MUT_TALENTS: TalentAllocation = {
  * Relentless Strikes, Ruthlessness, Cold Blood and Precision.
  * ============================================================================
  */
+/*
+ * 1.60.1.70755 REMADE THE ROGUE TREES -- Murder, Quietus, Cutthroat, Thousand
+ * Cuts and Improved Distract gone; Lethality, Seal Fate, Dual Wield
+ * Specialization and Camouflage shrunk; Relentless Strikes five ranks; Venom a
+ * Shank passive; Mutilate under Venom. So THIS BUILD IS OURS, the smallest
+ * legal edit keeping the profile's identity, and flagged for the owner to
+ * replace with their own URL.
+ */
 const ROGUE_PURE_HEMO_TALENTS: TalentAllocation = {
-  // The owner's respecification, decoded from https://talentsforever.com/rogue/60/005303105011-302003-5320200310013211-RTWi4kjm1pmituqwxCFDGIKvL-7
+  // Assassination, 19
   malice: 5,
   ruthlessness: 3,
   improved_slice_and_dice: 3,
-  relentless_strikes: 1,
-  lethality: 5,
+  lethality: 2,
+  vigor: 2,
   cold_blood: 1,
-  improved_poisons: 1,
-  improved_eviscerate: 3,
-  lightning_reflexes: 2,
+  improved_poisons: 3,
+  // Combat, 8: Efficient Strikes takes 5 energy off every Hemorrhage.
+  coup_de_grace: 3,
+  efficient_strikes: 2,
   precision: 3,
-  camouflage: 5,
-  master_of_deception: 3,
-  opportunity: 2,
-  elusiveness: 2,
+  // Subtlety, 24
+  opportunity: 5,
+  camouflage: 3,
+  dirty_deeds: 2,
   initiative: 3,
-  ghostly_strike: 1,
   premeditation: 1,
   serrated_blades: 3,
-  dirty_deeds: 2,
+  ghostly_strike: 1,
+  elusiveness: 2,
   preparation: 1,
   hemorrhage: 1,
+  heightened_senses: 2,
 };
 
 /**
@@ -723,72 +758,37 @@ const ROGUE_PURE_HEMO_TALENTS: TalentAllocation = {
  * both its abilities are stealth openers the owner has ruled out for good.
  * ----------------------------------------------------------------------------
  */
+/*
+ * 1.60.1.70755 REMADE THE ROGUE TREES -- Murder, Quietus, Cutthroat, Thousand
+ * Cuts and Improved Distract gone; Lethality, Seal Fate, Dual Wield
+ * Specialization and Camouflage shrunk; Relentless Strikes five ranks; Venom a
+ * Shank passive; Mutilate under Venom. So THIS BUILD IS OURS, the smallest
+ * legal edit keeping the profile's identity, and flagged for the owner to
+ * replace with their own URL.
+ */
 const ROGUE_HEMO_TALENTS: TalentAllocation = {
-  // Assassination, 17
+  // Assassination, 20
   malice: 5,
   ruthlessness: 3,
-  improved_slice_and_dice: 2,
-  relentless_strikes: 1,
-  lethality: 5,
-  /*
-   * COLD BLOOD IS THE NEW POINT, and it is what the respecified list needs:
-   * the owner's Hemo Dagger APL has a Cold Blood entry, and this build did not
-   * take the talent. A list naming an ability the build cannot cast is skipped
-   * IN SILENCE, so the two halves of the respecification only work together.
-   *
-   * IT IS PAID FOR OUT OF IMPROVED SLICE AND DICE, 3 -> 2, for a net of zero.
-   * That is the cheapest place it could have come from on this build: the list
-   * casts Slice and Dice at ONE combo point and only when the buff is DOWN, so
-   * what the talent buys is duration on a buff whose uptime is already the
-   * thing being managed.
-   */
+  improved_slice_and_dice: 3,
+  lethality: 2,
+  vigor: 2,
   cold_blood: 1,
-  /*
-   * IMPROVED POISONS 3, WHERE THE OWNER'S URL SPENT THREE POINTS IN COMBAT ON
-   * IMPROVED EVISCERATE -- round 78's optimisation.
-   *
-   * Eviscerate is about 2% of this build's damage (0.5 casts a minute, behind
-   * a five-point gate with two four-second floors), so +20% to it is worth
-   * almost nothing; three more ranks of poison application reach every swing
-   * of both daggers. Paired over 1,200 fights at 120s it is +14.06 +/- 2.86,
-   * +13.72 +/- 5.40 at five targets for 60s and +9.32 +/- 3.85 at 240s.
-   * Improved Slice and Dice 3 + Improved Poisons 2 measured the same (+14.04)
-   * and Vile Poisons 3 only +5.95. The owner's spread is `HEMO_TREE` in
-   * `tools/optimise/rogueVariants.ts`, one line to restore.
-   *
-   * ASSASSINATION 20 / COMBAT 0 / SUBTLETY 31 NOW. Improved Poisons is tier 15
-   * and the 17 points below it clear the gate.
-   */
-  improved_poisons: 3,
-  /*
-   * ==========================================================================
-   * SUBTLETY IS UNCHANGED, ON THE OWNER'S INSTRUCTION, AND THEIR SCREENSHOT
-   * DISAGREES WITH IT.
-   *
-   * The panel they sent shows Improved Ambush at 0/3 against the 3/3 below,
-   * and states a tree total of 31 either way -- so three points moved inside
-   * Subtlety and the icons were not legible enough to say where to. Asked
-   * which, the owner chose to keep this tree as it is.
-   *
-   * RECORDED RATHER THAN SILENTLY RESOLVED, because it is the one part of this
-   * build that is a READING rather than a statement: if the figure looks wrong
-   * later, this is the first thing to re-ask, and the build URL run through
-   * `decode_talent_build.mjs` is what would settle it in one command.
-   * ==========================================================================
-   */
-  camouflage: 5,
-  master_of_deception: 3,
-  opportunity: 2,
+  improved_poisons: 4,
+  // Subtlety, 31: Death Mark, with Boot Knife on Shank beneath it.
+  opportunity: 5,
   improved_ambush: 3,
+  camouflage: 3,
+  dirty_deeds: 2,
   initiative: 3,
-  improved_distract: 1,
   premeditation: 1,
   serrated_blades: 3,
-  dirty_deeds: 2,
+  ghostly_strike: 1,
+  elusiveness: 2,
   preparation: 1,
   hemorrhage: 1,
-  quietus: 5,
-  thousand_cuts: 1,
+  boot_knife: 5,
+  death_mark: 1,
 };
 
 /** Venom and Rupture: two daggers, which is what those builds are written for. */

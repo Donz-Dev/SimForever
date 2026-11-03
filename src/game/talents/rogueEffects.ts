@@ -1,5 +1,4 @@
 import type { TalentEffects } from './TalentEffect';
-import { THOUSAND_CUTS_BONUS } from '../auras/rogue';
 
 /**
  * Where the two poison talents are really applied, for `appliedElsewhere`.
@@ -85,43 +84,6 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   ruthlessness: [{ kind: 'castReaction', reactionId: 'ruthlessness' }],
 
-  /*
-   * APPLIED, ON THE OWNER'S RULING THAT THE TARGET IS ONE OF THE TWO TYPES.
-   *
-   * "Increases all damage dealt by 4% against Humanoid and Giant targets." Its
-   * old reason -- "conditional on creature type, which no combatant here
-   * carries" -- described the ENGINE and let the question go unasked; the
-   * answer was one message away, and it is the same answer the Hunter's
-   * Improved Tracking already runs on.
-   *
-   * `conditionalDamage` WITH AN EMPTY REQUIREMENT, which is how that talent
-   * expresses "a bonus the engine does not check". It covers auto attacks as
-   * well as abilities, which is what "all damage dealt" means and which matters
-   * here more than anywhere: auto attacks are 55-57% of every Rogue profile.
-   *
-   * NOT the same case as the Paladin's Undead-and-Demon clauses, which stay
-   * inert -- those were ruled the other way for the same target.
-   */
-  /*
-   * ==========================================================================
-   * INERT NOW, BY THE OWNER'S LATER RULING, which reverses the one above: "it's
-   * unrealistic to think you'll always be fighting a humanoid or giant for this
-   * effect." So it is the TARGET cause of inert -- the encounter is not a
-   * Humanoid or a Giant -- and no longer an assumed flat bonus. No preset
-   * spends a point here after the round-37 respecifications, so it moves no
-   * profile; a hand-built Rogue taking it now gets nothing for it.
-   * ==========================================================================
-   */
-  murder: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Damage against Humanoids and Giants, and by the owner ruling the ' +
-        'target is not assumed to be either -- "it is unrealistic to think ' +
-        'you will always be fighting a humanoid or giant". A target cause: it ' +
-        'expires only if an encounter declares a creature type.',
-    },
-  ],
 
   /*
    * The duration bonus reaches the ability as a named number, which Slice and
@@ -134,9 +96,10 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   relentless_strikes: [{ kind: 'castReaction', reactionId: 'relentless_strikes' }],
 
+  // `[energy, refund, at points]`: the refund scales with rank since 1.60.1.70755.
   improved_expose_armor: [
-    { kind: 'abilityCost', abilityId: 'expose_armor' },
-    { kind: 'castReaction', reactionId: 'improved_expose_armor' },
+    { kind: 'abilityCost', abilityId: 'expose_armor', valueIndex: 0 },
+    { kind: 'castReaction', reactionId: 'improved_expose_armor', valueIndex: 1 },
   ],
 
   /*
@@ -234,17 +197,56 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   seal_fate: [{ kind: 'reaction', reactionId: 'seal_fate' }],
 
   /*
-   * GRANTED, now that poisons exist and the owner has ruled on the stacking.
-   * Its +30% is ADDED to Vile Poisons' +20% rather than multiplied, so a
-   * fully talented poison deals 1.5x rather than 1.56x.
+   * A PASSIVE ON SHANK SINCE 1.60.1.70755, no longer a finisher: "Causes your
+   * Shank ability to increase your Poison damage by 30% and your chance to
+   * apply Poisons by 20% for 6 sec." A flag on Shank, which applies the window.
+   * Its +30% is ADDED to Vile Poisons' rather than multiplied, as it was.
    */
-  venom: [{ kind: 'grantAbility', abilityId: 'venom' }],
+  venom: [{ kind: 'abilityFlag', abilityId: 'shank', key: 'venom' }],
 
-  improved_eviscerate: [{ kind: 'abilityDamage', abilityId: 'eviscerate' }],
+  /*
+   * BLOOD SPLATTER (1.60.1.70755): "Increases the duration of your Rupture
+   * ability by 6 sec and your Garrote ability by 9 sec." A flag on each; the
+   * seconds are on the auras.
+   */
+  blood_splatter: [
+    { kind: 'abilityFlag', abilityId: 'rupture', key: 'bloodSplatter' },
+    { kind: 'abilityFlag', abilityId: 'garrote', key: 'bloodSplatter' },
+  ],
+
 
   // --- Combat --------------------------------------------------------------
 
-  improved_sinister_strike: [{ kind: 'abilityCost', abilityId: 'sinister_strike' }],
+  /*
+   * COUP DE GRACE, Improved Eviscerate renamed at 1.60.1.70755: "Increases the
+   * damage done by your Eviscerate ability by {0}%, and the damage and storage
+   * rate of your Death Mark ability by {1}%." The Death Mark damage is its
+   * burst's id; the storage rate rides on the ability.
+   */
+  coup_de_grace: [
+    { kind: 'abilityDamage', abilityId: 'eviscerate', valueIndex: 0 },
+    { kind: 'abilityDamage', abilityId: 'death_mark', valueIndex: 1 },
+    { kind: 'abilityBonus', abilityId: 'death_mark', key: 'coupDeGraceStorage', valueIndex: 1 },
+  ],
+
+  /* EFFICIENT STRIKES, Improved Sinister Strike renamed and widened to Hemorrhage. */
+  efficient_strikes: [
+    { kind: 'abilityCost', abilityId: 'sinister_strike' },
+    { kind: 'abilityCost', abilityId: 'hemorrhage' },
+  ],
+
+  /* COMPOSURE (1.60.1.70755): Poised takes 5/10 more off. See `poised.ts`. */
+  composure: [{ kind: 'abilityBonus', abilityId: 'poised', key: 'composure' }],
+
+  /*
+   * FLASH OF STEEL (1.60.1.70755): "Increases the Energy generated by your
+   * Shank ability by {0} and reduces its cooldown by {1} sec."
+   */
+  flash_of_steel: [
+    { kind: 'abilityBonus', abilityId: 'shank', key: 'flashOfSteelEnergy', valueIndex: 0 },
+    { kind: 'abilityCooldown', abilityId: 'shank', unit: 'seconds', valueIndex: 1 },
+  ],
+
 
   lightning_reflexes: [{ kind: 'stat', stat: 'dodgeChance', operation: 'flat' }],
 
@@ -398,9 +400,9 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    */
   weapon_expertise: [{ kind: 'stat', stat: 'dodgeParryReduction', operation: 'flat' }],
 
+  // Sinister Strike and Eviscerate at 5/10/15% since 1.60.1.70755; Backstab left it.
   aggression: [
     { kind: 'abilityDamage', abilityId: 'sinister_strike' },
-    { kind: 'abilityDamage', abilityId: 'backstab' },
     { kind: 'abilityDamage', abilityId: 'eviscerate' },
   ],
 
@@ -505,28 +507,6 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   ghostly_strike: [{ kind: 'grantAbility', abilityId: 'ghostly_strike' }],
 
-  /*
-   * ITS OLD REASON WAS AN ENGINE CLAIM AND BOTH ITS CLAUSES ARE RULINGS.
-   * "Distract is not implemented" reads as a gap waiting to be filled; the
-   * talent is "increases the RADIUS of your Distract by 5 yds, and further
-   * reduces the STEALTH DETECTION of distracted enemies" -- a radius is
-   * `positioning` and stealth detection is `stealth`, and neither expires.
-   * Distract itself is absent for the same reason rather than by omission.
-   *
-   * TAGGED `positioning`, because an entry carries one scope and the radius
-   * clause is the one the talent is named for. The stealth half is stated in
-   * the reason.
-   */
-  improved_distract: [
-    {
-      kind: 'unmodelled',
-      scope: 'positioning',
-      reason:
-        'Both its clauses are ruled out: a Distract radius is positioning, ' +
-        'and reducing stealth detection is stealth. Distract itself is not ' +
-        'declared for the same reason.',
-    },
-  ],
 
   heightened_senses: [
     {
@@ -579,92 +559,38 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   hemorrhage: [{ kind: 'grantAbility', abilityId: 'hemorrhage' }],
 
-  /*
-   * --------------------------------------------------------------------------
-   * THE OWNER HAS ANSWERED THE THRESHOLD: "quietus is 35%", meaning the last
-   * 35% of the fight by the same CLOCK Execute and Hammer of Wrath run on. So
-   * this is no longer a question about the ruling -- it is a missing
-   * declaration, and a specific one.
-   *
-   * WHAT IT NEEDS: a per-ability DAMAGE modifier active only while the fight is
-   * in its final fraction. `inExecutePhase` is hardcoded to
-   * `EXECUTE_PHASE_FRACTION` and wants a fraction argument; the modifier itself
-   * is the shape `addWhileAura` has, conditioned on the clock rather than on an
-   * aura -- and `Combatant.abilityModifierFor` has no simulation to read a
-   * clock from, which is the actual work.
-   *
-   * BUILD IT WITH THE PRIEST'S EARLY DEMISE, which is the same capability at
-   * 20% and for CRIT rather than damage. Two callers, two classes, one
-   * mechanism -- and the modifier must go through the combatant rather than an
-   * ability's `onCast`, by the standing rule that an ability which forgot to
-   * look would be quietly wrong.
-   *
-   * NO PROFILE TAKES IT, so building it moves nothing and carries no baseline
-   * risk. Its three abilities are Sinister Strike, Ghostly Strike and
-   * Hemorrhage, and only Hemorrhage is cast by any Rogue list.
-   * --------------------------------------------------------------------------
-   */
-  /*
-   * --------------------------------------------------------------------------
-   * THE OWNER'S 35% IS THE CLOCK, declared through the mechanism the PRIEST dive
-   * built rather than the one this dive built. Both branches reached for the same
-   * capability independently and named it differently -- this one
-   * `abilityBelowTargetHealth` taking a list of ids, that one
-   * `abilityDamageInFinalFraction` taking one id per entry.
-   *
-   * ONE MECHANISM, ONE NAME, and the merged project keeps the Priest's: "in final
-   * fraction" describes the MODEL where "below target health" describes the
-   * TOOLTIP, and the whole point of the ruling is that those are not the same
-   * thing.
-   *
-   * THREE ENTRIES BECAUSE THE TOOLTIP NAMES THREE ABILITIES. `fractionIndex: 1`
-   * is the 35 and `valueIndex: 0` is the 2-10%, which is the order
-   * `values/rogue.json` states them at every rank -- [2,35] through [10,35].
-   * Reading them the other way round gives a 35% bonus in the last 2% of the
-   * fight: a plausible-looking number and the wrong one.
-   * --------------------------------------------------------------------------
-   */
-  quietus: [
-    { kind: 'abilityDamageInFinalFraction', abilityId: 'sinister_strike', fractionIndex: 1, valueIndex: 0 },
-    { kind: 'abilityDamageInFinalFraction', abilityId: 'ghostly_strike', fractionIndex: 1, valueIndex: 0 },
-    { kind: 'abilityDamageInFinalFraction', abilityId: 'hemorrhage', fractionIndex: 1, valueIndex: 0 },
+  quick_getaway: [
+    {
+      kind: 'unmodelled',
+      scope: 'crowdControl',
+      reason: 'More Sapped targets and movement speed after a Sap. Sap is crowd control and movement is positioning.',
+    },
   ],
 
   /*
-   * CUTTHROAT IS NOT A STEALTH TALENT, and its old reason -- "Makes Ambush
-   * castable, and Ambush is absent" -- was true of the second half and hid the
-   * first. It is an in-combat proc whose entire purpose is to let Ambush be
-   * used WITHOUT stealth, so a fight that opens in combat is the case it was
-   * written for rather than the case that kills it. It was nonetheless counted
-   * among the eleven Rogue talents inert for exactly that reason.
-   *
-   * The ruleset owner's ruling is what keeps it this small: Ambush is simply
-   * castable while the buff is up, and there is no stealth system at all.
+   * BOOT KNIFE (1.60.1.70755): "Grants your Shank ability a {0}% chance to add
+   * {1} Combo Points to the target."
    */
-  cutthroat: [{ kind: 'reaction', reactionId: 'cutthroat' }],
+  boot_knife: [
+    { kind: 'abilityBonus', abilityId: 'shank', key: 'bootKnifeChance', valueIndex: 0 },
+    { kind: 'abilityBonus', abilityId: 'shank', key: 'bootKnifePoints', valueIndex: 1 },
+  ],
 
   /*
-   * APPLIED, AND IT COULD NOT BE A REACTION. "When your Rupture ability deals
-   * periodic damage, the Energy cost of your next Hemorrhage or Backstab within
-   * 10 sec is reduced by 3, stacking up to 5 times."
-   *
-   * A PERIODIC TICK RUNS NO REACTIONS -- `dealDamage` excludes them explicitly,
-   * because a bleed ticking is not an attack anybody parries -- so the old
-   * reason's "the tick is reachable" was the half that was wrong, and the half
-   * it doubted was the easy one. The tick reaches this by APPLYING AN AURA from
-   * inside `ruptureAura`, which is the only thing that runs there.
-   *
-   * THE NUMBER TRAVELS AS AN `abilityBonus` ON RUPTURE, the same hook Improved
-   * Slice and Dice uses for its duration: the tick needs the talent's value and
-   * an aura definition cannot read an allocation. A Rogue without the talent
-   * passes nothing and applies nothing, so the aura simply never exists.
-   *
-   * AND THE COST REDUCTION IS FLAT. `CastModifier.costFraction` would be right
-   * for a 380-mana spell and is wrong for a 35-energy strike -- three energy is
-   * three energy however the strike is priced -- so `costReduction` is the
-   * field, and it was the missing sibling of `castTimeReductionMs`.
+   * DEATH MARK, the Subtlety capstone at 1.60.1.70755: the ability, and the two
+   * reactions that fill its store -- a hit half and a tick half. Valueless: the
+   * figures are on the ability and its aura.
    */
-  thousand_cuts: [
-    { kind: 'abilityBonus', abilityId: 'rupture', key: THOUSAND_CUTS_BONUS },
+  death_mark: [
+    { kind: 'grantAbility', abilityId: 'death_mark' },
+    { kind: 'reaction', reactionId: 'death_mark_hits', valueless: true },
+    { kind: 'reaction', reactionId: 'death_mark_ticks', valueless: true },
   ],
+
+  /*
+   * REMOVED AT 1.60.1.70755, and gone from this table with them: Murder,
+   * Improved Distract, Quietus, Cutthroat and Thousand Cuts; Improved
+   * Eviscerate and Improved Sinister Strike renamed to Coup de Grace and
+   * Efficient Strikes above. `git log` has every one.
+   */
 };

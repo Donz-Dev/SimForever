@@ -34,10 +34,11 @@ import {
  * damage profile -- "we don't need stealth to properly function, it just needs
  * to enable Ambush."
  *
- * SO THIS IS THE SAME SHAPE CUTTHROAT ALREADY HAS, and deliberately the same
- * id-as-gate pattern: an aura Ambush reads in `canCast`. Two routes to the same
- * gate now, one from a Backstab proc and one from the pull or a Vanish, which is
- * why Ambush checks for EITHER rather than being given a second condition.
+ * SO THIS IS THE SAME SHAPE CUTTHROAT HAD, and deliberately the same id-as-gate
+ * pattern: an aura Ambush reads in `canCast`. Two routes to the same gate, one
+ * from the pull or a Vanish and -- since 1.60.1.70755, in Cutthroat's place --
+ * one from Ghostly Strike, which is why Ambush checks for EITHER rather than
+ * being given a second condition.
  *
  * ----------------------------------------------------------------------------
  * AND THE SECOND THING RULED IN IS THAT IT **ENDS**, WHICH THIS NOTE USED TO
@@ -174,47 +175,10 @@ export const RUPTURE_BY_COMBO_POINT: readonly { damage: number; durationMs: numb
 ];
 
 /*
- * ============================================================================
- * THOUSAND CUTS, which a Rupture TICK applies.
- *
- * "When your Rupture ability deals periodic damage, the Energy cost of your
- * next Hemorrhage or Backstab ability within 10 sec is reduced by 3, stacking
- * up to 5 times."
- *
- * ----------------------------------------------------------------------------
- * IT LIVES ON THE TICK BECAUSE A TICK RUNS NO REACTIONS. `dealDamage` excludes
- * periodic damage from the reaction pass on purpose -- "a bleed ticking is not
- * an attack anyone parries" -- so there is no proc hook here at all and the
- * only thing that runs inside a tick is the tick.
- *
- * `consumedByCast: 'all'` AND NOT `'stack'`. "Your NEXT Hemorrhage or Backstab
- * ... reduced by 3, stacking up to 5 times" is ONE cast that every stack paid
- * for, which is Maelstrom Weapon's shape and not Eclipse's. Spending a single
- * stack would leave four behind and make the talent worth several times what
- * it is -- a bigger number and no error, which is why the enum exists.
- * ============================================================================
+ * THOUSAND CUTS IS GONE at 1.60.1.70755 -- removed from the Subtlety tree with
+ * Quietus and Cutthroat, Death Mark and Boot Knife in their places. It was a
+ * Rupture tick applying an energy discount on the next Hemorrhage or Backstab.
  */
-export const THOUSAND_CUTS_BONUS = 'nextStrikeEnergyReduction';
-export const THOUSAND_CUTS_MAX_STACKS = 5;
-export const THOUSAND_CUTS_DURATION_MS = seconds(10);
-export const THOUSAND_CUTS_ABILITIES: readonly string[] = ['hemorrhage', 'backstab'];
-
-export function thousandCutsAura(energyPerStack: number): AuraDefinition {
-  return {
-    id: 'thousand_cuts',
-    name: 'Thousand Cuts',
-    durationMs: THOUSAND_CUTS_DURATION_MS,
-    maxStacks: THOUSAND_CUTS_MAX_STACKS,
-    // A fresh tick restarts the ten seconds as well as adding a stack.
-    refreshBehaviour: 'reset',
-    castModifier: {
-      abilityIds: THOUSAND_CUTS_ABILITIES,
-      costReduction: energyPerStack,
-      scalesWithStacks: true,
-      consumedByCast: 'all',
-    },
-  };
-}
 
 /**
  * Garrote's bleed: "552 damage over 18 sec, increased by your Attack Power" --
@@ -225,6 +189,21 @@ export function thousandCutsAura(energyPerStack: number): AuraDefinition {
 export const GARROTE_TICK_DAMAGE = 92;
 export const GARROTE_TICK_INTERVAL_MS = seconds(3);
 export const GARROTE_DURATION_MS = seconds(18);
+
+/**
+ * BLOOD SPLATTER (1.60.1.70755) lengthens both bleeds: "Increases the duration
+ * of your Rupture ability by 6 sec and your Garrote ability by 9 sec." More
+ * TICKS at the same per-tick figure -- the duration is what is stated, not the
+ * total -- so a Garrote gains three and a Rupture three.
+ */
+export const BLOOD_SPLATTER_RUPTURE_MS = seconds(6);
+export const BLOOD_SPLATTER_GARROTE_MS = seconds(9);
+/** The `abilityFlag` key Blood Splatter sets on Rupture and Garrote. */
+export const BLOOD_SPLATTER_FLAG = 'bloodSplatter';
+
+export function garroteAura(extraDurationMs = 0): AuraDefinition {
+  return { ...GARROTE, durationMs: GARROTE_DURATION_MS + extraDurationMs };
+}
 
 export const GARROTE: AuraDefinition = {
   id: 'garrote',
@@ -256,14 +235,10 @@ export const GARROTE: AuraDefinition = {
 };
 
 /**
- * Rupture's bleed.
- *
- * `thousandCutsEnergy` is the talent's per-stack energy reduction, handed down
- * from `RUPTURE.onCast` as an `abilityBonus` -- an aura definition cannot read
- * a talent allocation, and a Rogue without the talent passes nothing and
- * applies nothing.
+ * Rupture's bleed. `extraDurationMs` is Blood Splatter's six seconds, which add
+ * ticks at the same per-tick figure.
  */
-export function ruptureAura(comboPoints: number, thousandCutsEnergy = 0): AuraDefinition {
+export function ruptureAura(comboPoints: number, extraDurationMs = 0): AuraDefinition {
   const entry = RUPTURE_BY_COMBO_POINT[clampIndex(comboPoints)];
   const ticks = entry.durationMs / RUPTURE_TICK_INTERVAL_MS;
   const perTick = entry.damage / ticks;
@@ -272,7 +247,7 @@ export function ruptureAura(comboPoints: number, thousandCutsEnergy = 0): AuraDe
   return {
     id: 'rupture',
     name: 'Rupture',
-    durationMs: entry.durationMs,
+    durationMs: entry.durationMs + extraDurationMs,
     isDebuff: true,
     isBleed: true,
     refreshBehaviour: 'reset',
@@ -309,11 +284,6 @@ export function ruptureAura(comboPoints: number, thousandCutsEnergy = 0): AuraDe
           appliesArmor: false,
         });
 
-        // Thousand Cuts, on the SOURCE. The tick is the trigger the talent
-        // names, and a tick runs no reactions -- see the block above.
-        if (thousandCutsEnergy > 0) {
-          context.applyAura(source, thousandCutsAura(thousandCutsEnergy), source.id);
-        }
       },
     },
   };
@@ -507,7 +477,15 @@ export const HEMORRHAGE_DEBUFF: AuraDefinition = {
 
   // and the Mage dive landed it first for Winter's Chill.
 
-  attackerAbilityModifiers: { rupture: { damageMultiplier: 1 + HEMORRHAGE_RUPTURE_BONUS / 100 } },
+  /*
+   * RUPTURE AND GARROTE since 1.60.1.70755 -- "causes the target to take 15%
+   * increased Rupture and Garrote damage from the Rogue". A bleed's tick carries
+   * its aura's id, so the ids reach the ticks.
+   */
+  attackerAbilityModifiers: {
+    rupture: { damageMultiplier: 1 + HEMORRHAGE_RUPTURE_BONUS / 100 },
+    garrote: { damageMultiplier: 1 + HEMORRHAGE_RUPTURE_BONUS / 100 },
+  },
 };
 
 
@@ -515,37 +493,118 @@ export const HEMORRHAGE_DEBUFF: AuraDefinition = {
 
 /*
  * ============================================================================
- * CUTTHROAT, AND WHY IT IS NOT A STEALTH TALENT.
+ * GHOSTLY STRIKE'S OPENER WINDOW, which took Cutthroat's job (1.60.1.70755).
  *
- * "Your Backstab has a 15% chance to cause your next Ambush within 10 sec to
- * not require Stealth." Five ranks, 3/6/9/12/15 percent, a ten second window
- * at every rank.
+ * "...and causes your next Ambush or Garrote cast within 7 sec to not require
+ * Stealth." Cutthroat, the Backstab proc that used to do this for Ambush, is
+ * removed in the same patch. The window is a gate both abilities read in
+ * `canCast` beside STEALTH, and the one that is cast spends it -- "your NEXT
+ * Ambush or Garrote".
  *
- * IT WAS COUNTED AMONG THE ELEVEN ROGUE TALENTS INERT BECAUSE EVERY FIGHT
- * OPENS IN COMBAT, and it is the opposite: an in-combat proc whose entire
- * purpose is to let Ambush be used WITHOUT stealth. Its `unmodelled` reason
- * said "Makes Ambush castable, and Ambush is absent", which was true of the
- * second half and hid the first -- nothing about this talent ever needed a
- * stealth system.
- *
- * THE RULESET OWNER'S RULING IS WHAT MAKES IT THIS SMALL: "because we're never
- * in stealth Cutthroat can simply be modelled by allowing Ambush to be
- * castable only when Cutthroat buff is active." So the aura IS the gate, and
- * Ambush reads it in `canCast` the way Mongoose Bite reads Expose Prey.
+ * NOT `brokenByAction`: it is a proc window an ability spends, not a state an
+ * attack ends, which is the distinction Cutthroat drew against STEALTH.
  * ============================================================================
  */
-export const CUTTHROAT_DURATION_MS = seconds(10);
+export const GHOSTLY_STRIKE_OPENER_DURATION_MS = seconds(7);
 
-export const CUTTHROAT: AuraDefinition = {
-  id: 'cutthroat',
-  name: 'Cutthroat',
-  durationMs: CUTTHROAT_DURATION_MS,
-  /*
-   * RESET, not extend. "Your NEXT Ambush within 10 sec" -- a second proc
-   * starts a fresh window rather than adding to the one running.
-   */
+export const GHOSTLY_STRIKE_OPENER: AuraDefinition = {
+  id: 'ghostly_strike_opener',
+  name: 'Ghostly Strike',
+  durationMs: GHOSTLY_STRIKE_OPENER_DURATION_MS,
   refreshBehaviour: 'reset',
 };
+
+/*
+ * ============================================================================
+ * DEATH MARK, the Subtlety capstone at 1.60.1.70755.
+ *
+ * "Finishing move that marks the target, storing a portion of the damage dealt
+ * by your attacks per Combo Point. Garrote and Rupture damage is stored at
+ * twice the rate. After 6 sec, the stored damage is dealt, up to a maximum
+ * increased by Attack Power and Critical Strike chance" -- at rank 4, the
+ * spellbook's max:
+ *
+ *     1 point : 12% stored,  401 + 4% of attack power cap
+ *     ...
+ *     5 points: 60% stored, 1381 + 20% of attack power cap
+ *
+ * ----------------------------------------------------------------------------
+ * THE STORE LIVES ON THE CAST'S OWN AURA DEFINITION. Each cast builds a fresh
+ * definition carrying a mutable `DeathMarkState`; the Rogue's reaction finds it
+ * through the target's aura instance (`instance.definition`) and adds to it,
+ * and the aura's single periodic tick -- due at six seconds, the moment it
+ * falls off, which a periodic tick still lands -- deals what was stored, capped.
+ * Nothing is shared between casts or characters, so there is no module state.
+ *
+ * WHAT IS NOT MODELLED, said rather than guessed:
+ *   - "AND CRITICAL STRIKE CHANCE": the cap rises with crit chance by an amount
+ *     no source states, so the cap is the AP figure alone.
+ *   - THE BURST CANNOT CRIT AND IGNORES ARMOR: it is damage already dealt once,
+ *     so a crit or armor on it would count those twice. A reading, flagged.
+ *   - IT IS A CURSE AND ROLLS NOTHING: a finisher with a twenty-yard range and
+ *     no table stated, so it always lands.
+ * ============================================================================
+ */
+export const DEATH_MARK_ID = 'death_mark';
+export const DEATH_MARK_DURATION_MS = seconds(6);
+/** Share of damage stored per combo point. */
+export const DEATH_MARK_STORED_PER_POINT = 0.12;
+/** Garrote and Rupture store at twice the rate. */
+export const DEATH_MARK_BLEED_MULTIPLIER = 2;
+export const DEATH_MARK_BLEED_IDS: ReadonlySet<string> = new Set(['garrote', 'rupture']);
+/** The cap's flat part at 1..5 points, from the rank 4 tooltip. */
+export const DEATH_MARK_CAP_BY_COMBO_POINT: readonly number[] = [401, 646, 891, 1136, 1381];
+/** The cap's attack power part: 4% per point. */
+export const DEATH_MARK_CAP_AP_PER_POINT = 0.04;
+
+export interface DeathMarkState {
+  /** Damage stored so far, before the cap. */
+  stored: number;
+  /** Fraction of a non-bleed hit stored, Coup de Grace included. */
+  readonly rate: number;
+  /** The most the burst may deal. */
+  readonly cap: number;
+}
+
+/** A Death Mark aura: an ordinary definition that also carries its store. */
+export interface DeathMarkAura extends AuraDefinition {
+  readonly deathMark: DeathMarkState;
+}
+
+export function isDeathMarkAura(definition: AuraDefinition): definition is DeathMarkAura {
+  return (definition as Partial<DeathMarkAura>).deathMark !== undefined;
+}
+
+export function deathMarkAura(state: DeathMarkState): DeathMarkAura {
+  return {
+    id: DEATH_MARK_ID,
+    name: 'Death Mark',
+    durationMs: DEATH_MARK_DURATION_MS,
+    isDebuff: true,
+    refreshBehaviour: 'reset',
+    deathMark: state,
+    periodic: {
+      intervalMs: DEATH_MARK_DURATION_MS,
+      onTick: (context, aura) => {
+        const source = context.combatant(aura.sourceId);
+        const target = context.combatant(aura.targetId);
+        if (!source || !target || !target.isAlive) return;
+        const amount = Math.min(state.stored, state.cap);
+        if (amount <= 0) return;
+        dealDamage(context, {
+          source,
+          target,
+          abilityId: DEATH_MARK_ID,
+          abilityName: 'Death Mark',
+          school: 'physical',
+          baseAmount: amount,
+          appliesArmor: false,
+          cannotCrit: true,
+        });
+      },
+    },
+  };
+}
 
 // ---------------------------------------------------------------------------
 
@@ -568,7 +627,7 @@ export const ROGUE_AURAS: readonly AuraDefinition[] = [
   COLD_BLOOD,
   GHOSTLY_STRIKE_DODGE_AURA,
   HEMORRHAGE_DEBUFF,
-  CUTTHROAT,
+  GHOSTLY_STRIKE_OPENER,
 ];
 
 // ---------------------------------------------------------------------------
@@ -700,45 +759,38 @@ export function deadlyPoisonAura(damageMultiplier = 1): AuraDefinition {
 
 /*
  * ============================================================================
- * VENOM: a finisher whose whole effect is on poisons.
+ * VENOM, A PASSIVE ON SHANK SINCE 1.60.1.70755.
  *
- * "Finishing move that increases the damage of your Poisons by 30% and your
- * chance to apply Poisons by 10%." 25 energy, instant, 9 to 21 seconds by
- * combo points -- the SAME five durations Slice and Dice uses, which is why
- * `SLICE_AND_DICE_DURATIONS_MS` is shared rather than transcribed twice.
- *
- * A FOREVER ADDITION. The capture marks it `versusClassic: "new"`, so there is
- * no Classic behaviour to fall back on and nothing to cross-check it against.
+ * "Causes your Shank ability to increase your Poison damage by 30% and your
+ * chance to apply Poisons by 20% for 6 sec." It was a finisher -- "increases
+ * the damage of your Poisons by 30% and your chance to apply Poisons by 10%",
+ * nine to twenty-one seconds by combo points -- and the patch moved it to row
+ * 5, made it passive and doubled the chance.
  *
  * ----------------------------------------------------------------------------
- * IT STACKS ADDITIVELY WITH THE POISON TALENTS, on the ruleset owner's ruling.
- * With Vile Poisons at 5/5 a poison deals 1 + 0.20 + 0.30 = 1.5x, NOT
- * 1.2 x 1.3 = 1.56x; and with Improved Poisons the apply chance gains twenty
- * percentage points rather than ten of each applied in turn.
- *
- * Both readings produce a plausible number four points apart, which is exactly
- * the shape this project writes a test for -- and it is the same additive rule
- * `resolveCast` already uses for two cost reductions on one ability.
+ * IT STACKS ADDITIVELY WITH THE POISON TALENTS, on the ruleset owner's ruling
+ * about the finisher, kept: with Vile Poisons at 5/5 a poison deals
+ * 1 + 0.20 + 0.30 = 1.5x, NOT 1.2 x 1.3; and the apply chance gains the points
+ * rather than being multiplied.
  * ----------------------------------------------------------------------------
  */
 
 /** Added to the poison multiplier, not multiplied into it. */
 export const VENOM_POISON_DAMAGE_BONUS = 0.3;
 
-/** Added to the apply chance in percentage POINTS: 20% becomes 30%. */
-export const VENOM_POISON_CHANCE_BONUS = 0.1;
+/** Added to the apply chance in percentage POINTS: 20% becomes 40%. */
+export const VENOM_POISON_CHANCE_BONUS = 0.2;
 
 export const VENOM_AURA_ID = 'venom';
+export const VENOM_DURATION_MS = seconds(6);
 
-export function venomAura(comboPoints: number): AuraDefinition {
-  return {
-    id: VENOM_AURA_ID,
-    name: 'Venom',
-    durationMs: durationFor(SLICE_AND_DICE_DURATIONS_MS, comboPoints),
-    // Recasting replaces rather than extends, as every finisher buff here does.
-    refreshBehaviour: 'reset',
-  };
-}
+export const VENOM: AuraDefinition = {
+  id: VENOM_AURA_ID,
+  name: 'Venom',
+  durationMs: VENOM_DURATION_MS,
+  // A fresh Shank restarts the six seconds.
+  refreshBehaviour: 'reset',
+};
 
 /*
  * ----------------------------------------------------------------------------
@@ -771,7 +823,6 @@ export const CATALOG_AURAS: readonly AuraDefinition[] = [
    * FOR, which is why the audit asks the modules rather than the catalogue.
    */
   ruptureAura(0),
-  thousandCutsAura(0),
   exposeArmorAura(0),
   deadlyPoisonAura(),
 ];

@@ -380,8 +380,13 @@ export const GARROTE_TICK_AP_COEFFICIENT = 0.07;
  * The owner's own wording for the tick is "115 damage + 0.45% of attack power",
  * which is the sheet's row said twice -- so the two sources agree here.
  */
-export const INSTANT_POISON_AP_COEFFICIENT = 0.005;
-export const DEADLY_POISON_TICK_AP_COEFFICIENT = 0.0045;
+/*
+ * DOUBLED AT 1.60.1.70755: "Deadly Poison Attack Power coefficient increased
+ * to 0.009 (Was 0.0045). Instant Poison Attack Power coefficient increased to
+ * 0.01 (Was 0.005)." A later statement, so it outranks the sheet.
+ */
+export const INSTANT_POISON_AP_COEFFICIENT = 0.01;
+export const DEADLY_POISON_TICK_AP_COEFFICIENT = 0.009;
 
 // ---------------------------------------------------------------------------
 // Priest

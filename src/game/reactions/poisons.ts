@@ -162,8 +162,8 @@ function poisonProc(slot: MeleeWeaponSlot, poison: PoisonId, talents: TalentAllo
    * VENOM IS READ AT TRIGGER TIME, not folded in when the reaction is built.
    *
    * The talents are fixed for the fight and can be resolved once; Venom is a
-   * finisher with a nine-to-twenty-one second aura, so whether it is up is a
-   * question only the moment of the proc can answer. Resolving it at build
+   * six second window each Shank opens (a finisher's aura before 1.60.1.70755),
+   * so whether it is up is a question only the moment of the proc can answer. Resolving it at build
    * time would make it either permanently on or permanently off -- and
    * permanently on is a number that looks entirely reasonable.
    *

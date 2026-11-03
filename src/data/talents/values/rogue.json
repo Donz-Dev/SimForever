@@ -388,9 +388,9 @@
    "ranks": 1,
    "text": "Reduces the Energy cost of your Eviscerate ability by {0}.",
    "values": [
-    10
+    15
    ],
-   "note": "single rank; the value filled in by hand per this directory README -- a single-rank talent has no variable the importer can identify from its own text"
+   "note": "single rank; 15 since 1.60.1.70755 (\"Flawless Execution energy cost reduction increased to 15 (was 10)\"). The value filled in by hand per this directory README -- a single-rank talent has no variable the importer can identify from its own text"
   },
   "weapon_expertise": {
    "name": "Weapon Expertise",
