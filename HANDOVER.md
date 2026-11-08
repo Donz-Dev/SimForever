@@ -107,6 +107,46 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 92: three Hunter shot timings
+
+The owner's three rulings:
+
+- **"Multi-Shot no longer has a 0.5 second cast time"**: it is an instant
+  again, as Classic's was.
+- **"Aimed Shot cooldown starts AFTER cast completion"**: and the same for
+  **Sniper Shot**.
+
+**THE ENGINE CHANGE IS A FLAG, `Ability.cooldownStartsOnCompletion`.** The
+charge is still spent when the cast STARTS, so a shot cannot be cast twice.
+`AbilityBook.deferCooldown` then moves the clock forward by the cast actually
+taken, hasted, and moves the shared Multi-Shot lock with it, because that lock
+is the same cooldown seen from its sibling. A pre-combat cast needs nothing
+new: `runPrecombat` already rewinds a cooldown to when the cast FINISHED.
+
+**WHAT IT COST**, measured at 300 fights against round 91:
+
+| | was | now | |
+| --- | --- | --- | --- |
+| BM Hunter | 1196.7 | 1160.4 | **-36.3** REAL |
+| LW Ranged | 1399.5 | 1349.1 | **-50.5** REAL |
+
+Both losses are the shots' cooldowns getting longer by their own cast time. A
+6 s Aimed Shot behind a ~2 s cast now cycles at about 8 s, and a 15 s Sniper
+Shot behind a ~4 s cast at about 19 s. LW Ranged loses more because it casts
+both.
+
+**SHOULD AIMED SHOT MOVE ABOVE SUMMON HAWK OR ARCANE SHOT? NO, MEASURED.**
+`VARIANTS=aimedPlacement`, 1000 paired fights:
+
+| | 60s | 180s |
+| --- | --- | --- |
+| BM: Aimed Shot above Summon Hawk | **-6.02 +/- 1.92** | **-5.59 +/- 2.31** |
+| LW: Aimed Shot above Arcane Shot | **-12.60 +/- 3.62** | **-4.48 +/- 3.00** |
+
+All four cells are REAL losses, so both lists keep their order. The slower
+Aimed Shot cycle did not change which shot should win a global cooldown when
+both are ready.
+
 ## Round 91: the 1.60.1.70755 patch, round one
 
 **THIS IS ROUND ONE OF THE PATCH, AND THE TABLE BELOW HAS ROOM FOR MORE.** The

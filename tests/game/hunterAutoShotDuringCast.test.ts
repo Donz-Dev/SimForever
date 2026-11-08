@@ -100,17 +100,20 @@ function scriptedShots(ability: Ability | null): { shots: number[]; casts: numbe
 }
 
 describe("a Hunter's cast shots and the bow", () => {
-  it('declares the ruling on all three, as `continue` rather than `hold`', () => {
+  it('declares the ruling on both cast shots, as `continue` rather than `hold`', () => {
     /*
      * `hold` IS THE NEAR MISS AND IS WHAT A READER WOULD REACH FOR. It leaves
      * the timer running and then DEFERS the swing to the end of the cast,
      * which is the second half of the suspension the owner has ruled away.
      */
-    for (const ability of [AIMED_SHOT, MULTI_SHOT, SNIPER_SHOT]) {
+    for (const ability of [AIMED_SHOT, SNIPER_SHOT]) {
       expect(ability.swingTimer, ability.name).toBe('continue');
-      // A mode on an instant would be ignored; all three really do cast.
+      // A mode on an instant would be ignored; both really do cast.
       expect(ability.castTimeMs, ability.name).toBeGreaterThan(0);
     }
+    // "Multi-Shot no longer has a 0.5 second cast time" (round 92): an
+    // instant, so it has no cast for the bow to run through.
+    expect(MULTI_SHOT.castTimeMs ?? 0).toBe(0);
   });
 
   it('keeps the mode on the character built from the preset', () => {
@@ -137,7 +140,6 @@ describe("a Hunter's cast shots and the bow", () => {
   it.each([
     ['Sniper Shot', SNIPER_SHOT],
     ['Aimed Shot', AIMED_SHOT],
-    ['Multi-Shot', MULTI_SHOT],
   ] as const)('leaves the bow untouched through %s', (_name, ability) => {
     const during = scriptedShots(ability);
     // The cast HAPPENED. Without this the comparison passes on a refused cast,
@@ -146,13 +148,13 @@ describe("a Hunter's cast shots and the bow", () => {
     expect(during.shots).toEqual(scriptedShots(null).shots);
   });
 
-  it('puts a shot inside the window in all three cases', () => {
+  it('puts a shot inside the window in both cases', () => {
     /*
      * THE CASE THE FIXTURE HAS TO EXPRESS. A cast that fits between two shots
      * has nothing to suspend, so the row above would pass whatever the engine
      * did -- and at a flat one-second start, Multi-Shot was exactly that.
      */
-    for (const ability of [SNIPER_SHOT, AIMED_SHOT, MULTI_SHOT]) {
+    for (const ability of [SNIPER_SHOT, AIMED_SHOT]) {
       const start = castStartFor(ability);
       const inside = scriptedShots(ability).shots.filter(
         (at) => at > start && at < start + ability.castTimeMs!,
