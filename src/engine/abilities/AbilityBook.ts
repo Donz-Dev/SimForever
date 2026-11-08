@@ -203,6 +203,27 @@ export class AbilityBook {
     state.rechargeStartedAt -= byMs;
   }
 
+  /**
+   * Treat a cooldown as having started `byMs` LATER than it did -- the mirror
+   * of `rewindCooldown`, for an ability whose cooldown "starts after cast
+   * completion" (the owner's, for Aimed Shot and Sniper Shot). The charge is
+   * still spent when the cast STARTS, so nothing can cast it twice; only the
+   * clock moves. The shared group this ability started moves with it, because
+   * that lock is the same cooldown seen from its siblings.
+   */
+  deferCooldown(abilityId: string, byMs: Milliseconds): void {
+    const ability = this.abilities.get(abilityId);
+    const state = this.states.get(abilityId);
+    if (!ability || !state || state.rechargeStartedAt === null) return;
+    state.rechargeStartedAt += byMs;
+    if (ability.cooldownGroup) {
+      const existing = this.groupReadyAt.get(ability.cooldownGroup);
+      if (existing && existing.byAbilityId === abilityId) {
+        this.groupReadyAt.set(ability.cooldownGroup, { ...existing, until: existing.until + byMs });
+      }
+    }
+  }
+
   /** Consume a charge and start its recharge. Returns false if none were up. */
   consumeCharge(abilityId: string, now: Milliseconds): boolean {
     const ability = this.abilities.get(abilityId);

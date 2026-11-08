@@ -390,6 +390,10 @@ export function castAbility(
     return { ok: true };
   }
 
+  if (ability.cooldownStartsOnCompletion && castTime > 0) {
+    caster.abilities.deferCooldown(ability.id, castTime);
+  }
+
   if (castTime <= 0) {
     // An instant starts and ends at the same moment, so it gets both hooks.
     ability.onCastStart?.(abilityContext);

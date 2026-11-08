@@ -239,6 +239,8 @@ export const AIMED_SHOT: Ability = {
   // Auto shot runs straight through it -- see the note above Aimed Shot.
   swingTimer: 'continue',
   cooldownMs: seconds(6),
+  // "Aimed Shot cooldown starts AFTER cast completion", the owner's (round 92).
+  cooldownStartsOnCompletion: true,
   // "Aimed Shot shares its cooldown with Multi-Shot."
   cooldownGroup: 'aimed_shot',
   attackTable: 'ranged-special',
@@ -261,8 +263,9 @@ export const AIMED_SHOT: Ability = {
 /**
  * Multi-Shot: "Fires several missiles, hitting 3 targets."
  *
- * ONE RANK IN FOREVER, down from five, and a 0.5-second cast where Classic's
- * was instant. It lands on the one target this project has, so what is shown
+ * ONE RANK IN FOREVER, down from five. It was a 0.5-second cast until the
+ * owner ruled "Multi-Shot no longer has a 0.5 second cast time" (round 92), so
+ * it is instant again, as Classic's was. It lands on the one target this project has, so what is shown
  * is a third of what it is worth in a pull of three -- and it shares a
  * cooldown with Aimed Shot, which is the better single-target spell.
  */
@@ -272,11 +275,6 @@ export const MULTI_SHOT: Ability = {
   id: 'multi_shot',
   name: 'Multi-Shot',
   cost: { resource: 'mana', amount: shareOfBase(0.139) },
-  castTimeMs: seconds(0.5),
-  // Ranged attack speed shortens the cast too, the owner's (round 77).
-  castSpedByRangedAttackSpeed: true,
-  // Auto shot runs straight through it -- see the note above Aimed Shot.
-  swingTimer: 'continue',
   cooldownMs: seconds(6),
   cooldownGroup: 'aimed_shot',
   attackTable: 'ranged-special',
@@ -388,6 +386,8 @@ export const SNIPER_SHOT: Ability = {
   // Auto shot runs straight through it -- see the note above Aimed Shot.
   swingTimer: 'continue',
   cooldownMs: seconds(15),
+  // "Sniper Shot cooldown starts AFTER cast completion", the owner's (round 92).
+  cooldownStartsOnCompletion: true,
   attackTable: 'ranged-special',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;

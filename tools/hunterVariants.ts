@@ -282,6 +282,16 @@ export const VARIANT_GROUPS: Readonly<Record<string, readonly Variant[]>> = {
     { label: 'LW: Serpent Sting to the bottom', apply: moveToBottom('serpent_sting') },
   ],
 
+  /*
+   * ROUND 92: WHERE AIMED SHOT BELONGS ONCE ITS COOLDOWN RUNS FROM THE END OF
+   * ITS CAST. Each preset is probed with its own entry; the other's is a no-op
+   * on a list that does not hold the entry it moves above.
+   */
+  aimedPlacement: [
+    { label: 'BM: Aimed Shot above Summon Hawk', apply: moveAbove('aimed_shot', 'summon_hawk') },
+    { label: 'LW: Aimed Shot above Arcane Shot', apply: moveAbove('aimed_shot', 'arcane_shot') },
+  ],
+
   /* The winners stacked, so the parts can be checked against the sum. */
   hunterCombined: [
     {

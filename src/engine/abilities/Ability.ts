@@ -178,6 +178,12 @@ export interface Ability {
   readonly protectedChannelTicks?: number;
   /** Time before it can be used again. 0 (the default) means no cooldown. */
   readonly cooldownMs?: Milliseconds;
+  /**
+   * The cooldown starts when the cast COMPLETES rather than when it begins --
+   * "Aimed Shot cooldown starts AFTER cast completion", the owner's. A cast
+   * time of zero makes the two the same. See `AbilityBook.deferCooldown`.
+   */
+  readonly cooldownStartsOnCompletion?: boolean;
   /** Number of independent charges. Defaults to 1. */
   readonly charges?: number;
   /** Whether using it starts the global cooldown. Defaults to true. */

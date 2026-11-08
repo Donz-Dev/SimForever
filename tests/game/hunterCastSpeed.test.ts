@@ -74,11 +74,13 @@ describe('a cast shot', () => {
   });
 });
 
-describe('the three shots the owner named', () => {
+describe('the cast shots the owner named', () => {
   it('declare it, and nothing else in the Hunter book needs to', () => {
-    for (const ability of [AIMED_SHOT, MULTI_SHOT, SNIPER_SHOT]) {
+    for (const ability of [AIMED_SHOT, SNIPER_SHOT]) {
       expect(ability.castSpedByRangedAttackSpeed).toBe(true);
     }
+    // Multi-Shot is instant since round 92, so it has no cast to speed.
+    expect(MULTI_SHOT.castTimeMs ?? 0).toBe(0);
   });
 
   it("are sped by a built Hunter's quiver", () => {
