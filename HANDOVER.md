@@ -116,6 +116,7 @@ The owner's notes of 2026-11-11, round one. Leave room for a second.
 | 1 | the notes for Hunter and Shaman | BM Hunter **+64.5**, Hawk Melee **+63.3** |
 | 2 | the owner's answer to question 3: Enh imbues Windfury | Enh **1130.1 -> 1113.4** at 60 s, +11.2 at 180 s |
 | 3 | the Warlock notes: Wrack redesigned, Soul Siphon narrowed | SM/DS **1125.4 -> 1176.3**, +50.9 REAL |
+| 4 | the owner's three Wrack answers: scaling cut, partial ticks, Agony by count | SM/DS **1176.3 -> 1271.6**, +95.3 REAL |
 
 **WHAT CHANGED:**
 
@@ -211,19 +212,37 @@ row these notes do not reach is **0.0 to the decimal**. SM/DS goes
 **1125.4 -> 1176.3 (+50.9 REAL)**. Wrack is now 12.2 casts and **39.4%** of
 the profile. Firelock, SM Ruin and Fire Demo take no Wrack and do not move.
 
-**QUESTIONS FOR THE OWNER:**
+**THREE QUESTIONS, ANSWERED (row 4):**
 
-5. **Wrack's coefficient is cut by 30% along with the flat damage.** Only the
-   flat 86 -> 60 is confirmed by the client.
-6. **A DoT whose clock was shifted can lose its final tick at expiry.** After a
-   Wrack the tick phase moves, so a Corruption's last tick can fall a fraction
-   of a second past its 18 s and not land. The total still rises, because the
-   ticks during the channel come twice as fast. Is a partial final tick
-   intended to be lost?
-7. **Bane of Agony's ramp is read off elapsed time, not off the tick count.**
-   An extra tick takes the band its moment falls in. That keeps "still lasts
-   its full 24 seconds" true, and it means the extra ticks are worth what the
-   ramp says at that moment.
+5. **"Cut wrack's spell power scaling as well."** It already was, at 0.2002,
+   and is now ruled rather than read.
+6. **"Deliver a partial damage tick when the dot falls off."** A window whose
+   tick clock Wrack shifted pays the fraction it accrued as it expires:
+   `AuraCollection.deliverPartialTick`, scaled through
+   `AuraInstance.tickScale`. **Only a shifted window**, so every DoT Wrack
+   never touched is bit-identical. Its duration is not a whole number of ticks,
+   which is a separate question nobody has ruled on.
+7. **"Use tick count."** Bane of Agony draws its band from
+   `AuraInstance.ticksDelivered`, which restarts on a refresh. A tick Wrack
+   hurried therefore takes the NEXT band, and a 13th tick stays on the last.
+
+**WHERE THE +95.3 COMES FROM.** These are the SM/DS damage sources over 40
+fights, against row 3:
+
+| | hits a fight | damage a fight |
+| --- | --- | --- |
+| Bane of Agony | 52.5 -> 54.1 | 18,451 -> **23,739** (+5,288) |
+| Corruption | 34.2 -> 36.6 | 15,936 -> 16,445 (+509) |
+| Siphon Life | 34.2 -> 35.4 | 4,071 -> 4,118 (+47) |
+| Wrack | 48.4 -> 48.4 | unchanged |
+
+**THE TICK COUNT IS MOST OF IT.** Under Wrack, Agony delivers about eighteen
+ticks in its 24 seconds instead of twelve. By time, the extra ticks shared the
+early, cheap bands. By count, they walk the ramp to its 1/8 band sooner and
+stay there, so **a Wracked Bane of Agony now deals well over its stated 552
+total**. That follows from the two rulings together, and is recorded so it
+does not read as a bug. The partial ticks are the 1.2 to 2.4 extra hits on
+each DoT.
 
 ## Round 92: three Hunter shot timings
 
