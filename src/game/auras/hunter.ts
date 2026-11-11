@@ -621,18 +621,31 @@ export const HAWK_MAX_ACTIVE = 2;
 /** Each strike after the dive is a QUARTER of it. */
 export const HAWK_TICK_DIVISOR = 4;
 
+/**
+ * THE ASSAULT IS 80% HARDER SINCE THE OWNER'S 2026-11-11 NOTE: "Melee damage
+ * dealt by the Hawk pet increased by about 80%."
+ *
+ * ON THE STRIKES ONLY, AND THAT IS A READING. The dive-bomb is the ability's
+ * own hit and its tooltip still reads "dealing 110 Physical damage" at
+ * 1.60.1.70888; the strikes that follow are the hawk's MELEE. And "ABOUT 80%"
+ * is the note's word, so 1.8 is the stated round figure and not a measured
+ * one. Both are questions for the owner, recorded in HANDOVER.
+ */
+export const HAWK_ASSAULT_DAMAGE_MULTIPLIER = 1.8;
+
 /** One instant hit plus a tick every two seconds for eighteen. Derived. */
 export const HAWK_STRIKES = 1 + HAWK_DURATION_MS / HAWK_STRIKE_INTERVAL_MS;
 
 /**
- * The whole hawk, as a multiple of its opening hit: 1 + 9/4 = 3.25.
+ * The whole hawk, as a multiple of its opening hit: 1 + 9/4 x 1.8 = 5.05,
+ * which was 3.25 before the assault's 80%.
  *
  * A cross-check rather than a number anything reads -- the tests assert against
  * it, so a cadence or a divisor that drifts changes it and fails there instead
  * of quietly changing the ability's total.
  */
 export const HAWK_TOTAL_AS_MULTIPLE_OF_OPENER =
-  1 + (HAWK_STRIKES - 1) / HAWK_TICK_DIVISOR;
+  1 + ((HAWK_STRIKES - 1) / HAWK_TICK_DIVISOR) * HAWK_ASSAULT_DAMAGE_MULTIPLIER;
 
 /** The DIVE-BOMB: the full figure, dealt once by the ability. */
 export function hawkStrikeDamage(rangedAttackPower: number): number {
@@ -641,9 +654,11 @@ export function hawkStrikeDamage(rangedAttackPower: number): number {
   );
 }
 
-/** Each strike of the continuing assault: a quarter of the dive. */
+/** Each strike of the continuing assault: a quarter of the dive, times 1.8. */
 export function hawkTickDamage(rangedAttackPower: number): number {
-  return hawkStrikeDamage(rangedAttackPower) / HAWK_TICK_DIVISOR;
+  return (
+    (hawkStrikeDamage(rangedAttackPower) / HAWK_TICK_DIVISOR) * HAWK_ASSAULT_DAMAGE_MULTIPLIER
+  );
 }
 
 /**

@@ -85,10 +85,9 @@ function fireHit(
 /**
  * Flametongue Totem's proc, for the raid buff.
  *
- * `FLAMETONGUE_WEAPON_IMBUE` disables it for its own carrier, by the imbue's
- * own tooltip: "When applied to main hand, disables any benefit you personally
- * receive from Flametongue Totem." Asked at proc time for the reason
- * `windfuryTotemReaction` gives: the imbue arrives as a pre-combat cast.
+ * THE IMBUE NO LONGER DISABLES IT, by the owner's 2026-11-11 note: "Weapon
+ * imbues and Weapon totems can now be used at the same time." It used to
+ * refuse while `flametongue_weapon` was up, on the imbue's old tooltip clause.
  */
 export function flametongueTotemReaction(): Reaction {
   return {
@@ -96,9 +95,7 @@ export function flametongueTotemReaction(): Reaction {
     on: 'dealt',
     outcomes: [...LANDED],
     canTrigger: (_context, actor, attack) =>
-      isWeaponUseOf(attack, 'mainHand') &&
-      !actor.auras.has('flametongue_weapon') &&
-      mainHandBaseSpeed(actor) > 0,
+      isWeaponUseOf(attack, 'mainHand') && mainHandBaseSpeed(actor) > 0,
     onTrigger: (context, actor, attack) => {
       fireHit(
         context,

@@ -226,8 +226,9 @@ describe('the preset catalogue', () => {
      * ONE PROFILE PROVIDES A BUFF ITSELF AND SO DROPS IT.
      *
      * An Enhancement shaman imbues its own main hand, and Windfury Weapon's
-     * tooltip says it "disables any benefit you personally receive from
-     * Windfury Totem" -- so that preset drops the totem and nothing else.
+     * tooltip used to say it "disables any benefit you personally receive from
+     * Windfury Totem" -- so that preset dropped the totem. The owner's
+     * 2026-11-11 note lets the two stack, and the preset ticks every box.
      *
      * AND TWO SWAP A BUFF RATHER THAN DROPPING ONE, which is a different
      * shape and is why this test is not a single filter. On the ruleset owner's

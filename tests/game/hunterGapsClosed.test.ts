@@ -29,6 +29,7 @@ const batchOf = (preset: string, iterations: number, seed: number) => {
 };
 import { AUTO_ATTACK_NAMES, autoAttackName } from '../../src/engine';
 import {
+  HAWK_ASSAULT_DAMAGE_MULTIPLIER,
   HAWK_DAMAGE_PER_STRIKE,
   HAWK_DURATION_MS,
   HAWK_MAX_ACTIVE,
@@ -537,9 +538,11 @@ describe('the hawk: two of them, each on its own clock', () => {
     // 108 + 5% of ranged attack power on the dive...
     expect(hawkStrikeDamage(1000)).toBeCloseTo(108 + 50, 6);
     expect(hawkStrikeDamage(0)).toBe(108);
-    // ...and a quarter of that on every strike after it.
-    expect(hawkTickDamage(1000)).toBeCloseTo((108 + 50) / 4, 6);
-    expect(hawkTickDamage(0)).toBeCloseTo(27, 6);
+    // ...and a quarter of that on every strike after it, 80% harder since the
+    // owner's 2026-11-11 note -- the strikes are the hawk's melee, the dive is not.
+    expect(HAWK_ASSAULT_DAMAGE_MULTIPLIER).toBe(1.8);
+    expect(hawkTickDamage(1000)).toBeCloseTo(((108 + 50) / 4) * 1.8, 6);
+    expect(hawkTickDamage(0)).toBeCloseTo(27 * 1.8, 6);
 
     /*
      * TEN HITS, AND THIS ONE IS DERIVED RATHER THAN STATED. The owner gave a
@@ -548,11 +551,12 @@ describe('the hawk: two of them, each on its own clock', () => {
      * anyway, as the cross-check on the cadence and the duration.
      */
     expect(HAWK_STRIKES).toBe(10);
-    // One full hit plus nine quarters.
-    expect(HAWK_TOTAL_AS_MULTIPLE_OF_OPENER).toBeCloseTo(3.25, 10);
+    // One full hit plus nine quarters, each times 1.8.
+    expect(HAWK_TOTAL_AS_MULTIPLE_OF_OPENER).toBeCloseTo(1 + (9 / 4) * 1.8, 10);
+    expect(HAWK_TOTAL_AS_MULTIPLE_OF_OPENER).toBeCloseTo(5.05, 10);
   });
 
-  it('lands ten hits from one cast, totalling 3.25 openers', () => {
+  it('lands ten hits from one cast, totalling 5.05 openers', () => {
     const { simulation, events } = recordingSimulation(
       [hawkOwner(), makeTarget()],
       // Past the last tick at t=18 without reaching a second cast.
@@ -575,7 +579,7 @@ describe('the hawk: two of them, each on its own clock', () => {
       hawkStrikeDamage(1000) + hawkTickDamage(1000) * (HAWK_STRIKES - 1),
       6,
     );
-    expect(hawk.total).toBeCloseTo(hawkStrikeDamage(1000) * 3.25, 6);
+    expect(hawk.total).toBeCloseTo(hawkStrikeDamage(1000) * 5.05, 6);
     expect(hawk.total).not.toBeCloseTo(hawkStrikeDamage(1000) * HAWK_STRIKES, 1);
   });
 
@@ -606,8 +610,8 @@ describe('the hawk: two of them, each on its own clock', () => {
 
     expect(totals[0]).toBeCloseTo(108 * HAWK_TOTAL_AS_MULTIPLE_OF_OPENER, 6);
     expect(totals[1]).toBeCloseTo((108 + 50) * HAWK_TOTAL_AS_MULTIPLE_OF_OPENER, 6);
-    // The coefficient is worth 50 on the dive and 12.5 on each of nine strikes.
-    expect(totals[1] - totals[0]).toBeCloseTo(50 * 3.25, 6);
+    // The coefficient is worth 50 on the dive and 12.5 x 1.8 on each of nine strikes.
+    expect(totals[1] - totals[0]).toBeCloseTo(50 * 5.05, 6);
   });
 
   it('gives the second hawk its OWN clock, which is the point of the rewrite', () => {

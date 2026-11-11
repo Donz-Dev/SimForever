@@ -71,26 +71,31 @@ function applications(
 }
 
 describe('Windfury Weapon against Windfury Totem', () => {
-  it('leaves a Windfury-imbued Enhancement Shaman no totem procs at all', () => {
+  it('pays a Windfury-imbued Enhancement Shaman the totem too, since the 2026-11-11 note', () => {
     /*
      * ========================================================================
-     * THE TOTEM IS SELECTED AND PAYS NOTHING, which is the whole point of
-     * moving the rule into the engine: the box is ticked, and the carrier
-     * receives no benefit.
+     * THE IMBUE NO LONGER DISABLES THE TOTEM. The owner's note: "Weapon imbues
+     * and Weapon totems can now be used at the same time ... the Shaman can
+     * benefit from Windfury Weapon and Windfury Totem at the same time,
+     * granting their attacks a chance to activate both." This test asserted
+     * ZERO applications for the life of the old clause.
      *
-     * ASSERTED ON THE AURA'S APPLICATIONS rather than on DPS, because the
-     * totem's whole effect is a 246 attack power window plus an extra swing --
-     * so an application IS the benefit, and zero of them is the clause.
+     * ASSERTED ON THE AURA'S APPLICATIONS rather than on DPS, because an
+     * application IS the totem's benefit. Summed over seeds because it is a rate.
      * ========================================================================
      */
     const profile = windfuryEnhancement();
     expect(profile.raidBuffs, 'the box is ticked').toContain('windfury_totem');
 
-    // And the imbue really is up, or the refusal would be for the wrong reason.
+    // And the imbue really is up, or the procs would be for the wrong reason.
     const built = characterAtCombatStart(profile)!;
     expect(built.auras.has(WINDFURY_WEAPON_IMBUE.id), 'the imbue is on').toBe(true);
 
-    expect(applications(profile, 'windfury_totem')).toBe(0);
+    const procs = [4242, 99, 1234].reduce(
+      (total, seed) => total + applications(profile, 'windfury_totem', seed),
+      0,
+    );
+    expect(procs).toBeGreaterThan(0);
   });
 
   it('pays the shipped Enhancement Shaman, which imbues Flametongue instead', () => {

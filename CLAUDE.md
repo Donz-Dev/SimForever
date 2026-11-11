@@ -4848,6 +4848,11 @@ of the client, and `git log` has it -- **but it must not be kept standing
 empty**, because a table with no rows reads exactly like a mechanism that is
 doing something.
 
+**AND IT IS STANDING AGAIN (round 93), FOR MAELSTROM WEAPON**, whose owner note
+ran ahead of client 1.60.1.70888 -- one row, with the per-rank PPM as a fourth
+value. It has been built and deleted three times before; delete it again when
+`patchNoteValues.test.ts` says the client caught up.
+
 THE TWO THINGS TO REBUILD IT WITH, if that day comes:
 
 - **CONSULT IT IN `talentValue`, THE ROOT** -- which is the second place it went

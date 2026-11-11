@@ -107,6 +107,76 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 93: Hunter mana, the Hawk, and Shaman imbues with totems
+
+The owner's notes of 2026-11-11, round one. Leave room for a second.
+
+| | what it was | largest effect |
+| --- | --- | --- |
+| 1 | the notes for Hunter and Shaman | BM Hunter **+64.5**, Hawk Melee **+63.3** |
+
+**WHAT CHANGED:**
+
+- **Arcane Shot and Summon Hawk cost 11% of base mana.** That is 158 for a
+  Hunter, down from 190, shared through `ARCANE_SHOT_BASE_MANA_FRACTION`.
+  foreverchanges.pro's 1.60.1.70888 diff already carries the Arcane Shot half.
+- **The Hawk's assault strikes are x1.8.** The note reads "melee damage dealt
+  by the Hawk pet increased by about 80%". The whole hawk is now 5.05 openers,
+  up from 3.25.
+- **Weapon imbues stack with weapon totems.** Windfury Totem and Flametongue
+  Totem no longer refuse while their imbue is up.
+- **Maelstrom Weapon is 20% per stack at every rank**, at 6/7/8/9/10 procs a
+  minute by rank. Client 1.60.1.70888 still reads "by 4%" at rank 1. So
+  `patchNoteValues.ts` is rebuilt a FOURTH time, with one row that adds the
+  PPM as index 3. `maelstromWeapon` reads the rate from that index, and the
+  test fails the moment a refresh moves the generated row.
+
+**THE MEASUREMENT** -- 300 fights a profile, against `main` at `dbc2553`. Only
+the Hunter and Shaman profiles were run, since nothing else is reached.
+
+| | was | now | |
+| --- | --- | --- | --- |
+| BM Hunter | 1160.4 | 1224.8 | **+64.5** REAL |
+| Hawk Melee | 1138.6 | 1201.9 | **+63.3** REAL |
+| LW Ranged | 1349.1 | 1349.1 | 0.0 |
+| LW Melee | 1292.1 | 1292.1 | 0.0 |
+| Survival Weave | 1362.3 | 1361.7 | -0.6 noise |
+| Enh Shaman | 1130.1 | 1130.1 | 0.0 |
+| Spellhance | 1038.8 | 1038.8 | 0.0 |
+| Ele Shaman | 1023.8 | 1023.8 | 0.0 |
+
+**EACH ZERO HAS A REASON:**
+
+- **LW Ranged** casts Arcane Shot 10.5 times a fight but never runs short of
+  mana (its mana potion fires 0.00 times). A cheaper shot therefore changes no
+  decision.
+- **Enh** imbues Flametongue, so Windfury Totem was already paying it.
+  Flametongue Totem is exclusive with Windfury Totem and is not selected.
+- **Maelstrom** reaches only Enh, at 5/5, which is 20% and 10 PPM either way.
+
+**QUESTIONS FOR THE OWNER:**
+
+1. **The Hawk's +80% is applied to the assault strikes and not to the
+   dive-bomb.** The dive is the ability's own hit, and its tooltip still reads
+   110 at 70888. The strikes after it are the hawk's melee. That is a reading.
+2. **"About 80%" is implemented as exactly 1.8.** If the client carries a
+   precise figure, it replaces this one.
+3. **Should Enh imbue Windfury Weapon now?** Round 37 chose Flametongue partly
+   because the Windfury imbue switched the totem off. Re-priced over 1500
+   paired fights, `VARIANTS=enhancementImbue`:
+
+   | fight length | Windfury Weapon in the opener, vs Flametongue |
+   | --- | --- |
+   | 60 s | **-7.08 +/- 5.68** |
+   | 180 s | **+11.23 +/- 3.40** |
+
+   Both are REAL, and in opposite directions. The opener line is the owner's,
+   so it is unchanged.
+4. **The Maelstrom note says it "was 20 times per minute regardless of
+   rank"**, where this repository ran 10, the owner's five doubled at 70755.
+   The new 6 to 10 is applied as the note prescribes. The "was" figure is
+   flagged rather than reconciled.
+
 ## Round 92: three Hunter shot timings
 
 The owner's three rulings:

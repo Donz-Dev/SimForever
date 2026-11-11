@@ -162,7 +162,7 @@ export const LIGHTNING_BOLT: Ability = {
    * PLACEHOLDER" note, because the talent that discounts this spell had no
    * stated rate. The ruleset owner supplied five procs per minute on
    * 2026-09-30, so there is nothing left to caveat -- see
-   * `MAELSTROM_WEAPON_PPM` in `reactions/shamanTalents.ts`.
+   * `maelstromWeapon` in `reactions/shamanTalents.ts`, whose rate is index 3 of the talent row.
    *
    * Removing it also broke a genuine import cycle: this file imported the
    * caveat string from `reactions/shamanTalents.ts`, which now imports this
@@ -584,11 +584,10 @@ export const WINDFURY_WEAPON: Ability = {
     simulation.applyAura(caster, WINDFURY_WEAPON_IMBUE, caster.id);
   },
   /*
-   * NO `unmodelled` ANY MORE. It read "disables any benefit the caster
-   * personally receives from Windfury Totem ... selecting both overstates" --
-   * and `windfuryTotemReaction` has refused while the imbue is up since every
-   * raid buff was ticked on every profile. A caveat about a rule the engine
-   * enforces is a caveat that is false.
+   * IT STACKS WITH WINDFURY TOTEM, by the owner's 2026-11-11 note: "Weapon
+   * imbues and Weapon totems can now be used at the same time." The tooltip's
+   * old "disables any benefit you personally receive from Windfury Totem" was
+   * enforced in `windfuryTotemReaction` and is gone from it.
    */
 };
 
@@ -614,9 +613,9 @@ export const ELEMENTAL_WEAPONS_BONUS = 'elementalWeaponsPercent';
 
 /**
  * Flametongue Weapon, the imbue: "Each hit causes 35 to 112 additional Fire
- * damage, based on the speed of the weapon ... When applied to main hand,
- * disables any benefit you personally receive from Flametongue Totem. Lasts
- * for 60 minutes." 155 mana.
+ * damage, based on the speed of the weapon ... Lasts for 60 minutes." 155
+ * mana. Its old "disables any benefit you personally receive from Flametongue
+ * Totem" clause is gone by the owner's 2026-11-11 note, so the two stack.
  *
  * The damage is `flametongueWeaponReaction`'s. One of three main-hand imbues;
  * casting it takes the place of whichever was up.

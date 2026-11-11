@@ -8,6 +8,7 @@ import hunterValues from '../../data/talents/values/hunter.json';
 import warlockValues from '../../data/talents/values/warlock.json';
 import priestValues from '../../data/talents/values/priest.json';
 import type { ClassId } from '../character';
+import { patchNoteValue } from './patchNoteValues';
 
 /**
  * The per-rank numbers behind talent effects.
@@ -111,11 +112,14 @@ export function talentValue(
   rank: number,
 ): TalentValue | undefined {
   /*
-   * THE PATCH-NOTE OVERRIDE LAYER IS GONE A THIRD TIME: its two rows, Barrage
-   * and Lightning Reflexes, ship at 1.60.1.70755 exactly as foreverchanges.pro
-   * stated them a day earlier. `git log` has the shape for the next note that
-   * runs ahead of the client.
+   * A NOTE THAT RUNS AHEAD OF THE CLIENT OUTRANKS THE GENERATED VALUE, AND IT
+   * IS CONSULTED HERE, AT THE ROOT, so `talentNumber`, `talentNumbers` and
+   * `talentDescription` -- the fight and the Talent panel -- read one figure.
+   * Rebuilt a fourth time for Maelstrom Weapon; `patchNoteValues.test.ts`
+   * fails the moment a refresh moves the generated row, which is how it ends.
    */
+  const overridden = patchNoteValue(characterClass, talentId, rank);
+  if (overridden !== undefined) return overridden;
 
   const entry = FILES[characterClass]?.talents[talentId];
   if (!entry?.values) return undefined;

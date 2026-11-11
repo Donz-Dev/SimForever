@@ -98,12 +98,23 @@ export const elementalDevastation: TalentReactionBuilder = (critPercent) => ({
  * ----------------------------------------------------------------------------
  */
 /*
- * TEN SINCE 1.60.1.70755: "Maelstrom Weapon: Chance to trigger doubled." The
- * owner's five, doubled.
+ * 6/7/8/9/10 BY RANK SINCE THE OWNER'S 2026-11-11 NOTE, read off the talent
+ * row's INDEX 3, which `patchNoteValues.ts` carries ahead of the client. It
+ * was 10 at every rank after 1.60.1.70755 doubled the owner's five; the note's
+ * own "(was 20 times per minute regardless of rank)" disagrees with that, and
+ * the prescription is what is applied.
+ *
+ * THE REDUCTION IS INDEX 0 AND IS 20 AT EVERY RANK NOW, so rank 1 already
+ * makes a five-stack Lightning Bolt instant and what a rank buys is RATE.
  */
-export const MAELSTROM_WEAPON_PPM = 10;
+export const MAELSTROM_WEAPON_PPM_INDEX = 3;
 
-export const maelstromWeapon: TalentReactionBuilder = (reductionPercentPerStack) => ({
+export const maelstromWeapon: TalentReactionBuilder = (reductionPercentPerStack, values) => {
+  const ppm = values?.[MAELSTROM_WEAPON_PPM_INDEX];
+  if (ppm === undefined) {
+    throw new Error('Maelstrom Weapon carries no procs-per-minute at index 3 of its row.');
+  }
+  return {
   id: 'maelstrom_weapon',
   on: 'dealt',
   outcomes: ['hit', 'crit', 'glance', 'crush'],
@@ -111,7 +122,7 @@ export const maelstromWeapon: TalentReactionBuilder = (reductionPercentPerStack)
     if (!isWeaponUse(attack)) return false;
     const speed = triggeringSpeedSeconds(actor, attack.weaponSlot);
     if (speed === undefined || speed <= 0) return false;
-    return context.rng.nextFloat(0, 1) < ppmChance(speed, MAELSTROM_WEAPON_PPM);
+    return context.rng.nextFloat(0, 1) < ppmChance(speed, ppm);
   },
   onTrigger: (context, actor) => {
     // `applyAura` adds a stack itself, up to `maxStacks`, and resets the
@@ -119,7 +130,8 @@ export const maelstromWeapon: TalentReactionBuilder = (reductionPercentPerStack)
     // twice -- which the Warrior's Flurry does deliberately and this must not.
     context.applyAura(actor, maelstromWeaponAura(reductionPercentPerStack), actor.id);
   },
-});
+  };
+};
 
 /*
  * ============================================================================

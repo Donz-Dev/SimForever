@@ -25,12 +25,15 @@
  */
 import { runProfile } from '../src/simulator';
 import { PRESETS_BY_ID } from '../src/profiles';
-import { MAELSTROM_WEAPON_PPM } from '../src/game/reactions/shamanTalents';
+import { talentNumber } from '../src/game/talents/talentValues';
 import { WINDFURY_WEAPON_ATTACK_NAME } from '../src/game/reactions/shaman';
 import { MAELSTROM_WEAPON_MAX_STACKS } from '../src/game/auras/shaman';
 import { ppmChance } from '../src/game/items/procs';
 import { createPlayer } from '../src/game/actors/createPlayer';
 import type { TelemetryEvent } from '../src/engine';
+
+// Rank 5's rate, index 3 of the row since the owner's 2026-11-11 note.
+const MAELSTROM_WEAPON_PPM = talentNumber('shaman', 'maelstrom_weapon', 5, 3)!;
 
 const FIGHTS = Number(process.env.FIGHTS ?? 200);
 const PRESET = process.env.PRESET ?? 'shaman_enhancement';

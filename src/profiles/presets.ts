@@ -193,13 +193,13 @@ function presetRaidBuffsWith(extra: readonly string[]): readonly string[] {
  *                               worth nothing to a bow, which a ticked box is
  *                               allowed to be
  *   the Enhancement DROP        Windfury Totem, which that build's own imbue
- *                               disables. **The box is ticked and the ENGINE
- *                               enforces the disabling now**, which is the
- *                               honest version of the same answer: see
- *                               `windfuryTotemReaction`
+ *                               used to disable. The engine enforced it for a
+ *                               while; since the owner's 2026-11-11 note the
+ *                               imbue and the totem stack, so there is nothing
+ *                               left to enforce
  *
  * AND A DROPPED BOX WAS NEVER THE RIGHT MECHANISM FOR THE SECOND ONE. "The
- * imbue disables any benefit you personally receive from Windfury Totem" is a
+ * imbue disables any benefit you personally receive from Windfury Totem" WAS a
  * RULESET rule about a character, and expressing it as an unticked checkbox put
  * it in the one place a user can undo by accident -- the same mistake as
  * enforcing the Moonkin exclusivity at the chooser, which let a talent reach
@@ -3484,11 +3484,9 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: { ...SHAMAN_ENHANCEMENT_TALENTS },
       /*
-       * WINDFURY TOTEM IS SELECTED NOW LIKE EVERYTHING ELSE, and the engine is
-       * what stops it paying twice. The imbue this build casts says so itself:
-       * "when applied to main hand, disables any benefit you personally receive
-       * from Windfury Totem" -- so `windfuryTotemReaction` refuses while the
-       * imbue is up, and the box can be ticked honestly.
+       * WINDFURY TOTEM IS SELECTED LIKE EVERYTHING ELSE, AND IT PAYS: the
+       * owner's 2026-11-11 note lets the imbue and the totem stack, "granting
+       * their attacks a chance to activate both".
        */
       raidBuffs: [...PRESET_RAID_BUFFS],
       /*

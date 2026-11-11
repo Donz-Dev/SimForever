@@ -214,7 +214,9 @@ describe('the Shaman imbues', () => {
     expect(reaction.canTrigger!(simulation, player, offHand)).toBe(false);
   });
 
-  it('lets Flametongue Weapon switch off its carrier own Flametongue Totem, and nothing else', () => {
+  it('lets Flametongue Weapon and Flametongue Totem stack, since the owner’s 2026-11-11 note', () => {
+    // "Weapon imbues and Weapon totems can now be used at the same time." The
+    // imbue used to switch its carrier's own totem off.
     const player = shaman();
     const boss = makeTarget();
     const simulation = buildSimulation([player, boss]);
@@ -227,7 +229,7 @@ describe('the Shaman imbues', () => {
     expect(totem.canTrigger!(simulation, player, mainHandHit(player, boss))).toBe(true);
     player.auras.remove(simulation, WINDFURY_WEAPON_IMBUE.id);
     simulation.applyAura(player, FLAMETONGUE_WEAPON_IMBUE, player.id);
-    expect(totem.canTrigger!(simulation, player, mainHandHit(player, boss))).toBe(false);
+    expect(totem.canTrigger!(simulation, player, mainHandHit(player, boss))).toBe(true);
   });
 
   it('makes Flametongue Totem and Windfury Totem replace each other when selected', () => {
