@@ -66,10 +66,15 @@ function tick(
     abilityId: aura.id,
     abilityName: aura.name,
     school,
-    baseAmount: amount,
+    /*
+     * `tickScale` IS 1 EXCEPT ON A PARTIAL TICK: a window Wrack shifted pays
+     * the fraction it accrued when it falls off, by the owner's 2026-11-11
+     * ruling. Both halves scale, so a half tick is half the damage at any gear.
+     */
+    baseAmount: amount * aura.tickScale,
     // Per TICK. A pure DoT takes the whole periodic coefficient; Immolate's
     // burn takes its share of a hybrid pair.
-    powerCoefficient,
+    powerCoefficient: powerCoefficient * aura.tickScale,
     periodic: true,
     ...(canCrit ? { critFrom: 'spell' as const } : {}),
     appliesArmor: false,
@@ -167,23 +172,24 @@ export const BANE_OF_AGONY_TICK_SHARES: readonly number[] = [
 ];
 
 /**
- * Which share this tick draws, from the aura's own clock.
+ * Which share the Nth tick draws, counted from 0.
  *
  * ----------------------------------------------------------------------------
- * READ FROM `appliedAt` RATHER THAN COUNTED ON THE INSTANCE, because a refresh
- * sets `appliedAt = now` -- so the ramp restarts when the Bane is re-applied,
- * which is what `refreshBehaviour: 'reset'` means everywhere else here. A
- * counter held on the instance would have to be reset by hand in the one place
- * that is easy to forget.
+ * BY TICK COUNT, the owner's 2026-11-11 ruling: "Use tick count." It was read
+ * off `appliedAt` -- elapsed time -- which agreed with the count for as long
+ * as every tick came two seconds apart. Wrack's faster ticks broke that: two
+ * hurried ticks inside one two-second band both drew that band's share.
  *
- * CLAMPED INTO THE ARRAY, so the final tick -- due at the exact moment the
- * aura falls off, and ordered before the expiry by the event queue -- reads the
- * last band rather than running off the end.
+ * THE COUNT RESTARTS ON A REFRESH, in `AuraCollection.apply`, beside the
+ * `appliedAt` reset that used to carry the ramp -- so `reset` still restarts
+ * the ramp, which is what it means everywhere else here.
+ *
+ * CLAMPED INTO THE ARRAY, so a thirteenth tick -- which only Wrack's faster
+ * ticks can reach inside 24 seconds -- reads the last band.
  * ----------------------------------------------------------------------------
  */
-export function baneOfAgonyTickShare(elapsedMs: number): number {
-  const index = Math.round(elapsedMs / BANE_OF_AGONY_TICK_INTERVAL_MS) - 1;
-  const clamped = Math.min(Math.max(index, 0), BANE_OF_AGONY_TICK_SHARES.length - 1);
+export function baneOfAgonyTickShareByCount(ticksDelivered: number): number {
+  const clamped = Math.min(Math.max(ticksDelivered, 0), BANE_OF_AGONY_TICK_SHARES.length - 1);
   return BANE_OF_AGONY_TICK_SHARES[clamped]!;
 }
 
@@ -216,7 +222,9 @@ function baneOfAgonyAura(multiplier: number): AuraDefinition {
     periodic: {
       intervalMs: BANE_OF_AGONY_TICK_INTERVAL_MS,
       onTick: (context, aura) => {
-        const share = baneOfAgonyTickShare(context.clock.now() - aura.appliedAt) * multiplier;
+        // BY TICK COUNT, the owner's 2026-11-11 ruling: a tick Wrack hurried
+        // takes the next band, so twelve ticks are the twelve bands in order.
+        const share = baneOfAgonyTickShareByCount(aura.ticksDelivered) * multiplier;
         tick(
           context,
           aura,

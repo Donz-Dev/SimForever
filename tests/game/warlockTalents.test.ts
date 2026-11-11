@@ -287,7 +287,7 @@ describe('Wrack, which speeds three DoTs up while it is channelled (1.60.1.70888
   });
 
   it('doubles a Corruption tick rate for the channel and leaves its duration alone', () => {
-    const { caster, target, simulation, ticksOf } = fight();
+    const { events, caster, target, simulation, ticksOf } = fight();
     simulation.applyAura(target, CORRUPTION, caster.id);
     const wrack = caster.abilities.get('wrack') as Ability;
     castAbility(simulation, caster, wrack, target);
@@ -306,9 +306,27 @@ describe('Wrack, which speeds three DoTs up while it is channelled (1.60.1.70888
     expect(channelEnd).toBeLessThanOrEqual(seconds(6));
     const expected = [seconds(1.5), seconds(3), seconds(4.5)];
     for (let at = seconds(12) - channelEnd; at <= seconds(18); at += seconds(3)) expected.push(at);
+    const lastFull = expected[expected.length - 1]!;
+    /*
+     * AND A PARTIAL TICK AS IT FALLS OFF, by the owner's 2026-11-11 ruling:
+     * "Deliver a partial damage tick when the dot falls off." The shifted phase
+     * leaves `18 - lastFull` of the next tick's 3 s done at the end, and that
+     * fraction of a tick lands at 18 -- unless the phase happens to put a full
+     * tick exactly on 18, which leaves nothing owed.
+     */
+    const owed = seconds(18) - lastFull;
+    if (owed > 0) expected.push(seconds(18));
     expect(ticksOf('corruption')).toEqual(expected);
     // Three of them at x2 and the rest at x1: more ticks than the plain six.
     expect(expected.length).toBeGreaterThan(6);
+
+    if (owed > 0) {
+      const amounts = events
+        .filter((event) => event.type === 'damage' && event.abilityId === 'corruption')
+        .map((event) => (event as { amount: number }).amount);
+      const full = amounts[0]!;
+      expect(amounts[amounts.length - 1]).toBeCloseTo((full * owed) / seconds(3), 6);
+    }
   });
 
   it('keeps the progress it skipped after the channel is interrupted', () => {
@@ -329,6 +347,15 @@ describe('Wrack, which speeds three DoTs up while it is channelled (1.60.1.70888
     const ticks = ticksOf('corruption');
     expect(ticks[0]).toBe(seconds(2) + 1);
     expect(ticks[1]).toBe(ticks[0]! + seconds(3));
+  });
+
+  it('pays no partial tick on a DoT whose clock was never shifted', () => {
+    // Six ticks of a plain 18 s Corruption, the last exactly at 18, and nothing
+    // after it -- the partial tick is only for a window Wrack moved.
+    const { caster, target, simulation, ticksOf } = fight();
+    simulation.applyAura(target, CORRUPTION, caster.id);
+    simulation.advanceTo(seconds(30));
+    expect(ticksOf('corruption')).toEqual([3, 6, 9, 12, 15, 18].map((s) => seconds(s)));
   });
 
   it('speeds up nothing it does not name, and amplifies nothing', () => {

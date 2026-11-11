@@ -726,7 +726,7 @@ export const SEARING_PAIN: Ability = {
  * REDESIGNED BY THE OWNER'S 2026-11-11 NOTE, in three parts:
  *
  *   - "Wrack damage reduced by 30%": 86 -> 60 a tick, and the coefficient
- *     takes the same x0.7 (a reading; the client states no coefficient).
+ *     takes the same x0.7, by the owner's follow-up ruling.
  *   - "Wrack no longer increases the damage of the Warlock's periodic effects
  *     on the target": the old +10% to Shadow DoTs, `WRACK_AMPLIFICATION`, is
  *     deleted.

@@ -50,7 +50,7 @@ import {
   CORRUPTION,
   CORRUPTION_TOTAL,
   SIPHON_LIFE,
-  baneOfAgonyTickShare,
+  baneOfAgonyTickShareByCount,
   DEMONIC_SACRIFICE_DAMAGE,
   demonicSacrificeAura,
 } from '../../src/game/auras/warlock';
@@ -766,19 +766,18 @@ describe("Bane of Agony's ramp, which the owner has now quantified", () => {
     expect(ticks[8]! / ticks[0]!).toBeCloseTo(3, 6);
   });
 
-  it('restarts the ramp on a refresh, because a reset moves appliedAt', () => {
+  it('draws its band by TICK COUNT, the owner’s 2026-11-11 ruling', () => {
     /*
-     * `baneOfAgonyTickShare` reads the aura's own clock rather than a counter,
-     * so `refreshBehaviour: 'reset'` carries the ramp with it -- which is what
-     * reset means everywhere else in this engine. Asserted on the pure function
-     * so it needs no fight.
+     * "Use tick count." The first tick is band 0 whatever the clock says, the
+     * fifth is 1/12 and the ninth 1/8 -- and a refresh restarts the count,
+     * which `AuraCollection.apply` does beside the `appliedAt` reset.
      */
-    expect(baneOfAgonyTickShare(seconds(2))).toBeCloseTo(1 / 24, 12);
-    expect(baneOfAgonyTickShare(seconds(10))).toBeCloseTo(1 / 12, 12);
-    expect(baneOfAgonyTickShare(seconds(24))).toBeCloseTo(1 / 8, 12);
-    // Clamped at both ends: a tick at or past the end reads the last band.
-    expect(baneOfAgonyTickShare(0)).toBeCloseTo(1 / 24, 12);
-    expect(baneOfAgonyTickShare(seconds(99))).toBeCloseTo(1 / 8, 12);
+    expect(baneOfAgonyTickShareByCount(0)).toBeCloseTo(1 / 24, 12);
+    expect(baneOfAgonyTickShareByCount(4)).toBeCloseTo(1 / 12, 12);
+    expect(baneOfAgonyTickShareByCount(11)).toBeCloseTo(1 / 8, 12);
+    // Clamped at both ends: a thirteenth tick, which only Wrack reaches, reads the last band.
+    expect(baneOfAgonyTickShareByCount(-1)).toBeCloseTo(1 / 24, 12);
+    expect(baneOfAgonyTickShareByCount(12)).toBeCloseTo(1 / 8, 12);
   });
 
   it('is amplified by exactly 50% when Amplify Curse is up, and only once', () => {

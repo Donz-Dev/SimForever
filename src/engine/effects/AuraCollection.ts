@@ -585,6 +585,9 @@ export class AuraCollection {
           ? now + remaining + definition.durationMs
           : now + definition.durationMs;
       instance.appliedAt = now;
+      // The tick COUNT restarts with the window, as `appliedAt` does -- Bane
+      // of Agony's ramp reads it.
+      instance.ticksDelivered = 0;
       // A refresh IS a new window, even when it lands in the same
       // millisecond as the last one. See `AuraInstance.revision`.
       instance.revision += 1;
@@ -710,6 +713,7 @@ export class AuraCollection {
         const current = this.auras.get(instance.id);
         if (current !== instance) return;
         if (ctx.clock.now() < instance.expiresAt) return;
+        this.deliverPartialTick(ctx, instance);
         this.expire(ctx, instance);
       }),
     );
@@ -728,8 +732,42 @@ export class AuraCollection {
         ? periodic.firstTickDelay(context)
         : periodic.intervalMs;
     instance.tickProgressLeftMs = progress;
+    instance.tickProgressTotalMs = progress;
     instance.tickCheckpointAt = context.clock.now();
     this.scheduleTickIn(context, instance, wallTimeFor(progress, instance.tickRate));
+  }
+
+  /**
+   * Pay the part of a tick a SHIFTED window has accrued when it runs out.
+   *
+   * ----------------------------------------------------------------------------
+   * THE OWNER'S 2026-11-11 RULING: "Deliver a partial damage tick when the dot
+   * falls off." Wrack moves a DoT's tick phase, so its last tick can come due
+   * a moment past the end of the window; the progress already accrued is paid
+   * as a fraction of a tick instead of being thrown away.
+   *
+   * ONLY A WINDOW WHOSE CLOCK WAS SHIFTED, which is what keeps every other DoT
+   * bit-identical: an unshifted chain lands its last tick exactly at the end,
+   * and one whose duration is not a whole number of intervals is a separate
+   * question nobody has ruled on.
+   * ----------------------------------------------------------------------------
+   */
+  private deliverPartialTick(context: SimulationContext, instance: AuraInstance): void {
+    const periodic = instance.definition.periodic;
+    if (!periodic || !instance.tickClockShifted) return;
+    const now = context.clock.now();
+    const accrued = (now - instance.tickCheckpointAt) * instance.tickRate;
+    const done = instance.tickProgressTotalMs - instance.tickProgressLeftMs + accrued;
+    const fraction = Math.min(1, done / periodic.intervalMs);
+    // A tick that has just landed leaves nothing owed; a full one would have landed.
+    if (fraction <= 0 || fraction >= 1) return;
+    instance.tickScale = fraction;
+    try {
+      periodic.onTick(context, instance);
+    } finally {
+      instance.tickScale = 1;
+    }
+    instance.ticksDelivered += 1;
   }
 
   /**
@@ -754,6 +792,7 @@ export class AuraCollection {
     if (instance.tickRate === rate) return;
 
     const now = context.clock.now();
+    instance.tickClockShifted = true;
     if (instance.tickHandle) {
       const accrued = (now - instance.tickCheckpointAt) * instance.tickRate;
       instance.tickProgressLeftMs = Math.max(0, instance.tickProgressLeftMs - accrued);
@@ -784,15 +823,14 @@ export class AuraCollection {
 
         instance.tickHandle = null;
         periodic.onTick(ctx, instance);
+        instance.ticksDelivered += 1;
 
         // Ticks chain themselves rather than being scheduled up front, so a
         // refresh that extends the duration automatically gets more ticks.
-        // The NEXT one is spaced at the current tick rate.
-        const following =
-          ctx.clock.now() + wallTimeFor(periodic.intervalMs, instance.tickRate);
-        if (following <= instance.expiresAt) {
-          this.schedulePeriodicTick(ctx, instance);
-        }
+        // The NEXT one is spaced at the current tick rate, and its progress is
+        // recorded even when it falls past the end -- that is what a partial
+        // tick at expiry is paid from.
+        this.schedulePeriodicTick(ctx, instance);
       }),
     );
   }

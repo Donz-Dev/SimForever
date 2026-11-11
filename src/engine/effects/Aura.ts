@@ -974,6 +974,29 @@ export class AuraInstance {
   tickRate = 1;
   tickProgressLeftMs = 0;
   tickCheckpointAt: Milliseconds = 0;
+  /** The progress the pending tick needs in total -- `intervalMs`, or the first-tick delay. */
+  tickProgressTotalMs = 0;
+  /**
+   * Whether this window's tick clock was ever run at a rate other than 1.
+   * Only such a window can owe a PARTIAL tick when it falls off -- see
+   * `deliverPartialTick` -- so every unshifted DoT behaves exactly as before.
+   */
+  tickClockShifted = false;
+
+  /**
+   * Ticks this window has delivered, counted from its last application or
+   * refresh. Bane of Agony's ramp reads it, by the owner's 2026-11-11 ruling:
+   * "Use tick count", so a tick Wrack hurried takes the NEXT band rather than
+   * whichever band its moment falls in.
+   */
+  ticksDelivered = 0;
+
+  /**
+   * The fraction of a full tick the current `onTick` call delivers: 1, except
+   * for the partial tick a shifted window pays as it falls off. A periodic
+   * effect that can be shifted must scale its damage by this.
+   */
+  tickScale = 1;
 
   constructor(
     readonly definition: AuraDefinition,
