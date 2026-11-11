@@ -114,6 +114,7 @@ The owner's notes of 2026-11-11, round one. Leave room for a second.
 | | what it was | largest effect |
 | --- | --- | --- |
 | 1 | the notes for Hunter and Shaman | BM Hunter **+64.5**, Hawk Melee **+63.3** |
+| 2 | the owner's answer to question 3: Enh imbues Windfury | Enh **1130.1 -> 1113.4** at 60 s, +11.2 at 180 s |
 
 **WHAT CHANGED:**
 
@@ -170,8 +171,11 @@ the Hunter and Shaman profiles were run, since nothing else is reached.
    | 60 s | **-7.08 +/- 5.68** |
    | 180 s | **+11.23 +/- 3.40** |
 
-   Both are REAL, and in opposite directions. The opener line is the owner's,
-   so it is unchanged.
+   Both are REAL, and in opposite directions. **Answered: "Switch to
+   Windfury."** The Enh opener imbues Windfury Weapon at 3 s now. The published
+   60 s figure goes **1130.1 -> 1113.4** (-16.6, noise at 300 fights), the cost
+   the paired probe predicted. The gain arrives in longer fights. Spellhance and
+   the Enh AoE list keep Flametongue, since neither was asked about or priced.
 4. **The Maelstrom note says it "was 20 times per minute regardless of
    rank"**, where this repository ran 10, the owner's five doubled at 70755.
    The new 6 to 10 is applied as the note prescribes. The "was" figure is

@@ -105,8 +105,10 @@ function withWindfuryOpener<T extends { precombat?: readonly { abilityId: string
   const precombat = (built.precombat ?? []).map((action) =>
     action.abilityId === 'flametongue_weapon' ? { ...action, abilityId: 'windfury_weapon' } : action,
   );
+  // The preset imbues Windfury itself since round 93; the swap is kept so
+  // this still tests the Windfury imbue if the opener changes again.
   if (!precombat.some((action) => action.abilityId === 'windfury_weapon')) {
-    throw new Error('the Enhancement opener no longer imbues Flametongue to swap');
+    throw new Error('the Enhancement opener imbues neither Flametongue nor Windfury');
   }
   return { ...built, precombat };
 }
@@ -271,16 +273,16 @@ describe('the two builds, and what their talents actually do', () => {
 });
 
 describe('the fights', () => {
-  it('imbues Flametongue once, before the pull, and never Windfury', () => {
+  it('imbues Windfury once, before the pull, and never Flametongue', () => {
     /*
-     * The owner's round 37: Flametongue in the opener where Windfury was, and
-     * no imbue entries left in the combat list. The imbue lasts an hour, so the
-     * pre-combat cast is the only one.
+     * The owner's round 93: Windfury back in the opener now that it stacks with
+     * Windfury Totem (round 37 had put Flametongue there). The imbue lasts an
+     * hour, so the pre-combat cast is the only one.
      */
     const batch = batchOf('shaman_enhancement', 40, 5);
     const used = (name: string) => batch.abilities.find((a) => a.abilityName === name)?.uses ?? 0;
-    expect(used('Flametongue Weapon')).toBeCloseTo(1, 1);
-    expect(used('Windfury Weapon')).toBe(0);
+    expect(used('Windfury Weapon')).toBeCloseTo(1, 1);
+    expect(used('Flametongue Weapon')).toBe(0);
   });
 
   it('uses Stormstrike and Earth Shock, which is the pairing the debuff makes', () => {

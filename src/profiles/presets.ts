@@ -3573,8 +3573,11 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * ========================================================================
        */
       precombat: [
-        // FLAMETONGUE, not Windfury, by the owner's round 37.
-        ...before(3, 'flametongue_weapon'),
+        // WINDFURY again, by the owner's 2026-11-11 ruling (round 93): the
+        // imbue now stacks with Windfury Totem. Round 37 had chosen
+        // Flametongue; the swap measured -7.08 +/- 5.68 at 60 s and
+        // +11.23 +/- 3.40 at 180 s over 1500 paired fights.
+        ...before(3, 'windfury_weapon'),
         ...before(1.5, 'searing_totem'),
         ...before(0, 'flame_shock'),
         ...before(0, 'rage_of_the_farseer'),

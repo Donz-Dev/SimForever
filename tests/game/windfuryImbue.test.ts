@@ -33,18 +33,16 @@ import { characterAtCombatStart } from '../../src/simulator';
  */
 
 /*
- * THE PRESET IMBUES FLAMETONGUE SINCE ROUND 37 -- the owner's "pre-combat
- * Windfury -> Flametongue Weapon" -- so the clause is tested on the same build
- * with that one opener line swapped back.
+ * THE PRESET IMBUES WINDFURY AGAIN SINCE ROUND 93 -- it imbued Flametongue
+ * from round 37, while the imbue still switched the totem off -- so this is the
+ * shipped build, checked to carry the Windfury line.
  */
 function windfuryEnhancement() {
   const built = PRESETS_BY_ID.get('shaman_enhancement')!.build();
-  return {
-    ...built,
-    precombat: (built.precombat ?? []).map((action) =>
-      action.abilityId === 'flametongue_weapon' ? { ...action, abilityId: 'windfury_weapon' } : action,
-    ),
-  };
+  if (!(built.precombat ?? []).some((action) => action.abilityId === 'windfury_weapon')) {
+    throw new Error('the Enhancement opener no longer imbues Windfury Weapon');
+  }
+  return built;
 }
 
 /** Every aura application of `auraId` on the player, over one fight. */
@@ -93,19 +91,6 @@ describe('Windfury Weapon against Windfury Totem', () => {
 
     const procs = [4242, 99, 1234].reduce(
       (total, seed) => total + applications(profile, 'windfury_totem', seed),
-      0,
-    );
-    expect(procs).toBeGreaterThan(0);
-  });
-
-  it('pays the shipped Enhancement Shaman, which imbues Flametongue instead', () => {
-    /*
-     * THE OTHER HALF OF ROUND 37'S SWAP: with no Windfury imbue the clause does
-     * not apply, so the ticked totem now reaches the preset. Summed over seeds
-     * because the proc is a rate.
-     */
-    const procs = [4242, 99, 1234].reduce(
-      (total, seed) => total + applications('shaman_enhancement', 'windfury_totem', seed),
       0,
     );
     expect(procs).toBeGreaterThan(0);
