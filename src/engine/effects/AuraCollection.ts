@@ -723,10 +723,56 @@ export class AuraCollection {
     const periodic = instance.definition.periodic;
     if (!periodic) return;
 
-    const delay =
+    const progress =
       isFirst && periodic.firstTickDelay
         ? periodic.firstTickDelay(context)
         : periodic.intervalMs;
+    instance.tickProgressLeftMs = progress;
+    instance.tickCheckpointAt = context.clock.now();
+    this.scheduleTickIn(context, instance, wallTimeFor(progress, instance.tickRate));
+  }
+
+  /**
+   * Run an aura's tick clock at `rate` times its normal speed from now on.
+   *
+   * ----------------------------------------------------------------------------
+   * THE PROGRESS ALREADY ACCRUED IS KEPT, which is the whole of the developers'
+   * note on Wrack: "if you channel Wrack for 1 second during a 3-second
+   * Corruption tick, Corruption advances 2 seconds instead of 1, so its next
+   * tick lands 1 second later instead of 2, even if you stopped channeling."
+   * So the pending tick is cancelled and rescheduled for whatever progress is
+   * still owed, at the new rate. A rate of 1 is the normal clock.
+   *
+   * A no-op for an aura that is absent, carries no periodic effect, or has no
+   * tick pending -- a chain that has already stopped has nothing to speed up.
+   * ----------------------------------------------------------------------------
+   */
+  setTickRate(context: SimulationContext, id: string, rate: number): void {
+    const instance = this.auras.get(id);
+    if (!instance || !instance.definition.periodic) return;
+    if (rate <= 0) throw new Error(`A tick rate must be positive, got ${rate}.`);
+    if (instance.tickRate === rate) return;
+
+    const now = context.clock.now();
+    if (instance.tickHandle) {
+      const accrued = (now - instance.tickCheckpointAt) * instance.tickRate;
+      instance.tickProgressLeftMs = Math.max(0, instance.tickProgressLeftMs - accrued);
+      instance.tickCheckpointAt = now;
+      context.events.cancel(instance.tickHandle);
+      instance.tickHandle = null;
+      instance.tickRate = rate;
+      this.scheduleTickIn(context, instance, wallTimeFor(instance.tickProgressLeftMs, rate));
+    } else {
+      instance.tickRate = rate;
+    }
+  }
+
+  private scheduleTickIn(
+    context: SimulationContext,
+    instance: AuraInstance,
+    delay: Milliseconds,
+  ): void {
+    const periodic = instance.definition.periodic!;
     const nextTick = context.clock.now() + delay;
     if (nextTick > instance.expiresAt) return;
 
@@ -736,15 +782,27 @@ export class AuraCollection {
         const current = this.auras.get(instance.id);
         if (current !== instance) return;
 
+        instance.tickHandle = null;
         periodic.onTick(ctx, instance);
 
         // Ticks chain themselves rather than being scheduled up front, so a
         // refresh that extends the duration automatically gets more ticks.
-        const following = ctx.clock.now() + periodic.intervalMs;
+        // The NEXT one is spaced at the current tick rate.
+        const following =
+          ctx.clock.now() + wallTimeFor(periodic.intervalMs, instance.tickRate);
         if (following <= instance.expiresAt) {
           this.schedulePeriodicTick(ctx, instance);
         }
       }),
     );
   }
+}
+
+/**
+ * Wall time needed to deliver `progressMs` of tick progress at `rate`.
+ * Rounded UP to a whole millisecond, because time is integer milliseconds and
+ * a tick must never land before its progress is complete.
+ */
+function wallTimeFor(progressMs: number, rate: number): Milliseconds {
+  return Math.ceil(progressMs / rate);
 }

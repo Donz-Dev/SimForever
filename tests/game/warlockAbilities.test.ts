@@ -52,9 +52,6 @@ import {
   SIPHON_LIFE,
   baneOfAgonyTickShare,
   DEMONIC_SACRIFICE_DAMAGE,
-  WRACK_AMPLIFICATION,
-  WRACK_DEBUFF_DURATION_MS,
-  WRACK_DOT_AMPLIFICATION_PERCENT,
   demonicSacrificeAura,
 } from '../../src/game/auras/warlock';
 import { WARLOCK_TALENT_EFFECTS } from '../../src/game/talents/warlockEffects';
@@ -448,7 +445,7 @@ describe('Wrack, scaling now, and still not worth casting', () => {
    * not, so that one keeps its own words and is asserted to still say so.
    * --------------------------------------------------------------------------
    */
-  it('ticks six times a second for a flat 86 plus 28.6% spell power each', () => {
+  it('ticks six times a second for a flat 60 plus 20.02% spell power each', () => {
     /*
      * WRITTEN OUT BY HAND from the owner's own message: "14.3% of spell power
      * each tick, ticks every second for 6 seconds, 6 total ticks."
@@ -459,10 +456,12 @@ describe('Wrack, scaling now, and still not worth casting', () => {
      * constant rather than only here.
      *
      * 1.60.1.70755 took the flat 36 to 86 and doubled the coefficient to 0.286.
+     * The owner's 2026-11-11 note took 30% off -- client 1.60.1.70888 reads 60,
+     * and the coefficient takes the same x0.7 as a reading.
      */
-    expect(WRACK_TICK_DAMAGE).toBe(86);
+    expect(WRACK_TICK_DAMAGE).toBe(60);
     expect(WRACK_TICKS).toBe(6);
-    expect(WRACK_TICK_SP_COEFFICIENT).toBe(0.286);
+    expect(WRACK_TICK_SP_COEFFICIENT).toBeCloseTo(0.286 * 0.7, 10);
     expect(WRACK.castTimeMs).toBe(seconds(6));
     expect(WRACK.channelTicks).toBe(6);
     expect(WRACK.cost).toEqual({ resource: 'mana', amount: 200 });
@@ -509,12 +508,11 @@ describe('Wrack, scaling now, and still not worth casting', () => {
      * being special-cased.
      * ----------------------------------------------------------------------
      */
-    expect(WRACK_DOT_AMPLIFICATION_PERCENT).toBe(10);
-    expect(WRACK_AMPLIFICATION.periodicDamageTakenBySchool).toEqual({ shadow: 1.1 });
-    expect(WRACK_AMPLIFICATION.damageTakenBySchool).toBeUndefined();
-    // Six seconds from the FIRST tick, so `ignore` and not `reset`.
-    expect(WRACK_AMPLIFICATION.durationMs).toBe(WRACK_DEBUFF_DURATION_MS);
-    expect(WRACK_AMPLIFICATION.refreshBehaviour).toBe('ignore');
+    // GONE by the owner's 2026-11-11 note: "Wrack no longer increases the
+    // damage of the Warlock's periodic effects on the target." Its tick haste
+    // replaces it -- see `warlockTalents.test.ts`.
+    expect(WRACK.onCastStart).toBeDefined();
+    expect(WRACK.onChannelEnd).toBeDefined();
     // Its coefficient reason is gone too, and stayed gone.
     expect(WRACK.unmodelled).toBeUndefined();
   });

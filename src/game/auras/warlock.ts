@@ -466,40 +466,13 @@ export const SHADOW_TRANCE: AuraDefinition = {
   },
 };
 
-/**
- * WRACK's second half: "increasing the damage they take from your other Shadow
- * damage over time effects by 10%. Lasts 6 sec."
- *
- * ----------------------------------------------------------------------------
- * THE CLAUSE THAT WAS THE REASON TO CAST THE ABILITY, and it was `unmodelled`
- * for as long as Wrack existed. The reason given was true and specific: damage
- * taken here was per SCHOOL, and a Shadow vulnerability would also raise Shadow
- * Bolt -- over half of the SM/DS profile's damage -- which is a bigger number
- * wearing the right label rather than an approximation. That reason named the
- * field it wanted, and `periodicDamageTakenBySchool` is it.
- *
- * "OTHER" IS FREE, AND NOT BY ACCIDENT. Wrack is a CHANNEL, so its own six
- * ticks are cast ticks and carry no `periodic` flag -- only a real
- * damage-over-time tick does. So this debuff cannot amplify the ability that
- * applied it, which is exactly what the word asks for.
- *
- * `ignore` ON REFRESH, so the six seconds run from the FIRST tick of the
- * channel rather than from the last. The tooltip states one six-second effect
- * and the channel is six seconds long; resetting on every tick would leave the
- * debuff standing for five seconds after the channel ended.
- * ----------------------------------------------------------------------------
+/*
+ * WRACK's old second half -- "+10% damage taken from your other Shadow damage
+ * over time effects" -- is GONE by the owner's 2026-11-11 note: "Wrack no
+ * longer increases the damage of the Warlock's periodic effects on the
+ * target." Its replacement speeds those effects' ticks instead; see
+ * `WRACK_HASTED_EFFECTS` in `abilities/warlock.ts`.
  */
-export const WRACK_DOT_AMPLIFICATION_PERCENT = 10;
-export const WRACK_DEBUFF_DURATION_MS = seconds(6);
-
-export const WRACK_AMPLIFICATION: AuraDefinition = {
-  id: 'wrack',
-  name: 'Wrack',
-  durationMs: WRACK_DEBUFF_DURATION_MS,
-  isDebuff: true,
-  refreshBehaviour: 'ignore',
-  periodicDamageTakenBySchool: { shadow: 1 + WRACK_DOT_AMPLIFICATION_PERCENT / 100 },
-};
 
 // ---------------------------------------------------------------------------
 // Destruction

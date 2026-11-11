@@ -115,6 +115,7 @@ The owner's notes of 2026-11-11, round one. Leave room for a second.
 | --- | --- | --- |
 | 1 | the notes for Hunter and Shaman | BM Hunter **+64.5**, Hawk Melee **+63.3** |
 | 2 | the owner's answer to question 3: Enh imbues Windfury | Enh **1130.1 -> 1113.4** at 60 s, +11.2 at 180 s |
+| 3 | the Warlock notes: Wrack redesigned, Soul Siphon narrowed | SM/DS **1125.4 -> 1176.3**, +50.9 REAL |
 
 **WHAT CHANGED:**
 
@@ -180,6 +181,49 @@ the Hunter and Shaman profiles were run, since nothing else is reached.
    rank"**, where this repository ran 10, the owner's five doubled at 70755.
    The new 6 to 10 is applied as the note prescribes. The "was" figure is
    flagged rather than reconciled.
+
+### Round 93, row 3: Wrack and Soul Siphon
+
+The owner's Warlock notes, also 2026-11-11. Client 1.60.1.70888 already ships
+the Wrack tooltip and the Soul Siphon wording, so nothing here runs ahead of it.
+
+- **Wrack deals 60 a tick, down from 86**, which is the note's 30%. The client
+  reads 60. The coefficient takes the same x0.7, to 0.2002. That is a reading:
+  the client states no coefficient.
+- **Wrack's +10% to Shadow DoTs is gone.** `WRACK_AMPLIFICATION` is deleted.
+- **While Wrack is channelled, Siphon Life, Corruption and Bane of Agony tick
+  at x2. The progress is kept when the channel stops.** This needed two engine
+  pieces:
+  - `AuraCollection.setTickRate` makes a tick a quantity of progress. A rate
+    change spends what has accrued and reschedules the rest, which is the
+    developers' own example. The duration is untouched.
+  - `Ability.onChannelEnd` fires however a channel stops: completed,
+    interrupted, cancelled or finished early. `onCast` cannot do that job,
+    because an interrupted channel's last tick never runs.
+- **Soul Siphon counts exactly Corruption, Siphon Life and Bane of Agony.**
+  Curse of the Elements and Bane of Doom no longer count. The numbers are
+  unchanged at 4/8/12 per effect, capped at 12/24/36, so only the list moved.
+  The generated `values/warlock.json` still carries the old "other Affliction
+  effects" text; a talent refresh will fix the wording.
+
+**MEASURED ON ALL 38 PROFILES**, because the tick clock is engine code: every
+row these notes do not reach is **0.0 to the decimal**. SM/DS goes
+**1125.4 -> 1176.3 (+50.9 REAL)**. Wrack is now 12.2 casts and **39.4%** of
+the profile. Firelock, SM Ruin and Fire Demo take no Wrack and do not move.
+
+**QUESTIONS FOR THE OWNER:**
+
+5. **Wrack's coefficient is cut by 30% along with the flat damage.** Only the
+   flat 86 -> 60 is confirmed by the client.
+6. **A DoT whose clock was shifted can lose its final tick at expiry.** After a
+   Wrack the tick phase moves, so a Corruption's last tick can fall a fraction
+   of a second past its 18 s and not land. The total still rises, because the
+   ticks during the channel come twice as fast. Is a partial final tick
+   intended to be lost?
+7. **Bane of Agony's ramp is read off elapsed time, not off the tick count.**
+   An extra tick takes the band its moment falls in. That keeps "still lasts
+   its full 24 seconds" true, and it means the extra ticks are worth what the
+   ramp says at that moment.
 
 ## Round 92: three Hunter shot timings
 

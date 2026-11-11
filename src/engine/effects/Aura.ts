@@ -955,6 +955,26 @@ export class AuraInstance {
   /** Queue handle for the next periodic tick. */
   tickHandle: ScheduledEvent | null = null;
 
+  /*
+   * ----------------------------------------------------------------------------
+   * HOW FAST THE TICK CLOCK RUNS, and where it stood when the rate last moved.
+   *
+   * Wrack's 1.60.1.70888 redesign: "While channeling, your Siphon Life,
+   * Corruption, and Bane of Agony effects on the target deal their periodic
+   * damage 100% faster" -- and "the time it skips is kept after Wrack's channel
+   * ends". So a tick is a quantity of PROGRESS, not of wall time: it needs
+   * `intervalMs` of progress, progress accrues at `tickRate` per millisecond,
+   * and a rate change spends what has accrued so far and reschedules the rest.
+   * The DURATION is untouched -- "not how long they last".
+   *
+   * `tickProgressLeftMs` is the progress still owed to the pending tick as of
+   * `tickCheckpointAt`. Both are set whenever a tick is scheduled.
+   * ----------------------------------------------------------------------------
+   */
+  tickRate = 1;
+  tickProgressLeftMs = 0;
+  tickCheckpointAt: Milliseconds = 0;
+
   constructor(
     readonly definition: AuraDefinition,
     /** Id of the combatant that applied it. */

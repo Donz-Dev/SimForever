@@ -453,11 +453,16 @@ export function castAbility(
             caster.castEndsAt = 0;
             caster.endChannel();
           }
-          if (!caster.isAlive) return;
+          if (!caster.isAlive) {
+            if (last) caster.runChannelEndHook();
+            return;
+          }
           // A deferred cost is paid as the cast lands -- see `payCostOnCompletion`.
           if (last && deferCost && ability.cost) payCost(ctx, caster, ability, resolved.costAmount);
           caster.recordChannelTick();
           runCast(ctx, { simulation: ctx, caster, target, ability }, last);
+          // After the last tick's effect: see `Ability.onChannelEnd`.
+          if (last) caster.runChannelEndHook();
         }),
       ),
     );
@@ -469,7 +474,11 @@ export function castAbility(
    * ability declaring `interruptibleChannel` ever is. See
    * `Ability.interruptibleChannel`.
    */
-  caster.beginChannel(ability, handles);
+  caster.beginChannel(
+    ability,
+    handles,
+    ability.onChannelEnd ? () => ability.onChannelEnd!(abilityContext) : null,
+  );
 
   return { ok: true };
 }

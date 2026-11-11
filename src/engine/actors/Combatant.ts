@@ -657,11 +657,29 @@ export class Combatant {
   /** Ticks of the current channel that have already landed. */
   channelTicksDelivered = 0;
 
+  /**
+   * What to run when the current channel stops, however it stops -- set from
+   * `Ability.onChannelEnd` by `castAbility`, cleared once it has run.
+   */
+  private channelEndHook: (() => void) | null = null;
+
   /** Record a channel's pending tick events, replacing any previous set. */
-  beginChannel(ability: Ability, ticks: readonly ScheduledEvent[]): void {
+  beginChannel(
+    ability: Ability,
+    ticks: readonly ScheduledEvent[],
+    onEnd: (() => void) | null = null,
+  ): void {
     this.channelling = ability;
     this.channelTicks = [...ticks];
     this.channelTicksDelivered = 0;
+    this.channelEndHook = onEnd;
+  }
+
+  /** Run and clear the channel's end hook, if it has one. */
+  runChannelEndHook(): void {
+    const hook = this.channelEndHook;
+    this.channelEndHook = null;
+    hook?.();
   }
 
   /** One tick of the current channel landed. */
@@ -688,6 +706,7 @@ export class Combatant {
     this.channelTicks = [];
     this.channelling = null;
     this.castEndsAt = 0;
+    this.runChannelEndHook();
     return interrupted;
   }
 
