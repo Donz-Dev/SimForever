@@ -955,6 +955,49 @@ export class AuraInstance {
   /** Queue handle for the next periodic tick. */
   tickHandle: ScheduledEvent | null = null;
 
+  /*
+   * ----------------------------------------------------------------------------
+   * HOW FAST THE TICK CLOCK RUNS, and where it stood when the rate last moved.
+   *
+   * Wrack's 1.60.1.70888 redesign: "While channeling, your Siphon Life,
+   * Corruption, and Bane of Agony effects on the target deal their periodic
+   * damage 100% faster" -- and "the time it skips is kept after Wrack's channel
+   * ends". So a tick is a quantity of PROGRESS, not of wall time: it needs
+   * `intervalMs` of progress, progress accrues at `tickRate` per millisecond,
+   * and a rate change spends what has accrued so far and reschedules the rest.
+   * The DURATION is untouched -- "not how long they last".
+   *
+   * `tickProgressLeftMs` is the progress still owed to the pending tick as of
+   * `tickCheckpointAt`. Both are set whenever a tick is scheduled.
+   * ----------------------------------------------------------------------------
+   */
+  tickRate = 1;
+  tickProgressLeftMs = 0;
+  tickCheckpointAt: Milliseconds = 0;
+  /** The progress the pending tick needs in total -- `intervalMs`, or the first-tick delay. */
+  tickProgressTotalMs = 0;
+  /**
+   * Whether this window's tick clock was ever run at a rate other than 1.
+   * Only such a window can owe a PARTIAL tick when it falls off -- see
+   * `deliverPartialTick` -- so every unshifted DoT behaves exactly as before.
+   */
+  tickClockShifted = false;
+
+  /**
+   * Ticks this window has delivered, counted from its last application or
+   * refresh. Bane of Agony's ramp reads it, by the owner's 2026-11-11 ruling:
+   * "Use tick count", so a tick Wrack hurried takes the NEXT band rather than
+   * whichever band its moment falls in.
+   */
+  ticksDelivered = 0;
+
+  /**
+   * The fraction of a full tick the current `onTick` call delivers: 1, except
+   * for the partial tick a shifted window pays as it falls off. A periodic
+   * effect that can be shifted must scale its damage by this.
+   */
+  tickScale = 1;
+
   constructor(
     readonly definition: AuraDefinition,
     /** Id of the combatant that applied it. */

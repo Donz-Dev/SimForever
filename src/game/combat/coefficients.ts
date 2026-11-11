@@ -725,7 +725,14 @@ export const IMMOLATE_TICK_SP_COEFFICIENT = 0.13;
  * expected coefficient per cast time of 0.286 per second." So 28.6% a tick,
  * 1.716 over the six-second channel.
  */
-export const WRACK_TICK_SP_COEFFICIENT = 0.286;
+/*
+ * AND x0.7 SINCE THE OWNER'S 2026-11-11 NOTE, "Wrack damage reduced by 30%".
+ * Client 1.60.1.70888 shows the flat half moving 86 -> 60; the owner then
+ * ruled the scaling takes the cut too: "Cut wrack's spell power scaling as
+ * well."
+ */
+export const WRACK_DAMAGE_REDUCTION_70888 = 0.7;
+export const WRACK_TICK_SP_COEFFICIENT = 0.286 * WRACK_DAMAGE_REDUCTION_70888;
 
 // ---------------------------------------------------------------------------
 // Druid

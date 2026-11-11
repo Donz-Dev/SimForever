@@ -66,10 +66,15 @@ function tick(
     abilityId: aura.id,
     abilityName: aura.name,
     school,
-    baseAmount: amount,
+    /*
+     * `tickScale` IS 1 EXCEPT ON A PARTIAL TICK: a window Wrack shifted pays
+     * the fraction it accrued when it falls off, by the owner's 2026-11-11
+     * ruling. Both halves scale, so a half tick is half the damage at any gear.
+     */
+    baseAmount: amount * aura.tickScale,
     // Per TICK. A pure DoT takes the whole periodic coefficient; Immolate's
     // burn takes its share of a hybrid pair.
-    powerCoefficient,
+    powerCoefficient: powerCoefficient * aura.tickScale,
     periodic: true,
     ...(canCrit ? { critFrom: 'spell' as const } : {}),
     appliesArmor: false,
@@ -167,23 +172,24 @@ export const BANE_OF_AGONY_TICK_SHARES: readonly number[] = [
 ];
 
 /**
- * Which share this tick draws, from the aura's own clock.
+ * Which share the Nth tick draws, counted from 0.
  *
  * ----------------------------------------------------------------------------
- * READ FROM `appliedAt` RATHER THAN COUNTED ON THE INSTANCE, because a refresh
- * sets `appliedAt = now` -- so the ramp restarts when the Bane is re-applied,
- * which is what `refreshBehaviour: 'reset'` means everywhere else here. A
- * counter held on the instance would have to be reset by hand in the one place
- * that is easy to forget.
+ * BY TICK COUNT, the owner's 2026-11-11 ruling: "Use tick count." It was read
+ * off `appliedAt` -- elapsed time -- which agreed with the count for as long
+ * as every tick came two seconds apart. Wrack's faster ticks broke that: two
+ * hurried ticks inside one two-second band both drew that band's share.
  *
- * CLAMPED INTO THE ARRAY, so the final tick -- due at the exact moment the
- * aura falls off, and ordered before the expiry by the event queue -- reads the
- * last band rather than running off the end.
+ * THE COUNT RESTARTS ON A REFRESH, in `AuraCollection.apply`, beside the
+ * `appliedAt` reset that used to carry the ramp -- so `reset` still restarts
+ * the ramp, which is what it means everywhere else here.
+ *
+ * CLAMPED INTO THE ARRAY, so a thirteenth tick -- which only Wrack's faster
+ * ticks can reach inside 24 seconds -- reads the last band.
  * ----------------------------------------------------------------------------
  */
-export function baneOfAgonyTickShare(elapsedMs: number): number {
-  const index = Math.round(elapsedMs / BANE_OF_AGONY_TICK_INTERVAL_MS) - 1;
-  const clamped = Math.min(Math.max(index, 0), BANE_OF_AGONY_TICK_SHARES.length - 1);
+export function baneOfAgonyTickShareByCount(ticksDelivered: number): number {
+  const clamped = Math.min(Math.max(ticksDelivered, 0), BANE_OF_AGONY_TICK_SHARES.length - 1);
   return BANE_OF_AGONY_TICK_SHARES[clamped]!;
 }
 
@@ -216,7 +222,9 @@ function baneOfAgonyAura(multiplier: number): AuraDefinition {
     periodic: {
       intervalMs: BANE_OF_AGONY_TICK_INTERVAL_MS,
       onTick: (context, aura) => {
-        const share = baneOfAgonyTickShare(context.clock.now() - aura.appliedAt) * multiplier;
+        // BY TICK COUNT, the owner's 2026-11-11 ruling: a tick Wrack hurried
+        // takes the next band, so twelve ticks are the twelve bands in order.
+        const share = baneOfAgonyTickShareByCount(aura.ticksDelivered) * multiplier;
         tick(
           context,
           aura,
@@ -466,40 +474,13 @@ export const SHADOW_TRANCE: AuraDefinition = {
   },
 };
 
-/**
- * WRACK's second half: "increasing the damage they take from your other Shadow
- * damage over time effects by 10%. Lasts 6 sec."
- *
- * ----------------------------------------------------------------------------
- * THE CLAUSE THAT WAS THE REASON TO CAST THE ABILITY, and it was `unmodelled`
- * for as long as Wrack existed. The reason given was true and specific: damage
- * taken here was per SCHOOL, and a Shadow vulnerability would also raise Shadow
- * Bolt -- over half of the SM/DS profile's damage -- which is a bigger number
- * wearing the right label rather than an approximation. That reason named the
- * field it wanted, and `periodicDamageTakenBySchool` is it.
- *
- * "OTHER" IS FREE, AND NOT BY ACCIDENT. Wrack is a CHANNEL, so its own six
- * ticks are cast ticks and carry no `periodic` flag -- only a real
- * damage-over-time tick does. So this debuff cannot amplify the ability that
- * applied it, which is exactly what the word asks for.
- *
- * `ignore` ON REFRESH, so the six seconds run from the FIRST tick of the
- * channel rather than from the last. The tooltip states one six-second effect
- * and the channel is six seconds long; resetting on every tick would leave the
- * debuff standing for five seconds after the channel ended.
- * ----------------------------------------------------------------------------
+/*
+ * WRACK's old second half -- "+10% damage taken from your other Shadow damage
+ * over time effects" -- is GONE by the owner's 2026-11-11 note: "Wrack no
+ * longer increases the damage of the Warlock's periodic effects on the
+ * target." Its replacement speeds those effects' ticks instead; see
+ * `WRACK_HASTED_EFFECTS` in `abilities/warlock.ts`.
  */
-export const WRACK_DOT_AMPLIFICATION_PERCENT = 10;
-export const WRACK_DEBUFF_DURATION_MS = seconds(6);
-
-export const WRACK_AMPLIFICATION: AuraDefinition = {
-  id: 'wrack',
-  name: 'Wrack',
-  durationMs: WRACK_DEBUFF_DURATION_MS,
-  isDebuff: true,
-  refreshBehaviour: 'ignore',
-  periodicDamageTakenBySchool: { shadow: 1 + WRACK_DOT_AMPLIFICATION_PERCENT / 100 },
-};
 
 // ---------------------------------------------------------------------------
 // Destruction

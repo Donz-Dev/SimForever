@@ -58,7 +58,6 @@ import {
   IMPROVED_STORMSTRIKE_BYPASS_PERCENT,
   IMPROVED_STORMSTRIKE_DURATION_MS,
   LIGHTNING_OVERLOAD_FRACTION,
-  MAELSTROM_WEAPON_PPM,
   elementalFocus,
   maelstromWeapon,
   improvedStormstrike,
@@ -66,6 +65,9 @@ import {
 } from '../../src/game/reactions/shamanTalents';
 import { SHAMAN_ELEMENTAL, SHAMAN_ENHANCEMENT } from '../../src/game/rotations/shaman';
 import { talentNumber } from '../../src/game/talents/talentValues';
+
+/** Rank 5's procs a minute, index 3 of the row since the owner's 2026-11-11 note. */
+const MAELSTROM_WEAPON_PPM = talentNumber('shaman', 'maelstrom_weapon', 5, 3)!;
 import { talentBuild } from '../../src/game/talents/talentBuild';
 import { legalise } from '../helpers/legalTalents';
 import { MANA_REGEN_LOCKOUT_MS, manaPerTick } from '../../src/game/combat/resourceRules';
@@ -103,8 +105,10 @@ function withWindfuryOpener<T extends { precombat?: readonly { abilityId: string
   const precombat = (built.precombat ?? []).map((action) =>
     action.abilityId === 'flametongue_weapon' ? { ...action, abilityId: 'windfury_weapon' } : action,
   );
+  // The preset imbues Windfury itself since round 93; the swap is kept so
+  // this still tests the Windfury imbue if the opener changes again.
   if (!precombat.some((action) => action.abilityId === 'windfury_weapon')) {
-    throw new Error('the Enhancement opener no longer imbues Flametongue to swap');
+    throw new Error('the Enhancement opener imbues neither Flametongue nor Windfury');
   }
   return { ...built, precombat };
 }
@@ -269,16 +273,16 @@ describe('the two builds, and what their talents actually do', () => {
 });
 
 describe('the fights', () => {
-  it('imbues Flametongue once, before the pull, and never Windfury', () => {
+  it('imbues Windfury once, before the pull, and never Flametongue', () => {
     /*
-     * The owner's round 37: Flametongue in the opener where Windfury was, and
-     * no imbue entries left in the combat list. The imbue lasts an hour, so the
-     * pre-combat cast is the only one.
+     * The owner's round 93: Windfury back in the opener now that it stacks with
+     * Windfury Totem (round 37 had put Flametongue there). The imbue lasts an
+     * hour, so the pre-combat cast is the only one.
      */
     const batch = batchOf('shaman_enhancement', 40, 5);
     const used = (name: string) => batch.abilities.find((a) => a.abilityName === name)?.uses ?? 0;
-    expect(used('Flametongue Weapon')).toBeCloseTo(1, 1);
-    expect(used('Windfury Weapon')).toBe(0);
+    expect(used('Windfury Weapon')).toBeCloseTo(1, 1);
+    expect(used('Flametongue Weapon')).toBe(0);
   });
 
   it('uses Stormstrike and Earth Shock, which is the pairing the debuff makes', () => {
@@ -1130,8 +1134,11 @@ describe('the two owner rulings that replaced placeholders', () => {
      * removes exactly that. Asserted as the normalisation rather than as a
      * percentage, because that is the property the two readings disagree about.
      */
-    // 10 since 1.60.1.70755, which doubled it.
+    // 10 at rank 5, and 6/7/8/9/10 by rank since the owner's 2026-11-11 note.
     expect(MAELSTROM_WEAPON_PPM).toBe(10);
+    expect([1, 2, 3, 4, 5].map((rank) => talentNumber('shaman', 'maelstrom_weapon', rank, 3))).toEqual([
+      6, 7, 8, 9, 10,
+    ]);
 
     const slow = ppmChance(3.4, MAELSTROM_WEAPON_PPM);
     const fast = ppmChance(1.7, MAELSTROM_WEAPON_PPM);
@@ -1484,8 +1491,18 @@ describe('Windfury Weapon, as a self-contained special attack', () => {
      * The check is the COUNT: a 3.8 second weapon cannot swing more than about
      * 20 times in a 58 second fight even fully hasted, so an auto-attack row
      * carrying 33 attempts is carrying something else.
+     *
+     * WITHOUT WINDFURY TOTEM, since the owner's 2026-11-11 note lets the
+     * imbue and the totem stack: the totem's extra attacks ARE swings and
+     * belong in that row, so with it selected the count would measure the
+     * totem rather than where the imbue's specials report.
      */
-    const batch = windfuryBatchOf(30, 4);
+    const built = withWindfuryOpener(PRESETS_BY_ID.get('shaman_enhancement')!.build());
+    const batch = runProfileBatch({
+      ...built,
+      raidBuffs: built.raidBuffs.filter((id) => id !== 'windfury_totem'),
+      simulation: { ...built.simulation, iterations: 30, seed: 4 },
+    } as never);
     const autos = batch.abilities.find((row) => row.abilityName === 'Main Hand Auto-Attack');
     const weapon = enhancementPlayer().weapons.mainHand!;
     const swingsIfUnhasted =
@@ -1666,7 +1683,7 @@ describe('Maelstrom Weapon rolls on every melee weapon use', () => {
      * `weaponSlot: 'mainHand'` for exactly this reason. A Windfury attack that
      * forgot it would be dealt, reported, and silently stop feeding the capstone.
      */
-    const reaction = maelstromWeapon(20);
+    const reaction = maelstromWeapon(20, [20, 5, 30, MAELSTROM_WEAPON_PPM]);
     for (const abilityId of [undefined, 'stormstrike', WINDFURY_WEAPON_ATTACK_ID]) {
       expect(
         reaction.canTrigger!(alwaysRolls, shaman(), use(abilityId, 'mainHand')),
@@ -1676,7 +1693,7 @@ describe('Maelstrom Weapon rolls on every melee weapon use', () => {
   });
 
   it('does not roll on a spell, which has no weapon slot', () => {
-    const reaction = maelstromWeapon(20);
+    const reaction = maelstromWeapon(20, [20, 5, 30, MAELSTROM_WEAPON_PPM]);
     expect(reaction.canTrigger!(alwaysRolls, shaman(), use('lightning_bolt', 'ranged'))).toBe(
       false,
     );
@@ -1705,7 +1722,7 @@ describe('Maelstrom Weapon rolls on every melee weapon use', () => {
       clock: { now: () => 0 },
     } as unknown as SimulationContext;
 
-    const reaction = maelstromWeapon(20);
+    const reaction = maelstromWeapon(20, [20, 5, 30, MAELSTROM_WEAPON_PPM]);
     expect(reaction.canTrigger!(justUnder, shaman(), use(undefined, 'mainHand'))).toBe(true);
     expect(reaction.canTrigger!(justOver, shaman(), use(undefined, 'mainHand'))).toBe(false);
   });

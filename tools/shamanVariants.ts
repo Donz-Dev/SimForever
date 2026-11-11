@@ -893,6 +893,26 @@ export const VARIANT_GROUPS: Readonly<Record<string, readonly Variant[]>> = {
    * is not off it.
    * ============================================================================
    */
+  /*
+   * THE IMBUE, NOW THAT IT STACKS WITH THE TOTEM. The owner's 2026-11-11 note:
+   * "Weapon imbues and Weapon totems can now be used at the same time ... the
+   * Shaman can benefit from Windfury Weapon and Windfury Totem at the same
+   * time." Round 37 chose Flametongue partly BECAUSE a Windfury imbue switched
+   * the ticked totem off, so the choice is re-priced here. Both imbue entries
+   * in the list are gated on no imbue being up, so the opener's choice holds.
+   */
+  enhancementImbue: [
+    {
+      label: 'opener imbues windfury_weapon instead of flametongue_weapon',
+      apply: (profile) => ({
+        ...profile,
+        precombat: (profile.precombat ?? []).map((a) =>
+          a.abilityId === 'flametongue_weapon' ? { ...a, abilityId: 'windfury_weapon' } : a,
+        ),
+      }),
+    },
+  ],
+
   enhancementPrecombat: [
     { label: 'rage_of_the_farseer at 0s before', apply: addPrecombat(0, 'rage_of_the_farseer') },
     { label: 'no pre-combat flame_shock', apply: removePrecombat('flame_shock') },

@@ -504,6 +504,25 @@ export interface Ability {
   readonly onCastStart?: (context: AbilityContext) => void;
 
   /**
+   * Runs when a cast with a cast time STOPS, however it stops: the last tick
+   * landed, the rotation interrupted it, its cancel condition dropped it, or
+   * it was finished early.
+   *
+   * ----------------------------------------------------------------------------
+   * THE CLOSING HALF OF `onCastStart` FOR A WINDOW THAT MUST NOT OUTLIVE THE
+   * CHANNEL. Evocation closes its window in `onCast`, which works only because
+   * Evocation cannot be interrupted -- an interrupted channel's remaining ticks
+   * are cancelled, so its final `onCast` never runs. Wrack (1.60.1.70888) is
+   * interruptible and speeds up three DoTs "while channeling", so it needs a
+   * signal that also fires on an interrupt. This is it.
+   *
+   * Runs AFTER the final tick's `onCast` on a channel that completes, and
+   * never for an instant. The caster is already free when it runs.
+   * ----------------------------------------------------------------------------
+   */
+  readonly onChannelEnd?: (context: AbilityContext) => void;
+
+  /**
    * What the ability actually does: deal damage, apply an aura, generate a
    * resource. Runs when the cast completes, which is immediately for an
    * instant ability.

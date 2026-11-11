@@ -146,10 +146,18 @@ export const ARCANE_SHOT_DAMAGE = 280;
 // 0.15 since 1.60.1.70755: "Attack Power coefficient raised from 0.1 to 0.15".
 export const ARCANE_SHOT_RAP_COEFFICIENT = 0.15;
 
+/**
+ * 11% OF BASE MANA, AT EVERY RANK, by the owner's 2026-11-11 note -- and
+ * foreverchanges.pro's 1.60.1.70888 diff already reads "Costs 11% of base mana
+ * instead of 190 Mana". Summon Hawk costs the same share, "same as Arcane
+ * Shot", so the two read one constant.
+ */
+export const ARCANE_SHOT_BASE_MANA_FRACTION = 0.11;
+
 export const ARCANE_SHOT: Ability = {
   id: 'arcane_shot',
   name: 'Arcane Shot',
-  cost: { resource: 'mana', amount: 190 },
+  cost: { resource: 'mana', amount: shareOfBase(ARCANE_SHOT_BASE_MANA_FRACTION) },
   cooldownMs: seconds(6),
   /*
    * SIX SECONDS ON THE GROUP WHATEVER A TALENT DOES TO THIS ABILITY, which is
@@ -591,7 +599,9 @@ export const BESTIAL_WRATH_ABILITY: Ability = {
 export const SUMMON_HAWK: Ability = {
   id: 'summon_hawk',
   name: 'Summon Hawk',
-  cost: { resource: 'mana', amount: 190 },
+  // "Summon Hawk Mana cost changed to 11% of base Mana for all ranks of Summon
+  // Hawk, same as Arcane Shot." The owner's 2026-11-11 note.
+  cost: { resource: 'mana', amount: shareOfBase(ARCANE_SHOT_BASE_MANA_FRACTION) },
   cooldownMs: seconds(6),
   // "Shares cooldown with Arcane Shot", which the wiki states outright.
   cooldownGroup: 'arcane_shot',

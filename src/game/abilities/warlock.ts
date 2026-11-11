@@ -20,7 +20,6 @@ import {
   IMMOLATE_COEFFICIENTS,
   IMMOLATE_DIRECT,
   SIPHON_LIFE,
-  WRACK_AMPLIFICATION,
 } from '../auras/warlock';
 import {
   CONFLAGRATE_SP_COEFFICIENT,
@@ -717,54 +716,74 @@ export const SEARING_PAIN: Ability = {
 
 /*
  * ============================================================================
- * WRACK, the Affliction capstone: "Tears the target apart from within, dealing
- * 36 Shadow damage every 1 sec and increasing the damage they take from your
- * other Shadow damage over time effects by 10%. Lasts 6 sec." 200 mana, a
- * six-second CHANNEL, new in Forever and rank 1 IS max.
+ * WRACK, the Affliction capstone, as client 1.60.1.70888 has it: "Tears the
+ * target apart from within for 6 sec, inflicting 60 Shadow damage every 1 sec.
+ * While channeling, your Siphon Life, Corruption, and Bane of Agony effects on
+ * the target deal their periodic damage 100% faster." 200 mana, a six-second
+ * CHANNEL, new in Forever and rank 1 IS max.
  *
  * ----------------------------------------------------------------------------
- * BOTH HALVES NOW APPLY, AND THE SECOND ONE IS THE REASON TO CAST IT.
+ * REDESIGNED BY THE OWNER'S 2026-11-11 NOTE, in three parts:
  *
- * ITS COEFFICIENT IS 14.3% OF SPELL POWER PER TICK, supplied by the ruleset
+ *   - "Wrack damage reduced by 30%": 86 -> 60 a tick, and the coefficient
+ *     takes the same x0.7, by the owner's follow-up ruling.
+ *   - "Wrack no longer increases the damage of the Warlock's periodic effects
+ *     on the target": the old +10% to Shadow DoTs, `WRACK_AMPLIFICATION`, is
+ *     deleted.
+ *   - the three named DoTs tick at x2 while it is channelled, and keep the
+ *     progress afterwards: `WRACK_HASTED_EFFECTS`, `setTickRate`.
+ *
+ * SO THE REASON TO CAST IT MOVED, and the old argument for casting it is
+ * history: it was the +10% on the bleeds that paid for the channel, and it is
+ * now the extra ticks. Every figure in the old version of this comment -- the
+ * +5.6, the 30.3% share -- was measured on the design that is gone.
+ *
+ * ITS COEFFICIENT WAS 14.3% OF SPELL POWER PER TICK, supplied by the ruleset
  * owner directly rather than by `WoWSimWorksheet.xlsx`, which has no Wrack row.
  * The provenance is recorded at `WRACK_TICK_SP_COEFFICIENT`, because it is the
  * one row in that file which a refresh of the sheet will not contain.
- *
- * ITS +10% TO YOUR OTHER SHADOW DoTs IS APPLIED NOW, through
- * `periodicDamageTakenBySchool` on `WRACK_AMPLIFICATION`. The old reason for
- * its absence was specific enough to re-read and named the field it wanted: a
- * plain Shadow vulnerability would also raise Shadow Bolt, at over half of the
- * SM/DS profile's damage, so the clause waited for a PERIODIC-only one. It is
- * the fourth time in this project a reason written that way has expired
- * usefully.
- *
- * AND IT IS IN THE SM/DS LIST NOW. The owner paused it -- "it's unimportant for
- * the rest of the simulator for now, there isn't a profile that uses it" -- and
- * has since un-paused it, at the position and on the condition the list's own
- * comment had been carrying all along: between Life Tap and Shadow Bolt, gated
- * on all three bleeds having six seconds left.
- *
- * WORTH +5.6 DPS, AND IT RESHAPES THE PROFILE OUT OF ALL PROPORTION TO THAT.
- * 435.9 to 441.5 over thirty batches of ten, and in exchange Shadow Bolt falls
- * from 14.8 casts a fight to 5.6 and from 51.1% of the damage to 20.2%, while
- * Wrack takes 30.3%. **A list can change completely and be worth almost
- * nothing**, which this project has now measured three times -- and the uses
- * column is what says the list changed at all.
- *
- * THE ARITHMETIC THAT SAID IT COULD NOT BE WORTH CASTING WAS NEARLY RIGHT. Six
- * ticks at 14.3% is 0.858 over the channel against Shadow Bolt's 0.857 in half
- * the time, so the direct damage is roughly a wash per second; what pays for it
- * is the amplification on the three bleeds plus the 200 mana against Shadow
- * Bolt's 380. The margin is thin and REAL, which is why it took the full
- * method -- one batch of ten read +12.9, more than twice the truth.
  * ----------------------------------------------------------------------------
  */
 /*
- * 86 A SECOND SINCE 1.60.1.70755: "Base damage per second now increases with
- * each level by 2.5. Base damage per second at level 60 effectively increased
- * from 36 to 86." foreverchanges.pro says 86 too.
+ * 60 A SECOND SINCE THE OWNER'S 2026-11-11 NOTE, "Wrack damage reduced by
+ * 30%" -- and client 1.60.1.70888 reads "inflicting 60 Shadow damage every 1
+ * sec", which is 86 x 0.7 rounded. It was 86 from 1.60.1.70755.
  */
-export const WRACK_TICK_DAMAGE = 86;
+export const WRACK_TICK_DAMAGE = 60;
+
+/*
+ * ----------------------------------------------------------------------------
+ * THE THREE EFFECTS WRACK SPEEDS UP, by the 1.60.1.70888 tooltip: "While
+ * channeling, your Siphon Life, Corruption, and Bane of Agony effects on the
+ * target deal their periodic damage 100% faster." So their tick clocks run at
+ * x2 for the channel and back at x1 when it stops, however it stops -- and
+ * the progress gained is kept ("the time it skips is kept after Wrack's
+ * channel ends or is interrupted"). `AuraCollection.setTickRate` is that
+ * mechanism, and `Ability.onChannelEnd` is what fires on an interrupt.
+ *
+ * NAMED, NOT DERIVED: the tooltip lists three, and Bane of Doom and Immolate
+ * are periodic Warlock effects it does not name.
+ *
+ * IT REPLACES THE +10% TO SHADOW DoTs, which is gone: "Wrack no longer
+ * increases the damage of the Warlock's periodic effects on the target."
+ * ----------------------------------------------------------------------------
+ */
+export const WRACK_HASTED_EFFECTS: readonly string[] = ['siphon_life', 'corruption', 'bane_of_agony'];
+export const WRACK_TICK_RATE = 2;
+
+function setWrackTickRate(
+  simulation: SimulationContext,
+  casterId: string,
+  target: Combatant | undefined,
+  rate: number,
+): void {
+  if (!target) return;
+  for (const id of WRACK_HASTED_EFFECTS) {
+    // "YOUR" effects: one the caster applied, never another Warlock's.
+    if (target.auras.get(id)?.sourceId !== casterId) continue;
+    target.auras.setTickRate(simulation, id, rate);
+  }
+}
 export const WRACK_TICKS = 6;
 export const WRACK_CHANNEL_MS = seconds(WRACK_TICKS);
 
@@ -814,15 +833,12 @@ export const WRACK: Ability = {
    */
   interruptibleChannel: true,
   attackTable: 'spell',
+  onCastStart: ({ simulation, caster, target }) =>
+    setWrackTickRate(simulation, caster.id, target, WRACK_TICK_RATE),
+  onChannelEnd: ({ simulation, caster, target }) =>
+    setWrackTickRate(simulation, caster.id, target, 1),
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
-
-    /*
-     * THE DEBUFF FIRST, and it refuses to refresh -- so the six seconds run
-     * from the first tick of the channel and not from the last. See
-     * `WRACK_AMPLIFICATION`.
-     */
-    simulation.applyAura(target, WRACK_AMPLIFICATION, caster.id);
 
     /*
      * SOUL SIPHON, COUNTED PER TICK rather than once for the channel, because
@@ -920,14 +936,17 @@ export const WARLOCK_AFFLICTION_PERIODICS: readonly string[] = [
  * ----------------------------------------------------------------------------
  */
 export const WARLOCK_SOUL_SIPHON_EFFECTS: readonly string[] = [
+  /*
+   * EXACTLY THE THREE THE 1.60.1.70888 TOOLTIP NAMES, by the owner's
+   * 2026-11-11 note: "per each of your Corruption, Siphon Life, and Bane of
+   * Agony spells active on the target ... (was any Affliction spell)". So
+   * Curse of the Elements and Bane of Doom no longer count; they did under the
+   * owner's earlier ruling on the old wording.
+   */
   'corruption',
-  'bane_of_agony',
-  // An Affliction effect on the target, so it counts; it cannot be up beside
-  // Bane of Agony, so it never raises the count past what Agony did.
-  'bane_of_doom',
   'siphon_life',
-  'curse_of_the_elements',
-];
+  'bane_of_agony',
+]
 
 // ---------------------------------------------------------------------------
 // Area spells (round 57)

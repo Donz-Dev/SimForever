@@ -10,6 +10,7 @@ import {
   WARLOCK_DESTRUCTION_SPELLS,
   WARLOCK_SOUL_SIPHON_EFFECTS,
   WRACK,
+  WRACK_HASTED_EFFECTS,
   WRACK_SOUL_SIPHON_CAP,
   WRACK_SOUL_SIPHON_PER_EFFECT,
 } from '../../src/game/abilities/warlock';
@@ -17,7 +18,7 @@ import {
   BANE_OF_AGONY,
   CORRUPTION,
   SIPHON_LIFE,
-  WRACK_AMPLIFICATION,
+  IMMOLATE,
 } from '../../src/game/auras/warlock';
 import { COMBAT_CONSTANTS } from '../../src/game/combat/attackChances';
 import { WARLOCK_TALENT_EFFECTS } from '../../src/game/talents/warlockEffects';
@@ -246,62 +247,138 @@ describe('Improved Drains and Soul Siphon, and which of them still reaches Wrack
   });
 });
 
-describe('Wrack, whose debuff amplifies only damage OVER TIME', () => {
-  it('is a debuff the ability applies, with the ability id it shares', () => {
-    // Same id as the ability, so Pandemic and Improved Drains reach the ticks
-    // and the debuff through one key. `WRACK` applies it in its own `onCast`.
-    expect(WRACK_AMPLIFICATION.id).toBe(WRACK.id);
-    expect(WRACK_AMPLIFICATION.isDebuff).toBe(true);
+describe('Wrack, which speeds three DoTs up while it is channelled (1.60.1.70888)', () => {
+  /*
+   * ============================================================================
+   * THE REDESIGN: "While channeling, your Siphon Life, Corruption, and Bane of
+   * Agony effects on the target deal their periodic damage 100% faster" -- and
+   * "Wrack no longer increases the damage of the Warlock's periodic effects".
+   * The developers' note is the spec for the clock: "if you channel Wrack for 1
+   * second during a 3-second Corruption tick, Corruption advances 2 seconds
+   * instead of 1, so its next tick lands 1 second later instead of 2, even if
+   * you stopped channeling Wrack."
+   *
+   * ASSERTED ON TICK TIMESTAMPS, which is the mechanism, rather than on DPS.
+   * ============================================================================
+   */
+  const fight = () => {
+    const events: TelemetryEvent[] = [];
+    // NO ROTATION -- see `soloPlayerFor` -- so every cast here is the test's.
+    const caster = soloPlayerFor('warlock_smds');
+    const target = makeTarget({ maxHealth: 100_000_000 });
+    const simulation = buildSimulation(
+      [caster, target],
+      {
+        durationMs: seconds(60),
+        attackChances: () => ({ ...NO_CHANCES, crit: -1_000_000, critMultiplier: 1.5 }),
+      },
+      { emit: (event) => events.push(event) },
+    );
+    const ticksOf = (abilityId: string): number[] =>
+      events
+        .filter((event) => event.type === 'damage' && event.abilityId === abilityId)
+        .map((event) => event.timestamp);
+    return { events, caster, target, simulation, ticksOf };
+  };
+
+  it('names exactly the three effects the tooltip names', () => {
+    expect([...WRACK_HASTED_EFFECTS].sort()).toEqual(['bane_of_agony', 'corruption', 'siphon_life']);
+    expect(WRACK.interruptibleChannel).toBe(true);
   });
 
-  it('raises a Corruption TICK and leaves a Shadow Bolt CAST alone', () => {
+  it('doubles a Corruption tick rate for the channel and leaves its duration alone', () => {
+    const { events, caster, target, simulation, ticksOf } = fight();
+    simulation.applyAura(target, CORRUPTION, caster.id);
+    const wrack = caster.abilities.get('wrack') as Ability;
+    castAbility(simulation, caster, wrack, target);
+    simulation.advanceTo(seconds(30));
+
     /*
-     * ------------------------------------------------------------------------
-     * THE DISTINCTION IS THE WHOLE FEATURE, and it is why this is not
-     * `damageTakenBySchool`. Both spells here are Shadow and both are the
-     * caster's; one is damage OVER TIME and the other is not.
-     *
-     * SHADOW BOLT IS 52% OF THIS PROFILE'S DAMAGE, which is what the old
-     * `unmodelled` reason said would be swept up by a plain Shadow
-     * vulnerability -- "a bigger number wearing the right label rather than an
-     * approximation". This assertion is that sentence.
-     *
-     * AND IT IS ALSO WHY WRACK CANNOT AMPLIFY ITSELF. Wrack is a CHANNEL, so
-     * its six ticks are cast ticks exactly as Shadow Bolt is, and they are
-     * covered by the second assertion rather than by a special case.
-     *
-     * A RATIO OF TWO RUNS, not an absolute: this profile carries Shadow
-     * Mastery, Malevolence and a sacrificed Imp, and an absolute figure would
-     * be a test of those as well.
-     * ------------------------------------------------------------------------
+     * A 3 s tick at x2 lands every 1.5 s while the channel runs: 1.5, 3 and
+     * 4.5. The channel ends at T -- six seconds less this character's spell
+     * haste, read off Wrack's own last tick rather than assumed -- with
+     * `2 x (T - 4.5)` of the next tick's 3 s already done, so the remainder
+     * lands at x1 at `T + 3 - 2(T - 4.5) = 12 - T`, and every tick after it is
+     * 3 s apart until the 18 s Corruption ends -- "not how long they last".
      */
-    const damageOf = (abilityId: string, amplified: boolean): number => {
-      const events: TelemetryEvent[] = [];
-      const caster = soloPlayerFor('warlock_smds');
-      const target = makeTarget({ maxHealth: 100_000_000 });
-      const simulation = buildSimulation(
-        [caster, target],
-        {
-          durationMs: seconds(60),
-          attackChances: () => ({ ...NO_CHANCES, crit: -1_000_000, critMultiplier: 1.5 }),
-        },
-        { emit: (event) => events.push(event) },
-      );
-      if (amplified) simulation.applyAura(target, WRACK_AMPLIFICATION, caster.id);
-      castAbility(simulation, caster, caster.abilities.get(abilityId) as Ability, target);
-      // Inside the debuff's six seconds, so Corruption's first tick lands under
-      // it and Shadow Bolt's three-second cast resolves under it too.
-      simulation.advanceTo(seconds(4));
+    const channelEnd = Math.max(...ticksOf('wrack'));
+    expect(channelEnd).toBeGreaterThan(seconds(4.5));
+    expect(channelEnd).toBeLessThanOrEqual(seconds(6));
+    const expected = [seconds(1.5), seconds(3), seconds(4.5)];
+    for (let at = seconds(12) - channelEnd; at <= seconds(18); at += seconds(3)) expected.push(at);
+    const lastFull = expected[expected.length - 1]!;
+    /*
+     * AND A PARTIAL TICK AS IT FALLS OFF, by the owner's 2026-11-11 ruling:
+     * "Deliver a partial damage tick when the dot falls off." The shifted phase
+     * leaves `18 - lastFull` of the next tick's 3 s done at the end, and that
+     * fraction of a tick lands at 18 -- unless the phase happens to put a full
+     * tick exactly on 18, which leaves nothing owed.
+     */
+    const owed = seconds(18) - lastFull;
+    if (owed > 0) expected.push(seconds(18));
+    expect(ticksOf('corruption')).toEqual(expected);
+    // Three of them at x2 and the rest at x1: more ticks than the plain six.
+    expect(expected.length).toBeGreaterThan(6);
 
-      let total = 0;
-      for (const event of events) {
-        if (event.type === 'damage' && event.abilityId === abilityId) total += event.amount;
-      }
-      return total;
+    if (owed > 0) {
+      const amounts = events
+        .filter((event) => event.type === 'damage' && event.abilityId === 'corruption')
+        .map((event) => (event as { amount: number }).amount);
+      const full = amounts[0]!;
+      expect(amounts[amounts.length - 1]).toBeCloseTo((full * owed) / seconds(3), 6);
+    }
+  });
+
+  it('keeps the progress it skipped after the channel is interrupted', () => {
+    /*
+     * The developers' own example. Corruption goes up at t=0; Wrack starts at
+     * t=1 and is cut off just before t=2, so the 3 s tick has 1 s (at x1) plus
+     * 0.999 s (at x2) of progress -- 2 ms short, paid at x1, so it lands at
+     * 2.001 where it would have landed at 3. Then 3 s apart again.
+     */
+    const { caster, target, simulation, ticksOf } = fight();
+    simulation.applyAura(target, CORRUPTION, caster.id);
+    simulation.advanceTo(seconds(1));
+    castAbility(simulation, caster, caster.abilities.get('wrack') as Ability, target);
+    simulation.advanceTo(seconds(2) - 1);
+    caster.interruptChannel(simulation);
+    simulation.advanceTo(seconds(9));
+
+    const ticks = ticksOf('corruption');
+    expect(ticks[0]).toBe(seconds(2) + 1);
+    expect(ticks[1]).toBe(ticks[0]! + seconds(3));
+  });
+
+  it('pays no partial tick on a DoT whose clock was never shifted', () => {
+    // Six ticks of a plain 18 s Corruption, the last exactly at 18, and nothing
+    // after it -- the partial tick is only for a window Wrack moved.
+    const { caster, target, simulation, ticksOf } = fight();
+    simulation.applyAura(target, CORRUPTION, caster.id);
+    simulation.advanceTo(seconds(30));
+    expect(ticksOf('corruption')).toEqual([3, 6, 9, 12, 15, 18].map((s) => seconds(s)));
+  });
+
+  it('speeds up nothing it does not name, and amplifies nothing', () => {
+    const run = (withWrack: boolean) => {
+      const f = fight();
+      f.simulation.applyAura(f.target, CORRUPTION, f.caster.id);
+      f.simulation.applyAura(f.target, IMMOLATE, f.caster.id);
+      if (withWrack) castAbility(f.simulation, f.caster, f.caster.abilities.get('wrack') as Ability, f.target);
+      f.simulation.advanceTo(seconds(4));
+      return f;
     };
+    const plain = run(false);
+    const wracked = run(true);
 
-    expect(damageOf('corruption', true) / damageOf('corruption', false)).toBeCloseTo(1.1, 6);
-    expect(damageOf('shadow_bolt', true) / damageOf('shadow_bolt', false)).toBeCloseTo(1, 6);
+    // Immolate is periodic and not named, so its clock does not move.
+    expect(wracked.ticksOf('immolate')).toEqual(plain.ticksOf('immolate'));
+    // Corruption ticks more often, and each tick is the SAME SIZE: the old
+    // +10% to Shadow DoTs is gone.
+    const firstCorruption = (events: TelemetryEvent[]) =>
+      (events.find((e) => e.type === 'damage' && e.abilityId === 'corruption') as { amount: number })
+        .amount;
+    expect(wracked.ticksOf('corruption').length).toBeGreaterThan(plain.ticksOf('corruption').length);
+    expect(firstCorruption(wracked.events)).toBeCloseTo(firstCorruption(plain.events), 6);
   });
 });
 
@@ -319,8 +396,15 @@ describe('Two lists, and conflating them would have been the bug', () => {
    * number and no error anywhere.
    * ============================================================================
    */
-  it('Soul Siphon counts Curse of the Elements and Pandemic does not', () => {
-    expect(WARLOCK_SOUL_SIPHON_EFFECTS).toContain('curse_of_the_elements');
+  it('Soul Siphon counts exactly Corruption, Siphon Life and Bane of Agony now', () => {
+    // The owner's 2026-11-11 note: "per each of your Corruption, Siphon Life,
+    // and Bane of Agony spells ... (was any Affliction spell)". Curse of the
+    // Elements counted under the earlier ruling and does not any more.
+    expect([...WARLOCK_SOUL_SIPHON_EFFECTS].sort()).toEqual([
+      'bane_of_agony',
+      'corruption',
+      'siphon_life',
+    ]);
     expect(WARLOCK_AFFLICTION_PERIODICS).not.toContain('curse_of_the_elements');
 
     // And the modifier really does stop at the spells Pandemic names.
@@ -330,17 +414,10 @@ describe('Two lists, and conflating them would have been the bug', () => {
     ).toBe(0);
   });
 
-  it('counts three effects to the cap, which the raid supplies for free', () => {
+  it('counts three effects to the cap, and the three are the bleeds', () => {
     /*
-     * The owner's enumeration: "corruption, curse of the elements, and bane of
-     * agony are the 3 affliction effects needed to max out the 36% damage buff
-     * to wrack." Curse of the Elements comes from the preset raid buffs and
-     * sits on the target for the hour.
-     *
-     * WORTH +0.4 AND THAT IS NOT A FAILURE: with Siphon Life in the list the
-     * three bleeds already reach the 36% cap on their own, so the fourth
-     * counted effect is redundant while they are all up. It becomes
-     * load-bearing the moment one drops.
+     * The three named effects reach the cap exactly: 3 x 12% = 36%. Since the
+     * 2026-11-11 note they are the ONLY three that count.
      */
     const smds = playerFor('warlock_smds');
     const wrack = smds.abilities.get('wrack');

@@ -144,8 +144,9 @@ const OWNER_OPENERS: Readonly<Record<string, readonly (readonly [number, string]
   ],
   // Round 37: the Lightning Bolt is off the opener.
   shaman_elemental: [[0, 'flame_shock']],
+  // Round 93: Windfury Weapon again, now that it stacks with Windfury Totem.
   shaman_enhancement: [
-    [3, 'flametongue_weapon'],
+    [3, 'windfury_weapon'],
     [1.5, 'searing_totem'],
     [0, 'flame_shock'],
   ],

@@ -107,6 +107,143 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 93: Hunter mana, the Hawk, and Shaman imbues with totems
+
+The owner's notes of 2026-11-11, round one. Leave room for a second.
+
+| | what it was | largest effect |
+| --- | --- | --- |
+| 1 | the notes for Hunter and Shaman | BM Hunter **+64.5**, Hawk Melee **+63.3** |
+| 2 | the owner's answer to question 3: Enh imbues Windfury | Enh **1130.1 -> 1113.4** at 60 s, +11.2 at 180 s |
+| 3 | the Warlock notes: Wrack redesigned, Soul Siphon narrowed | SM/DS **1125.4 -> 1176.3**, +50.9 REAL |
+| 4 | the owner's three Wrack answers: scaling cut, partial ticks, Agony by count | SM/DS **1176.3 -> 1271.6**, +95.3 REAL |
+
+**WHAT CHANGED:**
+
+- **Arcane Shot and Summon Hawk cost 11% of base mana.** That is 158 for a
+  Hunter, down from 190, shared through `ARCANE_SHOT_BASE_MANA_FRACTION`.
+  foreverchanges.pro's 1.60.1.70888 diff already carries the Arcane Shot half.
+- **The Hawk's assault strikes are x1.8.** The note reads "melee damage dealt
+  by the Hawk pet increased by about 80%". The whole hawk is now 5.05 openers,
+  up from 3.25.
+- **Weapon imbues stack with weapon totems.** Windfury Totem and Flametongue
+  Totem no longer refuse while their imbue is up.
+- **Maelstrom Weapon is 20% per stack at every rank**, at 6/7/8/9/10 procs a
+  minute by rank. Client 1.60.1.70888 still reads "by 4%" at rank 1. So
+  `patchNoteValues.ts` is rebuilt a FOURTH time, with one row that adds the
+  PPM as index 3. `maelstromWeapon` reads the rate from that index, and the
+  test fails the moment a refresh moves the generated row.
+
+**THE MEASUREMENT** -- 300 fights a profile, against `main` at `dbc2553`. Only
+the Hunter and Shaman profiles were run, since nothing else is reached.
+
+| | was | now | |
+| --- | --- | --- | --- |
+| BM Hunter | 1160.4 | 1224.8 | **+64.5** REAL |
+| Hawk Melee | 1138.6 | 1201.9 | **+63.3** REAL |
+| LW Ranged | 1349.1 | 1349.1 | 0.0 |
+| LW Melee | 1292.1 | 1292.1 | 0.0 |
+| Survival Weave | 1362.3 | 1361.7 | -0.6 noise |
+| Enh Shaman | 1130.1 | 1130.1 | 0.0 |
+| Spellhance | 1038.8 | 1038.8 | 0.0 |
+| Ele Shaman | 1023.8 | 1023.8 | 0.0 |
+
+**EACH ZERO HAS A REASON:**
+
+- **LW Ranged** casts Arcane Shot 10.5 times a fight but never runs short of
+  mana (its mana potion fires 0.00 times). A cheaper shot therefore changes no
+  decision.
+- **Enh** imbues Flametongue, so Windfury Totem was already paying it.
+  Flametongue Totem is exclusive with Windfury Totem and is not selected.
+- **Maelstrom** reaches only Enh, at 5/5, which is 20% and 10 PPM either way.
+
+**QUESTIONS FOR THE OWNER:**
+
+1. **The Hawk's +80% is applied to the assault strikes and not to the
+   dive-bomb.** The dive is the ability's own hit, and its tooltip still reads
+   110 at 70888. The strikes after it are the hawk's melee. That is a reading.
+2. **"About 80%" is implemented as exactly 1.8.** If the client carries a
+   precise figure, it replaces this one.
+3. **Should Enh imbue Windfury Weapon now?** Round 37 chose Flametongue partly
+   because the Windfury imbue switched the totem off. Re-priced over 1500
+   paired fights, `VARIANTS=enhancementImbue`:
+
+   | fight length | Windfury Weapon in the opener, vs Flametongue |
+   | --- | --- |
+   | 60 s | **-7.08 +/- 5.68** |
+   | 180 s | **+11.23 +/- 3.40** |
+
+   Both are REAL, and in opposite directions. **Answered: "Switch to
+   Windfury."** The Enh opener imbues Windfury Weapon at 3 s now. The published
+   60 s figure goes **1130.1 -> 1113.4** (-16.6, noise at 300 fights), the cost
+   the paired probe predicted. The gain arrives in longer fights. Spellhance and
+   the Enh AoE list keep Flametongue, since neither was asked about or priced.
+4. **The Maelstrom note says it "was 20 times per minute regardless of
+   rank"**, where this repository ran 10, the owner's five doubled at 70755.
+   The new 6 to 10 is applied as the note prescribes. The "was" figure is
+   flagged rather than reconciled.
+
+### Round 93, row 3: Wrack and Soul Siphon
+
+The owner's Warlock notes, also 2026-11-11. Client 1.60.1.70888 already ships
+the Wrack tooltip and the Soul Siphon wording, so nothing here runs ahead of it.
+
+- **Wrack deals 60 a tick, down from 86**, which is the note's 30%. The client
+  reads 60. The coefficient takes the same x0.7, to 0.2002. That is a reading:
+  the client states no coefficient.
+- **Wrack's +10% to Shadow DoTs is gone.** `WRACK_AMPLIFICATION` is deleted.
+- **While Wrack is channelled, Siphon Life, Corruption and Bane of Agony tick
+  at x2. The progress is kept when the channel stops.** This needed two engine
+  pieces:
+  - `AuraCollection.setTickRate` makes a tick a quantity of progress. A rate
+    change spends what has accrued and reschedules the rest, which is the
+    developers' own example. The duration is untouched.
+  - `Ability.onChannelEnd` fires however a channel stops: completed,
+    interrupted, cancelled or finished early. `onCast` cannot do that job,
+    because an interrupted channel's last tick never runs.
+- **Soul Siphon counts exactly Corruption, Siphon Life and Bane of Agony.**
+  Curse of the Elements and Bane of Doom no longer count. The numbers are
+  unchanged at 4/8/12 per effect, capped at 12/24/36, so only the list moved.
+  The generated `values/warlock.json` still carries the old "other Affliction
+  effects" text; a talent refresh will fix the wording.
+
+**MEASURED ON ALL 38 PROFILES**, because the tick clock is engine code: every
+row these notes do not reach is **0.0 to the decimal**. SM/DS goes
+**1125.4 -> 1176.3 (+50.9 REAL)**. Wrack is now 12.2 casts and **39.4%** of
+the profile. Firelock, SM Ruin and Fire Demo take no Wrack and do not move.
+
+**THREE QUESTIONS, ANSWERED (row 4):**
+
+5. **"Cut wrack's spell power scaling as well."** It already was, at 0.2002,
+   and is now ruled rather than read.
+6. **"Deliver a partial damage tick when the dot falls off."** A window whose
+   tick clock Wrack shifted pays the fraction it accrued as it expires:
+   `AuraCollection.deliverPartialTick`, scaled through
+   `AuraInstance.tickScale`. **Only a shifted window**, so every DoT Wrack
+   never touched is bit-identical. Its duration is not a whole number of ticks,
+   which is a separate question nobody has ruled on.
+7. **"Use tick count."** Bane of Agony draws its band from
+   `AuraInstance.ticksDelivered`, which restarts on a refresh. A tick Wrack
+   hurried therefore takes the NEXT band, and a 13th tick stays on the last.
+
+**WHERE THE +95.3 COMES FROM.** These are the SM/DS damage sources over 40
+fights, against row 3:
+
+| | hits a fight | damage a fight |
+| --- | --- | --- |
+| Bane of Agony | 52.5 -> 54.1 | 18,451 -> **23,739** (+5,288) |
+| Corruption | 34.2 -> 36.6 | 15,936 -> 16,445 (+509) |
+| Siphon Life | 34.2 -> 35.4 | 4,071 -> 4,118 (+47) |
+| Wrack | 48.4 -> 48.4 | unchanged |
+
+**THE TICK COUNT IS MOST OF IT.** Under Wrack, Agony delivers about eighteen
+ticks in its 24 seconds instead of twelve. By time, the extra ticks shared the
+early, cheap bands. By count, they walk the ramp to its 1/8 band sooner and
+stay there, so **a Wracked Bane of Agony now deals well over its stated 552
+total**. That follows from the two rulings together, and is recorded so it
+does not read as a bug. The partial ticks are the 1.2 to 2.4 extra hits on
+each DoT.
+
 ## Round 92: three Hunter shot timings
 
 The owner's three rulings:
