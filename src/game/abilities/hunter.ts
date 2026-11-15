@@ -876,6 +876,13 @@ export const VOLLEY: Ability = {
   cost: { resource: 'mana', amount: 490 },
   castTimeMs: seconds(6),
   channelTicks: VOLLEY_TICKS,
+  /*
+   * NOT HASTED, by the owner's 2026-11-15 ruling: "It's always a 6-sec channel
+   * that ticks every 1 seconds for a total of 6 times." So no haste source --
+   * gear, Rapid Fire, Berserking, the quiver -- shortens the channel or packs
+   * its ticks closer together.
+   */
+  affectedByHaste: false,
   interruptibleChannel: true,
   attackTable: 'ranged-special',
   targets: { maxTargets: Infinity },
