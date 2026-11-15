@@ -684,7 +684,17 @@ export class Simulation implements SimulationContext {
        */
       for (const actor of this.actors) {
         if (actor.faction !== 'friendly') continue;
-        if (actor.isCasting(now)) this.cancelCast(actor);
+        /*
+         * OR A CAST THAT COMPLETES AT THIS VERY MILLISECOND. `isCasting(now)`
+         * is false once `now` reaches `castEndsAt`, but the completion event
+         * has not run yet -- the boundary sorts first -- so without this a
+         * channel whose last tick fell exactly on the pull's end struck an
+         * enemy that had already left. An unhasted Volley is what found it:
+         * a six-second channel started on a whole second lands on one.
+         * `channelling` is set for EVERY pending cast completion, not only a
+         * channel, and cleared by its last tick.
+         */
+        if (actor.isCasting(now) || actor.channelling) this.cancelCast(actor);
         actor.pendingSequence = null;
         actor.pendingCastCancel = null;
         /*
