@@ -524,7 +524,8 @@ describe('the fight', () => {
     /*
      * AND A SCOPED LINE STILL LANDS WHERE IT SHOULD, on a hand-built set,
      * because that is the rule the benchmark gear can no longer exercise.
-     * Elemental Mage Staff is +36 Fire and +36 Frost and nothing blind.
+     * Elemental Mage Staff is +100 Fire and +100 Frost and nothing blind
+     * (36 each before 1.60.1.70959).
      */
     const scoped = createPlayer({
       race: 'troll',
@@ -533,7 +534,7 @@ describe('the fight', () => {
       talents: shadowBuild().talents,
       equipment: { twoHand: { itemId: 944 } },
     });
-    expect(spellPowerFor(scoped, 'fire') - spellPowerFor(scoped, 'shadow')).toBe(36);
+    expect(spellPowerFor(scoped, 'fire') - spellPowerFor(scoped, 'shadow')).toBe(100);
   });
 });
 

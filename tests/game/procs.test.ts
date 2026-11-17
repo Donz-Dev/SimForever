@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Equipment } from '../../src/game/items/Item';
+import { ITEMS_BY_ID } from '../../src/game/items/itemData';
 import {
   CRUSADER_DURATION_MS,
   CRUSADER_PPM,
@@ -153,9 +154,12 @@ describe('Crusader', () => {
 });
 
 describe('Hand of Justice', () => {
-  it('is a flat two percent, not a PPM effect', () => {
-    // Stated as "2% chance for any attack", so it does not scale with speed.
-    expect(HAND_OF_JUSTICE_CHANCE).toBe(0.02);
+  it('is a flat ONE percent, Forever\'s figure, not a PPM effect', () => {
+    // "1% chance on Melee hit to gain 1 extra attack" -- client 1.60.1.70959,
+    // item 11815. A flat chance, so it does not scale with speed. It was
+    // Classic's 2% while the trinket was absent from Forever's data.
+    expect(HAND_OF_JUSTICE_CHANCE).toBe(0.01);
+    expect(ITEMS_BY_ID.get(11815)?.tooltip).toContain('1% chance on Melee hit to gain 1 extra attack');
   });
 
   it('has a 1.5 second internal cooldown', () => {

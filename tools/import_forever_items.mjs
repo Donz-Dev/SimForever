@@ -31,61 +31,92 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
 /**
- * The captures, and what each one is.
+ * ONE CAPTURE, SIX OUTPUT FILES (build 1.60.1.70959, the release).
  *
- * `new` is gear that exists only in Forever. `changed` is CLASSIC gear Forever
- * altered -- and the ruleset owner has ruled that the Forever side is
- * definitive, so where one of these shares an id with a Classic or Season of
- * Discovery stand-in already on file, this one wins. `itemData` applies that as
- * a declared override rather than by silently letting a later file through.
+ * ----------------------------------------------------------------------------
+ * The ruleset owner named two payloads -- every rare at item level 50 and up
+ * (2,778) and every epic at 50 and up (2,106) -- and the site builds both from
+ * the same four files, `new`, `changed`, `same` and `missing`. So they were
+ * captured as ONE payload, filtered in the browser, and are split here by which
+ * file each item came from (`t`) and its quality (`q`).
+ *
+ * `missing` IS CAPTURED AND NOT IMPORTED: Classic items the Forever client has
+ * not revealed yet, which the site shows as "NO FOREVER DATA", so their lines
+ * are CLASSIC's. The ruleset owner ruled them out (2026-11-17) -- "None of the
+ * old WoW Vanilla/Classic/SoD items" stands -- and they stay in the capture so
+ * a refresh that reveals them is a one-line change here.
+ *
+ * THE OLD FIVE CAPTURES ARE SUPERSEDED, all at build 1.60.1.70338. The two
+ * CHANGED ones stay in `tools/data/` for one reason: they carried the site's
+ * `wordingOnly` flag, which the new format no longer has. See `WORDING_ONLY`.
+ * ----------------------------------------------------------------------------
  */
-const CAPTURES = [
+const CAPTURE_FILE = 'tools/data/forever-items-70959.capture.json';
+
+const JOBS = [
   {
-    capture: 'tools/data/forever-new-epics.capture.json',
     out: 'src/data/items/forever-new-epics.json',
     set: 'forever-new-epics',
-    what: 'Every NEW epic weapon and armour piece at item level 55 and above',
+    keep: (raw) => raw.t !== 'changed' && raw.t !== 'same' && raw.t !== 'missing' && raw.q === 4,
+    what: 'Every NEW epic item at item level 50 and above',
   },
   {
-    capture: 'tools/data/forever-changed.capture.json',
-    out: 'src/data/items/forever-changed-epics.json',
-    set: 'forever-changed-epics',
-    what:
-      'Every CLASSIC epic at item level 55 and above that Forever CHANGED. ' +
-      'Most differ only in wording -- Classic\'s "Improves your chance to get a ' +
-      'critical strike by 1%" is Forever\'s "+14 Critical Strike Rating" -- and ' +
-      'those rewrites confirm the owner\'s rating table exactly: 14 per 1% crit ' +
-      'and spell crit, 10 per 1% hit, 12 per 1% dodge, with no variation across ' +
-      '83 items that carry both.',
-  },
-  {
-    capture: 'tools/data/forever-new-rares.capture.json',
     out: 'src/data/items/forever-new-rares.json',
     set: 'forever-new-rares',
-    what: 'Every NEW rare (blue) weapon and armour piece at item level 50 to 60',
+    keep: (raw) => raw.t !== 'changed' && raw.t !== 'same' && raw.t !== 'missing' && raw.q === 3,
+    what: 'Every NEW rare (blue) item at item level 50 and above',
   },
   {
-    capture: 'tools/data/forever-changed-rares.capture.json',
+    out: 'src/data/items/forever-changed-epics.json',
+    set: 'forever-changed-epics',
+    keep: (raw) => raw.t === 'changed' && raw.q === 4,
+    what: 'Every CLASSIC epic at item level 50 and above that Forever CHANGED',
+  },
+  {
     out: 'src/data/items/forever-changed-rares.json',
     set: 'forever-changed-rares',
-    what:
-      'Every CLASSIC rare (blue) item at item level 50 to 60 that Forever CHANGED. ' +
-      'Priced on the BLUE row of the quality table, 0.625*ilvl - 1.15, and the 113 ' +
-      'wording-only ones are a second control group -- one that independently ' +
-      'confirms stamina at 1.0 (best fit 0.99) on a different quality formula and a ' +
-      'different item level band from the epics.',
+    keep: (raw) => raw.t === 'changed' && raw.q === 3,
+    what: 'Every CLASSIC rare (blue) item at item level 50 and above that Forever CHANGED',
   },
   {
-    capture: 'tools/data/forever-same.capture.json',
     out: 'src/data/items/forever-same.json',
     set: 'forever-same',
+    keep: (raw) => raw.t === 'same',
     what:
-      'Every item at these levels that Forever did NOT change from Classic. ' +
-      'Still real Forever items -- the client has them, identical to their ' +
-      'Classic originals -- and captured because "new and changed" leaves out ' +
-      'everything the ruleset simply kept',
+      'Every rare and epic at item level 50 and above that Forever did NOT change ' +
+      'from Classic -- real Forever items, identical to their Classic originals',
   },
 ];
+
+/**
+ * THE `wordingOnly` FLAG, CARRIED FROM THE 1.60.1.70338 CAPTURES WHERE IT STILL
+ * HOLDS.
+ *
+ * ----------------------------------------------------------------------------
+ * The site used to say which CHANGED items differ from Classic in prose only --
+ * the control group `tools/item_budget.ts` prices Classic's itemization with.
+ * The 70959 format carries Classic's lines (`y`) and no flag. So an old flag is
+ * kept ONLY where the item's Forever lines are byte-identical to the ones it was
+ * computed against; anything that moved since is left unflagged rather than
+ * guessed at, and the count of each is printed.
+ * ----------------------------------------------------------------------------
+ */
+const WORDING_ONLY = new Map();
+for (const file of ['tools/data/forever-changed.capture.json', 'tools/data/forever-changed-rares.capture.json']) {
+  for (const old of JSON.parse(readFileSync(file, 'utf8')).items) {
+    if (old.wordingOnly !== undefined) WORDING_ONLY.set(old.id, { flag: old.wordingOnly, lines: JSON.stringify(old.lines) });
+  }
+}
+
+/**
+ * Not gear: no equipment slot, or a slot nothing here equips.
+ *
+ * `s` is null for a recipe, a mount, a quest item, a book; a bag and ammunition
+ * have a slot of their own. Ammunition is a Hunter's ROUND RULE, not an item a
+ * slot holds -- `game/character/hunterRanged.ts` -- so a captured arrow has no
+ * slot to go in. All are listed, grouped by what they are.
+ */
+const NOT_GEAR_SLOTS = new Set([null, 'Bag', 'Ammo']);
 
 /** Inventory types that appear on their own line, with no subclass after a tab. */
 const BARE_INVENTORY_TYPES = new Set([
@@ -146,6 +177,8 @@ const IGNORED = [
   /^Races: /,
   /^Sell Price/,
   /^Durability /,
+  // A use count on a tool, e.g. Grizzle's Skinner: "30 Charges".
+  /^\d+ Charges?$/,
   /^".*"$/,
   /^.+ \(\d+\/\d+\)$/, // a set header, e.g. "Warlord's Threads (0/6)"
 ];
@@ -172,13 +205,23 @@ const IGNORED = [
  */
 const TEST_ITEM = /^90 Epic /;
 
+/** The site's compact record, in the shape `convert` reads. */
+function expand(raw) {
+  const out = { id: raw.i, name: raw.n, quality: raw.q, ilvl: raw.l, icon: raw.k, lines: raw.x, file: raw.t };
+  const old = WORDING_ONLY.get(raw.i);
+  if (raw.t === 'changed' && old && old.lines === JSON.stringify(raw.x)) out.wordingOnly = old.flag;
+  return out;
+}
+
 function convert(raw) {
   const item = {
     id: raw.id,
     name: raw.name,
     quality: raw.quality,
+    // THE ICON IS KEPT, the client's own file name -- the Gear panel draws it so
+    // items can be told apart by appearance.
     icon: raw.icon,
-    source: `https://foreverchanges.pro/items/new.json#${raw.id}`,
+    source: `https://foreverchanges.pro/items/${raw.file}.json#${raw.id}`,
     itemLevel: raw.ilvl,
     inventoryType: null,
     subclass: null,
@@ -338,34 +381,78 @@ function convert(raw) {
   return { item, unknown };
 }
 
-for (const job of CAPTURES) run(job);
+const CAPTURE = JSON.parse(readFileSync(CAPTURE_FILE, 'utf8'));
+{
+  const { _note, _sha256_of_payload: claimed, ...payload } = CAPTURE;
+  const recomputed = createHash('sha256').update(JSON.stringify(payload)).digest('hex');
+  console.log(
+    `capture ${CAPTURE_FILE}: ${CAPTURE.items.length} items, payload sha256 ` +
+      `${recomputed === claimed ? 'MATCHES' : 'DOES NOT MATCH'} the browser hash (${claimed.slice(0, 16)}...)`,
+  );
+  if (recomputed !== claimed) {
+    console.error(`recomputed ${recomputed}`);
+    process.exit(1);
+  }
+  const claimedByJob = JOBS.map((job) => CAPTURE.items.filter(job.keep).length);
+  const missing = CAPTURE.items.filter((raw) => raw.t === 'missing').length;
+  console.log(`not imported: ${missing} "NO FOREVER DATA" items, whose lines are Classic's (owner's ruling)`);
+  const total = claimedByJob.reduce((a, b) => a + b, 0) + missing;
+  if (total !== CAPTURE.items.length) {
+    console.error(`the jobs claim ${total} of ${CAPTURE.items.length} items -- one is in two files or none`);
+    process.exit(1);
+  }
+}
+const build = CAPTURE.builds.new;
+const notGearAll = new Map();
+let carried = 0;
+let unflagged = 0;
+for (const job of JOBS) run(job);
+console.log(`\nexcluded as not gear, by what they are:`);
+for (const [kind, names] of [...notGearAll].sort((a, b) => b[1].length - a[1].length)) {
+  console.log(`  ${String(names.length).padStart(4)}  ${kind}`);
+}
+console.log(`wordingOnly carried from 1.60.1.70338 on ${carried} changed items; ${unflagged} changed items left unflagged`);
 
-function run({ capture: CAPTURE, out: OUT, set: SET, what: WHAT }) {
-const capture = JSON.parse(readFileSync(CAPTURE, 'utf8'));
-/*
- * RE-HASH THE PAYLOAD, NOT THE FILE.
- *
- * The capture file wraps the transferred payload in two `_`-prefixed fields,
- * so hashing the file answers a different question from the one the browser
- * answered. Rebuilding the payload exactly -- the same keys in the same order,
- * `JSON.stringify` with no spacing -- is what makes the two comparable, and a
- * mismatch means the file was edited after it was accepted.
- */
-const {
-  _note,
-  _sha256_of_payload: claimed,
-  _sha256_of_joined_payload: joined,
-  ...payload
-} = capture;
-const recomputed = createHash('sha256').update(JSON.stringify(payload)).digest('hex');
-
+function run({ out: OUT, set: SET, what: WHAT, keep }) {
+const capture = {
+  build: build.build,
+  classic_build: build.classic,
+  build_date: build.date,
+  source: CAPTURE.source,
+  items: CAPTURE.items.filter(keep),
+};
+console.log(`\n== ${SET}: ${capture.items.length} items`);
 const problemsBeforeItems = [];
 const items = [];
 const problems = [];
 /** Excluded for two different reasons, reported as two different lines. */
 const testItems = [];
 const notGear = [];
-for (const raw of capture.items) {
+const noDamage = [];
+for (const compact of capture.items) {
+  if (NOT_GEAR_SLOTS.has(compact.s)) {
+    const sub = compact.x.find((line) => line.includes('\t'))?.split('\t')[1] || 'other';
+    const kind = compact.s ? `${compact.s} (${sub})` : sub;
+    if (!notGearAll.has(kind)) notGearAll.set(kind, []);
+    notGearAll.get(kind).push(`${compact.n} (${compact.i})`);
+    notGear.push(`${compact.n} (${compact.i})`);
+    continue;
+  }
+  /*
+   * A WEAPON WITH NO DAMAGE FIGURE. The client prints "Damage set by hand" in
+   * place of a range on three items -- Screeching Bow, Bland Bow of Steadiness,
+   * Bland Dagger -- which is a server-side value the client does not carry.
+   * Excluded by name rather than given an invented range.
+   */
+  if (compact.x.some((line) => line.startsWith('Damage set by hand'))) {
+    noDamage.push(`${compact.n} (${compact.i})`);
+    continue;
+  }
+  const raw = expand(compact);
+  if (raw.file === 'changed') {
+    if (raw.wordingOnly !== undefined) carried += 1;
+    else unflagged += 1;
+  }
   if (TEST_ITEM.test(raw.name)) {
     testItems.push(`${raw.name} (${raw.id})`);
     continue;
@@ -394,30 +481,6 @@ for (const item of items) {
   byId.set(item.id, item);
 }
 
-console.log(`capture: build ${capture.build}, ${capture.items.length} items, taken ${capture.build_date}`);
-/*
- * WHICH HASH GUARDS WHAT, and they are not the same guarantee.
- *
- * `_sha256_of_payload` is re-checked here and guards the FILE ON DISK against
- * being edited after it was accepted. For a capture taken in one piece it is
- * also the figure the browser produced, so it guards the transfer too.
- *
- * The RARE captures were taken as ONE two-pack payload and split afterwards,
- * so their per-file hash was computed at split time and never saw a browser.
- * `_sha256_of_joined_payload` is the browser-verified one, and it is recorded
- * rather than re-checkable here because the thing it covers is not this file.
- * Saying "MATCHES" about a hash this process generated would be a check that
- * cannot fail.
- */
-console.log(
-  `         payload sha256 ${recomputed === claimed ? 'MATCHES' : 'DOES NOT MATCH'} the ` +
-    `recorded ${joined ? 'per-file' : 'browser'} hash (${claimed.slice(0, 16)}...)` +
-    (joined ? `; transfer was verified as the joined payload ${joined.slice(0, 16)}...` : ''),
-);
-if (recomputed !== claimed) {
-  console.error(`         recomputed ${recomputed}`);
-  problemsBeforeItems.push('capture hash mismatch -- the file was changed after it was accepted');
-}
 problems.push(...problemsBeforeItems);
 {
 }
@@ -428,7 +491,10 @@ if (testItems.length > 0) {
   console.log(`excluded ${testItems.length} developer test items: ${testItems.join(', ')}`);
 }
 if (notGear.length > 0) {
-  console.log(`excluded ${notGear.length} with no equipment slot: ${notGear.join(', ')}`);
+  console.log(`excluded ${notGear.length} with no equipment slot (grouped at the end)`);
+}
+if (noDamage.length > 0) {
+  console.log(`excluded ${noDamage.length} weapons whose damage the client does not state: ${noDamage.join(', ')}`);
 }
 console.log(`converted ${items.length} items`);
 const withWeapon = items.filter((i) => i.weapon).length;
@@ -449,14 +515,13 @@ if (process.argv.includes('--write')) {
   const out = {
     set: SET,
     description:
-      `${WHAT} in the WoW: Forever beta client, build ${capture.build}, captured ` +
-      `${capture.build_date}. REAL FOREVER DATA, unlike the Classic and Season of ` +
-      `Discovery stand-ins in the other files here. Converted by ` +
-      `tools/import_forever_items.mjs from the capture in tools/data/, which records ` +
-      `its own SHA-256.`,
+      `${WHAT}, WoW: Forever client build ${capture.build}, captured ${capture.build_date} ` +
+      `from foreverchanges.pro. Converted by tools/import_forever_items.mjs from ` +
+      `${CAPTURE_FILE}, which records its own SHA-256.`,
     source: capture.source,
     excludedTestItems: testItems,
     excludedNotEquippable: notGear,
+    excludedNoDamageFigure: noDamage,
     foreverBuild: capture.build,
     classicBuild: capture.classic_build,
     capturedOn: capture.build_date,

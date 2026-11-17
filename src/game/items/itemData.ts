@@ -754,8 +754,13 @@ function stylesFromFormList(list: string): readonly CombatStyleId[] | undefined 
 export const ITEM_PROCS = {
   /** Vis'kag the Bloodletter, and anything Forever gives the same line. */
   fatalWound: /Delivers a fatal wound for \d+ damage/,
-  /** Hand of Justice. */
-  extraAttack: /chance on melee hit to gain 1 extra attack/,
+  /**
+   * Hand of Justice. CASE-INSENSITIVE because Forever writes "on Melee hit"
+   * where Classic wrote "on melee hit": matched case-sensitively, the trinket's
+   * proc fired off its id and its tooltip line was ALSO listed as not
+   * simulated, with a stale reason saying the engine has no extra attacks.
+   */
+  extraAttack: /chance on melee hit to gain 1 extra attack/i,
 } as const;
 
 const MODELLED_AS_PROCS: readonly RegExp[] = Object.values(ITEM_PROCS);
@@ -1130,9 +1135,14 @@ const OVERRIDE_ITEMS: readonly RawItem[] = OVERRIDE_FILES.flatMap((file) => file
 
 const BASE_ITEMS = ITEM_FILES.flatMap((file) => file.items);
 
-const duplicates = BASE_ITEMS.map((item) => item.id).filter(
-  (id, index, all) => all.indexOf(id) !== index,
-);
+// A Set, not `indexOf`: with four thousand items the all-pairs scan is the
+// slowest thing this module does at load.
+const seenIds = new Set<number>();
+const duplicates: number[] = [];
+for (const item of BASE_ITEMS) {
+  if (seenIds.has(item.id)) duplicates.push(item.id);
+  seenIds.add(item.id);
+}
 if (duplicates.length > 0) {
   throw new Error(`Duplicate item ids across the item files: ${duplicates.join(', ')}`);
 }
@@ -1146,14 +1156,14 @@ if (duplicates.length > 0) {
  */
 export const FOREVER_OVERRIDDEN_IDS: readonly number[] = OVERRIDE_ITEMS
   .map((item) => item.id)
-  .filter((id) => BASE_ITEMS.some((item) => item.id === id))
+  .filter((id) => seenIds.has(id))
   .sort((a, b) => a - b);
 
 const overrideById = new Map(OVERRIDE_ITEMS.map((item) => [item.id, item] as const));
 
 const RAW_ITEMS: readonly RawItem[] = [
   ...BASE_ITEMS.map((item) => overrideById.get(item.id) ?? item),
-  ...OVERRIDE_ITEMS.filter((item) => !BASE_ITEMS.some((base) => base.id === item.id)),
+  ...OVERRIDE_ITEMS.filter((item) => !seenIds.has(item.id)),
 ];
 
 const CAPTURED_ITEMS: readonly Item[] = RAW_ITEMS.map(buildItem);

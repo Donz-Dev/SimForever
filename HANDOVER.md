@@ -107,6 +107,65 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 94: the release item database, every rare and epic at item level 50+
+
+Forever released at client build **1.60.1.70959**, and the owner asked for both
+payloads: `items?quality=3&ilvl=50-` (2,778) and `items?quality=4&ilvl=50-`
+(2,106). The site builds both from `new`, `changed`, `same` and `missing`. They
+were captured as ONE payload in the browser, hashed there, and moved through the
+clipboard in 17 chunks, each hashed in the browser and again on disk.
+**3,688 equippable items** are on file now, up from 1,946.
+
+| | rows | what happened |
+| --- | --- | --- |
+| imported | 3,688 | 601 + 728 new, 668 + 1,322 changed, 369 same |
+| "NO FOREVER DATA" | 630 | **left out on the owner's ruling**, since their lines are Classic's |
+| no equipment slot | 524 | recipes, mounts, quest items, books, bags, ammunition |
+| developer test items | 39 | the "90 Epic" set |
+| no damage figure | 3 | "Damage set by hand" weapons |
+
+**THE OWNER'S THREE CONDITIONS, EACH PINNED** in `releaseItemsInPlanner.test.ts`
+and checked in the running app:
+
+- **Class proficiency.** A Warlock's armour lists hold no plate, mail or
+  leather; a Hunter's weapon lists hold no mace. Both were confirmed in the
+  Gear panel itself: 175 Hunter main-hand items, none of them a mace.
+- **Icons.** All 909 icon names in use load from the CDN. Two client names
+  carry a space ("insect in amber"), which the CDN serves with a hyphen, so
+  `iconUrl` translates the space.
+- **Search and the stat-weight sort.** Every slot sorts by value for a melee and
+  a caster build, and search matches by name. The stat catalogue still prices
+  every stat an item grants. **That holds only because the "NO FOREVER DATA"
+  rows are out**: they grant Classic's flat crit percentages, which the
+  rating-only catalogue does not price.
+
+**NO PUBLISHED FIGURE MOVED.** All 38 profiles are 0.0 against the previous
+measurement, because presets wear generated benchmark gear.
+
+**WHAT THE IMPORT FOUND:**
+
+- **Hand of Justice is back** (id 11815, "1% chance on Melee hit to gain 1
+  extra attack"). Two faults are fixed with it. The engine rolled Classic's
+  **2%**; it now rolls the client's **1%**. And its wording regex was
+  case-sensitive against Forever's capital M, so the Gear panel listed a proc
+  the engine fired as "not simulated".
+- **Forever retuned items between 70338 and 70959**, and eight tests pinned the
+  old numbers:
+  - The Immovable Object: 2291 armor, 40 + 25 block value, 14 stamina.
+  - Don Julio's Band: 10 stamina and 14 attack power.
+  - Elemental Mage Staff: +100 Fire and Frost spell damage, +10 resistances.
+
+**QUESTIONS FOR THE OWNER:**
+
+1. **The 630 "NO FOREVER DATA" items include most of tier 1 and tier 2**, the
+   Felheart and Nemesis sets among them. They are captured and switch on with
+   one line in the importer once Forever reveals them, or now if you prefer.
+2. **419 of 1,213 set pieces carry no `Classes:` line**: tiers 0, 0.5 and 3, and
+   the crafted and PvP sets. Proficiency still gates them, so a Warlock never
+   sees Soulforge plate. But a Warrior is offered the leather Darkmantle set and
+   a Warlock the cloth Frostfire set. Classic's tooltips carry no line for
+   these either. Should Forever lock them by class?
+
 ## Round 93: Hunter mana, the Hawk, and Shaman imbues with totems
 
 The owner's notes of 2026-11-11, round one. Leave room for a second.

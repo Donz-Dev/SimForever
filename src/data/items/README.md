@@ -1,22 +1,35 @@
 # Item data
 
-**Forever's own items, and nothing else.** Five captures from
-`foreverchanges.pro`, 1,943 items and 2 enchants between them. One file per
-population, so "where did this number come from" has a per-file answer.
+**Forever's own items, and nothing else.** One capture from
+`foreverchanges.pro` at the release build **1.60.1.70959** (2026-11-17): every
+rare and epic at item level 50 and up -- the owner's two payloads,
+`items?quality=3&ilvl=50-` (2,778) and `items?quality=4&ilvl=50-` (2,106). Split
+one file per population, so "where did this number come from" has a per-file
+answer. **3,688 equippable items**, each with the client's own icon name.
 
 | File | Items | What it is |
 | --- | --- | --- |
-| `forever-new-epics.json` | 449 | Every new epic at item level 55 and up, beta build 1.60.1.70338 |
-| `forever-new-rares.json` | 412 | Every new RARE (blue) at item level 50-60 |
-| `forever-changed-epics.json` | 614 | Every CLASSIC epic at item level 55+ that Forever changed. An **override layer** |
-| `forever-changed-rares.json` | 198 | The same for rares. Also an override layer |
-| `forever-same.json` | 273 | Classic items Forever KEPT UNCHANGED |
-| `weapon-enchants.json` | — | Crusader and Enchant Weapon - Spell Power, the two SCRAPED enchants |
+| `forever-new-epics.json` | 601 | Every NEW epic at item level 50 and up |
+| `forever-new-rares.json` | 728 | Every NEW rare (blue) at item level 50 and up |
+| `forever-changed-epics.json` | 668 | Every CLASSIC epic at 50+ that Forever changed. An **override layer** |
+| `forever-changed-rares.json` | 1,322 | The same for rares. Also an override layer |
+| `forever-same.json` | 369 | Classic items Forever KEPT UNCHANGED |
+| `weapon-enchants.json` | -- | Crusader and Enchant Weapon - Spell Power, the two SCRAPED enchants |
 
-**All five are beta build 1.60.1.70338**, which is two builds AHEAD of the
-project's spell and talent captures (1.60.1.70170) -- a dated fact rather than
-a suspicion. Each file's header records the capture it came from; each capture
-under `tools/data/` records its own SHA-256, the build and the filter used.
+**WHAT THE 4,884 ROWS BECOME.** 3,688 are written above. 630 are the site's
+"NO FOREVER DATA" items -- Classic lines the client has not revealed, tier 1
+and tier 2 among them -- left out on the owner's ruling (2026-11-17) that "None
+of the old WoW Vanilla/Classic/SoD items" stands. 39 are the "90 Epic" developer
+test items. 3 are weapons whose client tooltip reads "Damage set by hand" with
+no damage figure. The other 524 have no equipment slot: recipes, mounts, quest
+items, books, bags and ammunition. Every exclusion is listed BY NAME in the
+importer's output and in each file's `excluded*` fields.
+
+The capture is `tools/data/forever-items-70959.capture.json`, which records the
+browser's SHA-256 of the payload; the importer re-checks it. The two older
+CHANGED captures (build 1.60.1.70338) stay beside it only because they carried
+the site's `wordingOnly` flag, which the release format dropped: it is carried
+onto 833 items whose Forever lines have not moved since, and left off the rest.
 
 ```bash
 node tools/import_forever_items.mjs --check   # what it would write, and any unread line

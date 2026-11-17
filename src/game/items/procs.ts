@@ -280,8 +280,17 @@ function crusaderProc(
 // Hand of Justice
 // ---------------------------------------------------------------------------
 
-/** "2% chance for any attack to trigger an extra attack." */
-export const HAND_OF_JUSTICE_CHANCE = 0.02;
+/**
+ * 1%, FOREVER'S OWN FIGURE: "1% chance on Melee hit to gain 1 extra attack",
+ * client build 1.60.1.70959, item 11815. It was Classic's 2% for as long as
+ * the trinket was absent from Forever's data, which made the figure a borrowed
+ * one nothing could check; the release capture carries the item and the
+ * number, so the number is the client's now.
+ *
+ * ITS "Attacks against Dwarves are 3 times as likely" CLAUSE IS INERT, a
+ * TARGET cause: no encounter here is a Dwarf.
+ */
+export const HAND_OF_JUSTICE_CHANCE = 0.01;
 
 /**
  * The internal cooldown that stops an extra attack from proccing another.
@@ -433,12 +442,12 @@ export function reactionsForEquipment(
     if (itemId === undefined) continue;
     const item = ITEMS_BY_ID.get(itemId);
     /*
-     * THE WORDING, OR THE TWO KNOWN IDS. Hand of Justice is in Forever's
-     * `missing.json` like Vis'kag, so the id list alone is dead -- and unlike
-     * Vis'kag this one has to keep working for a trinket that states the proc
-     * in its tooltip without the exact sentence, which is why both routes are
-     * tried. The ids are the Classic and Season of Discovery ones and are kept
-     * because a SAVED PROFILE can still name them.
+     * THE WORDING, OR THE TWO KNOWN IDS. Hand of Justice is back in Forever's
+     * data at 1.60.1.70959, in `changed.json` at its Classic id 11815, and its
+     * tooltip reads "Melee" with a capital M -- so the wording route matched
+     * nothing until `ITEM_PROCS.extraAttack` became case-insensitive, and only
+     * the id route was firing it. Both routes are kept; the Season of
+     * Discovery id stays because a SAVED PROFILE can still name it.
      */
     if (
       HAND_OF_JUSTICE_IDS.includes(itemId) ||
