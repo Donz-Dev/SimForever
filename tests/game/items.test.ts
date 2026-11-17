@@ -6,6 +6,7 @@ import {
   FOREVER_OVERRIDDEN_IDS,
   ITEMS,
   ITEMS_BY_ID,
+  ITEM_PROCS,
   SPELL_POWER_ENCHANT,
   enchantsForSlot,
   itemsForSlot,
@@ -91,25 +92,29 @@ describe('the item data', () => {
      * FIVE FILES, and the count is per file so that one failing to load is a
      * failure rather than a shorter list nobody notices.
      *
-     *   forever-new-epics      449  items Forever ADDED
-     *   forever-new-rares      412
-     *   forever-changed-epics  614  Classic items Forever ALTERED
-     *   forever-changed-rares  198
-     *   forever-same           273  Classic items Forever KEPT UNCHANGED
+     *   forever-new-epics      601  items Forever ADDED
+     *   forever-new-rares      728
+     *   forever-changed-epics  668  Classic items Forever ALTERED
+     *   forever-changed-rares 1322
+     *   forever-same           369  Classic items Forever KEPT UNCHANGED
+     *
+     * Build 1.60.1.70959, every rare and epic at item level 50 and up that
+     * has an equipment slot (2026-11-17). The 630 "NO FOREVER DATA" items in
+     * the same capture are left out on the owner's ruling.
      *
      * `same` IS THE FILE THAT IS EASY NOT TO TAKE. A diff site publishes what
      * CHANGED, so "new plus changed" is a complete description of the diff and
-     * an incomplete description of the game -- without it, 273 items Forever
+     * an incomplete description of the game -- without it, 369 items Forever
      * left alone would be absent from a database claiming to be Forever's.
      *
      * THE TWO CHANGED FILES ARE AN OVERRIDE LAYER rather than more items: an
      * id they share with something already on file REPLACES it.
      */
-    const BASE = [449, 412, 273];
-    const OVERRIDE = [614, 198];
+    const BASE = [601, 728, 369];
+    const OVERRIDE = [668, 1322];
     const sum = (list: readonly number[]) => list.reduce((a, b) => a + b, 0);
-    expect(sum(BASE)).toBe(1134);
-    expect(sum(OVERRIDE)).toBe(812);
+    expect(sum(BASE)).toBe(1698);
+    expect(sum(OVERRIDE)).toBe(1990);
 
     /*
      * AND IT NOW OVERRIDES NOTHING, WHICH IS A FACT WORTH PINNING RATHER THAN
@@ -130,7 +135,7 @@ describe('the item data', () => {
      */
     expect(FOREVER_OVERRIDDEN_IDS).toEqual([]);
     const expected = sum(BASE) + sum(OVERRIDE) - FOREVER_OVERRIDDEN_IDS.length;
-    expect(expected).toBe(1946);
+    expect(expected).toBe(3688);
 
     /*
      * CAPTURED ITEMS ONLY. `ITEMS` also carries the synthetic benchmark gear,
@@ -202,8 +207,9 @@ describe('the item data', () => {
 
     expect(shield.name).toBe('The Immovable Object');
     expect(shield.slots).toEqual(['shield']);
-    expect(shield.stats.armor).toBe(2468);
-    expect(shield.stats.stamina).toBe(15);
+    // Build 1.60.1.70959 retuned it: 2291 armor (was 2468), "40 Block" (was 44), "+25 Block Value" (was 27), 14 stamina (was 15).
+    expect(shield.stats.armor).toBe(2291);
+    expect(shield.stats.stamina).toBe(14);
     expect(shield.source).toMatch(/foreverchanges\.pro/);
 
     /*
@@ -212,7 +218,7 @@ describe('the item data', () => {
      * "44 Block" on a shield is its INHERENT BLOCK VALUE, not a chance. Read
      * as a chance it gave The Immovable Object a 44% chance to block, which is
      * wrong in a way that looks entirely plausible on a tank. It adds to the
-     * "+27 Block Value" line: 44 + 27 = 71.
+     * "+25 Block Value" line: 40 + 25 = 65 (44 + 27 = 71 before 1.60.1.70959).
      *
      * AND THE TWO ARE DIFFERENT KINDS OF NUMBER, which is what the benchmark
      * generator reads off this item: the 44 comes free with the item level, as
@@ -221,7 +227,7 @@ describe('the item data', () => {
      * The shield grants no block CHANCE at all. That comes from the flat 5%
      * for holding one, from talents, from defense skill and from Shield Block.
      */
-    expect(shield.stats.blockValue).toBe(71);
+    expect(shield.stats.blockValue).toBe(40 + 25);
     expect(shield.stats.blockChance).toBeUndefined();
     expect(shield.unmodelled.map((effect) => effect.text)).toEqual([]);
   });
@@ -258,20 +264,20 @@ describe('the item data', () => {
      * conversions are the owner's own table: 14 rating is a point of crit, 10
      * is a point of hit.
      *
-     * Don Julio's Band: +11 Stamina, +14 Critical Strike Rating, +10 Hit
-     * Rating, +16 Attack Power.
+     * Don Julio's Band: +10 Stamina, +14 Critical Strike Rating, +10 Hit
+     * Rating, +14 Attack Power (1.60.1.70959; it was 11 and 16).
      */
     expect(ITEMS_BY_ID.get(19325)?.stats).toMatchObject({
-      stamina: 11,
+      stamina: 10,
       critRating: 14,
       hitChance: 1,
-      attackPower: 16,
+      attackPower: 14,
       /*
        * BOTH POOLS, BY THE OWNER'S HARD RULING: "Attack Power always equals
        * and reaches Melee & Ranged Attack Power. And Melee Attack Power NEVER
        * reaches Ranged Attack Power."
        */
-      rangedAttackPower: 16,
+      rangedAttackPower: 14,
     });
 
     // High Warlord's Blade: +7 Stamina, +14 Critical Strike Rating, +28 Attack
@@ -414,14 +420,15 @@ describe('the item data', () => {
      * same character's Holy and Arcane spells hit harder; a school-blind bonus
      * filed under one school would be lost by the other six.
      *
-     * Elemental Mage Staff: "+36 Fire Spell Damage" and "+36 Frost Spell
-     * Damage", which is two schools on one item and NOTHING in the blind pool.
+     * Elemental Mage Staff: "+100 Fire Spell Damage" and "+100 Frost Spell
+     * Damage" at 1.60.1.70959 (36 before), which is two schools on one item and
+     * NOTHING in the blind pool.
      * ------------------------------------------------------------------------
      */
     const staff = ITEMS_BY_ID.get(944);
     expect(staff?.name).toBe('Elemental Mage Staff');
-    expect(staff?.schoolPower.fire).toBe(36);
-    expect(staff?.schoolPower.frost).toBe(36);
+    expect(staff?.schoolPower.fire).toBe(100);
+    expect(staff?.schoolPower.frost).toBe(100);
     expect(staff?.stats.spellPower).toBeUndefined();
     expect(staff?.schoolPower.shadow).toBeUndefined();
 
@@ -552,17 +559,15 @@ describe('the item data', () => {
         '^Improves your chance to get a critical strike with all spells and attacks by (\\d+)%\\.?$',
         '^Improves your chance to hit(?: with all spells and attacks)? by (\\d+)%\\.?$',
         /*
-         * CLASSIC'S SPELL POWER SENTENCE, which is the one that reads as the
-         * biggest surprise: `foreverchanges.pro` rewrites all 764 of them to
-         * "+N Spell Power". It remains inside set bonuses, where the "(6)"
-         * prefix puts the line past this anchor.
+         * THREE CLASSIC WORDINGS CAME OFF THIS LIST AT 1.60.1.70959 and are
+         * REACHED NOW: Forever's release keeps Classic's own sentence on some
+         * items it carried over -- "Increased Defense +7" on Golem Skull Helm,
+         * "Increases damage and healing done by magical spells and effects by
+         * up to 14" on Spritecaster Cape, "Increases healing done by spells and
+         * effects by up to 40" on Senior Designer's Pantaloons -- and the rules
+         * written for Classic read them. The block-value sentence is still
+         * unreached; Forever writes it as a bare "+25 Block Value".
          */
-        '^Increases damage and healing done by magical spells and effects by up to (\\d+)\\.?$',
-        // Classic's healing-only sentence, kept for the same reason (round 52).
-        '^Increases healing done by spells and effects by up to (\\d+)\\.?$',
-        // Classic's defense and shield-block wordings, now Defense Rating and
-        // a bare "+27 Block Value".
-        '^Increased Defense \\+(\\d+)\\.?$',
         '^Increases the block value of your shield by (\\d+)\\.?$',
       ].sort(),
     );
@@ -580,8 +585,9 @@ describe('what the items do that the simulator does not', () => {
     const staff = ITEMS_BY_ID.get(944);
     expect(staff?.unmodelled.some((e) => /Resistance/.test(e.text))).toBe(false);
     // Still on the item, for the sheet to total.
-    expect(staff?.resistances.fire).toBe(20);
-    expect(staff?.resistances.frost).toBe(20);
+    // +10 each at 1.60.1.70959 (20 before).
+    expect(staff?.resistances.fire).toBe(10);
+    expect(staff?.resistances.frost).toBe(10);
   });
 
   it('grants Crusader no flat stats, because its strength is a proc', () => {
@@ -691,7 +697,9 @@ describe('what the items do that the simulator does not', () => {
       item.unmodelled
         .filter(
           (e) =>
-            /^Increases damage done by \w+ spells and effects/.test(e.text) ||
+            // A STANDING line, not an on-use: Eye of Moam's "Use: Increases damage
+            // done by magical spells ... for 30 sec" is correctly not simulated.
+            (e.kind !== 'Use' && /^Increases damage done by \w+ spells and effects/.test(e.text)) ||
             /^\+\d+ (Fire|Frost|Arcane|Nature|Shadow|Holy) Spell (Power|Damage)$/.test(e.text),
         )
         .map((e) => `${item.name}: ${e.text}`),
@@ -712,11 +720,11 @@ describe('what the items do that the simulator does not', () => {
      * record rather than a zero for each of the seven.
      */
     const twoStaves: Equipment = { twoHand: { itemId: 944 } };
-    expect(schoolPowerForStyle(twoStaves, 'two_hander')).toEqual({ fire: 36, frost: 36 });
+    expect(schoolPowerForStyle(twoStaves, 'two_hander')).toEqual({ fire: 100, frost: 100 });
 
     // A caster style HOLDS a two-hander rather than swinging it, and still
     // reads its stats.
-    expect(schoolPowerForStyle(twoStaves, 'caster')).toEqual({ fire: 36, frost: 36 });
+    expect(schoolPowerForStyle(twoStaves, 'caster')).toEqual({ fire: 100, frost: 100 });
 
     // Every preset's benchmark set is school-blind, so each comes back empty.
     for (const id of ['shadow_priest', 'mage_fire', 'two_hand_arms']) {
@@ -743,33 +751,34 @@ describe('what the items do that the simulator does not', () => {
     expect(missing[0]?.itemName).toBe('Kris of Unspoken Names');
   });
 
-  it('keeps the two implemented item procs, which no Forever item carries', () => {
+  it('carries Hand of Justice again, with its proc read as MODELLED, and still no Vis\'kag', () => {
     /*
      * ------------------------------------------------------------------------
-     * BOTH PROC'D ITEMS ARE GONE FROM THE RULESET, AND THE MECHANISMS STAY.
-     * `procs.ts` implements Vis'kag's Fatal Wound and Hand of Justice's extra
-     * attack, and neither item is in Forever's data -- so `MODELLED_AS_PROCS`
-     * now matches nothing and the two reactions are unreachable from gear.
+     * HAND OF JUSTICE IS BACK AT 1.60.1.70959, in `changed.json` at its Classic
+     * id, and its tooltip writes "on Melee hit" with a capital M. Matched
+     * case-sensitively the line was listed as NOT SIMULATED -- with a stale
+     * reason saying the engine has no extra attacks -- while `procs.ts` fired
+     * the proc anyway off the id. Both now say the same thing: implemented.
      *
-     * WHICH IS WORTH ASSERTING RATHER THAN LEAVING TO BE DISCOVERED. An
-     * unreachable mechanism that nothing says is unreachable is how a reader
-     * concludes a profile has a damage source it does not have -- and the
-     * CRUSADER enchant still drives the same proc machinery, so the code is
-     * not dead, only the two item entries are.
+     * VIS'KAG IS STILL ABSENT: it is one of the 630 "NO FOREVER DATA" items the
+     * owner ruled out, so its Fatal Wound stays reachable only through wording
+     * a future capture might carry.
      * ------------------------------------------------------------------------
      */
-    for (const name of ["Vis'kag the Bloodletter", 'Hand of Justice']) {
-      expect(ITEMS.some((item) => item.name === name), name).toBe(false);
-    }
+    const hand = ITEMS.find((item) => item.name === 'Hand of Justice');
+    expect(hand?.id).toBe(11815);
+    expect(ITEMS.some((item) => item.name === "Vis'kag the Bloodletter")).toBe(false);
 
-    // Nothing in the data carries either proc's wording, so nothing is
-    // silently skipped by `MODELLED_AS_PROCS` either.
+    // Nothing the engine implements is listed as MISSING: asked with the
+    // engine's own patterns, so a different "fatal wound" -- Blackhand
+    // Doomsaw's, with no stated rate -- is rightly left on the list.
     const procLines = ITEMS.filter((item) => item.id < 9_500_000).flatMap((item) =>
       item.unmodelled
-        .filter((e) => /Delivers a fatal wound|gain 1 extra attack/.test(e.text))
+        .filter((e) => Object.values(ITEM_PROCS).some((pattern) => pattern.test(e.text)))
         .map((e) => e.text),
     );
     expect(procLines).toEqual([]);
+    expect(hand?.unmodelled.some((e) => /extra attack/.test(e.text))).toBe(false);
   });
 });
 

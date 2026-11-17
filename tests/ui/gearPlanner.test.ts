@@ -230,7 +230,9 @@ describe('a slot s list is sorted by what the build values', () => {
   });
 
   it('matches the search against the name, ignoring case', () => {
-    const named = itemsForSlot('head')[0].name;
+    // The first item the LIST offers, not the first in the database: that one
+    // can be a class-locked set piece the Warrior is rightly never shown.
+    const named = list()[0]!.item.name;
     const rows = list({ search: named.toUpperCase() });
     expect(rows.some((row) => row.item.name === named)).toBe(true);
     expect(rows.every((row) => row.item.name.toLowerCase().includes(named.toLowerCase()))).toBe(true);

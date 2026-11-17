@@ -18,7 +18,8 @@ import { legalise } from '../helpers/legalTalents';
  * that looks entirely plausible on a tank. The two block lines add:
  * 44 inherent + 27 bonus = 71.
  */
-const SHIELD = { id: 19321, blockValue: 44 + 27, armor: 2468, stamina: 15 };
+// Build 1.60.1.70959 retuned it: 2291 armor (was 2468), "40 Block" (was 44), "+25 Block Value" (was 27), 14 stamina (was 15).
+const SHIELD = { id: 19321, blockValue: 40 + 25, armor: 2291, stamina: 14 };
 
 /** Block chance for holding a shield at all, before anything adds to it. */
 const BASE_BLOCK = 5;
@@ -196,9 +197,9 @@ describe('Shield Slam', () => {
     // Strength adds to the shield's own, which is what makes Shield Slam scale
     // with strength at all.
     expect(blockValue).toBeGreaterThan(shieldValue);
-    // And 655 from Forever plus The Immovable Object's 71 is still 726: the
+    // And 655 from Forever plus The Immovable Object's 65 is 720: the
     // ADDITION is the rule, whichever shield is in the slot.
-    expect(SHIELD_SLAM_DAMAGE + SHIELD.blockValue).toBe(726);
+    expect(SHIELD_SLAM_DAMAGE + SHIELD.blockValue).toBe(720);
   });
 });
 

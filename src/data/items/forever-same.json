@@ -1,19 +1,167 @@
 {
  "set": "forever-same",
- "description": "Every item at these levels that Forever did NOT change from Classic. Still real Forever items -- the client has them, identical to their Classic originals -- and captured because \"new and changed\" leaves out everything the ruleset simply kept in the WoW: Forever beta client, build 1.60.1.70338, captured 2026-10-10. REAL FOREVER DATA, unlike the Classic and Season of Discovery stand-ins in the other files here. Converted by tools/import_forever_items.mjs from the capture in tools/data/, which records its own SHA-256.",
- "source": "https://foreverchanges.pro/items/same.json",
+ "description": "Every rare and epic at item level 50 and above that Forever did NOT change from Classic -- real Forever items, identical to their Classic originals, WoW: Forever client build 1.60.1.70959, captured 2026-11-17 from foreverchanges.pro. Converted by tools/import_forever_items.mjs from tools/data/forever-items-70959.capture.json, which records its own SHA-256.",
+ "source": "https://foreverchanges.pro/items/{new,changed,same,missing}.json",
  "excludedTestItems": [],
- "excludedNotEquippable": [],
- "foreverBuild": "1.60.1.70338",
+ "excludedNotEquippable": [
+  "Unforged Rune Covered Breastplate (12806)",
+  "Unfired Plate Gauntlets (12812)",
+  "Small Brilliant Shard (14343)",
+  "Large Brilliant Shard (14344)",
+  "Scale of Onyxia (15410)",
+  "Fiery Core (17010)",
+  "Lava Core (17011)",
+  "Sulfuron Ingot (17203)",
+  "Refined Scale of Onyxia (17967)",
+  "Core Armor Kit (18251)",
+  "Biznicks 247x128 Accurascope (18283)",
+  "Garona: A Study on Stealth and Treachery (18356)",
+  "Codex of Defense (18357)",
+  "The Arcanist's Cookbook (18358)",
+  "The Light and How to Swing It (18359)",
+  "Harnessing Shadows (18360)",
+  "The Greatest Race of Hunters (18361)",
+  "Holy Bologna: What the Light Won't Tell You (18362)",
+  "Frost Shock and You (18363)",
+  "The Emerald Dream (18364)",
+  "Nostro's Compendium of Dragon Slaying (18401)",
+  "Elementium Ore (18562)",
+  "Thorium Brotherhood Contract (18628)",
+  "Splinter of Nordrassil (18659)",
+  "Ancient Petrified Leaf (18703)",
+  "Mature Blue Dragon Sinew (18704)",
+  "Mature Black Dragon Sinew (18705)",
+  "Ancient Rune Etched Stave (18707)",
+  "Ancient Sinew Wrapped Lamina (18714)",
+  "Enchanted Black Dragon Sinew (18724)",
+  "Enchanted Thorium Platemail (18769)",
+  "Enchanted Thorium Platemail (18770)",
+  "Enchanted Thorium Platemail (18771)",
+  "Bottom Half of Advanced Armorsmithing: Volume I (18779)",
+  "Top Half of Advanced Armorsmithing: Volume I (18780)",
+  "Bottom Half of Advanced Armorsmithing: Volume II (18781)",
+  "Top Half of Advanced Armorsmithing: Volume II (18782)",
+  "Bottom Half of Advanced Armorsmithing: Volume III (18783)",
+  "Top Half of Advanced Armorsmithing: Volume III (18784)",
+  "Head of Nefarian (19002)",
+  "Head of Nefarian (19003)",
+  "Harpy Hide Quiver (19319)",
+  "Gnoll Skin Bandolier (19320)",
+  "Red Hakkari Bijou (19707)",
+  "Blue Hakkari Bijou (19708)",
+  "Yellow Hakkari Bijou (19709)",
+  "Orange Hakkari Bijou (19710)",
+  "Green Hakkari Bijou (19711)",
+  "Purple Hakkari Bijou (19712)",
+  "Bronze Hakkari Bijou (19713)",
+  "Silver Hakkari Bijou (19714)",
+  "Gold Hakkari Bijou (19715)",
+  "Blood Scythe (19727)",
+  "Presence of Might (19782)",
+  "Syncretist's Sigil (19783)",
+  "Death's Embrace (19784)",
+  "Falcon's Call (19785)",
+  "Vodouisant's Vigilant Embrace (19786)",
+  "Presence of Sight (19787)",
+  "Hoodoo Hex (19788)",
+  "Prophetic Aura (19789)",
+  "Animist's Caress (19790)",
+  "Heart of Hakkar (19802)",
+  "Panther Hide Sack (19914)",
+  "Zandalar Signet of Mojo (20076)",
+  "Zandalar Signet of Might (20077)",
+  "Zandalar Signet of Serenity (20078)",
+  "Nightmare Engulfed Object (20644)",
+  "Nexus Crystal (20725)",
+  "Azure Idol (20866)",
+  "Onyx Idol (20867)",
+  "Lambent Idol (20868)",
+  "Amber Idol (20869)",
+  "Jasper Idol (20870)",
+  "Obsidian Idol (20871)",
+  "Vermillion Idol (20872)",
+  "Alabaster Idol (20873)",
+  "Idol of the Sun (20874)",
+  "Idol of Night (20875)",
+  "Idol of Death (20876)",
+  "Idol of the Sage (20877)",
+  "Idol of Rebirth (20878)",
+  "Idol of Life (20879)",
+  "Idol of Strife (20881)",
+  "Idol of War (20882)",
+  "D'Sak's Sack (21193)",
+  "D'Sak's Big Sack (21194)",
+  "D'Sak's Sacktastic (21195)",
+  "Head of Ossirian the Unscarred (21220)",
+  "Eye of C'Thun (21221)",
+  "Imperial Qiraji Armaments (21232)",
+  "Imperial Qiraji Regalia (21237)",
+  "D'Sak's Small bag (21313)",
+  "Core Felcloth Bag (21342)",
+  "Riding Gryphon Reins (21736)",
+  "Desecrated Breastplate (22349)",
+  "Desecrated Tunic (22350)",
+  "Desecrated Robe (22351)",
+  "Desecrated Legplates (22352)",
+  "Desecrated Helmet (22353)",
+  "Desecrated Pauldrons (22354)",
+  "Desecrated Bracers (22355)",
+  "Desecrated Waistguard (22356)",
+  "Desecrated Gauntlets (22357)",
+  "Desecrated Sabatons (22358)",
+  "Desecrated Legguards (22359)",
+  "Desecrated Headpiece (22360)",
+  "Desecrated Spaulders (22361)",
+  "Desecrated Wristguards (22362)",
+  "Desecrated Girdle (22363)",
+  "Desecrated Handguards (22364)",
+  "Desecrated Boots (22365)",
+  "Desecrated Leggings (22366)",
+  "Desecrated Circlet (22367)",
+  "Desecrated Shoulderpads (22368)",
+  "Desecrated Bindings (22369)",
+  "Desecrated Belt (22370)",
+  "Desecrated Gloves (22371)",
+  "Desecrated Sandals (22372)",
+  "Wartorn Leather Scrap (22373)",
+  "Wartorn Chain Scrap (22374)",
+  "Wartorn Plate Scrap (22375)",
+  "Wartorn Cloth Scrap (22376)",
+  "The Phylactery of Kel'Thuzad (22520)",
+  "Savage Guard (22635)",
+  "Ice Guard (22636)",
+  "Primal Hakkari Idol (22637)",
+  "Shadow Guard (22638)",
+  "Supply Bag (22679)",
+  "Frozen Rune (22682)",
+  "Power of the Scourge (23545)",
+  "Resilience of the Scourge (23547)",
+  "Might of the Scourge (23548)",
+  "Fortitude of the Scourge (23549)",
+  "Skeletal Hitching Post (191477)",
+  "Skeletal Steed (191480)",
+  "Book of Deathstones: Skeletal Artifact (191607)",
+  "Book of Deathstones: Rod of Necromancy (191608)",
+  "Book of Deathstones: Fungal Spore Cluster (191609)",
+  "Book of Deathstones: Ritual Dagger (191610)",
+  "Book of Deathstones: Failsafe Phylactery (191611)",
+  "Book of Deathstones: Rune of Teleportation II (191612)",
+  "Book of Deathstones: Rune of Fortune (191613)",
+  "Book of Deathstones: Skeletal Hitching Post (191614)",
+  "Book of Deathstones: Thaddius' Lightning Bolts (191664)",
+  "Book of Deathstones: Monstrous Spider Fang (191666)"
+ ],
+ "excludedNoDamageFigure": [],
+ "foreverBuild": "1.60.1.70959",
  "classicBuild": "1.15.9.69722",
- "capturedOn": "2026-10-10",
+ "capturedOn": "2026-11-17",
  "items": [
   {
    "id": 1203,
    "name": "Aegis of Stormwind",
    "quality": 3,
    "icon": "inv_shield_06",
-   "source": "https://foreverchanges.pro/items/new.json#1203",
+   "source": "https://foreverchanges.pro/items/same.json#1203",
    "itemLevel": 54,
    "inventoryType": "Off Hand",
    "subclass": "Shield",
@@ -37,7 +185,7 @@
    "name": "Soulkeeper",
    "quality": 3,
    "icon": "spell_shadow_haunting",
-   "source": "https://foreverchanges.pro/items/new.json#1607",
+   "source": "https://foreverchanges.pro/items/same.json#1607",
    "itemLevel": 54,
    "inventoryType": "Two-Hand",
    "subclass": "Staff",
@@ -61,7 +209,7 @@
    "name": "Viking Warhammer",
    "quality": 3,
    "icon": "inv_hammer_09",
-   "source": "https://foreverchanges.pro/items/new.json#1721",
+   "source": "https://foreverchanges.pro/items/same.json#1721",
    "itemLevel": 54,
    "inventoryType": "Main Hand",
    "subclass": "Mace",
@@ -81,110 +229,11 @@
    "tooltip": "Viking Warhammer\nBinds when equipped\nMain Hand\tMace\n60 - 112 Damage\tSpeed 2.40\n(35.8 damage per second)\n+11 Stamina\n+5 Strength\nRequires Level 49\nSell Price: 3g 58s 15c"
   },
   {
-   "id": 2243,
-   "name": "Hand of Edward the Odd",
-   "quality": 4,
-   "icon": "inv_mace_14",
-   "source": "https://foreverchanges.pro/items/new.json#2243",
-   "itemLevel": 62,
-   "inventoryType": "One-Hand",
-   "subclass": "Mace",
-   "armor": null,
-   "weapon": {
-    "minDamage": 50,
-    "maxDamage": 94,
-    "speed": 1.6,
-    "dps": 45
-   },
-   "stats": {
-    "spirit": 10,
-    "intellect": 13
-   },
-   "resistances": {},
-   "effects": [
-    {
-     "kind": "Chance on hit",
-     "text": "Next spell cast within 4 sec will cast instantly."
-    }
-   ],
-   "tooltip": "Hand of Edward the Odd\nBinds when equipped\nUnique\nOne-Hand\tMace\n50 - 94 Damage\tSpeed 1.60\n(45.0 damage per second)\n+10 Spirit\n+13 Intellect\nRequires Level 57\nChance on hit: Next spell cast within 4 sec will cast instantly.\nSell Price: 7g 5s 54c"
-  },
-  {
-   "id": 2245,
-   "name": "Helm of Narv",
-   "quality": 4,
-   "icon": "inv_helmet_05",
-   "source": "https://foreverchanges.pro/items/new.json#2245",
-   "itemLevel": 59,
-   "inventoryType": "Head",
-   "subclass": "Mail",
-   "armor": 309,
-   "weapon": null,
-   "stats": {
-    "agility": 13,
-    "spirit": 18,
-    "stamina": 32
-   },
-   "resistances": {},
-   "effects": [],
-   "tooltip": "Helm of Narv\nBinds when equipped\nHead\tMail\n309 Armor\n+13 Agility\n+18 Spirit\n+32 Stamina\nRequires Level 54\nSell Price: 2g 76s 36c"
-  },
-  {
-   "id": 2801,
-   "name": "Blade of Hanna",
-   "quality": 4,
-   "icon": "inv_sword_10",
-   "source": "https://foreverchanges.pro/items/new.json#2801",
-   "itemLevel": 64,
-   "inventoryType": "Two-Hand",
-   "subclass": "Sword",
-   "armor": null,
-   "weapon": {
-    "minDamage": 101,
-    "maxDamage": 152,
-    "speed": 2.1,
-    "dps": 60.24
-   },
-   "stats": {
-    "agility": 11,
-    "intellect": 11,
-    "spirit": 11,
-    "stamina": 11,
-    "strength": 11
-   },
-   "resistances": {},
-   "effects": [],
-   "tooltip": "Blade of Hanna\nBinds when equipped\nUnique\nTwo-Hand\tSword\n101 - 152 Damage\tSpeed 2.10\n(60.2 damage per second)\n+11 Agility\n+11 Intellect\n+11 Spirit\n+11 Stamina\n+11 Strength\nRequires Level 59\nSell Price: 10g 47s 29c"
-  },
-  {
-   "id": 3475,
-   "name": "Cloak of Flames",
-   "quality": 4,
-   "icon": "inv_misc_cape_08",
-   "source": "https://foreverchanges.pro/items/new.json#3475",
-   "itemLevel": 65,
-   "inventoryType": "Back",
-   "subclass": "Cloth",
-   "armor": 50,
-   "weapon": null,
-   "stats": {},
-   "resistances": {
-    "fire": 15
-   },
-   "effects": [
-    {
-     "kind": "Equip",
-     "text": "Deals 5 Fire damage to anyone who strikes you with a melee attack."
-    }
-   ],
-   "tooltip": "Cloak of Flames\nBinds when equipped\nBack\tCloth\n50 Armor\n+15 Fire Resistance\nRequires Level 60\nEquip: Deals 5 Fire damage to anyone who strikes you with a melee attack.\nSell Price: 2g 60s 18c"
-  },
-  {
    "id": 4696,
    "name": "Lapidis Tankard of Tidesippe",
    "quality": 3,
    "icon": "inv_drink_03",
-   "source": "https://foreverchanges.pro/items/new.json#4696",
+   "source": "https://foreverchanges.pro/items/same.json#4696",
    "itemLevel": 59,
    "inventoryType": "Held In Off-hand",
    "subclass": null,
@@ -209,7 +258,7 @@
    "name": "Eye of Adaegus",
    "quality": 3,
    "icon": "inv_jewelry_ring_05",
-   "source": "https://foreverchanges.pro/items/new.json#5266",
+   "source": "https://foreverchanges.pro/items/same.json#5266",
    "itemLevel": 53,
    "inventoryType": "Finger",
    "subclass": null,
@@ -225,11 +274,61 @@
    "tooltip": "Eye of Adaegus\nBinds when equipped\nUnique\nFinger\n+12 Spirit\n+5 Stamina\n+6 Intellect\nRequires Level 48\nSell Price: 1g 11s 57c"
   },
   {
+   "id": 5267,
+   "name": "Scarlet Kris",
+   "quality": 3,
+   "icon": "inv_weapon_shortblade_03",
+   "source": "https://foreverchanges.pro/items/same.json#5267",
+   "itemLevel": 63,
+   "inventoryType": "One-Hand",
+   "subclass": "Dagger",
+   "armor": null,
+   "weapon": {
+    "minDamage": 43,
+    "maxDamage": 81,
+    "speed": 1.5,
+    "dps": 41.33
+   },
+   "stats": {
+    "agility": 10,
+    "stamina": 10
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Scarlet Kris\nBinds when equipped\nUnique\nOne-Hand\tDagger\n43 - 81 Damage\tSpeed 1.50\n(41.3 damage per second)\n+10 Agility\n+10 Stamina\nRequires Level 58\nSell Price: 5g 98s 51c"
+  },
+  {
+   "id": 6622,
+   "name": "Sword of Zeal",
+   "quality": 3,
+   "icon": "inv_sword_39",
+   "source": "https://foreverchanges.pro/items/same.json#6622",
+   "itemLevel": 63,
+   "inventoryType": "Main Hand",
+   "subclass": "Sword",
+   "armor": null,
+   "weapon": {
+    "minDamage": 81,
+    "maxDamage": 151,
+    "speed": 2.8,
+    "dps": 41.43
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Chance on hit",
+     "text": "A burst of energy fills the caster, increasing his damage by 10 and armor by 150 for 15 sec."
+    }
+   ],
+   "tooltip": "Sword of Zeal\nBinds when equipped\nMain Hand\tSword\n81 - 151 Damage\tSpeed 2.80\n(41.4 damage per second)\nRequires Level 58\nChance on hit: A burst of energy fills the caster, increasing his damage by 10 and armor by 150 for 15 sec.\nSell Price: 5g 54s"
+  },
+  {
    "id": 6660,
    "name": "Julie's Dagger",
    "quality": 3,
    "icon": "inv_weapon_shortblade_07",
-   "source": "https://foreverchanges.pro/items/new.json#6660",
+   "source": "https://foreverchanges.pro/items/same.json#6660",
    "itemLevel": 55,
    "inventoryType": "One-Hand",
    "subclass": "Dagger",
@@ -255,7 +354,7 @@
    "name": "Hanzo Sword",
    "quality": 3,
    "icon": "inv_sword_10",
-   "source": "https://foreverchanges.pro/items/new.json#8190",
+   "source": "https://foreverchanges.pro/items/same.json#8190",
    "itemLevel": 55,
    "inventoryType": "One-Hand",
    "subclass": "Sword",
@@ -281,7 +380,7 @@
    "name": "Earthborn Kilt",
    "quality": 3,
    "icon": "inv_pants_12",
-   "source": "https://foreverchanges.pro/items/new.json#9402",
+   "source": "https://foreverchanges.pro/items/same.json#9402",
    "itemLevel": 60,
    "inventoryType": "Legs",
    "subclass": "Leather",
@@ -300,7 +399,7 @@
    "name": "Dark Iron Sunderer",
    "quality": 3,
    "icon": "inv_weapon_halberd_02",
-   "source": "https://foreverchanges.pro/items/new.json#11607",
+   "source": "https://foreverchanges.pro/items/same.json#11607",
    "itemLevel": 57,
    "inventoryType": "Two-Hand",
    "subclass": "Axe",
@@ -326,7 +425,7 @@
    "name": "Dark Iron Pulverizer",
    "quality": 3,
    "icon": "inv_hammer_09",
-   "source": "https://foreverchanges.pro/items/new.json#11608",
+   "source": "https://foreverchanges.pro/items/same.json#11608",
    "itemLevel": 55,
    "inventoryType": "Two-Hand",
    "subclass": "Mace",
@@ -352,7 +451,7 @@
    "name": "Bleakwood Hew",
    "quality": 3,
    "icon": "inv_axe_24",
-   "source": "https://foreverchanges.pro/items/new.json#12769",
+   "source": "https://foreverchanges.pro/items/same.json#12769",
    "itemLevel": 54,
    "inventoryType": "Two-Hand",
    "subclass": "Axe",
@@ -381,7 +480,7 @@
    "name": "Blood Talon",
    "quality": 3,
    "icon": "inv_weapon_shortblade_27",
-   "source": "https://foreverchanges.pro/items/new.json#12795",
+   "source": "https://foreverchanges.pro/items/same.json#12795",
    "itemLevel": 60,
    "inventoryType": "Main Hand",
    "subclass": "Fist Weapon",
@@ -403,11 +502,63 @@
    "tooltip": "Blood Talon\nBinds when picked up\nMain Hand\tFist Weapon\n35 - 67 Damage\tSpeed 1.30\n(39.2 damage per second)\nRequires Level 55\nChance on hit: Wounds the target causing them to bleed for 100 damage over 30 sec.\nSell Price: 4g 88s 21c"
   },
   {
+   "id": 12796,
+   "name": "Hammer of the Titans",
+   "quality": 3,
+   "icon": "inv_hammer_09",
+   "source": "https://foreverchanges.pro/items/same.json#12796",
+   "itemLevel": 63,
+   "inventoryType": "Two-Hand",
+   "subclass": "Mace",
+   "armor": null,
+   "weapon": {
+    "minDamage": 163,
+    "maxDamage": 246,
+    "speed": 3.8,
+    "dps": 53.82
+   },
+   "stats": {
+    "strength": 15
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Chance on hit",
+     "text": "Stuns target for 3 sec."
+    }
+   ],
+   "tooltip": "Hammer of the Titans\nBinds when equipped\nTwo-Hand\tMace\n163 - 246 Damage\tSpeed 3.80\n(53.8 damage per second)\n+15 Strength\nRequires Level 58\nChance on hit: Stuns target for 3 sec.\nSell Price: 7g 9s 12c"
+  },
+  {
+   "id": 13000,
+   "name": "Staff of Hale Magefire",
+   "quality": 3,
+   "icon": "inv_staff_23",
+   "source": "https://foreverchanges.pro/items/same.json#13000",
+   "itemLevel": 62,
+   "inventoryType": "Two-Hand",
+   "subclass": "Staff",
+   "armor": null,
+   "weapon": {
+    "minDamage": 140,
+    "maxDamage": 210,
+    "speed": 3.3,
+    "dps": 53.03
+   },
+   "stats": {
+    "spirit": 22,
+    "intellect": 25
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Staff of Hale Magefire\nBinds when equipped\nTwo-Hand\tStaff\n140 - 210 Damage\tSpeed 3.30\n(53.0 damage per second)\n+22 Spirit\n+25 Intellect\nRequires Level 57\nSell Price: 6g 52s 25c"
+  },
+  {
    "id": 13002,
    "name": "Lady Alizabeth's Pendant",
    "quality": 3,
    "icon": "inv_jewelry_amulet_03",
-   "source": "https://foreverchanges.pro/items/new.json#13002",
+   "source": "https://foreverchanges.pro/items/same.json#13002",
    "itemLevel": 59,
    "inventoryType": "Neck",
    "subclass": null,
@@ -426,7 +577,7 @@
    "name": "Lord Alexander's Battle Axe",
    "quality": 3,
    "icon": "inv_weapon_halberd_02",
-   "source": "https://foreverchanges.pro/items/new.json#13003",
+   "source": "https://foreverchanges.pro/items/same.json#13003",
    "itemLevel": 56,
    "inventoryType": "Two-Hand",
    "subclass": "Axe",
@@ -451,7 +602,7 @@
    "name": "Torch of Austen",
    "quality": 3,
    "icon": "inv_wand_11",
-   "source": "https://foreverchanges.pro/items/new.json#13004",
+   "source": "https://foreverchanges.pro/items/same.json#13004",
    "itemLevel": 58,
    "inventoryType": "Ranged",
    "subclass": "Wand",
@@ -470,11 +621,35 @@
    "tooltip": "Torch of Austen\nBinds when equipped\nRanged\tWand\n55 - 104 Fire Damage\tSpeed 1.40\n(56.8 damage per second)\n+10 Fire Resistance\nRequires Level 53\nSell Price: 3g 35s 90c"
   },
   {
+   "id": 13006,
+   "name": "Mass of McGowan",
+   "quality": 3,
+   "icon": "inv_hammer_17",
+   "source": "https://foreverchanges.pro/items/same.json#13006",
+   "itemLevel": 62,
+   "inventoryType": "Main Hand",
+   "subclass": "Mace",
+   "armor": null,
+   "weapon": {
+    "minDamage": 80,
+    "maxDamage": 149,
+    "speed": 2.8,
+    "dps": 40.89
+   },
+   "stats": {
+    "strength": 10,
+    "stamina": 10
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Mass of McGowan\nBinds when equipped\nMain Hand\tMace\n80 - 149 Damage\tSpeed 2.80\n(40.9 damage per second)\n+10 Strength\n+10 Stamina\nRequires Level 57\nSell Price: 5g 48s 40c"
+  },
+  {
    "id": 13008,
    "name": "Dalewind Trousers",
    "quality": 3,
    "icon": "inv_pants_06",
-   "source": "https://foreverchanges.pro/items/new.json#13008",
+   "source": "https://foreverchanges.pro/items/same.json#13008",
    "itemLevel": 52,
    "inventoryType": "Legs",
    "subclass": "Cloth",
@@ -494,7 +669,7 @@
    "name": "Cow King's Hide",
    "quality": 3,
    "icon": "inv_chest_leather_06",
-   "source": "https://foreverchanges.pro/items/new.json#13009",
+   "source": "https://foreverchanges.pro/items/same.json#13009",
    "itemLevel": 51,
    "inventoryType": "Chest",
    "subclass": "Leather",
@@ -518,7 +693,7 @@
    "name": "Axe of Rin'ji",
    "quality": 3,
    "icon": "inv_axe_21",
-   "source": "https://foreverchanges.pro/items/new.json#13014",
+   "source": "https://foreverchanges.pro/items/same.json#13014",
    "itemLevel": 53,
    "inventoryType": "One-Hand",
    "subclass": "Axe",
@@ -542,7 +717,7 @@
    "name": "Gryphonwing Long Bow",
    "quality": 3,
    "icon": "inv_weapon_bow_11",
-   "source": "https://foreverchanges.pro/items/new.json#13022",
+   "source": "https://foreverchanges.pro/items/same.json#13022",
    "itemLevel": 55,
    "inventoryType": "Ranged",
    "subclass": "Bow",
@@ -562,11 +737,35 @@
    "tooltip": "Gryphonwing Long Bow\nBinds when equipped\nRanged\tBow\n53 - 100 Damage\tSpeed 2.70\n(28.3 damage per second)\n+8 Agility\n+4 Stamina\nRequires Level 50\nSell Price: 2g 79s 90c"
   },
   {
+   "id": 13023,
+   "name": "Eaglehorn Long Bow",
+   "quality": 3,
+   "icon": "inv_weapon_bow_11",
+   "source": "https://foreverchanges.pro/items/same.json#13023",
+   "itemLevel": 63,
+   "inventoryType": "Ranged",
+   "subclass": "Bow",
+   "armor": null,
+   "weapon": {
+    "minDamage": 40,
+    "maxDamage": 76,
+    "speed": 1.8,
+    "dps": 32.22
+   },
+   "stats": {
+    "agility": 10,
+    "stamina": 4
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Eaglehorn Long Bow\nBinds when equipped\nRanged\tBow\n40 - 76 Damage\tSpeed 1.80\n(32.2 damage per second)\n+10 Agility\n+4 Stamina\nRequires Level 58\nSell Price: 4g 27s 3c"
+  },
+  {
    "id": 13027,
    "name": "Bonesnapper",
    "quality": 3,
    "icon": "inv_hammer_20",
-   "source": "https://foreverchanges.pro/items/new.json#13027",
+   "source": "https://foreverchanges.pro/items/same.json#13027",
    "itemLevel": 53,
    "inventoryType": "Main Hand",
    "subclass": "Mace",
@@ -586,11 +785,35 @@
    "tooltip": "Bonesnapper\nBinds when equipped\nMain Hand\tMace\n66 - 124 Damage\tSpeed 2.70\n(35.2 damage per second)\n+11 Strength\n+5 Stamina\nRequires Level 48\nSell Price: 3g 38s 32c"
   },
   {
+   "id": 13028,
+   "name": "Bludstone Hammer",
+   "quality": 3,
+   "icon": "inv_hammer_19",
+   "source": "https://foreverchanges.pro/items/same.json#13028",
+   "itemLevel": 61,
+   "inventoryType": "Main Hand",
+   "subclass": "Mace",
+   "armor": null,
+   "weapon": {
+    "minDamage": 59,
+    "maxDamage": 110,
+    "speed": 2.1,
+    "dps": 40.24
+   },
+   "stats": {
+    "spirit": 12,
+    "stamina": 5
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Bludstone Hammer\nBinds when equipped\nMain Hand\tMace\n59 - 110 Damage\tSpeed 2.10\n(40.2 damage per second)\n+12 Spirit\n+5 Stamina\nRequires Level 56\nSell Price: 5g 26s 5c"
+  },
+  {
    "id": 13030,
    "name": "Basilisk Bone",
    "quality": 3,
    "icon": "inv_misc_bone_10",
-   "source": "https://foreverchanges.pro/items/new.json#13030",
+   "source": "https://foreverchanges.pro/items/same.json#13030",
    "itemLevel": 51,
    "inventoryType": "Held In Off-hand",
    "subclass": null,
@@ -612,7 +835,7 @@
    "name": "Heartseeking Crossbow",
    "quality": 3,
    "icon": "inv_weapon_crossbow_04",
-   "source": "https://foreverchanges.pro/items/new.json#13040",
+   "source": "https://foreverchanges.pro/items/same.json#13040",
    "itemLevel": 56,
    "inventoryType": "Ranged",
    "subclass": "Crossbow",
@@ -641,7 +864,7 @@
    "name": "Blanchard's Stout",
    "quality": 3,
    "icon": "inv_hammer_04",
-   "source": "https://foreverchanges.pro/items/new.json#13046",
+   "source": "https://foreverchanges.pro/items/same.json#13046",
    "itemLevel": 50,
    "inventoryType": "Two-Hand",
    "subclass": "Mace",
@@ -667,7 +890,7 @@
    "name": "Twig of the World Tree",
    "quality": 3,
    "icon": "inv_mace_13",
-   "source": "https://foreverchanges.pro/items/new.json#13047",
+   "source": "https://foreverchanges.pro/items/same.json#13047",
    "itemLevel": 58,
    "inventoryType": "Two-Hand",
    "subclass": "Mace",
@@ -688,37 +911,11 @@
    "tooltip": "Twig of the World Tree\nBinds when equipped\nTwo-Hand\tMace\n147 - 221 Damage\tSpeed 3.70\n(49.7 damage per second)\n+14 Strength\n+12 Spirit\n+21 Stamina\nRequires Level 53\nSell Price: 5g 65s 88c"
   },
   {
-   "id": 13053,
-   "name": "Doombringer",
-   "quality": 3,
-   "icon": "inv_sword_01",
-   "source": "https://foreverchanges.pro/items/new.json#13053",
-   "itemLevel": 60,
-   "inventoryType": "Two-Hand",
-   "subclass": "Sword",
-   "armor": null,
-   "weapon": {
-    "minDamage": 115,
-    "maxDamage": 173,
-    "speed": 2.8,
-    "dps": 51.43
-   },
-   "stats": {},
-   "resistances": {},
-   "effects": [
-    {
-     "kind": "Chance on hit",
-     "text": "Sends a shadowy bolt at the enemy causing 125 to 275 Shadow damage."
-    }
-   ],
-   "tooltip": "Doombringer\nBinds when equipped\nTwo-Hand\tSword\n115 - 173 Damage\tSpeed 2.80\n(51.4 damage per second)\nRequires Level 55\nChance on hit: Sends a shadowy bolt at the enemy causing 125 to 275 Shadow damage.\nSell Price: 5g 91s 86c"
-  },
-  {
    "id": 13059,
    "name": "Stoneraven",
    "quality": 3,
    "icon": "inv_spear_07",
-   "source": "https://foreverchanges.pro/items/new.json#13059",
+   "source": "https://foreverchanges.pro/items/same.json#13059",
    "itemLevel": 52,
    "inventoryType": "Two-Hand",
    "subclass": "Polearm",
@@ -744,7 +941,7 @@
    "name": "The Needler",
    "quality": 3,
    "icon": "inv_spear_08",
-   "source": "https://foreverchanges.pro/items/new.json#13060",
+   "source": "https://foreverchanges.pro/items/same.json#13060",
    "itemLevel": 60,
    "inventoryType": "Two-Hand",
    "subclass": "Polearm",
@@ -770,7 +967,7 @@
    "name": "Wand of Allistarj",
    "quality": 3,
    "icon": "inv_wand_09",
-   "source": "https://foreverchanges.pro/items/new.json#13065",
+   "source": "https://foreverchanges.pro/items/same.json#13065",
    "itemLevel": 50,
    "inventoryType": "Ranged",
    "subclass": "Wand",
@@ -793,7 +990,7 @@
    "name": "Wyrmslayer Spaulders",
    "quality": 3,
    "icon": "inv_shoulder_24",
-   "source": "https://foreverchanges.pro/items/new.json#13066",
+   "source": "https://foreverchanges.pro/items/same.json#13066",
    "itemLevel": 51,
    "inventoryType": "Shoulder",
    "subclass": "Plate",
@@ -813,7 +1010,7 @@
    "name": "Hydralick Armor",
    "quality": 3,
    "icon": "inv_chest_plate06",
-   "source": "https://foreverchanges.pro/items/new.json#13067",
+   "source": "https://foreverchanges.pro/items/same.json#13067",
    "itemLevel": 54,
    "inventoryType": "Chest",
    "subclass": "Plate",
@@ -835,7 +1032,7 @@
    "name": "Sapphiron's Scale Boots",
    "quality": 3,
    "icon": "inv_boots_plate_05",
-   "source": "https://foreverchanges.pro/items/new.json#13070",
+   "source": "https://foreverchanges.pro/items/same.json#13070",
    "itemLevel": 58,
    "inventoryType": "Feet",
    "subclass": "Plate",
@@ -855,7 +1052,7 @@
    "name": "Mugthol's Helm",
    "quality": 3,
    "icon": "inv_helmet_25",
-   "source": "https://foreverchanges.pro/items/new.json#13073",
+   "source": "https://foreverchanges.pro/items/same.json#13073",
    "itemLevel": 52,
    "inventoryType": "Head",
    "subclass": "Plate",
@@ -871,11 +1068,32 @@
    "tooltip": "Mugthol's Helm\nBinds when equipped\nHead\tPlate\n445 Armor\n+17 Spirit\n+10 Strength\n+17 Stamina\nRequires Level 47\nSell Price: 90s 80c"
   },
   {
+   "id": 13075,
+   "name": "Direwing Legguards",
+   "quality": 3,
+   "icon": "inv_pants_04",
+   "source": "https://foreverchanges.pro/items/same.json#13075",
+   "itemLevel": 63,
+   "inventoryType": "Legs",
+   "subclass": "Plate",
+   "armor": 575,
+   "weapon": null,
+   "stats": {
+    "strength": 15,
+    "stamina": 16,
+    "spirit": 16,
+    "agility": 15
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Direwing Legguards\nBinds when equipped\nLegs\tPlate\n575 Armor\n+15 Strength\n+16 Stamina\n+16 Spirit\n+15 Agility\nRequires Level 58\nSell Price: 2g 20s 90c"
+  },
+  {
    "id": 13077,
    "name": "Girdle of Uther",
    "quality": 3,
    "icon": "inv_belt_32",
-   "source": "https://foreverchanges.pro/items/new.json#13077",
+   "source": "https://foreverchanges.pro/items/same.json#13077",
    "itemLevel": 57,
    "inventoryType": "Waist",
    "subclass": "Plate",
@@ -893,11 +1111,58 @@
    "tooltip": "Girdle of Uther\nBinds when equipped\nWaist\tPlate\n336 Armor\n+9 Strength\n+10 Stamina\n+10 Spirit\n+9 Intellect\n+9 Agility\nRequires Level 52\nSell Price: 82s 26c"
   },
   {
+   "id": 13080,
+   "name": "Widow's Clutch",
+   "quality": 3,
+   "icon": "inv_chest_cloth_02",
+   "source": "https://foreverchanges.pro/items/same.json#13080",
+   "itemLevel": 63,
+   "inventoryType": "Chest",
+   "subclass": "Cloth",
+   "armor": 89,
+   "weapon": null,
+   "stats": {
+    "intellect": 24,
+    "spirit": 15,
+    "stamina": 10
+   },
+   "resistances": {
+    "arcane": 13
+   },
+   "effects": [],
+   "tooltip": "Widow's Clutch\nBinds when picked up\nChest\tCloth\n89 Armor\n+24 Intellect\n+15 Spirit\n+10 Stamina\n+13 Arcane Resistance\nRequires Level 58\nSell Price: 2g 25s 12c"
+  },
+  {
+   "id": 13083,
+   "name": "Garrett Family Crest",
+   "quality": 3,
+   "icon": "inv_shield_05",
+   "source": "https://foreverchanges.pro/items/same.json#13083",
+   "itemLevel": 62,
+   "inventoryType": "Off Hand",
+   "subclass": "Shield",
+   "armor": 2121,
+   "weapon": null,
+   "stats": {
+    "agility": 5,
+    "intellect": 4,
+    "spirit": 17
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Stat",
+     "text": "39 Block"
+    }
+   ],
+   "tooltip": "Garrett Family Crest\nBinds when equipped\nOff Hand\tShield\n2121 Armor\n39 Block\n+5 Agility\n+4 Intellect\n+17 Spirit\nRequires Level 57\nSell Price: 3g 46s 94c"
+  },
+  {
    "id": 13085,
    "name": "Horizon Choker",
    "quality": 3,
    "icon": "inv_jewelry_necklace_11",
-   "source": "https://foreverchanges.pro/items/new.json#13085",
+   "source": "https://foreverchanges.pro/items/same.json#13085",
    "itemLevel": 51,
    "inventoryType": "Neck",
    "subclass": null,
@@ -913,11 +1178,33 @@
    "tooltip": "Horizon Choker\nBinds when equipped\nNeck\n+14 Intellect\n+4 Spirit\n+4 Stamina\nRequires Level 46\nSell Price: 91s 37c"
   },
   {
+   "id": 13090,
+   "name": "Breastplate of the Chosen",
+   "quality": 3,
+   "icon": "inv_chest_chain_16",
+   "source": "https://foreverchanges.pro/items/same.json#13090",
+   "itemLevel": 63,
+   "inventoryType": "Chest",
+   "subclass": "Mail",
+   "armor": 370,
+   "weapon": null,
+   "stats": {
+    "stamina": 14,
+    "strength": 14,
+    "spirit": 14,
+    "intellect": 14,
+    "agility": 14
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Breastplate of the Chosen\nBinds when picked up\nChest\tMail\n370 Armor\n+14 Stamina\n+14 Strength\n+14 Spirit\n+14 Intellect\n+14 Agility\nRequires Level 58\nSell Price: 3g 59s 55c"
+  },
+  {
    "id": 13096,
    "name": "Band of the Hierophant",
    "quality": 3,
    "icon": "inv_jewelry_ring_17",
-   "source": "https://foreverchanges.pro/items/new.json#13096",
+   "source": "https://foreverchanges.pro/items/same.json#13096",
    "itemLevel": 60,
    "inventoryType": "Finger",
    "subclass": null,
@@ -933,11 +1220,30 @@
    "tooltip": "Band of the Hierophant\nBinds when equipped\nUnique\nFinger\n+11 Spirit\n+10 Intellect\n+7 Stamina\nRequires Level 55\nSell Price: 79s 13c"
   },
   {
+   "id": 13107,
+   "name": "Magiskull Cuffs",
+   "quality": 3,
+   "icon": "inv_bracer_13",
+   "source": "https://foreverchanges.pro/items/same.json#13107",
+   "itemLevel": 62,
+   "inventoryType": "Wrist",
+   "subclass": "Cloth",
+   "armor": 38,
+   "weapon": null,
+   "stats": {
+    "intellect": 17,
+    "stamina": 7
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Magiskull Cuffs\nBinds when equipped\nWrist\tCloth\n38 Armor\n+17 Intellect\n+7 Stamina\nRequires Level 57\nSell Price: 1g 12s 91c"
+  },
+  {
    "id": 13111,
    "name": "Sandals of the Insurgent",
    "quality": 3,
    "icon": "inv_boots_fabric_01",
-   "source": "https://foreverchanges.pro/items/new.json#13111",
+   "source": "https://foreverchanges.pro/items/same.json#13111",
    "itemLevel": 54,
    "inventoryType": "Feet",
    "subclass": "Leather",
@@ -952,11 +1258,51 @@
    "tooltip": "Sandals of the Insurgent\nBinds when equipped\nFeet\tLeather\n107 Armor\n+20 Spirit\n+8 Intellect\nRequires Level 49\nSell Price: 1g 39s 93c"
   },
   {
+   "id": 13113,
+   "name": "Feathermoon Headdress",
+   "quality": 3,
+   "icon": "inv_helmet_04",
+   "source": "https://foreverchanges.pro/items/same.json#13113",
+   "itemLevel": 63,
+   "inventoryType": "Head",
+   "subclass": "Leather",
+   "armor": 143,
+   "weapon": null,
+   "stats": {
+    "spirit": 21,
+    "intellect": 20,
+    "stamina": 13
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Feathermoon Headdress\nBinds when equipped\nHead\tLeather\n143 Armor\n+21 Spirit\n+20 Intellect\n+13 Stamina\nRequires Level 58\nSell Price: 2g 5s 46c"
+  },
+  {
+   "id": 13116,
+   "name": "Spaulders of the Unseen",
+   "quality": 3,
+   "icon": "inv_shoulder_18",
+   "source": "https://foreverchanges.pro/items/same.json#13116",
+   "itemLevel": 61,
+   "inventoryType": "Shoulder",
+   "subclass": "Leather",
+   "armor": 129,
+   "weapon": null,
+   "stats": {
+    "agility": 22,
+    "intellect": 4,
+    "stamina": 7
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Spaulders of the Unseen\nBinds when equipped\nShoulder\tLeather\n129 Armor\n+22 Agility\n+4 Intellect\n+7 Stamina\nRequires Level 56\nSell Price: 1g 93s 70c"
+  },
+  {
    "id": 13118,
    "name": "Serpentine Sash",
    "quality": 3,
    "icon": "inv_belt_25",
-   "source": "https://foreverchanges.pro/items/new.json#13118",
+   "source": "https://foreverchanges.pro/items/same.json#13118",
    "itemLevel": 57,
    "inventoryType": "Waist",
    "subclass": "Leather",
@@ -976,7 +1322,7 @@
    "name": "Deepfury Bracers",
    "quality": 3,
    "icon": "inv_bracer_07",
-   "source": "https://foreverchanges.pro/items/new.json#13120",
+   "source": "https://foreverchanges.pro/items/same.json#13120",
    "itemLevel": 55,
    "inventoryType": "Wrist",
    "subclass": "Leather",
@@ -996,7 +1342,7 @@
    "name": "Dark Phantom Cape",
    "quality": 3,
    "icon": "inv_misc_cape_21",
-   "source": "https://foreverchanges.pro/items/new.json#13122",
+   "source": "https://foreverchanges.pro/items/same.json#13122",
    "itemLevel": 55,
    "inventoryType": "Back",
    "subclass": "Cloth",
@@ -1011,11 +1357,31 @@
    "tooltip": "Dark Phantom Cape\nBinds when equipped\nBack\tCloth\n39 Armor\n+15 Agility\n+6 Spirit\nRequires Level 50\nSell Price: 1g 14s 89c"
   },
   {
+   "id": 13123,
+   "name": "Dreamwalker Armor",
+   "quality": 3,
+   "icon": "inv_chest_chain_06",
+   "source": "https://foreverchanges.pro/items/same.json#13123",
+   "itemLevel": 62,
+   "inventoryType": "Chest",
+   "subclass": "Mail",
+   "armor": 365,
+   "weapon": null,
+   "stats": {
+    "spirit": 20,
+    "stamina": 17,
+    "intellect": 20
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Dreamwalker Armor\nBinds when equipped\nChest\tMail\n365 Armor\n+20 Spirit\n+17 Stamina\n+20 Intellect\nRequires Level 57\nSell Price: 3g 33s 87c"
+  },
+  {
    "id": 13125,
    "name": "Elven Chain Boots",
    "quality": 3,
    "icon": "inv_boots_01",
-   "source": "https://foreverchanges.pro/items/new.json#13125",
+   "source": "https://foreverchanges.pro/items/same.json#13125",
    "itemLevel": 50,
    "inventoryType": "Feet",
    "subclass": "Mail",
@@ -1035,7 +1401,7 @@
    "name": "Battlecaller Gauntlets",
    "quality": 3,
    "icon": "inv_gauntlets_10",
-   "source": "https://foreverchanges.pro/items/new.json#13126",
+   "source": "https://foreverchanges.pro/items/same.json#13126",
    "itemLevel": 53,
    "inventoryType": "Hands",
    "subclass": "Mail",
@@ -1055,7 +1421,7 @@
    "name": "Windrunner Legguards",
    "quality": 3,
    "icon": "inv_pants_03",
-   "source": "https://foreverchanges.pro/items/new.json#13130",
+   "source": "https://foreverchanges.pro/items/same.json#13130",
    "itemLevel": 56,
    "inventoryType": "Legs",
    "subclass": "Mail",
@@ -1070,11 +1436,33 @@
    "tooltip": "Windrunner Legguards\nBinds when equipped\nLegs\tMail\n291 Armor\n+27 Agility\n+11 Spirit\nRequires Level 51\nSell Price: 2g 50s 65c"
   },
   {
+   "id": 13133,
+   "name": "Drakesfire Epaulets",
+   "quality": 3,
+   "icon": "inv_shoulder_23",
+   "source": "https://foreverchanges.pro/items/same.json#13133",
+   "itemLevel": 61,
+   "inventoryType": "Shoulder",
+   "subclass": "Mail",
+   "armor": 270,
+   "weapon": null,
+   "stats": {
+    "intellect": 14,
+    "stamina": 5,
+    "spirit": 15
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [],
+   "tooltip": "Drakesfire Epaulets\nBinds when equipped\nShoulder\tMail\n270 Armor\n+14 Intellect\n+5 Stamina\n+15 Spirit\n+10 Fire Resistance\nRequires Level 56\nSell Price: 2g 30s 83c"
+  },
+  {
    "id": 13135,
    "name": "Lordly Armguards",
    "quality": 3,
    "icon": "inv_bracer_17",
-   "source": "https://foreverchanges.pro/items/new.json#13135",
+   "source": "https://foreverchanges.pro/items/same.json#13135",
    "itemLevel": 59,
    "inventoryType": "Wrist",
    "subclass": "Mail",
@@ -1096,7 +1484,7 @@
    "name": "Guttbuster",
    "quality": 3,
    "icon": "inv_weapon_rifle_08",
-   "source": "https://foreverchanges.pro/items/new.json#13139",
+   "source": "https://foreverchanges.pro/items/same.json#13139",
    "itemLevel": 50,
    "inventoryType": "Ranged",
    "subclass": "Gun",
@@ -1120,7 +1508,7 @@
    "name": "Serenity Belt",
    "quality": 3,
    "icon": "inv_belt_07",
-   "source": "https://foreverchanges.pro/items/new.json#13144",
+   "source": "https://foreverchanges.pro/items/same.json#13144",
    "itemLevel": 53,
    "inventoryType": "Waist",
    "subclass": "Cloth",
@@ -1135,11 +1523,57 @@
    "tooltip": "Serenity Belt\nBinds when equipped\nWaist\tCloth\n43 Armor\n+17 Intellect\n+7 Stamina\nRequires Level 48\nSell Price: 68s 65c"
   },
   {
+   "id": 13164,
+   "name": "Heart of the Scale",
+   "quality": 3,
+   "icon": "inv_misc_gem_bloodstone_01",
+   "source": "https://foreverchanges.pro/items/same.json#13164",
+   "itemLevel": 61,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Increases Fire Resistance by 20 and deals 20 Fire damage to anyone who strikes you with a melee attack for 5 min. (30 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Heart of the Scale\nBinds when picked up\nUnique\nTrinket\nRequires Level 56\nUse: Increases Fire Resistance by 20 and deals 20 Fire damage to anyone who strikes you with a melee attack for 5 min. (30 Min Cooldown)\nSell Price: 1g 5s 39c"
+  },
+  {
+   "id": 14554,
+   "name": "Cloudkeeper Legplates",
+   "quality": 4,
+   "icon": "inv_pants_04",
+   "source": "https://foreverchanges.pro/items/same.json#14554",
+   "itemLevel": 62,
+   "inventoryType": "Legs",
+   "subclass": "Plate",
+   "armor": 617,
+   "weapon": null,
+   "stats": {
+    "stamina": 20,
+    "strength": 20,
+    "agility": 20
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Increases Attack Power by 100 for 30 sec. (15 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Cloudkeeper Legplates\nBinds when equipped\nLegs\tPlate\n617 Armor\n+20 Stamina\n+20 Strength\n+20 Agility\nRequires Level 57\nUse: Increases Attack Power by 100 for 30 sec. (15 Min Cooldown)\nSell Price: 2g 99s"
+  },
+  {
    "id": 15857,
    "name": "Magebane Scion",
    "quality": 3,
    "icon": "inv_staff_11",
-   "source": "https://foreverchanges.pro/items/new.json#15857",
+   "source": "https://foreverchanges.pro/items/same.json#15857",
    "itemLevel": 60,
    "inventoryType": "Held In Off-hand",
    "subclass": null,
@@ -1155,11 +1589,50 @@
    "tooltip": "Magebane Scion\nBinds when picked up\nHeld In Off-hand\n+10 Fire Resistance\n+10 Frost Resistance\n+10 Arcane Resistance\nSell Price: 1g 53s 35c"
   },
   {
+   "id": 16309,
+   "name": "Drakefire Amulet",
+   "quality": 3,
+   "icon": "inv_jewelry_talisman_11",
+   "source": "https://foreverchanges.pro/items/same.json#16309",
+   "itemLevel": 63,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 10
+   },
+   "resistances": {
+    "fire": 15
+   },
+   "effects": [],
+   "tooltip": "Drakefire Amulet\nBinds when picked up\nUnique\nNeck\n+10 Stamina\n+15 Fire Resistance\nRequires Level 50\n\"The Blood of Drakkisath Flows Within...\""
+  },
+  {
+   "id": 16335,
+   "name": "Senior Sergeant's Insignia",
+   "quality": 3,
+   "icon": "inv_misc_monsterscales_15",
+   "source": "https://foreverchanges.pro/items/same.json#16335",
+   "itemLevel": 63,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 17,
+    "spirit": 7
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Senior Sergeant's Insignia\nBinds when picked up\nUnique\nNeck\n+17 Stamina\n+7 Spirit\nRequires Level 58\nSell Price: 1g"
+  },
+  {
    "id": 16337,
    "name": "Sergeant Major's Cape",
    "quality": 3,
    "icon": "inv_misc_cape_21",
-   "source": "https://foreverchanges.pro/items/new.json#16337",
+   "source": "https://foreverchanges.pro/items/same.json#16337",
    "itemLevel": 60,
    "inventoryType": "Back",
    "subclass": "Cloth",
@@ -1181,7 +1654,7 @@
    "name": "Knight-Captain's Silk Sash",
    "quality": 3,
    "icon": "inv_belt_22",
-   "source": "https://foreverchanges.pro/items/new.json#16367",
+   "source": "https://foreverchanges.pro/items/same.json#16367",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Cloth",
@@ -1201,7 +1674,7 @@
    "name": "Knight-Captain's Silk Cuffs",
    "quality": 3,
    "icon": "inv_bracer_09",
-   "source": "https://foreverchanges.pro/items/new.json#16370",
+   "source": "https://foreverchanges.pro/items/same.json#16370",
    "itemLevel": 60,
    "inventoryType": "Wrist",
    "subclass": "Cloth",
@@ -1221,7 +1694,7 @@
    "name": "Knight-Captain's Leather Bracers",
    "quality": 3,
    "icon": "inv_bracer_02",
-   "source": "https://foreverchanges.pro/items/new.json#16394",
+   "source": "https://foreverchanges.pro/items/same.json#16394",
    "itemLevel": 60,
    "inventoryType": "Wrist",
    "subclass": "Leather",
@@ -1240,7 +1713,7 @@
    "name": "Knight-Captain's Dragonhide Armsplints",
    "quality": 3,
    "icon": "inv_bracer_02",
-   "source": "https://foreverchanges.pro/items/new.json#16395",
+   "source": "https://foreverchanges.pro/items/same.json#16395",
    "itemLevel": 60,
    "inventoryType": "Wrist",
    "subclass": "Leather",
@@ -1259,7 +1732,7 @@
    "name": "Knight-Captain's Leather Belt",
    "quality": 3,
    "icon": "inv_belt_23",
-   "source": "https://foreverchanges.pro/items/new.json#16398",
+   "source": "https://foreverchanges.pro/items/same.json#16398",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Leather",
@@ -1279,7 +1752,7 @@
    "name": "Knight-Captain's Dragonhide Girdle",
    "quality": 3,
    "icon": "inv_belt_23",
-   "source": "https://foreverchanges.pro/items/new.json#16399",
+   "source": "https://foreverchanges.pro/items/same.json#16399",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Leather",
@@ -1300,7 +1773,7 @@
    "name": "Knight-Captain's Chain Girdle",
    "quality": 3,
    "icon": "inv_belt_28",
-   "source": "https://foreverchanges.pro/items/new.json#16400",
+   "source": "https://foreverchanges.pro/items/same.json#16400",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Mail",
@@ -1320,7 +1793,7 @@
    "name": "Knight-Captain's Chain Armguards",
    "quality": 3,
    "icon": "inv_bracer_17",
-   "source": "https://foreverchanges.pro/items/new.json#16402",
+   "source": "https://foreverchanges.pro/items/same.json#16402",
    "itemLevel": 60,
    "inventoryType": "Wrist",
    "subclass": "Mail",
@@ -1339,7 +1812,7 @@
    "name": "Knight-Captain's Plate Wristguards",
    "quality": 3,
    "icon": "inv_bracer_18",
-   "source": "https://foreverchanges.pro/items/new.json#16404",
+   "source": "https://foreverchanges.pro/items/same.json#16404",
    "itemLevel": 60,
    "inventoryType": "Wrist",
    "subclass": "Plate",
@@ -1358,7 +1831,7 @@
    "name": "Knight-Captain's Plate Girdle",
    "quality": 3,
    "icon": "inv_belt_27",
-   "source": "https://foreverchanges.pro/items/new.json#16407",
+   "source": "https://foreverchanges.pro/items/same.json#16407",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Plate",
@@ -1379,7 +1852,7 @@
    "name": "Knight-Captain's Lamellar Cinch",
    "quality": 3,
    "icon": "inv_belt_27",
-   "source": "https://foreverchanges.pro/items/new.json#16411",
+   "source": "https://foreverchanges.pro/items/same.json#16411",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Plate",
@@ -1400,7 +1873,7 @@
    "name": "Knight-Captain's Lamellar Armsplints",
    "quality": 3,
    "icon": "inv_bracer_18",
-   "source": "https://foreverchanges.pro/items/new.json#16412",
+   "source": "https://foreverchanges.pro/items/same.json#16412",
    "itemLevel": 60,
    "inventoryType": "Wrist",
    "subclass": "Plate",
@@ -1420,7 +1893,7 @@
    "name": "Marshal's Silk Bracers",
    "quality": 4,
    "icon": "inv_bracer_09",
-   "source": "https://foreverchanges.pro/items/new.json#16438",
+   "source": "https://foreverchanges.pro/items/same.json#16438",
    "itemLevel": 65,
    "inventoryType": "Wrist",
    "subclass": "Cloth",
@@ -1440,7 +1913,7 @@
    "name": "Marshal's Silk Sash",
    "quality": 4,
    "icon": "inv_belt_22",
-   "source": "https://foreverchanges.pro/items/new.json#16439",
+   "source": "https://foreverchanges.pro/items/same.json#16439",
    "itemLevel": 65,
    "inventoryType": "Waist",
    "subclass": "Cloth",
@@ -1460,7 +1933,7 @@
    "name": "Marshal's Dragonhide Bracers",
    "quality": 4,
    "icon": "inv_bracer_02",
-   "source": "https://foreverchanges.pro/items/new.json#16445",
+   "source": "https://foreverchanges.pro/items/same.json#16445",
    "itemLevel": 65,
    "inventoryType": "Wrist",
    "subclass": "Leather",
@@ -1480,7 +1953,7 @@
    "name": "Marshal's Dragonhide Waistguard",
    "quality": 4,
    "icon": "inv_belt_23",
-   "source": "https://foreverchanges.pro/items/new.json#16447",
+   "source": "https://foreverchanges.pro/items/same.json#16447",
    "itemLevel": 65,
    "inventoryType": "Waist",
    "subclass": "Leather",
@@ -1500,7 +1973,7 @@
    "name": "Marshal's Leather Cinch",
    "quality": 4,
    "icon": "inv_belt_23",
-   "source": "https://foreverchanges.pro/items/new.json#16458",
+   "source": "https://foreverchanges.pro/items/same.json#16458",
    "itemLevel": 65,
    "inventoryType": "Waist",
    "subclass": "Leather",
@@ -1520,7 +1993,7 @@
    "name": "Marshal's Leather Armsplints",
    "quality": 4,
    "icon": "inv_bracer_02",
-   "source": "https://foreverchanges.pro/items/new.json#16460",
+   "source": "https://foreverchanges.pro/items/same.json#16460",
    "itemLevel": 65,
    "inventoryType": "Wrist",
    "subclass": "Leather",
@@ -1540,7 +2013,7 @@
    "name": "Marshal's Chain Bracers",
    "quality": 4,
    "icon": "inv_bracer_17",
-   "source": "https://foreverchanges.pro/items/new.json#16461",
+   "source": "https://foreverchanges.pro/items/same.json#16461",
    "itemLevel": 65,
    "inventoryType": "Wrist",
    "subclass": "Mail",
@@ -1560,7 +2033,7 @@
    "name": "Marshal's Chain Girdle",
    "quality": 4,
    "icon": "inv_belt_28",
-   "source": "https://foreverchanges.pro/items/new.json#16464",
+   "source": "https://foreverchanges.pro/items/same.json#16464",
    "itemLevel": 65,
    "inventoryType": "Waist",
    "subclass": "Mail",
@@ -1581,7 +2054,7 @@
    "name": "Marshal's Lamellar Armguards",
    "quality": 4,
    "icon": "inv_bracer_18",
-   "source": "https://foreverchanges.pro/items/new.json#16469",
+   "source": "https://foreverchanges.pro/items/same.json#16469",
    "itemLevel": 65,
    "inventoryType": "Wrist",
    "subclass": "Plate",
@@ -1601,7 +2074,7 @@
    "name": "Marshal's Lamellar Belt",
    "quality": 4,
    "icon": "inv_belt_27",
-   "source": "https://foreverchanges.pro/items/new.json#16470",
+   "source": "https://foreverchanges.pro/items/same.json#16470",
    "itemLevel": 65,
    "inventoryType": "Waist",
    "subclass": "Plate",
@@ -1623,7 +2096,7 @@
    "name": "Marshal's Plate Bracers",
    "quality": 4,
    "icon": "inv_bracer_18",
-   "source": "https://foreverchanges.pro/items/new.json#16481",
+   "source": "https://foreverchanges.pro/items/same.json#16481",
    "itemLevel": 65,
    "inventoryType": "Wrist",
    "subclass": "Plate",
@@ -1643,7 +2116,7 @@
    "name": "Marshal's Plate Girdle",
    "quality": 4,
    "icon": "inv_belt_27",
-   "source": "https://foreverchanges.pro/items/new.json#16482",
+   "source": "https://foreverchanges.pro/items/same.json#16482",
    "itemLevel": 65,
    "inventoryType": "Waist",
    "subclass": "Plate",
@@ -1659,11 +2132,30 @@
    "tooltip": "Marshal's Plate Girdle\nBinds when picked up\nUnique\nWaist\tPlate\n415 Armor\n+25 Strength\n+15 Stamina\n+12 Agility\nClasses: Warrior\nRequires Level 60\nSell Price: 82s 47c"
   },
   {
+   "id": 16486,
+   "name": "First Sergeant's Silk Cuffs",
+   "quality": 3,
+   "icon": "inv_bracer_07",
+   "source": "https://foreverchanges.pro/items/same.json#16486",
+   "itemLevel": 63,
+   "inventoryType": "Wrist",
+   "subclass": "Cloth",
+   "armor": 39,
+   "weapon": null,
+   "stats": {
+    "stamina": 17,
+    "intellect": 7
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "First Sergeant's Silk Cuffs\nBinds when picked up\nUnique\nWrist\tCloth\n39 Armor\n+17 Stamina\n+7 Intellect\nClasses: Priest, Mage, Warlock\nRequires Level 58\nSell Price: 56s 95c"
+  },
+  {
    "id": 16488,
    "name": "Legionnaire's Silk Belt",
    "quality": 3,
    "icon": "inv_belt_13",
-   "source": "https://foreverchanges.pro/items/new.json#16488",
+   "source": "https://foreverchanges.pro/items/same.json#16488",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Cloth",
@@ -1683,7 +2175,7 @@
    "name": "Legionnaire's Dragonhide Armguards",
    "quality": 3,
    "icon": "inv_bracer_03",
-   "source": "https://foreverchanges.pro/items/new.json#16493",
+   "source": "https://foreverchanges.pro/items/same.json#16493",
    "itemLevel": 60,
    "inventoryType": "Wrist",
    "subclass": "Leather",
@@ -1702,7 +2194,7 @@
    "name": "Legionnaire's Dragonhide Waistband",
    "quality": 3,
    "icon": "inv_belt_06",
-   "source": "https://foreverchanges.pro/items/new.json#16495",
+   "source": "https://foreverchanges.pro/items/same.json#16495",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Leather",
@@ -1719,11 +2211,66 @@
    "tooltip": "Legionnaire's Dragonhide Waistband\nBinds when picked up\nUnique\nWaist\tLeather\n95 Armor\n+15 Intellect\n+10 Stamina\n+5 Strength\n+8 Spirit\nClasses: Druid\nRequires Level 55\nSell Price: 65s 19c"
   },
   {
+   "id": 16497,
+   "name": "First Sergeant's Leather Armguards",
+   "quality": 3,
+   "icon": "inv_bracer_07",
+   "source": "https://foreverchanges.pro/items/same.json#16497",
+   "itemLevel": 63,
+   "inventoryType": "Wrist",
+   "subclass": "Leather",
+   "armor": 77,
+   "weapon": null,
+   "stats": {
+    "stamina": 17,
+    "agility": 7
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "First Sergeant's Leather Armguards\nBinds when picked up\nUnique\nWrist\tLeather\n77 Armor\n+17 Stamina\n+7 Agility\nClasses: Rogue\nRequires Level 58\nSell Price: 68s 80c"
+  },
+  {
+   "id": 16498,
+   "name": "Blood Guard's Leather Treads",
+   "quality": 3,
+   "icon": "inv_boots_05",
+   "source": "https://foreverchanges.pro/items/same.json#16498",
+   "itemLevel": 63,
+   "inventoryType": "Feet",
+   "subclass": "Leather",
+   "armor": 121,
+   "weapon": null,
+   "stats": {
+    "stamina": 18,
+    "agility": 11
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases the duration of your Sprint ability by 3 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Increases your chance to parry an attack by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Reduces the cooldown of your Gouge ability by 1 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +15 Stamina."
+    }
+   ],
+   "tooltip": "Blood Guard's Leather Treads\nBinds when picked up\nUnique\nFeet\tLeather\n121 Armor\n+18 Stamina\n+11 Agility\nClasses: Rogue\nRequires Level 58\nEquip: Increases the duration of your Sprint ability by 3 sec.\nChampion's Vestments (0/6)\n(2) Set: Increases your chance to parry an attack by 1%.\n(4) Set: Reduces the cooldown of your Gouge ability by 1 sec.\n(6) Set: +15 Stamina.\nSell Price: 1g 3s 60c"
+  },
+  {
    "id": 16500,
    "name": "Legionnaire's Leather Girdle",
    "quality": 3,
    "icon": "inv_belt_06",
-   "source": "https://foreverchanges.pro/items/new.json#16500",
+   "source": "https://foreverchanges.pro/items/same.json#16500",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Leather",
@@ -1743,7 +2290,7 @@
    "name": "Legionnaire's Plate Cinch",
    "quality": 3,
    "icon": "inv_belt_09",
-   "source": "https://foreverchanges.pro/items/new.json#16511",
+   "source": "https://foreverchanges.pro/items/same.json#16511",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Plate",
@@ -1764,7 +2311,7 @@
    "name": "Legionnaire's Plate Bracers",
    "quality": 3,
    "icon": "inv_bracer_19",
-   "source": "https://foreverchanges.pro/items/new.json#16512",
+   "source": "https://foreverchanges.pro/items/same.json#16512",
    "itemLevel": 60,
    "inventoryType": "Wrist",
    "subclass": "Plate",
@@ -1783,7 +2330,7 @@
    "name": "Legionnaire's Chain Bracers",
    "quality": 3,
    "icon": "inv_bracer_16",
-   "source": "https://foreverchanges.pro/items/new.json#16517",
+   "source": "https://foreverchanges.pro/items/same.json#16517",
    "itemLevel": 60,
    "inventoryType": "Wrist",
    "subclass": "Mail",
@@ -1802,7 +2349,7 @@
    "name": "Legionnaire's Mail Cinch",
    "quality": 3,
    "icon": "inv_belt_14",
-   "source": "https://foreverchanges.pro/items/new.json#16520",
+   "source": "https://foreverchanges.pro/items/same.json#16520",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Mail",
@@ -1823,7 +2370,7 @@
    "name": "Legionnaire's Chain Girdle",
    "quality": 3,
    "icon": "inv_belt_14",
-   "source": "https://foreverchanges.pro/items/new.json#16529",
+   "source": "https://foreverchanges.pro/items/same.json#16529",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Mail",
@@ -1839,11 +2386,30 @@
    "tooltip": "Legionnaire's Chain Girdle\nBinds when picked up\nUnique\nWaist\tMail\n199 Armor\n+15 Stamina\n+14 Agility\n+9 Intellect\nClasses: Hunter\nRequires Level 55\nSell Price: 76s 57c"
   },
   {
+   "id": 16532,
+   "name": "First Sergeant's Mail Wristguards",
+   "quality": 3,
+   "icon": "inv_bracer_16",
+   "source": "https://foreverchanges.pro/items/same.json#16532",
+   "itemLevel": 63,
+   "inventoryType": "Wrist",
+   "subclass": "Mail",
+   "armor": 162,
+   "weapon": null,
+   "stats": {
+    "stamina": 17,
+    "intellect": 7
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "First Sergeant's Mail Wristguards\nBinds when picked up\nUnique\nWrist\tMail\n162 Armor\n+17 Stamina\n+7 Intellect\nClasses: Hunter, Shaman\nRequires Level 58\nSell Price: 89s 60c"
+  },
+  {
    "id": 16537,
    "name": "General's Silk Sash",
    "quality": 4,
    "icon": "inv_belt_13",
-   "source": "https://foreverchanges.pro/items/new.json#16537",
+   "source": "https://foreverchanges.pro/items/same.json#16537",
    "itemLevel": 65,
    "inventoryType": "Waist",
    "subclass": "Cloth",
@@ -1863,7 +2429,7 @@
    "name": "General's Silk Cuffs",
    "quality": 4,
    "icon": "inv_bracer_07",
-   "source": "https://foreverchanges.pro/items/new.json#16538",
+   "source": "https://foreverchanges.pro/items/same.json#16538",
    "itemLevel": 65,
    "inventoryType": "Wrist",
    "subclass": "Cloth",
@@ -1883,7 +2449,7 @@
    "name": "General's Plate Armguards",
    "quality": 4,
    "icon": "inv_bracer_19",
-   "source": "https://foreverchanges.pro/items/new.json#16546",
+   "source": "https://foreverchanges.pro/items/same.json#16546",
    "itemLevel": 65,
    "inventoryType": "Wrist",
    "subclass": "Plate",
@@ -1903,7 +2469,7 @@
    "name": "General's Plate Girdle",
    "quality": 4,
    "icon": "inv_belt_09",
-   "source": "https://foreverchanges.pro/items/new.json#16547",
+   "source": "https://foreverchanges.pro/items/same.json#16547",
    "itemLevel": 65,
    "inventoryType": "Waist",
    "subclass": "Plate",
@@ -1923,7 +2489,7 @@
    "name": "General's Dragonhide Bracers",
    "quality": 4,
    "icon": "inv_bracer_03",
-   "source": "https://foreverchanges.pro/items/new.json#16553",
+   "source": "https://foreverchanges.pro/items/same.json#16553",
    "itemLevel": 65,
    "inventoryType": "Wrist",
    "subclass": "Leather",
@@ -1943,7 +2509,7 @@
    "name": "General's Dragonhide Belt",
    "quality": 4,
    "icon": "inv_belt_06",
-   "source": "https://foreverchanges.pro/items/new.json#16556",
+   "source": "https://foreverchanges.pro/items/same.json#16556",
    "itemLevel": 65,
    "inventoryType": "Waist",
    "subclass": "Leather",
@@ -1963,7 +2529,7 @@
    "name": "General's Leather Girdle",
    "quality": 4,
    "icon": "inv_belt_06",
-   "source": "https://foreverchanges.pro/items/new.json#16557",
+   "source": "https://foreverchanges.pro/items/same.json#16557",
    "itemLevel": 65,
    "inventoryType": "Waist",
    "subclass": "Leather",
@@ -1983,7 +2549,7 @@
    "name": "General's Leather Armsplints",
    "quality": 4,
    "icon": "inv_bracer_03",
-   "source": "https://foreverchanges.pro/items/new.json#16559",
+   "source": "https://foreverchanges.pro/items/same.json#16559",
    "itemLevel": 65,
    "inventoryType": "Wrist",
    "subclass": "Leather",
@@ -2003,7 +2569,7 @@
    "name": "General's Chain Wristguards",
    "quality": 4,
    "icon": "inv_bracer_16",
-   "source": "https://foreverchanges.pro/items/new.json#16570",
+   "source": "https://foreverchanges.pro/items/same.json#16570",
    "itemLevel": 65,
    "inventoryType": "Wrist",
    "subclass": "Mail",
@@ -2023,7 +2589,7 @@
    "name": "General's Chain Girdle",
    "quality": 4,
    "icon": "inv_belt_14",
-   "source": "https://foreverchanges.pro/items/new.json#16572",
+   "source": "https://foreverchanges.pro/items/same.json#16572",
    "itemLevel": 65,
    "inventoryType": "Waist",
    "subclass": "Mail",
@@ -2044,7 +2610,7 @@
    "name": "General's Mail Waistband",
    "quality": 4,
    "icon": "inv_belt_14",
-   "source": "https://foreverchanges.pro/items/new.json#16575",
+   "source": "https://foreverchanges.pro/items/same.json#16575",
    "itemLevel": 65,
    "inventoryType": "Waist",
    "subclass": "Mail",
@@ -2065,7 +2631,7 @@
    "name": "General's Mail Bracers",
    "quality": 4,
    "icon": "inv_bracer_16",
-   "source": "https://foreverchanges.pro/items/new.json#16576",
+   "source": "https://foreverchanges.pro/items/same.json#16576",
    "itemLevel": 65,
    "inventoryType": "Wrist",
    "subclass": "Mail",
@@ -2085,7 +2651,7 @@
    "name": "Flarecore Gloves",
    "quality": 4,
    "icon": "inv_gauntlets_26",
-   "source": "https://foreverchanges.pro/items/new.json#16979",
+   "source": "https://foreverchanges.pro/items/same.json#16979",
    "itemLevel": 62,
    "inventoryType": "Hands",
    "subclass": "Cloth",
@@ -2106,7 +2672,7 @@
    "name": "Flarecore Mantle",
    "quality": 4,
    "icon": "inv_shoulder_23",
-   "source": "https://foreverchanges.pro/items/new.json#16980",
+   "source": "https://foreverchanges.pro/items/same.json#16980",
    "itemLevel": 61,
    "inventoryType": "Shoulder",
    "subclass": "Cloth",
@@ -2128,7 +2694,7 @@
    "name": "Corehound Boots",
    "quality": 4,
    "icon": "inv_boots_07",
-   "source": "https://foreverchanges.pro/items/new.json#16982",
+   "source": "https://foreverchanges.pro/items/same.json#16982",
    "itemLevel": 59,
    "inventoryType": "Feet",
    "subclass": "Leather",
@@ -2149,7 +2715,7 @@
    "name": "Fiery Chain Shoulders",
    "quality": 4,
    "icon": "inv_shoulder_23",
-   "source": "https://foreverchanges.pro/items/new.json#16988",
+   "source": "https://foreverchanges.pro/items/same.json#16988",
    "itemLevel": 62,
    "inventoryType": "Shoulder",
    "subclass": "Mail",
@@ -2170,7 +2736,7 @@
    "name": "Fiery Chain Girdle",
    "quality": 4,
    "icon": "inv_belt_13",
-   "source": "https://foreverchanges.pro/items/new.json#16989",
+   "source": "https://foreverchanges.pro/items/same.json#16989",
    "itemLevel": 59,
    "inventoryType": "Waist",
    "subclass": "Mail",
@@ -2188,11 +2754,84 @@
    "tooltip": "Fiery Chain Girdle\nBinds when equipped\nWaist\tMail\n214 Armor\n+10 Stamina\n+9 Intellect\n+8 Spirit\n+24 Fire Resistance\nRequires Level 54\nSell Price: 1g 86s 10c"
   },
   {
+   "id": 16996,
+   "name": "Gorewood Bow",
+   "quality": 3,
+   "icon": "inv_weapon_bow_04",
+   "source": "https://foreverchanges.pro/items/same.json#16996",
+   "itemLevel": 62,
+   "inventoryType": "Ranged",
+   "subclass": "Bow",
+   "armor": null,
+   "weapon": {
+    "minDamage": 55,
+    "maxDamage": 104,
+    "speed": 2.5,
+    "dps": 31.8
+   },
+   "stats": {
+    "stamina": 9,
+    "agility": 3,
+    "strength": 2
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Gorewood Bow\nBinds when picked up\nRanged\tBow\n55 - 104 Damage\tSpeed 2.50\n(31.8 damage per second)\n+9 Stamina\n+3 Agility\n+2 Strength\nSell Price: 4g 14s 51c"
+  },
+  {
+   "id": 16997,
+   "name": "Stormrager",
+   "quality": 3,
+   "icon": "inv_wand_05",
+   "source": "https://foreverchanges.pro/items/same.json#16997",
+   "itemLevel": 62,
+   "inventoryType": "Ranged",
+   "subclass": "Wand",
+   "armor": null,
+   "weapon": {
+    "minDamage": 57,
+    "maxDamage": 106,
+    "speed": 1.3,
+    "dps": 62.69
+   },
+   "stats": {
+    "stamina": 8,
+    "intellect": 5
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Stormrager\nBinds when picked up\nRanged\tWand\n57 - 106 Nature Damage\tSpeed 1.30\n(62.7 damage per second)\n+8 Stamina\n+5 Intellect\nSell Price: 4g 16s 3c"
+  },
+  {
+   "id": 16998,
+   "name": "Sacred Protector",
+   "quality": 3,
+   "icon": "inv_shield_06",
+   "source": "https://foreverchanges.pro/items/same.json#16998",
+   "itemLevel": 62,
+   "inventoryType": "Off Hand",
+   "subclass": "Shield",
+   "armor": 2121,
+   "weapon": null,
+   "stats": {
+    "stamina": 15,
+    "intellect": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Stat",
+     "text": "39 Block"
+    }
+   ],
+   "tooltip": "Sacred Protector\nBinds when picked up\nOff Hand\tShield\n2121 Armor\n39 Block\n+15 Stamina\n+10 Intellect\nSell Price: 3g 56s 31c"
+  },
+  {
    "id": 16999,
    "name": "Royal Seal of Alexis",
    "quality": 3,
    "icon": "inv_jewelry_ring_30",
-   "source": "https://foreverchanges.pro/items/new.json#16999",
+   "source": "https://foreverchanges.pro/items/same.json#16999",
    "itemLevel": 59,
    "inventoryType": "Finger",
    "subclass": null,
@@ -2208,11 +2847,63 @@
    "tooltip": "Royal Seal of Alexis\nBinds when equipped\nFinger\n+10 Intellect\n+10 Stamina\n+8 Spirit\nRequires Level 54\nSell Price: 1g 7s 9c"
   },
   {
+   "id": 17050,
+   "name": "Chan's Imperial Robes",
+   "quality": 3,
+   "icon": "inv_chest_cloth_04",
+   "source": "https://foreverchanges.pro/items/same.json#17050",
+   "itemLevel": 52,
+   "inventoryType": "Chest",
+   "subclass": "Cloth",
+   "armor": 75,
+   "weapon": null,
+   "stats": {
+    "stamina": 20,
+    "spirit": 10,
+    "intellect": 10
+   },
+   "resistances": {
+    "nature": 5
+   },
+   "effects": [],
+   "tooltip": "Chan's Imperial Robes\nBinds when equipped\nChest\tCloth\n75 Armor\n+20 Stamina\n+10 Spirit\n+10 Intellect\n+5 Nature Resistance\nRequires Level 47\nSell Price: 1g 25s 36c"
+  },
+  {
+   "id": 17074,
+   "name": "Shadowstrike",
+   "quality": 4,
+   "icon": "inv_spear_08",
+   "source": "https://foreverchanges.pro/items/same.json#17074",
+   "itemLevel": 63,
+   "inventoryType": "Two-Hand",
+   "subclass": "Polearm",
+   "armor": null,
+   "weapon": {
+    "minDamage": 147,
+    "maxDamage": 221,
+    "speed": 3.1,
+    "dps": 59.35
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Chance on hit",
+     "text": "Steals 100 to 180 life from target enemy."
+    },
+    {
+     "kind": "Use",
+     "text": "Transforms Shadowstrike into Thunderstrike. (1 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Shadowstrike\nBinds when picked up\nTwo-Hand\tPolearm\n147 - 221 Damage\tSpeed 3.10\n(59.4 damage per second)\nRequires Level 58\nChance on hit: Steals 100 to 180 life from target enemy.\nUse: Transforms Shadowstrike into Thunderstrike. (1 Min Cooldown)\nSell Price: 9g 85s 14c"
+  },
+  {
    "id": 17111,
    "name": "Blazefury Medallion",
    "quality": 4,
    "icon": "inv_jewelry_talisman_01",
-   "source": "https://foreverchanges.pro/items/new.json#17111",
+   "source": "https://foreverchanges.pro/items/same.json#17111",
    "itemLevel": 68,
    "inventoryType": "Neck",
    "subclass": null,
@@ -2238,7 +2929,7 @@
    "name": "Thunderstrike",
    "quality": 4,
    "icon": "inv_spear_08",
-   "source": "https://foreverchanges.pro/items/new.json#17223",
+   "source": "https://foreverchanges.pro/items/same.json#17223",
    "itemLevel": 63,
    "inventoryType": "Two-Hand",
    "subclass": "Polearm",
@@ -2268,7 +2959,7 @@
    "name": "Knight-Captain's Dreadweave Bracers",
    "quality": 3,
    "icon": "inv_bracer_09",
-   "source": "https://foreverchanges.pro/items/new.json#17563",
+   "source": "https://foreverchanges.pro/items/same.json#17563",
    "itemLevel": 60,
    "inventoryType": "Wrist",
    "subclass": "Cloth",
@@ -2288,7 +2979,7 @@
    "name": "Knight-Captain's Dreadweave Belt",
    "quality": 3,
    "icon": "inv_belt_22",
-   "source": "https://foreverchanges.pro/items/new.json#17565",
+   "source": "https://foreverchanges.pro/items/same.json#17565",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Cloth",
@@ -2308,7 +2999,7 @@
    "name": "Legionnaire's Dreadweave Belt",
    "quality": 3,
    "icon": "inv_belt_13",
-   "source": "https://foreverchanges.pro/items/new.json#17574",
+   "source": "https://foreverchanges.pro/items/same.json#17574",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Cloth",
@@ -2328,7 +3019,7 @@
    "name": "Legionnaire's Dreadweave Bracers",
    "quality": 3,
    "icon": "inv_bracer_07",
-   "source": "https://foreverchanges.pro/items/new.json#17575",
+   "source": "https://foreverchanges.pro/items/same.json#17575",
    "itemLevel": 60,
    "inventoryType": "Wrist",
    "subclass": "Cloth",
@@ -2348,7 +3039,7 @@
    "name": "Marshal's Dreadweave Cuffs",
    "quality": 4,
    "icon": "inv_bracer_09",
-   "source": "https://foreverchanges.pro/items/new.json#17582",
+   "source": "https://foreverchanges.pro/items/same.json#17582",
    "itemLevel": 65,
    "inventoryType": "Wrist",
    "subclass": "Cloth",
@@ -2368,7 +3059,7 @@
    "name": "Marshal's Dreadweave Sash",
    "quality": 4,
    "icon": "inv_belt_22",
-   "source": "https://foreverchanges.pro/items/new.json#17585",
+   "source": "https://foreverchanges.pro/items/same.json#17585",
    "itemLevel": 65,
    "inventoryType": "Waist",
    "subclass": "Cloth",
@@ -2388,7 +3079,7 @@
    "name": "General's Dreadweave Bracers",
    "quality": 4,
    "icon": "inv_bracer_07",
-   "source": "https://foreverchanges.pro/items/new.json#17587",
+   "source": "https://foreverchanges.pro/items/same.json#17587",
    "itemLevel": 65,
    "inventoryType": "Wrist",
    "subclass": "Cloth",
@@ -2408,7 +3099,7 @@
    "name": "General's Dreadweave Belt",
    "quality": 4,
    "icon": "inv_belt_13",
-   "source": "https://foreverchanges.pro/items/new.json#17589",
+   "source": "https://foreverchanges.pro/items/same.json#17589",
    "itemLevel": 65,
    "inventoryType": "Waist",
    "subclass": "Cloth",
@@ -2428,7 +3119,7 @@
    "name": "Knight-Captain's Satin Cuffs",
    "quality": 3,
    "icon": "inv_bracer_09",
-   "source": "https://foreverchanges.pro/items/new.json#17595",
+   "source": "https://foreverchanges.pro/items/same.json#17595",
    "itemLevel": 60,
    "inventoryType": "Wrist",
    "subclass": "Cloth",
@@ -2448,7 +3139,7 @@
    "name": "Knight-Captain's Satin Cord",
    "quality": 3,
    "icon": "inv_belt_22",
-   "source": "https://foreverchanges.pro/items/new.json#17597",
+   "source": "https://foreverchanges.pro/items/same.json#17597",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Cloth",
@@ -2468,7 +3159,7 @@
    "name": "Marshal's Satin Bracers",
    "quality": 4,
    "icon": "inv_bracer_09",
-   "source": "https://foreverchanges.pro/items/new.json#17606",
+   "source": "https://foreverchanges.pro/items/same.json#17606",
    "itemLevel": 65,
    "inventoryType": "Wrist",
    "subclass": "Cloth",
@@ -2488,7 +3179,7 @@
    "name": "Marshal's Satin Sash",
    "quality": 4,
    "icon": "inv_belt_22",
-   "source": "https://foreverchanges.pro/items/new.json#17609",
+   "source": "https://foreverchanges.pro/items/same.json#17609",
    "itemLevel": 65,
    "inventoryType": "Waist",
    "subclass": "Cloth",
@@ -2508,7 +3199,7 @@
    "name": "Legionnaire's Satin Sash",
    "quality": 3,
    "icon": "inv_belt_13",
-   "source": "https://foreverchanges.pro/items/new.json#17614",
+   "source": "https://foreverchanges.pro/items/same.json#17614",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Cloth",
@@ -2528,7 +3219,7 @@
    "name": "Legionnaire's Satin Cuffs",
    "quality": 3,
    "icon": "inv_bracer_07",
-   "source": "https://foreverchanges.pro/items/new.json#17615",
+   "source": "https://foreverchanges.pro/items/same.json#17615",
    "itemLevel": 60,
    "inventoryType": "Wrist",
    "subclass": "Cloth",
@@ -2548,7 +3239,7 @@
    "name": "General's Satin Bracers",
    "quality": 4,
    "icon": "inv_bracer_07",
-   "source": "https://foreverchanges.pro/items/new.json#17619",
+   "source": "https://foreverchanges.pro/items/same.json#17619",
    "itemLevel": 65,
    "inventoryType": "Wrist",
    "subclass": "Cloth",
@@ -2568,7 +3259,7 @@
    "name": "General's Satin Cinch",
    "quality": 4,
    "icon": "inv_belt_13",
-   "source": "https://foreverchanges.pro/items/new.json#17621",
+   "source": "https://foreverchanges.pro/items/same.json#17621",
    "itemLevel": 65,
    "inventoryType": "Waist",
    "subclass": "Cloth",
@@ -2588,7 +3279,7 @@
    "name": "Ferra's Collar",
    "quality": 3,
    "icon": "inv_jewelry_necklace_06",
-   "source": "https://foreverchanges.pro/items/new.json#18355",
+   "source": "https://foreverchanges.pro/items/same.json#18355",
    "itemLevel": 60,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -2605,11 +3296,55 @@
    "tooltip": "Ferra's Collar\nBinds when picked up\nTrinket\nClasses: Hunter\nRequires Level 55\nEquip: Increases the damage done by your pets by 4%.\nSell Price: 1g 49s 96c"
   },
   {
+   "id": 18398,
+   "name": "Tidal Loop",
+   "quality": 3,
+   "icon": "inv_jewelry_ring_10",
+   "source": "https://foreverchanges.pro/items/same.json#18398",
+   "itemLevel": 63,
+   "inventoryType": "Finger",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 4,
+    "intellect": 7,
+    "spirit": 4
+   },
+   "resistances": {
+    "fire": 15
+   },
+   "effects": [],
+   "tooltip": "Tidal Loop\nBinds when picked up\nFinger\n+4 Stamina\n+7 Intellect\n+4 Spirit\n+15 Fire Resistance\nSell Price: 2g 71s 3c"
+  },
+  {
+   "id": 18399,
+   "name": "Ocean's Breeze",
+   "quality": 3,
+   "icon": "inv_jewelry_ring_28",
+   "source": "https://foreverchanges.pro/items/same.json#18399",
+   "itemLevel": 63,
+   "inventoryType": "Finger",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "agility": 7,
+    "strength": 4,
+    "stamina": 4
+   },
+   "resistances": {
+    "fire": 15
+   },
+   "effects": [],
+   "tooltip": "Ocean's Breeze\nBinds when picked up\nFinger\n+7 Agility\n+4 Strength\n+4 Stamina\n+15 Fire Resistance\nSell Price: 2g 71s 3c"
+  },
+  {
    "id": 18428,
    "name": "Senior Sergeant's Insignia",
    "quality": 3,
    "icon": "inv_misc_monsterscales_15",
-   "source": "https://foreverchanges.pro/items/new.json#18428",
+   "source": "https://foreverchanges.pro/items/same.json#18428",
    "itemLevel": 50,
    "inventoryType": "Neck",
    "subclass": null,
@@ -2624,11 +3359,30 @@
    "tooltip": "Senior Sergeant's Insignia\nBinds when picked up\nUnique\nNeck\n+14 Stamina\n+6 Spirit\nRequires Level 45\nSell Price: 75s"
   },
   {
+   "id": 18429,
+   "name": "First Sergeant's Plate Bracers",
+   "quality": 3,
+   "icon": "inv_bracer_19",
+   "source": "https://foreverchanges.pro/items/same.json#18429",
+   "itemLevel": 63,
+   "inventoryType": "Wrist",
+   "subclass": "Plate",
+   "armor": 287,
+   "weapon": null,
+   "stats": {
+    "stamina": 17,
+    "strength": 7
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "First Sergeant's Plate Bracers\nBinds when picked up\nUnique\nWrist\tPlate\n287 Armor\n+17 Stamina\n+7 Strength\nClasses: Warrior\nRequires Level 58\nSell Price: 58s 89c"
+  },
+  {
    "id": 18430,
    "name": "First Sergeant's Plate Bracers",
    "quality": 3,
    "icon": "inv_bracer_19",
-   "source": "https://foreverchanges.pro/items/new.json#18430",
+   "source": "https://foreverchanges.pro/items/same.json#18430",
    "itemLevel": 50,
    "inventoryType": "Wrist",
    "subclass": "Plate",
@@ -2647,7 +3401,7 @@
    "name": "First Sergeant's Mail Wristguards",
    "quality": 3,
    "icon": "inv_bracer_16",
-   "source": "https://foreverchanges.pro/items/new.json#18432",
+   "source": "https://foreverchanges.pro/items/same.json#18432",
    "itemLevel": 50,
    "inventoryType": "Wrist",
    "subclass": "Mail",
@@ -2662,11 +3416,30 @@
    "tooltip": "First Sergeant's Mail Wristguards\nBinds when picked up\nUnique\nWrist\tMail\n131 Armor\n+14 Stamina\n+6 Intellect\nClasses: Hunter, Shaman\nRequires Level 45\nSell Price: 43s 48c"
   },
   {
+   "id": 18434,
+   "name": "First Sergeant's Dragonhide Armguards",
+   "quality": 3,
+   "icon": "inv_bracer_03",
+   "source": "https://foreverchanges.pro/items/same.json#18434",
+   "itemLevel": 63,
+   "inventoryType": "Wrist",
+   "subclass": "Leather",
+   "armor": 77,
+   "weapon": null,
+   "stats": {
+    "stamina": 17,
+    "intellect": 7
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "First Sergeant's Dragonhide Armguards\nBinds when picked up\nUnique\nWrist\tLeather\n77 Armor\n+17 Stamina\n+7 Intellect\nClasses: Druid\nRequires Level 58\nSell Price: 74s 93c"
+  },
+  {
    "id": 18435,
    "name": "First Sergeant's Leather Armguards",
    "quality": 3,
    "icon": "inv_bracer_07",
-   "source": "https://foreverchanges.pro/items/new.json#18435",
+   "source": "https://foreverchanges.pro/items/same.json#18435",
    "itemLevel": 50,
    "inventoryType": "Wrist",
    "subclass": "Leather",
@@ -2685,7 +3458,7 @@
    "name": "First Sergeant's Dragonhide Armguards",
    "quality": 3,
    "icon": "inv_bracer_03",
-   "source": "https://foreverchanges.pro/items/new.json#18436",
+   "source": "https://foreverchanges.pro/items/same.json#18436",
    "itemLevel": 50,
    "inventoryType": "Wrist",
    "subclass": "Leather",
@@ -2704,7 +3477,7 @@
    "name": "First Sergeant's Silk Cuffs",
    "quality": 3,
    "icon": "inv_bracer_07",
-   "source": "https://foreverchanges.pro/items/new.json#18437",
+   "source": "https://foreverchanges.pro/items/same.json#18437",
    "itemLevel": 50,
    "inventoryType": "Wrist",
    "subclass": "Cloth",
@@ -2719,11 +3492,30 @@
    "tooltip": "First Sergeant's Silk Cuffs\nBinds when picked up\nUnique\nWrist\tCloth\n31 Armor\n+14 Stamina\n+6 Intellect\nClasses: Priest, Mage, Warlock\nRequires Level 45\nSell Price: 27s 44c"
   },
   {
+   "id": 18443,
+   "name": "Master Sergeant's Insignia",
+   "quality": 3,
+   "icon": "inv_misc_monsterscales_09",
+   "source": "https://foreverchanges.pro/items/same.json#18443",
+   "itemLevel": 63,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 17,
+    "spirit": 7
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Master Sergeant's Insignia\nBinds when picked up\nUnique\nNeck\n+17 Stamina\n+7 Spirit\nRequires Level 58\nSell Price: 1g"
+  },
+  {
    "id": 18444,
    "name": "Master Sergeant's Insignia",
    "quality": 3,
    "icon": "inv_misc_monsterscales_09",
-   "source": "https://foreverchanges.pro/items/new.json#18444",
+   "source": "https://foreverchanges.pro/items/same.json#18444",
    "itemLevel": 50,
    "inventoryType": "Neck",
    "subclass": null,
@@ -2738,11 +3530,30 @@
    "tooltip": "Master Sergeant's Insignia\nBinds when picked up\nUnique\nNeck\n+14 Stamina\n+6 Spirit\nRequires Level 45\nSell Price: 75s"
   },
   {
+   "id": 18445,
+   "name": "Sergeant Major's Plate Wristguards",
+   "quality": 3,
+   "icon": "inv_bracer_18",
+   "source": "https://foreverchanges.pro/items/same.json#18445",
+   "itemLevel": 63,
+   "inventoryType": "Wrist",
+   "subclass": "Plate",
+   "armor": 287,
+   "weapon": null,
+   "stats": {
+    "stamina": 17,
+    "strength": 7
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Sergeant Major's Plate Wristguards\nBinds when picked up\nUnique\nWrist\tPlate\n287 Armor\n+17 Stamina\n+7 Strength\nClasses: Warrior, Paladin\nRequires Level 58\nSell Price: 58s 4c"
+  },
+  {
    "id": 18447,
    "name": "Sergeant Major's Plate Wristguards",
    "quality": 3,
    "icon": "inv_bracer_18",
-   "source": "https://foreverchanges.pro/items/new.json#18447",
+   "source": "https://foreverchanges.pro/items/same.json#18447",
    "itemLevel": 50,
    "inventoryType": "Wrist",
    "subclass": "Plate",
@@ -2757,11 +3568,30 @@
    "tooltip": "Sergeant Major's Plate Wristguards\nBinds when picked up\nUnique\nWrist\tPlate\n231 Armor\n+14 Stamina\n+6 Strength\nClasses: Warrior, Paladin\nRequires Level 45\nSell Price: 28s 47c"
   },
   {
+   "id": 18448,
+   "name": "Sergeant Major's Chain Armguards",
+   "quality": 3,
+   "icon": "inv_bracer_06",
+   "source": "https://foreverchanges.pro/items/same.json#18448",
+   "itemLevel": 63,
+   "inventoryType": "Wrist",
+   "subclass": "Mail",
+   "armor": 162,
+   "weapon": null,
+   "stats": {
+    "stamina": 17,
+    "intellect": 7
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Sergeant Major's Chain Armguards\nBinds when picked up\nUnique\nWrist\tMail\n162 Armor\n+17 Stamina\n+7 Intellect\nClasses: Hunter\nRequires Level 58\nSell Price: 88s 1c"
+  },
+  {
    "id": 18449,
    "name": "Sergeant Major's Chain Armguards",
    "quality": 3,
    "icon": "inv_bracer_06",
-   "source": "https://foreverchanges.pro/items/new.json#18449",
+   "source": "https://foreverchanges.pro/items/same.json#18449",
    "itemLevel": 50,
    "inventoryType": "Wrist",
    "subclass": "Mail",
@@ -2776,11 +3606,30 @@
    "tooltip": "Sergeant Major's Chain Armguards\nBinds when picked up\nUnique\nWrist\tMail\n131 Armor\n+14 Stamina\n+6 Intellect\nClasses: Hunter\nRequires Level 45\nSell Price: 43s 1c"
   },
   {
+   "id": 18452,
+   "name": "Sergeant Major's Leather Armsplints",
+   "quality": 3,
+   "icon": "inv_bracer_07",
+   "source": "https://foreverchanges.pro/items/same.json#18452",
+   "itemLevel": 63,
+   "inventoryType": "Wrist",
+   "subclass": "Leather",
+   "armor": 77,
+   "weapon": null,
+   "stats": {
+    "stamina": 17,
+    "agility": 7
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Sergeant Major's Leather Armsplints\nBinds when picked up\nUnique\nWrist\tLeather\n77 Armor\n+17 Stamina\n+7 Agility\nClasses: Rogue\nRequires Level 58\nSell Price: 69s 10c"
+  },
+  {
    "id": 18453,
    "name": "Sergeant Major's Leather Armsplints",
    "quality": 3,
    "icon": "inv_bracer_07",
-   "source": "https://foreverchanges.pro/items/new.json#18453",
+   "source": "https://foreverchanges.pro/items/same.json#18453",
    "itemLevel": 50,
    "inventoryType": "Wrist",
    "subclass": "Leather",
@@ -2795,11 +3644,30 @@
    "tooltip": "Sergeant Major's Leather Armsplints\nBinds when picked up\nUnique\nWrist\tLeather\n64 Armor\n+14 Stamina\n+6 Agility\nClasses: Rogue\nRequires Level 45\nSell Price: 33s 78c"
   },
   {
+   "id": 18454,
+   "name": "Sergeant Major's Dragonhide Armsplints",
+   "quality": 3,
+   "icon": "inv_bracer_03",
+   "source": "https://foreverchanges.pro/items/same.json#18454",
+   "itemLevel": 63,
+   "inventoryType": "Wrist",
+   "subclass": "Leather",
+   "armor": 77,
+   "weapon": null,
+   "stats": {
+    "stamina": 17,
+    "intellect": 7
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Sergeant Major's Dragonhide Armsplints\nBinds when picked up\nUnique\nWrist\tLeather\n77 Armor\n+17 Stamina\n+7 Intellect\nClasses: Druid\nRequires Level 58\nSell Price: 69s 63c"
+  },
+  {
    "id": 18455,
    "name": "Sergeant Major's Dragonhide Armsplints",
    "quality": 3,
    "icon": "inv_bracer_03",
-   "source": "https://foreverchanges.pro/items/new.json#18455",
+   "source": "https://foreverchanges.pro/items/same.json#18455",
    "itemLevel": 50,
    "inventoryType": "Wrist",
    "subclass": "Leather",
@@ -2814,11 +3682,30 @@
    "tooltip": "Sergeant Major's Dragonhide Armsplints\nBinds when picked up\nUnique\nWrist\tLeather\n64 Armor\n+14 Stamina\n+6 Intellect\nClasses: Druid\nRequires Level 45\nSell Price: 34s 4c"
   },
   {
+   "id": 18456,
+   "name": "Sergeant Major's Silk Cuffs",
+   "quality": 3,
+   "icon": "inv_bracer_07",
+   "source": "https://foreverchanges.pro/items/same.json#18456",
+   "itemLevel": 63,
+   "inventoryType": "Wrist",
+   "subclass": "Cloth",
+   "armor": 39,
+   "weapon": null,
+   "stats": {
+    "stamina": 17,
+    "intellect": 7
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Sergeant Major's Silk Cuffs\nBinds when picked up\nUnique\nWrist\tCloth\n39 Armor\n+17 Stamina\n+7 Intellect\nClasses: Priest, Mage, Warlock\nRequires Level 58\nSell Price: 56s 13c"
+  },
+  {
    "id": 18457,
    "name": "Sergeant Major's Silk Cuffs",
    "quality": 3,
    "icon": "inv_bracer_07",
-   "source": "https://foreverchanges.pro/items/new.json#18457",
+   "source": "https://foreverchanges.pro/items/same.json#18457",
    "itemLevel": 50,
    "inventoryType": "Wrist",
    "subclass": "Cloth",
@@ -2833,11 +3720,62 @@
    "tooltip": "Sergeant Major's Silk Cuffs\nBinds when picked up\nUnique\nWrist\tCloth\n31 Armor\n+14 Stamina\n+6 Intellect\nClasses: Priest, Mage, Warlock\nRequires Level 45\nSell Price: 26s 74c"
   },
   {
+   "id": 18506,
+   "name": "Mongoose Boots",
+   "quality": 3,
+   "icon": "inv_boots_08",
+   "source": "https://foreverchanges.pro/items/same.json#18506",
+   "itemLevel": 62,
+   "inventoryType": "Feet",
+   "subclass": "Leather",
+   "armor": 120,
+   "weapon": null,
+   "stats": {
+    "agility": 23,
+    "stamina": 9
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Mongoose Boots\nBinds when equipped\nFeet\tLeather\n120 Armor\n+23 Agility\n+9 Stamina\nRequires Level 57\nSell Price: 2g 13s 40c"
+  },
+  {
+   "id": 18646,
+   "name": "The Eye of Divinity",
+   "quality": 4,
+   "icon": "spell_holy_mindsooth",
+   "source": "https://foreverchanges.pro/items/same.json#18646",
+   "itemLevel": 71,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [],
+   "tooltip": "The Eye of Divinity\nBinds when picked up\nUnique\nTrinket\nClasses: Priest\nRequires Level 60\n\"You can see movement when you peer into the Eye.\""
+  },
+  {
+   "id": 18665,
+   "name": "The Eye of Shadow",
+   "quality": 4,
+   "icon": "spell_shadow_unholyfrenzy",
+   "source": "https://foreverchanges.pro/items/same.json#18665",
+   "itemLevel": 71,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [],
+   "tooltip": "The Eye of Shadow\nBinds when equipped\nUnique\nTrinket\nRequires Level 60\n\"Seething darkness engulfs the eye.\""
+  },
+  {
    "id": 18710,
    "name": "Arena Bracers",
    "quality": 3,
    "icon": "inv_bracer_08",
-   "source": "https://foreverchanges.pro/items/new.json#18710",
+   "source": "https://foreverchanges.pro/items/same.json#18710",
    "itemLevel": 50,
    "inventoryType": "Wrist",
    "subclass": "Leather",
@@ -2856,7 +3794,7 @@
    "name": "Essence of the Pure Flame",
    "quality": 4,
    "icon": "spell_fire_fire",
-   "source": "https://foreverchanges.pro/items/new.json#18815",
+   "source": "https://foreverchanges.pro/items/same.json#18815",
    "itemLevel": 75,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -2877,7 +3815,7 @@
    "name": "Talisman of Ephemeral Power",
    "quality": 4,
    "icon": "inv_misc_stonetablet_11",
-   "source": "https://foreverchanges.pro/items/new.json#18820",
+   "source": "https://foreverchanges.pro/items/same.json#18820",
    "itemLevel": 66,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -2898,7 +3836,7 @@
    "name": "Grand Marshal's Aegis",
    "quality": 4,
    "icon": "inv_shield_05",
-   "source": "https://foreverchanges.pro/items/new.json#18825",
+   "source": "https://foreverchanges.pro/items/same.json#18825",
    "itemLevel": 78,
    "inventoryType": "Off Hand",
    "subclass": "Shield",
@@ -2926,7 +3864,7 @@
    "name": "High Warlord's Shield Wall",
    "quality": 4,
    "icon": "inv_shield_19",
-   "source": "https://foreverchanges.pro/items/new.json#18826",
+   "source": "https://foreverchanges.pro/items/same.json#18826",
    "itemLevel": 78,
    "inventoryType": "Off Hand",
    "subclass": "Shield",
@@ -2954,7 +3892,7 @@
    "name": "Girdle of the Dawn",
    "quality": 3,
    "icon": "inv_belt_11",
-   "source": "https://foreverchanges.pro/items/new.json#19051",
+   "source": "https://foreverchanges.pro/items/same.json#19051",
    "itemLevel": 58,
    "inventoryType": "Waist",
    "subclass": "Plate",
@@ -2973,7 +3911,7 @@
    "name": "Frostwolf Plate Belt",
    "quality": 3,
    "icon": "inv_belt_35",
-   "source": "https://foreverchanges.pro/items/new.json#19087",
+   "source": "https://foreverchanges.pro/items/same.json#19087",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Plate",
@@ -2995,7 +3933,7 @@
    "name": "Frostwolf Mail Belt",
    "quality": 3,
    "icon": "inv_belt_18",
-   "source": "https://foreverchanges.pro/items/new.json#19088",
+   "source": "https://foreverchanges.pro/items/same.json#19088",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Mail",
@@ -3017,7 +3955,7 @@
    "name": "Frostwolf Leather Belt",
    "quality": 3,
    "icon": "inv_belt_26",
-   "source": "https://foreverchanges.pro/items/new.json#19089",
+   "source": "https://foreverchanges.pro/items/same.json#19089",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Leather",
@@ -3039,7 +3977,7 @@
    "name": "Stormpike Plate Girdle",
    "quality": 3,
    "icon": "inv_belt_35",
-   "source": "https://foreverchanges.pro/items/new.json#19091",
+   "source": "https://foreverchanges.pro/items/same.json#19091",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Plate",
@@ -3061,7 +3999,7 @@
    "name": "Stormpike Mail Girdle",
    "quality": 3,
    "icon": "inv_belt_18",
-   "source": "https://foreverchanges.pro/items/new.json#19092",
+   "source": "https://foreverchanges.pro/items/same.json#19092",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Mail",
@@ -3083,7 +4021,7 @@
    "name": "Stormpike Leather Girdle",
    "quality": 3,
    "icon": "inv_belt_26",
-   "source": "https://foreverchanges.pro/items/new.json#19093",
+   "source": "https://foreverchanges.pro/items/same.json#19093",
    "itemLevel": 60,
    "inventoryType": "Waist",
    "subclass": "Leather",
@@ -3101,11 +4039,162 @@
    "tooltip": "Stormpike Leather Girdle\nBinds when picked up\nWaist\tLeather\n95 Armor\n+10 Agility\n+15 Stamina\n+11 Strength\n+5 Frost Resistance\nRequires Level 55\nSell Price: 1g 18s 60c"
   },
   {
+   "id": 19099,
+   "name": "Glacial Blade",
+   "quality": 3,
+   "icon": "inv_weapon_shortblade_06",
+   "source": "https://foreverchanges.pro/items/same.json#19099",
+   "itemLevel": 65,
+   "inventoryType": "One-Hand",
+   "subclass": "Dagger",
+   "armor": null,
+   "weapon": {
+    "minDamage": 53,
+    "maxDamage": 100,
+    "speed": 1.8,
+    "dps": 42.5
+   },
+   "stats": {
+    "agility": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Chance on hit",
+     "text": "Blasts a target for 45 Frost damage."
+    }
+   ],
+   "tooltip": "Glacial Blade\nBinds when picked up\nUnique\nOne-Hand\tDagger\n53 - 100 Damage\tSpeed 1.80\n(42.5 damage per second)\n+10 Agility\nRequires Level 60\nChance on hit: Blasts a target for 45 Frost damage.\nSell Price: 6g 30s 65c"
+  },
+  {
+   "id": 19100,
+   "name": "Electrified Dagger",
+   "quality": 3,
+   "icon": "inv_weapon_shortblade_15",
+   "source": "https://foreverchanges.pro/items/same.json#19100",
+   "itemLevel": 65,
+   "inventoryType": "One-Hand",
+   "subclass": "Dagger",
+   "armor": null,
+   "weapon": {
+    "minDamage": 53,
+    "maxDamage": 100,
+    "speed": 1.8,
+    "dps": 42.5
+   },
+   "stats": {
+    "agility": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Chance on hit",
+     "text": "Blasts a target for 45 Nature damage."
+    }
+   ],
+   "tooltip": "Electrified Dagger\nBinds when picked up\nUnique\nOne-Hand\tDagger\n53 - 100 Damage\tSpeed 1.80\n(42.5 damage per second)\n+10 Agility\nRequires Level 60\nChance on hit: Blasts a target for 45 Nature damage.\nSell Price: 6g 33s"
+  },
+  {
+   "id": 19103,
+   "name": "Frostbite",
+   "quality": 3,
+   "icon": "inv_axe_22",
+   "source": "https://foreverchanges.pro/items/same.json#19103",
+   "itemLevel": 65,
+   "inventoryType": "One-Hand",
+   "subclass": "Axe",
+   "armor": null,
+   "weapon": {
+    "minDamage": 80,
+    "maxDamage": 150,
+    "speed": 2.7,
+    "dps": 42.59
+   },
+   "stats": {
+    "strength": 15
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Frostbite\nBinds when picked up\nUnique\nOne-Hand\tAxe\n80 - 150 Damage\tSpeed 2.70\n(42.6 damage per second)\n+15 Strength\nRequires Level 60\nSell Price: 6g 39s 99c"
+  },
+  {
+   "id": 19104,
+   "name": "Stormstrike Hammer",
+   "quality": 3,
+   "icon": "inv_hammer_21",
+   "source": "https://foreverchanges.pro/items/same.json#19104",
+   "itemLevel": 65,
+   "inventoryType": "One-Hand",
+   "subclass": "Mace",
+   "armor": null,
+   "weapon": {
+    "minDamage": 80,
+    "maxDamage": 150,
+    "speed": 2.7,
+    "dps": 42.59
+   },
+   "stats": {
+    "strength": 15
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Stormstrike Hammer\nBinds when picked up\nUnique\nOne-Hand\tMace\n80 - 150 Damage\tSpeed 2.70\n(42.6 damage per second)\n+15 Strength\nRequires Level 60\nSell Price: 6g 42s 27c"
+  },
+  {
+   "id": 19106,
+   "name": "Ice Barbed Spear",
+   "quality": 3,
+   "icon": "inv_spear_04",
+   "source": "https://foreverchanges.pro/items/same.json#19106",
+   "itemLevel": 63,
+   "inventoryType": "Two-Hand",
+   "subclass": "Polearm",
+   "armor": null,
+   "weapon": {
+    "minDamage": 155,
+    "maxDamage": 233,
+    "speed": 3.6,
+    "dps": 53.89
+   },
+   "stats": {
+    "agility": 21,
+    "strength": 13,
+    "stamina": 20
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Ice Barbed Spear\nBinds when picked up\nTwo-Hand\tPolearm\n155 - 233 Damage\tSpeed 3.60\n(53.9 damage per second)\n+21 Agility\n+13 Strength\n+20 Stamina\nSell Price: 7g 33s 53c"
+  },
+  {
+   "id": 19107,
+   "name": "Bloodseeker",
+   "quality": 3,
+   "icon": "inv_weapon_crossbow_07",
+   "source": "https://foreverchanges.pro/items/same.json#19107",
+   "itemLevel": 63,
+   "inventoryType": "Ranged",
+   "subclass": "Crossbow",
+   "armor": null,
+   "weapon": {
+    "minDamage": 85,
+    "maxDamage": 128,
+    "speed": 3.3,
+    "dps": 32.27
+   },
+   "stats": {
+    "agility": 7,
+    "strength": 8
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Bloodseeker\nBinds when picked up\nRanged\tCrossbow\n85 - 128 Damage\tSpeed 3.30\n(32.3 damage per second)\n+7 Agility\n+8 Strength\nSell Price: 4g 41s 71c"
+  },
+  {
    "id": 19138,
    "name": "Band of Sulfuras",
    "quality": 4,
    "icon": "inv_jewelry_ring_36",
-   "source": "https://foreverchanges.pro/items/new.json#19138",
+   "source": "https://foreverchanges.pro/items/same.json#19138",
    "itemLevel": 78,
    "inventoryType": "Finger",
    "subclass": null,
@@ -3125,7 +4214,7 @@
    "name": "Woven Ivy Necklace",
    "quality": 3,
    "icon": "inv_misc_herb_15",
-   "source": "https://foreverchanges.pro/items/new.json#19159",
+   "source": "https://foreverchanges.pro/items/same.json#19159",
    "itemLevel": 51,
    "inventoryType": "Neck",
    "subclass": null,
@@ -3145,7 +4234,7 @@
    "name": "Molten Belt",
    "quality": 4,
    "icon": "inv_belt_13",
-   "source": "https://foreverchanges.pro/items/new.json#19163",
+   "source": "https://foreverchanges.pro/items/same.json#19163",
    "itemLevel": 70,
    "inventoryType": "Waist",
    "subclass": "Leather",
@@ -3166,7 +4255,7 @@
    "name": "Dark Iron Gauntlets",
    "quality": 4,
    "icon": "inv_gauntlets_22",
-   "source": "https://foreverchanges.pro/items/new.json#19164",
+   "source": "https://foreverchanges.pro/items/same.json#19164",
    "itemLevel": 70,
    "inventoryType": "Hands",
    "subclass": "Plate",
@@ -3187,7 +4276,7 @@
    "name": "Black Amnesty",
    "quality": 4,
    "icon": "inv_weapon_shortblade_12",
-   "source": "https://foreverchanges.pro/items/new.json#19166",
+   "source": "https://foreverchanges.pro/items/same.json#19166",
    "itemLevel": 66,
    "inventoryType": "One-Hand",
    "subclass": "Dagger",
@@ -3213,7 +4302,7 @@
    "name": "Nightfall",
    "quality": 4,
    "icon": "inv_axe_12",
-   "source": "https://foreverchanges.pro/items/new.json#19169",
+   "source": "https://foreverchanges.pro/items/same.json#19169",
    "itemLevel": 70,
    "inventoryType": "Two-Hand",
    "subclass": "Axe",
@@ -3235,84 +4324,12 @@
    "tooltip": "Nightfall\nBinds when equipped\nTwo-Hand\tAxe\n187 - 282 Damage\tSpeed 3.50\n(67.0 damage per second)\nRequires Level 60\nChance on hit: Spell damage taken by target increased by 15% for 5 sec.\nSell Price: 12g 91s 12c"
   },
   {
-   "id": 19170,
-   "name": "Ebon Hand",
-   "quality": 4,
-   "icon": "inv_hammer_19",
-   "source": "https://foreverchanges.pro/items/new.json#19170",
-   "itemLevel": 70,
-   "inventoryType": "One-Hand",
-   "subclass": "Mace",
-   "armor": null,
-   "weapon": {
-    "minDamage": 90,
-    "maxDamage": 168,
-    "speed": 2.5,
-    "dps": 51.6
-   },
-   "stats": {
-    "stamina": 9
-   },
-   "resistances": {
-    "fire": 7
-   },
-   "effects": [
-    {
-     "kind": "Chance on hit",
-     "text": "Sends a shadowy bolt at the enemy causing 125 to 275 Shadow damage."
-    }
-   ],
-   "tooltip": "Ebon Hand\nBinds when equipped\nOne-Hand\tMace\n90 - 168 Damage\tSpeed 2.50\n(51.6 damage per second)\n+9 Stamina\n+7 Fire Resistance\nRequires Level 60\nChance on hit: Sends a shadowy bolt at the enemy causing 125 to 275 Shadow damage.\nSell Price: 10g 36s 89c"
-  },
-  {
-   "id": 19287,
-   "name": "Darkmoon Card: Heroism",
-   "quality": 4,
-   "icon": "inv_misc_ticket_tarot_heroism_01",
-   "source": "https://foreverchanges.pro/items/new.json#19287",
-   "itemLevel": 66,
-   "inventoryType": "Trinket",
-   "subclass": null,
-   "armor": null,
-   "weapon": null,
-   "stats": {},
-   "resistances": {},
-   "effects": [
-    {
-     "kind": "Equip",
-     "text": "Sometimes heals bearer of 120 to 180 damage when damaging an enemy in melee."
-    }
-   ],
-   "tooltip": "Darkmoon Card: Heroism\nBinds when picked up\nUnique\nTrinket\nRequires Level 60\nEquip: Sometimes heals bearer of 120 to 180 damage when damaging an enemy in melee.\nSell Price: 10g"
-  },
-  {
-   "id": 19289,
-   "name": "Darkmoon Card: Maelstrom",
-   "quality": 4,
-   "icon": "inv_misc_ticket_tarot_maelstrom_01",
-   "source": "https://foreverchanges.pro/items/new.json#19289",
-   "itemLevel": 66,
-   "inventoryType": "Trinket",
-   "subclass": null,
-   "armor": null,
-   "weapon": null,
-   "stats": {},
-   "resistances": {},
-   "effects": [
-    {
-     "kind": "Equip",
-     "text": "Chance to strike your melee target with lightning for 200 to 300 Nature damage."
-    }
-   ],
-   "tooltip": "Darkmoon Card: Maelstrom\nBinds when picked up\nUnique\nTrinket\nRequires Level 60\nEquip: Chance to strike your melee target with lightning for 200 to 300 Nature damage.\nSell Price: 10g"
-  },
-  {
    "id": 19290,
    "name": "Darkmoon Card: Twisting Nether",
    "quality": 4,
    "icon": "inv_misc_ticket_tarot_twistingnether_01",
-   "source": "https://foreverchanges.pro/items/new.json#19290",
-   "itemLevel": 66,
+   "source": "https://foreverchanges.pro/items/same.json#19290",
+   "itemLevel": 65,
    "inventoryType": "Trinket",
    "subclass": null,
    "armor": null,
@@ -3332,7 +4349,7 @@
    "name": "Arcane Infused Gem",
    "quality": 4,
    "icon": "spell_nature_wispsplode",
-   "source": "https://foreverchanges.pro/items/new.json#19336",
+   "source": "https://foreverchanges.pro/items/same.json#19336",
    "itemLevel": 76,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -3353,7 +4370,7 @@
    "name": "The Black Book",
    "quality": 4,
    "icon": "inv_misc_book_06",
-   "source": "https://foreverchanges.pro/items/new.json#19337",
+   "source": "https://foreverchanges.pro/items/same.json#19337",
    "itemLevel": 76,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -3374,7 +4391,7 @@
    "name": "Mind Quickening Gem",
    "quality": 4,
    "icon": "spell_nature_wispheal",
-   "source": "https://foreverchanges.pro/items/new.json#19339",
+   "source": "https://foreverchanges.pro/items/same.json#19339",
    "itemLevel": 76,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -3395,7 +4412,7 @@
    "name": "Rune of Metamorphosis",
    "quality": 4,
    "icon": "inv_misc_rune_06",
-   "source": "https://foreverchanges.pro/items/new.json#19340",
+   "source": "https://foreverchanges.pro/items/same.json#19340",
    "itemLevel": 76,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -3416,7 +4433,7 @@
    "name": "Lifegiving Gem",
    "quality": 4,
    "icon": "inv_misc_gem_pearl_05",
-   "source": "https://foreverchanges.pro/items/new.json#19341",
+   "source": "https://foreverchanges.pro/items/same.json#19341",
    "itemLevel": 76,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -3437,7 +4454,7 @@
    "name": "Venomous Totem",
    "quality": 4,
    "icon": "inv_misc_idol_03",
-   "source": "https://foreverchanges.pro/items/new.json#19342",
+   "source": "https://foreverchanges.pro/items/same.json#19342",
    "itemLevel": 76,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -3458,7 +4475,7 @@
    "name": "Scrolls of Blinding Light",
    "quality": 4,
    "icon": "inv_scroll_08",
-   "source": "https://foreverchanges.pro/items/new.json#19343",
+   "source": "https://foreverchanges.pro/items/same.json#19343",
    "itemLevel": 76,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -3479,7 +4496,7 @@
    "name": "Natural Alignment Crystal",
    "quality": 4,
    "icon": "inv_misc_gem_03",
-   "source": "https://foreverchanges.pro/items/new.json#19344",
+   "source": "https://foreverchanges.pro/items/same.json#19344",
    "itemLevel": 76,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -3500,7 +4517,7 @@
    "name": "Aegis of Preservation",
    "quality": 4,
    "icon": "spell_holy_blessingofprotection",
-   "source": "https://foreverchanges.pro/items/new.json#19345",
+   "source": "https://foreverchanges.pro/items/same.json#19345",
    "itemLevel": 76,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -3521,7 +4538,7 @@
    "name": "Archimtiros' Ring of Reckoning",
    "quality": 4,
    "icon": "inv_jewelry_ring_40",
-   "source": "https://foreverchanges.pro/items/new.json#19376",
+   "source": "https://foreverchanges.pro/items/same.json#19376",
    "itemLevel": 83,
    "inventoryType": "Finger",
    "subclass": null,
@@ -3540,7 +4557,7 @@
    "name": "Girdle of the Fallen Crusader",
    "quality": 4,
    "icon": "inv_belt_11",
-   "source": "https://foreverchanges.pro/items/new.json#19392",
+   "source": "https://foreverchanges.pro/items/same.json#19392",
    "itemLevel": 77,
    "inventoryType": "Waist",
    "subclass": "Plate",
@@ -3562,7 +4579,7 @@
    "name": "Circle of Applied Force",
    "quality": 4,
    "icon": "inv_jewelry_ring_37",
-   "source": "https://foreverchanges.pro/items/new.json#19432",
+   "source": "https://foreverchanges.pro/items/same.json#19432",
    "itemLevel": 75,
    "inventoryType": "Finger",
    "subclass": null,
@@ -3582,7 +4599,7 @@
    "name": "Amulet of the Darkmoon",
    "quality": 4,
    "icon": "inv_jewelry_necklace_14",
-   "source": "https://foreverchanges.pro/items/new.json#19491",
+   "source": "https://foreverchanges.pro/items/same.json#19491",
    "itemLevel": 65,
    "inventoryType": "Neck",
    "subclass": null,
@@ -3598,11 +4615,31 @@
    "tooltip": "Amulet of the Darkmoon\nBinds when picked up\nNeck\n+19 Agility\n+10 Stamina\n+10 Strength\nRequires Level 60\nSell Price: 2g 50s"
   },
   {
+   "id": 19510,
+   "name": "Legionnaire's Band",
+   "quality": 3,
+   "icon": "inv_jewelry_ring_21",
+   "source": "https://foreverchanges.pro/items/same.json#19510",
+   "itemLevel": 63,
+   "inventoryType": "Finger",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "strength": 12,
+    "agility": 11,
+    "stamina": 8
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Legionnaire's Band\nBinds when picked up\nUnique\nFinger\n+12 Strength\n+11 Agility\n+8 Stamina\nRequires Level 58\nSell Price: 1g 87s 50c"
+  },
+  {
    "id": 19511,
    "name": "Legionnaire's Band",
    "quality": 3,
    "icon": "inv_jewelry_ring_21",
-   "source": "https://foreverchanges.pro/items/new.json#19511",
+   "source": "https://foreverchanges.pro/items/same.json#19511",
    "itemLevel": 53,
    "inventoryType": "Finger",
    "subclass": null,
@@ -3618,11 +4655,31 @@
    "tooltip": "Legionnaire's Band\nBinds when picked up\nUnique\nFinger\n+10 Strength\n+9 Agility\n+6 Stamina\nRequires Level 48\nSell Price: 1g 50s"
   },
   {
+   "id": 19514,
+   "name": "Protector's Band",
+   "quality": 3,
+   "icon": "inv_jewelry_ring_10",
+   "source": "https://foreverchanges.pro/items/same.json#19514",
+   "itemLevel": 63,
+   "inventoryType": "Finger",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "strength": 12,
+    "agility": 11,
+    "stamina": 8
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Protector's Band\nBinds when picked up\nUnique\nFinger\n+12 Strength\n+11 Agility\n+8 Stamina\nRequires Level 58\nSell Price: 1g 87s 50c"
+  },
+  {
    "id": 19516,
    "name": "Protector's Band",
    "quality": 3,
    "icon": "inv_jewelry_ring_10",
-   "source": "https://foreverchanges.pro/items/new.json#19516",
+   "source": "https://foreverchanges.pro/items/same.json#19516",
    "itemLevel": 53,
    "inventoryType": "Finger",
    "subclass": null,
@@ -3638,11 +4695,30 @@
    "tooltip": "Protector's Band\nBinds when picked up\nUnique\nFinger\n+10 Strength\n+9 Agility\n+6 Stamina\nRequires Level 48\nSell Price: 1g 50s"
   },
   {
+   "id": 19534,
+   "name": "Scout's Medallion",
+   "quality": 3,
+   "icon": "inv_jewelry_necklace_14",
+   "source": "https://foreverchanges.pro/items/same.json#19534",
+   "itemLevel": 63,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "agility": 15,
+    "stamina": 10
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Scout's Medallion\nBinds when picked up\nUnique\nNeck\n+15 Agility\n+10 Stamina\nRequires Level 58\nSell Price: 1g 87s 50c"
+  },
+  {
    "id": 19535,
    "name": "Scout's Medallion",
    "quality": 3,
    "icon": "inv_jewelry_necklace_14",
-   "source": "https://foreverchanges.pro/items/new.json#19535",
+   "source": "https://foreverchanges.pro/items/same.json#19535",
    "itemLevel": 53,
    "inventoryType": "Neck",
    "subclass": null,
@@ -3657,11 +4733,30 @@
    "tooltip": "Scout's Medallion\nBinds when picked up\nUnique\nNeck\n+12 Agility\n+8 Stamina\nRequires Level 48\nSell Price: 1g 50s"
   },
   {
+   "id": 19538,
+   "name": "Sentinel's Medallion",
+   "quality": 3,
+   "icon": "inv_jewelry_necklace_13",
+   "source": "https://foreverchanges.pro/items/same.json#19538",
+   "itemLevel": 63,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "agility": 15,
+    "stamina": 10
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Sentinel's Medallion\nBinds when picked up\nUnique\nNeck\n+15 Agility\n+10 Stamina\nRequires Level 58\nSell Price: 1g 87s 50c"
+  },
+  {
    "id": 19539,
    "name": "Sentinel's Medallion",
    "quality": 3,
    "icon": "inv_jewelry_necklace_13",
-   "source": "https://foreverchanges.pro/items/new.json#19539",
+   "source": "https://foreverchanges.pro/items/same.json#19539",
    "itemLevel": 53,
    "inventoryType": "Neck",
    "subclass": null,
@@ -3676,11 +4771,35 @@
    "tooltip": "Sentinel's Medallion\nBinds when picked up\nUnique\nNeck\n+12 Agility\n+8 Stamina\nRequires Level 48\nSell Price: 1g 50s"
   },
   {
+   "id": 19542,
+   "name": "Scout's Blade",
+   "quality": 3,
+   "icon": "inv_weapon_shortblade_15",
+   "source": "https://foreverchanges.pro/items/same.json#19542",
+   "itemLevel": 63,
+   "inventoryType": "One-Hand",
+   "subclass": "Dagger",
+   "armor": null,
+   "weapon": {
+    "minDamage": 49,
+    "maxDamage": 92,
+    "speed": 1.7,
+    "dps": 41.47
+   },
+   "stats": {
+    "agility": 13,
+    "stamina": 5
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Scout's Blade\nBinds when picked up\nUnique\nOne-Hand\tDagger\n49 - 92 Damage\tSpeed 1.70\n(41.5 damage per second)\n+13 Agility\n+5 Stamina\nRequires Level 58\nSell Price: 5g 95s 34c"
+  },
+  {
    "id": 19543,
    "name": "Scout's Blade",
    "quality": 3,
    "icon": "inv_weapon_shortblade_15",
-   "source": "https://foreverchanges.pro/items/new.json#19543",
+   "source": "https://foreverchanges.pro/items/same.json#19543",
    "itemLevel": 53,
    "inventoryType": "One-Hand",
    "subclass": "Dagger",
@@ -3700,11 +4819,35 @@
    "tooltip": "Scout's Blade\nBinds when picked up\nUnique\nOne-Hand\tDagger\n41 - 78 Damage\tSpeed 1.70\n(35.0 damage per second)\n+11 Agility\n+5 Stamina\nRequires Level 48\nSell Price: 3g 49s 82c"
   },
   {
+   "id": 19546,
+   "name": "Sentinel's Blade",
+   "quality": 3,
+   "icon": "inv_weapon_shortblade_14",
+   "source": "https://foreverchanges.pro/items/same.json#19546",
+   "itemLevel": 63,
+   "inventoryType": "One-Hand",
+   "subclass": "Dagger",
+   "armor": null,
+   "weapon": {
+    "minDamage": 49,
+    "maxDamage": 92,
+    "speed": 1.7,
+    "dps": 41.47
+   },
+   "stats": {
+    "agility": 13,
+    "stamina": 5
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Sentinel's Blade\nBinds when picked up\nUnique\nOne-Hand\tDagger\n49 - 92 Damage\tSpeed 1.70\n(41.5 damage per second)\n+13 Agility\n+5 Stamina\nRequires Level 58\nSell Price: 5g 61s 43c"
+  },
+  {
    "id": 19547,
    "name": "Sentinel's Blade",
    "quality": 3,
    "icon": "inv_weapon_shortblade_14",
-   "source": "https://foreverchanges.pro/items/new.json#19547",
+   "source": "https://foreverchanges.pro/items/same.json#19547",
    "itemLevel": 53,
    "inventoryType": "One-Hand",
    "subclass": "Dagger",
@@ -3724,11 +4867,35 @@
    "tooltip": "Sentinel's Blade\nBinds when picked up\nUnique\nOne-Hand\tDagger\n41 - 78 Damage\tSpeed 1.70\n(35.0 damage per second)\n+11 Agility\n+5 Stamina\nRequires Level 48\nSell Price: 3g 29s 96c"
   },
   {
+   "id": 19550,
+   "name": "Legionnaire's Sword",
+   "quality": 3,
+   "icon": "inv_sword_31",
+   "source": "https://foreverchanges.pro/items/same.json#19550",
+   "itemLevel": 63,
+   "inventoryType": "One-Hand",
+   "subclass": "Sword",
+   "armor": null,
+   "weapon": {
+    "minDamage": 78,
+    "maxDamage": 146,
+    "speed": 2.7,
+    "dps": 41.48
+   },
+   "stats": {
+    "strength": 13,
+    "stamina": 5
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Legionnaire's Sword\nBinds when picked up\nUnique\nOne-Hand\tSword\n78 - 146 Damage\tSpeed 2.70\n(41.5 damage per second)\n+13 Strength\n+5 Stamina\nRequires Level 58\nSell Price: 5g 49s 22c"
+  },
+  {
    "id": 19551,
    "name": "Legionnaire's Sword",
    "quality": 3,
    "icon": "inv_sword_31",
-   "source": "https://foreverchanges.pro/items/new.json#19551",
+   "source": "https://foreverchanges.pro/items/same.json#19551",
    "itemLevel": 53,
    "inventoryType": "One-Hand",
    "subclass": "Sword",
@@ -3748,11 +4915,35 @@
    "tooltip": "Legionnaire's Sword\nBinds when picked up\nUnique\nOne-Hand\tSword\n66 - 124 Damage\tSpeed 2.70\n(35.2 damage per second)\n+11 Strength\n+5 Stamina\nRequires Level 48\nSell Price: 3g 21s 56c"
   },
   {
+   "id": 19554,
+   "name": "Protector's Sword",
+   "quality": 3,
+   "icon": "inv_sword_27",
+   "source": "https://foreverchanges.pro/items/same.json#19554",
+   "itemLevel": 63,
+   "inventoryType": "One-Hand",
+   "subclass": "Sword",
+   "armor": null,
+   "weapon": {
+    "minDamage": 78,
+    "maxDamage": 146,
+    "speed": 2.7,
+    "dps": 41.48
+   },
+   "stats": {
+    "strength": 13,
+    "stamina": 5
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Protector's Sword\nBinds when picked up\nUnique\nOne-Hand\tSword\n78 - 146 Damage\tSpeed 2.70\n(41.5 damage per second)\n+13 Strength\n+5 Stamina\nRequires Level 58\nSell Price: 5g 49s 22c"
+  },
+  {
    "id": 19555,
    "name": "Protector's Sword",
    "quality": 3,
    "icon": "inv_sword_27",
-   "source": "https://foreverchanges.pro/items/new.json#19555",
+   "source": "https://foreverchanges.pro/items/same.json#19555",
    "itemLevel": 53,
    "inventoryType": "One-Hand",
    "subclass": "Sword",
@@ -3772,11 +4963,35 @@
    "tooltip": "Protector's Sword\nBinds when picked up\nUnique\nOne-Hand\tSword\n66 - 124 Damage\tSpeed 2.70\n(35.2 damage per second)\n+11 Strength\n+5 Stamina\nRequires Level 48\nSell Price: 3g 21s 56c"
   },
   {
+   "id": 19558,
+   "name": "Outrider's Bow",
+   "quality": 3,
+   "icon": "inv_weapon_bow_06",
+   "source": "https://foreverchanges.pro/items/same.json#19558",
+   "itemLevel": 63,
+   "inventoryType": "Ranged",
+   "subclass": "Bow",
+   "armor": null,
+   "weapon": {
+    "minDamage": 54,
+    "maxDamage": 101,
+    "speed": 2.4,
+    "dps": 32.29
+   },
+   "stats": {
+    "stamina": 10,
+    "agility": 4
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Outrider's Bow\nBinds when picked up\nRanged\tBow\n54 - 101 Damage\tSpeed 2.40\n(32.3 damage per second)\n+10 Stamina\n+4 Agility\nRequires Level 58\nSell Price: 4g 40s 11c"
+  },
+  {
    "id": 19559,
    "name": "Outrider's Bow",
    "quality": 3,
    "icon": "inv_weapon_bow_06",
-   "source": "https://foreverchanges.pro/items/new.json#19559",
+   "source": "https://foreverchanges.pro/items/same.json#19559",
    "itemLevel": 53,
    "inventoryType": "Ranged",
    "subclass": "Bow",
@@ -3796,11 +5011,35 @@
    "tooltip": "Outrider's Bow\nBinds when picked up\nRanged\tBow\n46 - 86 Damage\tSpeed 2.40\n(27.5 damage per second)\n+8 Stamina\n+3 Agility\nRequires Level 48\nSell Price: 2g 41s 17c"
   },
   {
+   "id": 19562,
+   "name": "Outrunner's Bow",
+   "quality": 3,
+   "icon": "inv_weapon_bow_02",
+   "source": "https://foreverchanges.pro/items/same.json#19562",
+   "itemLevel": 63,
+   "inventoryType": "Ranged",
+   "subclass": "Bow",
+   "armor": null,
+   "weapon": {
+    "minDamage": 54,
+    "maxDamage": 101,
+    "speed": 2.4,
+    "dps": 32.29
+   },
+   "stats": {
+    "stamina": 10,
+    "agility": 4
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Outrunner's Bow\nBinds when picked up\nRanged\tBow\n54 - 101 Damage\tSpeed 2.40\n(32.3 damage per second)\n+10 Stamina\n+4 Agility\nRequires Level 58\nSell Price: 4g 11s 91c"
+  },
+  {
    "id": 19563,
    "name": "Outrunner's Bow",
    "quality": 3,
    "icon": "inv_weapon_bow_02",
-   "source": "https://foreverchanges.pro/items/new.json#19563",
+   "source": "https://foreverchanges.pro/items/same.json#19563",
    "itemLevel": 53,
    "inventoryType": "Ranged",
    "subclass": "Bow",
@@ -3824,7 +5063,7 @@
    "name": "Berserker Bracers",
    "quality": 4,
    "icon": "inv_bracer_06",
-   "source": "https://foreverchanges.pro/items/new.json#19578",
+   "source": "https://foreverchanges.pro/items/same.json#19578",
    "itemLevel": 65,
    "inventoryType": "Wrist",
    "subclass": "Plate",
@@ -3844,7 +5083,7 @@
    "name": "Berserker Bracers",
    "quality": 4,
    "icon": "inv_bracer_06",
-   "source": "https://foreverchanges.pro/items/new.json#19580",
+   "source": "https://foreverchanges.pro/items/same.json#19580",
    "itemLevel": 55,
    "inventoryType": "Wrist",
    "subclass": "Plate",
@@ -3864,7 +5103,7 @@
    "name": "Heathen's Brand",
    "quality": 3,
    "icon": "inv_jewelry_necklace_24",
-   "source": "https://foreverchanges.pro/items/new.json#19585",
+   "source": "https://foreverchanges.pro/items/same.json#19585",
    "itemLevel": 60,
    "inventoryType": "Neck",
    "subclass": null,
@@ -3881,11 +5120,32 @@
    "tooltip": "Heathen's Brand\nBinds when picked up\nUnique\nNeck\n+8 Strength\n+6 Intellect\n+7 Spirit\n+8 Stamina\nClasses: Paladin"
   },
   {
+   "id": 19586,
+   "name": "Heathen's Brand",
+   "quality": 3,
+   "icon": "inv_jewelry_necklace_25",
+   "source": "https://foreverchanges.pro/items/same.json#19586",
+   "itemLevel": 68,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "strength": 10,
+    "intellect": 6,
+    "spirit": 9,
+    "stamina": 10
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Heathen's Brand\nBinds when picked up\nUnique\nNeck\n+10 Strength\n+6 Intellect\n+9 Spirit\n+10 Stamina\nClasses: Paladin"
+  },
+  {
    "id": 19587,
    "name": "Forest Stalker's Bracers",
    "quality": 4,
    "icon": "inv_bracer_12",
-   "source": "https://foreverchanges.pro/items/new.json#19587",
+   "source": "https://foreverchanges.pro/items/same.json#19587",
    "itemLevel": 65,
    "inventoryType": "Wrist",
    "subclass": "Leather",
@@ -3905,7 +5165,7 @@
    "name": "Hero's Brand",
    "quality": 4,
    "icon": "inv_jewelry_necklace_26",
-   "source": "https://foreverchanges.pro/items/new.json#19588",
+   "source": "https://foreverchanges.pro/items/same.json#19588",
    "itemLevel": 65,
    "inventoryType": "Neck",
    "subclass": null,
@@ -3943,7 +5203,7 @@
    "name": "Forest Stalker's Bracers",
    "quality": 4,
    "icon": "inv_bracer_12",
-   "source": "https://foreverchanges.pro/items/new.json#19589",
+   "source": "https://foreverchanges.pro/items/same.json#19589",
    "itemLevel": 55,
    "inventoryType": "Wrist",
    "subclass": "Leather",
@@ -3963,7 +5223,7 @@
    "name": "Vision of Voodress",
    "quality": 3,
    "icon": "inv_jewelry_necklace_24",
-   "source": "https://foreverchanges.pro/items/new.json#19607",
+   "source": "https://foreverchanges.pro/items/same.json#19607",
    "itemLevel": 60,
    "inventoryType": "Neck",
    "subclass": null,
@@ -3980,11 +5240,32 @@
    "tooltip": "Vision of Voodress\nBinds when picked up\nUnique\nNeck\n+6 Strength\n+8 Intellect\n+7 Spirit\n+8 Stamina\nClasses: Shaman"
   },
   {
+   "id": 19608,
+   "name": "Vision of Voodress",
+   "quality": 3,
+   "icon": "inv_jewelry_necklace_25",
+   "source": "https://foreverchanges.pro/items/same.json#19608",
+   "itemLevel": 68,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "strength": 6,
+    "intellect": 10,
+    "spirit": 9,
+    "stamina": 10
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Vision of Voodress\nBinds when picked up\nUnique\nNeck\n+6 Strength\n+10 Intellect\n+9 Spirit\n+10 Stamina\nClasses: Shaman"
+  },
+  {
    "id": 19609,
    "name": "Unmarred Vision of Voodress",
    "quality": 4,
    "icon": "inv_jewelry_necklace_26",
-   "source": "https://foreverchanges.pro/items/new.json#19609",
+   "source": "https://foreverchanges.pro/items/same.json#19609",
    "itemLevel": 65,
    "inventoryType": "Neck",
    "subclass": null,
@@ -4022,7 +5303,7 @@
    "name": "Enchanted South Seas Kelp",
    "quality": 3,
    "icon": "inv_jewelry_necklace_24",
-   "source": "https://foreverchanges.pro/items/new.json#19611",
+   "source": "https://foreverchanges.pro/items/same.json#19611",
    "itemLevel": 60,
    "inventoryType": "Neck",
    "subclass": null,
@@ -4039,11 +5320,32 @@
    "tooltip": "Enchanted South Seas Kelp\nBinds when picked up\nUnique\nNeck\n+6 Strength\n+8 Intellect\n+7 Spirit\n+8 Stamina\nClasses: Druid"
   },
   {
+   "id": 19612,
+   "name": "Enchanted South Seas Kelp",
+   "quality": 3,
+   "icon": "inv_jewelry_necklace_25",
+   "source": "https://foreverchanges.pro/items/same.json#19612",
+   "itemLevel": 68,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "strength": 6,
+    "intellect": 10,
+    "spirit": 9,
+    "stamina": 10
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Enchanted South Seas Kelp\nBinds when picked up\nUnique\nNeck\n+6 Strength\n+10 Intellect\n+9 Spirit\n+10 Stamina\nClasses: Druid"
+  },
+  {
    "id": 19613,
    "name": "Pristine Enchanted South Seas Kelp",
    "quality": 4,
    "icon": "inv_jewelry_necklace_26",
-   "source": "https://foreverchanges.pro/items/new.json#19613",
+   "source": "https://foreverchanges.pro/items/same.json#19613",
    "itemLevel": 65,
    "inventoryType": "Neck",
    "subclass": null,
@@ -4081,7 +5383,7 @@
    "name": "Zandalarian Shadow Talisman",
    "quality": 3,
    "icon": "inv_jewelry_necklace_24",
-   "source": "https://foreverchanges.pro/items/new.json#19615",
+   "source": "https://foreverchanges.pro/items/same.json#19615",
    "itemLevel": 60,
    "inventoryType": "Neck",
    "subclass": null,
@@ -4097,11 +5399,31 @@
    "tooltip": "Zandalarian Shadow Talisman\nBinds when picked up\nUnique\nNeck\n+12 Agility\n+6 Strength\n+7 Stamina\nClasses: Rogue"
   },
   {
+   "id": 19616,
+   "name": "Zandalarian Shadow Talisman",
+   "quality": 3,
+   "icon": "inv_jewelry_necklace_25",
+   "source": "https://foreverchanges.pro/items/same.json#19616",
+   "itemLevel": 68,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "agility": 15,
+    "strength": 6,
+    "stamina": 9
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Zandalarian Shadow Talisman\nBinds when picked up\nUnique\nNeck\n+15 Agility\n+6 Strength\n+9 Stamina\nClasses: Rogue"
+  },
+  {
    "id": 19617,
    "name": "Zandalarian Shadow Mastery Talisman",
    "quality": 4,
    "icon": "inv_jewelry_necklace_26",
-   "source": "https://foreverchanges.pro/items/new.json#19617",
+   "source": "https://foreverchanges.pro/items/same.json#19617",
    "itemLevel": 65,
    "inventoryType": "Neck",
    "subclass": null,
@@ -4138,7 +5460,7 @@
    "name": "Maelstrom's Tendril",
    "quality": 3,
    "icon": "inv_jewelry_necklace_24",
-   "source": "https://foreverchanges.pro/items/new.json#19619",
+   "source": "https://foreverchanges.pro/items/same.json#19619",
    "itemLevel": 60,
    "inventoryType": "Neck",
    "subclass": null,
@@ -4154,11 +5476,31 @@
    "tooltip": "Maelstrom's Tendril\nBinds when picked up\nUnique\nNeck\n+12 Agility\n+6 Intellect\n+7 Stamina\nClasses: Hunter"
   },
   {
+   "id": 19620,
+   "name": "Maelstrom's Tendril",
+   "quality": 3,
+   "icon": "inv_jewelry_necklace_25",
+   "source": "https://foreverchanges.pro/items/same.json#19620",
+   "itemLevel": 68,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "agility": 15,
+    "intellect": 6,
+    "stamina": 9
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Maelstrom's Tendril\nBinds when picked up\nUnique\nNeck\n+15 Agility\n+6 Intellect\n+9 Stamina\nClasses: Hunter"
+  },
+  {
    "id": 19621,
    "name": "Maelstrom's Wrath",
    "quality": 4,
    "icon": "inv_jewelry_necklace_26",
-   "source": "https://foreverchanges.pro/items/new.json#19621",
+   "source": "https://foreverchanges.pro/items/same.json#19621",
    "itemLevel": 65,
    "inventoryType": "Neck",
    "subclass": null,
@@ -4191,11 +5533,35 @@
    "tooltip": "Maelstrom's Wrath\nBinds when picked up\nUnique\nNeck\n+15 Agility\n+6 Intellect\n+9 Stamina\nClasses: Hunter\nEquip: Decreases the cooldown of Feign Death by 2 sec.\nPredator's Armor (0/5)\n(2) Set: +20 Attack Power.\n(3) Set: Decreases the cooldown of Concussive Shot by 1 sec.\n(5) Set: Increases the duration of Serpent Sting by 3 sec."
   },
   {
+   "id": 19691,
+   "name": "Bloodsoul Shoulders",
+   "quality": 3,
+   "icon": "inv_shoulder_15",
+   "source": "https://foreverchanges.pro/items/same.json#19691",
+   "itemLevel": 65,
+   "inventoryType": "Shoulder",
+   "subclass": "Mail",
+   "armor": 286,
+   "weapon": null,
+   "stats": {
+    "agility": 24,
+    "stamina": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(3) Restores 12 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Bloodsoul Shoulders\nBinds when equipped\nShoulder\tMail\n286 Armor\n+24 Agility\n+10 Stamina\nRequires Level 60\nBloodsoul Embrace (0/3)\n(3) Set: Restores 12 mana per 5 sec.\nSell Price: 3g"
+  },
+  {
    "id": 19824,
    "name": "Zandalar Vindicator's Armguards",
    "quality": 4,
    "icon": "inv_bracer_14",
-   "source": "https://foreverchanges.pro/items/new.json#19824",
+   "source": "https://foreverchanges.pro/items/same.json#19824",
    "itemLevel": 61,
    "inventoryType": "Wrist",
    "subclass": "Plate",
@@ -4228,7 +5594,7 @@
    "name": "Zandalar Madcap's Bracers",
    "quality": 4,
    "icon": "inv_bracer_14",
-   "source": "https://foreverchanges.pro/items/new.json#19836",
+   "source": "https://foreverchanges.pro/items/same.json#19836",
    "itemLevel": 61,
    "inventoryType": "Wrist",
    "subclass": "Leather",
@@ -4261,7 +5627,7 @@
    "name": "Zandalarian Hero Badge",
    "quality": 4,
    "icon": "inv_jewelry_necklace_13",
-   "source": "https://foreverchanges.pro/items/new.json#19948",
+   "source": "https://foreverchanges.pro/items/same.json#19948",
    "itemLevel": 68,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -4282,7 +5648,7 @@
    "name": "Zandalarian Hero Medallion",
    "quality": 4,
    "icon": "inv_jewelry_necklace_13",
-   "source": "https://foreverchanges.pro/items/new.json#19949",
+   "source": "https://foreverchanges.pro/items/same.json#19949",
    "itemLevel": 68,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -4303,7 +5669,7 @@
    "name": "Zandalarian Hero Charm",
    "quality": 4,
    "icon": "inv_jewelry_necklace_13",
-   "source": "https://foreverchanges.pro/items/new.json#19950",
+   "source": "https://foreverchanges.pro/items/same.json#19950",
    "itemLevel": 68,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -4324,7 +5690,7 @@
    "name": "Gri'lek's Charm of Might",
    "quality": 4,
    "icon": "inv_jewelry_necklace_19",
-   "source": "https://foreverchanges.pro/items/new.json#19951",
+   "source": "https://foreverchanges.pro/items/same.json#19951",
    "itemLevel": 65,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -4357,7 +5723,7 @@
    "name": "Renataki's Charm of Beasts",
    "quality": 4,
    "icon": "inv_jewelry_necklace_19",
-   "source": "https://foreverchanges.pro/items/new.json#19953",
+   "source": "https://foreverchanges.pro/items/same.json#19953",
    "itemLevel": 65,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -4390,7 +5756,7 @@
    "name": "Renataki's Charm of Trickery",
    "quality": 4,
    "icon": "inv_jewelry_necklace_19",
-   "source": "https://foreverchanges.pro/items/new.json#19954",
+   "source": "https://foreverchanges.pro/items/same.json#19954",
    "itemLevel": 65,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -4423,7 +5789,7 @@
    "name": "Wushoolay's Charm of Nature",
    "quality": 4,
    "icon": "inv_jewelry_necklace_19",
-   "source": "https://foreverchanges.pro/items/new.json#19955",
+   "source": "https://foreverchanges.pro/items/same.json#19955",
    "itemLevel": 65,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -4456,7 +5822,7 @@
    "name": "Wushoolay's Charm of Spirits",
    "quality": 4,
    "icon": "inv_jewelry_necklace_19",
-   "source": "https://foreverchanges.pro/items/new.json#19956",
+   "source": "https://foreverchanges.pro/items/same.json#19956",
    "itemLevel": 65,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -4489,7 +5855,7 @@
    "name": "Hazza'rah's Charm of Destruction",
    "quality": 4,
    "icon": "inv_jewelry_necklace_19",
-   "source": "https://foreverchanges.pro/items/new.json#19957",
+   "source": "https://foreverchanges.pro/items/same.json#19957",
    "itemLevel": 65,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -4522,7 +5888,7 @@
    "name": "Hazza'rah's Charm of Healing",
    "quality": 4,
    "icon": "inv_jewelry_necklace_19",
-   "source": "https://foreverchanges.pro/items/new.json#19958",
+   "source": "https://foreverchanges.pro/items/same.json#19958",
    "itemLevel": 65,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -4555,7 +5921,7 @@
    "name": "Hazza'rah's Charm of Magic",
    "quality": 4,
    "icon": "inv_jewelry_necklace_19",
-   "source": "https://foreverchanges.pro/items/new.json#19959",
+   "source": "https://foreverchanges.pro/items/same.json#19959",
    "itemLevel": 65,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -4588,7 +5954,7 @@
    "name": "Devilsaur Claws",
    "quality": 3,
    "icon": "inv_misc_monsterclaw_02",
-   "source": "https://foreverchanges.pro/items/new.json#20005",
+   "source": "https://foreverchanges.pro/items/same.json#20005",
    "itemLevel": 52,
    "inventoryType": "Off Hand",
    "subclass": "Fist Weapon",
@@ -4612,11 +5978,32 @@
    "tooltip": "Devilsaur Claws\nBinds when picked up\nOff Hand\tFist Weapon\n48 - 90 Damage\tSpeed 2.00\n(34.5 damage per second)\n+4 Agility\nEquip: Increased Fist Weapons +4.\n\"The claws hum with primal energy.\"\nSell Price: 3g 18s 28c"
   },
   {
+   "id": 20084,
+   "name": "Hunting Net",
+   "quality": 3,
+   "icon": "inv_misc_net_01",
+   "source": "https://foreverchanges.pro/items/same.json#20084",
+   "itemLevel": 52,
+   "inventoryType": "Trinket",
+   "subclass": "Junk",
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Renders a target unable to move for 10 sec. (3 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Hunting Net\nBinds when picked up\nTrinket\tJunk\nUse: Renders a target unable to move for 10 sec. (3 Min Cooldown)"
+  },
+  {
    "id": 20091,
    "name": "Highlander's Chain Greaves",
    "quality": 3,
    "icon": "inv_boots_chain_02",
-   "source": "https://foreverchanges.pro/items/new.json#20091",
+   "source": "https://foreverchanges.pro/items/same.json#20091",
    "itemLevel": 53,
    "inventoryType": "Feet",
    "subclass": "Mail",
@@ -4641,7 +6028,7 @@
    "name": "Highlander's Lamellar Greaves",
    "quality": 3,
    "icon": "inv_boots_plate_04",
-   "source": "https://foreverchanges.pro/items/new.json#20109",
+   "source": "https://foreverchanges.pro/items/same.json#20109",
    "itemLevel": 53,
    "inventoryType": "Feet",
    "subclass": "Plate",
@@ -4667,7 +6054,7 @@
    "name": "Highlander's Mail Greaves",
    "quality": 3,
    "icon": "inv_boots_chain_02",
-   "source": "https://foreverchanges.pro/items/new.json#20121",
+   "source": "https://foreverchanges.pro/items/same.json#20121",
    "itemLevel": 53,
    "inventoryType": "Feet",
    "subclass": "Mail",
@@ -4692,7 +6079,7 @@
    "name": "Highlander's Plate Greaves",
    "quality": 3,
    "icon": "inv_boots_plate_04",
-   "source": "https://foreverchanges.pro/items/new.json#20127",
+   "source": "https://foreverchanges.pro/items/same.json#20127",
    "itemLevel": 53,
    "inventoryType": "Feet",
    "subclass": "Plate",
@@ -4717,7 +6104,7 @@
    "name": "Defiler's Chain Greaves",
    "quality": 3,
    "icon": "inv_boots_chain_02",
-   "source": "https://foreverchanges.pro/items/new.json#20155",
+   "source": "https://foreverchanges.pro/items/same.json#20155",
    "itemLevel": 53,
    "inventoryType": "Feet",
    "subclass": "Mail",
@@ -4738,11 +6125,37 @@
    "tooltip": "Defiler's Chain Greaves\nBinds when picked up\nUnique\nFeet\tMail\n218 Armor\n+13 Stamina\n+12 Agility\n+6 Intellect\nRequires Level 48\nRequires The Defilers - Revered\nEquip: Run speed increased slightly.\nSell Price: 1g 50s 77c"
   },
   {
+   "id": 20181,
+   "name": "Defiler's Lamellar Greaves",
+   "quality": 3,
+   "icon": "inv_boots_plate_04",
+   "source": "https://foreverchanges.pro/items/same.json#20181",
+   "itemLevel": 63,
+   "inventoryType": "Feet",
+   "subclass": "Plate",
+   "armor": 452,
+   "weapon": null,
+   "stats": {
+    "strength": 14,
+    "stamina": 8,
+    "agility": 12,
+    "intellect": 8
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Run speed increased slightly."
+    }
+   ],
+   "tooltip": "Defiler's Lamellar Greaves\nBinds when picked up\nUnique\nFeet\tPlate\n452 Armor\n+14 Strength\n+8 Stamina\n+12 Agility\n+8 Intellect\nRequires Level 58\nRequires The Defilers - Revered\nEquip: Run speed increased slightly.\nSell Price: 1g 79s 27c"
+  },
+  {
    "id": 20184,
    "name": "Defiler's Lamellar Spaulders",
    "quality": 4,
    "icon": "inv_shoulder_01",
-   "source": "https://foreverchanges.pro/items/new.json#20184",
+   "source": "https://foreverchanges.pro/items/same.json#20184",
    "itemLevel": 65,
    "inventoryType": "Shoulder",
    "subclass": "Plate",
@@ -4763,7 +6176,7 @@
    "name": "Defiler's Lamellar Greaves",
    "quality": 3,
    "icon": "inv_boots_plate_04",
-   "source": "https://foreverchanges.pro/items/new.json#20185",
+   "source": "https://foreverchanges.pro/items/same.json#20185",
    "itemLevel": 53,
    "inventoryType": "Feet",
    "subclass": "Plate",
@@ -4789,7 +6202,7 @@
    "name": "Defiler's Mail Greaves",
    "quality": 3,
    "icon": "inv_boots_chain_02",
-   "source": "https://foreverchanges.pro/items/new.json#20202",
+   "source": "https://foreverchanges.pro/items/same.json#20202",
    "itemLevel": 53,
    "inventoryType": "Feet",
    "subclass": "Mail",
@@ -4814,7 +6227,7 @@
    "name": "Defiler's Plate Greaves",
    "quality": 3,
    "icon": "inv_boots_plate_04",
-   "source": "https://foreverchanges.pro/items/new.json#20211",
+   "source": "https://foreverchanges.pro/items/same.json#20211",
    "itemLevel": 53,
    "inventoryType": "Feet",
    "subclass": "Plate",
@@ -4835,11 +6248,112 @@
    "tooltip": "Defiler's Plate Greaves\nBinds when picked up\nUnique\nFeet\tPlate\n383 Armor\n+11 Strength\n+10 Stamina\n+10 Agility\nRequires Level 48\nRequires The Defilers - Revered\nEquip: Run speed increased slightly.\nSell Price: 1g 1s 22c"
   },
   {
+   "id": 20213,
+   "name": "Belt of Shrunken Heads",
+   "quality": 3,
+   "icon": "inv_belt_13",
+   "source": "https://foreverchanges.pro/items/same.json#20213",
+   "itemLevel": 70,
+   "inventoryType": "Waist",
+   "subclass": "Plate",
+   "armor": 408,
+   "weapon": null,
+   "stats": {
+    "strength": 23,
+    "stamina": 11,
+    "agility": 7
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Belt of Shrunken Heads\nBinds when picked up\nWaist\tPlate\n408 Armor\n+23 Strength\n+11 Stamina\n+7 Agility\nSell Price: 1g 63s 37c"
+  },
+  {
+   "id": 20215,
+   "name": "Belt of Shriveled Heads",
+   "quality": 3,
+   "icon": "inv_belt_12",
+   "source": "https://foreverchanges.pro/items/same.json#20215",
+   "itemLevel": 70,
+   "inventoryType": "Waist",
+   "subclass": "Mail",
+   "armor": 230,
+   "weapon": null,
+   "stats": {
+    "spirit": 7,
+    "stamina": 18,
+    "agility": 11,
+    "intellect": 11
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Belt of Shriveled Heads\nBinds when picked up\nWaist\tMail\n230 Armor\n+7 Spirit\n+18 Stamina\n+11 Agility\n+11 Intellect\nSell Price: 2g 46s 84c"
+  },
+  {
+   "id": 20476,
+   "name": "Sandstalker Bracers",
+   "quality": 3,
+   "icon": "inv_bracer_12",
+   "source": "https://foreverchanges.pro/items/same.json#20476",
+   "itemLevel": 62,
+   "inventoryType": "Wrist",
+   "subclass": "Mail",
+   "armor": 160,
+   "weapon": null,
+   "stats": {
+    "stamina": 7
+   },
+   "resistances": {
+    "nature": 15
+   },
+   "effects": [],
+   "tooltip": "Sandstalker Bracers\nBinds when equipped\nWrist\tMail\n160 Armor\n+7 Stamina\n+15 Nature Resistance\nRequires Level 57\nSell Price: 1g 64s 1c"
+  },
+  {
+   "id": 20477,
+   "name": "Sandstalker Gauntlets",
+   "quality": 3,
+   "icon": "inv_gauntlets_11",
+   "source": "https://foreverchanges.pro/items/same.json#20477",
+   "itemLevel": 62,
+   "inventoryType": "Hands",
+   "subclass": "Mail",
+   "armor": 228,
+   "weapon": null,
+   "stats": {
+    "stamina": 9
+   },
+   "resistances": {
+    "nature": 20
+   },
+   "effects": [],
+   "tooltip": "Sandstalker Gauntlets\nBinds when equipped\nHands\tMail\n228 Armor\n+9 Stamina\n+20 Nature Resistance\nRequires Level 57\nSell Price: 1g 68s 98c"
+  },
+  {
+   "id": 20478,
+   "name": "Sandstalker Breastplate",
+   "quality": 3,
+   "icon": "inv_chest_plate07",
+   "source": "https://foreverchanges.pro/items/same.json#20478",
+   "itemLevel": 62,
+   "inventoryType": "Chest",
+   "subclass": "Mail",
+   "armor": 365,
+   "weapon": null,
+   "stats": {
+    "stamina": 13
+   },
+   "resistances": {
+    "nature": 25
+   },
+   "effects": [],
+   "tooltip": "Sandstalker Breastplate\nBinds when equipped\nChest\tMail\n365 Armor\n+13 Stamina\n+25 Nature Resistance\nRequires Level 57\nSell Price: 3g 39s 17c"
+  },
+  {
    "id": 20525,
    "name": "Earthen Sigil",
    "quality": 3,
    "icon": "spell_nature_nullward",
-   "source": "https://foreverchanges.pro/items/new.json#20525",
+   "source": "https://foreverchanges.pro/items/same.json#20525",
    "itemLevel": 52,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -4860,7 +6374,7 @@
    "name": "Malfurion's Signet Ring",
    "quality": 4,
    "icon": "inv_jewelry_ring_37",
-   "source": "https://foreverchanges.pro/items/new.json#20600",
+   "source": "https://foreverchanges.pro/items/same.json#20600",
    "itemLevel": 72,
    "inventoryType": "Finger",
    "subclass": null,
@@ -4880,7 +6394,7 @@
    "name": "Ring of the Unliving",
    "quality": 4,
    "icon": "inv_jewelry_ring_38",
-   "source": "https://foreverchanges.pro/items/new.json#20624",
+   "source": "https://foreverchanges.pro/items/same.json#20624",
    "itemLevel": 72,
    "inventoryType": "Finger",
    "subclass": null,
@@ -4899,7 +6413,7 @@
    "name": "Hibernation Crystal",
    "quality": 4,
    "icon": "inv_misc_gem_stone_01",
-   "source": "https://foreverchanges.pro/items/new.json#20636",
+   "source": "https://foreverchanges.pro/items/same.json#20636",
    "itemLevel": 71,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -4916,11 +6430,156 @@
    "tooltip": "Hibernation Crystal\nBinds when picked up\nUnique\nTrinket\nRequires Level 60\nUse: Increases healing done by magical spells and effects by up to 350 for 15 sec. (2 Min Cooldown)\nSell Price: 8g 91s 3c"
   },
   {
+   "id": 20700,
+   "name": "Cenarion Reservist's Legplates",
+   "quality": 3,
+   "icon": "inv_pants_plate_18",
+   "source": "https://foreverchanges.pro/items/same.json#20700",
+   "itemLevel": 63,
+   "inventoryType": "Legs",
+   "subclass": "Plate",
+   "armor": 575,
+   "weapon": null,
+   "stats": {
+    "stamina": 13,
+    "intellect": 13
+   },
+   "resistances": {
+    "nature": 25
+   },
+   "effects": [],
+   "tooltip": "Cenarion Reservist's Legplates\nBinds when picked up\nLegs\tPlate\n575 Armor\n+13 Stamina\n+13 Intellect\n+25 Nature Resistance\nSell Price: 2g 19s 68c"
+  },
+  {
+   "id": 20701,
+   "name": "Cenarion Reservist's Legguards",
+   "quality": 3,
+   "icon": "inv_pants_mail_08",
+   "source": "https://foreverchanges.pro/items/same.json#20701",
+   "itemLevel": 63,
+   "inventoryType": "Legs",
+   "subclass": "Mail",
+   "armor": 324,
+   "weapon": null,
+   "stats": {
+    "stamina": 13,
+    "intellect": 13
+   },
+   "resistances": {
+    "nature": 25
+   },
+   "effects": [],
+   "tooltip": "Cenarion Reservist's Legguards\nBinds when picked up\nLegs\tMail\n324 Armor\n+13 Stamina\n+13 Intellect\n+25 Nature Resistance\nSell Price: 3g 43s 14c"
+  },
+  {
+   "id": 20702,
+   "name": "Cenarion Reservist's Legguards",
+   "quality": 3,
+   "icon": "inv_pants_mail_08",
+   "source": "https://foreverchanges.pro/items/same.json#20702",
+   "itemLevel": 63,
+   "inventoryType": "Legs",
+   "subclass": "Mail",
+   "armor": 324,
+   "weapon": null,
+   "stats": {
+    "stamina": 13,
+    "agility": 13
+   },
+   "resistances": {
+    "nature": 25
+   },
+   "effects": [],
+   "tooltip": "Cenarion Reservist's Legguards\nBinds when picked up\nLegs\tMail\n324 Armor\n+13 Stamina\n+13 Agility\n+25 Nature Resistance\nSell Price: 3g 53s 58c"
+  },
+  {
+   "id": 20712,
+   "name": "Wastewalker's Gauntlets",
+   "quality": 3,
+   "icon": "inv_gauntlets_11",
+   "source": "https://foreverchanges.pro/items/same.json#20712",
+   "itemLevel": 63,
+   "inventoryType": "Hands",
+   "subclass": "Mail",
+   "armor": 231,
+   "weapon": null,
+   "stats": {
+    "strength": 10,
+    "intellect": 10,
+    "stamina": 10,
+    "agility": 10,
+    "spirit": 10
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Wastewalker's Gauntlets\nBinds when picked up\nHands\tMail\n231 Armor\n+10 Strength\n+10 Intellect\n+10 Stamina\n+10 Agility\n+10 Spirit\nSell Price: 1g 65s 83c"
+  },
+  {
+   "id": 20713,
+   "name": "Desertstalkers's Gauntlets",
+   "quality": 3,
+   "icon": "inv_gauntlets_11",
+   "source": "https://foreverchanges.pro/items/same.json#20713",
+   "itemLevel": 63,
+   "inventoryType": "Hands",
+   "subclass": "Mail",
+   "armor": 231,
+   "weapon": null,
+   "stats": {
+    "stamina": 15,
+    "intellect": 10,
+    "agility": 16
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Desertstalkers's Gauntlets\nBinds when picked up\nHands\tMail\n231 Armor\n+15 Stamina\n+10 Intellect\n+16 Agility\nSell Price: 1g 66s 47c"
+  },
+  {
+   "id": 20715,
+   "name": "Dunestalker's Boots",
+   "quality": 3,
+   "icon": "inv_boots_08",
+   "source": "https://foreverchanges.pro/items/same.json#20715",
+   "itemLevel": 63,
+   "inventoryType": "Feet",
+   "subclass": "Leather",
+   "armor": 121,
+   "weapon": null,
+   "stats": {
+    "agility": 19,
+    "stamina": 10,
+    "strength": 9
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Dunestalker's Boots\nBinds when picked up\nFeet\tLeather\n121 Armor\n+19 Agility\n+10 Stamina\n+9 Strength\nSell Price: 2g 9s 69c"
+  },
+  {
+   "id": 20721,
+   "name": "Band of the Cultist",
+   "quality": 3,
+   "icon": "inv_jewelry_ring_27",
+   "source": "https://foreverchanges.pro/items/same.json#20721",
+   "itemLevel": 65,
+   "inventoryType": "Finger",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 12,
+    "agility": 12,
+    "strength": 7
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Band of the Cultist\nBinds when equipped\nUnique\nFinger\n+12 Stamina\n+12 Agility\n+7 Strength\nRequires Level 60\nSell Price: 3g 87s 90c"
+  },
+  {
    "id": 21134,
    "name": "Dark Edge of Insanity",
    "quality": 4,
    "icon": "inv_axe_24",
-   "source": "https://foreverchanges.pro/items/new.json#21134",
+   "source": "https://foreverchanges.pro/items/same.json#21134",
    "itemLevel": 84,
    "inventoryType": "Two-Hand",
    "subclass": "Axe",
@@ -4950,7 +6609,7 @@
    "name": "Earthstrike",
    "quality": 4,
    "icon": "spell_nature_abolishmagic",
-   "source": "https://foreverchanges.pro/items/new.json#21180",
+   "source": "https://foreverchanges.pro/items/same.json#21180",
    "itemLevel": 66,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -4967,11 +6626,32 @@
    "tooltip": "Earthstrike\nBinds when picked up\nUnique\nTrinket\nUse: Increases your melee and ranged attack power by 280. Effect lasts for 20 sec. (2 Min Cooldown)\nSell Price: 2g 16s 12c"
   },
   {
+   "id": 21181,
+   "name": "Grace of Earth",
+   "quality": 3,
+   "icon": "inv_misc_herb_02",
+   "source": "https://foreverchanges.pro/items/same.json#21181",
+   "itemLevel": 66,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Reduces your threat to enemy targets within 30 yards, making them less likely to attack you. (5 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Grace of Earth\nBinds when picked up\nUnique\nTrinket\nUse: Reduces your threat to enemy targets within 30 yards, making them less likely to attack you. (5 Min Cooldown)\nSell Price: 2g 16s 12c"
+  },
+  {
    "id": 21184,
    "name": "Deeprock Bracers",
    "quality": 4,
    "icon": "inv_bracer_07",
-   "source": "https://foreverchanges.pro/items/new.json#21184",
+   "source": "https://foreverchanges.pro/items/same.json#21184",
    "itemLevel": 62,
    "inventoryType": "Wrist",
    "subclass": "Plate",
@@ -4991,7 +6671,7 @@
    "name": "Wrath of Cenarius",
    "quality": 4,
    "icon": "inv_jewelry_ring_40",
-   "source": "https://foreverchanges.pro/items/new.json#21190",
+   "source": "https://foreverchanges.pro/items/same.json#21190",
    "itemLevel": 66,
    "inventoryType": "Finger",
    "subclass": null,
@@ -5012,7 +6692,7 @@
    "name": "Blessed Qiraji Naturalist Staff UNUSED",
    "quality": 4,
    "icon": "inv_staff_20",
-   "source": "https://foreverchanges.pro/items/new.json#21276",
+   "source": "https://foreverchanges.pro/items/same.json#21276",
    "itemLevel": 80,
    "inventoryType": "Two-Hand",
    "subclass": "Staff",
@@ -5033,7 +6713,7 @@
    "name": "Signet of the Unseen Path",
    "quality": 4,
    "icon": "inv_jewelry_ring_ahnqiraj_03",
-   "source": "https://foreverchanges.pro/items/new.json#21402",
+   "source": "https://foreverchanges.pro/items/same.json#21402",
    "itemLevel": 65,
    "inventoryType": "Finger",
    "subclass": null,
@@ -5058,7 +6738,7 @@
    "name": "Band of Veiled Shadows",
    "quality": 4,
    "icon": "inv_jewelry_ring_ahnqiraj_03",
-   "source": "https://foreverchanges.pro/items/new.json#21405",
+   "source": "https://foreverchanges.pro/items/same.json#21405",
    "itemLevel": 65,
    "inventoryType": "Finger",
    "subclass": null,
@@ -5079,11 +6759,53 @@
    "tooltip": "Band of Veiled Shadows\nBinds when picked up\nUnique-Equipped\nFinger\n+18 Agility\n+11 Strength\n+8 Stamina\nClasses: Rogue\nRequires Level 60\nEmblems of Veiled Shadows (0/3)\n(3) Set: -10 energy cost for your Slice and Dice ability."
   },
   {
+   "id": 21473,
+   "name": "Eye of Moam",
+   "quality": 3,
+   "icon": "inv_misc_eye_01",
+   "source": "https://foreverchanges.pro/items/same.json#21473",
+   "itemLevel": 74,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Increases damage done by magical spells and effects by up to 50, and decreases the magical resistances of your spell targets by 100 for 30 sec. (3 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Eye of Moam\nBinds when picked up\nUnique\nTrinket\nRequires Level 60\nUse: Increases damage done by magical spells and effects by up to 50, and decreases the magical resistances of your spell targets by 100 for 30 sec. (3 Min Cooldown)\nSell Price: 8g 28s 78c"
+  },
+  {
+   "id": 21488,
+   "name": "Fetish of Chitinous Spikes",
+   "quality": 3,
+   "icon": "inv_misc_ahnqirajtrinket_02",
+   "source": "https://foreverchanges.pro/items/same.json#21488",
+   "itemLevel": 73,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Spikes sprout from you causing 25 Nature damage to attackers when hit. Lasts 30 sec. (3 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Fetish of Chitinous Spikes\nBinds when picked up\nUnique\nTrinket\nRequires Level 60\nUse: Spikes sprout from you causing 25 Nature damage to attackers when hit. Lasts 30 sec. (3 Min Cooldown)\n\"Ouch\"\nSell Price: 6g 78s 12c"
+  },
+  {
    "id": 21520,
    "name": "Ravencrest's Legacy",
    "quality": 4,
    "icon": "inv_sword_49",
-   "source": "https://foreverchanges.pro/items/new.json#21520",
+   "source": "https://foreverchanges.pro/items/same.json#21520",
    "itemLevel": 76,
    "inventoryType": "One-Hand",
    "subclass": "Sword",
@@ -5108,7 +6830,7 @@
    "name": "Shadowsong's Sorrow",
    "quality": 4,
    "icon": "inv_weapon_shortblade_25",
-   "source": "https://foreverchanges.pro/items/new.json#21522",
+   "source": "https://foreverchanges.pro/items/same.json#21522",
    "itemLevel": 76,
    "inventoryType": "One-Hand",
    "subclass": "Dagger",
@@ -5133,7 +6855,7 @@
    "name": "Amulet of Shadow Shielding",
    "quality": 4,
    "icon": "inv_jewelry_necklace_17",
-   "source": "https://foreverchanges.pro/items/new.json#21529",
+   "source": "https://foreverchanges.pro/items/same.json#21529",
    "itemLevel": 77,
    "inventoryType": "Neck",
    "subclass": null,
@@ -5154,7 +6876,7 @@
    "name": "Onyx Embedded Leggings",
    "quality": 4,
    "icon": "inv_pants_mail_04",
-   "source": "https://foreverchanges.pro/items/new.json#21530",
+   "source": "https://foreverchanges.pro/items/same.json#21530",
    "itemLevel": 77,
    "inventoryType": "Legs",
    "subclass": "Mail",
@@ -5176,7 +6898,7 @@
    "name": "Drudge Boots",
    "quality": 4,
    "icon": "inv_boots_08",
-   "source": "https://foreverchanges.pro/items/new.json#21532",
+   "source": "https://foreverchanges.pro/items/same.json#21532",
    "itemLevel": 77,
    "inventoryType": "Feet",
    "subclass": "Leather",
@@ -5198,7 +6920,7 @@
    "name": "Vanquished Tentacle of C'Thun",
    "quality": 4,
    "icon": "inv_misc_ahnqirajtrinket_05",
-   "source": "https://foreverchanges.pro/items/new.json#21579",
+   "source": "https://foreverchanges.pro/items/same.json#21579",
    "itemLevel": 88,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -5219,7 +6941,7 @@
    "name": "Bracers of Eternal Reckoning",
    "quality": 4,
    "icon": "inv_bracer_18",
-   "source": "https://foreverchanges.pro/items/new.json#21584",
+   "source": "https://foreverchanges.pro/items/same.json#21584",
    "itemLevel": 88,
    "inventoryType": "Wrist",
    "subclass": "Mail",
@@ -5238,7 +6960,7 @@
    "name": "Ring of the Godslayer",
    "quality": 4,
    "icon": "inv_jewelry_ring_ahnqiraj_06",
-   "source": "https://foreverchanges.pro/items/new.json#21596",
+   "source": "https://foreverchanges.pro/items/same.json#21596",
    "itemLevel": 88,
    "inventoryType": "Finger",
    "subclass": null,
@@ -5257,7 +6979,7 @@
    "name": "Wormhide Boots",
    "quality": 4,
    "icon": "inv_boots_04",
-   "source": "https://foreverchanges.pro/items/new.json#21613",
+   "source": "https://foreverchanges.pro/items/same.json#21613",
    "itemLevel": 81,
    "inventoryType": "Feet",
    "subclass": "Leather",
@@ -5277,7 +6999,7 @@
    "name": "Wormhide Protector",
    "quality": 4,
    "icon": "inv_helmet_09",
-   "source": "https://foreverchanges.pro/items/new.json#21614",
+   "source": "https://foreverchanges.pro/items/same.json#21614",
    "itemLevel": 81,
    "inventoryType": "Head",
    "subclass": "Leather",
@@ -5299,7 +7021,7 @@
    "name": "Huhuran's Stinger",
    "quality": 4,
    "icon": "inv_weapon_bow_14",
-   "source": "https://foreverchanges.pro/items/new.json#21616",
+   "source": "https://foreverchanges.pro/items/same.json#21616",
    "itemLevel": 78,
    "inventoryType": "Ranged",
    "subclass": "Bow",
@@ -5322,7 +7044,7 @@
    "name": "Hive Defiler Wristguards",
    "quality": 4,
    "icon": "inv_bracer_02",
-   "source": "https://foreverchanges.pro/items/new.json#21618",
+   "source": "https://foreverchanges.pro/items/same.json#21618",
    "itemLevel": 78,
    "inventoryType": "Wrist",
    "subclass": "Plate",
@@ -5341,7 +7063,7 @@
    "name": "Scarab Brooch",
    "quality": 4,
    "icon": "inv_misc_ahnqirajtrinket_06",
-   "source": "https://foreverchanges.pro/items/new.json#21625",
+   "source": "https://foreverchanges.pro/items/same.json#21625",
    "itemLevel": 78,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -5362,7 +7084,7 @@
    "name": "Fetish of the Sand Reaver",
    "quality": 4,
    "icon": "inv_misc_ahnqirajtrinket_03",
-   "source": "https://foreverchanges.pro/items/new.json#21647",
+   "source": "https://foreverchanges.pro/items/same.json#21647",
    "itemLevel": 77,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -5383,7 +7105,7 @@
    "name": "Mantle of Wicked Revenge",
    "quality": 4,
    "icon": "inv_shoulder_30",
-   "source": "https://foreverchanges.pro/items/new.json#21665",
+   "source": "https://foreverchanges.pro/items/same.json#21665",
    "itemLevel": 77,
    "inventoryType": "Shoulder",
    "subclass": "Leather",
@@ -5403,7 +7125,7 @@
    "name": "Badge of the Swarmguard",
    "quality": 4,
    "icon": "inv_misc_ahnqirajtrinket_04",
-   "source": "https://foreverchanges.pro/items/new.json#21670",
+   "source": "https://foreverchanges.pro/items/same.json#21670",
    "itemLevel": 76,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -5424,7 +7146,7 @@
    "name": "Petrified Scarab",
    "quality": 4,
    "icon": "inv_misc_ahnqirajtrinket_01",
-   "source": "https://foreverchanges.pro/items/new.json#21685",
+   "source": "https://foreverchanges.pro/items/same.json#21685",
    "itemLevel": 76,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -5445,7 +7167,7 @@
    "name": "Cloak of the Fallen God",
    "quality": 4,
    "icon": "inv_misc_cape_10",
-   "source": "https://foreverchanges.pro/items/new.json#21710",
+   "source": "https://foreverchanges.pro/items/same.json#21710",
    "itemLevel": 88,
    "inventoryType": "Back",
    "subclass": "Cloth",
@@ -5465,7 +7187,7 @@
    "name": "Shard of the Fallen Star",
    "quality": 4,
    "icon": "inv_misc_ahnqirajtrinket_04",
-   "source": "https://foreverchanges.pro/items/new.json#21891",
+   "source": "https://foreverchanges.pro/items/same.json#21891",
    "itemLevel": 75,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -5482,11 +7204,122 @@
    "tooltip": "Shard of the Fallen Star\nBinds when picked up\nTrinket\nRequires Level 60\nUse: Calls down a meteor, burning all enemies within the area for 400 to 442 total Fire damage. (3 Min Cooldown)\nSell Price: 9g 93s 78c"
   },
   {
+   "id": 22001,
+   "name": "Spaulders of Heroism",
+   "quality": 3,
+   "icon": "inv_shoulder_30",
+   "source": "https://foreverchanges.pro/items/same.json#22001",
+   "itemLevel": 65,
+   "inventoryType": "Shoulder",
+   "subclass": "Plate",
+   "armor": 507,
+   "weapon": null,
+   "stats": {
+    "stamina": 18,
+    "strength": 12,
+    "agility": 12
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Chance on melee attack to heal you for 88 to 132."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +40 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(8) +200 Armor."
+    }
+   ],
+   "tooltip": "Spaulders of Heroism\nBinds when picked up\nShoulder\tPlate\n507 Armor\n+18 Stamina\n+12 Strength\n+12 Agility\nBattlegear of Heroism (0/8)\n(2) Set: +8 All Resistances.\n(4) Set: Chance on melee attack to heal you for 88 to 132.\n(6) Set: +40 Attack Power.\n(8) Set: +200 Armor.\nSell Price: 1g 92s 3c"
+  },
+  {
+   "id": 22010,
+   "name": "Beastmaster's Belt",
+   "quality": 3,
+   "icon": "inv_belt_28",
+   "source": "https://foreverchanges.pro/items/same.json#22010",
+   "itemLevel": 65,
+   "inventoryType": "Waist",
+   "subclass": "Mail",
+   "armor": 214,
+   "weapon": null,
+   "stats": {
+    "agility": 16,
+    "stamina": 16,
+    "intellect": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Your normal ranged attacks have a 4% chance of restoring 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +40 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(8) +200 Armor."
+    }
+   ],
+   "tooltip": "Beastmaster's Belt\nBinds when picked up\nWaist\tMail\n214 Armor\n+16 Agility\n+16 Stamina\n+10 Intellect\nBeastmaster Armor (0/8)\n(2) Set: +8 All Resistances.\n(4) Set: Your normal ranged attacks have a 4% chance of restoring 200 mana.\n(6) Set: +40 Attack Power.\n(8) Set: +200 Armor.\nSell Price: 1g 84s 32c"
+  },
+  {
+   "id": 22011,
+   "name": "Beastmaster's Bindings",
+   "quality": 3,
+   "icon": "inv_bracer_17",
+   "source": "https://foreverchanges.pro/items/same.json#22011",
+   "itemLevel": 65,
+   "inventoryType": "Wrist",
+   "subclass": "Mail",
+   "armor": 167,
+   "weapon": null,
+   "stats": {
+    "agility": 16,
+    "stamina": 7,
+    "intellect": 5
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Your normal ranged attacks have a 4% chance of restoring 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +40 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(8) +200 Armor."
+    }
+   ],
+   "tooltip": "Beastmaster's Bindings\nBinds when picked up\nWrist\tMail\n167 Armor\n+16 Agility\n+7 Stamina\n+5 Intellect\nBeastmaster Armor (0/8)\n(2) Set: +8 All Resistances.\n(4) Set: Your normal ranged attacks have a 4% chance of restoring 200 mana.\n(6) Set: +40 Attack Power.\n(8) Set: +200 Armor.\nSell Price: 1g 85s"
+  },
+  {
    "id": 22015,
    "name": "Beastmaster's Gloves",
    "quality": 4,
    "icon": "inv_gauntlets_10",
-   "source": "https://foreverchanges.pro/items/new.json#22015",
+   "source": "https://foreverchanges.pro/items/same.json#22015",
    "itemLevel": 55,
    "inventoryType": "Hands",
    "subclass": "Mail",
@@ -5523,11 +7356,85 @@
    "tooltip": "Beastmaster's Gloves\nBinds when picked up\nHands\tMail\n223 Armor\n+14 Agility\n+12 Stamina\n+10 Intellect\nEquip: Increases your pet's critical strike chance by 2%.\nBeastmaster Armor (0/8)\n(2) Set: +8 All Resistances.\n(4) Set: Your normal ranged attacks have a 4% chance of restoring 200 mana.\n(6) Set: +40 Attack Power.\n(8) Set: +200 Armor.\nSell Price: 1g 49s 41c"
   },
   {
+   "id": 22016,
+   "name": "Beastmaster's Mantle",
+   "quality": 3,
+   "icon": "inv_shoulder_10",
+   "source": "https://foreverchanges.pro/items/same.json#22016",
+   "itemLevel": 65,
+   "inventoryType": "Shoulder",
+   "subclass": "Mail",
+   "armor": 286,
+   "weapon": null,
+   "stats": {
+    "stamina": 18,
+    "agility": 12,
+    "intellect": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Your normal ranged attacks have a 4% chance of restoring 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +40 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(8) +200 Armor."
+    }
+   ],
+   "tooltip": "Beastmaster's Mantle\nBinds when picked up\nShoulder\tMail\n286 Armor\n+18 Stamina\n+12 Agility\n+10 Intellect\nBeastmaster Armor (0/8)\n(2) Set: +8 All Resistances.\n(4) Set: Your normal ranged attacks have a 4% chance of restoring 200 mana.\n(6) Set: +40 Attack Power.\n(8) Set: +200 Armor.\nSell Price: 2g 84s 2c"
+  },
+  {
+   "id": 22017,
+   "name": "Beastmaster's Pants",
+   "quality": 3,
+   "icon": "inv_pants_03",
+   "source": "https://foreverchanges.pro/items/same.json#22017",
+   "itemLevel": 66,
+   "inventoryType": "Legs",
+   "subclass": "Mail",
+   "armor": 339,
+   "weapon": null,
+   "stats": {
+    "agility": 28,
+    "stamina": 14,
+    "intellect": 9
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Your normal ranged attacks have a 4% chance of restoring 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +40 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(8) +200 Armor."
+    }
+   ],
+   "tooltip": "Beastmaster's Pants\nBinds when picked up\nLegs\tMail\n339 Armor\n+28 Agility\n+14 Stamina\n+9 Intellect\nBeastmaster Armor (0/8)\n(2) Set: +8 All Resistances.\n(4) Set: Your normal ranged attacks have a 4% chance of restoring 200 mana.\n(6) Set: +40 Attack Power.\n(8) Set: +200 Armor.\nSell Price: 3g 97s 35c"
+  },
+  {
    "id": 22061,
    "name": "Beastmaster's Boots",
    "quality": 4,
    "icon": "inv_boots_plate_07",
-   "source": "https://foreverchanges.pro/items/new.json#22061",
+   "source": "https://foreverchanges.pro/items/same.json#22061",
    "itemLevel": 60,
    "inventoryType": "Feet",
    "subclass": "Mail",
@@ -5567,7 +7474,7 @@
    "name": "Thick Obsidian Breastplate",
    "quality": 4,
    "icon": "inv_chest_chain_17",
-   "source": "https://foreverchanges.pro/items/new.json#22196",
+   "source": "https://foreverchanges.pro/items/same.json#22196",
    "itemLevel": 72,
    "inventoryType": "Chest",
    "subclass": "Plate",
@@ -5587,11 +7494,35 @@
    "tooltip": "Thick Obsidian Breastplate\nBinds when equipped\nChest\tPlate\n814 Armor\n+38 Strength\n+16 Stamina\nRequires Level 60\nEquip: When struck by a non-periodic damage spell you have a 30% chance of getting a 6 sec spell shield that absorbs 300 to 500 of that school of damage.\nSell Price: 4g 96s 24c"
   },
   {
+   "id": 22377,
+   "name": "The Thunderwood Poker",
+   "quality": 3,
+   "icon": "inv_sword_17",
+   "source": "https://foreverchanges.pro/items/same.json#22377",
+   "itemLevel": 65,
+   "inventoryType": "One-Hand",
+   "subclass": "Dagger",
+   "armor": null,
+   "weapon": {
+    "minDamage": 53,
+    "maxDamage": 100,
+    "speed": 1.8,
+    "dps": 42.5
+   },
+   "stats": {
+    "agility": 13,
+    "stamina": 6
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "The Thunderwood Poker\nBinds when picked up\nUnique\nOne-Hand\tDagger\n53 - 100 Damage\tSpeed 1.80\n(42.5 damage per second)\n+13 Agility\n+6 Stamina\nSell Price: 6g 49s 76c"
+  },
+  {
    "id": 22396,
    "name": "Totem of Life",
    "quality": 4,
    "icon": "inv_relics_totemoflife",
-   "source": "https://foreverchanges.pro/items/new.json#22396",
+   "source": "https://foreverchanges.pro/items/same.json#22396",
    "itemLevel": 78,
    "inventoryType": "Relic",
    "subclass": "Totem",
@@ -5612,7 +7543,7 @@
    "name": "Idol of Health",
    "quality": 4,
    "icon": "inv_relics_idolofhealth",
-   "source": "https://foreverchanges.pro/items/new.json#22399",
+   "source": "https://foreverchanges.pro/items/same.json#22399",
    "itemLevel": 78,
    "inventoryType": "Relic",
    "subclass": "Idol",
@@ -5633,7 +7564,7 @@
    "name": "Libram of Grace",
    "quality": 4,
    "icon": "inv_relics_libramofgrace",
-   "source": "https://foreverchanges.pro/items/new.json#22402",
+   "source": "https://foreverchanges.pro/items/same.json#22402",
    "itemLevel": 78,
    "inventoryType": "Relic",
    "subclass": "Libram",
@@ -5654,7 +7585,7 @@
    "name": "Glacial Cloak",
    "quality": 4,
    "icon": "inv_misc_cape_16",
-   "source": "https://foreverchanges.pro/items/new.json#22658",
+   "source": "https://foreverchanges.pro/items/same.json#22658",
    "itemLevel": 80,
    "inventoryType": "Back",
    "subclass": "Cloth",
@@ -5670,11 +7601,31 @@
    "tooltip": "Glacial Cloak\nBinds when equipped\nBack\tCloth\n61 Armor\n+18 Stamina\n+24 Frost Resistance\nRequires Level 60\nSell Price: 5g 30s 45c"
   },
   {
+   "id": 22660,
+   "name": "Gaea's Embrace",
+   "quality": 3,
+   "icon": "inv_misc_cape_17",
+   "source": "https://foreverchanges.pro/items/same.json#22660",
+   "itemLevel": 70,
+   "inventoryType": "Back",
+   "subclass": "Cloth",
+   "armor": 49,
+   "weapon": null,
+   "stats": {
+    "stamina": 6
+   },
+   "resistances": {
+    "nature": 20
+   },
+   "effects": [],
+   "tooltip": "Gaea's Embrace\nBinds when equipped\nBack\tCloth\n49 Armor\n+6 Stamina\n+20 Nature Resistance\nRequires Level 60\nSell Price: 2g 46s 1c"
+  },
+  {
    "id": 22661,
    "name": "Polar Tunic",
    "quality": 4,
    "icon": "inv_chest_cloth_08",
-   "source": "https://foreverchanges.pro/items/new.json#22661",
+   "source": "https://foreverchanges.pro/items/same.json#22661",
    "itemLevel": 80,
    "inventoryType": "Chest",
    "subclass": "Leather",
@@ -5695,7 +7646,7 @@
    "name": "Polar Gloves",
    "quality": 4,
    "icon": "inv_gauntlets_06",
-   "source": "https://foreverchanges.pro/items/new.json#22662",
+   "source": "https://foreverchanges.pro/items/same.json#22662",
    "itemLevel": 80,
    "inventoryType": "Hands",
    "subclass": "Leather",
@@ -5716,7 +7667,7 @@
    "name": "Polar Bracers",
    "quality": 4,
    "icon": "inv_bracer_07",
-   "source": "https://foreverchanges.pro/items/new.json#22663",
+   "source": "https://foreverchanges.pro/items/same.json#22663",
    "itemLevel": 80,
    "inventoryType": "Wrist",
    "subclass": "Leather",
@@ -5737,7 +7688,7 @@
    "name": "Bracers of Subterfuge",
    "quality": 4,
    "icon": "inv_bracer_04",
-   "source": "https://foreverchanges.pro/items/new.json#22668",
+   "source": "https://foreverchanges.pro/items/same.json#22668",
    "itemLevel": 60,
    "inventoryType": "Wrist",
    "subclass": "Leather",
@@ -5757,7 +7708,7 @@
    "name": "Talisman of Ascendance",
    "quality": 4,
    "icon": "inv_misc_gem_pearl_04",
-   "source": "https://foreverchanges.pro/items/new.json#22678",
+   "source": "https://foreverchanges.pro/items/same.json#22678",
    "itemLevel": 60,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -5778,7 +7729,7 @@
    "name": "Polar Leggings",
    "quality": 4,
    "icon": "inv_pants_leather_21",
-   "source": "https://foreverchanges.pro/items/new.json#22701",
+   "source": "https://foreverchanges.pro/items/same.json#22701",
    "itemLevel": 80,
    "inventoryType": "Legs",
    "subclass": "Leather",
@@ -5799,7 +7750,7 @@
    "name": "Icy Scale Leggings",
    "quality": 4,
    "icon": "inv_pants_mail_15",
-   "source": "https://foreverchanges.pro/items/new.json#22702",
+   "source": "https://foreverchanges.pro/items/same.json#22702",
    "itemLevel": 80,
    "inventoryType": "Legs",
    "subclass": "Mail",
@@ -5820,7 +7771,7 @@
    "name": "Ramaladni's Icy Grasp",
    "quality": 4,
    "icon": "inv_jewelry_ring_35",
-   "source": "https://foreverchanges.pro/items/new.json#22707",
+   "source": "https://foreverchanges.pro/items/same.json#22707",
    "itemLevel": 80,
    "inventoryType": "Finger",
    "subclass": null,
@@ -5836,11 +7787,265 @@
    "tooltip": "Ramaladni's Icy Grasp\nBinds when picked up\nUnique\nFinger\n+15 Stamina\n+25 Frost Resistance\n\"Inscribed on the band: Ramaladni\"\nSell Price: 9g 86s 60c"
   },
   {
+   "id": 22725,
+   "name": "Band of Cenarius",
+   "quality": 3,
+   "icon": "inv_jewelry_ring_11",
+   "source": "https://foreverchanges.pro/items/same.json#22725",
+   "itemLevel": 70,
+   "inventoryType": "Finger",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 10
+   },
+   "resistances": {
+    "nature": 19
+   },
+   "effects": [],
+   "tooltip": "Band of Cenarius\nBinds when picked up\nUnique\nFinger\n+10 Stamina\n+19 Nature Resistance\nSell Price: 3g 87s 90c"
+  },
+  {
+   "id": 22759,
+   "name": "Bramblewood Helm",
+   "quality": 3,
+   "icon": "inv_helmet_58",
+   "source": "https://foreverchanges.pro/items/same.json#22759",
+   "itemLevel": 70,
+   "inventoryType": "Head",
+   "subclass": "Leather",
+   "armor": 156,
+   "weapon": null,
+   "stats": {
+    "stamina": 20
+   },
+   "resistances": {
+    "nature": 30
+   },
+   "effects": [],
+   "tooltip": "Bramblewood Helm\nBinds when equipped\nHead\tLeather\n156 Armor\n+20 Stamina\n+30 Nature Resistance\nRequires Level 60\nSell Price: 2g 91s 90c"
+  },
+  {
+   "id": 22760,
+   "name": "Bramblewood Boots",
+   "quality": 3,
+   "icon": "inv_boots_cloth_04",
+   "source": "https://foreverchanges.pro/items/same.json#22760",
+   "itemLevel": 70,
+   "inventoryType": "Feet",
+   "subclass": "Leather",
+   "armor": 132,
+   "weapon": null,
+   "stats": {
+    "stamina": 12
+   },
+   "resistances": {
+    "nature": 25
+   },
+   "effects": [],
+   "tooltip": "Bramblewood Boots\nBinds when equipped\nFeet\tLeather\n132 Armor\n+12 Stamina\n+25 Nature Resistance\nRequires Level 60\nSell Price: 2g 93s 2c"
+  },
+  {
+   "id": 22761,
+   "name": "Bramblewood Belt",
+   "quality": 3,
+   "icon": "inv_belt_17",
+   "source": "https://foreverchanges.pro/items/same.json#22761",
+   "itemLevel": 70,
+   "inventoryType": "Waist",
+   "subclass": "Leather",
+   "armor": 108,
+   "weapon": null,
+   "stats": {
+    "stamina": 14
+   },
+   "resistances": {
+    "nature": 15
+   },
+   "effects": [],
+   "tooltip": "Bramblewood Belt\nBinds when equipped\nWaist\tLeather\n108 Armor\n+14 Stamina\n+15 Nature Resistance\nRequires Level 60\nSell Price: 1g 96s 7c"
+  },
+  {
+   "id": 22843,
+   "name": "Blood Guard's Chain Greaves",
+   "quality": 3,
+   "icon": "inv_boots_05",
+   "source": "https://foreverchanges.pro/items/same.json#22843",
+   "itemLevel": 66,
+   "inventoryType": "Feet",
+   "subclass": "Mail",
+   "armor": 266,
+   "weapon": null,
+   "stats": {
+    "stamina": 19,
+    "agility": 20
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +20 Agility."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Reduces the cooldown of your Concussive Shot by 1 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +20 Stamina."
+    }
+   ],
+   "tooltip": "Blood Guard's Chain Greaves\nBinds when picked up\nUnique\nFeet\tMail\n266 Armor\n+19 Stamina\n+20 Agility\nClasses: Hunter\nRequires Level 60\nChampion's Pursuance (0/6)\n(2) Set: +20 Agility.\n(4) Set: Reduces the cooldown of your Concussive Shot by 1 sec.\n(6) Set: +20 Stamina.\nSell Price: 1g 50s 84c"
+  },
+  {
+   "id": 22857,
+   "name": "Blood Guard's Mail Greaves",
+   "quality": 3,
+   "icon": "inv_boots_07",
+   "source": "https://foreverchanges.pro/items/same.json#22857",
+   "itemLevel": 66,
+   "inventoryType": "Feet",
+   "subclass": "Mail",
+   "armor": 266,
+   "weapon": null,
+   "stats": {
+    "stamina": 14,
+    "intellect": 12,
+    "strength": 13
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases the speed of your Ghost Wolf ability by 15%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +40 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Improves your chance to get a critical strike with all Shock spells by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +20 Stamina."
+    }
+   ],
+   "tooltip": "Blood Guard's Mail Greaves\nBinds when picked up\nUnique\nFeet\tMail\n266 Armor\n+14 Stamina\n+12 Intellect\n+13 Strength\nClasses: Shaman\nRequires Level 60\nEquip: Increases the speed of your Ghost Wolf ability by 15%.\nChampion's Stormcaller (0/6)\n(2) Set: +40 Attack Power.\n(4) Set: Improves your chance to get a critical strike with all Shock spells by 2%.\n(6) Set: +20 Stamina.\nSell Price: 1g 47s 51c"
+  },
+  {
+   "id": 22858,
+   "name": "Blood Guard's Plate Greaves",
+   "quality": 3,
+   "icon": "inv_boots_plate_09",
+   "source": "https://foreverchanges.pro/items/same.json#22858",
+   "itemLevel": 66,
+   "inventoryType": "Feet",
+   "subclass": "Plate",
+   "armor": 472,
+   "weapon": null,
+   "stats": {
+    "stamina": 23,
+    "strength": 10,
+    "agility": 9
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +40 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Reduces the cooldown of your Intercept ability by 5 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +20 Stamina."
+    }
+   ],
+   "tooltip": "Blood Guard's Plate Greaves\nBinds when picked up\nUnique\nFeet\tPlate\n472 Armor\n+23 Stamina\n+10 Strength\n+9 Agility\nClasses: Warrior\nRequires Level 60\nChampion's Battlearmor (0/6)\n(2) Set: +40 Attack Power.\n(4) Set: Reduces the cooldown of your Intercept ability by 5 sec.\n(6) Set: +20 Stamina.\nSell Price: 98s 27c"
+  },
+  {
+   "id": 22862,
+   "name": "Blood Guard's Chain Vices",
+   "quality": 3,
+   "icon": "inv_gauntlets_17",
+   "source": "https://foreverchanges.pro/items/same.json#22862",
+   "itemLevel": 66,
+   "inventoryType": "Hands",
+   "subclass": "Mail",
+   "armor": 242,
+   "weapon": null,
+   "stats": {
+    "stamina": 16,
+    "agility": 18
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases the damage done by your Multi-Shot by 4%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +20 Agility."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Reduces the cooldown of your Concussive Shot by 1 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +20 Stamina."
+    }
+   ],
+   "tooltip": "Blood Guard's Chain Vices\nBinds when picked up\nUnique\nHands\tMail\n242 Armor\n+16 Stamina\n+18 Agility\nClasses: Hunter\nRequires Level 60\nEquip: Increases the damage done by your Multi-Shot by 4%.\nChampion's Pursuance (0/6)\n(2) Set: +20 Agility.\n(4) Set: Reduces the cooldown of your Concussive Shot by 1 sec.\n(6) Set: +20 Stamina.\nSell Price: 99s 73c"
+  },
+  {
+   "id": 22868,
+   "name": "Blood Guard's Plate Gauntlets",
+   "quality": 3,
+   "icon": "inv_gauntlets_26",
+   "source": "https://foreverchanges.pro/items/same.json#22868",
+   "itemLevel": 66,
+   "inventoryType": "Hands",
+   "subclass": "Plate",
+   "armor": 429,
+   "weapon": null,
+   "stats": {
+    "strength": 17,
+    "stamina": 17
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Hamstring Rage cost reduced by 3."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +40 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Reduces the cooldown of your Intercept ability by 5 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +20 Stamina."
+    }
+   ],
+   "tooltip": "Blood Guard's Plate Gauntlets\nBinds when picked up\nUnique\nHands\tPlate\n429 Armor\n+17 Strength\n+17 Stamina\nClasses: Warrior\nRequires Level 60\nEquip: Hamstring Rage cost reduced by 3.\nChampion's Battlearmor (0/6)\n(2) Set: +40 Attack Power.\n(4) Set: Reduces the cooldown of your Intercept ability by 5 sec.\n(6) Set: +20 Stamina.\nSell Price: 63s 57c"
+  },
+  {
    "id": 22935,
    "name": "Touch of Frost",
    "quality": 4,
    "icon": "inv_jewelry_amulet_04",
-   "source": "https://foreverchanges.pro/items/new.json#22935",
+   "source": "https://foreverchanges.pro/items/same.json#22935",
    "itemLevel": 83,
    "inventoryType": "Neck",
    "subclass": null,
@@ -5860,7 +8065,7 @@
    "name": "Polar Shoulder Pads",
    "quality": 4,
    "icon": "inv_shoulder_07",
-   "source": "https://foreverchanges.pro/items/new.json#22941",
+   "source": "https://foreverchanges.pro/items/same.json#22941",
    "itemLevel": 83,
    "inventoryType": "Shoulder",
    "subclass": "Leather",
@@ -5880,7 +8085,7 @@
    "name": "Band of Reanimation",
    "quality": 4,
    "icon": "inv_jewelry_ring_49naxxramas",
-   "source": "https://foreverchanges.pro/items/new.json#22961",
+   "source": "https://foreverchanges.pro/items/same.json#22961",
    "itemLevel": 83,
    "inventoryType": "Finger",
    "subclass": null,
@@ -5898,7 +8103,7 @@
    "name": "Icy Scale Spaulders",
    "quality": 4,
    "icon": "inv_shoulder_14",
-   "source": "https://foreverchanges.pro/items/new.json#22967",
+   "source": "https://foreverchanges.pro/items/same.json#22967",
    "itemLevel": 83,
    "inventoryType": "Shoulder",
    "subclass": "Mail",
@@ -5918,7 +8123,7 @@
    "name": "Idol of Longevity",
    "quality": 4,
    "icon": "inv_relics_idolofhealth",
-   "source": "https://foreverchanges.pro/items/new.json#23004",
+   "source": "https://foreverchanges.pro/items/same.json#23004",
    "itemLevel": 83,
    "inventoryType": "Relic",
    "subclass": "Idol",
@@ -5939,7 +8144,7 @@
    "name": "Totem of Flowing Water",
    "quality": 4,
    "icon": "inv_relics_totemoflife",
-   "source": "https://foreverchanges.pro/items/new.json#23005",
+   "source": "https://foreverchanges.pro/items/same.json#23005",
    "itemLevel": 83,
    "inventoryType": "Relic",
    "subclass": "Totem",
@@ -5960,7 +8165,7 @@
    "name": "Libram of Light",
    "quality": 4,
    "icon": "inv_relics_libramofgrace",
-   "source": "https://foreverchanges.pro/items/new.json#23006",
+   "source": "https://foreverchanges.pro/items/same.json#23006",
    "itemLevel": 83,
    "inventoryType": "Relic",
    "subclass": "Libram",
@@ -5981,7 +8186,7 @@
    "name": "Polar Helmet",
    "quality": 4,
    "icon": "inv_helmet_04",
-   "source": "https://foreverchanges.pro/items/new.json#23020",
+   "source": "https://foreverchanges.pro/items/same.json#23020",
    "itemLevel": 83,
    "inventoryType": "Head",
    "subclass": "Leather",
@@ -6002,7 +8207,7 @@
    "name": "Icy Scale Coif",
    "quality": 4,
    "icon": "inv_helmet_20",
-   "source": "https://foreverchanges.pro/items/new.json#23033",
+   "source": "https://foreverchanges.pro/items/same.json#23033",
    "itemLevel": 83,
    "inventoryType": "Head",
    "subclass": "Mail",
@@ -6023,7 +8228,7 @@
    "name": "Loatheb's Reflection",
    "quality": 4,
    "icon": "inv_trinket_naxxramas05",
-   "source": "https://foreverchanges.pro/items/new.json#23042",
+   "source": "https://foreverchanges.pro/items/same.json#23042",
    "itemLevel": 85,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -6046,11 +8251,211 @@
    "tooltip": "Loatheb's Reflection\nBinds when picked up\nUnique\nTrinket\n+13 Fire Resistance\n+13 Nature Resistance\n+13 Frost Resistance\n+13 Shadow Resistance\n+13 Arcane Resistance\nRequires Level 60\nUse: Increases resistances to all schools of magic by 40 for 20 sec. (2 Min Cooldown)\nSell Price: 9g 11s 60c"
   },
   {
+   "id": 23197,
+   "name": "Idol of the Moon",
+   "quality": 3,
+   "icon": "inv_relics_idolofrejuvenation",
+   "source": "https://foreverchanges.pro/items/same.json#23197",
+   "itemLevel": 65,
+   "inventoryType": "Relic",
+   "subclass": "Idol",
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases the damage of your Moonfire spell by up to 33."
+    }
+   ],
+   "tooltip": "Idol of the Moon\nBinds when equipped\nUnique\nRelic\tIdol\nRequires Level 60\nEquip: Increases the damage of your Moonfire spell by up to 33.\nSell Price: 1g 87s 17c"
+  },
+  {
+   "id": 23199,
+   "name": "Totem of the Storm",
+   "quality": 3,
+   "icon": "inv_relics_totemofrage",
+   "source": "https://foreverchanges.pro/items/same.json#23199",
+   "itemLevel": 65,
+   "inventoryType": "Relic",
+   "subclass": "Totem",
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Chain Lightning and Lightning Bolt by up to 33."
+    }
+   ],
+   "tooltip": "Totem of the Storm\nBinds when equipped\nUnique\nRelic\tTotem\nRequires Level 60\nEquip: Increases damage done by Chain Lightning and Lightning Bolt by up to 33.\nSell Price: 1g 88s 58c"
+  },
+  {
+   "id": 23203,
+   "name": "Libram of Fervor",
+   "quality": 3,
+   "icon": "inv_relics_libramoftruth",
+   "source": "https://foreverchanges.pro/items/same.json#23203",
+   "itemLevel": 65,
+   "inventoryType": "Relic",
+   "subclass": "Libram",
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases the melee attack power bonus of your Seal of the Crusader by 48 and the Holy damage increase of your Judgement of the Crusader by 33."
+    }
+   ],
+   "tooltip": "Libram of Fervor\nBinds when equipped\nUnique\nRelic\tLibram\nRequires Level 60\nEquip: Increases the melee attack power bonus of your Seal of the Crusader by 48 and the Holy damage increase of your Judgement of the Crusader by 33.\nSell Price: 1g 91s 38c"
+  },
+  {
+   "id": 23278,
+   "name": "Knight-Lieutenant's Chain Greaves",
+   "quality": 3,
+   "icon": "inv_boots_05",
+   "source": "https://foreverchanges.pro/items/same.json#23278",
+   "itemLevel": 66,
+   "inventoryType": "Feet",
+   "subclass": "Mail",
+   "armor": 266,
+   "weapon": null,
+   "stats": {
+    "stamina": 19,
+    "agility": 20
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +20 Agility."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Reduces the cooldown of your Concussive Shot by 1 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +20 Stamina."
+    }
+   ],
+   "tooltip": "Knight-Lieutenant's Chain Greaves\nBinds when picked up\nUnique\nFeet\tMail\n266 Armor\n+19 Stamina\n+20 Agility\nClasses: Hunter\nRequires Level 60\nLieutenant Commander's Pursuance (0/6)\n(2) Set: +20 Agility.\n(4) Set: Reduces the cooldown of your Concussive Shot by 1 sec.\n(6) Set: +20 Stamina.\nSell Price: 1g 52s 53c"
+  },
+  {
+   "id": 23279,
+   "name": "Knight-Lieutenant's Chain Vices",
+   "quality": 3,
+   "icon": "inv_gauntlets_17",
+   "source": "https://foreverchanges.pro/items/same.json#23279",
+   "itemLevel": 66,
+   "inventoryType": "Hands",
+   "subclass": "Mail",
+   "armor": 242,
+   "weapon": null,
+   "stats": {
+    "stamina": 16,
+    "agility": 18
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases the damage done by your Multi-Shot by 4%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +20 Agility."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Reduces the cooldown of your Concussive Shot by 1 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +20 Stamina."
+    }
+   ],
+   "tooltip": "Knight-Lieutenant's Chain Vices\nBinds when picked up\nUnique\nHands\tMail\n242 Armor\n+16 Stamina\n+18 Agility\nClasses: Hunter\nRequires Level 60\nEquip: Increases the damage done by your Multi-Shot by 4%.\nLieutenant Commander's Pursuance (0/6)\n(2) Set: +20 Agility.\n(4) Set: Reduces the cooldown of your Concussive Shot by 1 sec.\n(6) Set: +20 Stamina.\nSell Price: 1g 1s 60c"
+  },
+  {
+   "id": 23286,
+   "name": "Knight-Lieutenant's Plate Gauntlets",
+   "quality": 3,
+   "icon": "inv_gauntlets_26",
+   "source": "https://foreverchanges.pro/items/same.json#23286",
+   "itemLevel": 66,
+   "inventoryType": "Hands",
+   "subclass": "Plate",
+   "armor": 429,
+   "weapon": null,
+   "stats": {
+    "strength": 17,
+    "stamina": 17
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Hamstring Rage cost reduced by 3."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +40 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Reduces the cooldown of your Intercept ability by 5 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +20 Stamina."
+    }
+   ],
+   "tooltip": "Knight-Lieutenant's Plate Gauntlets\nBinds when picked up\nUnique\nHands\tPlate\n429 Armor\n+17 Strength\n+17 Stamina\nClasses: Warrior\nRequires Level 60\nEquip: Hamstring Rage cost reduced by 3.\nLieutenant Commander's Battlearmor (0/6)\n(2) Set: +40 Attack Power.\n(4) Set: Reduces the cooldown of your Intercept ability by 5 sec.\n(6) Set: +20 Stamina.\nSell Price: 69s 45c"
+  },
+  {
+   "id": 23287,
+   "name": "Knight-Lieutenant's Plate Greaves",
+   "quality": 3,
+   "icon": "inv_boots_plate_09",
+   "source": "https://foreverchanges.pro/items/same.json#23287",
+   "itemLevel": 66,
+   "inventoryType": "Feet",
+   "subclass": "Plate",
+   "armor": 472,
+   "weapon": null,
+   "stats": {
+    "stamina": 23,
+    "strength": 10,
+    "agility": 9
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +40 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Reduces the cooldown of your Intercept ability by 5 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +20 Stamina."
+    }
+   ],
+   "tooltip": "Knight-Lieutenant's Plate Greaves\nBinds when picked up\nUnique\nFeet\tPlate\n472 Armor\n+23 Stamina\n+10 Strength\n+9 Agility\nClasses: Warrior\nRequires Level 60\nLieutenant Commander's Battlearmor (0/6)\n(2) Set: +40 Attack Power.\n(4) Set: Reduces the cooldown of your Intercept ability by 5 sec.\n(6) Set: +20 Stamina.\nSell Price: 1g 4s 54c"
+  },
+  {
    "id": 23558,
    "name": "The Burrower's Shell",
    "quality": 4,
    "icon": "inv_shield_23",
-   "source": "https://foreverchanges.pro/items/new.json#23558",
+   "source": "https://foreverchanges.pro/items/same.json#23558",
    "itemLevel": 81,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -6071,7 +8476,7 @@
    "name": "Jom Gabbar",
    "quality": 4,
    "icon": "inv_misc_enggizmos_19",
-   "source": "https://foreverchanges.pro/items/new.json#23570",
+   "source": "https://foreverchanges.pro/items/same.json#23570",
    "itemLevel": 81,
    "inventoryType": "Trinket",
    "subclass": null,
@@ -6092,7 +8497,7 @@
    "name": "Failsafe Phylactery",
    "quality": 4,
    "icon": "inv_trinket_naxxramas03",
-   "source": "https://foreverchanges.pro/items/new.json#191312",
+   "source": "https://foreverchanges.pro/items/same.json#191312",
    "itemLevel": 60,
    "inventoryType": "Trinket",
    "subclass": null,

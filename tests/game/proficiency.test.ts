@@ -327,8 +327,15 @@ describe('an item that names a class is offered only to that class', () => {
      * is 177 and not 184. The other 177 carry none in Classic's own data
      * either, so a Paladin being offered a Frostfire Circlet is what BOTH
      * sources say about that item rather than a gap in this filter.
+     *
+     * 419 OF 1213 SINCE THE 1.60.1.70959 RELEASE CAPTURE, which widened the
+     * data to every rare and epic at item level 50 and up. The new ones are
+     * the same kinds of set -- tier 0, 0.5 and 3, the crafted and PvP sets --
+     * and every one is still gated by ARMOUR PROFICIENCY, so a Warlock is
+     * never offered Soulforge plate. Whether Forever means a tier set
+     * class-locked beyond that remains the owner's question.
      */
-    expect(`${unrestricted.length} of ${setPieces.length}`).toBe('177 of 742');
+    expect(`${unrestricted.length} of ${setPieces.length}`).toBe('419 of 1213');
   });
 
   it('answers a missing line from the capture, and never overrides a stated one', () => {

@@ -527,12 +527,12 @@ describe('resistances are totalled for display and nothing else', () => {
      * template's preference list -- so the starting set totals to nothing and
      * the function under test would never be exercised.
      *
-     * The Elemental Mage Staff is +20 Fire and +20 Frost, transcribed by hand
-     * from its own tooltip.
+     * The Elemental Mage Staff is +10 Fire and +10 Frost at 1.60.1.70959 (it
+     * was 20), transcribed by hand from its own tooltip.
      * ------------------------------------------------------------------------
      */
     const total = resistancesFromItems({ twoHand: { itemId: 944 } }, 'two_hander');
-    expect(total).toEqual({ fire: 20, frost: 20 });
+    expect(total).toEqual({ fire: 10, frost: 10 });
 
     // And a benchmark set genuinely carries none, which is the honest zero
     // rather than a missing read.
@@ -615,7 +615,8 @@ describe('block chance and block value are different numbers', () => {
      * lines are block value and they add.
      */
     const shield = ITEMS_BY_ID.get(19321)!;
-    expect(shield.stats.blockValue).toBe(71);
+    // 40 inherent + 25 bought since 1.60.1.70959 (44 + 27 before).
+    expect(shield.stats.blockValue).toBe(40 + 25);
     expect(shield.stats.blockChance).toBeUndefined();
   });
 

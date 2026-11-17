@@ -16,6 +16,19 @@ import { qualityEdge } from './tooltipLines';
  */
 const ICON_BASE = 'https://wow.zamimg.com/images/wow/icons/medium';
 
+/**
+ * The CDN's file for a client icon name.
+ *
+ * SPACES BECOME HYPHENS, because a handful of client icon names carry them --
+ * "trade_archaeology_insect in amber" on Swarming Idol -- and the CDN serves
+ * them as "insect-in-amber". Checked by loading all 909 icon names the
+ * 1.60.1.70959 items use: every one resolves this way. The data keeps the
+ * client's own spelling; only the URL is translated.
+ */
+export function iconUrl(icon: string): string {
+  return `${ICON_BASE}/${icon.replace(/ /g, '-')}.jpg`;
+}
+
 export function ItemIcon({
   icon,
   quality,
@@ -38,7 +51,7 @@ export function ItemIcon({
     <img
       className="item-icon"
       style={style}
-      src={`${ICON_BASE}/${icon}.jpg`}
+      src={iconUrl(icon)}
       alt=""
       loading="lazy"
       draggable={false}
