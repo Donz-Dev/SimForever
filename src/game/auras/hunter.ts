@@ -776,6 +776,36 @@ export const LONE_WOLF: AuraDefinition = {
  * break it from a distance.
  * ----------------------------------------------------------------------------
  */
+/**
+ * Rapid Recuperation's window: "Afflicting a target with Serpent Sting allows
+ * {0}% of your Mana Regeneration to continue while casting for {1} sec".
+ *
+ * ----------------------------------------------------------------------------
+ * A WINDOW OPENED BY A LANDED STING, which it was not. The talent used to grant
+ * its bypass PERMANENTLY, as a flat stat from the pull -- so a Hunter who never
+ * cast Serpent Sting got the full 50% anyway, and the talent's one condition
+ * was never asked. The owner asked whether it works: it paid, unconditionally.
+ *
+ * `manaRegenBypass` IS THE STAT, as for Resourcefulness, whose 30-second proc
+ * window is the same shape. The two ADD, capped at 100 by `manaPerTick`.
+ *
+ * REFRESHED BY EACH STING, so a list that re-applies Serpent Sting every 15
+ * seconds holds it the whole fight -- which is what the owner described.
+ * ----------------------------------------------------------------------------
+ */
+export const RAPID_RECUPERATION_AURA_ID = 'rapid_recuperation';
+
+export function rapidRecuperationAura(bypassPercent: number, durationMs: number): AuraDefinition {
+  return {
+    id: RAPID_RECUPERATION_AURA_ID,
+    name: 'Rapid Recuperation',
+    durationMs,
+    refreshBehaviour: 'reset',
+    statModifiers: [flat('manaRegenBypass', bypassPercent)],
+  };
+}
+
 export const CATALOG_AURAS: readonly AuraDefinition[] = [
   laceratingStrikesAura(0),
+  rapidRecuperationAura(0, seconds(15)),
 ];

@@ -18,6 +18,7 @@ import {
   IMMOLATION_TRAP,
   RAPID_FIRE,
   SERPENT_STING,
+  rapidRecuperationAura,
 } from '../auras/hunter';
 
 /** The midpoint of a stated range. The combat table supplies the spread. */
@@ -331,6 +332,10 @@ export const MULTI_SHOT: Ability = {
  * shots resolve on and has no dodge or parry.
  * ----------------------------------------------------------------------------
  */
+/** Rapid Recuperation's two numbers, handed to Serpent Sting by the talent. */
+export const RAPID_RECUPERATION_BYPASS = 'rapidRecuperationBypass';
+export const RAPID_RECUPERATION_SECONDS = 'rapidRecuperationSeconds';
+
 export const SERPENT_STING_ABILITY: Ability = {
   id: 'serpent_sting',
   name: 'Serpent Sting',
@@ -341,6 +346,16 @@ export const SERPENT_STING_ABILITY: Ability = {
     const roll = simulation.rollAttack(ability.attackTable, caster, target, { slot: RANGED });
     if (roll.avoided) return;
     simulation.applyAura(target, SERPENT_STING, caster.id);
+    /*
+     * RAPID RECUPERATION: "AFFLICTING a target with Serpent Sting" -- so only
+     * a sting that LANDED opens the window, which is why this is after the
+     * miss check. A build without the talent reads 0 and opens nothing.
+     */
+    const bypass = ability.bonuses?.[RAPID_RECUPERATION_BYPASS] ?? 0;
+    const duration = ability.bonuses?.[RAPID_RECUPERATION_SECONDS] ?? 0;
+    if (bypass > 0 && duration > 0) {
+      simulation.applyAura(caster, rapidRecuperationAura(bypass, seconds(duration)), caster.id);
+    }
   },
 };
 

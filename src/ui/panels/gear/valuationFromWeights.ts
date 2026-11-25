@@ -59,3 +59,27 @@ export function valuationFromWeights(weights: readonly StatWeight[]): StatValuat
 export function hasMeasuredWeights(weights: readonly StatWeight[]): boolean {
   return weights.some((weight) => weight.verdict === 'measured');
 }
+
+/**
+ * Whether two valuations price every stat the same.
+ *
+ * ==============================================================================
+ * WHAT DECIDES WHETHER "Use for gear" IS ALREADY DONE. The button used to read
+ * "is ANY valuation applied" -- `statValuation !== undefined` -- so the first
+ * click disabled it for good, and a later run with different weights could
+ * never overwrite the first. The owner: "it works but I can't do it again and
+ * overwrite." It is applied only when the gear is sorted by THIS run's weights.
+ *
+ * Keyed comparison, not `JSON.stringify`: two valuations built in a different
+ * order are the same valuation. An absent entry and a zero are the same thing
+ * to `scoreStats`, so they compare equal here too.
+ * ==============================================================================
+ */
+export function sameValuation(a: StatValuation | undefined, b: StatValuation | undefined): boolean {
+  if (a === undefined || b === undefined) return a === b;
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]) as Set<StatName>;
+  for (const key of keys) {
+    if ((a[key] ?? 0) !== (b[key] ?? 0)) return false;
+  }
+  return true;
+}

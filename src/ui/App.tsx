@@ -454,7 +454,7 @@ export function App() {
                   stops the list of "edits that can matter" going stale.
                 */
                 onUseForGear={(statValuation) => editProfile({ ...profile, statValuation })}
-                usedForGear={profile.statValuation !== undefined}
+                currentValuation={profile.statValuation}
               />
             ) : null}
 
