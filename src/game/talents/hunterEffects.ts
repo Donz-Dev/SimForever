@@ -1,4 +1,5 @@
 import type { TalentEffects } from './TalentEffect';
+import { RAPID_RECUPERATION_BYPASS, RAPID_RECUPERATION_SECONDS } from '../abilities/hunter';
 
 /**
  * What each Hunter talent does, as data.
@@ -289,7 +290,24 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   rapid_recuperation: [
-    { kind: 'stat', stat: 'manaRegenBypass', operation: 'flat' },
+    /*
+     * "Afflicting a target with Serpent Sting allows {0}% of your Mana
+     * Regeneration to continue while casting for {1} sec, increased to {2}%
+     * when Rapid Killing is consumed."
+     *
+     * A WINDOW SERPENT STING OPENS, not a standing stat. It was
+     * `{ kind: 'stat', stat: 'manaRegenBypass' }`, which granted the bypass
+     * from the pull whether or not a sting ever landed. Both numbers go to the
+     * ability, which applies `rapidRecuperationAura` when its sting lands.
+     */
+    { kind: 'abilityBonus', abilityId: 'serpent_sting', key: RAPID_RECUPERATION_BYPASS },
+    { kind: 'abilityBonus', abilityId: 'serpent_sting', key: RAPID_RECUPERATION_SECONDS, valueIndex: 1 },
+    {
+      kind: 'unmodelled',
+      reason:
+        'Its "increased to {2}% when Rapid Killing is consumed" clause: Rapid ' +
+        'Killing needs a KILL and the target survives every fight here.',
+    },
   ],
 
   barrage: [

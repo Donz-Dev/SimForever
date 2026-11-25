@@ -1,7 +1,7 @@
 import type { HeadroomReport, StatWeight, StatWeightPlan } from '../../simulator';
 import type { StatValuation } from '../../game/items/itemValue';
 import { Panel } from '../components/Panel';
-import { hasMeasuredWeights, valuationFromWeights } from './gear/valuationFromWeights';
+import { hasMeasuredWeights, sameValuation, valuationFromWeights } from './gear/valuationFromWeights';
 
 interface StatWeightsPanelProps {
   readonly plan: StatWeightPlan;
@@ -30,8 +30,12 @@ interface StatWeightsPanelProps {
    * --------------------------------------------------------------------------
    */
   readonly onUseForGear?: (valuation: StatValuation) => void;
-  /** True when the profile is already running these weights. */
-  readonly usedForGear?: boolean;
+  /**
+   * The valuation the Gear panel sorts by now, if one was applied. The button
+   * reads as done only when it equals THIS run's weights, so a later run can
+   * always overwrite an earlier one.
+   */
+  readonly currentValuation?: StatValuation;
 }
 
 /**
@@ -72,8 +76,12 @@ export function StatWeightsPanel({
   fights,
   workers,
   onUseForGear,
-  usedForGear = false,
+  currentValuation,
 }: StatWeightsPanelProps) {
+  // APPLIED ONLY WHEN THE GEAR IS SORTED BY *THIS* RUN'S WEIGHTS -- not by any
+  // weights at all, which is what let one click disable the button for good.
+  const fromRun = valuationFromWeights(weights);
+  const usedForGear = sameValuation(fromRun, currentValuation);
   const ranked = [...weights].sort((a, b) => b.perUnit - a.perUnit);
   /*
    * RELATIVE TO THE LARGEST MEASURED WEIGHT, which is how a weight list is
@@ -106,7 +114,7 @@ export function StatWeightsPanel({
         onUseForGear ? (
           <button
             type="button"
-            onClick={() => onUseForGear(valuationFromWeights(weights))}
+            onClick={() => onUseForGear(fromRun)}
             disabled={!hasMeasuredWeights(weights) || usedForGear}
             title={
               hasMeasuredWeights(weights)

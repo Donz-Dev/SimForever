@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { StatWeight } from '../../src/simulator';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import {
   hasMeasuredWeights,
+  sameValuation,
   valuationFromWeights,
 } from '../../src/ui/panels/gear/valuationFromWeights';
+import { StatWeightsPanel } from '../../src/ui/panels/StatWeightsPanel';
 
 /*
  * ==============================================================================
@@ -98,5 +102,57 @@ describe('a run that resolved nothing says so', () => {
 
   it('produces an empty valuation, which the Gear panel reads as no sorting', () => {
     expect(valuationFromWeights([row({ verdict: 'none' })])).toEqual({});
+  });
+});
+
+describe('"Use for gear" can be pressed again for a new run', () => {
+  /*
+   * THE OWNER: "when I click the button to take my stat weights and apply them
+   * to the gear sorting, it works but I can't do it again and overwrite." The
+   * button read "is ANY valuation applied", so the first click disabled it for
+   * every run after. It is done only when the gear runs THIS run's weights.
+   */
+  const panel = (weights: readonly StatWeight[], currentValuation?: Record<string, number>) =>
+    renderToStaticMarkup(
+      createElement(StatWeightsPanel, {
+        plan: { headroom: [], skipped: [] } as never,
+        weights,
+        baselineDps: 1000,
+        iterations: 500,
+        fights: 1000,
+        workers: 1,
+        onUseForGear: () => {},
+        ...(currentValuation ? { currentValuation } : {}),
+      }),
+    );
+  const buttonOf = (html: string) => /<button[^>]*>(?:(?!<\/button>).)*(Use for gear|Sorting gear)<\/button>/.exec(html)?.[0] ?? '';
+
+  const first = [row({ statId: 'strength', perUnit: 0.58 })];
+  const second = [row({ statId: 'strength', perUnit: 0.61 }), row({ key: 'a', statId: 'agility', perUnit: 0.4 })];
+
+  it('offers it when nothing is applied', () => {
+    const button = buttonOf(panel(first));
+    expect(button).toContain('Use for gear');
+    expect(button).not.toContain('disabled');
+  });
+
+  it('shows it as done for the run whose weights are applied', () => {
+    const button = buttonOf(panel(first, valuationFromWeights(first)));
+    expect(button).toContain('Sorting gear');
+    expect(button).toContain('disabled');
+  });
+
+  it('offers it again for a later run, which overwrites the earlier one', () => {
+    const button = buttonOf(panel(second, valuationFromWeights(first)));
+    expect(button).toContain('Use for gear');
+    expect(button).not.toContain('disabled');
+  });
+
+  it('compares by stat, not by key order, and treats an absent entry as zero', () => {
+    expect(sameValuation({ strength: 1, agility: 2 }, { agility: 2, strength: 1 })).toBe(true);
+    expect(sameValuation({ strength: 1, agility: 0 }, { strength: 1 })).toBe(true);
+    expect(sameValuation({ strength: 1 }, { strength: 1.01 })).toBe(false);
+    expect(sameValuation(undefined, { strength: 1 })).toBe(false);
+    expect(sameValuation(undefined, undefined)).toBe(true);
   });
 });

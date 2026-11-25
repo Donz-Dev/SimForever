@@ -107,6 +107,38 @@ figures the owner measured rather than this repository -- see **The baseline is
 the owner's now** below, which also says which rows of the table further down
 are stale.
 
+## Round 95: Rapid Recuperation as a window, and "Use for gear" can overwrite
+
+The owner asked two things.
+
+**"Is Rapid Recuperation actually functioning?"** It paid, but unconditionally.
+It was a flat `manaRegenBypass` stat from the pull, so the 50% was there
+whether or not Serpent Sting ever landed. It is now the talent's own shape: a
+landed sting opens a `rapid_recuperation` aura that carries the bypass for 15
+seconds and is refreshed by each sting. Both numbers are read off the talent
+row. The "100% when Rapid Killing is consumed" clause is `unmodelled`, because
+Rapid Killing needs a kill and the target survives every fight.
+
+The window's uptime on LW Ranged, the one profile that takes the talent:
+
+| | 60 s | 180 s | 300 s |
+| --- | --- | --- | --- |
+| Rapid Recuperation uptime | **96.6%** | **90.1%** | -- |
+| DPS, main -> branch (same seeds) | 1348.7 -> 1348.7 | 1230.5 -> **1219.4** | 1154.4 -> **1129.4** |
+
+**THE GAPS ARE THE LIST, NOT THE TALENT.** The list re-applies Serpent Sting on
+`missingOn`, so a cast or a global cooldown passes after the sting falls off
+before the next one lands, and the odd sting misses. The 60 s figure does not
+move, because LW Ranged is not mana-bound in a minute. Refreshing the sting
+just before it expires is a list question the owner may want to rule on.
+
+**"I can't do it again and overwrite."** The Stat weights panel's "Use for
+gear" button read `statValuation !== undefined`, so the first click disabled it
+for every later run. It now shows as done only when the gear is sorted by THIS
+run's weights (`sameValuation`), so a new run can always overwrite an earlier
+one. This was checked in the app: one run applied, a second run re-enabled the
+button, and applying it overwrote the first.
+
 ## Round 94: the release item database, every rare and epic at item level 50+
 
 Forever released at client build **1.60.1.70959**, and the owner asked for both
